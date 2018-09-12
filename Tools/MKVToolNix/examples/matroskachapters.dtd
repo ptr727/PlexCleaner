@@ -1,0 +1,62 @@
+<!ELEMENT Chapters (EditionEntry*)>
+<!ELEMENT EditionEntry (
+          EditionUID,
+          EditionFlagHidden?,
+          EditionManaged?,
+          EditionFlagDefault?,
+          ChapterAtom*)>
+
+<!ELEMENT EditionUID (#PCDATA)>
+<!ELEMENT EditionFlagHidden (#PCDATA)>
+<!ELEMENT EditionManaged (#PCDATA)>
+<!ELEMENT EditionFlagDefault (#PCDATA)>
+
+<!ELEMENT ChapterAtom (
+          ChapterTimeStart,
+          ChapterTimeEnd?,
+          ChapterUID?,
+          ChapterSegmentUID?,
+          ChapterSegmentEditionUID?,
+          ChapterPhysicalEquiv?,
+          ChapterTrack?,
+          ChapterFlagHidden?,
+          ChapterFlagEnabled?,
+          ChapterDisplay*,
+          ChapterProcess*,
+          ChapterAtom*)>
+
+<!ELEMENT ChapterTrack (ChapterTrackNumber)>
+<!ELEMENT ChapterTrackNumber (#PCDATA)>
+
+<!ELEMENT ChapterDisplay (
+          ChapterString,
+          ChapterLanguage+,
+          ChapterCountry*)>
+
+<!ELEMENT ChapterProcess (
+          ChapterProcessCodecID,
+          ChapterProcessPrivate?,
+          ChapterProcessCommand+)>
+
+<!ELEMENT ChapterProcessCommand (
+          ChapterProcessTime,
+          ChapterProcessData)>
+
+<!ELEMENT ChapterTimeStart (#PCDATA)>
+<!ELEMENT ChapterTimeEnd (#PCDATA)>
+<!ELEMENT ChapterFlagHidden (#PCDATA)>
+<!ELEMENT ChapterFlagEnabled (#PCDATA)>
+<!ELEMENT ChapterUID (#PCDATA)>
+
+<!ELEMENT ChapterSegmentUID (#PCDATA)>
+<!ELEMENT ChapterSegmentEditionUID (#PCDATA)>
+<!ELEMENT ChapterPhysicalEquiv (#PCDATA)>
+
+<!ELEMENT ChapterProcessCodecID (#PCDATA)>
+<!ELEMENT ChapterProcessPrivate (#PCDATA)>
+<!ELEMENT ChapterProcessTime (#PCDATA)>
+<!ELEMENT ChapterProcessData (#PCDATA)>
+
+<!ELEMENT ChapterString (#PCDATA)>
+<!ELEMENT ChapterLanguage (#PCDATA)>
+<!ELEMENT ChapterCountry (#PCDATA)>

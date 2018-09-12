@@ -1,0 +1,138 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvtoolnix-gui -- mkvmerge1 的 GUI，包含章节编辑器和头部字段编辑器</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvtoolnix-gui -- <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的 GUI，包含章节编辑器和头部字段编辑器
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvtoolnix-gui.synopsis">1. 概要</a></li>
+            <li><a href="#mkvtoolnix-gui.description">2. 说明</a></li>
+            <li><a href="#mkvtoolnix-gui.seealso">3. 参阅</a></li>
+            <li><a href="#mkvtoolnix-gui.www">4. 网络</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvtoolnix-gui.synopsis">1. 概要</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvtoolnix-gui</span> [[配置文件名.mtxcfg] | [输入文件.扩展名] | [matroska-文件.mkv] | [章节文件.扩展名] | [matroska-文件.mkv]]
+         </div>
+         
+         <h1><a name="mkvtoolnix-gui.description">2. 说明</a></h1>
+         
+         
+         <p>
+            <span class="productname">mkvtoolnix-gui</span>(1) 是用于 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的 <span class="abbrev">GUI</span>，基于
+            <span class="productname">Qt</span><sup>(tm)</sup> 开发。它还支持调用 <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a> 与 <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>，未来还将覆盖
+            <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> 的功能。所有设置（例如输入文件、轨道选项等）都可以保存与恢复。
+            
+         </p>
+         
+         
+         <p>
+            给出扩展名为 <span class="literal">.mtxcfg</span> 的配置文件名，可让 GUI
+            在相应工具中加载这些配置文件。其他文件名将根据当前模式，作为待混流的输入文件添加，或在信息工具、章节编辑器或头部编辑器中打开。当前模式可通过
+            <span class="option">--merge</span>（混流）、<span class="option">--info</span>（信息）、<span class="option">--edit-chapters</span>（章节编辑）
+            或 <span class="option">--edit-headers</span>（头部编辑）修改。默认模式为添加文件用于混流。
+            
+         </p>
+         
+         
+         <p>
+            注意，若再次启动应用程序时，已经有一个该应用程序的实例在运行，则命令行给出的所有文件都将由已在运行的实例处理。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">--merge</span></td>
+                  <td>
+                     
+                     <p>后面的所有文件名都将作为输入文件添加到当前混流任务。这是默认模式。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--info</span></td>
+                  <td>
+                     
+                     <p>其后所有文件名将在信息工具中打开。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-chapters</span></td>
+                  <td>
+                     
+                     <p>后面的所有文件名都将在章节编辑器中打开。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-headers</span></td>
+                  <td>
+                     
+                     <p>后面的所有文件名都将在头部编辑器中打开。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        显示用法信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        显示版本信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvtoolnix-gui.seealso">3. 参阅</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvtoolnix-gui.www">4. 网络</a></h1>
+         
+         
+         <p>
+            最新版本总可以在 <a href="https://mkvtoolnix.download/">MKVToolNix 主页</a> 找到。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

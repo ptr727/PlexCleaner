@@ -1,0 +1,66 @@
+{
+  "attachments": [],
+  "chapters": [],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2017-06-24T19:37:39-07:00",
+      "date_utc": "2017-06-25T02:37:39Z",
+      "duration": 2545040000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "libebml v1.3.4 + libmatroska v1.4.5",
+      "segment_uid": "8c9db306470579f1823519369a9e2b0b",
+      "writing_application": "mkvmerge v12.0.0 ('Trust / Lust') 64bit"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\MSMPEG4v3 - Stargate SG-1 - S05E22 - Revelations.mkv",
+  "global_tags": [],
+  "identification_format_version": 10,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "0x44495633 \"DIV3\"",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MS/VFW/FOURCC",
+        "codec_private_data": "280000008002000060010000010018004449563300500a0000000000000000000000000000000000",
+        "codec_private_length": 40,
+        "default_duration": 40000000,
+        "default_track": true,
+        "display_dimensions": "640x352",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 1,
+        "pixel_dimensions": "640x352",
+        "uid": 11703158795456325508
+      },
+      "type": "video"
+    },
+    {
+      "codec": "MP3",
+      "id": 1,
+      "properties": {
+        "audio_channels": 2,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_MPEG/L3",
+        "codec_private_length": 0,
+        "default_duration": 24000000,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 2,
+        "uid": 13659446196227148479
+      },
+      "type": "audio"
+    }
+  ],
+  "warnings": []
+}

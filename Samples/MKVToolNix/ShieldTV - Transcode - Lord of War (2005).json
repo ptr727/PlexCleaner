@@ -1,0 +1,90 @@
+{
+  "attachments": [],
+  "chapters": [
+    {
+      "num_entries": 14
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2000-12-31T16:00:00-07:00",
+      "date_utc": "2001-01-01T00:00:00Z",
+      "duration": 7303337000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "Lavf57.7.2",
+      "segment_uid": "a39ca2780428083cf47db35415fa81c0",
+      "writing_application": "HandBrake 1.0.7 2017040900"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\ShieldTV - Transcode - Lord of War (2005).mkv",
+  "global_tags": [
+    {
+      "num_entries": 2
+    }
+  ],
+  "identification_format_version": 10,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "MPEG-4p10/AVC/h.264",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MPEG4/ISO/AVC",
+        "codec_private_data": "01640028ffe1001d67640028acd94078065fac05a808080a000003000200057e401e30632c01000668ebe1b2c8b0",
+        "codec_private_length": 46,
+        "default_duration": 41708333,
+        "default_track": true,
+        "display_dimensions": "1920x798",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 1,
+        "packetizer": "mpeg4_p10_video",
+        "pixel_dimensions": "1920x798",
+        "uid": 1
+      },
+      "type": "video"
+    },
+    {
+      "codec": "DTS-ES",
+      "id": 1,
+      "properties": {
+        "audio_channels": 7,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_DTS",
+        "codec_private_length": 0,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 41000000,
+        "number": 2,
+        "track_name": "Surround",
+        "uid": 2
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "HDMV PGS",
+      "id": 2,
+      "properties": {
+        "codec_id": "S_HDMV/PGS",
+        "codec_private_length": 0,
+        "default_track": false,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "number": 3,
+        "uid": 3
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

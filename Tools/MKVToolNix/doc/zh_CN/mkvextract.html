@@ -1,0 +1,1198 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvextract -- 将 Matroska 文件中的轨道提取为另外的文件</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvextract -- 将 <span class="productname">Matroska</span><sup>(tm)</sup> 文件中的轨道提取为另外的文件
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvextract.synopsis">1. 概要</a></li>
+            <li><a href="#mkvextract.description">2. 说明</a></li>
+            <li><a href="#mkvextract.examples">3. 示例</a></li>
+            <li><a href="#mkvextract.text_files_and_charsets">4. 文本文件与字符集转换</a></li>
+            <li><a href="#mkvextract.output_file_formats">5. 输出文件格式</a></li>
+            <li><a href="#d4e1768">6. 退出代码</a></li>
+            <li><a href="#mkvextract.environment_variables">7. 环境变量</a></li>
+            <li><a href="#mkvextract.seealso">8. 参阅</a></li>
+            <li><a href="#mkvextract.www">9. 网络</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvextract.synopsis">1. 概要</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvextract</span> {输入文件名} {模式1} 选项 提取规格1 模式2 选项 提取规格2 …
+         </div>
+         
+         <h1><a name="mkvextract.description">2. 说明</a></h1>
+         
+         
+         <p>
+            该程序可将 <span class="productname">Matroska</span><sup>(tm)</sup>&nbsp;文件的指定部分提取为其他有用的格式。第一个参数是输入文件名称，该文件必须为 <span class="productname">Matroska</span><sup>(tm)</sup>&nbsp;文件。
+            
+         </p>
+         
+         
+         <p>
+            其余参数可切换到特定提取模式、更改当前活动模式的选项、指定要将什么内容提取到哪些文件。单次调用 mkvextract
+            可同时使用多种模式，以便只读取一遍就提取多项内容。 大多数选项只能在特定模式下使用，少数选项可用于所有模式。
+            
+         </p>
+         
+         
+         <p>
+            目前支持提取 <a href="#mkvextract.description.tracks">tracks 轨道</a>、<a href="#mkvextract.description.tags">tags 标签</a>、<a href="#mkvextract.description.attachments">attachments 附件</a>、<a href="#mkvextract.description.chapters">chapters 章节</a>、<a href="#mkvextract.description.cuesheets">cue 表单</a>、<a href="#mkvextract.description.timestamps_v2">timestamps 时间戳</a> 以及
+            <a href="#mkvextract.description.cues">cues</a>。
+            
+         </p>
+         
+         
+         <h2><a name="mkvextract.description.common">2.1. 通用选项</a></h2>
+         
+         
+         
+         <p>
+            以下选项在所有模式下可用，只在本段落讲一遍，不赘述。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.parse_fully"><span class="option">-f</span>, <span class="option">--parse-fully</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置解析模式为
+                        '<span class="literal">full（完整）</span>'。默认的解析模式不解析整个文件，而是使用元定位元素确定输入文件中所需元素的位置。99%
+                        的情况下这已经足够。但如果碰到不含元定位元素或者元定位元素损坏的文件，用户可能得考虑使用此模式。完整扫描文件可能要花费几分钟，而快速扫描只需要几秒钟。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设定在命令行给出的字符串的字符集，用于转为其他字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.output_charset"><span class="option">--output-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置输出的字符串应被转换到何种字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        将所有信息输出至文件 <span class="parameter">文件名</span>
+                        而不是在命令行显示。尽管该操作可以用输出重定向轻松实现，但在某些情况下还需要靠它：如当终端在写入文件之前重新解释（覆盖输出）时。将优先使用通过
+                        <a href="#mkvextract.description.common.output_charset">--output-charset</a>
+                        设定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">语言代码</span></a></td>
+                  <td>
+                     
+                     <p>
+                        强制使用 <span class="parameter">语言代码</span> 所对应的翻译 (例如  '<span class="literal">de_DE</span>'
+                        表示德文翻译)。在 <span class="parameter">语言代码</span> 处输入 '<span class="literal">list</span>'
+                        可让程序输出可用翻译的列表。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.debug"><span class="option">--debug</span> <span class="parameter">主题</span></a></td>
+                  <td>
+                     
+                     <p>
+                        为特定功能开启调试。该选项仅对开发者有用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.engage"><span class="option">--engage</span> <span class="parameter">功能</span></a></td>
+                  <td>
+                     
+                     <p>
+                        开启实验性功能。可用功能列表可通过 <span class="command">mkvextract --engage list</span>
+                        得到。这些功能在正常情况下不应该使用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        打开 GUI 模式。该模式下，将输出特殊格式的行，告知目前受控的 GUI
+                        的行为。这些消息遵从格式「<span class="literal">#GUI#消息</span>」。消息可能包括键值对，如「<span class="literal">#GUI#消息#键1=值1#键2=值2…</span>」。消息内容及键的内容不作翻译，总是以英语输出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        使输出信息更详尽，且每当读取到重要的 <span class="productname">Matroska</span><sup>(tm)</sup> 元素时就将其显示。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        显示用法信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        显示版本信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">选项文件.json</span></td>
+                  <td>
+                     
+                     <p>
+                        从文件 <span class="parameter">选项文件</span> 读取其他命令行参数。关于支持的选项文件格式的详细说明，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        手册的“选项文件”段落。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.tracks">2.2. 轨道提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span> <span class="option">tracks</span>
+               [<span class="parameter">选项</span>]
+               <span class="parameter">TID1:目标文件名1</span>
+               [<span class="parameter">TID2:目标文件名2</span> ...]</span>
+            
+         </p>
+         
+         
+         <p>
+            以下命令行在 '<span class="literal">tracks</span>' 轨道提取模式下对各轨道可用。它们应当在所应用到的轨道指令（参阅下文）之前出现。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-c</span> <span class="parameter">字符集</span></td>
+                  <td>
+                     
+                     <p>
+                        设定下一个字幕轨应被转换为哪一字符集。仅当后面的轨道 ID 对应文本字幕轨时有效。默认为 UTF-8。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--blockadd</span> <span class="parameter">层级</span></td>
+                  <td>
+                     
+                     <p>
+                        只保留低于或等于此层级的 BlockAdditions 附加块。默认保留所有层级。 本选项仅影响特定类别的编解码器，如 WAVPACK4。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cuesheet</span></td>
+                  <td>
+                     
+                     <p>
+                        让 <span class="productname">mkvextract</span>(1) 根据下一轨道的标签数据与章节信息提取出 <span class="abbrev">CUE</span> 表单，输出文件名为轨道的输出名后接
+                        '<span class="literal">.cue</span>' 扩展名。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--raw</span></td>
+                  <td>
+                     
+                     <p>
+                        将原始数据提取为文件，输出文件的周围没有任何容器数据。 与 <a href="#mkvextract.description.tracks.fullraw">--fullraw</a>
+                        标记不同的是，此标记不会将 <span class="classname">CodecPrivate</span> 元素的内容写入输出文件。 此模式对所有
+                        <span class="classname">CodecIDs</span> 有效，即使是 <span class="productname">mkvextract</span>(1) 不支持处理的，然而生成的文件可能无法使用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.tracks.fullraw"><span class="option">--fullraw</span></a></td>
+                  <td>
+                     
+                     <p>
+                        提取原始数据，输出文件的周围没有任何容器数据。 如果轨道包含 <span class="classname">CodecPrivate</span>
+                        编解码器私有元素，它的内容将先被写入文件。 此模式对所有 <span class="classname">CodecIDs</span> 有效，即使是
+                        <span class="productname">mkvextract</span>(1) 不支持的那些，但是生成的文件可能无法使用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:输出文件名</span></td>
+                  <td>
+                     
+                     <p>
+                        如果输入文件中存在 ID 为 <span class="parameter">TID</span> 的轨道，则将其提取为文件
+                        <span class="parameter">输出文件名</span>。本选项可多次给出。轨道 ID 与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的
+                        <span class="option">--identify</span> 选项所输出的相同。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        每个输出文件名只能用一次。但 RealAudio 与 RealVideo
+                        轨道例外。如果您为不同轨道使用了同样的输出文件名，这些轨道将被存入同一个文件中。示例：
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract 输入.mkv tracks 0:视频.h264 2:输出两个vobsub轨道.idx 3:输出两个vobsub轨道.idx</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.attachments">2.3. 附件提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span>
+               <span class="option">attachments</span> [<span class="parameter">选项</span>]
+               <span class="parameter">AID1:输出文件名1</span>
+               [<span class="parameter">AID2:输出文件名2</span> ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">AID</span>:<span class="parameter">输出文件名</span></td>
+                  <td>
+                     
+                     <p>
+                        如果输入文件中存在 ID 为 <span class="parameter">AID</span> 的附件，则将其提取为文件
+                        <span class="parameter">输出文件名</span>。如果 <span class="parameter">输出文件名</span> 处留空，将使用所用
+                        <span class="productname">Matroska</span><sup>(tm)</sup> 文件中的附件名称。本选项可多次给出。附件 ID 与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的
+                        <span class="option">--identify</span> 选项所输出的相同。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.chapters">2.4. 章节提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span>
+               <span class="option">chapters</span>[<span class="parameter">选项</span>]
+               <span class="parameter">输出文件名.xml</span></span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--simple</span></td>
+                  <td>
+                     
+                     <p>
+                        将章节信息以 <span class="abbrev">OGM</span> tools 所用的简单格式 (CHAPTER01=..., CHAPTER01NAME=...)
+                        导出。此模式下部分信息将被废弃。默认以 <span class="abbrev">XML</span> 格式输出章节。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--simple-language</span> <span class="parameter">语言</span></td>
+                  <td>
+                     
+                     <p>
+                        若启用简化格式，<span class="productname">mkvextract</span>(1) 对于发现的每个章节单位，均只输出单个条目，即使该章节单位包含多个章节名称。<span class="productname">mkvextract</span>(1)
+                        默认对每个章节单位使用发现的第一个章节名称，而不考察其语言。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        本选项允许用户决定，在章节单位包含多个章节名称时，应该输出哪些章节名称。<span class="parameter">语言</span> 参数必须为 ISO
+                        639-1 或 ISO 639-2 代码。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            章节将写入指定的输出文件。默认使用 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 能理解的 <span class="abbrev">XML</span> 格式。如果文件中没有发现章节条目，则不会创建输出文件。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.tags">2.5. 标签提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span> <span class="option">tags</span>
+               [<span class="parameter">选项</span>]
+               <span class="parameter">输出文件名.xml</span></span>
+            
+         </p>
+         
+         
+         <p>
+            标签将写入指定的输出文件，使用 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 能理解的 <span class="abbrev">XML</span> 格式。如果文件中没有发现标签条目，则不会创建输出文件。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.cuesheets">2.6. Cue 表单提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span>
+               <span class="option">cuesheet</span> [<span class="parameter">选项</span>]
+               <span class="parameter">输出文件名.cue</span></span>
+            
+         </p>
+         
+         
+         <p>
+            cue 表单将写入指定的输出文件。如果文件中没有发现章节或标签条目，则不会创建输出文件。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.timestamps_v2">2.7. 时间戳提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span>
+               <span class="option">timestamps_v2</span>
+               [<span class="parameter">选项</span>]
+               <span class="parameter">TID1:目标文件名1</span>
+               [<span class="parameter">TID2:目标文件名2</span> ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:输出文件名</span></td>
+                  <td>
+                     
+                     <p>
+                        如果输入文件中存在 ID 为 <span class="parameter">TID</span> 的轨道，则将其时间戳提取为文件
+                        <span class="parameter">输出文件名</span>。本选项可多次给出。轨道 ID 与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的
+                        <span class="option">--identify</span> 选项所输出的相同。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        示例:
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract 输入.mkv timestamps_v2 1:时间戳-轨1.txt 2:时间戳-轨2.txt</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.cues">2.8. cue 提取模式</a></h2>
+         
+         
+         
+         <p>
+            语法: <span class="command">mkvextract <span class="parameter">输入文件名</span> <span class="option">cues</span>
+               [<span class="parameter">选项</span>]
+               <span class="parameter">TID1:目标文件名1</span>
+               [<span class="parameter">TID2:目标文件名2</span> ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:目标文件名</span></td>
+                  <td>
+                     
+                     <p>
+                        若输入文件中存在，则提取 ID 为 <span class="parameter">TID</span> 的轨道的 cue 并保存到
+                        <span class="parameter">输出文件名</span> 中。本选项可多次给出。轨道 ID 与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的
+                        <span class="option">--identify</span> 选项所输出的一致，而非 <span class="classname">CueTrack</span>
+                        元素中所包含的数字。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            输出的格式为简单文本格式: 每个 <span class="classname">CuePoint</span> 及 <span class="literal">键=值</span>
+            对占一行。如果 <span class="classname">CuePoint</span> 中未出现某个可选元素 (如
+            <span class="classname">CueDuration</span>) 则将输出短横作为其数值。
+            
+         </p>
+         
+         
+         <p>
+            示例:
+            
+         </p>
+         
+         <pre class="screen">timestamp=00:00:13.305000000 duration=- cluster_position=757741 relative_position=11</pre>
+         
+         <p>可用的关键词包括：</p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">时间戳</td>
+                  <td>
+                     
+                     <p>cue point 的时间戳，精确到纳秒。格式为 <span class="literal">HH:MM:SS.nnnnnnnnn</span>。该元素必有值。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">duration</td>
+                  <td>
+                     
+                     <p>cue point 的时长，精确到纳秒。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">cluster_position</td>
+                  <td>
+                     
+                     <p><span class="productname">Matroska</span><sup>(tm)</sup> 文件中指向相关元素的簇的起始点的绝对位置，单位为字节。
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p><span class="productname">Matroska</span><sup>(tm)</sup> 文件中，<span class="classname">CueClusterPosition</span> 相对于剪辑数据的起始偏移。而
+                           <span class="productname">mkvextract</span>(1) 的 cue 提取模式所输出的值，已经计入该偏移，因此是从文件开头起的绝对偏移。
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">relative_position</td>
+                  <td>
+                     
+                     <p>cue point 所指向的 <span class="classname">BlockGroup</span> 或
+                        <span class="classname">SimpleBlock</span> 元素的起始点在簇内的绝对位置，单位为字节。
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p><span class="productname">Matroska</span><sup>(tm)</sup> 文件中，<span class="classname">CueRelativePosition</span> 相对于簇数据的起始偏移。而
+                           <span class="productname">mkvextract</span>(1) 的 cue 提取模式所输出的值，相对于簇的 ID。在文件内的绝对位置可以通过将
+                           <span class="literal">cluster_position</span> 与 <span class="literal">relative_position</span>
+                           相加得出。
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            示例:
+            
+         </p>
+         
+         <pre class="screen">$ mkvextract 输入.mkv cues 1:cues-轨1.txt 2:cues-轨2.txt</pre>
+         
+         <h1><a name="mkvextract.examples">3. 示例</a></h1>
+         
+         
+         
+         <p>
+            同时提取章节与标签，并按其相应的 <span class="abbrev">XML</span> 格式保存:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge 影片.mkv chapters 影片章节.xml tags 影片标签.xml</pre>
+         
+         <p>
+            同时提取一些轨道及其对应的时间戳:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "另一部影片.mkv" tracks 0:视频.h265 "1:主音轨.aac" "2:导演评论.aac" timestamps_v2 "0:时间戳 视频.txt" "1:时间戳 主音轨.txt" "2:时间戳 导演评论.txt"</pre>
+         
+         <p>
+            以 Ogg/OGM 格式提取章节，并将一条文本字幕轨道用另一种字符集重新编码:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "我的影片.mkv" chapters --simple "我的章节.txt" tracks -c MS-ANSI "2:我的字幕.srt"</pre>
+         <h1><a name="mkvextract.text_files_and_charsets">4. 文本文件与字符集转换</a></h1>
+         
+         
+         
+         <p>
+            关于 MKVToolNix 套件中所有工具如何处理字符集转换、输入/输出编码、命令行编码及控制台编码的深入讨论，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            手册中相对应名称的段落。
+            
+         </p>
+         
+         <h1><a name="mkvextract.output_file_formats">5. 输出文件格式</a></h1>
+         
+         
+         
+         <p>
+            输出文件的格式取决于轨道的类型，而不是输出文件名的扩展名。目前支持以下轨道类型：
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">A_AAC/MPEG2/*, A_AAC/MPEG4/*, A_AAC</td>
+                  <td>
+                     
+                     <p>
+                        所有 <span class="abbrev">AAC</span> 文件将被输出为 <span class="abbrev">AAC</span> 文件，其中数据包前有
+                        <span class="abbrev">ADTS</span> 头。<span class="abbrev">ADTS</span> 头将不含反增强字段（deprecated emphasis
+                        field）。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_AC3, A_EAC3</td>
+                  <td>
+                     
+                     <p>
+                        这些会提取为原始 <span class="abbrev">AC-3</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_ALAC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">ALAC</span> 轨道将输出为 <span class="abbrev">CAF</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_DTS</td>
+                  <td>
+                     
+                     <p>
+                        这些会提取为原始 <span class="abbrev">DTS</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_FLAC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">FLAC</span> 轨道将输出为原始的 <span class="abbrev">FLAC</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L2</td>
+                  <td>
+                     
+                     <p>
+                        MPEG-1 Audio Layer II 流将提取为原始的 <span class="abbrev">MP2</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L3</td>
+                  <td>
+                     
+                     <p>
+                        这些会提取为原始 <span class="abbrev">MP3</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_OPUS</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Opus</span><sup>(tm)</sup> 轨道将输出为 <span class="productname">OggOpus</span><sup>(tm)</sup>
+                        文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_PCM/INT/LIT, A_PCM/INT/BIG</td>
+                  <td>
+                     
+                     <p>
+                        原始 <span class="abbrev">PCM</span> 数据将写入 <span class="abbrev">WAV</span> 文件。大端序整数数据在此期间将被转为小端序数据。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">RealAudio</span><sup>(tm)</sup> 轨道将被输出为
+                        <span class="productname">RealMedia</span><sup>(tm)</sup> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TRUEHD, A_MLP</td>
+                  <td>
+                     
+                     <p>
+                        这些会提取为原始 <span class="abbrev">TrueHD</span>/<span class="abbrev">MLP</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TTA1</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">TrueAudio</span><sup>(tm)</sup> 轨道将被输出为 <span class="abbrev">TTA</span> 文件。请注意，由于
+                        <span class="productname">Matroska</span><sup>(tm)</sup> 时间戳的精度限制，解开来的文件的头部有两个字段不同：<span class="varname">data_length</span>
+                        (文件的总采样数) 与 <span class="abbrev">CRC</span>。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_VORBIS</td>
+                  <td>
+                     
+                     <p>
+                        Vorbis 音频将被输出为 <span class="productname">OggVorbis</span><sup>(tm)</sup> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_WAVPACK4</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">WavPack</span><sup>(tm)</sup> 轨道将输出为 <span class="abbrev">WV</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/PGS</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">PGS</span> 字幕将输出为 <span class="abbrev">SUP</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/TEXTST</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">TextST</span> 字幕将以转为 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 与 <span class="productname">mkvextract</span>(1) 发明的特殊格式写入。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_KATE</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Kate</span><sup>(tm)</sup> 流将以 <span class="productname">Ogg</span><sup>(tm)</sup> 为容器输出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/SSA, S_TEXT/ASS, S_SSA, S_ASS</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">SSA</span> 与 <span class="abbrev">ASS</span> 文本字幕将分别被输出为
+                        <span class="abbrev">SSA</span>/<span class="abbrev">ASS</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/UTF8, S_TEXT/ASCII</td>
+                  <td>
+                     
+                     <p>
+                        简单的文本字幕将被输出为 <span class="abbrev">SRT</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_VOBSUB</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">VobSub</span><sup>(tm)</sup> 字幕将输出为 <span class="abbrev">SUB</span> 文件及相应的索引文件（后缀为
+                        <span class="abbrev">IDX</span>）。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/USF</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">USF</span> 文本字幕将输出为 <span class="abbrev">USF</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/WEBVTT</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">WebVTT</span> 字幕文件将写入 <span class="abbrev">WebVTT</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG1, V_MPEG2</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">MPEG-1</span> 与 <span class="abbrev">MPEG-2</span> 视频轨道将输出为
+                        <span class="abbrev">MPEG</span> 基本流（ES）。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/AVC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">H.264</span> / <span class="abbrev">AVC</span> 视频轨将被输出为
+                        <span class="abbrev">H.264</span> 基本流，可以使用如 <span class="productname">GPAC</span><sup>(tm)</sup> 工具包中的
+                        <span class="productname">MP4Box</span><sup>(tm)</sup> 作进一步处理。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/HEVC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">H.265</span> / <span class="abbrev">HEVC</span> 视频轨道将输出为
+                        <span class="abbrev">H.265</span> 基本流（ES），该格式可使用 <span class="productname">GPAC</span><sup>(tm)</sup> 软件包中的
+                        <span class="productname">MP4Box</span><sup>(tm)</sup> 作进一步处理。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MS/VFW/FOURCC</td>
+                  <td>
+                     
+                     <p>
+                        使用此 <span class="classname">CodecID</span> 且 <span class="abbrev">FPS</span> 恒定的视频轨将被输出为
+                        <span class="abbrev">AVI</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">RealVideo</span><sup>(tm)</sup> 轨道将被输出为
+                        <span class="productname">RealMedia</span><sup>(tm)</sup> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_THEORA</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Theora</span><sup>(tm)</sup> 流将以 <span class="productname">Ogg</span><sup>(tm)</sup> 为容器输出
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_VP8, V_VP9</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">VP8</span> / <span class="abbrev">VP9</span> 轨道将输出为 <span class="abbrev">IVF</span> 文件。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">标签</td>
+                  <td>
+                     
+                     <p>
+                        标签将被转换为 <span class="abbrev">XML</span> 格式。此格式与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 所支持读取的标签格式相同。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">附件</td>
+                  <td>
+                     
+                     <p>
+                        附件将被以原样输出。不会进行任何转换。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">章节</td>
+                  <td>
+                     
+                     <p>
+                        章节将被转换为 <span class="abbrev">XML</span> 格式。此格式与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 所支持读取的章节格式相同。您也可以选择输出精简的简单
+                        <span class="abbrev">OGM</span> 格式。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">时间戳</td>
+                  <td>
+                     
+                     <p>
+                        时间戳会先被排序，然后以 timestamp v2 格式文件输出，该文件适用于 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>。不支持提取为其他格式 (v1, v3 或 v4)。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="d4e1768">6. 退出代码</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) 退出时会返回以下三个退出代码中的一个：
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- 此退出代码说明已成功完成提取。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- 这种情况下 <span class="productname">mkvextract</span>(1) 至少输出了一条警告信息，但提取并未因之中止。 警告信息以文字
+                  '<span class="literal">警告:</span>' 为前缀。根据问题的不同，生成的文件可能是好的，也可能不是。 强烈建议用户检查警告信息以及生成的文件。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- 此退出代码用于错误发生之后。 <span class="productname">mkvextract</span>(1)
+                  在输出错误信息后即中断处理。错误信息可能是错误的命令行参数，也可能是损坏文件的读取/写入错误。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvextract.environment_variables">7. 环境变量</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) 使用决定系统区域设置的默认变量 (如 <span class="varname">LANG</span> 与
+            <span class="varname">LC_*</span> 族)。其他变量包括:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span>
+                     及其缩略形式 <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvextract.description.debug">--debug</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     及其缩略形式 <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvextract.description.engage">--engage</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvextract.seealso">8. 参阅</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvextract.www">9. 网络</a></h1>
+         
+         
+         <p>
+            最新版本总可以在 <a href="https://mkvtoolnix.download/">MKVToolNix 主页</a> 找到。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

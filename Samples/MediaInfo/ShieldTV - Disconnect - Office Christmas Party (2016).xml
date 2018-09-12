@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaInfo
+    xmlns="https://mediaarea.net/mediainfo"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://mediaarea.net/mediainfo https://mediaarea.net/mediainfo/mediainfo_2_0.xsd"
+    version="2.0">
+<creatingLibrary version="17.10" url="https://mediaarea.net/MediaInfo">MediaInfoLib</creatingLibrary>
+<media ref="\\STORAGE\Media\Test\Troublesome\ShieldTV - Disconnect - Office Christmas Party (2016).mkv">
+<track type="General">
+<VideoCount>1</VideoCount>
+<AudioCount>2</AudioCount>
+<TextCount>2</TextCount>
+<MenuCount>1</MenuCount>
+<FileExtension>mkv</FileExtension>
+<Format>Matroska</Format>
+<Format_Version>2</Format_Version>
+<FileSize>8523153641</FileSize>
+<Duration>6647.599</Duration>
+<OverallBitRate>10257121</OverallBitRate>
+<FrameRate>23.976</FrameRate>
+<FrameCount>159383</FrameCount>
+<StreamSize>169604394</StreamSize>
+<IsStreamable>Yes</IsStreamable>
+<File_Created_Date>UTC 2017-10-29 02:51:05.795</File_Created_Date>
+<File_Created_Date_Local>2017-10-28 19:51:05.795</File_Created_Date_Local>
+<File_Modified_Date>UTC 2017-04-04 21:17:34.132</File_Modified_Date>
+<File_Modified_Date_Local>2017-04-04 14:17:34.132</File_Modified_Date_Local>
+<Encoded_Application>mkvmerge v6.6.0 (&apos;The Edge Of The In Between&apos;) built on Dec 1 2013 17:55:00</Encoded_Application>
+<Encoded_Library>libebml v1.3.0 + libmatroska v1.4.1</Encoded_Library>
+</track>
+<track type="Video">
+<StreamOrder>0</StreamOrder>
+<ID>1</ID>
+<UniqueID>1</UniqueID>
+<Format>AVC</Format>
+<Format_Profile>High</Format_Profile>
+<Format_Level>4.1</Format_Level>
+<Format_Settings_CABAC>Yes</Format_Settings_CABAC>
+<Format_Settings_RefFrames>5</Format_Settings_RefFrames>
+<CodecID>V_MPEG4/ISO/AVC</CodecID>
+<Duration>6647.606</Duration>
+<BitRate>8110000</BitRate>
+<Width>1920</Width>
+<Height>808</Height>
+<Stored_Height>816</Stored_Height>
+<Sampled_Width>1920</Sampled_Width>
+<Sampled_Height>808</Sampled_Height>
+<PixelAspectRatio>1.000</PixelAspectRatio>
+<DisplayAspectRatio>2.376</DisplayAspectRatio>
+<FrameRate_Mode>CFR</FrameRate_Mode>
+<FrameRate>23.976</FrameRate>
+<FrameCount>159383</FrameCount>
+<ColorSpace>YUV</ColorSpace>
+<ChromaSubsampling>4:2:0</ChromaSubsampling>
+<BitDepth>8</BitDepth>
+<ScanType>Progressive</ScanType>
+<Delay>0.000</Delay>
+<StreamSize>6567838235</StreamSize>
+<Encoded_Library>x264 - core 148 r2744 b97ae06</Encoded_Library>
+<Encoded_Library_Name>x264</Encoded_Library_Name>
+<Encoded_Library_Version>core 148 r2744 b97ae06</Encoded_Library_Version>
+<Encoded_Library_Settings>cabac=1 / ref=5 / deblock=1:0:0 / analyse=0x3:0x113 / me=umh / subme=8 / psy=1 / psy_rd=1.00:0.00 / mixed_ref=1 / me_range=16 / chroma_me=1 / trellis=1 / 8x8dct=1 / cqm=0 / deadzone=21,11 / fast_pskip=1 / chroma_qp_offset=-2 / threads=24 / lookahead_threads=4 / sliced_threads=0 / nr=0 / decimate=1 / interlaced=0 / bluray_compat=0 / constrained_intra=0 / bframes=3 / b_pyramid=2 / b_adapt=2 / b_bias=0 / direct=3 / weightb=1 / open_gop=0 / weightp=2 / keyint=240 / keyint_min=24 / scenecut=40 / intra_refresh=0 / rc_lookahead=50 / rc=2pass / mbtree=1 / bitrate=8110 / ratetol=1.0 / qcomp=0.60 / qpmin=0 / qpmax=69 / qpstep=4 / cplxblur=20.0 / qblur=0.5 / ip_ratio=1.40 / aq=1:1.00</Encoded_Library_Settings>
+<Language>en</Language>
+<Default>Yes</Default>
+<Forced>No</Forced>
+</track>
+<track type="Audio" typeorder="1">
+<StreamOrder>1</StreamOrder>
+<ID>2</ID>
+<UniqueID>2864556435</UniqueID>
+<Format>AC-3</Format>
+<Format_Settings_Endianness>Big</Format_Settings_Endianness>
+<CodecID>A_AC3</CodecID>
+<Duration>6647.598</Duration>
+<BitRate_Mode>CBR</BitRate_Mode>
+<BitRate>640000</BitRate>
+<Channels>6</Channels>
+<ChannelPositions>Front: L C R, Side: L R, LFE</ChannelPositions>
+<ChannelLayout>L C R LFE Ls Rs</ChannelLayout>
+<SamplesPerFrame>1536</SamplesPerFrame>
+<SamplingRate>48000</SamplingRate>
+<SamplingCount>319084736</SamplingCount>
+<FrameRate>31.250</FrameRate>
+<BitDepth>16</BitDepth>
+<Compression_Mode>Lossy</Compression_Mode>
+<Delay>0.000</Delay>
+<Delay_Source>Container</Delay_Source>
+<StreamSize>531807840</StreamSize>
+<StreamSize_Proportion>0.06240</StreamSize_Proportion>
+<Title>French AC3 640kbps</Title>
+<Language>fr</Language>
+<ServiceKind>CM</ServiceKind>
+<Default>Yes</Default>
+<Forced>No</Forced>
+<extra>
+<bsid>6</bsid>
+<dialnorm>-31</dialnorm>
+<dialnorm_String>-31 dB</dialnorm_String>
+<compr>0.53</compr>
+<compr_String>0.53 dB</compr_String>
+<dynrng>0.27</dynrng>
+<dynrng_String>0.27 dB</dynrng_String>
+<acmod>7</acmod>
+<lfeon>1</lfeon>
+<dialnorm_Average>-31</dialnorm_Average>
+<dialnorm_Average_String>-31 dB</dialnorm_Average_String>
+<dialnorm_Minimum>-31</dialnorm_Minimum>
+<dialnorm_Minimum_String>-31 dB</dialnorm_Minimum_String>
+<dialnorm_Maximum>-31</dialnorm_Maximum>
+<dialnorm_Maximum_String>-31 dB</dialnorm_Maximum_String>
+<dialnorm_Count>544</dialnorm_Count>
+<compr_Average>-1.65</compr_Average>
+<compr_Average_String>-1.65 dB</compr_Average_String>
+<compr_Minimum>-3.66</compr_Minimum>
+<compr_Minimum_String>-3.66 dB</compr_Minimum_String>
+<compr_Maximum>2.77</compr_Maximum>
+<compr_Maximum_String>2.77 dB</compr_Maximum_String>
+<compr_Count>473</compr_Count>
+<dynrng_Average>-1.57</dynrng_Average>
+<dynrng_Average_String>-1.57 dB</dynrng_Average_String>
+<dynrng_Minimum>-3.66</dynrng_Minimum>
+<dynrng_Minimum_String>-3.66 dB</dynrng_Minimum_String>
+<dynrng_Maximum>2.36</dynrng_Maximum>
+<dynrng_Maximum_String>2.36 dB</dynrng_Maximum_String>
+<dynrng_Count>515</dynrng_Count>
+</extra>
+</track>
+<track type="Audio" typeorder="2">
+<StreamOrder>2</StreamOrder>
+<ID>3</ID>
+<UniqueID>2864556437</UniqueID>
+<Format>DTS</Format>
+<Format_Settings_Mode>16</Format_Settings_Mode>
+<Format_Settings_Endianness>Big</Format_Settings_Endianness>
+<CodecID>A_DTS</CodecID>
+<Duration>6647.598</Duration>
+<BitRate_Mode>CBR</BitRate_Mode>
+<BitRate>1509000</BitRate>
+<Channels>6</Channels>
+<ChannelPositions>Front: L C R, Side: L R, LFE</ChannelPositions>
+<ChannelLayout>C L R Ls Rs LFE</ChannelLayout>
+<SamplesPerFrame>512</SamplesPerFrame>
+<SamplingRate>48000</SamplingRate>
+<SamplingCount>319084736</SamplingCount>
+<FrameRate>93.750</FrameRate>
+<BitDepth>24</BitDepth>
+<Compression_Mode>Lossy</Compression_Mode>
+<Delay>0.000</Delay>
+<Delay_Source>Container</Delay_Source>
+<StreamSize>1253903172</StreamSize>
+<StreamSize_Proportion>0.14712</StreamSize_Proportion>
+<Title>English DTS 1509kbps</Title>
+<Language>en</Language>
+<Default>Yes</Default>
+<Forced>No</Forced>
+</track>
+<track type="Text" typeorder="1">
+<ID>4</ID>
+<UniqueID>2864556439</UniqueID>
+<Format>UTF-8</Format>
+<CodecID>S_TEXT/UTF8</CodecID>
+<Title>Forced</Title>
+<Language>fr</Language>
+<Default>Yes</Default>
+<Forced>Yes</Forced>
+</track>
+<track type="Text" typeorder="2">
+<ID>5</ID>
+<UniqueID>2864556441</UniqueID>
+<Format>UTF-8</Format>
+<CodecID>S_TEXT/UTF8</CodecID>
+<Title>French</Title>
+<Language>fr</Language>
+<Default>No</Default>
+<Forced>No</Forced>
+</track>
+<track type="Menu">
+<extra>
+<_00_00_00_000>en:00:00:00.000</_00_00_00_000>
+<_00_08_22_252>en:00:08:22.252</_00_08_22_252>
+<_00_13_26_764>en:00:13:26.764</_00_13_26_764>
+<_00_23_26_280>en:00:23:26.280</_00_23_26_280>
+<_00_29_53_291>en:00:29:53.291</_00_29_53_291>
+<_00_33_08_612>en:00:33:08.612</_00_33_08_612>
+<_00_42_48_691>en:00:42:48.691</_00_42_48_691>
+<_00_53_11_688>en:00:53:11.688</_00_53_11_688>
+<_00_58_24_000>en:00:58:24.000</_00_58_24_000>
+<_01_03_41_151>en:01:03:41.151</_01_03_41_151>
+<_01_08_55_423>en:01:08:55.423</_01_08_55_423>
+<_01_14_46_982>en:01:14:46.982</_01_14_46_982>
+<_01_20_26_864>en:01:20:26.864</_01_20_26_864>
+<_01_26_15_795>en:01:26:15.795</_01_26_15_795>
+<_01_31_41_788>en:01:31:41.788</_01_31_41_788>
+<_01_40_17_428>en:01:40:17.428</_01_40_17_428>
+<_01_44_46_238>en:01:44:46.238</_01_44_46_238>
+</extra>
+</track>
+</media>
+</MediaInfo>

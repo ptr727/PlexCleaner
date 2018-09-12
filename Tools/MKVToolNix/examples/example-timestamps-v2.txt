@@ -1,0 +1,38 @@
+# timestamp format v2
+
+# The very first line MUST have this format.
+
+# As you can see empty lines and other lines starting with '#' are ignored.
+
+# The remaining lines simply contain the timestamp in ms for the following
+# frame. The number can be a floating point number, but it doesn't have to
+# be. Note that only dots ('.') are accepted as the decimal point, not
+# commas!
+
+# White spaces are ignored.
+
+# You must give at least as many timestamp lines here as the track contais
+# frames. Otherwise mkvmerge will complain, and the results might not be
+# what you expect.
+
+# Example for 10 consecutive frames at 25fps:
+0
+40.0
+80.0
+120
+160
+200
+240
+280
+320
+360
+
+# No need to use floats, but you can if you want. Now some more frames which
+# are spaced a bit more.
+460
+560
+660
+760
+860
+960
+1060

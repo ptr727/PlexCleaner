@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE Tags SYSTEM "matroskatags.dtd">
+
+<Tags>
+  <Tag>
+    <Targets>
+      <!-- TrackUIDs and ChapterUIDs can occur more than once. -->
+      <TrackUID>1</TrackUID>
+      <TrackUID>2</TrackUID>
+      <TrackUID>3</TrackUID>
+      <TrackUID>4</TrackUID>
+      <ChapterUID>2</ChapterUID>
+      <ChapterUID>4</ChapterUID>
+      <ChapterUID>6</ChapterUID>
+      <ChapterUID>8</ChapterUID>
+    </Targets>
+
+    <!-- The new tagging system. It's more or less a 'Name=String' system, -->
+    <!-- but entries may also be nested. Also the Matroska specs give -->
+    <!-- you a set of pre-defined tag names for better cross-application -->
+    <!-- usability. However, you are free to use your own tag names. -->
+    <Simple>
+      <Name>LEAD_PERFORMER</Name>
+      <String>Tori Amos</String>
+    </Simple>
+    <Simple>
+      <Name>ALBUM</Name>
+      <String>Under the Pink</String>
+      <Simple>
+        <Name>TITLE</Name>
+        <String>Cornflake Girl</String>
+      </Simple>
+    </Simple>
+
+  </Tag>
+</Tags>

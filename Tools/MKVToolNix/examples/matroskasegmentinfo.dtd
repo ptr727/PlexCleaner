@@ -1,0 +1,26 @@
+<!ELEMENT Info (
+          SegmentUID?,
+          NextSegmentUID?,
+          PreviousSegmentUID?,
+          SegmentFamily?,
+          SegmentFilename?,
+          NextSegmentFilename?,
+          PreviousSegmentFilename?,
+          ChapterTranslate*)>
+
+<!ELEMENT SegmentUID (#PCDATA)>
+<!ELEMENT NextSegmentUID (#PCDATA)>
+<!ELEMENT PreviousSegmentUID (#PCDATA)>
+<!ELEMENT SegmentFamily (#PCDATA)>
+<!ELEMENT SegmentFilename (#PCDATA)>
+<!ELEMENT NextSegmentFilename (#PCDATA)>
+<!ELEMENT PreviousSegmentFilename (#PCDATA)>
+
+<!ELEMENT ChapterTranslate (
+          ChapterTranslateEditionUID,
+          ChapterTranslateCodec,
+          ChapterTranslateID)>
+
+<!ELEMENT ChapterTranslateEditionUID (#PCDATA)>
+<!ELEMENT ChapterTranslateCodec (#PCDATA)>
+<!ELEMENT ChapterTranslateID (#PCDATA)>

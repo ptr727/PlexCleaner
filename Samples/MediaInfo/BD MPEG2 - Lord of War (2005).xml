@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaInfo
+    xmlns="https://mediaarea.net/mediainfo"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://mediaarea.net/mediainfo https://mediaarea.net/mediainfo/mediainfo_2_0.xsd"
+    version="2.0">
+<creatingLibrary version="17.10" url="https://mediaarea.net/MediaInfo">MediaInfoLib</creatingLibrary>
+<media ref="\\STORAGE\Media\Test\Troublesome\BD MPEG2 - Lord of War (2005).mkv">
+<track type="General">
+<UniqueID>13553023243323837610059063106300393345</UniqueID>
+<VideoCount>1</VideoCount>
+<AudioCount>1</AudioCount>
+<TextCount>1</TextCount>
+<MenuCount>1</MenuCount>
+<FileExtension>mkv</FileExtension>
+<Format>Matroska</Format>
+<Format_Version>2</Format_Version>
+<FileSize>20796843303</FileSize>
+<Duration>7303.296</Duration>
+<OverallBitRate_Mode>VBR</OverallBitRate_Mode>
+<OverallBitRate>22780776</OverallBitRate>
+<FrameRate>23.976</FrameRate>
+<FrameCount>175104</FrameCount>
+<StreamSize>413837709</StreamSize>
+<IsStreamable>Yes</IsStreamable>
+<Encoded_Date>UTC 2011-02-08 21:47:44</Encoded_Date>
+<File_Created_Date>UTC 2017-10-29 02:49:04.696</File_Created_Date>
+<File_Created_Date_Local>2017-10-28 19:49:04.696</File_Created_Date_Local>
+<File_Modified_Date>UTC 2011-02-08 22:14:38.310</File_Modified_Date>
+<File_Modified_Date_Local>2011-02-08 15:14:38.310</File_Modified_Date_Local>
+<Encoded_Application>MakeMKV v1.6.4 win(x64-release)</Encoded_Application>
+<Encoded_Library>libmakemkv v1.6.4 (0.7.7/0.8.1) win(x64-release)</Encoded_Library>
+</track>
+<track type="Video">
+<StreamOrder>0</StreamOrder>
+<ID>1</ID>
+<UniqueID>1</UniqueID>
+<Format>MPEG Video</Format>
+<Format_Version>2</Format_Version>
+<Format_Profile>Main</Format_Profile>
+<Format_Level>High</Format_Level>
+<Format_Settings_BVOP>Yes</Format_Settings_BVOP>
+<Format_Settings_Matrix>Custom</Format_Settings_Matrix>
+<Format_Settings_Matrix_Data>0810101310131616161616161A181A1B1B1B1A1A1A1A1B1B1B1D1D1D2222221D1D1D1B1B1D1D2020222225262523232223262628282830302E2E38383A454553 / 10111112121213131313141414141415151515151516161616161616171717171717171718181819181818191A1A1A1A191B1B1B1B1B1C1C1C1C1E1E1E1F1F21</Format_Settings_Matrix_Data>
+<Format_Settings_GOP>M=3, N=15</Format_Settings_GOP>
+<CodecID>V_MPEG2</CodecID>
+<Duration>7303.304</Duration>
+<BitRate_Mode>VBR</BitRate_Mode>
+<BitRate>20818438</BitRate>
+<BitRate_Maximum>36000000</BitRate_Maximum>
+<Width>1920</Width>
+<Height>1080</Height>
+<Sampled_Width>1920</Sampled_Width>
+<Sampled_Height>1080</Sampled_Height>
+<PixelAspectRatio>1.000</PixelAspectRatio>
+<DisplayAspectRatio>1.778</DisplayAspectRatio>
+<FrameRate_Mode>CFR</FrameRate_Mode>
+<FrameRate>23.976</FrameRate>
+<FrameCount>175104</FrameCount>
+<ColorSpace>YUV</ColorSpace>
+<ChromaSubsampling>4:2:0</ChromaSubsampling>
+<BitDepth>8</BitDepth>
+<ScanType>Progressive</ScanType>
+<Compression_Mode>Lossy</Compression_Mode>
+<Delay>0.000</Delay>
+<Delay_Original>3598.000</Delay_Original>
+<TimeCode_FirstFrame>00:59:58:00</TimeCode_FirstFrame>
+<TimeCode_Source>Group of pictures header</TimeCode_Source>
+<Gop_OpenClosed>Closed</Gop_OpenClosed>
+<StreamSize>19005421386</StreamSize>
+<Language>en</Language>
+<Default>Yes</Default>
+<Forced>No</Forced>
+<BufferSize>1222656</BufferSize>
+<extra>
+<intra_dc_precision>8</intra_dc_precision>
+</extra>
+</track>
+<track type="Audio">
+<StreamOrder>1</StreamOrder>
+<ID>2</ID>
+<UniqueID>2</UniqueID>
+<Format>DTS</Format>
+<Format_Profile>ES Discrete / Core</Format_Profile>
+<Format_Settings_Mode>16</Format_Settings_Mode>
+<Format_Settings_Endianness>Big</Format_Settings_Endianness>
+<CodecID>A_DTS</CodecID>
+<Duration>7303.296</Duration>
+<BitRate_Mode>CBR</BitRate_Mode>
+<BitRate>1509000</BitRate>
+<Channels>7 / 6</Channels>
+<ChannelPositions>Front: L C R, Side: L R, Back: C, LFE / Front: L C R, Side: L R, LFE</ChannelPositions>
+<ChannelLayout>C L R Ls Rs Cs LFE / C L R Ls Rs LFE</ChannelLayout>
+<SamplesPerFrame>512</SamplesPerFrame>
+<SamplingRate>48000</SamplingRate>
+<SamplingCount>350558208</SamplingCount>
+<FrameRate>93.750</FrameRate>
+<BitDepth>24</BitDepth>
+<Compression_Mode>Lossy</Compression_Mode>
+<Delay>0.000</Delay>
+<Delay_Source>Container</Delay_Source>
+<StreamSize>1377584208</StreamSize>
+<StreamSize_Proportion>0.06624</StreamSize_Proportion>
+<Title>3/2+1</Title>
+<Language>en</Language>
+<Default>Yes</Default>
+<Forced>No</Forced>
+</track>
+<track type="Text">
+<ID>3</ID>
+<UniqueID>3</UniqueID>
+<Format>PGS</Format>
+<CodecID>S_HDMV/PGS</CodecID>
+<Language>en</Language>
+<Default>Yes</Default>
+<Forced>No</Forced>
+</track>
+<track type="Menu">
+<extra>
+<_00_00_00_000>en:Chapter 00</_00_00_00_000>
+<_00_08_06_235>en:Chapter 01</_00_08_06_235>
+<_00_17_26_170>en:Chapter 02</_00_17_26_170>
+<_00_24_39_144>en:Chapter 03</_00_24_39_144>
+<_00_32_47_465>en:Chapter 04</_00_32_47_465>
+<_00_42_11_278>en:Chapter 05</_00_42_11_278>
+<_00_52_09_876>en:Chapter 06</_00_52_09_876>
+<_01_00_29_751>en:Chapter 07</_01_00_29_751>
+<_01_08_51_335>en:Chapter 08</_01_08_51_335>
+<_01_17_39_696>en:Chapter 09</_01_17_39_696>
+<_01_24_56_549>en:Chapter 10</_01_24_56_549>
+<_01_32_35_716>en:Chapter 11</_01_32_35_716>
+<_01_46_22_125>en:Chapter 12</_01_46_22_125>
+<_01_54_16_099>en:Chapter 13</_01_54_16_099>
+</extra>
+</track>
+</media>
+</MediaInfo>

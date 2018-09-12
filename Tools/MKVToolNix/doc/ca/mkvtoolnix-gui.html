@@ -1,0 +1,149 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvtoolnix-gui -- Una IGU pel mkvmerge1 que inclou un editor de capítols i de la capçalera</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvtoolnix-gui -- Una IGU pel <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> que inclou un editor de capítols i de la capçalera
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvtoolnix-gui.synopsis">1. Sinopsis</a></li>
+            <li><a href="#mkvtoolnix-gui.description">2. Descripció</a></li>
+            <li><a href="#mkvtoolnix-gui.seealso">3. Vegeu també</a></li>
+            <li><a href="#mkvtoolnix-gui.www">4. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvtoolnix-gui.synopsis">1. Sinopsis</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvtoolnix-gui</span> [[nom_fitxer_configuració.mtxcfg] | [fitxer_origen.ext] | [fitxer_matroska.mkv] | [fitxer_capítols.ext] | [fitxer_matroska.mkv]]
+         </div>
+         
+         <h1><a name="mkvtoolnix-gui.description">2. Descripció</a></h1>
+         
+         
+         <p>
+            El <span class="productname">mkvtoolnix-gui</span>(1) és una <span class="abbrev">IGU</span> basada en les
+            <span class="productname">Qt</span><sup>(tm)</sup> pel <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. També implementa la
+            funcionalitat del <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a> i el <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a> i evolucionarà per cobrir el
+            <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>. Es poden desar i restaurar tots els ajustaments (p. ex.,
+            fitxers d'origen, opcions de les pistes, etc.)
+            
+         </p>
+         
+         
+         <p>
+            El fet de llistar noms de fitxer de configuració amb l'extensió
+            <span class="literal">.mtxcfg</span> farà que la IGU els carregui a l'eina
+            corresponent. Qualsevol altre nom de fitxer serà afegit com un fitxer
+            d'origen per a multiplexar, obert a l'eina d'informació, l'editor de
+            capítols o a l'editor de la capçalera -en funció del mode actual-. El mode
+            actual es pot canviar amb les opcions <span class="option">--merge</span>,
+            <span class="option">--info</span>, <span class="option">--edit-chapters</span> o
+            <span class="option">--edit-headers</span>. El mode per omissió és afegir fitxers pel
+            multiplexat.
+            
+         </p>
+         
+         
+         <p>
+            Tingueu en compte que si ja s'està executant una instància de l'aplicació
+            quan es llança una segona instància, tots els noms de fitxer indicats a la
+            línia d'ordres restaran a càrrec de la primera instància.
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">--merge</span></td>
+                  <td>
+                     
+                     <p>Tots els noms de fitxer que segueixen s'afegiran com a fitxers d'origen a la
+                        tasca de multiplexat actual. Aquest és el mode per omissió.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--info</span></td>
+                  <td>
+                     
+                     <p>Tots els següents noms de fitxer s'obriran a l'eina d'informació.</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-chapters</span></td>
+                  <td>
+                     
+                     <p>Tots els noms de fitxer que segueixen s'obriran a l'editor de capítols.</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-headers</span></td>
+                  <td>
+                     
+                     <p>Tots els noms de fitxer que segueixen s'obriran a l'editor de la capçalera.</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Mostra la informació d'ús i surt.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Mostra la informació sobre la versió i surt.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvtoolnix-gui.seealso">3. Vegeu també</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvtoolnix-gui.www">4. WWW</a></h1>
+         
+         
+         <p>
+            Sempre trobareu l'última versió a <a href="https://mkvtoolnix.download/">la pàgina de les MKVToolNix</a>.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvinfo -- 输出关于 Matroska 文件中各轨的信息</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvinfo -- 输出关于 <span class="productname">Matroska</span><sup>(tm)</sup> 文件中各轨的信息
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvinfo.synopsis">1. 概要</a></li>
+            <li><a href="#mkvinfo.description">2. 说明</a></li>
+            <li><a href="#mkvinfo.verbosity_levels">3. “详细”程度</a></li>
+            <li><a href="#mkvinfo.text_files_and_charsets">4. 文本文件与字符集转换</a></li>
+            <li><a href="#d4e513">5. 退出代码</a></li>
+            <li><a href="#mkvinfo.environment_variables">6. 环境变量</a></li>
+            <li><a href="#mkvinfo.seealso">7. 参阅</a></li>
+            <li><a href="#mkvinfo.www">8. 网络</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvinfo.synopsis">1. 概要</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvinfo</span> 选项 {输入文件名}
+         </div>
+         
+         <h1><a name="mkvinfo.description">2. 说明</a></h1>
+         
+         
+         <p>
+            本程序可列出 <span class="productname">Matroska</span><sup>(tm)</sup>文件中包含的所有轨道，输出信息可以限定为文件的轨道列表以及所用编解码器的信息。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
+                  <td>
+                     
+                     <p>
+                        计算并显示各帧的 <span class="function">Adler-32</span> 校验码。仅当调试时有用处。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--summary</span></td>
+                  <td>
+                     
+                     <p>
+                        仅显示 <span class="productname">mkvinfo</span>(1) 所获取信息的简要概述，而非各元素。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-t</span>, <span class="option">--track-info</span></td>
+                  <td>
+                     
+                     <p>
+                        在“详细”模式下为各轨道显示统计信息。如果“详细”程度为 0 级，则将同时将级别设为 1。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-x</span>, <span class="option">--hexdump</span></td>
+                  <td>
+                     
+                     <p>
+                        以十六进制转储形式显示各帧的前 16 字节。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-X</span>, <span class="option">--full-hexdump</span></td>
+                  <td>
+                     
+                     <p>
+                        以十六进制转储形式显示各帧的所有字节。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-z</span>, <span class="option">--size</span></td>
+                  <td>
+                     
+                     <p>
+                        显示各元素的尺寸，含头部所占用的尺寸。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设定在命令行给出的字符串的字符集，用于转为其他字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置输出的字符串应被转换到何种字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        将所有信息输出至文件
+                        <span class="parameter">文件名</span>，而不是在命令行显示。尽管该操作可以用输出重定向轻松实现，但在特定情况下还是缺不得它：当终端写入文件之前重新解释（覆盖输出）时。
+                        <a href="#mkvinfo.description.output_charset">--output-charset</a>
+                        中所选定的字符集将被优先选用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">语言代码</span></a></td>
+                  <td>
+                     
+                     <p>
+                        强制使用 <span class="parameter">语言代码</span> 所对应的翻译 (例如  '<span class="literal">de_DE</span>'
+                        表示德文翻译)。在 <span class="parameter">语言代码</span> 处输入 '<span class="literal">list</span>'
+                        可让程序输出可用翻译的列表。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.debug"><span class="option">--debug</span> <span class="parameter">主题</span></a></td>
+                  <td>
+                     
+                     <p>
+                        为特定功能开启调试。该选项仅对开发者有用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.engage"><span class="option">--engage</span> <span class="parameter">功能</span></a></td>
+                  <td>
+                     
+                     <p>
+                        开启实验性功能。可用功能列表可通过 <span class="command">mkvinfo --engage list</span>
+                        获取。通常情况下不应该使用这些功能。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        打开 GUI 模式。该模式下，将输出特殊格式的行，告知目前受控的 GUI
+                        的行为。这些消息遵从格式「<span class="literal">#GUI#消息</span>」。消息可能包括键值对，如「<span class="literal">#GUI#消息#键1=值1#键2=值2…</span>」。消息内容及键的内容不作翻译，总是以英语输出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.verbose"><span class="option">-v</span>, <span class="option">--verbose</span></a></td>
+                  <td>
+                     
+                     <p>
+                        使输出更详尽。请参阅关于 <a href="#mkvinfo.verbosity_levels">“详细”程度</a>
+                        的段落获取在哪些层级将输出哪些信息的描述。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        显示用法信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        显示版本信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">选项文件.json</span></td>
+                  <td>
+                     
+                     <p>
+                        从文件 <span class="parameter">选项文件</span> 读取其他命令行参数。关于支持的选项文件格式的详细说明，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        手册的“选项文件”段落。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvinfo.verbosity_levels">3. “详细”程度</a></h1>
+         
+         
+         
+         <p>
+            <a href="#mkvinfo.description.verbose">-v</a> 选项可以使
+            <span class="productname">mkvinfo</span>(1) 增强其“详细”程度并输出关于当前文件的更多信息。
+            
+         </p>
+         
+         
+         <p>
+            在 level 0 <span class="productname">mkvinfo</span>(1) 仅输出它发现的轨道头及其类型。头部解析完毕后（更专业地：遇到首个簇时），<span class="productname">mkvinfo</span>(1)
+            将退出执行。在此层级，定位头项与 cue 索引不会显示出来——即使它们位于轨道信息之前。
+            
+         </p>
+         
+         
+         <p>
+            在 level 1 <span class="productname">mkvinfo</span>(1) 同样将输出在整个文件中遇到的所有 <span class="productname">Matroska</span><sup>(tm)</sup> 元素，此外还将输出定位头项与 cue
+            索引项。如果启用了简要模式，<span class="productname">mkvinfo</span>(1) 还将输出各帧位置。
+            
+         </p>
+         
+         
+         <p>
+            在 level 2 <span class="productname">mkvinfo</span>(1) 同样将输出定位头项与 cue 索引项，以及文件中各 <span class="productname">Matroska</span><sup>(tm)</sup> 元素被发现的位置。
+            
+         </p>
+         
+         
+         <p>
+            在 level 3 及更高层级 <span class="productname">mkvinfo</span>(1) 将输出一些与 <span class="productname">Matroska</span><sup>(tm)</sup>
+            元素不直接相连的信息。对于其他元素，将只输出发现的基本信息。Level 3 增加了元信息以便调试（换句话说：它是为开发人员设计的）。Level 3
+            输出的所有行都以方括号嵌套以便过滤。
+            
+         </p>
+         
+         <h1><a name="mkvinfo.text_files_and_charsets">4. 文本文件与字符集转换</a></h1>
+         
+         
+         
+         <p>
+            关于 MKVToolNix 套件中所有工具如何处理字符集转换、输入/输出编码、命令行编码及控制台编码的深入讨论，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            手册中相对应名称的段落。
+            
+         </p>
+         
+         <h1><a name="d4e513">5. 退出代码</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvinfo</span>(1) 退出时会返回以下三个退出代码中的一个：
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- 此退出代码说明已成功完成运行。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- 这种情况下 <span class="productname">mkvinfo</span>(1) 至少输出了一条警告信息，但运行并未因之中止。 警告信息以文字
+                  '<span class="literal">警告:</span>' 为前缀。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- 此退出代码用于错误发生之后。 <span class="productname">mkvinfo</span>(1)
+                  在输出错误信息后即中断运行。错误信息可能是错误的命令行参数，也可能是损坏文件的读取/写入错误。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvinfo.environment_variables">6. 环境变量</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvinfo</span>(1) 会使用决定系统区域设置的默认变量 (如 <span class="varname">LANG</span> 与
+            <span class="varname">LC_*</span> 族)。其他变量包括:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVINFO_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> 及其缩略形式
+                     <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvinfo.description.debug">--debug</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVINFO_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     及其缩略形式 <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvinfo.description.engage">--engage</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvinfo.seealso">7. 参阅</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvinfo.www">8. 网络</a></h1>
+         
+         
+         <p>
+            最新版本总可以在 <a href="https://mkvtoolnix.download/">MKVToolNix 主页</a> 找到。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

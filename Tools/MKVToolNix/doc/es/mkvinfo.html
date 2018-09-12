@@ -1,0 +1,453 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvinfo -- Imprime la información respecto a los elementos de los archivos Matroska</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvinfo -- Imprime la información respecto a los elementos de los archivos <span class="productname">Matroska</span><sup>(tm)</sup></div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvinfo.synopsis">1. Sinopsis</a></li>
+            <li><a href="#mkvinfo.description">2. Descripción</a></li>
+            <li><a href="#mkvinfo.verbosity_levels">3. Niveles de detalle</a></li>
+            <li><a href="#mkvinfo.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></li>
+            <li><a href="#d4e512">5. Códigos de salida</a></li>
+            <li><a href="#mkvinfo.environment_variables">6. Variables de entorno</a></li>
+            <li><a href="#mkvinfo.seealso">7. Vea también</a></li>
+            <li><a href="#mkvinfo.www">8. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvinfo.synopsis">1. Sinopsis</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvinfo</span> opciones {nombre-archivo}
+         </div>
+         
+         <h1><a name="mkvinfo.description">2. Descripción</a></h1>
+         
+         
+         <p>
+            Este programa muestra una lista de todos los elementos contenidos en un
+            archivo <span class="productname">Matroska</span><sup>(tm)</sup>. La salida puede ser limitada a una lista de pistas en un
+            archivo incluyendo información acerca de los códecs usados. 
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
+                  <td>
+                     
+                     <p>
+                        Calcula y muestra el checksum <span class="function">Adler-32</span> para cada
+                        fotograma. Útil sólo para depuración. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--summary</span></td>
+                  <td>
+                     
+                     <p>
+                        Sólo muestra un breve resumen de lo que <span class="productname">mkvinfo</span>(1) encuentra y no de cada
+                        elemento. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-t</span>, <span class="option">--track-info</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra la estadística de cada pista en el modo detallado. También establece
+                        la verbosidad a 1 si antes era 0. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-x</span>, <span class="option">--hexdump</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra los primeros 16 bytes de cada fotograma como un dump (volcado)
+                        hexadecimal. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-X</span>, <span class="option">--full-hexdump</span></td>
+                  <td>
+                     
+                     <p>
+                        	
+                        
+                        Muestra todos los bytes de cada fotograma como un dump (volcado)
+                        hexadecimal. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-z</span>, <span class="option">--size</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra el tamaño de cada elemento incluyendo su encabezado. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.command_line_charset"><span class="option">--command-line-charset</span>
+                        <span class="parameter">conjunto-caracteres</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Establece el conjunto de caracteres a convertir las cadenas de texto dadas
+                        desde la línea de comandos. Por defecto, se ajusta al conjunto de caracteres
+                        dado por la configuración local del sistema. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">conjunto-caracteres</span></a></td>
+                  <td>
+                     
+                     <p>
+                        	
+                        
+                        Establece el conjunto de caracteres para convertir las cadenas de texto que
+                        serán usadas en el archivo de salida. Por defecto, se ajusta al conjunto de
+                        caracteres dado por la configuración local del sistema. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">nombre-archivo</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Escribe todos los mensajes al archivo <span class="parameter">nombre-archivo</span>
+                        en vez de en la consola. Mientras esto puede ser realizado fácilmente con
+                        una redirección de salida hay casos en el que esta opción es necesaria:
+                        cuando el terminal reinterpreta la salida antes la escribe a un archivo. El
+                        conjunto de caracteres establecidos con <a href="#mkvinfo.description.output_charset">--output-charset</a>
+                        se respeta. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">código</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Fuerza la traducción al <span class="parameter">código</span> de idioma que será
+                        usado (p.e. '<span class="literal">de_DE</span>' para la traducción al
+                        Alemán). Introduciendo '<span class="literal">list</span>' como
+                        <span class="parameter">código</span> provocará que el programa muestre una lista de
+                        las traducciones disponibles. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita la depuración para una característica concreta. Esta opción sólo es
+                        útil para desarrolladores. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.engage"><span class="option">--engage</span> <span class="parameter">característica</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Activa características experimentales. Una lista de características
+                        disponibles pueden ser solicitada con <span class="command">mkvinfo --engage
+                           list</span>. Estas características no están destinadas para ser
+                        utilizadas en situaciones normales. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita el modo GUI. En este modo las líneas especialmente formateadas
+                        pueden ser generadas para decirle a un control de la GUI lo que está
+                        pasando. Estos mensajes se rigen bajo el formato
+                        '<span class="literal">#GUI#mensaje</span>'. El mensaje puede ser continuado por pares
+                        de valores/claves como en
+                        '<span class="literal">#GUI#mensaje#clave1=valor1#clave2=valor2…</span>'. Ni los
+                        mensajes ni las claves pueden ser traducidas y siempre se generan en
+                        inglés. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvinfo.description.verbose"><span class="option">-v</span>, <span class="option">--verbose</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Ser más detallado. Mire la sección acerca de <a href="#mkvinfo.verbosity_levels">niveles de detalle</a> para una
+                        descripción de que información será generada en cada nivel. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra información de uso y sale.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra la información de la versión y sale. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        Lee argumentos adicionales de la línea de comandos desde el archivo
+                        <span class="parameter">archivo-opciones</span>. Para más información sobre los
+                        formatos admitidos para esos archivos mire la sección acerca de "archivos de
+                        opciones" en la página del manual de <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvinfo.verbosity_levels">3. Niveles de detalle</a></h1>
+         
+         
+         
+         <p>
+            La opción <a href="#mkvinfo.description.verbose">-v</a> puede ser
+            usada para incrementar el nivel de verbosidad <span class="productname">mkvinfo</span>(1) e imprimir más
+            información sobre al archivo actual. 
+            
+         </p>
+         
+         
+         <p>
+            En el nivel 0 <span class="productname">mkvinfo</span>(1) imprimirá sólo los encabezados de la pista que
+            encuentra y sus tipos. <span class="productname">mkvinfo</span>(1) saldrá tan pronto como los encabezados sean
+            analizados completamente (más técnico: tan pronto como el primer clúster sea
+            encontrado). En este nivel, la búsqueda de entradas del encabezado y los
+            índices no será mostrados -- incluso si ellos están localizados al principio
+            de la información de la pista. 
+            
+         </p>
+         
+         
+         <p>
+            En el nivel 1 <span class="productname">mkvinfo</span>(1) también imprimirá todos los elementos encontrados
+            <span class="productname">Matroska</span><sup>(tm)</sup> en todo el archivo al buscar las entradas del encabezado y del
+            índice. Si el modo resumen está habilitado entonces <span class="productname">mkvinfo</span>(1) también
+            generará la posición del fotograma. 
+            
+         </p>
+         
+         
+         <p>
+            En el nivel 2 <span class="productname">mkvinfo</span>(1) también imprimirá las entradas buscadas del
+            encabezado, las del índice y la posición en el archivo en el que cada
+            elemento <span class="productname">Matroska</span><sup>(tm)</sup> pudo ser encontrado. 
+            
+         </p>
+         
+         
+         <p>
+            En el nivel 3 y superiores <span class="productname">mkvinfo</span>(1) imprimirá algo de información que no
+            está directamente relacionada al elemento <span class="productname">Matroska</span><sup>(tm)</sup>. El resto de elementos
+            sólo imprimirá datos sobre los elementos que fueron encontrados. El nivel 3
+            añade meta información para facilitar la depuración (leer: está indicado
+            para desarrolladores). Todas las líneas escritas por el nivel 3 están
+            cerradas entre corchetes para facilitar el filtrado. 
+            
+         </p>
+         
+         <h1><a name="mkvinfo.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></h1>
+         
+         
+         
+         <p>
+            Para una discusión en profundidad sobre como la suite de MkvToolNix manipula
+            las conversiones de caracteres, la codificación entrada/salida y la
+            codificación de la línea de comandos y consola, por favor consulte la
+            sección llamada de igual manera en la pagina del manual para <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>.
+            
+         </p>
+         
+         <h1><a name="d4e512">5. Códigos de salida</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvinfo</span>(1) finaliza con uno de estos tres códigos de salida: 
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- Este código de salida significa que la extracción
+                  se ha realizado correctamente. 
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- En este caso <span class="productname">mkvinfo</span>(1) genera una salida con al
+                  menos una advertencia, pero la extracción continuó. Una advertencia es
+                  prefijada con el texto '<span class="literal">Advertencia:</span>'. 
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- Este código de salida es usado después de que
+                  ocurra un error. <span class="productname">mkvinfo</span>(1) aborta el proceso justo después de mostrar el
+                  mensaje de error. El rango de los mensajes de error va desde los argumentos
+                  de la línea de comandos, por delante de los errores de lectura/escritura,
+                  hasta los archivos erróneos. 
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvinfo.environment_variables">6. Variables de entorno</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvinfo</span>(1) usa las variables predefinidas que se determinan en la
+            configuración local del sistema (p.e. <span class="varname">LANG</span> y la familia
+            <span class="varname">LC_*</span>). Variables adicionales: 
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVINFO_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> y su
+                     forma abreviada <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>El contenido se trata como si se hubiese pasado a través de la opción <a href="#mkvinfo.description.debug">--debug</a>.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVINFO_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> y su
+                     forma abreviada <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>El contenido se trata como si se hubiese pasado a través de la opción <a href="#mkvinfo.description.engage">--engage</a>.
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvinfo.seealso">7. Vea también</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvinfo.www">8. WWW</a></h1>
+         
+         
+         <p>
+            La última versión se puede encontrar siempre en <a href="https://mkvtoolnix.download/">la página de MKVToolNix</a>.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

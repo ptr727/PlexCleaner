@@ -1,0 +1,118 @@
+{
+  "attachments": [
+    {
+      "content_type": "image/png",
+      "description": "",
+      "file_name": "TAG.png",
+      "id": 1,
+      "properties": {
+        "uid": 4316349515222306365
+      },
+      "size": 53416
+    }
+  ],
+  "chapters": [
+    {
+      "num_entries": 4
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2015-11-15T23:03:14-07:00",
+      "date_utc": "2015-11-16T07:03:14Z",
+      "duration": 2610045000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "libebml v1.3.1 + libmatroska v1.4.2",
+      "segment_uid": "a2c7f090d0d72aeb3e356835399cfd17",
+      "writing_application": "mkvmerge v8.3.0 ('Over the Horizon') 64bit"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\HEVC - Stargate SG-1 - S09E20 - Camelot.mkv",
+  "global_tags": [
+    {
+      "num_entries": 1
+    }
+  ],
+  "identification_format_version": 10,
+  "track_tags": [
+    {
+      "num_entries": 1,
+      "track_id": 1
+    },
+    {
+      "num_entries": 1,
+      "track_id": 2
+    }
+  ],
+  "tracks": [
+    {
+      "codec": "MPEG-H/HEVC/h.265",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MPEGH/ISO/HEVC",
+        "codec_private_data": "0101600000009000000000005af000fcfdf8f800000f04200001001840010c01ffff01600000030090000003000003005a99c090210001002f42010101600000030090000003000003005aa005a201e165999a4932bffc0d540b41a83008302000007d20000bb80122000100064401c173d18927000103404e0105ffffff3b2ca2de09b51747dbbb55a4fe7fc2fc4e7832363520286275696c6420343329202d20312e353a5b57696e646f77735d5b47434320342e372e305d5b3332206269745d2038627070202d20482e3236352f4845564320636f646563202d20436f7079726967687420323031332d3230313520286329204d756c7469636f72657761726520496e63202d20687474703a2f2f783236352e6f7267202d206f7074696f6e733a2037323078343830206670733d32343030302f313030312062697464657074683d3820777070206374753d36342074752d696e7472612d64657074683d312074752d696e7465722d64657074683d31206d653d31207375626d653d32206d6572616e67653d3537206e6f2d72656374206e6f2d616d70206d61782d6d657267653d322074656d706f72616c2d6d7670206e6f2d6561726c792d736b6970206e6f2d666173742d63626620726470656e616c74793d30206e6f2d74736b6970206e6f2d74736b69702d66617374207374726f6e672d696e7472612d736d6f6f7468696e67206e6f2d6c6f73736c657373206e6f2d63752d6c6f73736c657373206e6f2d636f6e73747261696e65642d696e74726120666173742d696e747261206f70656e2d676f7020696e7465726c6163653d30206b6579696e743d323430206d696e2d6b6579696e743d3234207363656e656375743d34302072632d6c6f6f6b61686561643d313520626672616d65733d3420626672616d652d626961733d3020622d61646170743d30207265663d322077656967687470206e6f2d776569676874622061712d6d6f64653d312061712d737472656e6774683d302e303020636271706f6666733d3020637271706f6666733d302072643d32207073792d72643d302e3030207073792d72646f713d302e3030207369676e68696465206c66742073616f206e6f2d73616f2d6e6f6e2d6465626c6f636b20622d707972616d6964206375747265652072633d32207061737320626974726174653d3630302071636f6d703d302e36302071706d696e3d302071706d61783d3531207170737465703d342063706c78626c75723d32302e302071626c75723d302e35206970726174696f3d312e3430207062726174696f3d312e333080",
+        "codec_private_length": 952,
+        "default_duration": 41708328,
+        "default_track": true,
+        "display_dimensions": "853x480",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 83000000,
+        "number": 1,
+        "packetizer": "mpegh_p2_video",
+        "pixel_dimensions": "720x480",
+        "uid": 1
+      },
+      "type": "video"
+    },
+    {
+      "codec": "AAC",
+      "id": 1,
+      "properties": {
+        "audio_channels": 6,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_AAC",
+        "codec_private_data": "11b056e500",
+        "codec_private_length": 5,
+        "default_duration": 21333333,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 62000000,
+        "number": 2,
+        "tag_language": "eng",
+        "track_name": "Surround",
+        "uid": 2
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "SubStationAlpha",
+      "id": 2,
+      "properties": {
+        "codec_id": "S_TEXT/ASS",
+        "codec_private_data": "5b53637269707420496e666f5d0d0a536372697074547970653a2076342e30302b0d0a436f6c6c6973696f6e733a204e6f726d616c0d0a506c6179526573583a203732300d0a506c6179526573593a203438300d0a54696d65723a203130302e300d0a577261705374796c653a20300d0a0d0a5b56342b205374796c65735d0d0a466f726d61743a204e616d652c20466f6e746e616d652c20466f6e7473697a652c205072696d617279436f6c6f75722c205365636f6e64617279436f6c6f75722c204f75746c696e65436f6c6f75722c204261636b436f6c6f75722c20426f6c642c204974616c69632c20556e6465726c696e652c20537472696b654f75742c205363616c65582c205363616c65592c2053706163696e672c20416e676c652c20426f726465725374796c652c204f75746c696e652c20536861646f772c20416c69676e6d656e742c204d617267696e4c2c204d617267696e522c204d617267696e562c20456e636f64696e670d0a5374796c653a2044656661756c742c417269616c2c33312c264830304646464646462c264830304646464646462c264830303046304630462c264830303046304630462c302c302c302c302c3130302c3130302c302c302e30302c312c322c332c322c32302c32302c32302c300d0a00",
+        "codec_private_length": 480,
+        "default_track": false,
+        "enabled_track": true,
+        "encoding": "UTF-8",
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 2003000000,
+        "number": 3,
+        "tag_language": "eng",
+        "text_subtitles": true,
+        "uid": 3
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

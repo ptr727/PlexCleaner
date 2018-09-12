@@ -1,0 +1,4201 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvmerge -- マルチメディアストリームをMatroskaファイルに格納します。</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvmerge -- マルチメディアストリームを<span class="productname">Matroska</span><sup>(tm)</sup>ファイルに格納します。
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvmerge.synopsis">1. 書式</a></li>
+            <li><a href="#mkvmerge.description">2. 説明</a></li>
+            <li><a href="#mkvmerge.usage">3. 使用法</a></li>
+            <li><a href="#mkvmerge.option_order">4. オプションの順番</a></li>
+            <li><a href="#mkvmerge.examples">5. 例</a></li>
+            <li><a href="#mkvmerge.track_ids">6. トラックID</a></li>
+            <li><a href="#mkvmerge.text_files_and_charsets">7. テキストファイルと文字コード変換</a></li>
+            <li><a href="#mkvmerge.option_files">8. オプションファイル：</a></li>
+            <li><a href="#mkvmerge.subtitles">9. 字幕</a></li>
+            <li><a href="#mkvmerge.file_linking">10. ファイル紐付け</a></li>
+            <li><a href="#mkvmerge.default_values">11. デフォルト値</a></li>
+            <li><a href="#mkvmerge.attachments">12. 添付ファイル</a></li>
+            <li><a href="#mkvmerge.chapters">13. チャプタ</a></li>
+            <li><a href="#mkvmerge.tags">14. タグ</a></li>
+            <li><a href="#mkvmerge.segmentinfo">15. セグメント情報XMLファイル</a></li>
+            <li><a href="#mkvmerge.file_layout">16. Matroskaファイルのレイアウト</a></li>
+            <li><a href="#mkvmerge.external_timestamp_files">17. 外部タイムコードファイル</a></li>
+            <li><a href="#mkvmerge.exit_codes">18. 返り値</a></li>
+            <li><a href="#mkvmerge.environment_variables">19. 環境変数</a></li>
+            <li><a href="#mkvmerge.seealso">20. 関連項目</a></li>
+            <li><a href="#mkvmerge.www">21. ウェブ</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvmerge.synopsis">1. 書式</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvmerge</span> global options {-o
+            out} options1 {file1} options2 {file2} @options-file.json
+         </div>
+         
+         <h1><a name="mkvmerge.description">2. 説明</a></h1>
+         
+         
+         <p>
+            このプログラムはいくつかのメディアファイルを入力とし、それらに格納されたストリームのうち全て、もしくは選択されたものを<span class="productname">Matroska</span><sup>(tm)</sup>ファイルに書き込みます。<a href="http://www.matroska.org/">Matroska</a>のウェブサイトも参照してください。
+            
+         </p>
+         
+         
+         <div class="important">
+            <p class="important-title">Important:</p>
+            
+            <p>
+               コマンドラインオプションの順番は重要です。もしあなたが初心者なら、<a href="#mkvmerge.option_order">"オプションの順番"</a>セクションを読んで下さい。
+               
+            </p>
+            
+         </div>
+         
+         
+         <h2><a name="d4e126">2.1. グローバルオプション</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>より詳細な情報を表示します</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-q</span>, <span class="option">--quiet</span></td>
+                  <td>
+                     
+                     <p>ステータス情報の出力を抑制します。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--output</span>
+                     <span class="parameter">file-name</span></td>
+                  <td>
+                     
+                     <p><span class="parameter">file-name</span>で指定したファイルに書き込みます。もし、ファイル分割が有効な場合このオプションは若干解釈が違います。詳細は<a href="#mkvmerge.description.split">--split</a>オプションの説明を参照してください。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-w</span>, <span class="option">--webm</span></td>
+                  <td>
+                     
+                     <p>Create a WebM compliant file. This is also turned on if the output file
+                        name's extension is "webm". This mode enforces several
+                        restrictions. The only allowed codecs are VP8, VP9 video and Opus, Vorbis
+                        audio tracks. The DocType header item is changed to "webm".
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        For chapters and tags only a subset of elements are allowed. <span class="productname">mkvmerge</span>(1) will
+                        automatically remove all elements not allowed by the specification.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.title"><span class="option">--title</span> <span class="parameter">title</span></a></td>
+                  <td>
+                     
+                     <p>出力ファイル全体のタイトルを指定します(例:映画のタイトルなど)。</p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--default-language</span> <span class="parameter">language-code</span></td>
+                  <td>
+                     
+                     <p>Sets the default language code that will be used for tracks for which no
+                        language is set with the <a href="#mkvmerge.description.language">--language</a>
+                        option and for which the source container doesn't provide a language.
+                     </p>
+                     
+                     
+                     <p>The default language code is '<span class="literal">und</span>' for 'undefined'.
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e260">2.2. セグメント情報の扱い (グローバルオプション)</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">--segmentinfo</span> <span class="parameter">filename.xml</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">XML</span>ファイルからセグメント情報を読み取ります。このファイルは、セグメントファミリ<span class="abbrev">UID</span>、セグメント<span class="abbrev">UID</span>、前、及び、後セグメント<span class="abbrev">UID</span>エレメントを含むことができます。MKVToolNixは、サンプルファイルと<span class="abbrev">DTD</span>を含んで配布されています。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        詳細は、下にある<a href="#mkvmerge.segmentinfo">セグメント情報XMLファイル</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--segment-uid</span> <span class="parameter">SID1,SID2,...</span></td>
+                  <td>
+                     
+                     <p>
+                        使用するセグメントUIDを設定します。これはコンマで区切られた、通常のUID形式("0x"を前置する、またはしない、空白を含む、または含まない、ちょうど32桁の16進数)128ビットセグメントUIDのリストです。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If SID starts with = then its rest is interpreted as the name of a Matroska
+                        file whose segment UID is read and used.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        作成される各ファイルは一つのセグメントを含み、そして各セグメントは一つのセグメントUIDを持ちます。もし、作成されたセグメントよりも多数のセグメントUIDが指定された場合、余ったセグメントUIDは無視されます。また、もし指定されたセグメントUIDよりも多数のセグメントが作成された場合は、ランダムなUIDが作成されて使用されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e329">2.3. チャプタ及びタグの扱い (グローバルオプション)</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_language"><span class="option">--chapter-language</span> <span class="parameter">language-code</span></a></td>
+                  <td>
+                     
+                     <p>
+                        各チャプタのエントリに書き込むISO639-2言語コードを指定します。デフォルトは'<span class="literal">eng</span>'です。詳細は<a href="#mkvmerge.chapters">チャプタ</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションはシンプルチャプタファイルを読み込んだ場合、そしてソースファイルがチャプタを含むがチャプタの言語情報を含まなかった場合(例:MP4,OGMファイル)に適用されます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The language set with this option is also used when chapters are generated
+                        with the <a href="#mkvmerge.description.generate_chapters">--generate-chapters
+                           option</a>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_charset"><span class="option">--chapter-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        シンプルチャプタファイルをUTF-8に変換する際の文字コードを指定します。<span class="productname">mkvmerge</span>(1)の文字コード変換については、<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このスイッチはチャプタがOgg,OGMファイルなどのコンテナからコピーされる際にも適用されます。詳細については後述のチャプタについてのセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">mkvmerge</span>(1) can create chapters automatically.  The following two modes are
+                        currently supported:
+                        
+                     </p>
+                     
+                     
+                     <ul>
+                        
+                        <li>
+                           
+                           <p>
+                              '<span class="literal">when-appending</span>' – This mode creates one chapter at the
+                              start and one chapter whenever a file is appended.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 <span class="productname">mkvmerge</span>(1) requires a video or an audio track to be present in order to be
+                                 able to determine when a new file is appended.  If one or more video tracks
+                                 are muxed the first one is used.  Otherwise the first audio track is used.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              '<span class="literal">interval:</span><span class="parameter">time-spec</span>' – This mode
+                              creates one chapter at fixed intervals given by
+                              <span class="parameter">time-spec</span>.  The format is either the form
+                              <span class="parameter">HH:MM:SS.nnnnnnnnn</span> or a number followed by one of the
+                              units '<span class="literal">s</span>', '<span class="literal">ms</span>' or
+                              '<span class="literal">us</span>'.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Example: <span class="literal">--generate-chapters interval:45s</span>
+                              
+                           </p>
+                           
+                        </li>
+                        
+                     </ul>
+                     
+                     
+                     <p>
+                        The names for the new chapters are controlled by the option <a href="#mkvmerge.description.generate_chapters_name_template">--generate-chapters-name-template</a>.
+                        The language is set with <a href="#mkvmerge.description.chapter_language">--chapter-language</a>
+                        which must occur before <span class="option">--generate-chapters</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.generate_chapters_name_template"><span class="option">--generate-chapters-name-template</span>
+                        <span class="parameter">template</span></a></td>
+                  <td>
+                     
+                     <p>
+                        This sets the name template for chapter names generated by the option <a href="#mkvmerge.description.generate_chapters">--generate-chapters</a>.
+                        If the option is not used then default '<span class="literal">Chapter
+                           &lt;NUM:2&gt;</span>' will be used.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        There are several variables that can be used in the template that are
+                        replaced by their actual values when a chapter is generated.  The string
+                        '<span class="literal">&lt;NUM&gt;</span>' will be replaced by the chapter number. The
+                        string '<span class="literal">&lt;START&gt;</span>' will be replaced by the chapter's
+                        start timestamp.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The strings <span class="literal">'&lt;FILE_NAME&gt;'</span> and
+                        <span class="literal">'&lt;FILE_NAME_WITH_EXT&gt;'</span> are only filled when
+                        generating chapters for appended files.  They will be replaced by the
+                        appended file's name wihtout respectively with its extension.  Note that
+                        only the file's base name and extension are inserted, not its directory or
+                        drive components.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        You can specify a minimum number of places for the chapter number with
+                        '<span class="literal">&lt;NUM:places&gt;</span>',
+                        e.g. '<span class="literal">&lt;NUM:3&gt;</span>'.  The resulting number will be
+                        padded with leading zeroes if the number of places is less than specified.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        You can control the format used by the start timestamp with
+                        <span class="literal">&lt;START:format&gt;</span>.  The format defaults to
+                        '<span class="literal">%H:%M:%S</span>' if none is given.  Valid format codes are:
+                        
+                     </p>
+                     
+                     
+                     <ul>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%h</span> – hours
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%H</span> – hours zero-padded to two places
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%m</span> – minutes
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%M</span> – minutes zero-padded to two places
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%s</span> – seconds
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%S</span> – seconds zero-padded to two places
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%n</span> – nanoseconds with nine places
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="literal">%&lt;1-9&gt;n</span> – nanoseconds with up to nine places
+                              (e.g. three places with <span class="literal">%3n</span>)
+                           </p>
+                           
+                        </li>
+                        
+                     </ul>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cue-chapter-name-format</span> <span class="parameter">format</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">mkvmerge</span>(1)は音声ファイル向けの<span class="abbrev">CUE</span>シートからチャプタ情報を読み込むことができます。<span class="abbrev">CUE</span>シートには通常<span class="varname">PERFORMER</span>エントリ及び<span class="varname">TITLE</span>エントリが各インデックスエントリに存在します。<span class="productname">mkvmerge</span>(1)はこれら二つの文字列をチャプタの名前を生成するのに使用します。このフォーマットをこのオプションで指定することができます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションが指定されていない場合、デフォルトで'<span class="code">%p - %t</span>'というフォーマットが使用されます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        フォーマットが指定された場合、下のメタ文字以外はそのままコピーされ、メタ文字は以下のように置換されます。
+                        
+                     </p>
+                     
+                     
+                     <ul>
+                        
+                        <li>
+                           
+                           <p><span class="parameter">%p</span>はそのエントリの<span class="varname">PERFORMER</span>文字列で置換されます。
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="parameter">%t</span>はそのエントリの<span class="varname">TITLE</span>文字列で置換されます。
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="parameter">%n</span>はそのエントリのトラック番号で置換されます。
+                           </p>
+                           
+                        </li>
+                        
+                        <li>
+                           
+                           <p><span class="parameter">%N</span>は、そのエントリのトラック番号が10未満の場合0を前置して二桁にした数字で置換されます。
+                           </p>
+                           
+                        </li>
+                        
+                     </ul>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chapters</span> <span class="parameter">file-name</span></td>
+                  <td>
+                     
+                     <p>
+                        チャプタ情報を<span class="parameter">file-name</span>で指定したファイルから読み込みます。詳細は<a href="#mkvmerge.chapters">チャプタ</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.global_tags"><span class="option">--global-tags</span> <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="parameter">file-name</span>で指定したファイルからグローバルタグを読み込みます。詳細は<a href="#mkvmerge.tags">タグ</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e756">2.4. 出力一般のコントロール（高度なグローバルオプション）</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">--track-order</span>
+                     <span class="parameter">FID1:TID1,FID2:TID2,...</span></td>
+                  <td>
+                     
+                     <p>
+                        このオプションは入力されたトラックが配置される順序を変更します。オプション引数はコンマで区切られるIDペアのリストです。各ペアは最初を0としてコマンドラインの何番目に指定したファイルであるかを示すファイルID(<span class="parameter">FID1</span>)と、そのファイルの中の何番目のトラックかを示すトラックID(<span class="parameter">TID1</span>)からなります。ここで指定されなかったトラックは、指定されたトラックの後に配置されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cluster-length</span> <span class="parameter">spec</span></td>
+                  <td>
+                     
+                     <p>
+                        クラスタごとの、データブロック個数の上限または持続時間を指定します。<span class="parameter">spec</span>パラメータには単位なしの数字<span class="parameter">n</span>もしくは、'<span class="literal">ms</span>'を後ろに付けた数字<span class="parameter">d</span>を指定することができます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        単位が指定されなかった場合、クラスタごとのデータブロックの最大個数は<span class="parameter">n</span>に設定されます。上限は65535です。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        数字<span class="parameter">d</span>に'<span class="literal">ms</span>'が後置されていた場合、<span class="productname">mkvmerge</span>(1)は各データクラスタ毎に最大でも<span class="parameter">d</span>ミリ秒分のデータしか格納しません。<span class="parameter">d</span>の最小値は'<span class="literal">100ms</span>'、最大値は'<span class="literal">32000ms</span>'です。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルトは、データクラスタ毎に65535データブロック以下、5000ms以下のデータを書き込みます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        プログラムがあるフレームを見つけようとするときは、クラスタに直接シークして、その後クラスタ全体を読み込みます。よって、より大きなクラスタを作ると、シークが不正確かつ遅くなるかもしれません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_cues"><span class="option">--no-cues</span></a></td>
+                  <td>
+                     
+                     <p>
+                        キューデータ(AVIファイルにおけるインデックスのようなもの)を作成しません。キューデータなしでもファイルは再生できますが、シークは不正確かつ遅くなるでしょう。このオプションは、少しでもファイルサイズを小さくしようと必死なとき、またはテスト目的以外には使用しないでください。<a href="#mkvmerge.description.cues">--cues</a>オプションは各入力ファイルごとに指定できます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--clusters-in-meta-seek</span></td>
+                  <td>
+                     
+                     <p>
+                        ファイルの終端に全てのクラスタを含むメタシーク要素を作成します。<a href="#mkvmerge.file_layout">Matroskaファイルレイアウト</a>のセクションも参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--disable-lacing</span></td>
+                  <td>
+                     
+                     <p>
+                        全てのトラックで複数のフレームを1つのブロックにまとめません。これは特に多数のオーディオトラックがある場合に、ファイルサイズを増大させます。テスト目的でのみ使用してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--enable-durations</span></td>
+                  <td>
+                     
+                     <p>
+                        全てのブロックの長さを記録します。これはファイルサイズを増大させますが、現在のところプレーヤには何のメリットももたらしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--disable-track-statistics-tags</span></td>
+                  <td>
+                     
+                     <p>
+                        Normally <span class="productname">mkvmerge</span>(1) will write certain tags with statistics for each
+                        track. If such tags are already present then they will be overwritten. The
+                        tags are <span class="constant">BPS</span>, <span class="constant">DURATION</span>,
+                        <span class="constant">NUMBER_OF_BYTES</span> and
+                        <span class="constant">NUMBER_OF_FRAMES</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Enabling this option prevents <span class="productname">mkvmerge</span>(1) from writing those tags and from
+                        touching any existing tags with same names.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.timestamp_scale"><span class="option">--timestamp-scale</span> <span class="parameter">factor</span></a></td>
+                  <td>
+                     
+                     <p>
+                        タイムコードスケールの係数を<span class="parameter">factor</span>に強制設定します。この値は1000～10000000、もしくは-1に設定しなければなりません。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        通常<span class="productname">mkvmerge</span>(1)は<span class="constant">1000000</span>を使用します。これはタイムコードとフレーム持続期間が1ミリ秒単位の精度を持つことを意味します。ビデオトラックを含まず、1つ以上のオーディオトラックを含むファイルでは、<span class="productname">mkvmerge</span>(1)は全てのタイムコードとフレーム持続時間がサンプリング音1つ分の精度を持つようタイムコードスケールの係数を自動的に選択します。これによってオーバーヘッドは大きくなりますが、正確なシークと展開が可能になります。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        特殊な値<span class="constant">-1</span>が指定された場合、たとえビデオトラックが存在していてもサンプリング音の精度を使用します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e1000">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.split"><span class="option">--split</span> <span class="parameter">specification</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Splits the output file after a given size or a given time.  Please note that
+                        tracks can only be split right before a key frame.  Therefore the split
+                        point may be a bit off from what the user has specified.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        At the moment <span class="productname">mkvmerge</span>(1) supports four different modes.
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>
+                              指定サイズで分割します。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              書式: <span class="option">--split</span>
+                              [<span class="literal">size:</span>]<span class="parameter">d</span>[k|m|g]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              例: <span class="code">--split size:700m</span> or <span class="code">--split 150000000</span>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              パラメータ<span class="parameter">d</span>の後ろには'<span class="literal">k</span>'・'<span class="literal">m</span>'・'<span class="literal">g</span>'を付けて、単位がそれぞれKB・MB・GBであることを示すことができます。付けない場合はバイト単位になります。出力中のファイルがこの上限に達したら、次の新しいファイルへの出力が開始されます。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              '<span class="literal">size:</span>'という接頭辞は、互換性のために省略できるようになっています。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              指定時間で分割します。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              書式: <span class="option">--split</span>
+                              [<span class="literal">duration:</span>]<span class="parameter">HH:MM:SS.nnnnnnnnn</span>|<span class="parameter">d</span>s
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              例: <span class="code">--split duration:00:60:00.000</span> or <span class="code">--split 3600s</span>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              パラメータは<span class="parameter">HH:MM:SS.nnnnnnnnn</span>という形式でナノ秒精度で長さを指定するか、数字<span class="parameter">d</span>のあとに'<span class="literal">s</span>'と書いて秒数で長さを指定しなければなりません。<span class="parameter">HH</span>は時間、<span class="parameter">MM</span>は分、<span class="parameter">SS</span>は秒数で<span class="parameter">nnnnnnnnn</span>ナノ秒を示します。時間及びナノ秒は省略できます。小数点の後ろには9桁までの数字を指定できます。指定した長さだけ出力されたら、次のファイルへの出力が開始されます。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              '<span class="literal">duration:</span>'という接頭辞は、互換性のために省略できるようになっています。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              指定した各タイムコードで分割します。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              書式: <span class="option">--split</span>
+                              <span class="literal">timestamps:</span><span class="parameter">A</span>[,<span class="parameter">B</span>[,<span class="parameter">C</span>...]]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              例: <span class="code">--split timestamps:00:45:00.000,01:20:00.250,6300s</span>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              パラメータ<span class="parameter">A</span>、<span class="parameter">B</span>、<span class="parameter">C</span>…は、durationで使用されるものと同じフォーマットで指定しなければなりません(上記参照)。タイムコードのリストはコンマで区切られます。入力ストリームが現在の分割点に達すると次のファイルが作成され、このリストから次の分割点が使用されます。
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              '<span class="literal">timestamps:</span>'という接頭辞は、互換性のために省略できるようになっています。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              Keeping specific parts by specifying timestamp ranges while discarding
+                              others.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Syntax: <span class="option">--split</span>
+                              <span class="literal">parts:</span><span class="parameter">start1</span>-<span class="parameter">end1</span>[,[+]<span class="parameter">start2</span>-<span class="parameter">end2</span>[,[+]<span class="parameter">start3</span>-<span class="parameter">end3</span>...]]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Examples: 
+                              <ol>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts:00:01:20-00:02:45,00:05:50-00:10:30</span></p>
+                                 </li>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts:00:01:20-00:02:45,+00:05:50-00:10:30</span></p>
+                                 </li>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts:-00:02:45,00:05:50-</span></p>
+                                 </li>
+                                 
+                              </ol>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The <span class="literal">parts</span> mode tells <span class="productname">mkvmerge</span>(1) to keep certain ranges of
+                              timestamps while discarding others. The ranges to keep have to be listed
+                              after the <span class="literal">parts:</span> keyword and be separated by commas. A
+                              range itself consists of a start and an end timestamp in the same format the
+                              other variations of <span class="parameter">--split</span> accept (e.g. both
+                              <span class="literal">00:01:20</span> and <span class="literal">80s</span> refer to the same
+                              timestamp).
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              If a start timestamp is left out then it defaults to the previous range's
+                              end timestamp. If there was no previous range then it defaults to the start
+                              of the file (see example 3).
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              If an end timestamp is left out then it defaults to the end of the source
+                              files which basically tells <span class="productname">mkvmerge</span>(1) to keep the rest (see example 3).
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Normally each range will be written to a new file. This can be changed so
+                              that consecutive ranges are written to the same file. For that the user has
+                              to prefix the start timestamp with a <span class="literal">+</span>. This tells
+                              <span class="productname">mkvmerge</span>(1) not to create a new file and instead append the range to the same
+                              file the previous range was written to. Timestamps will be adjusted so that
+                              there will be no gap in the output file even if there was a gap in the two
+                              ranges in the input file.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              In example 1 <span class="productname">mkvmerge</span>(1) will create two files. The first will contain the
+                              content starting from <span class="literal">00:01:20</span> until
+                              <span class="literal">00:02:45</span>. The second file will contain the content
+                              starting from <span class="literal">00:05:50</span> until <span class="literal">00:10:30</span>.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              In example 2 <span class="productname">mkvmerge</span>(1) will create only one file. This file will contain
+                              both the content starting from <span class="literal">00:01:20</span> until
+                              <span class="literal">00:02:45</span> and the content starting from
+                              <span class="literal">00:05:50</span> until <span class="literal">00:10:30</span>.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              In example 3 <span class="productname">mkvmerge</span>(1) will create two files. The first will contain the
+                              content from the start of the source files until
+                              <span class="literal">00:02:45</span>. The second file will contain the content
+                              starting from <span class="literal">00:05:50</span> until the end of the source files.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 Note that <span class="productname">mkvmerge</span>(1) only makes decisions about splitting at key frame
+                                 positions. This applies to both the start and the end of each range. So even
+                                 if an end timestamp is between two key frames <span class="productname">mkvmerge</span>(1) will continue
+                                 outputting the frames up to but excluding the following key frame.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              Keeping specific parts by specifying frame/field number ranges while
+                              discarding others.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Syntax: <span class="option">--split</span>
+                              <span class="literal">parts-frames:</span><span class="parameter">start1</span>-<span class="parameter">end1</span>[,[+]<span class="parameter">start2</span>-<span class="parameter">end2</span>[,[+]<span class="parameter">start3</span>-<span class="parameter">end3</span>...]]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Examples: 
+                              <ol>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts-frames:137-258,548-1211</span></p>
+                                 </li>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts-frames:733-912,+1592-2730</span></p>
+                                 </li>
+                                 
+                                 <li>
+                                    <p><span class="code">--split parts-frames:-430,2512-</span></p>
+                                 </li>
+                                 
+                              </ol>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The <span class="literal">parts-frames</span> mode tells <span class="productname">mkvmerge</span>(1) to keep certain
+                              ranges of frame/field numbers while discarding others. The ranges to keep
+                              have to be listed after the <span class="literal">parts-frames:</span> keyword and be
+                              separated by commas. A range itself consists of a start and an end
+                              frame/field number. Numbering starts at 1.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              If a start number is left out then it defaults to the previous range's end
+                              number. If there was no previous range then it defaults to the start of the
+                              file (see example 3).
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              If an end number is left out then it defaults to the end of the source files
+                              which basically tells <span class="productname">mkvmerge</span>(1) to keep the rest (see example 3).
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Normally each range will be written to a new file. This can be changed so
+                              that consecutive ranges are written to the same file. For that the user has
+                              to prefix the start number with a <span class="literal">+</span>. This tells
+                              <span class="productname">mkvmerge</span>(1) not to create a new file and instead append the range to the same
+                              file the previous range was written to. Timestamps will be adjusted so that
+                              there will be no gap in the output file even if there was a gap in the two
+                              ranges in the input file.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 Note that <span class="productname">mkvmerge</span>(1) only makes decisions about splitting at key frame
+                                 positions. This applies to both the start and the end of each range. So even
+                                 if an end frame/field number is between two key frames <span class="productname">mkvmerge</span>(1) will
+                                 continue outputting the frames up to but excluding the following key frame.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                           
+                           <p>
+                              In example 1 <span class="productname">mkvmerge</span>(1) will create two files. The first will contain the
+                              content starting from the first key frame at or after <span class="literal">137</span>
+                              up to but excluding the first key frame at or after
+                              <span class="literal">258</span>. The second file will contain the content starting
+                              from <span class="literal">548</span> until <span class="literal">1211</span>.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              In example 2 <span class="productname">mkvmerge</span>(1) will create only one file. This file will contain
+                              both the content starting from <span class="literal">733</span> until
+                              <span class="literal">912</span> and the content starting from <span class="literal">1592</span>
+                              until <span class="literal">2730</span>.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              In example 3 <span class="productname">mkvmerge</span>(1) will create two files. The first will contain the
+                              content from the start of the source files until <span class="literal">430</span>. The
+                              second file will contain the content starting from <span class="literal">2512</span>
+                              until the end of the source files.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              This mode considers only the first video track that is output.  If no video
+                              track is output no splitting will occur.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 The numbers given with this argument are interpreted based on the number of
+                                 <span class="productname">Matroska</span><sup>(tm)</sup> blocks that are output.  A single <span class="productname">Matroska</span><sup>(tm)</sup> block contains
+                                 either a full frame (for progressive content) or a single field (for
+                                 interlaced content).  mkvmerge does not distinguish between those two and
+                                 simply counts the number of blocks.  For example: If one wanted to split
+                                 after the 25th full frame with interlaced content one would have to use
+                                 <span class="literal">50</span> (two fields per full frame) as the split point.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              Splitting after specific frames/fields.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Syntax: <span class="option">--split</span>
+                              <span class="literal">frames:</span><span class="parameter">A</span>[,<span class="parameter">B</span>[,<span class="parameter">C</span>...]]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Example: <span class="code">--split frames:120,237,891</span>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The parameters <span class="parameter">A</span>, <span class="parameter">B</span>,
+                              <span class="parameter">C</span> etc must all be positive integers.  Numbering
+                              starts at 1.  The list of frame/field numbers is separated by commas.  After
+                              the input stream has reached the current split point's frame/field number a
+                              new file is created.  Then the next split point given in this list is used.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The '<span class="literal">frames:</span>' prefix must not be omitted.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              This mode considers only the first video track that is output.  If no video
+                              track is output no splitting will occur.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 The numbers given with this argument are interpreted based on the number of
+                                 <span class="productname">Matroska</span><sup>(tm)</sup> blocks that are output.  A single <span class="productname">Matroska</span><sup>(tm)</sup> block contains
+                                 either a full frame (for progressive content) or a single field (for
+                                 interlaced content).  mkvmerge does not distinguish between those two and
+                                 simply counts the number of blocks.  For example: If one wanted to split
+                                 after the 25th full frame with interlaced content one would have to use
+                                 <span class="literal">50</span> (two fields per full frame) as the split point.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              Splitting before specific chapters.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Syntax: <span class="option">--split</span> <span class="literal">chapters:all</span> or
+                              <span class="option">--split</span>
+                              <span class="literal">chapters:</span><span class="parameter">A</span>[,<span class="parameter">B</span>[,<span class="parameter">C</span>...]]
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              Example: <span class="code">--split chapters:5,8</span>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The parameters <span class="parameter">A</span>, <span class="parameter">B</span>,
+                              <span class="parameter">C</span> etc must all be positive integers.  Numbering
+                              starts at 1.  The list of chapter numbers is separated by commas.  Splitting
+                              will occur right before the first key frame whose timestamp is equal to or
+                              bigger than the start timestamp for the chapters whose numbers are listed.
+                              A chapter starting at 0s is never considered for splitting and discarded
+                              silently.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The keyword <span class="literal">all</span> can be used instead of listing all
+                              chapter numbers manually.
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              The '<span class="literal">chapters:</span>' prefix must not be omitted.
+                              
+                           </p>
+                           
+                           
+                           <div class="note">
+                              <p class="note-title">Note:</p>
+                              
+                              <p>
+                                 The <span class="productname">Matroska</span><sup>(tm)</sup> file format supports arbitrary deeply nested chapter
+                                 structures called 'edition entries' and 'chapter atoms'.  However, this mode
+                                 only considers the top-most level of chapters across all edition entries.
+                                 
+                              </p>
+                              
+                           </div>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        この分割モードでは、出力ファイル名は通常の操作とは異なる扱いを受けます。このモードでは出力ファイル名は<span class="function">printf</span>のように'<span class="code">%d</span>'というパターンを含むことができます。'<span class="literal">%02d</span>'のように幅指定を追加することもできます。出力ファイル名がこのパターンを含む場合、ファイル番号が適切なフォーマットで指定された位置に挿入されます。含まない場合、'<span class="code">-%03d</span>'というパターンがファイルの拡張子の直前に指定されたものとみなされ、例えば'<span class="code">-o
+                           output.mkv</span>'を指定した場合、'<span class="code">output-001.mkv</span>'等のファイル名に出力されます。拡張子が存在しない場合、'<span class="code">-%03d</span>'はファイル名の末尾に追加されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.link"><span class="option">--link</span></a></td>
+                  <td>
+                     
+                     <p>
+                        分割された出力ファイルを相互に紐付けします。詳細は<a href="#mkvmerge.file_linking">ファイル紐付け</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--link-to-previous</span> <span class="parameter">segment-UID</span></td>
+                  <td>
+                     
+                     <p>
+                        最初の出力ファイルを<span class="parameter">segment-UID</span>で指定したセグメントUIDに紐付けします。詳細は<a href="#mkvmerge.file_linking">ファイル紐付け</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If SID starts with = then its rest is interpreted as the name of a Matroska
+                        file whose segment UID is read and used.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--link-to-next</span> <span class="parameter">segment-UID</span></td>
+                  <td>
+                     
+                     <p>
+                        最後の出力ファイルを<span class="parameter">segment-UID</span>で指定したセグメントUIDに紐付けします。詳細は<a href="#mkvmerge.file_linking">ファイル紐付け</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If SID starts with = then its rest is interpreted as the name of a Matroska
+                        file whose segment UID is read and used.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--append-mode</span> <span class="parameter">mode</span></td>
+                  <td>
+                     
+                     <p>
+                        ファイルを結合する際に、タイムコードがどのように計算されるかを決定します。パラメータ<span class="parameter">mode</span>は'<span class="literal">file</span>'(デフォルト)、'<span class="literal">track</span>の二つの値を取り得ます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        mkvmergeが二つめのファイル(以後'<span class="literal">file2</span>'と呼ぶ)のトラック(以後'<span class="literal">track2_1</span>'と呼ぶ)を、一つめのファイル(以後'<span class="literal">file1</span>'と呼ぶ)のトラック(以後'<span class="literal">track1_1</span>'と呼ぶ)と結合する際、'<span class="literal">track2_1</span>'のタイムコードは一定量だけずらす必要があります。'<span class="literal">file</span>'モードでは、ずらす量は'<span class="literal">file1</span>'の中の'<span class="literal">track1_1</span>'以外のトラックを含む全てのトラックの中で一番大きいタイムコードの値になります。'<span class="literal">track</span>'モードでは、'<span class="literal">track1_1</span>'の中で一番大きいタイムコードの値になります。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        残念ながら、mkvmergeはどちらのモードが適切であるか判断はできません。デフォルトは'<span class="literal">file</span>'モードになっています。'<span class="literal">file</span>'モードは独立に作られたファイル同士を結合する際、例えば<span class="abbrev">AVI</span>又は<span class="abbrev">MP4</span>ファイルを結合する際に、通常はより上手く働きます。'<span class="literal">track</span>'モードは、例えば<span class="abbrev">VOB</span>や<span class="abbrev">EVO</span>ファイルなどの大きなファイルの一部がソースの場合より上手く働くかもしれません。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        字幕トラックは'<span class="literal">track</span>'モードが指定された場合でも、常に'<span class="literal">file</span>'が指定されたかのように処理されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--append-to</span>
+                     <span class="parameter">SFID1:STID1:DFID1:DTID1[,...]</span></td>
+                  <td>
+                     
+                     <p>
+                        このオプションは、どのトラックがどのトラックに追加されるのかを制御します。ファイルID、トラックID、追加するファイルID、追加するトラックIDの4つのIDで一組の指定を構成します。最初のファイルIDとトラックIDの組み合わせは、追加される対象のトラックを指定します。次のファイルIDとトラックIDは、そのトラックに追加されるトラックを指定します。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションが指定されない場合、標準のマッピングが使用されます。この場合、前のファイルのトラックに、現在のファイルのトラックIDが同じであるトラックが追加されます。これにより、動画が二つのファイルに分割されており、かつ同じトラック数とトラックIDを持つ場合、<span class="command">mkvmerge
+                           -o output.mkv part1.mkv +part2.mkv</span>のようにして簡単に結合することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">+</span></td>
+                  <td>
+                     
+                     <p>
+                        '+'一文字を指定すると、次に指定されたファイルは追加ではなく結合されます。'+'は次のファイル名の直前に置くこともできます。よって、次の2つのコマンドは等価です。
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvmerge -o full.mkv file1.mkv + file2.mkv
+$ mkvmerge -o full.mkv file1.mkv +file2.mkv</pre>
+                     </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">[</span> <span class="parameter">file1</span> <span class="parameter">file2</span>
+                     <span class="option">]</span></td>
+                  <td>
+                     
+                     <p>
+                        If multiple file names are contained in a pair of square brackets then the
+                        second and all following files will be appended to the first file named
+                        within the brackets.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        This is an alternative syntax to using '+' between the file names. Therefore
+                        the following two commands are equivalent:
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvmerge -o full.mkv file1.mkv + file2.mkv
+$ mkvmerge -o full.mkv '[' file1.mkv file2.mkv ']'</pre>
+                     </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.prevent_concatenation"><span class="option">=</span></a></td>
+                  <td>
+                     
+                     <p>
+                        通常mkvmergeは、入力ファイルと同じディレクトリにあり、同じ基底名を持ち、通し番号だけが異なるファイル（例：'VTS_01_1.VOB',
+                        'VTS_01_2.VOB', 'VTS_01_3.VOB'
+                        etc）を検索し、それらのファイル全てを、まるで1つの大きなファイルへと連結されているかのように扱います。この'='一文字のオプションを使うと、mkvmergeはそういった追加ファイルを検索しません。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        '='は次のファイル名の直前に置くこともできます。よって、次の2つのコマンドは等価です。
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvmerge -o full.mkv = file1.mkv
+$ mkvmerge -o full.mkv =file1.mkv</pre>
+                     </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.concatenation"><span class="option">(</span> <span class="parameter">file1</span> <span class="parameter">file2</span>
+                        <span class="option">)</span></a></td>
+                  <td>
+                     
+                     <p>
+                        複数のファイル名が括弧の中に含まれている場合、それらのファイルは、各ファイルの内容によって順々に構成される1つの大きなファイルへと連結されているかのように扱われます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        これは、例えばDVDのVOBファイルやMPEGトランスポートストリーム等のために使用することができます。通常AVIやMP4のようなスタンドアローンのファイルの場合ですが、各ファイルが自身のヘッダを一通り含んでいる場合には使用することができません。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        ファイル名を括弧で括るのは、<a href="#mkvmerge.description.prevent_concatenation">オプション=</a>で説明されているように同じ基底名を持つファイルを<span class="productname">mkvmerge</span>(1)に検索させない効果もあります。
+                        よって、これらの2つのコマンドラインは同値です：
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvmerge -o out.mkv = file.mkv
+$ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
+                     
+                     <p>
+                        いくつか注意事項があります：
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>
+                              開く括弧の後と閉じる括弧の前の両方に空白が必要です。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              括弧内の全てのパラメータはファイル名として解釈されます。よって、この論理上のファイルに適用される全てのオプションは、開く括弧の前に記述する必要があります。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              括弧を特殊文字として扱うシェルもあります。よって、上の例で示されているように括弧をエスケープするかクォーテーションで囲む必要があります。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         
+         <h2><a name="d4e2058">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.attachment_description"><span class="option">--attachment-description</span> <span class="parameter">description</span></a></td>
+                  <td>
+                     
+                     <p>
+                        次の添付ファイルを説明するプレーンテキストを指定します。次の<a href="#mkvmerge.description.attach_file">--attach-file</a>オプション又は<span class="option">--attach-file-once</span>オプションで指定した添付ファイルに適用されます。
+                        
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--attachment-mime-type</span> <span class="parameter">MIME type</span></td>
+                  <td>
+                     
+                     <p>
+                        次の添付ファイルの<span class="abbrev">MIME</span>タイプを指定します。<a href="#mkvmerge.description.attach_file">--attach-file</a>及び<a href="#mkvmerge.description.attach_file">--attach-file-once</a>オプションに適用されます。公式に認知されている<span class="abbrev">MIME</span>タイプは例えば<a href="http://www.iana.org/assignments/media-types/">IANAのホームページ</a>に掲載されています。<span class="abbrev">MIME</span>タイプは添付ファイルに必須です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--attachment-name</span> <span class="parameter">name</span></td>
+                  <td>
+                     
+                     <p>
+                        この添付ファイルの、出力ファイル内での名前を指定します。このオプションが指定されなかった場合、<a href="#mkvmerge.description.attach_file">--attach-file</a>または<a href="#mkvmerge.description.attach_file">--attach-file-once</a>で指定されたファイル名がそのまま使用されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.attach_file">
+                        <span class="option">--attach-file</span> <span class="parameter">file-name</span>,
+                        <span class="option">--attach-file-once</span> <span class="parameter">file-name</span>
+                        </a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Matroska</span><sup>(tm)</sup>ファイルの内部に添付ファイルを作成します。これらのオプションを使用するには、<span class="abbrev">MIME</span>タイプをこれらのオプションより前に指定しなければなりません。二つのオプションの違いは、出力ファイルを分割する際に、<span class="option">--attach-file</span>では全ての出力ファイルに添付されますが、<span class="option">--attach-file-once</span>では最初に作成されたファイルにしか添付されない点です。分割が使用されない場合、2つは等価です。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>で<span class="productname">Matroska</span><sup>(tm)</sup>ファイルから添付ファイルを抽出することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e2199">2.7. 各入力ファイルに指定できるオプション</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--audio-tracks</span>
+                     <span class="parameter">[!]n,m,...</span></td>
+                  <td>
+                     
+                     <p>
+                        オーディオトラック<span class="parameter">n</span>、<span class="parameter">m</span>…をコピーします。番号は<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるトラックIDです。これは単純にトラック番号を示すものではありません(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。デフォルト:
+                        全てのオーディオトラックをコピーします。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Instead of track IDs you can also provide ISO 639-2 language codes. This
+                        will only work for source files that provide language tags for their tracks.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Default: copy all tracks of this kind.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the IDs are prefixed with <span class="literal">!</span> then the meaning is
+                        reversed: copy all tracks of this kind but the ones listed after the
+                        <span class="literal">!</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-d</span>, <span class="option">--video-tracks</span>
+                     <span class="parameter">[!]n,m,...</span></td>
+                  <td>
+                     
+                     <p>
+                        ビデオトラック<span class="parameter">n</span>、<span class="parameter">m</span>…をコピーします。数字は<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるトラックIDです。これは単純にトラック番号を示すものではありません(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。 デフォルト:
+                        全てのビデオトラックをコピーします。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Instead of track IDs you can also provide ISO 639-2 language codes. This
+                        will only work for source files that provide language tags for their tracks.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the IDs are prefixed with <span class="literal">!</span> then the meaning is
+                        reversed: copy all tracks of this kind but the ones listed after the
+                        <span class="literal">!</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--subtitle-tracks</span>
+                     <span class="parameter">[!]n,m,...</span></td>
+                  <td>
+                     
+                     <p>
+                        字幕トラック<span class="parameter">n</span>、<span class="parameter">m</span>…をコピーします。番号は<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるトラックIDです。これは単純にトラック番号を示すものではありません(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。デフォルト:
+                        全ての字幕トラックをコピーします。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Instead of track IDs you can also provide ISO 639-2 language codes. This
+                        will only work for source files that provide language tags for their tracks.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the IDs are prefixed with <span class="literal">!</span> then the meaning is
+                        reversed: copy all tracks of this kind but the ones listed after the
+                        <span class="literal">!</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-b</span>, <span class="option">--button-tracks</span>
+                     <span class="parameter">[!]n,m,...</span></td>
+                  <td>
+                     
+                     <p>
+                        ボタントラック<span class="parameter">n</span>、<span class="parameter">m</span>…をコピーします。番号は<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるトラックIDです。これは単純にトラック番号を示すものではありません(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。デフォルト:
+                        全てのボタントラックをコピーします。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Instead of track IDs you can also provide ISO 639-2 language codes. This
+                        will only work for source files that provide language tags for their tracks.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the IDs are prefixed with <span class="literal">!</span> then the meaning is
+                        reversed: copy all tracks of this kind but the ones listed after the
+                        <span class="literal">!</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--track-tags</span>
+                     <span class="parameter">[!]n,m,...</span></td>
+                  <td>
+                     
+                     <p>
+                        トラック<span class="parameter">n</span>、<span class="parameter">m</span>…のタグをコピーします。番号は<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるトラックIDです。これは単純にトラック番号を示すものではありません(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。デフォルト:
+                        全てのトラックのタグをコピーします。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        もしIDにプレフィックス<span class="literal">!</span>がついていた場合は、意味が逆になります：<span class="literal">!</span>の後に列挙されたIDを除く全てをコピーします。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.attachments"><span class="option">-m</span>, <span class="option">--attachments</span>
+                        <span class="parameter">[!]n[:all|first],m[:all|first],...</span></a></td>
+                  <td>
+                     
+                     <p>
+                        IDが<span class="parameter">n</span>、<span class="parameter">m</span>…の添付ファイルを全ての、または最初の出力ファイルにコピーします。各IDの後ろには、'<span class="literal">:all</span>'(デフォルト)又は'<span class="literal">:first</span>'を指定することができます。出力ファイル分割が有効の場合、'<span class="literal">:all</span>'をつけたIDの添付ファイルは全ての出力ファイルにコピーされ、'<span class="literal">:first</span>'をつけた場合は最初の出力ファイルにのみコピーされます。分割が有効でない場合は二つは同等です。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルトでは、全ての添付ファイルが全ての出力ファイルにコピーされます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        もしIDにプレフィックス<span class="literal">!</span>がついていた場合は、意味が逆になります：<span class="literal">!</span>の後に列挙されたIDを除く全てをコピーします。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-A</span>, <span class="option">--no-audio</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからオーディオトラックをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-D</span>, <span class="option">--no-video</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからビデオトラックをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-S</span>, <span class="option">--no-subtitles</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルから字幕トラックをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-B</span>, <span class="option">--no-buttons</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからボタントラックをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-T</span>, <span class="option">--no-track-tags</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからオーディオトラックをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_chapters"><span class="option">--no-chapters</span></a></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからチャプタをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_attachments"><span class="option">-M</span>, <span class="option">--no-attachments</span></a></td>
+                  <td>
+                     
+                     <p>
+                        このファイルから添付ファイルをコピーしません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--no-global-tags</span></td>
+                  <td>
+                     
+                     <p>
+                        このファイルからグローバルタグを引き継ぎません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chapter-charset</span> <span class="parameter">character-set</span></td>
+                  <td>
+                     
+                     <p>
+                        ソースファイルに含まれるチャプタ情報ををUTF-8に変換する際の文字コードを指定します。<span class="productname">mkvmerge</span>(1)の文字コード変換については、<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chapter-language</span> <span class="parameter">language-code</span></td>
+                  <td>
+                     
+                     <p>
+                        各チャプタエントリのISO639-2言語コードを指定します。このオプションはソースファイルがチャプタは含みますが、チャプタの言語情報を含まない場合(例:MP4、OGMファイル)に使用されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-y</span>, <span class="option">--sync</span>
+                     <span class="parameter">TID:d[,o[/p]]</span></td>
+                  <td>
+                     
+                     <p>
+                        トラックIDが<span class="parameter">TID</span>のトラックのタイムコードを<span class="parameter">d</span>ミリ秒だけ調整します。トラックIDは<a href="#mkvmerge.description.identify">--identify</a>オプションで得られるものと同じです(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照してください)。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>:
+                        タイムスタンプを<span class="parameter">o</span>/<span class="parameter">p</span>の割合で調整し、リニアドリフトを修正します。<span class="parameter">p</span>が省略された場合、デフォルトで1が使用されます。<span class="parameter">o</span>及び<span class="parameter">p</span>には小数を指定できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルト: マニュアル同期修正は行われません(<span class="parameter">d</span> = <span class="constant">0</span>
+                        かつ<span class="parameter">o</span> = <span class="constant">1.0</span>の場合と同じです)。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.cues"><span class="option">--cues</span> <span class="parameter">TID:none|iframes|all</span></a></td>
+                  <td>
+                     
+                     <p>
+                        指定されたトラックについて、どのトラックCUE(インデックス)エントリが作成されるのかを指定します(<a href="#mkvmerge.track_ids">トラックID</a>のセクションを参照)。'<span class="literal">none</span>'はCUEエントリを作成しません。'<span class="literal">iframes</span>は前方参照及び後方参照を含まないブロック(ビデオトラックでは
+                        I
+                        frame)のみがCUEシートに挿入されます。'<span class="literal">all</span>'では<span class="productname">mkvmerge</span>(1)は全てのブロックに対してCUEエントリを作成し、非常に大きなファイルを出力するでしょう。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The default is '<span class="literal">iframes</span>' for video and subtitle tracks
+                        and '<span class="literal">none</span>' for audio tracks.  See also option <a href="#mkvmerge.description.no_cues">--no-cues</a>
+                        which inhibits the creation of cue entries regardless of the
+                        <span class="option">--cues</span> options used.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--default-track</span>
+                     <span class="parameter">TID[:bool]</span></td>
+                  <td>
+                     
+                     <p>
+                        省略可能な引数<span class="parameter">bool</span>が指定されなかった場合、指定されたトラックに'デフォルト'フラグを付与します(<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照)。ユーザが明示的にトラックを選択しなかった場合、プレイヤーは'デフォルト'フラグの付いたトラックを優先的に再生します。各トラックの種類(オーディオ、ビデオ、字幕、ボタン)ごとに、一つだけのトラックにだけ'デフォルト'フラグは付与できます。もし、デフォルトフラグをどのトラックにも付けたくない場合は、全てのトラックで<span class="parameter">bool</span>を<span class="constant">0</span>にすれば可能です。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--forced-track</span>
+                     <span class="parameter">TID[:bool]</span></td>
+                  <td>
+                     
+                     <p>
+                        省略可能な引数<span class="parameter">bool</span>が指定されなかった場合、指定されたトラックに'強制表示'フラグを付与します（<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照。）プレーヤはこのフラグが<span class="constant">1</span>に設定されている全てのトラックを再生しなければなりません。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--blockadd</span> <span class="parameter">TID:level</span></td>
+                  <td>
+                     
+                     <p>
+                        指定したトラックで、レベル<span class="parameter">level</span>までの<span class="classname">BlockAddition</span>を保持します。デフォルトでは全て保持します。このオプションはWAVPACK4などの特定のコーデックにのみ有効です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.track_name"><span class="option">--track-name</span> <span class="parameter">TID:name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        指定したトラックのトラック名を<span class="parameter">name</span>にします(<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照)。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.language"><span class="option">--language</span> <span class="parameter">TID:language</span></a></td>
+                  <td>
+                     
+                     <p>
+                        指定したトラックの言語を設定します(<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照)。ISO639-2 言語コード及び
+                        ISO639-1 国別コードが使用できます。国別コードは言語コードへ自動的に変換されます。ISO639-2 に含まれる全てのコードは<a href="#mkvmerge.description.list_languages">--list-languages</a>オプションで一覧できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.tags"><span class="option">-t</span>, <span class="option">--tags</span>
+                        <span class="parameter">TID:file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="parameter">file-name</span>で指定したファイルからグローバルタグを読み込みます。詳細は<a href="#mkvmerge.tags">タグ</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--aac-is-sbr</span>
+                     <span class="parameter">TID[:0|1]</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">mkvmerge</span>(1)にIDが<span class="parameter">TID</span>のトラックが<span class="abbrev">SBR AAC</span>
+                        (別名<span class="abbrev">HE-AAC</span>又は<span class="abbrev">AAC+</span>)であることを教えます。このオプションは、 a)
+                        ソースファイルが(<span class="productname">Matroska</span><sup>(tm)</sup>ファイルでは<em>なく</em>)<span class="abbrev">AAC</span>ファイルでありかつ
+                        b) <span class="abbrev">AAC</span>ファイルが<span class="abbrev">SBR
+                           AAC</span>データを含む場合に必要です。このスイッチが存在する理由は、通常の<span class="abbrev">AAC</span>ファイルと<span class="abbrev">SBR
+                           AAC</span>ファイルを自動的に区別することは、<span class="abbrev">AAC</span>フレームを完全にデコードしなければ技術的に不可能であるためです。<span class="abbrev">AAC</span>はいくつかの特許問題を抱えているため、<span class="productname">mkvmerge</span>(1)は将来的にもこのデコードステージを含むことはありません。よって、<span class="abbrev">SBR
+                           AAC</span>にはこのスイッチが必須となります。このスイッチが指定されなかった場合、出力ファイルは正常に再生ができなくなるか、完全に再生不能になるでしょう。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        ソースファイルが<span class="productname">Matroska</span><sup>(tm)</sup>ファイルの場合、<span class="classname">CodecID</span>により<span class="abbrev">SBR
+                           AAC</span>を検知できます。しかし、<span class="classname">CodecID</span>が不正な場合、このスイッチで修正することができます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        もし、mkvmergeが<span class="abbrev">AAC</span>ファイルを間違って<span class="abbrev">SBR</span>と認識してしまった場合、トラックIDに'<span class="literal">:0</span>'を指定できます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--reduce-to-core</span> <span class="parameter">TID</span></td>
+                  <td>
+                     
+                     <p>
+                        Some audio codecs have a lossy core and optional extensions that implement
+                        lossless decoding. This option tells <span class="productname">mkvmerge</span>(1) to only copy the core but
+                        not the extensions. By default <span class="productname">mkvmerge</span>(1) copies both the core and the
+                        extensions.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Currently only <span class="abbrev">DTS</span> tracks are affected by this
+                        option. TrueHD tracks that contain an embedded <span class="abbrev">AC-3</span> core
+                        are instead presented as two separate tracks for which the user can select
+                        which track to copy. For <span class="abbrev">DTS</span> such a scheme would not work
+                        as the HD extensions cannot be decoded by themselves – unlike the TrueHD
+                        data.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--remove-dialog-normalization-gain</span>
+                     <span class="parameter">TID</span></td>
+                  <td>
+                     
+                     <p>
+                        Some audio codecs contain header fields that tell the decoder or player to
+                        apply a (usually negative) gain for dialog normalization. This option tells
+                        <span class="productname">mkvmerge</span>(1) to remove or minimize that gain by modifying the corresponding
+                        header fields.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Currently only <span class="abbrev">AC-3</span>, <span class="abbrev">DTS</span> and
+                        <span class="abbrev">TrueHD</span> tracks are affected by this option.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--timestamps</span> <span class="parameter">TID:file-name</span></td>
+                  <td>
+                     
+                     <p>
+                        指定したトラックIDのタイムコードを、<span class="parameter">file-name</span>から読み込みます。これらのタイムコードは<span class="productname">mkvmerge</span>(1)が通常計算するタイムコードを強制的に上書きします。<a href="#mkvmerge.external_timestamp_files">外部タイムコードファイル</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.default_duration"><span class="option">--default-duration</span> <span class="parameter">TID:x</span></a></td>
+                  <td>
+                     
+                     <p>
+                        指定したトラックの default duration を強制的に設定します。トラックのトラックのタイムコードも、 default duration
+                        に合うように変更されます。引数<span class="parameter">x</span>は'<span class="literal">s</span>'、'<span class="literal">ms</span>'、'<span class="literal">us</span>'、'<span class="literal">ns</span>'、'<span class="literal">fps</span>'、<span class="literal">p</span>'。'<span class="literal">i</span>のうちどれか一つを後置されていなければなりません。それぞれ、
+                        default duration
+                        は秒、ミリ秒、マイクロ秒、ナノ秒、'fps'、1秒あたりのプログレッシブフレーム、1秒あたりのインターレスのフレーム数単位で指定されます。<span class="parameter">x</span>は小数または分数で指定できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルトのフレーム持続時間が指定されなかった場合は、mkvmergeはそのトラックのデフォルトのフレーム持続時間を、コンテナと、AVC/h.264やMPEG-2のような特定のトラックタイプの場合はエンコードされたビットストリームから取得しようと試みます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは、外部タイムコードファイルを使用せずにビデオトラックの<span class="abbrev">FPS</span>を変更するのにも使えます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.fix_bitstream_timing_information"><span class="option">--fix-bitstream-timing-information</span>
+                        <span class="parameter">TID[:0|1]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Normally <span class="productname">mkvmerge</span>(1) does not change the timing information (frame/field
+                        rate) stored in the video bitstream. With this option that information is
+                        adjusted to match the container timing information. The container timing
+                        information can come from various sources: from the command line (see option
+                        <a href="#mkvmerge.description.default_duration">--default-duration</a>),
+                        the source container or derived from the bitstream.
+                        
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p>This has only been implemented for AVC/h.264 video tracks so far.</p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--nalu-size-length</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">NALU</span>サイズ長を<span class="parameter">n</span>バイトに強制設定します。このパラメータは<span class="foreignphrase">AVC/h.264</span>エレメンタリストリームパケタイザが使用される場合にのみ使用されます。何も指定しなかった時のデフォルト値は4バイトですが、65535バイト以上のフレームやスライスが含まれていないファイルも存在します。そのようなファイルでは、このパラメータを使用してNALUサイズ長を2に減らすことができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.compression"><span class="option">--compression</span> <span class="parameter">TID:n</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Selects the compression method to be used for the track. Note that the
+                        player also has to support this method. Valid values are
+                        '<span class="literal">none</span>', '<span class="literal">zlib</span>' and
+                        '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>'.
+                        
+                     </p>
+                     
+                     <p>
+                        '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>'圧縮法は、
+                        <span class="abbrev">MPEG4</span> part2 ビデオトラックにのみ適用できる、'<span class="foreignphrase">header
+                           removal</span>'と呼ばれる特殊な圧縮法です。
+                        
+                     </p>
+                     
+                     <p>
+                        The default for some subtitle types is '<span class="literal">zlib</span>'
+                        compression. This compression method is also the one that most if not all
+                        playback applications support. Support for other compression methods other
+                        than '<span class="literal">none</span>' is not assured.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e3318">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-f</span>, <span class="option">--fourcc</span>
+                     <span class="parameter">TID:FourCC</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="classname">FourCC</span>を指定した値に強制設定します。ビデオトラックが'<span class="foreignphrase">MS互換モード</span>'である場合にのみ有効です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.display_dimensions"><span class="option">--display-dimensions</span>
+                        <span class="parameter">TID:widthxheight</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Matroska</span><sup>(tm)</sup>ファイルは再生時の画像スケールを決定するための二つの値を持ちます。表示幅と表示高さです。これらの値をこのオプションで、例えば'<span class="literal">1:640x480</span>'のように指定できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        これらの値を設定する別の方法として、<a href="#mkvmerge.description.aspect_ratio">--aspect-ratio</a>又は<a href="#mkvmerge.description.aspect_ratio_factor">--aspect-ratio-factor</a>オプションが使用できます(下記参照)。これらのオプションは互いに排他的です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.aspect_ratio"><span class="option">--aspect-ratio</span>
+                        <span class="parameter">TID:ratio|width/height</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">Matroska</span><sup>(tm)</sup>ファイルは再生時の画像スケールを決定するための二つの値を持ちます。表示幅と表示高さです。これらの値をこのオプションで、例えば'<span class="literal">1:640x480</span>'のように指定できます。このオプションを指定すると、<span class="productname">mkvmerge</span>(1)は自動的に表示幅及び表示高さを、画像の元の幅と高さ、そして指定されたアスペクト比から自動的に計算します。アスペクト比は、小数<span class="parameter">ratio</span>または分数'<span class="parameter">width</span>/<span class="parameter">height</span>'(例:
+                        '<span class="literal">16/9</span>')の形式で指定できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        これらの値を設定する別の方法として、<a href="#mkvmerge.description.aspect_ratio_factor">--aspect-ratio-factor</a>又は<a href="#mkvmerge.description.display_dimensions">--display-dimensions</a>オプションが使用できます(上記及び下記参照)。これらのオプションは互いに排他的です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.aspect_ratio_factor"><span class="option">--aspect-ratio-factor</span> <span class="parameter">TID:factor|n/d</span></a></td>
+                  <td>
+                     
+                     <p>
+                        アスペクト比を設定するもうひとつの方法は、元のアスペクト比からの係数を指定する方法です。元のアスペクト比に、<span class="parameter">factor</span>を乗じたものが新しいアスペクト比として使用されます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        これらの値を設定する別の方法として、<a href="#mkvmerge.description.aspect_ratio">--aspect-ratio</a>又は<a href="#mkvmerge.description.display_dimensions">--display-dimensions</a>オプションが使用できます(上記参照)。これらのオプションは互いに排他的です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cropping</span> <span class="parameter">TID:left,top,right,bottom</span></td>
+                  <td>
+                     
+                     <p>
+                        ビデオトラックのピクセルクロッピングのパラメータを指定した値に設定します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--colour-matrix</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the matrix coefficients of the video used to derive luma and chroma
+                        values from red, green and blue color primaries. The parameter
+                        <span class="parameter">n</span> is an integer rangeing from <span class="constant">0</span>
+                        and <span class="constant">10</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Valid values and their meaning are:
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="constant">0</span>: GBR, <span class="constant">1</span>: BT709,
+                        <span class="constant">2</span>: unspecified, <span class="constant">3</span>: reserved,
+                        <span class="constant">4</span>: FCC, <span class="constant">5</span>: BT470BG,
+                        <span class="constant">6</span>: SMPTE 170M, <span class="constant">7</span>: SMPTE 240M,
+                        <span class="constant">8</span>: YCOCG, <span class="constant">9</span>: BT2020 non-constant
+                        luminance, <span class="constant">10</span>: BT2020 constant luminance
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--colour-bits-per-channel</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the number of coded bits for a colour channel. A value of
+                        <span class="constant">0</span> indicates that the number of bits is unspecified.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chroma-subsample</span> <span class="parameter">TID:hori,vert</span></td>
+                  <td>
+                     
+                     <p>
+                        The amount of pixels to remove in the Cr and Cb channels for every pixel not
+                        removed horizontally/vertically.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Example: For video with 4:2:0 chroma subsampling, the parameter should be
+                        set to
+                        <span class="code"><span class="parameter">TID</span>:<span class="constant">1</span>,<span class="constant">1</span></span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cb-subsample</span> <span class="parameter">TID:hori,vert</span></td>
+                  <td>
+                     
+                     <p>
+                        The amount of pixels to remove in the Cb channel for every pixel not removed
+                        horizontally/vertically. This is additive with
+                        <span class="option">--chroma-subsample</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Example: For video with 4:2:1 chroma subsampling, the parameter
+                        <span class="option">--chroma-subsample</span> should be set to
+                        <span class="code"><span class="parameter">TID</span>:<span class="constant">1</span>,<span class="constant">0</span></span>
+                        and Cb-subsample should be set to
+                        <span class="code"><span class="parameter">TID</span>:<span class="constant">1</span>,<span class="constant">0</span></span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chroma-siting</span> <span class="parameter">TID:hori,vert</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets how chroma is sited horizontally/vertically (<span class="constant">0</span>:
+                        unspecified, <span class="constant">1</span>: top collocated, <span class="constant">2</span>:
+                        half).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--colour-range</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the clipping of the color ranges (<span class="constant">0</span>: unspecified,
+                        <span class="constant">1</span>: broadcast range, <span class="constant">2</span>: full range
+                        (no clipping), <span class="constant">3</span>: defined by
+                        MatrixCoefficients/TransferCharacteristics).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--colour-transfer-characteristics</span>
+                     <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        The transfer characteristics of the video.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Valid values and their meaning are:
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="constant">0</span>: reserved, <span class="constant">1</span>: ITU-R BT.709,
+                        <span class="constant">2</span>: unspecified, <span class="constant">3</span>: reserved,
+                        <span class="constant">4</span>: gamma 2.2 curve, <span class="constant">5</span>: gamma 2.8
+                        curve, <span class="constant">6</span>: SMPTE 170M, <span class="constant">7</span>: SMPTE
+                        240M, <span class="constant">8</span>: linear, <span class="constant">9</span>: log,
+                        <span class="constant">10</span>: log sqrt, <span class="constant">11</span>: IEC 61966-2-4,
+                        <span class="constant">12</span>: ITU-R BT.1361 extended colour gamut,
+                        <span class="constant">13</span>: IEC 61966-2-1, <span class="constant">14</span>: ITU-R
+                        BT.2020 10 bit, <span class="constant">15</span>: ITU-R BT.2020 12 bit,
+                        <span class="constant">16</span>: SMPTE ST 2084, <span class="constant">17</span>: SMPTE ST
+                        428-1; <span class="constant">18</span>: ARIB STD-B67 (HLG)
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--colour-primaries</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the colour primaries of the video.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Valid values and their meaning are:
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="constant">0</span>: reserved, <span class="constant">1</span>: ITU-R BT.709,
+                        <span class="constant">2</span>: unspecified, <span class="constant">3</span>: reserved,
+                        <span class="constant">4</span>: ITU-R BT.470M, <span class="constant">5</span>: ITU-R
+                        BT.470BG, <span class="constant">6</span>: SMPTE 170M, <span class="constant">7</span>: SMPTE
+                        240M, <span class="constant">8</span>: FILM, <span class="constant">9</span>: ITU-R BT.2020,
+                        <span class="constant">10</span>: SMPTE ST 428-1, <span class="constant">22</span>: JEDEC P22
+                        phosphors
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--max-content-light</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the maximum brightness of a single pixel (Maximum Content Light Level)
+                        in candelas per square meter (cd/m²). The value of <span class="parameter">n</span>
+                        should be a non-negtive integer.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--max-frame-light</span> <span class="parameter">TID:n</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the maximum brightness of a single full frame (Maximum Frame-Average
+                        Light Level) in candelas per square meter (cd/m²). The value of
+                        <span class="parameter">n</span> should be a non-negtive integer.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--chromaticity-coordinates</span>
+                     <span class="parameter">TID:red-x,red-y,green-x,green-y,blue-x,blue-y</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the red/green/blue chromaticity coordinates as defined by CIE 1931.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--white-colour-coordinates</span> <span class="parameter">TID:x,y</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the white colour chromaticity coordinates as defined by CIE 1931.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--max-luminance</span> <span class="parameter">TID:float</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the maximum luminance in candelas per square meter (cd/m²). The value
+                        should be less than 9999.99.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--min-luminance</span> <span class="parameter">TID:float</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the minimum luminance in candelas per square meter (cd/m²). The value
+                        should be less than 999.9999.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--projection-type</span> <span class="parameter">TID:method</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets the video projection method used. Valid values are 0 (rectangular
+                        projection), 1 (equirectangular projection), 2 (cubemap projection) and 3
+                        (mesh projection).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--projection-private</span> <span class="parameter">TID:data</span></td>
+                  <td>
+                     
+                     <p>
+                        Sets private data that only applies to a specific projection. Data must be
+                        given as hex numbers with or without the "0x" prefix, with or
+                        without spaces.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--projection-pose-yaw</span> <span class="parameter">TID:float</span></td>
+                  <td>
+                     
+                     <p>
+                        Specifies a yaw rotation to the projection.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--projection-pose-pitch</span> <span class="parameter">TID:float</span></td>
+                  <td>
+                     
+                     <p>
+                        Specifies a pitch rotation to the projection.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--projection-pose-roll</span> <span class="parameter">TID:float</span></td>
+                  <td>
+                     
+                     <p>
+                        Specifies a roll rotation to the projection.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.field_order"><span class="option">--field-order</span> <span class="parameter">TID:n</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the field order for the video track with the track ID
+                        <span class="parameter">TID</span>.  The order must be one of the following numbers:
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="constant">0</span>: progressive; <span class="constant">1</span>: interlaced with
+                        top field displayed first and top field stored first;
+                        <span class="constant">2</span>: undetermined field order; <span class="constant">6</span>:
+                        interlaced with bottom field displayed first and bottom field stored first;
+                        <span class="constant">9</span>: interlaced with bottom field displayed first and top
+                        field stored first; <span class="constant">14</span>: interlaced with top field
+                        displayed first and bottom field stored first
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--stereo-mode</span> <span class="parameter">TID:n|keyword</span></td>
+                  <td>
+                     
+                     <p>
+                        トラックIDが<span class="parameter">TID</span>のビデオトラックのステレオモードを設定します。ステレオモードは、<span class="constant">0</span>～<span class="constant">14</span>の数字<span class="parameter">n</span>、または以下のキーワードのうちの1つを指定することができます：
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        '<span class="literal">mono</span>', '<span class="literal">side_by_side_left_first</span>',
+                        '<span class="literal">top_bottom_right_first</span>',
+                        '<span class="literal">top_bottom_left_first</span>',
+                        '<span class="literal">checkerboard_right_first</span>',
+                        '<span class="literal">checkerboard_left_first</span>',
+                        '<span class="literal">row_interleaved_right_first</span>',
+                        '<span class="literal">row_interleaved_left_first</span>',
+                        '<span class="literal">column_interleaved_right_first</span>',
+                        '<span class="literal">column_interleaved_left_first</span>',
+                        '<span class="literal">anaglyph_cyan_red</span>',
+                        '<span class="literal">side_by_side_right_first</span>',
+                        '<span class="literal">anaglyph_green_magenta</span>',
+                        '<span class="literal">both_eyes_laced_left_first</span>',
+                        '<span class="literal">both_eyes_laced_right_first</span>'.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e4142">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.sub_charset"><span class="option">--sub-charset</span> <span class="parameter">TID:character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        指定したIDの示すトラックのUTF-8字幕をUTF-8へ変換する際の文字コードを指定します。デフォルトでは、現在のロケールの設定が使用されます。<span class="productname">mkvmerge</span>(1)の文字コード変換については、<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="d4e4179">2.10. その他のオプション</a></h2>
+         
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.identify"><span class="option">-i</span>, <span class="option">--identify</span>
+                        <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">mkvmerge</span>(1)に、単一のファイルを探査してその種類と、ファイルに含まれるトラック及びそのトラックIDを表示させます。このオプションを指定した場合、他に指定できるのはファイル名のみです。
+                        
+                     </p>
+                     
+                     
+                     <p>The output format used for the result can be changed with the option <a href="#mkvmerge.description.identification_format">--identification-format</a>.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.identify_json"><span class="option">-J</span> <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        This is a convenient alias for "<span class="literal">--identification-format json
+                           --identify file-name</span>".
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.identification_format"><span class="option">-F</span>, <span class="option">--identification-format</span>
+                        <span class="parameter">format</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Determines the output format used by the <a href="#mkvmerge.description.identify">--identify
+                           option</a>. The following formats are supported: <span class="literal">text</span>
+                        (the default if this option isn't used) and <span class="literal">json</span>.
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The <span class="literal">text</span> format is short and human-readable. It consists
+                              of one line per item found (container, tracks, attachments etc.).
+                           </p>
+                           
+                           
+                           <p>This format is not meant to be parsed. The output will be translated into
+                              the language <span class="productname">mkvmerge</span>(1) uses (see also <a href="#mkvmerge.description.ui_language">--ui-language</a>).
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>
+                              The <span class="literal">json</span> format outputs a machine-readable JSON
+                              representation. This format follows the JSON schema described in the
+                              following file:
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              
+                           </p>
+                           
+                           
+                           <p>
+                              All versions of the JSON schema are available both online and in the
+                              released source code archives.
+                              
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.probe_range_percentage"><span class="option">--probe-range-percentage</span> <span class="parameter">percentage</span></a></td>
+                  <td>
+                     
+                     <p>
+                        File types such as MPEG program and transport streams
+                        (<span class="literal">.vob</span>, <span class="literal">.m2ts</span>) require parsing a
+                        certain amount of data in order to detect all tracks contained in the file.
+                        This amount is 0.3% of the source file's size or 10 MB, whichever is higher.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If tracks are known to be present but not found then the percentage to probe
+                        can be changed with this option.  The minimum of 10 MB is built-in and
+                        cannot be changed.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-l</span>, <span class="option">--list-types</span></td>
+                  <td>
+                     
+                     <p>
+                        サポートされている入力ファイルの種類を列挙します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.list_languages"><span class="option">--list-languages</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <a href="#mkvmerge.description.language">--language</a>オプションに指定できる、ISO639-2言語コードの一覧を出力します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--priority</span> <span class="parameter">priority</span></td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">mkvmerge</span>(1)を実行する際のプロセス優先度を指定します。指定できるのは'<span class="literal">lowest</span>'、'<span class="literal">lower</span>'、'<span class="literal">normal</span>'、'<span class="literal">higher</span>'、及び'<span class="literal">highest</span>'です。指定されない場合、'<span class="literal">normal</span>'が使用されます。UNIX系のシステムでは、<span class="productname">mkvmerge</span>(1)は<a href="http://linux.die.net/man/2/nice"><span class="productname">nice</span>(2)</a>関数を使用するので、'<span class="literal">higher</span>'及び'<span class="literal">highest</span>'はスーパーユーザのみが使用可能です。Windowsでは全てのユーザが全優先度を使用可能です。
+                        
+                     </p>
+                     
+                     
+                     <p>Selecting '<span class="literal">lowest</span>' also causes <span class="productname">mkvmerge</span>(1) to select idle
+                        I/O priority in addition to the lowest possible process priority.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        コマンドライン文字列の文字コードを指定します。デフォルトは、システムの現在のロケールの文字コードになります。この設定は<a href="#mkvmerge.description.title">--title</a>、<a href="#mkvmerge.description.track_name">--track-name</a>、及び<a href="#mkvmerge.description.attachment_description">--attachment-description</a>の三つのオプションの引数に影響します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        出力する文字コードを指定します。デフォルトは、システムの現在のロケールの文字コードになります。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        全てのメッセージをコンソールではなく<span class="parameter">file-name</span>で指定したファイルに書き出します。出力リダイレクトによっても同じことが簡単にできますが、このオプションが必要な場合もあります。ターミナルがファイルに書き込む前に出力を処理してしまう場合などです。<a href="#mkvmerge.description.output_charset">--output-charset</a>によって指定された文字コードは尊重されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Forces the translations for the language <span class="parameter">code</span> to be
+                        used (e.g.  '<span class="literal">de_DE</span>' for the German
+                        translations). Entering '<span class="literal">list</span>' as the
+                        <span class="parameter">code</span> will cause the program to output a list of
+                        available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td>
+                     
+                     <p>
+                        特定の機能のデバッグをオンにします。このオプションは開発者にのみ有用です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td>
+                     
+                     <p>
+                        実験的機能をオンにします。利用可能な機能のリストは<span class="command">mkvmerge --engage
+                           list</span>で得られます。これらの機能は通常の状況で使用されることは意図されていません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turns on GUI mode. In this mode specially-formatted lines may be output that
+                        can tell a controlling GUI what's happening. These messages follow the
+                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
+                        key/value pairs as in
+                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
+                        messages nor the keys are ever translated and always output in English.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        ファイル<span class="parameter">options-file</span>から追加のコマンドライン引数を読み込みます。詳細は<a href="#mkvmerge.option_files">オプションファイル</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--capabilities</span></td>
+                  <td>
+                     
+                     <p>
+                        コンパイル時に組込まれたオプション機能を一覧表示して終了します。出力の一行目はバージョン情報になります。以降の全ての行は、その機能がコンパイルされていることを示す一単語のみを含みます。オプション機能の一覧を下に示します。
+                        
+                     </p>
+                     
+                     
+                     <ul>
+                        
+                        <li>
+                           
+                           <p>
+                              '<span class="literal">FLAC</span>' -- 生<span class="abbrev">FLAC</span>ファイルの読み込み及び、他のコンテナ(例:
+                              <span class="productname">Ogg</span><sup>(tm)</sup>、<span class="productname">Matroska</span><sup>(tm)</sup>など)に格納された<span class="abbrev">FLAC</span>トラックの処理。
+                              
+                           </p>
+                           
+                        </li>
+                        
+                     </ul>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        コマンド書式情報を出力して終了します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        バージョン情報を出力して終了します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <h1><a name="mkvmerge.usage">3. 使用法</a></h1>
+         
+         
+         <p>
+            各ファイルについて、ユーザは<span class="productname">mkvmerge</span>(1)が取り出すべきトラックを選択できます。取り出されたトラックは、すべて<span class="option">-o</span>で指定されたファイルに書き出されます。既知の(サポート済の)入力ファイルフォーマットは<span class="option">-l</span>オプションで取得できます。
+            
+         </p>
+         
+         
+         <div class="important">
+            <p class="important-title">Important:</p>
+            
+            <p>
+               コマンドラインオプションの順番は重要です。もしあなたが初心者なら、<a href="#mkvmerge.option_order">"オプションの順番"</a>セクションを読んで下さい。
+               
+            </p>
+            
+         </div>
+         
+         <h1><a name="mkvmerge.option_order">4. オプションの順番</a></h1>
+         
+         
+         
+         <p>
+            いくつかのオプションでは、入力する順番が重要になります。オプションは2つに分類されます：
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>
+                  プログラム全体に影響し、どの入力ファイルにも関連付けられていないオプション。例えば、<span class="option">--command-line-charset</span>、<span class="option">--output</span>、<span class="option">--title</span>などです。これらのオプションは、コマンドラインのどこに書いても構いません。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  1つの入力ファイルのみ、もしくは入力ファイル中の1つのトラックのみに影響するオプション。これらのオプションは全て、コマンドラインでその後ろに続く入力ファイルに適用されます。同じ入力ファイル（または同じ入力ファイル中のトラック）に適用される全てのオプションは、その入力ファイルのファイル名の前に書きさえすれば、どんな順番でも構いません。1つの入力ファイルに適用されるオプションの例を挙げると、<span class="option">--no-chapters</span>や<span class="option">--chapter-charset</span>などがあります。1つのトラックのみに適用されるオプションには、例えば<span class="option">--default-duration</span>や<span class="option">--language</span>があります。
+                  
+               </p>
+               
+            </li>
+            
+         </ol>
+         
+         
+         <p>
+            オプションは左から右へと処理されます。もし同じスコープ内に1つのオプションが2回以上出てきた場合には、最後のものが使われます。よって、次の例ではタイトルは"Something
+            else"に設定されます。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o output.mkv --title 'This and that' input.avi --title 'Something else'</pre>
+         
+         <p>
+            次の例は、違うスコープ内で使われているので<span class="option">--language</span>オプションを2回使ってもよいということを示しています。それらは同じトラックIDに適用されますが、違う入力ファイルに適用されるので違うスコープを持っているのです。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o output.mkv --language 0:fre français.ogg --language 0:deu deutsch.ogg</pre>
+         <h1><a name="mkvmerge.examples">5. 例</a></h1>
+         
+         
+         <p>
+            あなたは、 MyMovie.avi というファイルを持っていて、またオーディオトラックが別の、例えば
+            '<span class="literal">MyMovie.wav</span>'というファイルに入っているとします。あなたは、まず音声を<span class="productname">OggVorbis</span><sup>(tm)</sup>でエンコードしたいと思います。
+            
+         </p>
+         
+         <pre class="screen">$ oggenc -q4 -oMyMovie.ogg MyMovie.wav</pre>
+         
+         <p>
+            数分後、ビデオとオーディオを結合できます。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o MyMovie-with-sound.mkv MyMovie.avi MyMovie.ogg</pre>
+         
+         <p>
+            <span class="abbrev">AVI</span>ファイルが既にオーディオトラックを持っていた場合(そしてそのフォーマットを<span class="productname">mkvmerge</span>(1)がサポートしていた場合)、そのトラックもコピーされます。これを避けるには、下のようにしてください。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o MyMovie-with-sound.mkv -A MyMovie.avi MyMovie.ogg</pre>
+         
+         <p>
+            ちょっと考えて、あなたはもうひとつのオーディオトラック(例えばオーディオコメンタリや吹替えなど)を'<span class="literal">MyMovie-add-audio.wav</span>にリッピングしました。再びエンコードして、新しいファイルにまとめます。
+            
+         </p>
+         
+         <pre class="screen">$ oggenc -q4 -oMyMovie-add-audio.ogg MyMovie-add-audio.wav
+$ mkvmerge -o MM-complete.mkv MyMovie-with-sound.mkv MyMovie-add-audio.ogg</pre>
+         
+         <p>
+            同じことは、次のようにしても可能です。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o MM-complete.mkv -A MyMovie.avi MyMovie.ogg MyMovie-add-audio.ogg</pre>
+         
+         <p>
+            あとは<span class="productname">mplayer</span><sup>(tm)</sup>を立ち上げて動画を楽しむだけです。もし、複数のオーディオトラック(もしかするとビデオトラックも)がある場合は、再生するトラックを'<span class="option">-vid</span>'と'<span class="option">-aid</span>'オプションで<span class="productname">mplayer</span><sup>(tm)</sup>に指定できます。ゼロベースで、ビデオとオーディオの区別をしないIDを指定します。
+            
+         </p>
+         
+         
+         <p>
+            もし、オーディオトラックの同期をとる必要がある場合も、簡単にとることができます。まず、次のようにしてVorbisトラックのトラックIDを取得します。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge --identify outofsync.ogg</pre>
+         
+         <p>
+            次に、このIDを使って、次のようなコマンドラインを実行します。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o goodsync.mkv -A source.avi -y 12345:200 outofsync.ogg</pre>
+         
+         <p>
+            上のようにすると、'<span class="literal">outofsync.ogg</span>'に入っている、IDが
+            <span class="constant">12345</span> のオーディオトラックの最初に200msの無音を挿入します。
+            
+         </p>
+         
+         
+         <p>
+            最初は同期がとれているのにだんだんとずれていく動画もあります。このような動画には、全てのタイムコードに適用される遅れ係数を指定することができます。データは追加も削除もされないので、あまり大きな、またはあまりに小さな係数を指定するとまずい結果になるでしょう。例として、私が変換したある動画は、全長が<span class="constant">77340</span>フレームで、最終的に<span class="constant">0.2</span>秒ずれていました。<span class="constant">29.97fps</span>では、<span class="constant">0.2</span>は約<span class="constant">6</span>フレームに相当します。よって、私は次のようなコマンドを実行しました。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o goodsync.mkv -y 23456:0,77346/77340 outofsync.mkv</pre>
+         
+         <p>
+            結果は良好でした。
+            
+         </p>
+         
+         
+         <p>
+            同期オプションは字幕にも同様に使用できます。
+            
+         </p>
+         
+         
+         <p>
+            テキスト字幕を生成するには、<span class="productname">SubRipper</span><sup>(tm)</sup>のようなWindowsソフトウェアを使用するか、<a href="http://linux.die.net/man/1/transcode"><span class="productname">transcode</span>(1)</a>のソースコードの、<span class="literal">contrib/subrip</span>'ディレクトリの中にある<span class="productname">subrip</span><sup>(tm)</sup>パッケージが使用できます。一般的なプロセスは以下の通りです。
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>ソースから生字幕を抽出:</p>
+               <pre class="screen">$ tccat -i /path/to/copied/dvd/ -T 1 -L | tcextract -x ps1 -t vob -a 0x20 | subtitle2pgm -o mymovie</pre>
+               </li>
+            
+            
+            <li>
+               
+               <p>出力されたPGMイメージをgocrでテキスト化:</p>
+               <pre class="screen">$ pgm2txt mymovie</pre>
+               </li>
+            
+            
+            <li>
+               
+               <p>出力されたテキストファイルを校正:</p>
+               <pre class="screen">$ ispell -d american *txt</pre>
+               </li>
+            
+            
+            <li>
+               
+               <p>テキストファイルをSRTファイルに変換:</p>
+               <pre class="screen">$ srttool -s -w -i mymovie.srtx -o mymovie.srt</pre>
+               </li>
+            
+         </ol>
+         
+         
+         <p>
+            出力されたファイルを<span class="productname">mkvmerge</span>(1)の入力ファイルとして使用する:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o mymovie.mkv mymovie.avi mymovie.srt</pre>
+         
+         <p>
+            もし、あるトラックに言語コードを指定したいならば、簡単に指定できます。まず、指定する言語のISO639-2コードを調べます。次のようにすれば<span class="productname">mkvmerge</span>(1)に全ての言語コードを一覧表示させることができます。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge --list-languages</pre>
+         
+         <p>
+            必要な言語をリストの中から探してください。<span class="productname">Matroska</span><sup>(tm)</sup>ファイルの中に、二つのオーディオトラックがあり、トラックIDは2と3だとします。この二つに言語コードを指定するには、次のようにします。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o with-lang-codes.mkv --language 2:ger --language 3:dut without-lang-codes.mkv</pre>
+         
+         <p>
+            このように、<a href="#mkvmerge.description.language">--language</a>スイッチを複数回使うことができます。
+            
+         </p>
+         
+         
+         <p>
+            プレイヤーにデフォルトでオランダ語を再生させたいときもあるでしょう。さらに、例えば英語とフランス語の字幕があって、フランス語をデフォルトで再生させたいと仮定します。これは、次のようにすれば可能です。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o with-lang-codes.mkv --language 2:ger --language 3:dut --default-track 3 without-lang-codes.mkv --language 0:eng english.srt --default-track 0 --language 0:fre french.srt</pre>
+         
+         <p>
+            もし、指定したはずの言語やデフォルトフラグが<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>の出力に見当たらない場合は、<a href="#mkvmerge.default_values">デフォルト値</a>のセクションを参照してください。
+            
+         </p>
+         
+         
+         <p>
+            入力ファイルの圧縮をオフにします。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o no-compression.mkv --compression -1:none MyMovie.avi --compression -1:none mymovie.srt</pre>
+         
+         <h1><a name="mkvmerge.track_ids">6. トラックID</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)のオプションの中には、どのトラックに適用するかを特定するために、トラックIDを指定する必要なものがあります。このトラックIDは、入力ファイルがdemuxされる際に表示されるほか、<span class="productname">mkvmerge</span>(1)に<a href="#mkvmerge.description.identify">--identify</a>オプションを指定して表示させることもできます。この場合の出力は次のようになります。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -i v.mkv
+File 'v.mkv': container: Matroska
+Track ID 0: video (V_MS/VFW/FOURCC, DIV3)
+Track ID 1: audio (A_MPEG/L3)</pre>
+         
+         <p>
+            出力されるMKVファイルの中に配置されるトラックに割り当てられるトラックIDと、入力ファイルのトラックIDを混同しないでください。これらの値が必要なオプションに使われるのは、入力ファイルのトラックIDだけです。
+            
+         </p>
+         
+         
+         <p>
+            また、各入力ファイルは、それ固有のトラックIDの組を持っていることにも注意してください。従って、'<span class="literal">mkvmerge
+               --identify</span>'で報告される'<span class="filename">file1.ext</span>'のトラックIDは、他にいくつ入力ファイルがあっても、また、'<span class="filename">file1.ext</span>'がどの位置で使われようとも、変わることはありません。
+            
+         </p>
+         
+         
+         <p>
+            トラックIDは次のように割り当てられます:
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="abbrev">AVI</span>ファイル: ビデオトラックのIDは0になります。オーディオトラックのIDは1から昇順に割り当てられます。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="abbrev">AAC</span>、<span class="abbrev">AC-3</span>、<span class="abbrev">MP3</span>、<span class="abbrev">SRT</span>、及び<span class="abbrev">WAV</span>ファイル:
+                  ファイル中の唯一のトラックがID 0 を割り当てられます。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  その他の殆どのファイル：トラックIDは、トラックがファイル中で見つかった順番に0から割り当てられます。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         
+         <p>
+            '<span class="constant">-1</span>'は特殊で、そのスイッチが入力ファイルから読み込まれる全てのトラックに適用されることを示します。
+            
+         </p>
+         
+         
+         <p>
+            トラックIDを使用するオプションの説明には、'<span class="literal">TID</span>'が含まれています。また、<span class="option">--audio-tracks</span>、<span class="option">--video-tracks</span>、<span class="option">--subtitle-tracks</span>、<span class="option">--button-tracks</span>及び<span class="option">--track-tags</span>オプションもトラックIDを使用します。
+            
+         </p>
+         
+         <h1><a name="mkvmerge.text_files_and_charsets">7. テキストファイルと文字コード変換</a></h1>
+         
+         
+         <div class="note">
+            <p class="note-title">Note:</p>
+            
+            <p>
+               このセクションは、暗黙のうちに<span class="productname">mkvmerge</span>(1)だけでなくMKVToolNixの全てのプログラムにあてはまります。
+               
+            </p>
+            
+         </div>
+         
+         
+         <h2><a name="mkvmerge.text_files_and_charsets.introduction">7.1. はじめに</a></h2>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>ファイルに格納されているテキストの文字コードは全てUTF-8です。よって、<span class="productname">mkvmerge</span>(1)がテキストファイルを読み込む際には全てをUTF-8に文字コード変換する必要があります。代わりに、<span class="productname">mkvmerge</span>(1)が例えば<a href="#mkvmerge.description.ui_language">--ui-language</a>によって非英語翻訳が使用される際や、<span class="productname">Matroska</span><sup>(tm)</sup>ファイルに格納されていたテキストを出力する際には、UTF-8から指定された文字コードに変換すればよいということになります。
+            
+         </p>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)はこの変換を<span class="foreignphrase">バイト・オーダー・マーク</span>(<span class="abbrev">BOM</span>)の有無、又はシステムのロケールに基づいて自動的に行ないます。ロケールからどのように文字コードが推測されるかは、<span class="productname">mkvmerge</span>(1)を実行するシステムに依存します。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.text_files_and_charsets.byte_order_markers">7.2. Byte order markers (BOM)</a></h2>
+         
+         
+         
+         <p>
+            BOMで始まるテキストファイルは、既にUTFエンコーディングの一種でエンコードされています。<span class="productname">mkvmerge</span>(1)はUTF-8、UTF-16リトルエンディアン及びビッグエンディアン、UTF-32リトルエンディアン及びビッグエンディアンの五つのモードをサポートします。BOMで始まるテキストファイルは自動的にUTF-8に変換されます。この場合、テキストファイルの文字コードを指定するパラメータ(例:
+            <a href="#mkvmerge.description.sub_charset">--sub-charset</a>)は全て黙殺されます。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux and Unix-like systems including Mac OS</a></h2>
+         
+         
+         
+         <p>
+            UNIX系システム上では、<span class="productname">mkvmerge</span>(1)は<a href="http://linux.die.net/man/3/setlocale"><span class="productname">setlocale</span>(3)</a>システムコールを使うので、<span class="varname">LANG</span>、<span class="varname">LC_ALL</span>及び<span class="varname">LC_CYPE</span>環境変数を使用します。大抵は、UTF-8かISO-8859-*ファミリのどれかが全てのテキストファイルとコマンドライン文字列の処理、及びコンソールへの出力の文字コードとして使用されます。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.text_files_and_charsets.windows">7.4. Windows</a></h2>
+         
+         
+         
+         <p>
+            On Windows the default character set used for converting text files is
+            determined by a call to the <span class="function">GetACP()</span> system call.
+            
+         </p>
+         
+         
+         <p>
+            Reading the command line is done with the
+            <span class="function">GetCommandLineW()</span> function which already returns a
+            Unicode string. Therefore the option <span class="option">--command-line-charset</span>
+            is ignored on Windows.
+            
+         </p>
+         
+         
+         <p>
+            Output to the console consists of three scenarios:
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>
+                  If the output is redirected with the option <a href="#mkvmerge.description.redirect_output">--redirect-output</a>
+                  then the default charset is UTF-8. This can be changed with <a href="#mkvmerge.description.output_charset">--output-charset</a>.
+                  
+               </p>
+               
+               
+               <p>
+                  If the output is redirected with <span class="command">cmd.exe</span> itself,
+                  e.g. with <span class="literal">mkvinfo file.mkv &gt; info.txt</span>, then the
+                  charset is always UTF-8 and cannot be changed.
+                  
+               </p>
+               
+               
+               <p>
+                  Otherwise (when writing directly to the console) the Windows function
+                  <span class="function">WriteConsoleW()</span> is used and the option <a href="#mkvmerge.description.output_charset">--output-charset</a>
+                  is ignored. The console should be able to output all Unicode characters for
+                  which the corresponding language support is installed (e.g. Chinese
+                  characters might not be displayed on English Windows versions).
+                  
+               </p>
+               
+            </li>
+            
+         </ol>
+         
+         
+         
+         <h2><a name="mkvmerge.text_files_and_charsets.options">7.5. Command line options</a></h2>
+         
+         
+         
+         <p>
+            次のような文字コードを指定するオプションがあります。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <a href="#mkvmerge.description.sub_charset">--sub-charset</a>は、テキスト字幕ファイルの文字コードと、他のコンテナに格納されたテキスト字幕トラックの文字コードが曖昧さなく決定できない場合(例:
+                  Oggファイル)の文字コードを指定します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <a href="#mkvmerge.description.chapter_charset">--chapter-charset</a>は、チャプタテキストファイルの文字コードと、他のコンテナフォーマットに格納されているチャプタ及びタイトルの文字コードを曖昧さなく決定できない場合(例:
+                  Oggファイルのチャプタ情報、トラックとファイルのタイトル等、及びMP4ファイルのチャプタ情報)の文字コードを指定します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <a href="#mkvmerge.description.command_line_charset">--command-line-charset</a>は全てのコマンドライン文字列の文字コードを指定します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <a href="#mkvmerge.description.output_charset">--output-charset</a>
+                  for all strings written to the console or to a file if the output has been
+                  redirected with the <a href="#mkvmerge.description.redirect_output">--redirect-output</a>
+                  option. On non-Windows systems the default for the output charset is the
+                  system's current charset. On Windows it defaults to UTF-8 both for
+                  redirecting with <a href="#mkvmerge.description.redirect_output">--redirect-output</a>
+                  and with <span class="command">cmd.exe</span> itself, e.g. <span class="literal">mkvinfo file.mkv
+                     &gt; info.txt</span>.
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         
+         <h1><a name="mkvmerge.option_files">8. オプションファイル：</a></h1>
+         
+         
+         
+         <p>
+            オプションファイルとは、<span class="productname">mkvmerge</span>(1)が追加のコマンドラインの引数をそれから読み込むことができるものです。これは、コマンドラインの長さ制限等の、外部プログラムを実行する際のシェルやオペレーティングシステムの特定の制限を回避するために使用することができます。
+            
+         </p>
+         
+         
+         <p>
+            An option file contains JSON-formatted data. Its content must be a valid
+            JSON array consisting solely of JSON strings. The file's encoding must be
+            UTF-8. The file should not start with a <span class="foreignphrase">byte order
+               marker</span> (<span class="abbrev">BOM</span>), but if one exists, it will be
+            skipped.
+            
+         </p>
+         
+         
+         <p>
+            The rules for escaping special characters inside JSON are the ones in the
+            official JSON specification, <a href="https://tools.ietf.org/html/rfc7159">RFC 7159</a>.
+            
+         </p>
+         
+         
+         <p>
+            The command line '<span class="command">mkvmerge -o "my file.mkv" -A "a movie.avi"
+               sound.ogg</span>' could be converted into the following JSON option file
+            called e.g. '<span class="filename">options.json</span>':
+            
+         </p>
+         
+         <pre class="programlisting">[
+  "-o",
+  "c:\\Matroska\\my file.mkv",
+  "--title",
+  "#65",
+  "-A",
+  "a movie.avi",
+  "sound.ogg"
+]</pre>
+         <h1><a name="mkvmerge.subtitles">9. 字幕</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>に埋め込むことのできるテキスト及びビットマップ字幕フォーマットがいくつかあります。テキスト字幕は、プレイヤーで正しく表示されるためにUTF-8で保存されなればなりません(<span class="productname">mkvmerge</span>(1)の文字コード変換については<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください)。Kate字幕は既にUTF-8でエンコードされているので、再変換する必要はありません。
+            
+         </p>
+         
+         
+         <p>
+            現在、次の字幕フォーマットがサポートされています。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  SubRipテキスト字幕形式(SRT)ファイル
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Substation Alpha (SSA) / Advanced Substation (ASS) 字幕
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Universal Subtitle Format (USF)ファイル
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  OggKateストリーム
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  VobSubビットマップ字幕
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  ブルーレイディスクで見られるようなPGSビットマップ字幕ファイル
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvmerge.file_linking">10. ファイル紐付け</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>はファイル紐付けをサポートします。ファイル紐付けとは、単純に現在のファイルの前の、又は次のファイルを指定する機能です。正確に言うと、本当に紐付けされるのはファイルではなく<span class="productname">Matroska</span><sup>(tm)</sup>セグメントです。ほとんどのファイルは<span class="productname">Matroska</span><sup>(tm)</sup>セグメントを一つしか持たないので、以降の説明ではより正確な'セグメント紐付け'という用語ではなく、'ファイル紐付け'という用語を使用します。
+            
+         </p>
+         
+         
+         <p>
+            各セグメントはユニークな128-bit幅のセグメントUIDを持ちます。このUIDは<span class="productname">mkvmerge</span>(1)が自動的に生成します。紐付けは基本的にセグメントUID(略して<span class="abbrev">SID</span>)をヘッダ情報の中に挿入することで行われます。<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>はこの<span class="abbrev">SID</span>を、存在する場合は表示します。
+            
+         </p>
+         
+         
+         <p>
+            もしひとつのファイルがいくつかの小さなファイルに分割されて紐付けされる場合、タイムコードは0から始まらず、前のファイルの続きから始まります。この方式では、前のファイルが無い場合も絶対時間が保たれます(例:
+            ストリーミングを使用している際)。もし、紐付けが使用されない場合、タイムコードは各ファイルで0から始まります。デフォルトでは<span class="productname">mkvmerge</span>(1)はファイル紐付けを使用しません。ファイル紐付けを使用したい場合は、<span class="option">--link</span>オプションを使用する必要があります。このオプションはファイル分割が有効な場合以外には無効です。
+            
+         </p>
+         
+         
+         <p>
+            ファイル分割が有効か無効かに関わらず、ユーザは<span class="productname">mkvmerge</span>(1)に、生成したファイルを特定の<span class="abbrev">SID</span>に紐付けすることができます。これは<span class="option">--link-to-previous</span>オプションと<span class="option">--link-to-next</span>オプションにより可能です。これらのオプションは<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>が出力するフォーマット(16個の<span class="constant">0x00</span>から<span class="constant">0xff</span>までの、'<span class="literal">0x</span>'を頭につけた16進数)の<span class="abbrev">SID</span>を受け付けます(例:
+            '<span class="code">0x41 0xda 0x73 0x66 0xd9 0xcf 0xb2 0x1e 0xae 0x78 0xeb 0xb4 0x5e 0xca
+               0xb3
+               0x93</span>')。もしくは短い形式（'<span class="literal">0x</span>'及び数字の間のスペースを省いた<span class="constant">0x00</span>から<span class="constant">0xff</span>までの16進数の数字）を指定することもできます。例:
+            '<span class="code">41da7366d9cfb21eae78ebb45ecab393</span>'
+            
+         </p>
+         
+         
+         <p>
+            もしファイル分割が有効の場合、最初のファイルが<span class="option">--link-to-previous</span>オプションで指定した<span class="abbrev">SID</span>に紐付けされ、最後のファイルが<span class="option">--link-to-next</span>オプションで指定した<span class="abbrev">SID</span>に紐付けされます。ファイル分割が無効の場合、一つの出力ファイルが両方の<span class="abbrev">SID</span>に紐付けされます。
+            
+         </p>
+         
+         <h1><a name="mkvmerge.default_values">11. デフォルト値</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>ファイルの仕様には、デフォルト値を持つエレメントの存在が明記されています。通常、デフォルト値と等しい値をもつエレメントはファイルサイズを抑えるためファイルに書き込まれません。<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>では表示されないかもしれないエレメントは、<span class="parameter">言語</span>と<span class="parameter">デフォルトトラックフラグ</span>エレメントです。<span class="parameter">言語</span>エレメントのデフォルト値は英語('<span class="literal">eng</span>')で、<span class="parameter">デフォルトトラックフラグ</span>エレメントのデフォルト値は<span class="parameter">true</span>です。よって、あるトラックに<span class="option">--language:
+               0:eng</span>を指定した場合には、<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>の出力には現れません。
+            
+         </p>
+         
+         <h1><a name="mkvmerge.attachments">12. 添付ファイル</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>ファイルに写真を入れておきたいということや、非常に稀でしょうが<span class="abbrev">SSA</span>字幕を使っていて<span class="productname">TrueType</span><sup>(tm)</sup>フォントを使用したいということがあるかもしれません。このような場合には、<span class="productname">Matroska</span><sup>(tm)</sup>ファイルにファイルを添付することができます。添付されるファイルは<span class="productname">Matroska</span><sup>(tm)</sup>ファイルにただ単純に追加されるのではなく、埋め込まれます。よって、プレイヤーはこれらのファイルを表示したり(写真の場合)、字幕を描画するのに使用したり(フォントの場合)できます。
+            
+         </p>
+         
+         
+         <p>
+            下に、出力ファイルに写真と<span class="productname">TrueType</span><sup>(tm)</sup>フォントを添付する方法の例を示します。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o output.mkv -A video.avi sound.ogg \
+  --attachment-description "Me and the band behind the stage in a small get-together" \
+  --attachment-mime-type image/jpeg \
+  --attach-file me_and_the_band.jpg \
+  --attachment-description "The real rare and unbelievably good looking font" \
+  --attachment-mime-type application/octet-stream \
+  --attach-file really_cool_font.ttf</pre>
+         
+         <p>
+            添付ファイルつきの<span class="productname">Matroska</span><sup>(tm)</sup>ファイルが入力ファイルとして使われた場合、<span class="productname">mkvmerge</span>(1)はその添付ファイルを新しいファイルにコピーします。添付ファイルのコピーの有無は、<a href="#mkvmerge.description.attachments">--attachments</a>及び<a href="#mkvmerge.description.no_attachments">--no-attachments</a>オプションを使って切り替えることができます。
+            
+         </p>
+         
+         <h1><a name="mkvmerge.chapters">13. チャプタ</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>チャプタシステムは、<span class="abbrev">OGM</span>ファイルで使用されていた従来のシステムより強力です。その仕様の全ては、<a href="http://www.matroska.org">Matroskaのウェブサイト</a>に記されています。
+            
+         </p>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は2種類のチャプタファイルを入力としてサポートしています。一つ目は'<span class="foreignphrase">シンプルチャプタファイル</span>'と呼ばれるもので、<span class="abbrev">OGM</span>
+            toolsが想定しているものと同じフォーマットです。二つ目は<span class="abbrev">XML</span>ベースのチャプタフォーマットで、<span class="productname">Matroska</span><sup>(tm)</sup>のチャプタ機能の全てをサポートしています。
+            
+         </p>
+         
+         
+         <h2><a name="mkvmerge.chapters.simple">13.1. シンプルチャプタフォーマット</a></h2>
+         
+         
+         
+         <p>
+            このフォーマットは、'<span class="literal">CHAPTERxx=</span>'で始まる行と'<span class="literal">ChapterxxNAME=</span>'で始まる行のペアから成ります。前者の行は開始タイムコードを含み、後者はタイトルを含みます。下に例を示します。
+            
+         </p>
+         
+         <pre class="screen">CHAPTER01=00:00:00.000
+CHAPTER01NAME=Intro
+CHAPTER02=00:02:30.000
+CHAPTER02NAME=Baby prepares to rock
+CHAPTER03=00:02:42.300
+CHAPTER03NAME=Baby rocks the house</pre>
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は各ペア、もしくは行を、一個の<span class="productname">Matroska</span><sup>(tm)</sup><span class="classname">ChapterAtom</span>に変換します。<span class="classname">ChapterTrackNumber</span>は設定しないので、全てのトラックにチャプタは適用されます。
+            
+         </p>
+         
+         
+         <p>
+            このときにテキストファイルの文字コードが必要になります。<span class="productname">mkvmerge</span>(1)の文字コード変換については<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.chapters.xml">13.2. XMLチャプタフォーマット</a></h2>
+         
+         
+         <p>
+            <span class="abbrev">XML</span>チャプタフォーマットの例を以下に示します。
+            
+         </p>
+         
+         <pre class="screen">&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
+&lt;!DOCTYPE Chapters SYSTEM "matroskachapters.dtd"&gt;
+&lt;Chapters&gt;
+  &lt;EditionEntry&gt;
+    &lt;ChapterAtom&gt;
+      &lt;ChapterTimeStart&gt;00:00:30.000&lt;/ChapterTimeStart&gt;
+      &lt;ChapterTimeEnd&gt;00:01:20.000&lt;/ChapterTimeEnd&gt;
+      &lt;ChapterDisplay&gt;
+        &lt;ChapterString&gt;A short chapter&lt;/ChapterString&gt;
+        &lt;ChapterLanguage&gt;eng&lt;/ChapterLanguage&gt;
+      &lt;/ChapterDisplay&gt;
+      &lt;ChapterAtom&gt;
+        &lt;ChapterTimeStart&gt;00:00:46.000&lt;/ChapterTimeStart&gt;
+        &lt;ChapterTimeEnd&gt;00:01:10.000&lt;/ChapterTimeEnd&gt;
+        &lt;ChapterDisplay&gt;
+          &lt;ChapterString&gt;A part of that short chapter&lt;/ChapterString&gt;
+          &lt;ChapterLanguage&gt;eng&lt;/ChapterLanguage&gt;
+        &lt;/ChapterDisplay&gt;
+      &lt;/ChapterAtom&gt;
+    &lt;/ChapterAtom&gt;
+  &lt;/EditionEntry&gt;
+&lt;/Chapters&gt;</pre>
+         
+         <p>
+            このフォーマットでは、シンプルチャプタフォーマットでは不可能な、3つのことが可能です。
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               <p>チャプタの終了タイムコードを指定できます。</p>
+            </li>
+            
+            <li>
+               <p>ネストしたチャプタを作成できます。</p>
+            </li>
+            
+            <li>
+               <p>言語及び国を設定できます。</p>
+            </li>
+            
+         </ol>
+         
+         
+         <p>
+            mkvtoolnixは、テンプレートとなるサンプルファイルと一緒に配布されています。サンプルファイルは<span class="filename">doc</span>サブディレクトリの中にあります。
+            
+         </p>
+         
+         
+         <p>
+            以下にサポートされているXMLタグ、そのデータタイプ、そして適切な場所では、その値の有効な範囲を挙げます：
+            
+         </p>
+         
+         <pre class="screen">Chapters (master)
+  EditionEntry (master)
+    EditionUID (unsigned integer, valid range: 1 &lt;= value)
+    EditionFlagHidden (unsigned integer, valid range: 0 &lt;= value &lt;= 1)
+    EditionFlagDefault (unsigned integer, valid range: 0 &lt;= value &lt;= 1)
+    EditionFlagOrdered (unsigned integer, valid range: 0 &lt;= value &lt;= 1)
+    ChapterAtom (master)
+      ChapterAtom (master)
+      ChapterUID (unsigned integer, valid range: 1 &lt;= value)
+      ChapterTimeStart (unsigned integer)
+      ChapterTimeEnd (unsigned integer)
+      ChapterFlagHidden (unsigned integer, valid range: 0 &lt;= value &lt;= 1)
+      ChapterFlagEnabled (unsigned integer, valid range: 0 &lt;= value &lt;= 1)
+      ChapterSegmentUID (binary, valid range: 1 &lt;= length in bytes)
+      ChapterSegmentEditionUID (unsigned integer, valid range: 1 &lt;= value)
+      ChapterPhysicalEquiv (unsigned integer)
+      ChapterTrack (master)
+        ChapterTrackNumber (unsigned integer, valid range: 1 &lt;= value)
+      ChapterDisplay (master)
+        ChapterString (UTF-8 string)
+        ChapterLanguage (UTF-8 string)
+        ChapterCountry (UTF-8 string)
+      ChapterProcess (master)
+        ChapterProcessCodecID (unsigned integer)
+        ChapterProcessPrivate (binary)
+        ChapterProcessCommand (master)
+          ChapterProcessTime (unsigned integer)
+          ChapterProcessData (binary)</pre>
+         
+         
+         <h2><a name="d4e5850">13.3. 注意</a></h2>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は出力ファイルを分割する際、チャプタも適切に処理します。つまり、分割された各ファイルはそのファイルに関係するチャプタのみを含み、タイムコードには適切なオフセットがかかります。
+            
+         </p>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は、<a href="#mkvmerge.description.no_chapters">--no-chapters</a>オプションで明示的に無効化されていなければ、<span class="productname">Matroska</span><sup>(tm)</sup>ソースファイルからチャプタをコピーできます。全てのソース(<span class="productname">Matroska</span><sup>(tm)</sup>ファイル、Oggファイル、<span class="abbrev">MP4</span>ファイル、チャプタテキストファイル)に由来するチャプタは通常はマージされず、別々の<span class="classname">ChapterEditions</span>が作成されます。いくつかの<span class="productname">Matroska</span><sup>(tm)</sup>もしくは<span class="abbrev">XML</span>ファイルで、エディションUIDが共有される場合にのみ、チャプタは一つの<span class="classname">ChapterEdition</span>にマージされます。そのような場合以外でマージを行いたい場合は、ユーザはまず全てのソースから<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>でチャプタを抽出し、手動で<span class="abbrev">XML</span>ファイルをマージした後にMUXを行なわなければなりません。
+            
+         </p>
+         
+         
+         <h1><a name="mkvmerge.tags">14. タグ</a></h1>
+         
+         
+         
+         <h2><a name="d4e5915">14.1. はじめに</a></h2>
+         
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>は廃止予定の拡張可能なタグのセットと、新しい、他のよくあるコンテナで採用されているようなより単純な、<span class="parameter">KEY=VALUE</span>というシステムをサポートします。しかし、<span class="productname">Matroska</span><sup>(tm)</sup>では、これらのタグはネストすることも可能で、さらに<span class="parameter">KEY</span>と<span class="parameter">VALUE</span>は両方がそれ自信のエレメントです。サンプルファイル<span class="filename">example-tags-2.xml</span>がこの新しいシステムの使い方の例を示しています。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.tags.scope">14.2. タグのスコープ</a></h2>
+         
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>タグは自動的にはファイル全体に適用はされません。適用することもできますが、ファイルの異る部分々々に適用することもできます。一つ、もしくは複数のトラック、一つ、もしくは複数のチャプタ、さらにはその組み合わせにも適用することが可能です。<a href="http://matroska.org/technical/specs/index.html">Matroskaの仕様</a>に、このことの詳細が記述されています。
+            
+         </p>
+         
+         
+         <p>
+            重要なことは、タグは<span class="classname">Targets</span><span class="productname">Matroska</span><sup>(tm)</sup>タグエレメントによってトラック及びチャプタにリンクされますが、このリンクの際に使用されるUIDは<span class="productname">mkvmerge</span>(1)が色々な所で使用するトラックID<em>ではない</em>ことです。その代わりに、<span class="productname">mkvmerge</span>(1)は自動的に計算したUID(トラックが<span class="productname">Matroska</span><sup>(tm)</sup>以外のファイルフォーマットから取り出される場合)か、トラックのソースファイルが<span class="productname">Matroska</span><sup>(tm)</sup>ファイルの場合ソースファイルからコピーされた数字が使用されます。よって、タグファイルが<span class="productname">mkvmerge</span>(1)に渡される前に、使用されるUIDを知ることは困難です。
+            
+         </p>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は<span class="productname">Matroska</span><sup>(tm)</sup>ファイルにタグを追加する二つのオプションを認識します。<a href="#mkvmerge.description.global_tags">--global-tags</a>と<a href="#mkvmerge.description.tags">--tags</a>オプションです。この二つの違いは、前者の<a href="#mkvmerge.description.global_tags">--global-tags</a>は、上述の<span class="classname">Targets</span>エレメントを全て取り除くことで、タグがファイル全体に適用されるようにします。後者の<a href="#mkvmerge.description.tags">--tags</a>オプションは、<span class="productname">mkvmerge</span>(1)が
+            of the <a href="#mkvmerge.description.tags">--tags</a>に指定した<span class="parameter">TID</span>の示すトラックに対して自動的に計算したUIDを挿入します。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.tags.example">14.3. 例</a></h2>
+         
+         
+         <p>
+            あなたは、<span class="abbrev">AVI</span>から読み込まれるビデオトラックにタグをつけたいと仮定しましょう。<span class="command">mkvmerge
+               --identify
+               file.avi</span>を実行すると、ビデオトラックのトラックID(このIDをUIDと混同しないでください!)は0であると教えてくれます。よって、あなたは全ての<span class="classname">Targets</span>エレメントを記入しないタグファイルを作成し、<span class="productname">mkvmerge</span>(1)を以下のように実行します。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge -o file.mkv --tags 0:tags.xml file.avi</pre>
+         
+         
+         <h2><a name="mkvmerge.tags.file_format">14.4. タグファイルフォーマット</a></h2>
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は<span class="abbrev">XML</span>ベースのタグファイルフォーマットをサポートします。このフォーマットは<a href="http://matroska.org/technical/specs/index.html">Matroskaの仕様</a>に非常に近いデザインになっています。MKVToolNixのバイナリ、及びソースディストリビューションはどちらも、既知のタグをただリストしただけの、実際のタグファイルのテンプレートとして使用できる<span class="filename">example-tags-2.xml</span>というサンプルファイルを含んでいます。
+            
+         </p>
+         
+         
+         <p>
+            基本的には、以下の様な構成です。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               <p>最も外側のエレメントは<span class="classname">&lt;Tags&gt;</span>でなければなりません。
+               </p>
+            </li>
+            
+            <li>
+               
+               <p>一個の論理タグは<span class="classname">&lt;Tag&gt;</span><span class="abbrev">XML</span>タグの内部に包含されます。
+               </p>
+               
+            </li>
+            
+            <li>
+               <p>タグの中身の直前・直後のスペースは無視されます。</p>
+            </li>
+            
+         </ul>
+         
+         
+         
+         <h2><a name="mkvmerge.tags.data_types">14.5. データタイプ</a></h2>
+         
+         
+         <p>
+            新しい<span class="productname">Matroska</span><sup>(tm)</sup>タグシステムは、UTF-8文字列とバイナリの二つのデータタイプしか認識しません。前者はタグの名前と<span class="classname">&lt;String&gt;</span>エレメントに使用され、後者は<span class="classname">&lt;Binary&gt;</span>エレメントに使用されます。
+            
+         </p>
+         
+         
+         <p>
+            バイナリデータは、そのままでは<span class="abbrev">XML</span>ファイルに格納できないので、<span class="productname">mkvmerge</span>(1)は二つのバイナリデータを格納する方法をサポートします。<span class="abbrev">XML</span>タグの中身が'<span class="literal">@</span>'で始まる場合、そのあとのテキストはファイル名として扱われ、対応するファイルの中身が<span class="productname">Matroska</span><sup>(tm)</sup>エレメントにコピーされます。
+            
+         </p>
+         
+         
+         <p>
+            もう一つの方法では、データは<span class="foreignphrase">Base64</span>エンコードされる必要があります。これは、バイナリデータを<span class="abbrev">ASCII</span>キャラクタの一部だけで表現するためのエンコードで、例えばEメールなどに使用されています。<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>は、バイナリエレメントを<span class="foreignphrase">Base64</span>エンコードされたデータとして出力します。
+            
+         </p>
+         
+         
+         <p>
+            古いタグシステムは、公式の<span class="productname">Matroska</span><sup>(tm)</sup>の仕様に示されているように、もっと多くのデータタイプを認識していました。<span class="productname">mkvmerge</span>(1)はもはやこのシステムをサポートしないので、それらのタイプについてはここでは説明しません。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.tags.xml">14.6. XMLファイルフォーマットで知られているタグ</a></h2>
+         
+         
+         
+         <p>
+            以下にサポートされているXMLタグ、そのデータタイプ、そして適切な場所では、その値の有効な範囲を挙げます：
+            
+         </p>
+         
+         <pre class="screen">Tags (master)
+  Tag (master)
+    Targets (master)
+      TargetTypeValue (unsigned integer)
+      TargetType (UTF-8 string)
+      TrackUID (unsigned integer)
+      EditionUID (unsigned integer)
+      ChapterUID (unsigned integer)
+      AttachmentUID (unsigned integer)
+    Simple (master)
+      Simple (master)
+      Name (UTF-8 string)
+      TagLanguage (UTF-8 string)
+      DefaultLanguage (unsigned integer)
+      String (UTF-8 string)
+      Binary (binary)</pre>
+         
+         <h1><a name="mkvmerge.segmentinfo">15. セグメント情報XMLファイル</a></h1>
+         
+         
+         
+         <p>
+            With a segment info XML file it is possible to set certain values in the
+            "segment information" header field of a <span class="productname">Matroska</span><sup>(tm)</sup> file. All of
+            these values cannot be set via other command line options.
+            
+         </p>
+         
+         
+         <p>
+            他の"segment
+            information"ヘッダフィールドはコマンドラインオプション経由で設定できますが、XMLファイル経由では設定できません。
+            これはには例えば<span class="option"><a href="#mkvmerge.description.title">--title</a></span>や<span class="option"><a href="#mkvmerge.description.timestamp_scale">--timestamp-scale</a></span>
+            オプションなどが含まれます。
+            
+         </p>
+         
+         
+         <p>
+            他にもコマンドラインオプション経由でもXMLファイル経由でも設定できない要素があります。これらには以下のものが含まれます：<span class="varname">DateUTC</span>
+            （別名"muxing
+            date"）、<span class="varname">MuxingApp</span>、<span class="varname">WritingApp</span>、そして<span class="varname">Duration</span>です。それらは常に<span class="productname">mkvmerge</span>(1)自身によって設定されます。
+            
+         </p>
+         
+         
+         <p>
+            以下にサポートされているXMLタグ、そのデータタイプ、そして適切な場所では、その値の有効な範囲を挙げます：
+            
+         </p>
+         
+         <pre class="screen">Info (master)
+  SegmentUID (binary, valid range: length in bytes == 16)
+  SegmentFilename (UTF-8 string)
+  PreviousSegmentUID (binary, valid range: length in bytes == 16)
+  PreviousSegmentFilename (UTF-8 string)
+  NextSegmentUID (binary, valid range: length in bytes == 16)
+  NextSegmentFilename (UTF-8 string)
+  SegmentFamily (binary, valid range: length in bytes == 16)
+  ChapterTranslate (master)
+    ChapterTranslateEditionUID (unsigned integer)
+    ChapterTranslateCodec (unsigned integer)
+    ChapterTranslateID (binary)</pre>
+         <h1><a name="mkvmerge.file_layout">16. Matroskaファイルのレイアウト</a></h1>
+         
+         
+         <p>
+            <span class="productname">Matroska</span><sup>(tm)</sup>ファイルのレイアウトは非常に柔軟性に富んでいます。<span class="productname">mkvmerge</span>(1)はあらかじめ定義された方法でファイルを書き出します。出力されたファイルはこのようになります。
+            
+         </p>
+         
+         
+         <p>
+            [EBMLヘッダ] [セグメント {メタシーク #1} [セグメント情報] [トラック情報] {添付ファイル} {チャプタ} [クラスタ 1]
+            {クラスタ 2} ...  {クラスタ n} {CUE} {メタシーク #2} {タグ}]
+            
+         </p>
+         
+         
+         <p>
+            波括弧でくくられたエレメントは省略可能で、コンテンツと指定されたオプションに依存します。いくつか注釈があります。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  メタシーク #1は、少数のレベル1エレメント(添付ファイル、チャプタ、CUE、タグ、メタシーク
+                  #2)のみを、それらが存在するときにのみ含みます。以前のバージョンの<span class="productname">mkvmerge</span>(1)は、このメタシークエレメントにクラスタも挿入していました。このため、十分なスペースを確保しておくために不正確な推測が必要で、この推測は多くの場合失敗していました。現在では、クラスタのみはメタシーク
+                  #2に格納され、メタシーク #1がメタシークエレメント #2を参照しています。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>添付ファイル、チャプタ、及びタグエレメントはそれらが存在するときにのみ追加されます。</p>
+               
+            </li>
+            
+         </ul>
+         
+         
+         <p>
+            The shortest possible <span class="productname">Matroska</span><sup>(tm)</sup> file would look like this:
+            
+         </p>
+         
+         
+         <p>
+            [EBMLヘッダ] [セグメント [セグメント情報] [トラック情報] [クラスタ1]]
+            
+         </p>
+         
+         
+         <p>
+            音声のみのファイルはこのようになるでしょう。
+            
+         </p>
+         
+         <h1><a name="mkvmerge.external_timestamp_files">17. 外部タイムコードファイル</a></h1>
+         
+         
+         <p>
+            ユーザは、特定のトラックのタイムコードを自分で<span class="productname">mkvmerge</span>(1)に指定することができます。これは可変フレームレートビデオを含むファイルを作成するときや、オーディオに無音を挿入するときに使用できます。この場合、フレームは<span class="productname">Matroska</span><sup>(tm)</sup>ブロックを作成する際の単位となります。ビデオでは、これはちょうど1フレームとなり、オーディオではこれは各オーディオタイプの1パケットとなります。例えば、<span class="abbrev">AC-3</span>では、これは<span class="constant">1536</span>サンプルを含む1パケットとなります。
+            
+         </p>
+         
+         
+         <p>
+            結合されたトラックにタイムコードファイルを指定する場合は、各結合されるトラックチェインの最初の部分にのみ指定してください。例えばv1.avi、v2.aviの二つのファイルを結合し、タイムコードを使用したいときのコマンドラインは次のようになります。
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge ... --timestamps 0:my_timestamps.txt v1.avi +v2.avi</pre>
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は、4つのフォーマットを認識します。最初の1行は常にバージョン番号を含みます。空行、空白のみを含む行、及び'<span class="literal">#</span>'で始まる行は無視されます。
+            
+         </p>
+         
+         
+         <h2><a name="d4e6359">17.1. タイムコードファイルフォーマット v1</a></h2>
+         
+         
+         <p>
+            このフォーマットはバージョン行から始まります。2行目はデフォルトフレームレートを宣言します。残りの全ての行は、コンマで区切られた3つの数字を含みます。開始フレーム(<span class="constant">0</span>が最初のフレームです)、終了フレーム、そしてこの範囲で適用されるフレームレートです。<span class="abbrev">FPS</span>は、ドット'<span class="literal">.</span>'を小数点として持つ小数です。フレーム範囲はデフォルト<span class="abbrev">FPS</span>が使用されるギャップを含むこともあります。例を下に示します。
+            
+         </p>
+         
+         <pre class="screen"># timestamp format v1
+assume 27.930
+800,1000,25
+1500,1700,30</pre>
+         
+         
+         <h2><a name="d4e6383">17.2. タイムコードファイルフォーマット v2</a></h2>
+         
+         
+         
+         <p>
+            このフォーマットでは、各行は対応するフレームのタイムコードを含みます。このタイムコードはミリ秒単位の精度で指定しなければなりません。小数を指定することができますが、小数でなくてもかまいません。最低でも、トラックに含まれるフレーム数と同数のタイムコード行を含ま<em>なければなりません</em>。このファイル内のタイムコードは整列されていなければなりません。例えば、25fpsでは以下のようになります。
+            
+         </p>
+         
+         <pre class="screen"># timestamp format v2
+0
+40
+80</pre>
+         
+         
+         <h2><a name="d4e6398">17.3. タイムコードファイルフォーマット v3</a></h2>
+         
+         
+         <p>
+            このフォーマットでは、各行は秒単位の持続時間と、省略可能なフレームレートを含みます。この二つは両方とも小数を指定できます。もし、フレームレートが指定されない場合はデフォルトの値が使用されます。オーディオではコーデックにタイムコードを計算させるべきです。このためには、フレームレートとして<span class="constant">0.0</span>を指定してください。また、'<span class="literal">gap</span>'キーワードの後に持続時間を指定して、無音を指定することもできます。オーディオファイル用の例を示します。
+            
+         </p>
+         
+         <pre class="screen"># timestamp format v3
+assume 0.0
+25.325
+7.530,38.236
+gap, 10.050
+2.000,38.236</pre>
+         
+         
+         <h2><a name="d4e6416">17.4. タイムコードファイルフォーマット v4</a></h2>
+         
+         
+         <p>
+            このフォーマットはv2フォーマットと同一です。唯一の違いは、タイムコードが整列されていなくてもいいという点です。このフォーマットが使われることはほぼ無いでしょう。
+            
+         </p>
+         
+         
+         <h1><a name="mkvmerge.exit_codes">18. 返り値</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)は下の3つの返り値を返します。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- この返り値はMUXが正常に終了したことを示します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- この返り値は、一つ以上の警告が出力されましたが、抽出が続行されたことを意味します。警告は
+                  '<span class="literal">警告:</span>'
+                  という文字列を先頭につけて出力されます。出力ファイルが無事であるかどうかは、場合によります。出力ファイルを確認することを強く推奨します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> --
+                  この返り値は、エラーが発生し、エラーメッセージを出力した後に<span class="productname">mkvmerge</span>(1)が処理を中断したことを示します。エラーメッセージは不正なコマンドラインやファイルI/Oエラー、壊れたファイルなど様々です。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvmerge.environment_variables">19. 環境変数</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvmerge</span>(1)はシステムのロケールを決めるデフォルトの変数（例：<span class="varname">LANG</span>や<span class="varname">LC_*</span>系）を使用します。追加の変数は以下の通りです：
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVMERGE_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> and
+                     its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>その内容は、あたかも<a href="#mkvmerge.description.debug">--debug</a>オプション経由で渡されたかのように扱われます。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVMERGE_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> and
+                     its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>その内容は、あたかも<a href="#mkvmerge.description.engage">--engage</a>オプション経由で渡されたかのように扱われます。
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvmerge.seealso">20. 関連項目</a></h1>
+         
+         
+         <p>
+            <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvmerge.www">21. ウェブ</a></h1>
+         
+         
+         <p>
+            最新のバージョンは、常時<a href="https://mkvtoolnix.download/">MKVToolNixのホームページ</a>から取得できます。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

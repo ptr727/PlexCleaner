@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE Chapters SYSTEM "matroskachapters.dtd">
+
+<!-- A more complex example including sub chapters. -->
+<!-- Let's take Ludwig van Beethoven's opera Fidelio. -->
+<!-- For the sake of brevity I'm only including the first -->
+<!-- three pieces of the two acts. -->
+
+<!-- The first act contains: -->
+<!-- 1. Overtüre (6:24 long), -->
+<!-- 2. Arie: 'Jetzt, Schätzchen, jetzt sind wir allein' (4:46 long) and -->
+<!-- 3. Dialog: 'Armer Jaquino' (0:10 long). -->
+
+<!-- The second act contains: -->
+<!-- 1. Ouvertüre und Arie: 'Gott! welch Dunkel hier!' (10:46 long), -->
+<!-- 2. Melodrama und Duett: 'Wie kalt ist es' (5:21 long) and -->
+<!-- 3. Dialog: 'Er erwacht!' (0:59 long). -->
+
+<!-- The first act, which will be our first chapter, has a combined length -->
+<!-- of 11:20. Our second act has a length of 17:06. -->
+
+<!-- Note that the end timestamps are optional. -->
+
+<!-- The timestamps use the normal format of HH:MM:SS.mmm with -->
+<!-- HH beging the hour, MM the minute, SS the second and -->
+<!-- mmm the milliseconds. -->
+
+<Chapters>
+  <EditionEntry>
+    <ChapterAtom> <!-- First act -->
+      <ChapterTimeStart>00:00:00.000</ChapterTimeStart>
+      <ChapterTimeEnd>00:11:20.000</ChapterTimeEnd>
+      <ChapterDisplay>
+        <ChapterString>erster Akt</ChapterString>
+        <ChapterLanguage>ger</ChapterLanguage>
+        <ChapterCountry>de</ChapterCountry>
+      </ChapterDisplay>
+      <ChapterAtom> <!-- First track in the first act -->
+        <ChapterTimeStart>00:00:00.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:06:24.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Ouvertüre</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom>
+      <ChapterAtom>
+        <ChapterTimeStart>00:06:24.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:11:10.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Arie: Jetzt, Schätzchen, jetzt sind wir allein</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom>
+      <ChapterAtom>
+        <ChapterTimeStart>00:11:10.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:11:20.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Dialog: Armer Jaquino</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom> <!-- End of the third track in the first act -->
+    </ChapterAtom> <!-- End of the first act -->
+
+    <ChapterAtom> <!-- Second act -->
+      <ChapterTimeStart>00:11:20.000</ChapterTimeStart>
+      <ChapterTimeEnd>00:28:26.000</ChapterTimeEnd>
+      <ChapterDisplay>
+        <ChapterString>zweiter Akt</ChapterString>
+        <ChapterLanguage>ger</ChapterLanguage>
+        <ChapterCountry>de</ChapterCountry>
+      </ChapterDisplay>
+      <ChapterAtom> <!-- First track in the second act -->
+        <ChapterTimeStart>00:11:20.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:22:06.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Ouvertüre und Arie: Gott! Welch Dunkel hier!</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom>
+      <ChapterAtom>
+        <ChapterTimeStart>00:22:06.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:27:27.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Melodram und Duett: Wie kalt ist es</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom>
+      <ChapterAtom>
+        <ChapterTimeStart>00:27:27.000</ChapterTimeStart>
+        <ChapterTimeEnd>00:28:26.000</ChapterTimeEnd>
+        <ChapterDisplay>
+          <ChapterString>Dialog: Er erwacht!</ChapterString>
+          <ChapterLanguage>ger</ChapterLanguage>
+          <ChapterCountry>de</ChapterCountry>
+        </ChapterDisplay>
+      </ChapterAtom> <!-- End of the third track in the second act -->
+    </ChapterAtom> <!-- End of the second act -->
+  </EditionEntry>
+</Chapters>

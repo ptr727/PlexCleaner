@@ -1,0 +1,1336 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvextract -- extrae las pistas de los archivos Matroska a otros archivos</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvextract -- extrae las pistas de los archivos <span class="productname">Matroska</span><sup>(tm)</sup> a otros archivos
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvextract.synopsis">1. Sinopsis</a></li>
+            <li><a href="#mkvextract.description">2. Descripción</a></li>
+            <li><a href="#mkvextract.examples">3. Ejemplos</a></li>
+            <li><a href="#mkvextract.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></li>
+            <li><a href="#mkvextract.output_file_formats">5. Formatos de salida</a></li>
+            <li><a href="#d4e1769">6. Códigos de salida</a></li>
+            <li><a href="#mkvextract.environment_variables">7. Variables de entorno</a></li>
+            <li><a href="#mkvextract.seealso">8. Vea también</a></li>
+            <li><a href="#mkvextract.www">9. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvextract.synopsis">1. Sinopsis</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvextract</span> {source-filename} {mode1} options extraction-spec1 mode2 options extraction-spec2 …
+         </div>
+         
+         <h1><a name="mkvextract.description">2. Descripción</a></h1>
+         
+         
+         <p>
+            Este programa extrae partes específicas de un archivo <span class="productname">Matroska</span><sup>(tm)</sup> a otros
+            formatos. El primer argumento es el nombre del archivo origen que debe ser
+            un archivo <span class="productname">Matroska</span><sup>(tm)</sup>.
+            
+         </p>
+         
+         
+         <p>
+            Todos los argumentos cambian a un modo de extracción concreto, cambian las
+            opciones del modo actualmente activo o especifican qué extraer a cierto
+            archivo. Varios modos se pueden usar en la misma invocación de mkvextract
+            permitiendo la extracción de múltiples elementos de una sola vez. La mayoría
+            de las opciones sólo se pueden usar en ciertos modos con algunas opciones
+            que se aplican a todos los modos.
+            
+         </p>
+         
+         
+         <p>
+            Actualmente permite la extracción de <a href="#mkvextract.description.tracks">pistas</a>, <a href="#mkvextract.description.tags">etiquetas</a>, <a href="#mkvextract.description.attachments">adjuntos</a>, <a href="#mkvextract.description.chapters">capítulos</a>, <a href="#mkvextract.description.cuesheets">CUE sheets -tabla de
+               contenidos-</a>, <a href="#mkvextract.description.timestamps_v2">códigos de tiempo</a>
+            e<a href="#mkvextract.description.cues">cues -registros-</a>.
+            
+         </p>
+         
+         
+         <h2><a name="mkvextract.description.common">2.1. Opciones comunes</a></h2>
+         
+         
+         
+         <p>
+            Las siguientes opciones están disponibles en todos los modos y sólo se
+            describirán en esta sección. 
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.parse_fully"><span class="option">-f</span>, <span class="option">--parse-fully</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Establece el modo de análisis a 'completo'. El modo predeterminado no
+                        analiza el archivo entero pues usa la búsqueda de elementos de metadatos
+                        para localizar los elementos necesarios de un archivo origen. En un 99% de
+                        todos los casos es suficiente. Pero para archivos que no contienen elementos
+                        de metadatos o que están dañados, el usuario debería usar este modo. Un
+                        análisis completo de un archivo puede requerir bastantes minutos mientras
+                        que un análisis rápido sólo lleva unos segundos. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.command_line_charset"><span class="option">--command-line-charset</span>
+                        <span class="parameter">conjunto-caracteres</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Establece el conjunto de caracteres a convertir las cadenas de texto dadas
+                        desde la línea de comandos. Por defecto, se ajusta al conjunto de caracteres
+                        dado por la configuración local del sistema. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.output_charset"><span class="option">--output-charset</span> <span class="parameter">conjunto-caracteres</span></a></td>
+                  <td>
+                     
+                     <p>
+                        	
+                        
+                        Establece el conjunto de caracteres para convertir las cadenas de texto que
+                        serán usadas en el archivo de salida. Por defecto, se ajusta al conjunto de
+                        caracteres dado por la configuración local del sistema. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">nombre-archivo</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Escribe todos los mensajes al archivo <span class="parameter">nombre-archivo</span>
+                        en vez de en la consola. Aunque esto se puede hacer fácilmente con la opción
+                        de redirección hay casos en los que es necesaria esta opción: cuando el
+                        terminal reinterpreta la salida antes de escribirlo al archivo. El conjunto
+                        de caracteres establecido con <a href="#mkvextract.description.common.output_charset">--output-charset</a>
+                        se respeta. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">código</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Fuerza la traducción al <span class="parameter">código</span> de idioma que será
+                        usado (p.e. '<span class="literal">de_DE</span>' para la traducción al
+                        Alemán). Introduciendo '<span class="literal">list</span>' como
+                        <span class="parameter">código</span> provocará que el programa muestre una lista de
+                        las traducciones disponibles. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita la depuración para una característica concreta. Esta opción sólo es
+                        útil para desarrolladores. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.engage"><span class="option">--engage</span> <span class="parameter">característica</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita características experimentales. Una lista de características
+                        disponibles puede ser solicitada con la instrucción <span class="command">mkvextract
+                           --engage list</span>. Estas características no están indicadas para ser
+                        usadas en situaciones normales. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita el modo GUI. En este modo las líneas especialmente formateadas
+                        pueden ser generadas para decirle a un control de la GUI lo que está
+                        pasando. Estos mensajes se rigen bajo el formato
+                        '<span class="literal">#GUI#mensaje</span>'. El mensaje puede ser continuado por pares
+                        de valores/claves como en
+                        '<span class="literal">#GUI#mensaje#clave1=valor1#clave2=valor2…</span>'. Ni los
+                        mensajes ni las claves pueden ser traducidas y siempre se generan en
+                        inglés. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        Habilita el modo detallado y muestra todos los elementos <span class="productname">Matroska</span><sup>(tm)</sup>
+                        importantes que pueden ser leídos. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra información de uso y sale.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra la información de la versión y sale. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        Lee argumentos adicionales de la línea de comandos desde el archivo
+                        <span class="parameter">archivo-opciones</span>. Para más información sobre los
+                        formatos admitidos para esos archivos mire la sección acerca de "archivos de
+                        opciones" en la página del manual de <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.tracks">2.2. Modo de extracción de pista</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">tracks</span> [<span class="parameter">opciones</span>]
+               <span class="parameter">TID1:nombre-destino1</span>
+               [<span class="parameter">TID2:nombre-destino2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <p>
+            Las siguientes opciones de línea de comandos están disponibles para cada
+            pista en el modo de extracción de pistas
+            ('<span class="literal">tracks</span>'). Tienen que aparecer delante de la
+            especificación de pista a las que se deben aplicar (ver abajo). 
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-c</span> <span class="parameter">conjunto-caracteres</span></td>
+                  <td>
+                     
+                     <p>
+                        Establece el conjunto de caracteres para convertir el texto de la siguiente
+                        pista de subtítulo. Sólo es válido si el ID de la siguiente pista
+                        corresponde a un subtítulo. Por defecto usa UTF-8. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--blockadd</span> <span class="parameter">nivel</span></td>
+                  <td>
+                     
+                     <p>
+                        Conserva el BlockAdditions sólo hasta este nivel. Por defecto conserva todos
+                        los niveles. Esta opción sólo afecta a ciertos tipos de códecs como
+                        WAVPACK4. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cuesheet</span></td>
+                  <td>
+                     
+                     <p>
+                        Provoca que <span class="productname">mkvextract</span>(1) extraiga un <span class="abbrev">CUE</span> sheet desde la
+                        información de capítulos y etiquetas para la siguiente pista, a un archivo
+                        cuyo nombre es el del archivo de salida junto con la extensión
+                        '<span class="literal">.cue</span>'.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--raw</span></td>
+                  <td>
+                     
+                     <p>
+                        Extrae los datos en bruto (raw) a un archivo sin contenedor. A diferencia de
+                        <a href="#mkvextract.description.tracks.fullraw">--fullraw</a>
+                        esta opción no provoca que el contenido del elemento
+                        <span class="classname">CodecPrivate</span> se escriba en el archivo. Este modo
+                        funciona sólo con todos los <span class="classname">CodecIDs</span>, incluso con los
+                        que <span class="productname">mkvextract</span>(1) no sea compatible pero los archivos resultantes podrían ser
+                        inutilizables. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.tracks.fullraw"><span class="option">--fullraw</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Extrae los datos en bruto (raw) a un archivo sin contenedor. El contenido
+                        del elemento <span class="classname">CodecPrivate</span> se escribirá en el primer
+                        archivo si la pista contiene ese elemento en el encabezado. Este modo
+                        funciona sólo con todos los <span class="classname">CodecIDs</span>, incluso con los
+                        que <span class="productname">mkvextract</span>(1) no sea compatible pero los archivos resultantes podrían ser
+                        inutilizables. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:nombre-salida</span></td>
+                  <td>
+                     
+                     <p>
+                        Provoca la extracción de la pista con el ID <span class="parameter">TID</span> a un
+                        archivo con el <span class="parameter">nombre-salida</span> si dicha pista existe en
+                        el archivo fuente. Esta opción puede ser usada múltiples veces. Los IDs de
+                        la pista son los mismos que muestra <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> con la opción
+                        <span class="option">--identify</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Cada nombre de salida sólo debe ser usado una vez. La única excepción son
+                        las pistas RealAudio y RealVideo. Si usas el mismo nombre para pistas
+                        diferentes entonces estas pistas serán almacenadas en el mismo
+                        archivo. Ejemplo: 
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract entrada.mkv tracks 0:video.h264 2:salida-2-pistas-vobsub.idx 3:salida-2-pistas-vobsub.idx</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.attachments">2.3. Modo de extracción de adjuntos</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">attachments</span>
+               [<span class="parameter">opciones</span>]
+               <span class="parameter">AID1:nombre-destino1</span>
+               [<span class="parameter">AID2:nombre-destino2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">AID</span>:<span class="parameter">nombre-salida</span></td>
+                  <td>
+                     
+                     <p>
+                        Provoca la extracción del adjunto con el ID <span class="parameter">AID</span> a un
+                        archivo con el <span class="parameter">nombre-salida</span> si dicho adjunto existe
+                        en el archivo fuente. Si el <span class="parameter">nombre-salida</span> se deja
+                        vacío entonces será usado el nombre del adjunto en el archivo
+                        <span class="productname">Matroska</span><sup>(tm)</sup>. Esta opción puede ser usada múltiples veces. Los IDs de los
+                        adjuntos son los mismos que muestra <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> con la opción
+                        <span class="option">--identify</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.chapters">2.4. Modo de extracción de capitulos</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">chapters</span>
+               [<span class="parameter">opciones</span>]
+               <span class="parameter">nombre-destino.xml</span></span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--simple</span></td>
+                  <td>
+                     
+                     <p>
+                        Exporta la información de capítulos en un formato simple usado en las
+                        herramientas de <span class="abbrev">OGM</span> (CAPITULO01=...,
+                        CAPITULO01NOMBRE=...). En este modo alguna información será descartada. Por
+                        defecto la salida de los capítulos están en formato XML. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--simple-language</span> <span class="parameter">idioma</span></td>
+                  <td>
+                     
+                     <p>
+                        Si se habilita el formato simple entonces <span class="productname">mkvextract</span>(1) sólo generará una
+                        única entrada de cada capítulo atom encontrado incluso si un capítulo atom
+                        contiene más de un nombre de capítulos. Por defecto <span class="productname">mkvextract</span>(1) usará el
+                        primer nombre de capítulos que encuentre para cada atom, independientemente
+                        de su idioma. 
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Usar esta opción permite al usuario determinar que nombres de capítulos se
+                        generan si los atoms contienen más de un nombre de capítulos. El parámetro
+                        <span class="parameter">language</span> debe ser un código ISO 639-1 o ISO 639-2.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Los capítulos se escriben a un archivo de salida especificado. Por defecto,
+            se utiliza el formato <span class="abbrev">XML</span> que es interpretado por <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. Si en el
+            archivo no hay capítulos, el archivo de salida no será creado.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.tags">2.5. Modo de extracción de etiquetas</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">tags</span> [<span class="parameter">opciones</span>]
+               <span class="parameter">nombre-destino.xml</span></span>
+            
+         </p>
+         
+         
+         <p>
+            Las etiquetas se escriben a un archivo de salida especificado en el formato
+            <span class="abbrev">XML</span> que es interpretado por <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. Si en el archivo no hay etiquetas,
+            el archivo de salida no será creado.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.cuesheets">2.6. Modo de extracción de Cue sheet</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">cuesheet</span>
+               [<span class="parameter">opciones</span>]
+               <span class="parameter">nombre-destino.cue</span></span>
+            
+         </p>
+         
+         
+         <p>
+            La tabla de contenidos -cue sheet- se escribe a un archivo de salida
+            especificado. Si en el archivo no hay capítulos o etiquetas, el archivo de
+            salida no será creado.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.timestamps_v2">2.7. Modo de extracción de códigos de tiempo</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">timestamps_v2</span>
+               [<span class="parameter">opciones</span>]
+               <span class="parameter">TID1:nombre-destino1</span>
+               [<span class="parameter">TID2:nombre-destino2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:nombre-salida</span></td>
+                  <td>
+                     
+                     <p>
+                        Provoca la extracción de los timestamps para la pista con el ID
+                        <span class="parameter">TID</span> a un archivo con el
+                        <span class="parameter">nombre-salida</span> si dicha pista existe en el archivo
+                        origen. Esta opción puede ser usada múltiples veces. Los IDs de la pista son
+                        los mismos que muestra <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> con la opción <span class="option">--identify</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Ejemplo:
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract entrada.mkv timestamps_v2 1:ct-pista1.txt 2:ct-pista2.txt</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.cues">2.8. Modo de extracción de Cues</a></h2>
+         
+         
+         
+         <p>
+            Sintaxis: <span class="command">mkvextract <span class="parameter">nombre-archivo</span>
+               <span class="option">cues</span> [<span class="parameter">opciones</span>]
+               <span class="parameter">TID1:nombre-destino1</span>
+               [<span class="parameter">TID2:nombre-destino2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:nombrearchivo-dest</span></td>
+                  <td>
+                     
+                     <p>
+                        Provoca la extracción de los cues (índices) para la pista con el ID
+                        <span class="parameter">TID</span> a un archivo con el
+                        <span class="parameter">nombre-salida</span> si dicha pista existe en el archivo
+                        origen. Esta opción puede ser usada múltiples veces. Los IDs de la pista son
+                        los mismos que muestra <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> con la opción <span class="option">--identify</span>
+                        y no los números contenidos en el elemento <span class="classname">CueTrack</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            El formato de salida es un simple formato de texto: una línea por cada
+            elemento <span class="classname">CuePoint</span> con
+            <span class="literal">clave=valor</span>. Si un elemento opcional no existe en un
+            <span class="classname">CuePoint</span> (p.e. <span class="classname">CueDuration</span>)
+            entonces un guión será devuelto como valor.
+            
+         </p>
+         
+         
+         <p>
+            Ejemplo:
+            
+         </p>
+         
+         <pre class="screen">timestamp=00:00:13.305000000 duration=- cluster_position=757741 relative_position=11</pre>
+         
+         <p>Las claves posibles son:</p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">timestamp</td>
+                  <td>
+                     
+                     <p>El código de tiempo del cue point con precisión de nanosegundos. El formato
+                        es <span class="literal">HH:MM:SS.nnnnnnnnn</span>. Este elemento siempre se
+                        establece. 
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">duration</td>
+                  <td>
+                     
+                     <p>La duración del cue point con precisión de nanosegundos. El formato es
+                        <span class="literal">HH:MM:SS.nnnnnnnnn</span>.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">cluster_position</td>
+                  <td>
+                     
+                     <p>La posición absoluta en bytes dentro del archivo <span class="productname">Matroska</span><sup>(tm)</sup> en dónde
+                        comienza el clúster que contiene el elemento de referencia. 
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p>Dentro del archivo <span class="productname">Matroska</span><sup>(tm)</sup> el <span class="classname">CueClusterPosition</span>
+                           se refiere a la compensación (offset) de los datos de inicio del
+                           segmento. El valor de salida es dado por el modo de extracción de cue de
+                           <span class="productname">mkvextract</span>(1), sin embargo ya contiene esa compensación y que es absoluta a
+                           partir del inicio del archivo. 
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">relative_position</td>
+                  <td>
+                     
+                     <p>La posición relativa en bytes dentro del clúster en donde el elemento
+                        <span class="classname">BlockGroup</span> o <span class="classname">SimpleBlock</span> es el
+                        cue point que se refiere al inicio. 
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p>Dentro del archivo <span class="productname">Matroska</span><sup>(tm)</sup> el <span class="classname">CueRelativePosition</span>
+                           se refiere a la compensación de los datos de inicio del clúster. El valor de
+                           salida es dado por el modo de extracción de cue de <span class="productname">mkvextract</span>(1), sin embargo
+                           es relativo al ID del clúster. La posición absoluta dentro del archivo puede
+                           ser calculada por añadir <span class="literal">cluster_position</span> y
+                           <span class="literal">relative_position</span>.
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Ejemplo:
+            
+         </p>
+         
+         <pre class="screen">$ mkvextract entrada.mkv cues 1:cues-pista1.txt 2:cues-pista2.txt</pre>
+         
+         <h1><a name="mkvextract.examples">3. Ejemplos</a></h1>
+         
+         
+         
+         <p>
+            Extrayendo tanto capítulos como etiquetas en sus respectivos formatos <span class="abbrev">XML</span>
+            a la vez;
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge pelicula.mkv chapters capítulos-película.xml tags etiquetas-película.xml</pre>
+         
+         <p>
+            Extrayendo un par de pistas y sus respectivos códigos de tiempo a la vez:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "Otra película.mkv" tracks 0:video.h265 "1:audio principal.aac" "2:comentarios del director.aac" timestamps_v2 "0:códigos tiempo video.txt" "1:códigos tiempo audio principal.txt" "2:códigos tiempo comentarios del director.txt"</pre>
+         
+         <p>
+            Extrayendo capítulos en el formato Ogg/OGM y recodificando el texto de una
+            pista de subtítulos a otro conjunto de caracteres:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "Mi película.mkv" chapters --simple "Mis capítulos.txt" tracks -c MS-ANSI "2:Mis subtítulos.srt"</pre>
+         <h1><a name="mkvextract.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></h1>
+         
+         
+         
+         <p>
+            Para una discusión en profundidad sobre como la suite de MkvToolNix manipula
+            las conversiones de caracteres, la codificación entrada/salida y la
+            codificación de la línea de comandos y consola, por favor consulte la
+            sección llamada de igual manera en la pagina del manual para <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>.
+            
+         </p>
+         
+         <h1><a name="mkvextract.output_file_formats">5. Formatos de salida</a></h1>
+         
+         
+         
+         <p>
+            La decisión sobre el tipo de formato se basa en el tipo de pista y no en la
+            extensión usada en el nombre del archivo de salida. Por ahora, los
+            siguientes tipos de pista son compatibles:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">A_AAC/MPEG2/*, A_AAC/MPEG4/*, A_AAC</td>
+                  <td>
+                     
+                     <p>
+                        Todos los archivos <span class="abbrev">AAC</span> se escribirán en un archivo
+                        <span class="abbrev">AAC</span> con encabezados <span class="abbrev">ADTS</span> antes de cada
+                        paquete. Los encabezados <span class="abbrev">ADTS</span> no contendrán el obsoleto
+                        campo de énfasis. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_AC3, A_EAC3</td>
+                  <td>
+                     
+                     <p>
+                        Serán extraídos a archivos <span class="abbrev">AC-3</span> sin procesar.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_ALAC</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="abbrev">ALAC</span> se escriben en archivos
+                        <span class="abbrev">CAF</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_DTS</td>
+                  <td>
+                     
+                     <p>
+                        Serán extraídos a archivos <span class="abbrev">DTS</span> sin procesar.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_FLAC</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="abbrev">FLAC</span> se escriben en archivos en bruto
+                        <span class="abbrev">FLAC</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L2</td>
+                  <td>
+                     
+                     <p>
+                        Las secuencias de audio MPEG-1 Layer II serán extraídas a archivos en bruto
+                        <span class="abbrev">MP2</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L3</td>
+                  <td>
+                     
+                     <p>
+                        Serán extraídos a archivos <span class="abbrev">MP3</span> sin procesar.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_OPUS</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="productname">Opus</span><sup>(tm)</sup> se escribe en archivos
+                        <span class="productname">OggOpus</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_PCM/INT/LIT, A_PCM/INT/BIG</td>
+                  <td>
+                     
+                     <p>
+                        Los datos <span class="abbrev">PCM</span> sin procesar serán escritos al archivo
+                        <span class="abbrev">WAV</span>. Los datos enteros big-endian se convertirán en datos
+                        little-endian en el proceso.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="productname">RealAudio</span><sup>(tm)</sup> se escriben en archivos
+                        <span class="productname">RealMedia</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TRUEHD, A_MLP</td>
+                  <td>
+                     
+                     <p>
+                        Serán extraídos a archivos <span class="abbrev">TrueHD</span>/<span class="abbrev">MLP</span> sin
+                        procesar.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TTA1</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="productname">TrueAudio</span><sup>(tm)</sup> se escriben en archivos
+                        <span class="abbrev">TTA</span>. Por favor, tenga en cuenta que debido a la precisión
+                        limitada de los códigos de tiempo de <span class="productname">Matroska</span><sup>(tm)</sup>, el encabezado del archivo
+                        extraído será diferente con respecto a dos campos:
+                        <span class="varname">data_length</span> (el número total de muestras en el archivo) y
+                        el <span class="abbrev">CRC</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_VORBIS</td>
+                  <td>
+                     
+                     <p>
+                        El audio Vorbis se escribirá en un archivo <span class="productname">OggVorbis</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_WAVPACK4</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="productname">WavPack</span><sup>(tm)</sup> se escriben en archivos
+                        <span class="abbrev">WV</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/PGS</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos <span class="abbrev">PGS</span> se escribirán como archivos
+                        <span class="abbrev">SUP</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/TEXTST</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos <span class="abbrev">TextST</span> serán escritos como un formato
+                        especial de archivo inventado para <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> y <span class="productname">mkvextract</span>(1).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_KATE</td>
+                  <td>
+                     
+                     <p>
+                        Las secuencias <span class="productname">Kate</span><sup>(tm)</sup> se escribirán dentro de un
+                        contenedor <span class="productname">Ogg</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/SSA, S_TEXT/ASS, S_SSA, S_ASS</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos de texto <span class="abbrev">SSA</span> y <span class="abbrev">ASS</span> se
+                        escribirán como archivos <span class="abbrev">SSA</span>/<span class="abbrev">ASS</span>,
+                        respectivamente. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/UTF8, S_TEXT/ASCII</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos de texto simple se escribirán como archivos
+                        <span class="abbrev">SRT</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_VOBSUB</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos <span class="productname">VobSub</span><sup>(tm)</sup> se escribirán como archivos
+                        <span class="abbrev">SUB</span> junto con sus respectivos archivos de índice
+                        <span class="abbrev">IDX</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/USF</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos de texto <span class="abbrev">USF</span> se escribirán como archivos
+                        <span class="abbrev">USF</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/WEBVTT</td>
+                  <td>
+                     
+                     <p>
+                        Los subtítulos de texto <span class="abbrev">WebVTT</span> serán escritos como archivos
+                        <span class="abbrev">WebVTT</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG1, V_MPEG2</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas de video <span class="abbrev">MPEG-1</span> y <span class="abbrev">MPEG-2</span> serán
+                        escritas como secuencias básicas <span class="abbrev">MPEG</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/AVC</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas de video <span class="abbrev">H.264</span> / <span class="abbrev">AVC</span> se
+                        escriben en secuencias elementales <span class="abbrev">H.264</span> que pueden ser
+                        procesadas posteriormente, por ejemplo con <span class="productname">MP4Box</span><sup>(tm)</sup>
+                        del paquete <span class="productname">GPAC</span><sup>(tm)</sup>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/HEVC</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas de video <span class="abbrev">H.265</span>/<span class="abbrev">HEVC</span> serán
+                        escritas a secuencias básicas <span class="abbrev">H.265</span> que pueden ser
+                        procesadas posteriormente, por ejemplo, con
+                        <span class="productname">MP4Box</span><sup>(tm)</sup> del paquete
+                        <span class="productname">GPAC</span><sup>(tm)</sup>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MS/VFW/FOURCC</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas de video con <span class="abbrev">FPS</span> fijadas con este
+                        <span class="classname">CodecID</span> se escriben en los archivos
+                        <span class="abbrev">AVI</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="productname">RealVideo</span><sup>(tm)</sup> se escriben en archivos
+                        <span class="productname">RealMedia</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_THEORA</td>
+                  <td>
+                     
+                     <p>
+                        Las secuencias <span class="productname">Theora</span><sup>(tm)</sup> se escribirán en un
+                        contenedor <span class="productname">Ogg</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_VP8, V_VP9</td>
+                  <td>
+                     
+                     <p>
+                        Las pistas <span class="abbrev">VP8</span> / <span class="abbrev">VP9</span> se escriben en
+                        archivos <span class="abbrev">IVF</span>. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Tags</td>
+                  <td>
+                     
+                     <p>
+                        Las etiquetas se convierten a formato <span class="abbrev">XML</span>. Este formato es el mismo que
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> admite para leer etiquetas. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Attachments</td>
+                  <td>
+                     
+                     <p>
+                        Los adjuntos se escriben en el archivo de salida tal y como están. No se
+                        realiza ningún tipo de conversión. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Chapters</td>
+                  <td>
+                     
+                     <p>
+                        Los capítulos se convierten a formato <span class="abbrev">XML</span>. Este formato es el mismo que
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> admite para leer capítulos. Alternativamente, una versión
+                        reducida puede ser generada a un simple formato de estilo
+                        <span class="abbrev">OGM</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Timestamps</td>
+                  <td>
+                     
+                     <p>
+                        Los códigos de tiempo se ordenan de principio a fin, y entonces se genera un
+                        archivo compatible con el formato timestamp v2 preparado para ser
+                        proporcionado a <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. La extracción a otros formatos (v1, v3 y v4) no
+                        son compatibles. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="d4e1769">6. Códigos de salida</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) finaliza con uno de estos tres códigos de salida: 
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- Este código de salida significa que la extracción
+                  se ha realizado correctamente. 
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- En este caso <span class="productname">mkvextract</span>(1) genera una salida con al
+                  menos una advertencia, pero la extracción continuó. Una advertencia es
+                  prefijada con el texto '<span class="literal">Advertencia:</span>'. Dependiendo de los
+                  fallos involucrados los archivos creados serán correctos o no. El usuario es
+                  instado a que revise tanto las advertencias como los archivos creados. 
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- Este código de salida es usado después de que
+                  ocurra un error. <span class="productname">mkvextract</span>(1) aborta el proceso justo después de mostrar el
+                  mensaje de error. El rango de los mensajes de error va desde los argumentos
+                  de la línea de comandos, por delante de los errores de lectura/escritura,
+                  hasta los archivos erróneos. 
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvextract.environment_variables">7. Variables de entorno</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) usa las variables predefinidas que se determinan en la
+            configuración local del sistema (p.e. <span class="varname">LANG</span> y la familia
+            <span class="varname">LC_*</span>). Variables adicionales: 
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> y
+                     su forma abreviada<span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>El contenido se trata como si se hubiese pasado a través de la opción <a href="#mkvextract.description.debug">--debug</a>.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> y
+                     su forma abreviada <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>El contenido se trata como si se hubiese pasado a través de la opción <a href="#mkvextract.description.engage">--engage</a>. 
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvextract.seealso">8. Vea también</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvextract.www">9. WWW</a></h1>
+         
+         
+         <p>
+            La última versión se puede encontrar siempre en <a href="https://mkvtoolnix.download/">la página de MKVToolNix</a>.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

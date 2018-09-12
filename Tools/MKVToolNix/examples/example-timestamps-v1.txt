@@ -1,0 +1,27 @@
+# timestamp format v1
+
+# The very first line MUST have this format. Later formats will increase
+# the version number.
+
+# As you can see empty lines and other lines starting with '#' are ignored.
+
+# The second line with contents MUST be 'assume <fps>', e.g.
+assume 25
+# This sets the default FPS for ranges that are not explicitely covered
+# below.
+
+# The remaining lines have the format 's,e,fps'.
+# White spaces around the commas are ignored. This sets the number of
+# frames per second for the frames starting with frame number s up to and
+# including frame number e.
+
+# The 'fps' can be given as a floating point number. Note that only
+# dots ('.') are accepted as the decimal point, not commas!
+
+# Example:
+800,1000,23.97
+1500,1700,29.930
+
+# As you can see you can have gaps at the start, in the middle, and
+# naturally at the end. For those gaps the default FPS set with the
+# 'assume' command is being used.

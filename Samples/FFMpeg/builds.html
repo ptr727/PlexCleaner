@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <title>Builds - Zeranoe FFmpeg</title>
+  </head>
+  <body>
+    <div class="tb">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/"><img src="/img/logo.svg" alt="Zeranoe"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Download <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/forum">Forum</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/contact">Contact</a>
+            </li>
+          </ul>
+          <form class="form-inline my-2 my-lg-0" action="/forum/search.php" method="get">
+            <input name="keywords" class="form-control" type="text" placeholder="Search forum" aria-label="Search forum">
+          </form>
+        </div>
+      </div>
+      <span id="line"></span>
+    </nav>
+    <div class="container my-3 my-lg-5">
+      <h1>FFmpeg Builds</h1>
+      <p class="lead">FFmpeg is the leading multimedia framework to decode, encode, transcode, mux, demux, stream, filter and play. <strong>All builds require at least Windows 7 or Mac OS X 10.10.</strong></p>
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3132162465607980" data-ad-slot="1407863336" data-ad-format="auto"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      <div class="row">
+        <div class="col-lg-5">
+          <div id="indicators" class="carousel slide" data-ride="carousel">
+            <ol class="carousel-indicators">
+              <li data-target="#indicators" data-slide-to="0" class="active"></li>
+              <li data-target="#indicators" data-slide-to="1"></li>
+              <li data-target="#indicators" data-slide-to="2"></li>
+            </ol>
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img class="d-block w-100" src="/img/windows_ffplay_powershell.png" alt="Windows FFplay testsrc2">
+              </div>
+              <div class="carousel-item">
+                <img class="d-block w-100" src="/img/macos_ffplay.png" alt="Windows FFplay testsrc2">
+              </div>
+              <div class="carousel-item">
+                <img class="d-block w-100" src="/img/windows_ffplay_cmd.png" alt="macOS FFplay testsrc2">
+              </div>
+            </div>
+            <a class="carousel-control-prev" href="#indicators" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#indicators" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="row text-center">
+            <div class="col-lg-4">
+              <h3 class="mt-2 mt-lg-0">Version</h3>
+              <div class="btn-group-vertical btn-block" data-toggle="buttons">
+                <label class="btn btn-secondary active" data-toggle="tooltip" data-placement="right" title="Nightly git builds contain more features, are usually stable, and are the required version when submitting bugs.">
+                  <input type="radio" name="v" value="20171120-8f4702a" checked> 20171120-8f4702a
+                </label>
+                <label class="btn btn-secondary" data-toggle="tooltip" data-placement="right" title="Release builds are recommended for distributors, but cannot be used when submitting bugs.">
+                  <input type="radio" name="v" value="3.4"> 3.4
+                </label>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <h3 class="mt-2 mt-lg-0">Architecture</h3>
+              <div class="btn-group-vertical btn-block" data-toggle="buttons">
+                <label class="btn btn-secondary">
+                  <input type="radio" name="m" value="win64"> Windows 64-bit
+                </label>
+                <label class="btn btn-secondary">
+                  <input type="radio" name="m" value="win32"> Windows 32-bit
+                </label>
+                <label class="btn btn-secondary">
+                  <input type="radio" name="m" value="macos64"> macOS 64-bit
+                </label>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <h3 class="mt-2 mt-lg-0">Linking</h3>
+              <div class="btn-group-vertical btn-block" data-toggle="buttons">
+                <label class="btn btn-secondary active" data-toggle="tooltip" data-placement="left" title="The recommened default build. No dll or dylib files.">
+                  <input type="radio" name="l" value="static" checked> Static
+                </label>
+                <label class="btn btn-secondary" data-toggle="tooltip" data-placement="left" title="Executables that depend on the included dll or dylib files.">
+                  <input type="radio" name="l" value="shared"> Shared
+                </label>
+                <label class="btn btn-secondary" data-toggle="tooltip" data-placement="left" title="Headers and def files for Windows builds.">
+                  <input type="radio" name="l" value="dev"> Dev
+                </label>
+              </div>
+            </div>
+          </div>          
+          <div class="row justify-content-lg-center">
+            <div class="col-lg-6 mt-3 mb-2 mt-lg-5 mb-lg-0">
+                <a id="d" role="button" href="#" class="btn btn-primary btn-lg btn-block" data-toggle="tooltip" data-placement="bottom" title="Example">Download Build</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      <div class="container"><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3132162465607980" data-ad-slot="4082128136" data-ad-format="auto"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>
+      <div class="bg-light">
+        <div class="container py-3 py-lg-5">
+        <h2>Other Downloads</h2>
+        <div class="row">
+          <div class="col-lg-2"><a id="sc" role="button" href="#" class="btn btn-secondary btn-block">Source Code</a></div>
+          <div class="col-lg-2 pt-2 pt-lg-0"><a role="button" id="r" data-toggle="tooltip" data-placement="bottom" href="#" class="btn btn-secondary btn-block">Readme</a></div>
+        </div>
+        <h2 class="mt-3">Previous Builds</h2>
+        <div class="row">
+          <div class="col-lg-3"><a role="button" href="win64" class="btn btn-secondary btn-block">Windows 64-bit Builds</a></div>
+          <div class="col-lg-3 pt-2 pt-lg-0"><a role="button" href="win32" class="btn btn-secondary btn-block">Windows 32-bit Builds</a></div>
+          <div class="col-lg-3 pt-2 pt-lg-0"><a role="button" href="macos64" class="btn btn-secondary btn-block">macOS 64-bit Builds</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="container"><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3132162465607980" data-ad-slot="5558861331" data-ad-format="auto"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>
+    <footer class="container my-3 my-lg-5">
+      <div class="row">
+        <div class="col-lg-5">
+          <h6>Zeranoe</h6>
+          <ul class="list-inline">
+            <li><a class="text-secondary" href="https://www.patreon.com/Zeranoe">Support these builds on Patreon</a></li>
+            <li class="list-inline-item"><a class="text-secondary" href="https://twitter.com/Zeranoe"><i class="fa fa-twitter fa-2x" aria-hidden="true"></i></a></li>
+            <li class="list-inline-item"><a class="text-secondary" href="https://www.facebook.com/Zeranoe"><i class="fa fa-facebook fa-2x" aria-hidden="true"></i></a></li>
+            <li class="list-inline-item"><a class="text-secondary" href="https://github.com/Zeranoe"><i class="fa fa-github fa-2x" aria-hidden="true"></i></a></li>
+            <li class="list-inline-item"><a class="text-secondary" href="https://www.paypal.me/zeranoe"><i class="fa fa-paypal fa-2x" aria-hidden="true"></i></a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h6>FFmpeg</h6>
+          <ul class="list-inline">
+            <li><a class="text-secondary" href="https://ffmpeg.org/index.html#news">News</a></li>
+            <li><a class="text-secondary" href="https://ffmpeg.org/documentation.html">Documentation</a></li>
+            <li><a class="text-secondary" href="https://webchat.freenode.net?channels=%23ffmpeg">#ffmpeg IRC</a></li>
+            <li><a class="text-secondary" href="https://github.com/FFmpeg/FFmpeg">GitHub</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4 copyright text-secondary">&copy; 2017 Kyle Schwarz</div>
+      </div>
+    </footer>
+    </div>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/ua-parser.min.js"></script>
+    <script>
+      $("[data-toggle='tooltip']").tooltip({container: ".tb", trigger: "hover"});
+      function update_links(v, m, l) {
+        var b = "ffmpeg-" + v + "-" + m + "-" + l;
+        $("#d").prop("href", m + "/" + l + "/" + b + ".zip").attr("data-original-title", b + ".zip");
+        if (l == "dev") {
+          l = "shared";
+          b = "ffmpeg-" + v + "-" + m + "-shared";
+        }
+        $("#r").prop("href", "readme/" + m + "/" + l + "/" + b + "-readme.txt").attr("data-original-title", b + "-readme.txt");
+        if (v.indexOf(".") !== -1) {
+          $("#sc").prop("href", "https://ffmpeg.org/releases/ffmpeg-" + v + ".tar.bz2");
+        } else {
+          $("#sc").prop("href", "https://git.ffmpeg.org/gitweb/ffmpeg.git/commit/" + v.substring(9));
+        }
+      }
+      function checked_val(n) {
+        return $("input[name='" + n + "']:checked").val();
+      }
+      function detect_machine() {
+        var p = new UAParser();
+        var r = p.getResult();
+        var a = r.cpu.architecture;
+        var o = r.os.name;
+        var v = $("input[name=v]").first().val();
+        var l = "static";
+        var m;
+        if (o == "Windows" && a == "ia32") {
+          m = "win32";
+        } else if (o == "Mac OS") {
+          m = "macos64";
+        } else {
+          m = "win64";
+        }
+        $("input[value='" + m + "']").prop("checked", true).parent().addClass("active");
+        update_links(v, m, l);
+      }
+      detect_machine();
+      $("input").change(function() {
+        var v = checked_val("v");
+        var m = checked_val("m");
+        var l = checked_val("l");
+        update_links(v, m, l);
+      });
+    </script>
+  </body>
+</html>

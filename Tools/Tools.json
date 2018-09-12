@@ -1,0 +1,37 @@
+{
+  "lastcheck": "2018-09-12 20:54:39Z",
+  "tools": [
+    {
+      "filename": "mkvtoolnix-64-bit-26.0.0.7z",
+      "modifiedtime": "2018-08-26 05:20:02Z",
+      "size": 14087442,
+      "tool": "MkvTool",
+      "url": "https://mkvtoolnix.download/windows/releases/26.0.0/mkvtoolnix-64-bit-26.0.0.7z",
+      "version": "26.0.0"
+    },
+    {
+      "filename": "ffmpeg-4.0.2-win64-static.zip",
+      "modifiedtime": "2018-07-25 13:25:20Z",
+      "size": 65766779,
+      "tool": "FfMpegTool",
+      "url": "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.0.2-win64-static.zip",
+      "version": "4.0.2"
+    },
+    {
+      "filename": "MediaInfo_CLI_18.08.1_Windows_x64.zip",
+      "modifiedtime": "2018-09-10 00:26:28Z",
+      "size": 2715390,
+      "tool": "MediaInfoTool",
+      "url": "https://mediaarea.net/download/binary/mediainfo/18.08.1/MediaInfo_CLI_18.08.1_Windows_x64.zip",
+      "version": "18.08.1"
+    },
+    {
+      "filename": "7z1805-extra.7z",
+      "modifiedtime": "2018-04-30 22:09:59Z",
+      "size": 923870,
+      "tool": "SevenZipTool",
+      "url": "https://www.7-zip.org/a/7z1805-extra.7z",
+      "version": "18.05"
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "attachments": [],
+  "chapters": [
+    {
+      "num_entries": 19
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2000-12-31T16:00:00-07:00",
+      "date_utc": "2001-01-01T00:00:00Z",
+      "duration": 6643079000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "Lavf57.7.2",
+      "segment_uid": "bd8ab397ffa0838f266e95ec88493d42",
+      "writing_application": "HandBrake 1.0.7 2017040900"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\ShieldTV - Transcode - Kill Bill Volume 1 (2003).mkv",
+  "global_tags": [
+    {
+      "num_entries": 2
+    }
+  ],
+  "identification_format_version": 10,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "MPEG-4p10/AVC/h.264",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MPEG4/ISO/AVC",
+        "codec_private_data": "0164001effe100216764001eacd940b42ff9bff0020001b6a0c020c800000300080015f90078b16cb001000668ebe1b2c8b0",
+        "codec_private_length": 50,
+        "default_duration": 41708333,
+        "default_track": true,
+        "display_dimensions": "853x358",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 1,
+        "packetizer": "mpeg4_p10_video",
+        "pixel_dimensions": "720x358",
+        "uid": 1
+      },
+      "type": "video"
+    },
+    {
+      "codec": "DTS",
+      "id": 1,
+      "properties": {
+        "audio_channels": 6,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_DTS",
+        "codec_private_length": 0,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 33000000,
+        "number": 2,
+        "track_name": "Surround",
+        "uid": 2
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "VobSub",
+      "id": 2,
+      "properties": {
+        "codec_id": "S_VOBSUB",
+        "codec_private_data": "73697a653a20373230783438300a6f72673a20302c20300a7363616c653a20313030252c20313030250a616c7068613a20313030250a736d6f6f74683a204f46460a66616465696e2f6f75743a2035302c2035300a616c69676e3a204f4646206174204c45465420544f500a74696d65206f66667365743a20300a666f7263656420737562733a204f46460a70616c657474653a206661666637302c206537336630362c203165316531652c206663666366632c203066656230662c203030303030302c206261333230332c206663666366632c203333633337652c206237653634342c203665316530302c203035373230352c203030303036612c206362303965382c206430616130632c203732303837300a637573746f6d20636f6c6f72733a204f46462c2074726964783a20303030302c20636f6c6f72733a203030303030302c203030303030302c203030303030302c203030303030300a00",
+        "codec_private_length": 349,
+        "default_track": false,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "number": 3,
+        "uid": 3
+      },
+      "type": "subtitles"
+    },
+    {
+      "codec": "VobSub",
+      "id": 3,
+      "properties": {
+        "codec_id": "S_VOBSUB",
+        "codec_private_data": "73697a653a20373230783438300a6f72673a20302c20300a7363616c653a20313030252c20313030250a616c7068613a20313030250a736d6f6f74683a204f46460a66616465696e2f6f75743a2035302c2035300a616c69676e3a204f4646206174204c45465420544f500a74696d65206f66667365743a20300a666f7263656420737562733a204f46460a70616c657474653a206661666637302c206537336630362c203165316531652c206663666366632c203066656230662c203030303030302c206261333230332c206663666366632c203333633337652c206237653634342c203665316530302c203035373230352c203030303036612c206362303965382c206430616130632c203732303837300a637573746f6d20636f6c6f72733a204f46462c2074726964783a20303030302c20636f6c6f72733a203030303030302c203030303030302c203030303030302c203030303030300a00",
+        "codec_private_length": 349,
+        "default_track": false,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "number": 4,
+        "uid": 4
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

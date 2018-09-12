@@ -1,0 +1,1005 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvpropedit -- 在不进行完整的重新混流的情况下修改现有 Matroska 文件的属性</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvpropedit -- 在不进行完整的重新混流的情况下修改现有 <span class="productname">Matroska</span><sup>(tm)</sup> 文件的属性
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvpropedit.synopsis">1. 概要</a></li>
+            <li><a href="#mkvpropedit.description">2. 说明</a></li>
+            <li><a href="#mkvpropedit.edit_selectors">3. 编辑选择器</a></li>
+            <li><a href="#mkvpropedit.attachment_selectors">4. 附件选择器</a></li>
+            <li><a href="#mkvpropedit.examples">5. 示例</a></li>
+            <li><a href="#d4e1375">6. 退出代码</a></li>
+            <li><a href="#mkvinfo.text_files_and_charsets">7. 文本文件与字符集转换</a></li>
+            <li><a href="#mkvpropedit.environment_variables">8. 环境变量</a></li>
+            <li><a href="#mkvpropedit.seealso">9. 参阅</a></li>
+            <li><a href="#mkvpropedit.www">10. 网络</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvpropedit.synopsis">1. 概要</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvpropedit</span> 选项 {输入文件名} {操作}
+         </div>
+         
+         <h1><a name="mkvpropedit.description">2. 说明</a></h1>
+         
+         
+         <p>
+            此程序可分析现有 <span class="productname">Matroska</span><sup>(tm)</sup>
+            文件，并修改其部分属性。然后它将将变更写入现有文件。可修改的属性包括剪辑信息元素（如标题）和轨道头部（如语言代码、'默认轨' 标记或轨道名称）。
+            
+         </p>
+         
+         
+         <p>
+            选项:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.list_property_names"><span class="option">-l</span>, <span class="option">--list-property-names</span></a></td>
+                  <td>
+                     
+                     <p>
+                        列出所有已知的可编辑的属性名称、它们的类型（字符串型、整数型、布尔型等等）及简短说明。程序随后将退出执行。因此不必提供
+                        <span class="parameter">source-filename</span> 参数。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.parse_mode"><span class="option">-p</span>, <span class="option">--parse-mode</span> <span class="parameter">模式</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置解析模式。参数 '<span class="parameter">模式</span>' 可以为
+                        '<span class="literal">fast（快速）</span>'（此项为默认值）或
+                        '<span class="literal">full（完整）</span>'。'<span class="literal">fast（快速）</span>'模式不解析整个文件，而是使用元定位元素确定输入文件中所需元素的位置。99%
+                        的情况下这就足够了。但如果碰到不含元定位元素或者元定位元素损坏的文件，用户可能得考虑 '<span class="literal">full（完整）</span>'
+                        解析模式。完整扫描文件可能要花费几分钟，而快速扫描只需要几秒钟。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            轨道、剪辑信息属性处理操作:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.edit"><span class="option">-e</span>, <span class="option">--edit</span> <span class="parameter">选择器</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置后续的 <a href="#mkvpropedit.description.add">添加</a>、<a href="#mkvpropedit.description.set">设置</a> 或 <a href="#mkvpropedit.description.delete">删除</a> 操作所针对的 <span class="productname">Matroska</span><sup>(tm)</sup>
+                        文件区域（即剪辑信息或某个轨道的头部）。此选项可多次使用，以同时修改多个元素。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        默认情况下，<span class="productname">mkvpropedit</span>(1) 将编辑剪辑信息区段。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        关于完整的语法说明请参见关于 <a href="#mkvpropedit.edit_selectors">编辑选择器</a> 的段落。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add"><span class="option">-a</span>, <span class="option">--add</span>
+                        <span class="parameter">名称</span>=<span class="parameter">数值</span></a></td>
+                  <td>
+                     
+                     <p>
+                        添加名为 <span class="parameter">名称</span>、值为 <span class="parameter">数值</span>
+                        的属性。即使已存在这样的属性，也将执行添加属性操作。注意大多数属性是唯一的，不能出现多个。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.set"><span class="option">-s</span>, <span class="option">--set</span>
+                        <span class="parameter">名称</span>=<span class="parameter">数值</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置所有名为 <span class="parameter">名称</span> 的属性的数值为
+                        <span class="parameter">数值</span>。如果不存在这样的属性，则将添加该属性。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete"><span class="option">-d</span>, <span class="option">--delete</span> <span class="parameter">名称</span></a></td>
+                  <td>
+                     
+                     <p>
+                        删除所有名为 <span class="parameter">名称</span> 的属性。注意部分属性是必需的，不能删除。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            标签及章节处理操作:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.tags"><span class="option">-t</span>, <span class="option">--tags</span>
+                        <span class="parameter">选择器</span>:<span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        用 <span class="filename">文件名</span> 中的标签添加或替换文件中的标签，或者如果 <span class="filename">文件名</span>
+                        为空则移除标签。<span class="productname">mkvpropedit</span>(1) 读取的 XML 标签格式与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 所读取的相同。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">选择器</span> 必须是
+                        <span class="constant">all</span>、<span class="constant">global</span> 或
+                        <span class="constant">track</span> 之一。对于<span class="constant">all</span> 选择器，<span class="productname">mkvpropedit</span>(1)
+                        将替换或移除文件中的所有标签。对于 <span class="constant">global</span> 选择器，将只替换或移除全局标签。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        对于 <span class="constant">track</span> 选择器，<span class="productname">mkvpropedit</span>(1) 将替换特定轨道的标签。读取自
+                        <span class="filename">文件名</span> 的其他标签将分配给相同轨道。轨道与 <a href="#mkvpropedit.edit_selectors">编辑选择器</a> 以相同格式指定 (参见下文)，如
+                        <span class="code">--tags track:a1:新音频标签.xml</span>。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_track_statistics_tags"><span class="option">--add-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        计算文件所有轨道的统计信息，并为每个轨道新增一个统计信息标签。若文件中已经存在此类标签，则将更新这些标签。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_track_statistics_tags"><span class="option">--delete-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        从文件中删除现有的全部轨道统计标签。若文件不包括轨道统计标签，则不会被修改。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.chapters"><span class="option">-c</span>, <span class="option">--chapters</span> <span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        用 <span class="filename">文件名</span> 中的标签添加或替换文件中的章节，或者如果 <span class="filename">文件名</span>
+                        为空则移除章节。<span class="productname">mkvpropedit</span>(1) 读取的 XML 及简单章节格式与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 所读取的相同。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            附件处理操作:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_attachment"><span class="option">--add-attachment</span> <span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        从 <span class="parameter">文件名</span> 添加新附件。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-name</span> 选项，则其值将用作新附件的名称。否则附件名称将从
+                        <span class="parameter">文件名</span> 得出。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-mime-type</span> 选项，则其值将用作新附件的 MIME
+                        类型。否则将根据 <span class="parameter">文件名</span> 的内容自动侦测。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-description</span>
+                        选项，则其值将用作新附件的描述。否则将不设置描述信息。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-uid</span> 选项，则其值将用作新附件的 UID。否则将自动生成随机的
+                        UID。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.replace_attachment"><span class="option">--replace-attachment</span>
+                        <span class="parameter">选择器</span><span class="literal">:</span><span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        用文件 <span class="parameter">文件名</span> 替换与 <span class="parameter">选择器</span>
+                        相匹配的一或多个附件。如果有超过一个现有附件与 <span class="parameter">选择器</span> 相匹配，则其所有内容均将被
+                        <span class="parameter">文件名</span> 的内容替代。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">选择器</span> 可以有四种格式。各格式说明位于下文 <a href="#mkvpropedit.attachment_selectors">附件选择器</a> 段落。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-name</span> 选项，则其值将设为每个被修改的附件的新名称。否则不修改名称。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-mime-type</span> 选项，则其值将设为每个被修改的附件的新 MIME
+                        类型。否则不修改 MIME 类型。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-description</span>
+                        选项，则其值将设为每个被修改的附件的新描述。否则不修改描述。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-uid</span> 选项，则其值将设为每个被修改的附件的新 UID。否则不修改
+                        UID。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.update_attachment"><span class="option">--update-attachment</span> <span class="parameter">选择器</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置 <span class="parameter">选择器</span> 所匹配的一或多个附件的属性。如果匹配 <span class="parameter">选择器</span>
+                        的现有附件超过一个，则每个附件的属性都将被更新。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">选择器</span> 可以有四种格式。各格式说明位于下文 <a href="#mkvpropedit.attachment_selectors">附件选择器</a> 段落。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-name</span> 选项，则其值将设为每个被修改的附件的新名称。否则不修改名称。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-mime-type</span> 选项，则其值将设为每个被修改的附件的新 MIME
+                        类型。否则不修改 MIME 类型。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-description</span>
+                        选项，则其值将设为每个被修改的附件的新描述。否则不修改描述。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        若本选项之前使用了 <span class="option">--attachment-uid</span> 选项，则其值将设为每个被修改的附件的新 UID。否则不修改
+                        UID。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_attachment"><span class="option">--delete-attachment</span> <span class="parameter">选择器</span></a></td>
+                  <td>
+                     
+                     <p>
+                        删除与 <span class="parameter">选择器</span> 相匹配的一或多个附件。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">选择器</span> 可以有四种格式。各格式说明位于下文 <a href="#mkvpropedit.attachment_selectors">附件选择器</a> 段落。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            附件操作选项:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_name"><span class="option">--attachment-name</span> <span class="parameter">名称</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置接下来 <span class="option">--add-attachment</span> 或
+                        <span class="option">--replace-attachment</span> 操作要使用的名称。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_mime_type"><span class="option">--attachment-mime-type</span> <span class="parameter">mime 类型</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置接下来 <span class="option">--add-attachment</span> 或
+                        <span class="option">--replace-attachment</span> 操作要使用的 MIME 类型。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_description"><span class="option">--attachment-description</span> <span class="parameter">描述</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置接下来 <span class="option">--add-attachment</span> 或
+                        <span class="option">--replace-attachment</span> 操作要使用的描述。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            其他选项：
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设定在命令行给出的字符串的字符集，用于转为其他字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">字符集</span></a></td>
+                  <td>
+                     
+                     <p>
+                        设置输出的字符串应被转换到何种字符集。默认为系统当前区域设置中所给定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">文件名</span></a></td>
+                  <td>
+                     
+                     <p>
+                        将所有信息写入文件 <span class="parameter">文件名</span> 而不是输出到命令行。
+                        尽管该操作可以用输出重定向轻松实现，但在某些情况下还需要靠它：如当终端在写入文件之前重新解释（覆盖输出）时。将优先使用通过 <a href="#mkvpropedit.description.output_charset">--output-charset</a>
+                        设定的字符集。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">语言代码</span></a></td>
+                  <td>
+                     
+                     <p>
+                        强制使用 <span class="parameter">语言代码</span> 所对应的翻译 (例如  '<span class="literal">de_DE</span>'
+                        表示德文翻译)。在 <span class="parameter">语言代码</span> 处输入 '<span class="literal">list</span>'
+                        可让程序输出可用翻译的列表。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.debug"><span class="option">--debug</span> <span class="parameter">主题</span></a></td>
+                  <td>
+                     
+                     <p>
+                        为特定功能开启调试。该选项仅对开发者有用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.engage"><span class="option">--engage</span> <span class="parameter">功能</span></a></td>
+                  <td>
+                     
+                     <p>
+                        开启实验性功能。可用功能列表可通过 <span class="command">mkvpropedit --engage list</span>
+                        得到。这些功能在正常情况下不应该使用。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        打开 GUI 模式。该模式下，将输出特殊格式的行，告知目前受控的 GUI
+                        的行为。这些消息遵从格式「<span class="literal">#GUI#消息</span>」。消息可能包括键值对，如「<span class="literal">#GUI#消息#键1=值1#键2=值2…</span>」。消息内容及键的内容不作翻译，总是以英语输出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        使输出信息更详尽，且每当读取到重要的 <span class="productname">Matroska</span><sup>(tm)</sup> 元素时就将其显示。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        显示用法信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        显示版本信息并退出。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">选项文件.json</span></td>
+                  <td>
+                     
+                     <p>
+                        从文件 <span class="parameter">选项文件</span> 读取其他命令行参数。关于支持的选项文件格式的详细说明，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        手册的“选项文件”段落。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.edit_selectors">3. 编辑选择器</a></h1>
+         
+         
+         <p>
+            <a href="#mkvpropedit.description.edit">--edit</a>
+            选项设置后续的 <a href="#mkvpropedit.description.add">添加</a>, <a href="#mkvpropedit.description.set">设置</a> 或 <a href="#mkvpropedit.description.delete">删除</a> 操作所影响的 <span class="productname">Matroska</span><sup>(tm)</sup>
+            文件区域（剪辑信息或者特定轨道的头部）。在出现另一个 <a href="#mkvpropedit.description.edit">--edit</a>
+            选项之前，此选项将一直有效。此选项的参数就叫做编辑选择器。
+            
+         </p>
+         
+         
+         <p>
+            默认情况下，<span class="productname">mkvpropedit</span>(1) 将编辑剪辑信息区段。
+            
+         </p>
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.segment_info">3.1. 剪辑信息</a></h2>
+         
+         
+         <p>
+            可以通过这三个词中的任意一个选择剪辑信息:
+            '<span class="literal">info</span>'、'<span class="literal">segment_info</span>' 或
+            '<span class="literal">segmentinfo</span>'。剪辑信息包含的属性包括剪辑标题、剪辑 <span class="abbrev">UID</span> 等。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.track_headers">3.2. 轨道头部</a></h2>
+         
+         
+         <p>
+            可用于选择轨道头部的选择器稍显复杂：所有以 '<span class="literal">track:</span>' 开头的变体。轨道头部属性包括如语言代码、'默认轨'
+            标记、轨道名称等属性。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        如果参数 <span class="parameter">n</span> 为数字，则将选择第 <span class="parameter">n</span> 条轨道。轨道顺序与
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的 <span class="option">--identify</span> 选项所输出的相同。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        编号从 1 开始。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">t</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        如果参数以字母 <span class="parameter">t</span> 后接 <span class="parameter">n</span>
+                        开头，则将选择选定轨道类型中的第 <span class="parameter">n</span> 条轨道。轨道类型参数
+                        <span class="parameter">t</span> 必须为下述四个字母中的一个: '<span class="literal">a</span>'
+                        代表音频轨道，'<span class="literal">b</span>' 代表按钮轨道，'<span class="literal">s</span>'
+                        代表字幕轨道，'<span class="literal">v</span>' 代表视频轨道。轨道顺序与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的
+                        <span class="option">--identify</span> 选项所输出的相同。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        编号从 1 开始。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>=<span class="parameter">uid</span></td>
+                  <td>
+                     
+                     <p>
+                        如果参数以 '<span class="literal">=</span>' 后接 <span class="parameter">uid</span> 开头，则将选择轨道
+                        <span class="abbrev">UID</span> 元素等于此 <span class="parameter">uid</span> 的轨道。轨道
+                        <span class="abbrev">UID</span> 可通过 <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a> 获取。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>@<span class="parameter">数字</span></td>
+                  <td>
+                     
+                     <p>
+                        如果参数以 '<span class="literal">@</span>' 后接 <span class="parameter">数字</span> 开头，则选择轨道号元素等于
+                        <span class="parameter">数字</span> 的轨道。轨道号可以通过 <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a> 获取。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.notes">3.3. 注</a></h2>
+         
+         
+         <p>
+            由于轨道编辑选择器的特性，一些选择器所匹配的轨道头部可能是相同的。在此情况下，这些编辑选择器的所有操作将被按照在命令行给出的顺序合并运行。
+            
+         </p>
+         
+         
+         <h1><a name="mkvpropedit.attachment_selectors">4. 附件选择器</a></h1>
+         
+         
+         
+         <p>
+            附件选择器可与两项操作 <a href="#mkvpropedit.description.replace_attachment">--replace-attachment</a>
+            及 <a href="#mkvpropedit.description.delete_attachment">--delete-attachment</a>
+            一起使用。它可以有以下四种格式:
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>
+                  按附件 ID 选择。本格式的选择器仅仅是数字，<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 的识别命令所输出的附件 ID。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  按附件 UID (唯一 ID) 选择。本格式的选择器为等号 <span class="literal">=</span> 后接数字，<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                  的详尽识别命令所输出的附件的唯一 ID。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  按附件名称选择。本格式的选择器为文字 <span class="literal">name:</span> 后接现有附件名称。若本选择器与
+                  <span class="option">--replace-attachment</span> 一同使用，则名称中的冒号必须用 <span class="literal">\c</span>
+                  转义。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  按 MIME 类型选择。本格式的选择器为文字 <span class="literal">mime-type:</span> 后接现有附件的 MIME 类型。若本选择器与
+                  <span class="option">--replace-attachment</span> 一同使用，则 MIME 类型中的冒号必须用
+                  <span class="literal">\c</span> 转义。
+                  
+               </p>
+               
+            </li>
+            
+         </ol>
+         
+         <h1><a name="mkvpropedit.examples">5. 示例</a></h1>
+         
+         
+         <p>
+            下面的示例将编辑一个名为 '<span class="literal">电影.mkv</span>'
+            的文件。示例中将设置剪辑标题并修改一条音频轨和一条字幕轨的语言代码。附注，本示例可以简写，即省去 <a href="#mkvpropedit.description.edit">--edit</a>
+            选项，因为在第一个 <a href="#mkvpropedit.description.edit">--edit</a>
+            选项之前的所有选项默认编辑的就是剪辑信息元素。
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --edit info --set "title=一部影片" --edit track:a1 --set language=fre --edit track:a2 --set language=ita</pre>
+         
+         <p>
+            第二个示例，将 '默认轨标记' 从第一条字幕轨移除并设置到第二条字幕轨上。注意 <span class="productname">mkvpropedit</span>(1) 与 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            不同，不会在将另一个轨道的 '默认轨标记'设为 '1' 的时候自动将其他轨道的标记设为 '0'。
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --edit track:s1 --set flag-default=0 --edit track:s2 --set flag-default=1</pre>
+         
+         <p>
+            像这样替换文件中第二个字幕轨的标签:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --tags track:s2:新字幕标签.xml</pre>
+         
+         <p>
+            移除所有标签需要将文件名留空:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --tags all:</pre>
+         
+         <p>
+            像这样替换文件中的章节:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --chapters 新章节.xml</pre>
+         
+         <p>
+            移除所有章节需要将文件名留空:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --chapters ''</pre>
+         
+         <p>
+            将字体文件 (<span class="literal">Arial.ttf</span>) 作为附件添加:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --add-attachment Arial.ttf</pre>
+         
+         <p>
+            将字体文件 (<span class="literal">89719823.ttf</span>) 作为附件添加，并提供信息，因为它真的就是 Arial:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --attachment-name Arial.ttf --attachment-description 'Arial 字体，TrueType 类型' --attachment-mime-type application/x-truetype-font --add-attachment 89719823.ttf</pre>
+         
+         <p>
+            将已经附加的字体 (<span class="literal">Comic.ttf</span>) 替换为另一个
+            (<span class="literal">Arial.ttf</span>):
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --attachment-name Arial.ttf --attachment-description 'Arial 字体，TrueType 类型' --replace-attachment name:Comic.ttf:Arial.ttf</pre>
+         
+         <p>
+            删除附加的第二个文件，不论它是什么:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --delete-attachment 2</pre>
+         
+         <p>
+            按 MIME 类型删除所有附加字体:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit 影片.mkv --delete-attachment mime-type:application/x-truetype-font</pre>
+         <h1><a name="d4e1375">6. 退出代码</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1) 退出时会返回以下三个退出代码中的一个：
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- 此退出代码说明已成功完成修改。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- 这种情况下 <span class="productname">mkvpropedit</span>(1) 至少输出了一条警告信息，但修改并未因之中止。 警告信息以文字
+                  '<span class="literal">警告:</span>' 为前缀。根据问题的不同，生成的文件可能是好的，也可能不是。 强烈建议用户检查警告信息以及生成的文件。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- 此退出代码用于错误发生之后。 <span class="productname">mkvpropedit</span>(1)
+                  在输出错误信息后即中断处理。错误信息可能是错误的命令行参数，也可能是损坏文件的读取/写入错误。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvinfo.text_files_and_charsets">7. 文本文件与字符集转换</a></h1>
+         
+         
+         
+         <p>
+            关于 MKVToolNix 套件中所有工具如何处理字符集转换、输入/输出编码、命令行编码及控制台编码的深入讨论，请参见 <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            手册中相对应名称的段落。
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.environment_variables">8. 环境变量</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1) 会使用决定系统区域设置的默认变量 (如 <span class="varname">LANG</span> 与
+            <span class="varname">LC_*</span> 族)。其他变量包括:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span>
+                     及其缩略形式 <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvpropedit.description.debug">--debug</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     及其缩略形式 <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>内容将被当作通过 <a href="#mkvpropedit.description.engage">--engage</a>
+                        选项传递的参数对待。
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.seealso">9. 参阅</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.www">10. 网络</a></h1>
+         
+         
+         <p>
+            最新版本总可以在 <a href="https://mkvtoolnix.download/">MKVToolNix 主页</a> 找到。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

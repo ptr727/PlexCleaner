@@ -1,0 +1,86 @@
+{
+  "attachments": [],
+  "chapters": [
+    {
+      "num_entries": 14
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2011-02-08T13:47:44-07:00",
+      "date_utc": "2011-02-08T21:47:44Z",
+      "duration": 7303296000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "libmakemkv v1.6.4 (0.7.7/0.8.1) win(x64-release)",
+      "segment_uid": "0a3237a2f28608a9c086bbb2e6c5b781",
+      "writing_application": "MakeMKV v1.6.4 win(x64-release)"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\BD MPEG2 - Lord of War (2005).mkv",
+  "global_tags": [],
+  "identification_format_version": 10,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "MPEG-1/2",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MPEG2",
+        "codec_private_data": "000001b37804383157e432aa1020202620262c2c2c2c2c2c343034363636343434343636363a3a3a4444443a3a3a36363a3a404044444a4c4a464644464c4c50505060605c5c7070748a8aa710111112121213131313141414141415151515151516161616161616171717171717171718181819181818191a1a1a1a191b1b1b1b1b1c1c1c1c1e1e1e1f1f21000001b5144a00010000",
+        "codec_private_length": 150,
+        "default_duration": 41708333,
+        "default_track": true,
+        "display_dimensions": "1920x1080",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 1,
+        "pixel_dimensions": "1920x1080",
+        "uid": 1
+      },
+      "type": "video"
+    },
+    {
+      "codec": "DTS-ES",
+      "id": 1,
+      "properties": {
+        "audio_channels": 6,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_DTS",
+        "codec_private_length": 0,
+        "default_duration": 10666666,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 2,
+        "track_name": "3/2+1",
+        "uid": 2
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "HDMV PGS",
+      "id": 2,
+      "properties": {
+        "codec_id": "S_HDMV/PGS",
+        "codec_private_length": 0,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "number": 3,
+        "uid": 3
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

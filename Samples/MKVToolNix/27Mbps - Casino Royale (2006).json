@@ -1,0 +1,108 @@
+{
+  "attachments": [],
+  "chapters": [
+    {
+      "num_entries": 16
+    }
+  ],
+  "container": {
+    "properties": {
+      "container_type": 17,
+      "date_local": "2011-02-09T14:49:07-07:00",
+      "date_utc": "2011-02-09T22:49:07Z",
+      "duration": 8652672000000,
+      "is_providing_timestamps": true,
+      "muxing_application": "libmakemkv v1.6.4 (0.7.7/0.8.1) win(x64-release)",
+      "segment_uid": "004e1291cd4406fbcf7f8baf200ac8ee",
+      "writing_application": "MakeMKV v1.6.4 win(x64-release)"
+    },
+    "recognized": true,
+    "supported": true,
+    "type": "Matroska"
+  },
+  "errors": [],
+  "file_name": "\\\\STORAGE\\Media\\Test\\Troublesome\\27Mbps - Casino Royale (2006).mkv",
+  "global_tags": [],
+  "identification_format_version": 10,
+  "track_tags": [],
+  "tracks": [
+    {
+      "codec": "MPEG-4p10/AVC/h.264",
+      "id": 0,
+      "properties": {
+        "codec_id": "V_MPEG4/ISO/AVC",
+        "codec_private_data": "01640029ffe1003427640029ac7b01e0089f9701c800009c68001d4c070300003ef1480003938740c6c60600007d6f500007270e818d872c2211458001008028ea8f3954c730c17498a344921a1e0e870341384850b02b03680bf2b4d7a7a142dd231de285040222c5c841512728c1438811122c829362820609c242026121507710a4290c59085688064032ba0d03e07a1bc0cc02d805c00ab01660758681e00aa1002a40821d011c02f004141b80d9012e04601640b81c80f8021ffe16c0",
+        "codec_private_length": 191,
+        "default_duration": 41708333,
+        "default_track": true,
+        "display_dimensions": "1920x1080",
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 1,
+        "packetizer": "mpeg4_p10_video",
+        "pixel_dimensions": "1920x1080",
+        "uid": 1
+      },
+      "type": "video"
+    },
+    {
+      "codec": "TrueHD",
+      "id": 1,
+      "properties": {
+        "audio_bits_per_sample": 24,
+        "audio_channels": 6,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_TRUEHD",
+        "codec_private_length": 0,
+        "default_duration": 833333,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 2,
+        "track_name": "5.1",
+        "uid": 2
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "AC-3",
+      "id": 2,
+      "properties": {
+        "audio_channels": 6,
+        "audio_sampling_frequency": 48000,
+        "codec_id": "A_AC3",
+        "codec_private_length": 0,
+        "default_duration": 32000000,
+        "default_track": false,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "minimum_timestamp": 0,
+        "number": 3,
+        "track_name": "3/2+1",
+        "uid": 3
+      },
+      "type": "audio"
+    },
+    {
+      "codec": "HDMV PGS",
+      "id": 3,
+      "properties": {
+        "codec_id": "S_HDMV/PGS",
+        "codec_private_length": 0,
+        "default_track": true,
+        "enabled_track": true,
+        "forced_track": false,
+        "language": "eng",
+        "number": 4,
+        "uid": 4
+      },
+      "type": "subtitles"
+    }
+  ],
+  "warnings": []
+}

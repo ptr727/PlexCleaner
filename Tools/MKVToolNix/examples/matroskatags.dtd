@@ -1,0 +1,32 @@
+<!ELEMENT Tags (Tag*)>
+<!ELEMENT Tag (
+          Targets,
+          Simple*)>
+
+<!ELEMENT Targets (
+          TrackUID*,
+          ChapterUID*,
+          AttachmentUID*,
+          EditionUID*,
+          TargetType?,
+          TargetTypeValue?)>
+
+<!ELEMENT TrackUID (#PCDATA)>
+<!ELEMENT ChapterUID (#PCDATA)>
+<!ELEMENT AttachmentUID (#PCDATA)>
+<!ELEMENT EditionUID (#PCDATA)>
+<!ELEMENT TargetType (#PCDATA)>
+<!ELEMENT TargetTypeValue (#PCDATA)>
+
+<!ELEMENT Simple (
+          Name,
+          String?,
+          Binary?,
+          TagLanguage?,
+          DefaultLanguage?,
+          Simple*)>
+<!ELEMENT Name (#PCDATA)>
+<!ELEMENT String (#PCDATA)>
+<!ELEMENT Binary (#PCDATA)>
+<!ELEMENT TagLanguage (#PCDATA)>
+<!ELEMENT DefaultLanguage (#PCDATA)>

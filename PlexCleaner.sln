@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27110.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlexCleaner", "PlexCleaner\PlexCleaner.csproj", "{F42F132F-6FA9-42E5-A352-AD785FC38BBA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{130C299B-C002-4E98-A429-B32AD25CB873} = {130C299B-C002-4E98-A429-B32AD25CB873}
+		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D} = {0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ISO6393Library", "ISO6393Library\ISO6393Library.csproj", "{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{58A76478-B1D2-4BD3-8796-A7874A4FED52}"
+	ProjectSection(SolutionItems) = preProject
+		Tools\Tools.json = Tools\Tools.json
+		Tools\Tools.txt = Tools\Tools.txt
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utilities", "..\Utilities\Utilities\Utilities.csproj", "{130C299B-C002-4E98-A429-B32AD25CB873}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F42F132F-6FA9-42E5-A352-AD785FC38BBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F42F132F-6FA9-42E5-A352-AD785FC38BBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F42F132F-6FA9-42E5-A352-AD785FC38BBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F42F132F-6FA9-42E5-A352-AD785FC38BBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{130C299B-C002-4E98-A429-B32AD25CB873}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{130C299B-C002-4E98-A429-B32AD25CB873}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{130C299B-C002-4E98-A429-B32AD25CB873}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{130C299B-C002-4E98-A429-B32AD25CB873}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A127C929-B096-4BFD-8BAD-56A3860AEB94}
+	EndGlobalSection
+EndGlobal

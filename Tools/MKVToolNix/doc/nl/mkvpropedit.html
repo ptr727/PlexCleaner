@@ -1,0 +1,1127 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvpropedit -- Modificeren van eigenschappen van een bestaande Matroska bestanden zonder
+         een volledige samenvoeging
+      </title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvpropedit -- Modificeren van eigenschappen van een bestaande <span class="productname">Matroska</span><sup>(tm)</sup> bestanden zonder
+         een volledige samenvoeging
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvpropedit.synopsis">1. Beknopte inhoudsbeschrijving</a></li>
+            <li><a href="#mkvpropedit.description">2. Beschrijving</a></li>
+            <li><a href="#mkvpropedit.edit_selectors">3. Bewerk selecteurs/kiezers</a></li>
+            <li><a href="#mkvpropedit.attachment_selectors">4. Bijlage(n) keuze</a></li>
+            <li><a href="#mkvpropedit.examples">5. Voorbeelden</a></li>
+            <li><a href="#d4e1375">6. Verlaat codes</a></li>
+            <li><a href="#mkvinfo.text_files_and_charsets">7. Tekst bestanden en karakter set conversies</a></li>
+            <li><a href="#mkvpropedit.environment_variables">8. Omgevingsvariabelen</a></li>
+            <li><a href="#mkvpropedit.seealso">9. Zie ook</a></li>
+            <li><a href="#mkvpropedit.www">10. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvpropedit.synopsis">1. Beknopte inhoudsbeschrijving</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvpropedit</span> options {source-filename} {actions}
+         </div>
+         
+         <h1><a name="mkvpropedit.description">2. Beschrijving</a></h1>
+         
+         
+         <p>
+            Dit programma analyseert een bestaand <span class="productname">Matroska</span><sup>(tm)</sup> bestand en kan sommige
+            eigenschappen veranderen. Dan schrijft het deze veranderingen naar het
+            bestaande bestand. Onder de eigenschappen die kunnen worden veranderd, zijn
+            de segment informatie elementen (b.v. de titel) en de spoor koppen (b.v.de
+            taal code, 'standaard spoor' markering of de naam).
+            
+         </p>
+         
+         
+         <p>
+            Opties:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.list_property_names"><span class="option">-l</span>, <span class="option">--list-property-names</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Lijst alle bekende bewerkbare eigenschap namen, hun type (string, integer,
+                        boolean etc) en een korte beschrijving. Nadien stopt het programma. Daarom
+                        hoeft de parameter <span class="parameter">source-filename</span> niet te worden
+                        ingegeven.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.parse_mode"><span class="option">-p</span>, <span class="option">--parse-mode</span>
+                        <span class="parameter">mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Stelt de ontleedt mode in. De parameter '<span class="parameter">mode</span>' kan
+                        zijn of '<span class="literal">fast</span>' (wat ook standaard is) of
+                        '<span class="literal">full</span>'. De '<span class="literal">fast</span>' mode ontleedt niet
+                        het gehele bestand, maar gebruikt de meta zoek elementen voor lokaliseren
+                        van de benodigde elementen van een bron bestand. In 99% van alle gevallen is
+                        dat voldoende. Maar voor bestanden die geen meta zoek element bevatten of
+                        zij die beschadigd zijn, zou de gebruiker moeten opgeven de
+                        '<span class="literal">full</span>' ontleedt mode. Een volledige scan kan enige
+                        minuten duren terwijl een snelle scan slechts enkele seconden duurt.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Acties die van doen zijn met sporen en segment informatie eigenschappen:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.edit"><span class="option">-e</span>, <span class="option">--edit</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet de <span class="productname">Matroska</span><sup>(tm)</sup> bestand sectie (segment informatie of bepaalde sporen
+                        koppen) die alle volgen <a href="#mkvpropedit.description.add">voeg
+                           toe</a>, <a href="#mkvpropedit.description.set">zet</a> en <a href="#mkvpropedit.description.delete">verwijder</a> acties die er op
+                        werken. Deze optie kan meerdere keren worden gebruikt om wijzigingen aan
+                        meer dan één element te maken.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Standaard bewerkt <span class="productname">mkvpropedit</span>(1) de segment informatie sectie
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Zie de sectie over: <a href="#mkvpropedit.edit_selectors">Bewerk
+                           selecteurs/kiezers</a> voor een volledige beschrijving van de ingaven.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add"><span class="option">-a</span>, <span class="option">--add</span>
+                        <span class="parameter">name</span>=<span class="parameter">value</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Voegt eigenschap <span class="parameter">name</span> toe met de waarde
+                        <span class="parameter">value</span>. De eigenschap wordt toegevoegd zelfs wanneer
+                        deze reeds bestaat. Opmerking: dat de meeste eigenschappen uniek zijn en
+                        niet nog een keer mogen voorkomen.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.set"><span class="option">-s</span>, <span class="option">--set</span>
+                        <span class="parameter">name</span>=<span class="parameter">value</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet alle voorgekomen van de eigenschap <span class="parameter">name</span> naar de
+                        waarde <span class="parameter">value</span>. Als een dergelijke eigenschap niet
+                        bestaat dan wordt deze toegevoegd.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete"><span class="option">-d</span>, <span class="option">--delete</span> <span class="parameter">name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Verwijdert alle voorgekomen eigenschappen
+                        <span class="parameter">name</span>. Opmerking: sommige eigenschappen zijn vereist
+                        en kunnen niet worden verwijderd.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Acties die van doen zijn met markeringen en hoofdstukken:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.tags"><span class="option">-t</span>, <span class="option">--tags</span>
+                        <span class="parameter">selector</span>:<span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Markeringen toevoegen of vervangen in het bestand met degene van
+                        <span class="filename">filename</span> of verwijder ze als
+                        <span class="filename">filename</span> leeg is. <span class="productname">mkvpropedit</span>(1) leest dezelfde XML
+                        markeer format die <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> ook inleest.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        De <span class="parameter">selector</span> moet één van de woorden
+                        <span class="constant">all</span>, <span class="constant">global</span> of
+                        <span class="constant">track</span> zijn. Voor <span class="constant">all</span> zal
+                        <span class="productname">mkvpropedit</span>(1) alle markeringen vervangen of verwijderen in een bestand. Met
+                        <span class="constant">global</span> worden alléén globale markeringen vervangen of
+                        verwijderd.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Met <span class="constant">track</span> vervangt <span class="productname">mkvpropedit</span>(1) markeringen van een
+                        specifiek spoor. Als extra leest het de markeringen van
+                        <span class="filename">filename</span> en worden toegewezen aan hetzelfde spoor. Het
+                        spoor is gespecificeerd op dezelfde manier <a href="#mkvpropedit.edit_selectors">bewerk selecteurs</a> zijn
+                        gespecificeerd (zie hieronder), b.v. <span class="code">--tags
+                           track:a1:new-audio-tags.xml</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_track_statistics_tags"><span class="option">--add-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Calculates statistics for all tracks in a file and adds new statistics tags
+                        for them. If the file already contains such tags then they'll be updated.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_track_statistics_tags"><span class="option">--delete-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Deletes all existing track statistics tags from a file. If the file doesn't
+                        contain track statistics tags then it won't be modified.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.chapters"><span class="option">-c</span>, <span class="option">--chapters</span>
+                        <span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Toevoegen of vervangen van hoofdstukken in het bestand met degene van
+                        <span class="filename">filename</span> of verwijder ze als
+                        <span class="filename">filename</span> leeg is. <span class="productname">mkvpropedit</span>(1) leest dezelfde XML en
+                        simpele hoofdstukformaten die <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> ook inleest.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Acties voor afhandelen van bijlagen:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_attachment"><span class="option">--add-attachment</span> <span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Voegt een nieuwe bijlage van <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Als de optie <span class="option">--attachment-name</span> is gebruikt voorafgaand tot
+                        deze optie, wordt die waarde gebruikt als vervanging van de bijlage
+                        naam. Anders wordt het verkregen uit <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Als de optie <span class="option">--attachment-dmime-type</span> is gebruikt
+                        voorafgaand tot deze optie, wordt die waarde gebruikt als vervanging van het
+                        MIME type. Anders wordt het automatisch gedetecteerd van de inhoud van
+                        <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Als de optie <span class="option">--attachment-description</span> is gebruikt
+                        voorafgaand tot deze optie, wordt die waarde gebruikt als vervanging van de
+                        bijlage beschrijving. Anders wordt er géén beschrijving gezet.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is used as the new attachment's UID. Otherwise a
+                        random UID will be generated automatically.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.replace_attachment"><span class="option">--replace-attachment</span>
+                        <span class="parameter">selector</span><span class="literal">:</span><span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Vervangt één of meer bijlage(n) die overeenkomen met
+                        <span class="parameter">selector</span> met het bestand
+                        <span class="parameter">filename</span>. Indien meer dan één bestand overeenkomt met
+                        <span class="parameter">selector</span> dan wordt al hun inhoud vervangen met de
+                        inhoud van <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        De <span class="parameter">keuze</span> kan vier vormen hebben. Ze worden in de
+                        sectie hieronder uitgelegd <a href="#mkvpropedit.attachment_selectors">bijlage keuze</a>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-name</span> has been used prior to this
+                        option then its value is set as the new name for each modified
+                        attachment. Otherwise the names aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-mime-type</span> has been used prior to
+                        this option then its value is set as the new MIME type for each modified
+                        attachment. Otherwise the MIME types aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-description</span> has been used prior
+                        to this option then its value is set as the new description for each
+                        modified attachment. Otherwise the descriptions aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is set as the new UID for each modified
+                        attachment. Otherwise the UIDs aren't changed.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.update_attachment"><span class="option">--update-attachment</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the properties of one or more attachments that match
+                        <span class="parameter">selector</span>. If more than one existing attachment
+                        matches <span class="parameter">selector</span> then all of their properties will be
+                        updated.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        De <span class="parameter">keuze</span> kan vier vormen hebben. Ze worden in de
+                        sectie hieronder uitgelegd <a href="#mkvpropedit.attachment_selectors">bijlage keuze</a>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-name</span> has been used prior to this
+                        option then its value is set as the new name for each modified
+                        attachment. Otherwise the names aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-mime-type</span> has been used prior to
+                        this option then its value is set as the new MIME type for each modified
+                        attachment. Otherwise the MIME types aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-description</span> has been used prior
+                        to this option then its value is set as the new description for each
+                        modified attachment. Otherwise the descriptions aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is set as the new UID for each modified
+                        attachment. Otherwise the UIDs aren't changed.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_attachment"><span class="option">--delete-attachment</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Verwijdert één of meer bijlagen die overeenkomen met
+                        <span class="parameter">selector</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        De <span class="parameter">keuze</span> kan vier vormen hebben. Ze worden in de
+                        sectie hieronder uitgelegd <a href="#mkvpropedit.attachment_selectors">bijlage keuze</a>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Opties voor bijlage acties:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_name"><span class="option">--attachment-name</span> <span class="parameter">name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Stelt de te gebruiken naam in voor het volgende
+                        <span class="option">--add-attachment</span> of <span class="option">--replace-attachment</span>
+                        uitvoering.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_mime_type"><span class="option">--attachment-mime-type</span> <span class="parameter">mime-type</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet de te gebruiken MIME type  voor het volgende
+                        <span class="option">--add-attachment</span> of <span class="option">--replace-attachment</span>
+                        uitvoering.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_description"><span class="option">--attachment-description</span> <span class="parameter">description</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet de te gebruiken beschrijving voor het volgende
+                        <span class="option">--add-attachment</span> of <span class="option">--replace-attachment</span>
+                        uitvoering.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Andere opties:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">(karakterset)</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Plaatst het karakter set om de reeksen om te zetten die vanaf de
+                        commandoregel worden opgegeven. Standaard wordt gebruikt het karakter set
+                        die afhankelijk is van wat er in uw besturingssysteem staat aangegeven
+                        (locatie).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">(karakterset)</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Stelt het karakter set in, waarnaar de reeksen naar de uitvoer dienen te
+                        worden geconverteerd. Standaard wordt gebruikt het karakter set die
+                        afhankelijk is van wat er in uw besturingssysteem staat aangegeven
+                        (locatie).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">(bestandsnaam)</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Schrijft alle berichten naar een bestand <span class="parameter">file-name</span>
+                        i.p.v. naar de 'apparaat/houder'. Terwijl dit gemakkelijk met uitvoer
+                        omleiden kan worden gedaan er zijn gevallen waarin deze optie nodig is:
+                        wanneer de verwerker e.e.a. herinterpreteert voordat het geschreven wordt
+                        naar de uitvoer bestand. Het karakter set met <a href="#mkvpropedit.description.output_charset">--output-charset</a>
+                        is toegewezen.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Forces the translations for the language <span class="parameter">code</span> to be
+                        used (e.g.  '<span class="literal">de_DE</span>' for the German
+                        translations). Entering '<span class="literal">list</span>' as the
+                        <span class="parameter">code</span> will cause the program to output a list of
+                        available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.debug"><span class="option">--title</span> <span class="parameter">onderwerp</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet debuggen aan voor een specifieke mogelijkheid. Dit is alleen zinvol voor
+                        ontwikkelaars.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.engage"><span class="option">--tags</span> <span class="parameter">feature</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Zet experimentele mogelijkheden aan. Een lijst van beschikbare mogelijkheden
+                        kan worden opgevraagd met <span class="command">mkvpropedit --engage list</span>. Deze
+                        mogelijkheden zijn niet bedoeld in normale situaties.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turns on GUI mode. In this mode specially-formatted lines may be output that
+                        can tell a controlling GUI what's happening. These messages follow the
+                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
+                        key/value pairs as in
+                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
+                        messages nor the keys are ever translated and always output in English.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        Wees uitgebreid en toon alle belangrijke <span class="productname">Matroska</span><sup>(tm)</sup> elementen zoals ze zijn
+                        gelezen.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Toon gebruik informatie en sluit af.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Toon versie informatie en sluit af.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        Reads additional command line arguments from the file
+                        <span class="parameter">options-file</span>. For a full explanation on the supported
+                        formats for such files see the section called "Option files" in the
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.edit_selectors">3. Bewerk selecteurs/kiezers</a></h1>
+         
+         
+         <p>
+            De optie <a href="#mkvpropedit.description.edit">--edit</a> zet
+            het <span class="productname">Matroska</span><sup>(tm)</sup> bestand sectie (segment informatie of de bepaalde sporen
+            knoppen) die alle volgen <a href="#mkvpropedit.description.add">voeg
+               toe</a>, <a href="#mkvpropedit.description.set">zet</a> en <a href="#mkvpropedit.description.delete">verwijder</a> acties die er op
+            werken. Dit blijft geldig totdat de volgende optie <a href="#mkvpropedit.description.edit">--edit</a> is
+            gevonden. Het argument naar deze optie wordt genoemd de bewerk
+            selecteur/kiezer.
+            
+         </p>
+         
+         
+         <p>
+            Standaard bewerkt <span class="productname">mkvpropedit</span>(1) de segment informatie sectie
+            
+         </p>
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.segment_info">3.1. Segment informatie</a></h2>
+         
+         
+         <p>
+            Het segment informatie kan worden geselecteerd met één van deze drie
+            woorden: '<span class="literal">info</span>', '<span class="literal">segment_info</span>' of
+            '<span class="literal">segmentinfo</span>'. het bevat eigenschappen zoals, segment
+            titel of het segment <span class="abbrev">UID</span>.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.track_headers">3.2. Spoor koppen</a></h2>
+         
+         
+         <p>
+            Spoor koppen kunnen worden geselecteerd met een ietwat complexere
+            selectie. Alle variaties starten met '<span class="literal">track:</span>'. De spoor
+            kop eigenschappen bevatten elementen zoals de taal code, 'default track'
+            markering of het spoor naam.
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        Als de parameter <span class="parameter">n</span> een nummer is dan zal het
+                        <span class="parameter">n</span>'de spoor worden geselecteerd. De spoor volgorde is
+                        hetzelfde als <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s <span class="option">--identify</span> optie uitvoert.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Nummering start op 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">t</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        Als de parameter start met één karakter <span class="parameter">t</span> gevolgd
+                        door een <span class="parameter">n</span> dan zal het de <span class="parameter">n</span>'de
+                        spoor van een specifiek spoor type geselecteerd worden. Het spoor type
+                        parameter <span class="parameter">t</span> moet één van deze vier karakters zijn:
+                        '<span class="literal">a</span>' voor een audio spoor, '<span class="literal">b</span>' voor een
+                        knop spoor, '<span class="literal">s</span>' voor een ondertitel spoor en
+                        '<span class="literal">v</span>' voor een video spoor. De spoor volgorde is hetzelfde
+                        wanneer <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s <span class="option">--identify</span> de optie uitvoert.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Nummering start op 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>=<span class="parameter">uid</span></td>
+                  <td>
+                     
+                     <p>
+                        Als de parameter start met een '<span class="literal">=</span>' gevolgd door een
+                        nummer <span class="parameter">uid</span> dan het spoor van wie het spoor
+                        <span class="abbrev">UID</span> element gelijk is met <span class="parameter">uid</span>. Spoor
+                        <span class="abbrev">UID's</span> kan verkregen worden met <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>@<span class="parameter">number</span></td>
+                  <td>
+                     
+                     <p>
+                        Als de parameter start met een '<span class="literal">@</span>' gevolgd door een
+                        nummer <span class="parameter">number</span> dan het spoor het van wie het
+                        spoornummer element gelijk is met <span class="parameter">number</span>. Spoornummer
+                        kan verkregen worden met <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.notes">3.3. Opmerkingen</a></h2>
+         
+         
+         <p>
+            Door de aard van de spoor bewerk selecteur/kiezer, is het mogelijk dat
+            verschillende selecteurs/kiezers eigenlijk overeenkomen met dezelfde spoor
+            koppen. In zulke gevallen, zullen alle acties voor die bewerk
+            selecteurs/kiezers in die volgorde worden gecombineerd en uitgevoerd worden
+            in de volgorde waarin ze zijn opgegeven op de commandoregel.
+            
+         </p>
+         
+         
+         <h1><a name="mkvpropedit.attachment_selectors">4. Bijlage(n) keuze</a></h1>
+         
+         
+         
+         <p>
+            Een bijlage keuze word op twee verschillende manieren gebruikt <a href="#mkvpropedit.description.replace_attachment">--replace-attachment</a>
+            en <a href="#mkvpropedit.description.delete_attachment">--delete-attachment</a>.
+            het kan één van de volgende vier vormen hebben:
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>
+                  Selectie op bijlage-id. In deze vorm is de keuze een gewoon getal, de
+                  bijlage ID als uitgevoerd door <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> 's identificatie commando.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Keuze op bijlage UID (uniek ID). In deze vorm van keuze  is het "is (=)"
+                  teken <span class="literal">=</span> gevolg door een nummer, de bijlage's unieke ID
+                  als uitvoer door <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s  beknopte identificatie commando.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Keuze via bestandsnaam. In deze vorm is de keuze het letterlijke woord
+                  <span class="literal">naam:</span> gevolg door een bestaande bijlage naam. Als deze
+                  keuze is geselecteerd met <span class="option">--replace-attachment</span> dan moeten
+                  dubbele punten binnen de naam overeen te laten komen worden ingesloten als
+                  <span class="literal">\c</span>.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Selecteren op MIME type. In deze vorm is de keuze het letterlijke
+                  woord<span class="literal">mime-type:</span> gevolg door een bestaande MIME type
+                  bijlage. Indien deze keuze is geselecteerd met
+                  <span class="option">--replace-attachment</span> dan om dubbele punten overeen te laten
+                  komen binnenin het MIME-type moeten worden overgeslagen als
+                  <span class="literal">\c</span>.
+                  
+               </p>
+               
+            </li>
+            
+         </ol>
+         
+         <h1><a name="mkvpropedit.examples">5. Voorbeelden</a></h1>
+         
+         
+         <p>
+            Het volgende voorbeeld bewerkt een bestand genaamd
+            '<span class="literal">film.mkv</span>'. Het zet het segment titel en modificeert de
+            taal code van een audio en ondertitel spoor. Opmerking: Dat dit voorbeeld
+            kan worden verkort door het weglaten van de eerste <a href="#mkvpropedit.description.edit">--edit</a> optie,
+            omdat bewerken van het segment informatie element in elk geval standaard is
+            voor alle opties welke worden gevonden voor de eerste <a href="#mkvpropedit.description.edit">--edit</a> optie.
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --edit info --set "title=The movie" --edit track:a1 --set language=fre --edit track:a2 --set language=ita</pre>
+         
+         <p>
+            Het tweede voorbeeld, verwijdert de 'standaard spoor markering' van het
+            eerste ondertitel spoor en plaatst het voor de tweede. Opmerking: Dat
+            <span class="productname">mkvpropedit</span>(1), integenstelling tot <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, niet instelt de 'standaard
+            spoor markering' van andere sporen naar '0' als het automatisch is ingesteld
+            op '1' voor een verschillend spoor.
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --edit track:s1 --set flag-default=0 --edit track:s2 --set flag-default=1</pre>
+         
+         <p>
+            Vervangen van markeringen voor het tweede ondertitelspoor in een bestand zou
+            lijken op dit:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --tags track:s2:new-subtitle-tags.xml</pre>
+         
+         <p>
+            Verwijderen van alle markeringen vereist het weglaten van de bestandsnaam:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --tags all:</pre>
+         
+         <p>
+            Hoofdstukken vervangen in een bestand zou lijken op dit:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --chapters new-chapters.xml</pre>
+         
+         <p>
+            Verwijderen van alle hoofdstukken vereist het weglaten van de bestandsnaam:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --chapters ''</pre>
+         
+         <p>
+            Toevoegen van een lettertype bestand (<span class="literal">Arial.ttf</span>) als een
+            bijlage:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --add-attachment Arial.ttf</pre>
+         
+         <p>
+            Toevoegen lettertype bestand (<span class="literal">89719823.ttf</span>) als een
+            bijlage en geeft enige informatie of het werkelijk een Arial letterype is:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'Het Arial lettertype als een TrueType letter' --attachment-mime-type application/x-truetype-font --add-attachment 89719823.ttf</pre>
+         
+         <p>
+            Vervangt een gekoppeld lettertype (<span class="literal">Comic.ttf</span>) bestand met
+            een andere (<span class="literal">Arial.ttf</span>):
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'Het Arial lettertyupe als een TrueType letter' --replace-attachment name:Comic.ttf:Arial.ttf</pre>
+         
+         <p>
+            Verwijderen tweede bijlage bestand wat het ook mag zijn:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --delete-attachment 2</pre>
+         
+         <p>
+            Verwijderen alle bijlage lettertypen op MIME type:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --delete-attachment mime-type:application/x-truetype-font</pre>
+         <h1><a name="d4e1375">6. Verlaat codes</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1) verlaat met één van drie verlaat codes:
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- Deze verlaat code betekend dat het modificeren
+                  succesvol voltooid is.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- In dit geval heeft <span class="productname">mkvpropedit</span>(1) minstends één
+                  waarschuwing uitgegeven, maar extractie is doorgegaan. Een waarschuwing
+                  wordt vooraf bepaald met de tekst
+                  '<span class="literal">Waarschuwing:</span>'. Afhankelijk van de 'tegengekomen'
+                  kwesties kan het resultaat goed of slecht zijn. De gebruiker wordt
+                  geadviseerd, om zowel de waarschuwing als de resulterende bestanden te
+                  controleren.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- Deze afsluit code wordt gebruikt nadat er een fout
+                  ontstond. <span class="productname">mkvpropedit</span>(1) breekt direct af na het geven van dit waarschuw
+                  bericht. Fout berichten, bereik van een verkeerd commandoregel argument over
+                  lees/schrijf fouten naar een 'gebroken' bestanden.
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvinfo.text_files_and_charsets">7. Tekst bestanden en karakter set conversies</a></h1>
+         
+         
+         
+         <p>
+            For an in-depth discussion about how all tools in the MKVToolNix suite
+            handle character set conversions, input/output encoding, command line
+            encoding and console encoding please see the identically-named section in
+            the <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.environment_variables">8. Omgevingsvariabelen</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1) gebruikt de standaard variabelen vanuit het systeem locatie
+            (b.v. <span class="varname">LANG</span> en de <span class="varname">LC_*</span> family). Extra
+            variabelen:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span>
+                     and its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>De inhoud wordt behandeld alsof het via de <a href="#mkvpropedit.description.debug">--debug</a>
+                        optie gepasseerd is.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>De inhoud wordt behandeld alsof het via de <a href="#mkvpropedit.description.engage">--engage</a>
+                        optie gepasseerd is.
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.seealso">9. Zie ook</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.www">10. WWW</a></h1>
+         
+         
+         <p>
+            De laatste versie kan altijd gevonden worden op de <a href="https://mkvtoolnix.download/">MKVToolNix</a> thuis basis.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

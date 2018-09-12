@@ -1,0 +1,1011 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvpropedit -- 再MUXすることなく、既存のMatroskaファイルのプロパティを修正する</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvpropedit -- 再MUXすることなく、既存の<span class="productname">Matroska</span><sup>(tm)</sup>ファイルのプロパティを修正する
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvpropedit.synopsis">1. 書式</a></li>
+            <li><a href="#mkvpropedit.description">2. 説明</a></li>
+            <li><a href="#mkvpropedit.edit_selectors">3. エディットセレクタ</a></li>
+            <li><a href="#mkvpropedit.attachment_selectors">4. Attachment selectors</a></li>
+            <li><a href="#mkvpropedit.examples">5. 例</a></li>
+            <li><a href="#d4e1382">6. 返り値</a></li>
+            <li><a href="#mkvinfo.text_files_and_charsets">7. テキストファイルと文字コード変換</a></li>
+            <li><a href="#mkvpropedit.environment_variables">8. 環境変数</a></li>
+            <li><a href="#mkvpropedit.seealso">9. 関連項目</a></li>
+            <li><a href="#mkvpropedit.www">10. ウェブ</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvpropedit.synopsis">1. 書式</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvpropedit</span> options {source-filename} {actions}
+         </div>
+         
+         <h1><a name="mkvpropedit.description">2. 説明</a></h1>
+         
+         
+         <p>
+            このプログラムは、既存の<span class="productname">Matroska</span><sup>(tm)</sup>ファイルを解析し、そのプロパティのいくつかを修正します。そして、それらの修正を既存のファイルに書き込みます。プロパティの中で変更可能なのは、セグメント情報エレメント(例えばタイトル)と、トラックヘッダ(例えば言語コードや'デフォルトトラック'フラグ、トラック名)です。
+            
+         </p>
+         
+         
+         <p>
+            オプション:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.list_property_names"><span class="option">-l</span>, <span class="option">--list-property-names</span></a></td>
+                  <td>
+                     
+                     <p>
+                        既知の編集可能なプロパティの名前、型(文字列、整数、真偽値等)、短い説明を一覧表示します。その後、プログラムは終了します。よって、<span class="parameter">source-filename</span>パラメータを指定する必要はありません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.parse_mode"><span class="option">-p</span>, <span class="option">--parse-mode</span>
+                        <span class="parameter">mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        解析モードを設定します。'<span class="parameter">mode</span>'パラメータは'<span class="literal">fast</span>'(デフォルト)と'<span class="literal">full</span>'のどちらかを指定できます。'<span class="literal">fast</span>'モードはファイル全体を解析するのではなく、メタシークエレメントを使ってソースファイル内の必要なエレメントを探します。99%の場合これで十分です。しかし、メタシークエレメントを含まないファイルや破損したファイルに対しては'<span class="literal">full</span>'解析モードを指定する必要があるかもしれません。'<span class="literal">full</span>'スキャンには数分かかることがありますが、'<span class="literal">fast</span>'スキャンには数秒しかかかりません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Actions that deal with track and segment info properties:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.edit"><span class="option">-e</span>, <span class="option">--edit</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        このオプション以降の<a href="#mkvpropedit.description.add">add</a>、<a href="#mkvpropedit.description.set">set</a>、<a href="#mkvpropedit.description.delete">delete</a>アクションが適用される<span class="productname">Matroska</span><sup>(tm)</sup>ファイルセクション(セグメント情報または特定のトラックのヘッダ)を指定します。このオプションは、複数のエレメントを修正するために、複数回指定することができます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルトでは、<span class="productname">mkvpropedit</span>(1)はセグメント情報のセクションを編集します。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        文法の完全な説明は、<a href="#mkvpropedit.edit_selectors">エディットセレクタ</a>のセクションを参照してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add"><span class="option">-a</span>, <span class="option">--add</span>
+                        <span class="parameter">name</span>=<span class="parameter">value</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="parameter">name</span>で指定された名前のプロパティを<span class="parameter">value</span>で指定した値で追加します。プロパティは、既にその名前のプロパティが存在する場合も追加されます。ほとんどのプロパティは一意的で、複数回追加できないことに注意してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.set"><span class="option">-s</span>, <span class="option">--set</span>
+                        <span class="parameter">name</span>=<span class="parameter">value</span></a></td>
+                  <td>
+                     
+                     <p>
+                        見付けた全ての、プロパティ名が<span class="parameter">name</span>であるプロパティの値を、<span class="parameter">value</span>に設定します。そのようなプロパティが存在しないときは、プロパティは追加されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete"><span class="option">-d</span>, <span class="option">--delete</span> <span class="parameter">name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        見付けた全ての、プロパティ名が<span class="parameter">name</span>であるプロパティを削除します。いくつかのプロパティは必須で、削除できないことに注意してください。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Actions that deal with tags and chapters:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.tags"><span class="option">-t</span>, <span class="option">--tags</span>
+                        <span class="parameter">selector</span>:<span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="filename">ファイル名</span>からのタグを、このファイル中のタグに追加、あるいは置換します。もし<span class="filename">ファイル名</span>が空白なら、タグを削除します。<span class="productname">mkvpropedit</span>(1)は、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>が読み込むのと同じXMLタグフォーマットを読み込みます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">セレクタ</span>は、<span class="constant">all</span>、<span class="constant">global</span>、または<span class="constant">track</span>のうちどれか一つを指定してください。<span class="constant">all</span>を指定すると、<span class="productname">mkvpropedit</span>(1)はファイル中の全てのタグを置換あるいは削除します。<span class="constant">global</span>を指定すると、グローバルタグだけが置換あるいは削除されます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="constant">track</span>を指定すると、<span class="productname">mkvpropedit</span>(1)は特定のトラックのタグを置換します。また、<span class="filename">filename</span>から読み込まれたタグは、同じトラックに割り当てられます。<a href="#mkvpropedit.edit_selectors">edit
+                           selectors</a>が指定されるのと同じ様に（下を参照してください）、トラックは指定されます。(see below),
+                        e.g. <span class="code">--tags track:a1:new-audio-tags.xml</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_track_statistics_tags"><span class="option">--add-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Calculates statistics for all tracks in a file and adds new statistics tags
+                        for them. If the file already contains such tags then they'll be updated.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_track_statistics_tags"><span class="option">--delete-track-statistics-tags</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Deletes all existing track statistics tags from a file. If the file doesn't
+                        contain track statistics tags then it won't be modified.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.chapters"><span class="option">-c</span>, <span class="option">--chapters</span>
+                        <span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        <span class="filename">ファイル名</span>からのチャプタを、このファイル中のタグに追加、あるいは置換します。もし<span class="filename">ファイル名</span>が空白なら、チャプタを削除します。<span class="productname">mkvpropedit</span>(1)は、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>が読み込むのと同じXMLまたはシンプルチャプタフォーマットを読み込みます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Actions for handling attachments:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.add_attachment"><span class="option">--add-attachment</span> <span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Adds a new attachment from <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-name</span> has been used prior to this
+                        option then its value is used as the new attachment's name. Otherwise it is
+                        derived from <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-mime-type</span> has been used prior to
+                        this option then its value is used as the new attachment's MIME
+                        type. Otherwise it is auto-detected from the content of
+                        <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-description</span> has been used prior
+                        to this option then its value is used as the new attachment's
+                        description. Otherwise no description will be set.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is used as the new attachment's UID. Otherwise a
+                        random UID will be generated automatically.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.replace_attachment"><span class="option">--replace-attachment</span>
+                        <span class="parameter">selector</span><span class="literal">:</span><span class="parameter">filename</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Replaces one or more attachments that match <span class="parameter">selector</span>
+                        with the file <span class="parameter">filename</span>. If more than one existing
+                        attachment matches <span class="parameter">selector</span> then all of their
+                        contents will be replaced by the content of <span class="parameter">filename</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The <span class="parameter">selector</span> can have one of four forms. They're
+                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-name</span> has been used prior to this
+                        option then its value is set as the new name for each modified
+                        attachment. Otherwise the names aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-mime-type</span> has been used prior to
+                        this option then its value is set as the new MIME type for each modified
+                        attachment. Otherwise the MIME types aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-description</span> has been used prior
+                        to this option then its value is set as the new description for each
+                        modified attachment. Otherwise the descriptions aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is set as the new UID for each modified
+                        attachment. Otherwise the UIDs aren't changed.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.update_attachment"><span class="option">--update-attachment</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the properties of one or more attachments that match
+                        <span class="parameter">selector</span>. If more than one existing attachment
+                        matches <span class="parameter">selector</span> then all of their properties will be
+                        updated.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The <span class="parameter">selector</span> can have one of four forms. They're
+                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-name</span> has been used prior to this
+                        option then its value is set as the new name for each modified
+                        attachment. Otherwise the names aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-mime-type</span> has been used prior to
+                        this option then its value is set as the new MIME type for each modified
+                        attachment. Otherwise the MIME types aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-description</span> has been used prior
+                        to this option then its value is set as the new description for each
+                        modified attachment. Otherwise the descriptions aren't changed.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        If the option <span class="option">--attachment-uid</span> has been used prior to this
+                        option then its value is set as the new UID for each modified
+                        attachment. Otherwise the UIDs aren't changed.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.delete_attachment"><span class="option">--delete-attachment</span> <span class="parameter">selector</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Deletes one or more attachments that match <span class="parameter">selector</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        The <span class="parameter">selector</span> can have one of four forms. They're
+                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Options for attachment actions:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_name"><span class="option">--attachment-name</span> <span class="parameter">name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the name to use for the following <span class="option">--add-attachment</span> or
+                        <span class="option">--replace-attachment</span> operation.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_mime_type"><span class="option">--attachment-mime-type</span> <span class="parameter">mime-type</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the MIME type to use for the following
+                        <span class="option">--add-attachment</span> or <span class="option">--replace-attachment</span>
+                        operation.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.attachment_description"><span class="option">--attachment-description</span> <span class="parameter">description</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Sets the description to use for the following
+                        <span class="option">--add-attachment</span> or <span class="option">--replace-attachment</span>
+                        operation.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            その他のオプション:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        コマンドライン文字列の文字コードを指定します。デフォルトは、システムの現在のロケールの文字コードになります。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        出力する文字コードを指定します。デフォルトは、システムの現在のロケールの文字コードになります。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        全てのメッセージをコンソールではなく<span class="parameter">file-name</span>で指定したファイルに書き出します。出力リダイレクトによっても同じことが簡単にできますが、このオプションが必要な場合もあります。ターミナルがファイルに書き込む前に出力を処理してしまう場合などです。<a href="#mkvpropedit.description.output_charset">--output-charset</a>によって指定された文字コードは尊重されます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Forces the translations for the language <span class="parameter">code</span> to be
+                        used (e.g.  '<span class="literal">de_DE</span>' for the German
+                        translations). Entering '<span class="literal">list</span>' as the
+                        <span class="parameter">code</span> will cause the program to output a list of
+                        available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td>
+                     
+                     <p>
+                        特定の機能のデバッグをオンにします。このオプションは開発者にのみ有用です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td>
+                     
+                     <p>
+                        実験的機能をオンにします。利用可能な機能のリストは<span class="command">mkvpropedit --engage
+                           list</span>で得られます。これらの機能は通常の状況で利用されることは意図されていません。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvpropedit.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turns on GUI mode. In this mode specially-formatted lines may be output that
+                        can tell a controlling GUI what's happening. These messages follow the
+                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
+                        key/value pairs as in
+                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
+                        messages nor the keys are ever translated and always output in English.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        出力が冗長になり、<span class="productname">Matroska</span><sup>(tm)</sup>のエレメントにとって重要なこと全てを、読み込まれるつどに表示していきます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        コマンド書式情報を出力して終了します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        バージョン情報を出力して終了します。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        Reads additional command line arguments from the file
+                        <span class="parameter">options-file</span>. For a full explanation on the supported
+                        formats for such files see the section called "Option files" in the
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.edit_selectors">3. エディットセレクタ</a></h1>
+         
+         
+         <p>
+            <a href="#mkvpropedit.description.edit">--edit</a>オプションは、以降の<a href="#mkvpropedit.description.add">add</a>、<a href="#mkvpropedit.description.set">set</a>及び<a href="#mkvpropedit.description.delete">delete</a>アクションが適用される<span class="productname">Matroska</span><sup>(tm)</sup>ファイルセクション(セグメント情報または特定のトラックヘッダ)を設定します。これは次の<a href="#mkvpropedit.description.edit">--edit</a>オプションが見付かるまでずっと有効です。このオプションへの引数はエディットセレクタと呼ばれます。
+            
+         </p>
+         
+         
+         <p>
+            デフォルトでは、<span class="productname">mkvpropedit</span>(1)はセグメント情報のセクションを編集します。
+            
+         </p>
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.segment_info">3.1. セグメント情報</a></h2>
+         
+         
+         <p>
+            セグメント情報は次の3つの単語によって選択されます。'<span class="literal">info</span>'、'<span class="literal">segment_info</span>'または'<span class="literal">segmentinfo</span>'です。これはセグメントタイトルやセグメント<span class="abbrev">UID</span>などのプロパティを格納しています。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.track_headers">3.2. トラックヘッダ</a></h2>
+         
+         
+         <p>
+            トラックヘッダはもうちょっとだけ複雑なセレクタで選択されます。全ての場合でセレクタは'<span class="literal">track:</span>'で始まります。トラックヘッダプロパティには、言語コード、'デフォルトトラック'フラグやトラック名のようなエレメントがあります。
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        パラメータ<span class="parameter">n</span>が数字であれば、<span class="parameter">n</span>番目のトラックが選択されます。トラックの順番は、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>に<span class="option">--identify</span>オプションを指定すると出力されるものと同じです。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Numbering starts at 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span><span class="parameter">t</span><span class="parameter">n</span></td>
+                  <td>
+                     
+                     <p>
+                        パラメータが一文字の英字<span class="parameter">t</span>で始まり、次に<span class="parameter">n</span>が続く場合、あるトラックタイプで<span class="parameter">n</span>番目のトラックが選択されます。トラックタイプパラメータ<span class="parameter">t</span>は、オーディオトラックを示す'<span class="literal">a</span>'、ボタントラックを示す'<span class="literal">b</span>'、字幕トラックを示す'<span class="literal">s</span>'、ビデオトラックを示す'<span class="literal">v</span>'の四つのうちの一つでなければなりません。トラックの順番は<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>の<span class="option">--identify</span>オプションで出力される順番と同じです。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Numbering starts at 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>=<span class="parameter">uid</span></td>
+                  <td>
+                     
+                     <p>
+                        パラメータが'<span class="literal">=</span>'で始まり、次に<span class="parameter">uid</span>が続く場合は、トラック<span class="abbrev">UID</span>エレメントが<span class="parameter">uid</span>のトラックが選択されます。トラック<span class="abbrev">UID</span>は<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>で取得できます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">track:</span>@<span class="parameter">number</span></td>
+                  <td>
+                     
+                     <p>
+                        パラメータが'<span class="literal">@</span>'で始まり、次に<span class="parameter">number</span>が続く場合は、トラックナンバーエレメントが<span class="parameter">number</span>と等しいトラックが選択されます。トラックナンバーは<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>で取得できます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvpropedit.edit_selectors.notes">3.3. 注意</a></h2>
+         
+         
+         <p>
+            トラックエディットセレクタの性質から、いくつかのセレクタが同じトラックヘッダにマッチすることがあります。このような場合、それらのエディットセレクタへの全てのアクションは一つにまとめられ、コマンドラインに指定された順番に実行されます。
+            
+         </p>
+         
+         
+         <h1><a name="mkvpropedit.attachment_selectors">4. Attachment selectors</a></h1>
+         
+         
+         
+         <p>
+            An attachment selector is used with the two actions <a href="#mkvpropedit.description.replace_attachment">--replace-attachment</a>
+            and <a href="#mkvpropedit.description.delete_attachment">--delete-attachment</a>.
+            It can have one of the following four forms:
+            
+         </p>
+         
+         
+         <ol>
+            
+            <li>
+               
+               <p>
+                  Selection by attachment ID. In this form the selector is simply a number,
+                  the attachment's ID as output by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s identification command.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Selection by attachment UID (unique ID). In this form the selector is the
+                  equal sign <span class="literal">=</span> followed by a number, the attachment's
+                  unique ID as output by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s verbose identification command.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Selection by attachment name. In this form the selector is the literal word
+                  <span class="literal">name:</span> followed by the existing attachment's name. If this
+                  selector is used with <span class="option">--replace-attachment</span> then colons
+                  within the name to match must be escaped as <span class="literal">\c</span>.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  Selection by MIME type. In this form the selector is the literal word
+                  <span class="literal">mime-type:</span> followed by the existing attachment's MIME
+                  type. If this selector is used with <span class="option">--replace-attachment</span>
+                  then colons within the MIME type to match must be escaped as
+                  <span class="literal">\c</span>.
+                  
+               </p>
+               
+            </li>
+            
+         </ol>
+         
+         <h1><a name="mkvpropedit.examples">5. 例</a></h1>
+         
+         
+         <p>
+            下に'<span class="literal">movie.mkv</span>'というファイルを編集する例を示します。この例では、セグメントタイトルを設定し、オーディオトラックと字幕トラックの言語コードを修正します。この例は、最初の<a href="#mkvpropedit.description.edit">--edit</a>オプションが見付かる前の全てのオプションはデフォルトで結局セグメント情報エレメントを編集するので、最初の<a href="#mkvpropedit.description.edit">--edit</a>オプションを省略して短縮できることに注意してください。
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --edit info --set "title=The movie" --edit track:a1 --set language=fre --edit track:a2 --set language=ita</pre>
+         
+         <p>
+            二番目の例は、最初の字幕トラックから'デフォルトトラックフラグ'を削除し二番目の字幕トラックに設定します。<span class="productname">mkvpropedit</span>(1)は<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>とは違い、'デフォルトトラックフラグ'が違うトラックで'1'に設定されているからといって自動的に他のトラックの'デフォルトトラックフラグ'を'0'に設定はしない、という点に注意してください。
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --edit track:s1 --set flag-default=0 --edit track:s2 --set flag-default=1</pre>
+         
+         <p>
+            ファイル中で2番目の字幕トラックのタグを置換するには、以下のようにします：
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --tags track:s2:new-subtitle-tags.xml</pre>
+         
+         <p>
+            タグを削除するには、ファイル名を空白にします
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --tags all:</pre>
+         
+         <p>
+            ファイル中のチャプタを置換するには、以下のようにします：
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --chapters new-chapters.xml</pre>
+         
+         <p>
+            全てのチャプタを削除するには、ファイル名を空白にします
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --chapters ''</pre>
+         
+         <p>
+            Adding a font file (<span class="literal">Arial.ttf</span>) as an attachment:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --add-attachment Arial.ttf</pre>
+         
+         <p>
+            Adding a font file (<span class="literal">89719823.ttf</span>) as an attachment and
+            providing some information as it really is just Arial:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'The Arial font as a TrueType font' --attachment-mime-type application/x-truetype-font --add-attachment 89719823.ttf</pre>
+         
+         <p>
+            Replacing one attached font (<span class="literal">Comic.ttf</span>) file with another
+            one (<span class="literal">Arial.ttf</span>):
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'The Arial font as a TrueType font' --replace-attachment name:Comic.ttf:Arial.ttf</pre>
+         
+         <p>
+            Deleting the second attached file, whatever it may be:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --delete-attachment 2</pre>
+         
+         <p>
+            Deleting all attached fonts by MIME type:
+            
+         </p>
+         
+         <pre class="screen">$ mkvpropedit movie.mkv --delete-attachment mime-type:application/x-truetype-font</pre>
+         <h1><a name="d4e1382">6. 返り値</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1)は下の3つの返り値を返します。
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- この返り値は変更が成功したことを示します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- この返り値は、一つ以上の警告が出力されましたが、抽出が続行されたことを意味します。警告は
+                  '<span class="literal">警告:</span>'
+                  という文字列を先頭につけて出力されます。出力ファイルが無事であるかどうかは、場合によります。出力ファイルを確認することを強く推奨します。
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> --
+                  この返り値は、エラーが発生し、エラーメッセージを表示した直後に<span class="productname">mkvpropedit</span>(1)が終了したことを示します。エラーメッセージは不正なコマンドラインやファイルI/Oエラー、壊れたファイルなど様々です。
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvinfo.text_files_and_charsets">7. テキストファイルと文字コード変換</a></h1>
+         
+         
+         
+         <p>
+            For an in-depth discussion about how all tools in the MKVToolNix suite
+            handle character set conversions, input/output encoding, command line
+            encoding and console encoding please see the identically-named section in
+            the <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.environment_variables">8. 環境変数</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvpropedit</span>(1)はシステムのロケールを決めるデフォルトの変数（例：<span class="varname">LANG</span>や<span class="varname">LC_*</span>系）を使用します。追加の変数は以下の通りです：
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span>
+                     and its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>その内容は、あたかも<a href="#mkvpropedit.description.debug">--debug</a>オプション経由で渡されたかのように扱われます。
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>その内容は、あたかも<a href="#mkvpropedit.description.engage">--engage</a>オプション経由で渡されたかのように扱われます。
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvpropedit.seealso">9. 関連項目</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvpropedit.www">10. ウェブ</a></h1>
+         
+         
+         <p>
+            最新のバージョンは、常時<a href="https://mkvtoolnix.download/">MKVToolNixのホームページ</a>から取得できます。
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

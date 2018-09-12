@@ -1,0 +1,1315 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvextract -- витягнення доріжок з файлів Matroska до інших файлів</title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvextract -- витягнення доріжок з файлів <span class="productname">Matroska</span><sup>(tm)</sup> до інших файлів
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvextract.synopsis">1. Короткий опис</a></li>
+            <li><a href="#mkvextract.description">2. Опис</a></li>
+            <li><a href="#mkvextract.examples">3. Examples</a></li>
+            <li><a href="#mkvextract.text_files_and_charsets">4. Text files and character set conversions</a></li>
+            <li><a href="#mkvextract.output_file_formats">5. Формати файлів на виході</a></li>
+            <li><a href="#d4e1772">6. Коди завершення</a></li>
+            <li><a href="#mkvextract.environment_variables">7. Environment variables</a></li>
+            <li><a href="#mkvextract.seealso">8. Дивіться також</a></li>
+            <li><a href="#mkvextract.www">9. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvextract.synopsis">1. Короткий опис</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvextract</span> {source-filename} {mode1} options extraction-spec1 mode2 options extraction-spec2 …
+         </div>
+         
+         <h1><a name="mkvextract.description">2. Опис</a></h1>
+         
+         
+         <p>
+            This program extracts specific parts from a <span class="productname">Matroska</span><sup>(tm)</sup> file to other useful
+            formats. The first argument is the name of the source file which must be a
+            <span class="productname">Matroska</span><sup>(tm)</sup> file.
+            
+         </p>
+         
+         
+         <p>
+            All other arguments either switch to a certain extraction mode, change
+            options for the currently active mode or specify what to extract into which
+            file.  Multiple modes can be used in the same invocation of mkvextract
+            allowing the extraction of multiple things in a single pass.  Most options
+            can only be used in certain modes with a few options applying to all modes.
+            
+         </p>
+         
+         
+         <p>
+            Currently supported is the extraction of <a href="#mkvextract.description.tracks">tracks</a>, <a href="#mkvextract.description.tags">tags</a>, <a href="#mkvextract.description.attachments">attachments</a>, <a href="#mkvextract.description.chapters">chapters</a>, <a href="#mkvextract.description.cuesheets">CUE sheets</a>, <a href="#mkvextract.description.timestamps_v2">timestamps</a> and <a href="#mkvextract.description.cues">cues</a>.
+            
+         </p>
+         
+         
+         <h2><a name="mkvextract.description.common">2.1. Загальні опції</a></h2>
+         
+         
+         
+         <p>
+            Нижчевказані опції доступні у всіх режимах і тому лише раз описуються в
+            данному розділі.
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.parse_fully"><span class="option">-f</span>, <span class="option">--parse-fully</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Встановлює режим аналізу як 'full'. За допомогою типового режиму не
+                        аналізується увесь файл, а використовуються елементи метапошуку для
+                        виявлення необхідних елементів вхідного файла. В 99% випадків цього
+                        достатньо. Але для аналізу файлів, що не містять елементів метапошуку або є
+                        пошкодженими треба використовувати цей режим. Повне сканування файлу може
+                        тривати кілька хвилин, в той час як швидке - кілька секунд.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Встановлює набір символів заданого в командному рядку для
+                        конвертації. Типово використовується набір символів згідно поточної локалі
+                        системи.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Встановлює вихідний набір символів заданого в командному рядку для
+                        конвертації. Типово використовується набір символів згідно поточної локалі
+                        системи.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
+                        <span class="parameter">file-name</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Всі повідомлення записуються до файлу <span class="parameter">file-name</span>
+                        замість консолі.  Хоча це можна зробити через перенаправлення виводу, є
+                        деякі випадки, коли необхідно застосовувати саме дану опцію: коли термінал
+                        інтерпретує в інший спосіб вивід перед записом до файлу.  Набір символів,
+                        заданий через <a href="#mkvextract.description.common.output_charset">--output-charset</a>
+                        враховується.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Forces the translations for the language <span class="parameter">code</span> to be
+                        used (e.g.  '<span class="literal">de_DE</span>' for the German
+                        translations). Entering '<span class="literal">list</span>' as the
+                        <span class="parameter">code</span> will cause the program to output a list of
+                        available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turn on debugging for a specific feature. This option is only useful for
+                        developers.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turn on experimental features. A list of available features can be requested
+                        with <span class="command">mkvextract --engage list</span>. These features are not
+                        meant to be used in normal situations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.gui_mode"><span class="option">--gui-mode</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Turns on GUI mode. In this mode specially-formatted lines may be output that
+                        can tell a controlling GUI what's happening. These messages follow the
+                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
+                        key/value pairs as in
+                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
+                        messages nor the keys are ever translated and always output in English.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-v</span>, <span class="option">--verbose</span></td>
+                  <td>
+                     
+                     <p>
+                        Задає відображення розширеної інформації про важливі елементи <span class="productname">Matroska</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Відображається інформація про використання додатку і відбувається завершення
+                        роботи додатку.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Відображається інформація про версію додатку і відбувається завершення
+                        роботи додатку.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td>
+                     
+                     <p>
+                        Reads additional command line arguments from the file
+                        <span class="parameter">options-file</span>. For a full explanation on the supported
+                        formats for such files see the section called "Option files" in the
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.tracks">2.2. Режим витягнення доріжок</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">tracks</span> [<span class="parameter">options</span>]
+               <span class="parameter">TID1:dest-filename1</span>
+               [<span class="parameter">TID2:dest-filename2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <p>
+            Наступні опції командного рядка доступні для кожної доріжки в режимі
+            витягнення '<span class="literal">tracks</span>'.  Вони мають бути присутні після
+            вказання доріжки (див. нижче), до якої будуть застосовуватись.
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-c</span> <span class="parameter">character-set</span></td>
+                  <td>
+                     
+                     <p>
+                        Задається набір символів, який має містити наступна доріжка субтитрів після
+                        конвертації. Застосовується лише тоді, коли ID наступної доріжки вказує на
+                        доріжку субтитрів. Типовим набором символів є UTF-8.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--blockadd</span> <span class="parameter">level</span></td>
+                  <td>
+                     
+                     <p>
+                        Залишати лише BlockAdditions до цього рівня. Типово враховуються усі
+                        рівні. Дана опція може нашкодити лише деяким кодекам, як то WAVPACK4.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--cuesheet</span></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення <span class="productname">mkvextract</span>(1) списків <span class="abbrev">CUE</span> з
+                        інформацією про розділи і дані тегів даної доріжки до файлу з назвою, що
+                        відповідає такій для вихідної назви доріжки з розширенням
+                        '<span class="literal">.cue</span>'.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--raw</span></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення "сирих" даних до файлу без контейнера. На відміну
+                        від прапорця <a href="#mkvextract.description.tracks.fullraw">--fullraw</a>
+                        даний параметр не призводить до запису складових елементу
+                        <span class="classname">CodecPrivate</span> до файлу. Даний режим може працювати з
+                        усіма <span class="classname">CodecIDs</span>, навіть з тими, які <span class="productname">mkvextract</span>(1) не
+                        підтримує, але це може призвести до створення пошкодженого файлу.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.tracks.fullraw"><span class="option">--fullraw</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення "сирих" даних до файлу без контейнера. Складові
+                        елементу <span class="classname">CodecPrivate</span> будуть записуватися до файлу
+                        спочатку, якщо доріжка містить такий елемент заголовку. Даний режим може
+                        працювати з усіма <span class="classname">CodecIDs</span>, навіть з тими, які
+                        <span class="productname">mkvextract</span>(1) не підтримує, але це може призвести до створення пошкодженого
+                        файлу.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:outname</span></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення доріжки з ID <span class="parameter">TID</span> до файлу
+                        <span class="parameter">outname</span> за умови, якщо така доріжка міститься у
+                        вхідному файлі. Дану опцію можна задавати декілька разів. ID доріжок мають
+                        бути такі самі як і при виведенні інформації командою <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> з
+                        параметром <span class="option">--identify</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Кожна назва вихідного файлу має використовуватися лише раз. Виняток
+                        становлять доріжки RealAudio і RealVideo. Якщо використовувати однакові
+                        назви для різних доріжок, то вони будуть збережені до одного й того самого
+                        файлу. Наприклад:
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract input.mkv tracks 0:video.h264 2:output-two-vobsub-tracks.idx 3:output-two-vobsub-tracks.idx</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.attachments">2.3. Режим витягнення вкладень</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">attachments</span>
+               [<span class="parameter">options</span>]
+               <span class="parameter">AID1:outname1</span>
+               [<span class="parameter">AID2:outname2</span> ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">AID</span>:<span class="parameter">outname</span></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення вкладення з ID <span class="parameter">AID</span> до файлу
+                        <span class="parameter">outname</span> за умови, якщо таке вкладення міститься у
+                        вхідному файлі. Якщо ж залишити <span class="parameter">outname</span> пустим, то
+                        буде використовуватися назва вкладення з вхідного файла <span class="productname">Matroska</span><sup>(tm)</sup>. Дану
+                        опцію можна задавати декілька разів. ID вкладень мають бути такі самі як і
+                        при виведенні інформації командою <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> з параметром
+                        <span class="option">--identify</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.chapters">2.4. Режим витягнення розділів</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">chapters</span>
+               [<span class="parameter">options</span>]
+               <span class="parameter">output-filename.xml</span></span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">-s</span>, <span class="option">--simple</span></td>
+                  <td>
+                     
+                     <p>
+                        Витягується інформація про розділи у простому форматі, що використовується в
+                        інструментарії для роботи з <span class="abbrev">OGM</span> (CHAPTER01=...,
+                        CHAPTER01NAME=...). В цьому режимі деяка інформація пропускається. Типово,
+                        розділи витягуються у форматі <span class="abbrev">XML</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--simple-language</span> <span class="parameter">language</span></td>
+                  <td>
+                     
+                     <p>
+                        If the simple format is enabled then <span class="productname">mkvextract</span>(1) will only output a single
+                        entry for each chapter atom encountered even if a chapter atom contains more
+                        than one chapter name.  By default <span class="productname">mkvextract</span>(1) will use the first chapter
+                        name found for each atom regardless of its language.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Using this option allows the user to determine which chapter names are
+                        output if atoms contain more than one chapter name.  The
+                        <span class="parameter">language</span> parameter must be an ISO 639-1 or ISO 639-2
+                        code.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            The chapters are written to specified output file. By default the <span class="abbrev">XML</span>
+            format understood by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> is used. If no chapters are found in the
+            file, the output file is not created.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.tags">2.5. Режим витягнення тегів</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">tags</span> [<span class="parameter">options</span>]
+               <span class="parameter">output-filename.xml</span></span>
+            
+         </p>
+         
+         
+         <p>
+            The tags are written to specified output file in the <span class="abbrev">XML</span> format understood
+            by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. If no tags are found in the file, the output file is not
+            created.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.cuesheets">2.6. Режим витягнення списків Cue</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">cuesheet</span>
+               [<span class="parameter">options</span>]
+               <span class="parameter">output-filename.cue</span></span>
+            
+         </p>
+         
+         
+         <p>
+            The cue sheet is written to specified output file. If no chapters or tags
+            are found in the file, the output file is not created.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvextract.description.timestamps_v2">2.7. Режим витягнення тайм-кодів</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">timestamps_v2</span>
+               [<span class="parameter">options</span>]
+               <span class="parameter">TID1:dest-filename1</span>
+               [<span class="parameter">TID2:dest-filename2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:outname</span></td>
+                  <td>
+                     
+                     <p>
+                        Відбувається витягнення тайм-кодів доріжок з ID <span class="parameter">TID</span>
+                        до файлу <span class="parameter">outname</span> за умови, якщо така доріжка
+                        міститься у вхідному файлі. Дану опцію можна задавати декілька разів. ID
+                        доріжок мають бути такі самі як і при виведенні інформації командою
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> з параметром <span class="option">--identify</span>.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Наприклад:
+                        
+                     </p>
+                     
+                     <pre class="screen">$ mkvextract input.mkv timestamps_v2 1:ts-track1.txt 2:ts-track2.txt</pre>
+                     </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         
+         <h2><a name="mkvextract.description.cues">2.8. Cues extraction mode</a></h2>
+         
+         
+         
+         <p>
+            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+               <span class="option">cues</span> [<span class="parameter">options</span>]
+               <span class="parameter">TID1:dest-filename1</span>
+               [<span class="parameter">TID2:dest-filename2</span>
+               ...]</span>
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="parameter">TID:dest-filename</span></td>
+                  <td>
+                     
+                     <p>
+                        Causes extraction of the cues for the track with the ID
+                        <span class="parameter">TID</span> into the file <span class="parameter">outname</span> if
+                        such a track exists in the source file. This option can be given multiple
+                        times. The track IDs are the same as the ones output by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s
+                        <span class="option">--identify</span> option and not the numbers contained in the
+                        <span class="classname">CueTrack</span> element.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            The format output is a simple text format: one line per
+            <span class="classname">CuePoint</span> element with <span class="literal">key=value</span>
+            pairs. If an optional element is not present in a
+            <span class="classname">CuePoint</span> (e.g. <span class="classname">CueDuration</span>)
+            then a dash will be output as the value.
+            
+         </p>
+         
+         
+         <p>
+            Наприклад:
+            
+         </p>
+         
+         <pre class="screen">timestamp=00:00:13.305000000 duration=- cluster_position=757741 relative_position=11</pre>
+         
+         <p>The possible keys are:</p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">timestamp</td>
+                  <td>
+                     
+                     <p>The cue point's timestamp with nanosecond precision. The format is
+                        <span class="literal">HH:MM:SS.nnnnnnnnn</span>. This element is always set.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">duration</td>
+                  <td>
+                     
+                     <p>The cue point's duration with nanosecond precision. The format is
+                        <span class="literal">HH:MM:SS.nnnnnnnnn</span>.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">cluster_position</td>
+                  <td>
+                     
+                     <p>The absolute position in bytes inside the <span class="productname">Matroska</span><sup>(tm)</sup> file where the cluster
+                        containing the referenced element starts.
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p>Inside the <span class="productname">Matroska</span><sup>(tm)</sup> file the <span class="classname">CueClusterPosition</span> is
+                           relative to the segment's data start offset. The value output by
+                           <span class="productname">mkvextract</span>(1)'s cue extraction mode, however, contains that offset already
+                           and is an absolute offset from the beginning of the file.
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">relative_position</td>
+                  <td>
+                     
+                     <p>The relative position in bytes inside the cluster where the
+                        <span class="classname">BlockGroup</span> or <span class="classname">SimpleBlock</span>
+                        element the cue point refers to starts.
+                     </p>
+                     
+                     
+                     <div class="note">
+                        <p class="note-title">Note:</p>
+                        
+                        <p>Inside the <span class="productname">Matroska</span><sup>(tm)</sup> file the <span class="classname">CueRelativePosition</span> is
+                           relative to the cluster's data start offset. The value output by
+                           <span class="productname">mkvextract</span>(1)'s cue extraction mode, however, is relative to the cluster's
+                           ID. The absolute position inside the file can be calculated by adding
+                           <span class="literal">cluster_position</span> and
+                           <span class="literal">relative_position</span>.
+                        </p>
+                        
+                     </div>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         
+         <p>
+            Наприклад:
+            
+         </p>
+         
+         <pre class="screen">$ mkvextract input.mkv cues 1:cues-track1.txt 2:cues-track2.txt</pre>
+         
+         <h1><a name="mkvextract.examples">3. Examples</a></h1>
+         
+         
+         
+         <p>
+            Extracting both chapters and tags in their respective <span class="abbrev">XML</span> formats at the
+            same time:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
+         
+         <p>
+            Extracting a couple of tracks and their respective timestamps at the same
+            time:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
+         
+         <p>
+            Extracting chapters in the Ogg/OGM format and re-encoding a text subtitle
+            track to another character set:
+            
+         </p>
+         
+         <pre class="screen">$ mkvmerge "My Movie.mkv" chapters --simple "My Chapters.txt" tracks -c MS-ANSI "2:My Subtitles.srt"</pre>
+         <h1><a name="mkvextract.text_files_and_charsets">4. Text files and character set conversions</a></h1>
+         
+         
+         
+         <p>
+            For an in-depth discussion about how all tools in the MKVToolNix suite
+            handle character set conversions, input/output encoding, command line
+            encoding and console encoding please see the identically-named section in
+            the <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+            
+         </p>
+         
+         <h1><a name="mkvextract.output_file_formats">5. Формати файлів на виході</a></h1>
+         
+         
+         
+         <p>
+            Рішення щодо формату файлу на виході обирається, базуючись на типі доріжки,
+            а не на типі файлу, що буде записаний. У даний час підтримуються наступні
+            типи доріжок:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption">A_AAC/MPEG2/*, A_AAC/MPEG4/*, A_AAC</td>
+                  <td>
+                     
+                     <p>
+                        Усі файли <span class="abbrev">AAC</span> будуть записані до файлів
+                        <span class="abbrev">AAC</span> з заголовками <span class="abbrev">ADTS</span> перед кожним
+                        пакетом. Заголовки <span class="abbrev">ADTS</span> не будуть містити застарілого поля
+                        особливого призначення.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_AC3, A_EAC3</td>
+                  <td>
+                     
+                     <p>
+                        These will be extracted to raw <span class="abbrev">AC-3</span> files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_ALAC</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">ALAC</span><sup>(tm)</sup> записуються до файлів
+                        <span class="productname">CAF</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_DTS</td>
+                  <td>
+                     
+                     <p>
+                        These will be extracted to raw <span class="abbrev">DTS</span> files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_FLAC</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">FLAC</span><sup>(tm)</sup> записуються до необроблених файлів
+                        <span class="productname">FLAC</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L2</td>
+                  <td>
+                     
+                     <p>
+                        Потоки MPEG-1 Audio Layer II будуть витягнуті до необроблених файлів
+                        <span class="abbrev">MP2</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_MPEG/L3</td>
+                  <td>
+                     
+                     <p>
+                        These will be extracted to raw <span class="abbrev">MP3</span> files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_OPUS</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">Opus</span><sup>(tm)</sup> записуються до файлів
+                        <span class="productname">OggOpus</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_PCM/INT/LIT, A_PCM/INT/BIG</td>
+                  <td>
+                     
+                     <p>
+                        Raw <span class="abbrev">PCM</span> data will be written to a <span class="abbrev">WAV</span>
+                        file. Big-endian integer data will be converted to little-endian data in the
+                        process.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">RealAudio</span><sup>(tm)</sup> записуються до файлів
+                        <span class="productname">RealMedia</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TRUEHD, A_MLP</td>
+                  <td>
+                     
+                     <p>
+                        These will be extracted to raw <span class="abbrev">TrueHD</span>/<span class="abbrev">MLP</span>
+                        files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_TTA1</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки<span class="productname">TrueAudio</span><sup>(tm)</sup> записуються до файлів
+                        <span class="abbrev">TTA</span>. Майте на увазі, що через обмежену точність тайм-кодів
+                        <span class="productname">Matroska</span><sup>(tm)</sup>, витягнуті заголовки файлів будуть різними, що зазначено у двох
+                        полях: <span class="varname">data_length</span> (сумарна кількість семплів у файлі) і
+                        <span class="abbrev">CRC</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_VORBIS</td>
+                  <td>
+                     
+                     <p>
+                        Файли аудіо Vorbis будуть записані до файлу <span class="productname">OggVorbis</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">A_WAVPACK4</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">WavPack</span><sup>(tm)</sup> записуються до файлів
+                        <span class="productname">WV</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/PGS</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">PGS</span> субтитри будуть записані до файлів
+                        <span class="abbrev">SUP</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_HDMV/TEXTST</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">TextST</span> subtitles will be written as a special file format
+                        invented for <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> and <span class="productname">mkvextract</span>(1).
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_KATE</td>
+                  <td>
+                     
+                     <p>
+                        Потоки <span class="productname">Kate</span><sup>(tm)</sup> будуть записані до контейнеру
+                        <span class="productname">Ogg</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/SSA, S_TEXT/ASS, S_SSA, S_ASS</td>
+                  <td>
+                     
+                     <p>
+                        Текстові субтитри <span class="abbrev">SSA</span> і <span class="abbrev">ASS</span> будуть
+                        записані до файлів <span class="abbrev">SSA</span>/<span class="abbrev">ASS</span> відповідно.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/UTF8, S_TEXT/ASCII</td>
+                  <td>
+                     
+                     <p>
+                        Прості текстові субтитри будуть записані до файлів <span class="abbrev">SRT</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_VOBSUB</td>
+                  <td>
+                     
+                     <p>
+                        <span class="productname">VobSub</span><sup>(tm)</sup> subtitles will be written as
+                        <span class="abbrev">SUB</span> files along with the respective index files, as
+                        <span class="abbrev">IDX</span> files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/USF</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">USF</span> текстові субтитри будуть записані до файлів
+                        <span class="abbrev">USF</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">S_TEXT/WEBVTT</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">WebVTT</span> text subtitles will be written as
+                        <span class="abbrev">WebVTT</span> files.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG1, V_MPEG2</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">MPEG-1</span> and <span class="abbrev">MPEG-2</span> video tracks will be
+                        written as <span class="abbrev">MPEG</span> elementary streams.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/AVC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">H.264</span> / <span class="abbrev">AVC</span> доріжки відео записуються до
+                        <span class="abbrev">H.264</span> елементарних потоків, які можуть надалі бути
+                        оброблені за допомогою, наприклад, <span class="productname">MP4Box</span><sup>(tm)</sup> зі
+                        збірки <span class="productname">GPAC</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MPEG4/ISO/HEVC</td>
+                  <td>
+                     
+                     <p>
+                        <span class="abbrev">H.265</span> / <span class="abbrev">HEVC</span> video tracks are written to
+                        <span class="abbrev">H.265</span> elementary streams which can be processed further
+                        with e.g. <span class="productname">MP4Box</span><sup>(tm)</sup> from the
+                        <span class="productname">GPAC</span><sup>(tm)</sup> package.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_MS/VFW/FOURCC</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки відео з виправленим <span class="abbrev">FPS</span> з таким
+                        <span class="classname">CodecID</span> записуються до файлів <span class="abbrev">AVI</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_REAL/*</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="productname">RealVideo</span><sup>(tm)</sup> записуються до файлів
+                        <span class="productname">RealMedia</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_THEORA</td>
+                  <td>
+                     
+                     <p>
+                        Потоки <span class="productname">Theora</span><sup>(tm)</sup> будуть записані до контейнеру
+                        <span class="productname">Ogg</span><sup>(tm)</sup>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">V_VP8, V_VP9</td>
+                  <td>
+                     
+                     <p>
+                        Доріжки <span class="abbrev">VP8</span> / <span class="abbrev">VP9</span> записуються до файлів
+                        <span class="abbrev">IVF</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Теги</td>
+                  <td>
+                     
+                     <p>
+                        Теги конвертуються до формату <span class="abbrev">XML</span>. Цей формат є тим самим, який <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+                        підтримує для читання тегів.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Вкладення</td>
+                  <td>
+                     
+                     <p>
+                        Вкладення записуються як є до файлу на виході. Ніяких перетворень не
+                        виконується.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Розділи</td>
+                  <td>
+                     
+                     <p>
+                        Розділи конвертуються до формату <span class="abbrev">XML</span>. Цей формат є тим самим, який
+                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> підтримує для читання розділів. Як альтернатива, можна витягувати
+                        розділи до спрощеного стильового формату <span class="abbrev">OGM</span>.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption">Тайм-коди</td>
+                  <td>
+                     
+                     <p>
+                        Тайм-коди спочатку сортуються і потім виводяться у сумісному файловому
+                        форматі тайм-кодів v2 для використання <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. Витягнення до інших
+                        форматів (v1, v3 і v4) не підтримується.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="d4e1772">6. Коди завершення</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) завершує роботу одним з трьох кодів завершення:
+            
+         </p>
+         
+         
+         <ul>
+            
+            <li>
+               
+               <p>
+                  <span class="constant">0</span> -- Цей код означає, що витягнення пройшло успішно.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">1</span> -- В цьому випадку <span class="productname">mkvextract</span>(1) було видано хоча б
+                  одне попередження, проте витягнення продовжувалось. Попередженню передує
+                  текст '<span class="literal">Warning:</span>'. В залежності від помилок, що сталися,
+                  результуючі файли можуть бути або цілими, або пошкодженими. Користувачу
+                  рекомендується як звернути увагу на саме попередження, так і перевірити
+                  результуючі файли.
+                  
+               </p>
+               
+            </li>
+            
+            
+            <li>
+               
+               <p>
+                  <span class="constant">2</span> -- Цей код завершення використовується у випадку
+                  помилки. <span class="productname">mkvextract</span>(1) припиняє роботу одразу після виведення повідомлення
+                  про помилку. Помилки виникають через невірні параметри командного рядка,
+                  помилки читання/запису або через з самого початку пошкоджені файли.
+                  
+               </p>
+               
+            </li>
+            
+         </ul>
+         
+         <h1><a name="mkvextract.environment_variables">7. Environment variables</a></h1>
+         
+         
+         
+         <p>
+            <span class="productname">mkvextract</span>(1) uses the default variables that determine the system's locale
+            (e.g. <span class="varname">LANG</span> and the <span class="varname">LC_*</span>
+            family). Additional variables:
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> and
+                     its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td>
+                     
+                     <p>The content is treated as if it had been passed via the <a href="#mkvextract.description.debug">--debug</a>
+                        option.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
+                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td>
+                     
+                     <p>The content is treated as if it had been passed via the <a href="#mkvextract.description.engage">--engage</a>
+                        option.
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvextract.seealso">8. Дивіться також</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>, <a href="mkvtoolnix-gui.html"><span class="productname">mkvtoolnix-gui</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvextract.www">9. WWW</a></h1>
+         
+         
+         <p>
+            Остання версія завжди може бути знайдена на веб-сторінці <a href="https://mkvtoolnix.download/">the MKVToolNix homepage</a>.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>
