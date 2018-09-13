@@ -80,6 +80,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Utilities, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Utilities.1.0.20180913.19\lib\netstandard2.0\Utilities.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="SevenZipTool.cs" />
@@ -130,10 +133,6 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Utilities\Utilities\Utilities.csproj">
-      <Project>{130c299b-c002-4e98-a429-b32ad25cb873}</Project>
-      <Name>Utilities</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ISO6393Library\ISO6393Library.csproj">
       <Project>{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}</Project>
       <Name>ISO6393Library</Name>
