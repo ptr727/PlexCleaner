@@ -87,7 +87,7 @@ namespace PlexCleaner
 
             // Share the cancel object and settings with the utilities project
             // The constructor will assign the default static member
-            _settings = new Settings
+            _settings = new Utilities.Settings
             {
                 TestNoModify = Properties.Settings.Default.TestNoModify,
                 FileRetryCount = Properties.Settings.Default.FileRetryCount,
@@ -271,7 +271,7 @@ namespace PlexCleaner
 
         private Options Options { get; }
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private Settings _settings;
+        private Utilities.Settings _settings;
         public CancelEx Cancel { get; }
 
         public List<Iso6393> Iso6393List;

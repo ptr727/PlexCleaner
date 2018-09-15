@@ -2,7 +2,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {

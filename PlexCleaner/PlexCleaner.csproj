@@ -102,7 +102,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Settings.cs" />
     <Compile Include="Tools.cs" />
     <Compile Include="Updater.cs" />
   </ItemGroup>

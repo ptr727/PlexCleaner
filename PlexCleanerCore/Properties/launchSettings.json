@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PlexCleanerCore": {
+      "commandName": "Project",
+      "commandLineArgs": "--CheckForTools"
+    }
+  }
+}

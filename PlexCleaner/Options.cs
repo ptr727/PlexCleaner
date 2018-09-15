@@ -5,7 +5,7 @@ namespace PlexCleaner
 {
     public class Options
     {
-        // Commanline options
+        // Commandline options
         [Option(HelpText = "Process the folders.")]
         public bool Process { get; set; }
 

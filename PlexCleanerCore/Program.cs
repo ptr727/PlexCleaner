@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using CommandLine;
@@ -9,7 +8,7 @@ using ISO6393Library;
 using Utilities;
 
 // TODO : Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color
-// TODO : Reenable the file watcher when directory dissapears
+// TODO : Reenable the file watcher when directory disappears
 //  e.GetException().GetType() == typeof(SomethingPathNotAccessibleException)), retry waiting with with Directory.Exists(path)
 //  if (e is Win32Exception)
 //  OnError : System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available
@@ -38,8 +37,9 @@ namespace PlexCleaner
         // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
         private static int Main()
         {
-            // TODO : Core replacmeent
-            // Redirect debug outpout to console
+            // TODO : Core replacement
+            // https://github.com/dotnet/corefx/issues/16596
+            // Redirect debug output to console
             // TODO : Disable modal UI for Assert, AssertUiEnabled
             // TextWriterTraceListener textWriterTraceListener = new TextWriterTraceListener(Console.Error);
             // Debug.Listeners.Add(textWriterTraceListener);
@@ -88,11 +88,11 @@ namespace PlexCleaner
 
             // Share the cancel object and settings with the utilities project
             // The constructor will assign the default static member
-            _settings = new Settings
+            _settings = new Utilities.Settings
             {
-                TestNoModify = Properties.Settings.Default.TestNoModify,
-                FileRetryCount = Properties.Settings.Default.FileRetryCount,
-                FileRetryWaitTime = Properties.Settings.Default.FileRetryWaitTime
+                TestNoModify = Settings.Default.TestNoModify,
+                FileRetryCount = Settings.Default.FileRetryCount,
+                FileRetryWaitTime = Settings.Default.FileRetryWaitTime
             };
             Cancel = _settings.Cancel;
 
@@ -272,7 +272,7 @@ namespace PlexCleaner
 
         private Options Options { get; }
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private Settings _settings;
+        private Utilities.Settings _settings;
         public CancelEx Cancel { get; }
 
         public List<Iso6393> Iso6393List;

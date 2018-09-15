@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 // We are using genrated code to read XML
 // http://xmltocsharp.azurewebsites.net/
