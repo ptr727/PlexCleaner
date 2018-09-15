@@ -22,6 +22,11 @@ using Utilities;
 //  Prefer DTS over AC3, if same language, change order, e.g. the breakfast club
 // TODO : Keep machine from sleeping while processing
 // TODO : Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS
+// TODO : Convert to appsettings
+// https://blog.bitscry.com/2017/05/30/appsettings-json-in-net-core-console-app/
+// http://benfoster.io/blog/net-core-configuration-legacy-projects
+// https://msdn.microsoft.com/en-us/magazine/mt632279.aspx
+// https://developer.telerik.com/featured/new-configuration-model-asp-net-core/
 
 namespace PlexCleaner
 {
