@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Text.RegularExpressions;
-using Utilities;
+using InsaneGenius.Utilities;
 using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner

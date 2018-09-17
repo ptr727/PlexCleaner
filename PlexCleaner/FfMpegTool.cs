@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
-using Utilities;
+using InsaneGenius.Utilities;
 using Settings = PlexCleaner.Properties.Settings;
 
 // We are using generated code to read the JSON

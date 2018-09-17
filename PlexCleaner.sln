@@ -16,9 +16,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{58A76478
 		Tools\Tools.txt = Tools\Tools.txt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlexCleanerCore", "PlexCleanerCore\PlexCleanerCore.csproj", "{1A686E6C-DD3F-4D71-A5F1-DCEE8F872A2F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerCore", "PlexCleanerCore\PlexCleanerCore.csproj", "{1A686E6C-DD3F-4D71-A5F1-DCEE8F872A2F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D} = {0509B9B7-A4A1-4A29-930D-DCE6D8E9A21D}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D8F3D73D-A71B-4B79-982F-8491CCFB893A}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
 Global

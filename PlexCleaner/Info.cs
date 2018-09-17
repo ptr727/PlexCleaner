@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ISO6393Library;
-using Utilities;
+using InsaneGenius.Utilities;
 using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner

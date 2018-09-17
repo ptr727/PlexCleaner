@@ -5,7 +5,7 @@ using System.Linq;
 using CommandLine;
 using CommandLine.Text;
 using ISO6393Library;
-using Utilities;
+using InsaneGenius.Utilities;
 
 // TODO : Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color
 // TODO : Reenable the file watcher when directory disappears
@@ -93,13 +93,13 @@ namespace PlexCleaner
 
             // Share the cancel object and settings with the utilities project
             // The constructor will assign the default static member
-            _settings = new Utilities.Settings
+            FileEx.Settings = new FileEx.SettingsEx()
             {
                 TestNoModify = Settings.Default.TestNoModify,
                 FileRetryCount = Settings.Default.FileRetryCount,
                 FileRetryWaitTime = Settings.Default.FileRetryWaitTime
             };
-            Cancel = _settings.Cancel;
+            Cancel = FileEx.Settings.Cancel;
 
             // Set the static value for use in other static classes where cancel is observed
             Default = this;
@@ -276,9 +276,7 @@ namespace PlexCleaner
         }
 
         private Options Options { get; }
-        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
-        private Utilities.Settings _settings;
-        public CancelEx Cancel { get; }
+        public FileEx.CancelEx Cancel { get; }
 
         public List<Iso6393> Iso6393List;
         public static Program Default;

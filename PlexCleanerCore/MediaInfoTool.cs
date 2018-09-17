@@ -4,7 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-using Utilities;
+using InsaneGenius.Utilities;
 
 // We are using genrated code to read XML
 // http://xmltocsharp.azurewebsites.net/

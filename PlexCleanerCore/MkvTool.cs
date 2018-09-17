@@ -5,7 +5,7 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Net;
 using System.IO.Compression;
-using Utilities;
+using InsaneGenius.Utilities;
 
 // We are using generated code to read JSON and XML
 // https://quicktype.io/

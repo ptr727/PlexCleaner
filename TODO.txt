@@ -1,0 +1,1 @@
+Refactor CancelEx class to be generally usefull and accessible
