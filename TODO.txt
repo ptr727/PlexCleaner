@@ -2,4 +2,8 @@ Compile T4 as part of build
 https://github.com/clariuslabs/TransformOnBuild
 https://github.com/bennor/AutoT4
 
-Convert from settings to json
+Make settings static
+
+Create tools folders if they do not exist
+
+Print tool folder

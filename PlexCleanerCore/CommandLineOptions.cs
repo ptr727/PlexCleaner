@@ -3,7 +3,7 @@ using CommandLine;
 
 namespace PlexCleaner
 {
-    public class Options
+    public class CommandLineOptions
     {
         // Commandline options
         [Option(HelpText = "Process the folders.")]

@@ -61,7 +61,7 @@ namespace PlexCleaner
                             _watchfolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
-                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Settings.Default.MonitorWaitTime);
+                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Program.Default.AppSettingsOptions.App.MonitorWaitTime);
                         foreach (KeyValuePair<string, DateTime> pair in _watchfolders)
                         // If not recently modified and all files in the folder are readable
                             if (pair.Value < settletime)
