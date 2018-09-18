@@ -19,13 +19,13 @@ namespace PlexCleaner
 
         public static int SevenZip(string parameters)
         {
-            string path = Tools.CombineToolPath(Program.Default.AppSettingsOptions.Tools.SevenZip, SevenZipBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.SevenZip, SevenZipBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Program.Default.AppSettingsOptions.Tools.SevenZip);
+            return Tools.CombineToolPath(ToolOptions.Default.SevenZip);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

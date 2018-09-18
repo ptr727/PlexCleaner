@@ -185,7 +185,8 @@ namespace PlexCleaner
                     case nameof(MkvTool):
                         // Get the path and clean the destination directory
                         toolpath = MkvTool.GetToolPath();
-                        if (!FileEx.DeleteInsideDirectory(toolpath))
+                        if (!FileEx.CreateDirectory(toolpath) ||
+                            !FileEx.DeleteInsideDirectory(toolpath))
                             return false;
                         break;
                     case nameof(FfMpegTool):
@@ -198,7 +199,8 @@ namespace PlexCleaner
                     case nameof(MediaInfoTool):
                         // Get the path and clean the destination directory
                         toolpath = MediaInfoTool.GetToolPath();
-                        if (!FileEx.DeleteInsideDirectory(toolpath))
+                        if (!FileEx.CreateDirectory(toolpath) ||
+                            !FileEx.DeleteInsideDirectory(toolpath))
                             return false;
                         break;
                     default:

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {
@@ -24,7 +23,7 @@ namespace PlexCleaner
             };
 
             // Wanted extensions, always keep .mkv and sidecar files
-            List<string> stringlist = Settings.Default.KeepExtensions.Split(',').ToList();
+            List<string> stringlist = EncodeOptions.Default.KeepExtensions.Split(',').ToList();
             _keepextensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 ".mkv"
@@ -33,20 +32,20 @@ namespace PlexCleaner
                 _keepextensions.Add(extension);
 
             // Containers types that can be remuxed to MKV
-            stringlist = Settings.Default.ReMuxExtensions.Split(',').ToList();
+            stringlist = EncodeOptions.Default.ReMuxExtensions.Split(',').ToList();
             _remuxextensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Languages are in short form using ISO 639-2 notation
             // https://www.loc.gov/standards/iso639-2/php/code_list.php
             // zxx = no linguistic content, und = undetermined
             // Default language
-            _defaultlanguage = Settings.Default.DefaultLanguage;
+            _defaultlanguage = EncodeOptions.Default.DefaultLanguage;
             if (String.IsNullOrEmpty(_defaultlanguage))
                 _defaultlanguage = "eng";
 
             // Languages to keep, always keep no linguistic content and the default language
             // The languages must be in ISO 639-2 form
-            stringlist = Settings.Default.KeepLanguages.Split(',').ToList();
+            stringlist = EncodeOptions.Default.KeepLanguages.Split(',').ToList();
             _keeplanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 "zxx",
@@ -56,8 +55,8 @@ namespace PlexCleaner
             // Re-encode any video track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to h264
-            List<string> codeclist = Settings.Default.ReEncodeVideoCodec.Split(',').ToList();
-            List<string> profilelist = Settings.Default.ReEncodeVideoProfile.Split(',').ToList();
+            List<string> codeclist = EncodeOptions.Default.ReEncodeVideoCodec.Split(',').ToList();
+            List<string> profilelist = EncodeOptions.Default.ReEncodeVideoProfile.Split(',').ToList();
             _reencodevideocodecs = new List<Info.VideoInfo>();
             for (int i = 0; i < codeclist.Count; i++)
             {
@@ -75,14 +74,14 @@ namespace PlexCleaner
             // Re-encode any audio track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
-            _audioencodecodec = Settings.Default.AudioEncodeCodec;
+            _audioencodecodec = EncodeOptions.Default.AudioEncodeCodec;
             if (String.IsNullOrEmpty(_audioencodecodec))
                 _audioencodecodec = "ac3";
-            stringlist = Settings.Default.ReEncodeAudioCodec.Split(',').ToList();
+            stringlist = EncodeOptions.Default.ReEncodeAudioCodec.Split(',').ToList();
             _reencodeaudiocodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Video encode constant quality factor, e.g. 20
-            _videoencodequality = Settings.Default.VideoEncodeQuality;
+            _videoencodequality = EncodeOptions.Default.VideoEncodeQuality;
             if (_videoencodequality == 0)
                 _videoencodequality = 20;
         }
@@ -117,7 +116,7 @@ namespace PlexCleaner
             }
 
             // Delete all empty folders
-            if (Settings.Default.DeleteEmptyFolders)
+            if (AppOptions.Default.DeleteEmptyFolders)
                 foreach (string folder in folders)
                 {
                     ConsoleEx.WriteLine($"Deleting empty folders : \"{folder}\"");
@@ -534,7 +533,7 @@ namespace PlexCleaner
             ConsoleEx.WriteLineError($"File missing required tracks : Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
 
             // Delete the file
-            if (Settings.Default.DeleteFailedFiles)
+            if (AppOptions.Default.DeleteFailedFiles)
                 FileEx.DeleteFile(fileinfo.FullName);
 
             return false;
@@ -718,7 +717,7 @@ namespace PlexCleaner
         {
             // Read or create sidecar file
             mediainfo = null;
-            if (Settings.Default.UseSidecarFiles)
+            if (AppOptions.Default.UseSidecarFiles)
                 return GetMediaInfoSidecar(fileinfo, parser, out bool _, out mediainfo);
             
             // Use the specified stream parser tool

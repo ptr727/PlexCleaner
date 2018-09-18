@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ISO6393Library;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {
@@ -605,7 +604,7 @@ namespace PlexCleaner
         public static bool SetMkvTrackLanguage(string filename, int track, string language)
         {
             // Test
-            if (Settings.Default.TestNoModify)
+            if (AppOptions.Default.TestNoModify)
                 return true;
 
             // Create the MKVPropEdit commandline and execute

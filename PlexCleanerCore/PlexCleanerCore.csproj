@@ -10,7 +10,7 @@
     <Authors>Pieter Viljoen</Authors>
     <Company>Pieter Viljoen</Company>
     <Description>Cleanup media files for Plex playback.</Description>
-    <PackageProjectUrl>https://dev.azure.com/pieterv/Plex%20Cleaner</PackageProjectUrl>
+    <PackageProjectUrl>https://dev.azure.com/pieterv/</PackageProjectUrl>
     <NeutralLanguage>en</NeutralLanguage>
     <Version>1.0.1</Version>
   </PropertyGroup>
@@ -18,11 +18,10 @@
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.3.65" />
     <PackageReference Include="HtmlAgilityPack" Version="1.8.7" />
-    <PackageReference Include="InsaneGenius.Utilities" Version="1.0.20180917.4" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="1.0.20180918.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
+    <None Update="appSettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -1,28 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using CommandLine;
 using CommandLine.Text;
 using ISO6393Library;
 using InsaneGenius.Utilities;
-
-// TODO : Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color
-// TODO : Reenable the file watcher when directory dissapears
-//  e.GetException().GetType() == typeof(SomethingPathNotAccessibleException)), retry waiting with with Directory.Exists(path)
-//  if (e is Win32Exception)
-//  OnError : System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available
-// TODO : Check for new tool version on start and download new tools
-// TODO : Retrieve SRT subtitles using original file details, before the sourced file gets modified
-// TODO : Embed SRT files in MKV file
-// TODO : Consider converting DIVX to H264 or just re-tag as XVID
-//  cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID
-// TODO : Compare folder with file name and rename to match
-// TODO : Check if more than two audio or subtitle tracks of the same language
-//  Prefer DTS over AC3, if same language, change order, e.g. the breakfast club
-// TODO : Keep machine from sleeping while processing
-// TODO : Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS
+using Microsoft.Extensions.Configuration;
 
 namespace PlexCleaner
 {
@@ -38,13 +23,27 @@ namespace PlexCleaner
         // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
         private static int Main()
         {
-            // Redirect debug outpout to console
+            // Load options from appsettings.json
+            const string settingsfile = "appSettings.json";
+            string settingspath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            ConsoleEx.WriteLine($"Loading settings from : {Path.Combine(settingspath, settingsfile)}");
+            Options options = new Options();
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(settingspath)
+                .AddJsonFile(settingsfile);
+            IConfiguration config = builder.Build();
+            config.Bind(options);
+            ConsoleEx.WriteLine($"Using Tools from : {Tools.GetToolsRoot()}");
+
+
+            // TODO : Find a .NET Core replacement
+            // https://github.com/dotnet/corefx/issues/16596
+            // Redirect debug output to console
             // TODO : Disable modal UI for Assert, AssertUiEnabled
-            TextWriterTraceListener textWriterTraceListener = new TextWriterTraceListener(Console.Error);
-            Debug.Listeners.Add(textWriterTraceListener);
+            // TextWriterTraceListener textWriterTraceListener = new TextWriterTraceListener(Console.Error);
+            // Debug.Listeners.Add(textWriterTraceListener);
 
             // Parse the commandline arguments
-            // https://github.com/gsscoder/commandline
             Parser parser = new Parser(with =>
             {
                 with.CaseSensitive = false;
@@ -52,22 +51,22 @@ namespace PlexCleaner
             });
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
-            ParserResult<Options> result = parser.ParseArguments<Options>(CommandLineEx.GetCommandlineArgs());
+            ParserResult<Commands> result = parser.ParseArguments<Commands>(CommandLineEx.GetCommandlineArgs());
             if (result.Tag == ParserResultType.NotParsed)
             {
                 ConsoleEx.WriteLineError("Failed to parse commandline.");
                 return -1;
             }
-            Options options = ((Parsed<Options>)result).Value;
+            Commands commands = ((Parsed<Commands>)result).Value;
 
-            // Some action must be specified
-            if (!options.Process &&
-                !options.ReMux &&
-                !options.ReEncode &&
-                !options.WriteSidecar &&
-                !options.CreateTagMap &&
-                !options.Monitor &&
-                !options.CheckForTools)
+            // At least some action must be specified
+            if (!commands.Process &&
+                !commands.ReMux &&
+                !commands.ReEncode &&
+                !commands.WriteSidecar &&
+                !commands.CreateTagMap &&
+                !commands.Monitor &&
+                !commands.CheckForTools)
             {
                 // TODO : Write commandline help output on demand
                 // https://github.com/gsscoder/commandline/issues/445#issuecomment-317901624
@@ -77,22 +76,20 @@ namespace PlexCleaner
             }
 
             // Run
-            Program program = new Program(options);
+            Program program = new Program(commands, options);
             return program.Run();
         }
 
-        private Program(Options options)
+        private Program(Commands commands, Options options)
         {
-            Options = options;
+            ProgCommands = commands;
+            ProgOptions = options;
 
-            // Share the cancel object and settings with the utilities project
-            FileEx.Settings = new FileEx.SettingsEx()
-            {
-                TestNoModify = Properties.Settings.Default.TestNoModify,
-                FileRetryCount = Properties.Settings.Default.FileRetryCount,
-                FileRetryWaitTime = Properties.Settings.Default.FileRetryWaitTime
-            };
-            Cancel = FileEx.Settings.Cancel;
+            // Share the cancel object and settings with the utilities FileEx project
+            FileEx.Options.TestNoModify = AppOptions.Default.TestNoModify;
+            FileEx.Options.FileRetryCount = AppOptions.Default.FileRetryCount;
+            FileEx.Options.FileRetryWaitTime = AppOptions.Default.FileRetryWaitTime;
+            Cancel = FileEx.Options.Cancel;
 
             // Set the static value for use in other static classes where cancel is observed
             Default = this;
@@ -102,7 +99,6 @@ namespace PlexCleaner
         {
             // Register cancel handler
             void Cancelhandler(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
-
             Console.CancelKeyPress += Cancelhandler;
 
             // Process the commands
@@ -117,7 +113,7 @@ namespace PlexCleaner
                 }
 
                 // Process
-                if (Options.Process &&
+                if (ProgCommands.Process &&
                     !Process())
                 {
                     ret = -1;
@@ -125,7 +121,7 @@ namespace PlexCleaner
                 }
 
                 // ReMux
-                if (Options.ReMux &&
+                if (ProgCommands.ReMux &&
                     !ReMux())
                 {
                     ret = -1;
@@ -133,7 +129,7 @@ namespace PlexCleaner
                 }
 
                 // ReEncode
-                if (Options.ReEncode &&
+                if (ProgCommands.ReEncode &&
                     !ReEncode())
                 {
                     ret = -1;
@@ -141,7 +137,7 @@ namespace PlexCleaner
                 }
 
                 // WriteSidecar
-                if (Options.WriteSidecar &&
+                if (ProgCommands.WriteSidecar &&
                     !WriteSidecar())
                 {
                     ret = -1;
@@ -149,7 +145,7 @@ namespace PlexCleaner
                 }
 
                 // CreateTagMap
-                if (Options.CreateTagMap &&
+                if (ProgCommands.CreateTagMap &&
                     !CreateTagMap())
                 {
                     ret = -1;
@@ -157,7 +153,7 @@ namespace PlexCleaner
                 }
 
                 // CheckForTools
-                if (Options.CheckForTools &&
+                if (ProgCommands.CheckForTools &&
                     !CheckForTools())
                 {
                     ret = -1;
@@ -165,7 +161,7 @@ namespace PlexCleaner
                 }
 
                 // Monitor
-                if (Options.Monitor &&
+                if (ProgCommands.Monitor &&
                     !Monitor())
                 {
                     ret = -1;
@@ -185,7 +181,7 @@ namespace PlexCleaner
 
         private bool NormalizeFolders()
         {
-            List<string> infolders = Options.Folders.ToList();
+            List<string> infolders = ProgCommands.Folders.ToList();
             List<string> norfolders = new List<string>();
             foreach (string infolder in infolders)
             {
@@ -213,7 +209,7 @@ namespace PlexCleaner
             }
 
             // Swap the input folders with the normalized folders
-            Options.Folders = norfolders;
+            ProgCommands.Folders = norfolders;
 
             return true;
         }
@@ -221,31 +217,31 @@ namespace PlexCleaner
         private bool Process()
         {
             Process process = new Process();
-            return process.ProcessFolders(Options.Folders.ToList());
+            return process.ProcessFolders(ProgCommands.Folders.ToList());
         }
 
         private bool ReMux()
         {
             Process process = new Process();
-            return process.ReMuxFolders(Options.Folders.ToList());
+            return process.ReMuxFolders(ProgCommands.Folders.ToList());
         }
 
         private bool ReEncode()
         {
             Process process = new Process();
-            return process.ReEncodeFolders(Options.Folders.ToList());
+            return process.ReEncodeFolders(ProgCommands.Folders.ToList());
         }
 
         private bool WriteSidecar()
         {
             Process process = new Process();
-            return process.WriteSidecarFolders(Options.Folders.ToList());
+            return process.WriteSidecarFolders(ProgCommands.Folders.ToList());
         }
 
         private bool CreateTagMap()
         {
             Process process = new Process();
-            return process.CreateTagMapFolders(Options.Folders.ToList());
+            return process.CreateTagMapFolders(ProgCommands.Folders.ToList());
         }
 
         private bool CheckForTools()
@@ -256,7 +252,7 @@ namespace PlexCleaner
         private bool Monitor()
         {
             Monitor monitor = new Monitor();
-            return monitor.MonitorFolders(Options.Folders.ToList());
+            return monitor.MonitorFolders(ProgCommands.Folders.ToList());
         }
 
         private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
@@ -268,7 +264,8 @@ namespace PlexCleaner
             program.Cancel.State = true;
         }
 
-        private Options Options { get; }
+        private Commands ProgCommands { get; }
+        public Options ProgOptions { get; }
         public Signal Cancel { get; }
 
         public List<Iso6393> Iso6393List;

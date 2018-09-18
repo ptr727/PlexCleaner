@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 // We are using generated code to read the JSON
 // https://quicktype.io/
@@ -60,7 +59,7 @@ namespace PlexCleaner
 
         public static int FfMpeg(string parameters)
         {
-            string path = Tools.CombineToolPath(Settings.Default.FFmpeg, FfMpegBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.FFMpeg, FfMpegBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -74,13 +73,13 @@ namespace PlexCleaner
 
         public static int FfProbe(string parameters, out string output, out string error)
         {
-            string path = Tools.CombineToolPath(Settings.Default.FFmpeg, FfProbeBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.FFMpeg, FfProbeBinary);
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Settings.Default.FFmpeg);
+            return Tools.CombineToolPath(ToolOptions.Default.FFMpeg);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

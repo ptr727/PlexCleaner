@@ -604,7 +604,7 @@ namespace PlexCleaner
         public static bool SetMkvTrackLanguage(string filename, int track, string language)
         {
             // Test
-            if (Program.Default.AppSettingsOptions.App.TestNoModify)
+            if (AppOptions.Default.TestNoModify)
                 return true;
 
             // Create the MKVPropEdit commandline and execute

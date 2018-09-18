@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 // We are using genrated code to read XML
 // http://xmltocsharp.azurewebsites.net/
@@ -71,13 +70,13 @@ namespace PlexCleaner
 
         public static int MediaInfo(string parameters, out string output)
         {
-            string path = Tools.CombineToolPath(Settings.Default.MediaInfo, MediaInfoBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.MediaInfo, MediaInfoBinary);
             return ProcessEx.Execute(path, parameters, out output);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Settings.Default.MediaInfo);
+            return Tools.CombineToolPath(ToolOptions.Default.MediaInfo);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

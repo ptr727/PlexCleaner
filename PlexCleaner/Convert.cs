@@ -4,7 +4,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {
@@ -14,7 +13,7 @@ namespace PlexCleaner
         public static bool ConvertToMkv(string inputname, out string outputname)
         {
             // Convert all tracks
-            return ConvertToMkv(inputname, 20, "ac3", null, null, out outputname);
+            return ConvertToMkv(inputname, EncodeOptions.Default.VideoEncodeQuality, EncodeOptions.Default.AudioEncodeCodec, null, null, out outputname);
         }
 
         // ReEncode to MKV H264
@@ -26,7 +25,7 @@ namespace PlexCleaner
             // Match the logic in ReMuxToMKV()
 
             // Test
-            if (Settings.Default.TestNoModify)
+            if (AppOptions.Default.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -67,7 +66,7 @@ namespace PlexCleaner
             // Match the logic in ConvertToMKV()
 
             // Test
-            if (Settings.Default.TestNoModify)
+            if (AppOptions.Default.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -157,7 +156,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = Settings.Default.TestSnippets ? MkvMergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? MkvMergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -173,7 +172,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = Settings.Default.TestSnippets ? MkvMergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? MkvMergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -199,7 +198,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Settings.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -218,7 +217,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Settings.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -332,7 +331,7 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Settings.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
             string commandline = $"-v warning -i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -350,7 +349,7 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // Copy all streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Settings.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
             string commandline = $"-v warning -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);

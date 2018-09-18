@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {
@@ -62,11 +61,11 @@ namespace PlexCleaner
                             _watchfolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
-                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Settings.Default.MonitorWaitTime);
+                        DateTime settletime = DateTime.UtcNow.AddSeconds(-AppOptions.Default.MonitorWaitTime);
                         foreach (KeyValuePair<string, DateTime> pair in _watchfolders)
                         // If not recently modified and all files in the folder are readable
                             if (pair.Value < settletime)
-                                if (!FileEx.AreFilesInfolderReadable(pair.Key))
+                                if (!FileEx.AreFilesInDirectoryReadable(pair.Key))
                                     WriteLine($"Folder not readable : \"{pair.Key}\"");
                                 else
                                     watchlist.Add(pair.Key);

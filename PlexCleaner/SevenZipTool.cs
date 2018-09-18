@@ -2,7 +2,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
-using Settings = PlexCleaner.Properties.Settings;
 
 namespace PlexCleaner
 {
@@ -20,13 +19,13 @@ namespace PlexCleaner
 
         public static int SevenZip(string parameters)
         {
-            string path = Tools.CombineToolPath(Settings.Default.SevenZip, SevenZipBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.SevenZip, SevenZipBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Settings.Default.SevenZip);
+            return Tools.CombineToolPath(ToolOptions.Default.SevenZip);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

@@ -9,16 +9,16 @@ namespace PlexCleaner
         public static string GetToolsRoot()
         {
             // Process relative or absolute tools path
-            if (!Program.Default.AppSettingsOptions.Tools.RootAssemblyRelative)
+            if (!ToolOptions.Default.RootRelative)
                 // Return the absolute path
-                return Program.Default.AppSettingsOptions.Tools.RootPath;
+                return ToolOptions.Default.RootPath;
             
-            // Get the process directory
+            // Get the assembly directory
             string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             if (toolsroot == null) throw new ArgumentNullException(nameof(toolsroot));
 
-            // Create the root from the process relative directory
-            return Path.GetFullPath(Path.Combine(toolsroot, Program.Default.AppSettingsOptions.Tools.RootPath));
+            // Create the root from the relative directory
+            return Path.GetFullPath(Path.Combine(toolsroot, ToolOptions.Default.RootPath));
         }
 
         public static string CombineToolPath(string filename)

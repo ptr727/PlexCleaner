@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using PlexCleaner.Properties;
+using System.Reflection;
 
 namespace PlexCleaner
 {
@@ -9,16 +9,16 @@ namespace PlexCleaner
         public static string GetToolsRoot()
         {
             // Process relative or absolute tools path
-            if (!Settings.Default.ToolsRootProcessRelative)
+            if (!ToolOptions.Default.RootRelative)
                 // Return the absolute path
-                return Settings.Default.ToolsRootPath;
+                return ToolOptions.Default.RootPath;
             
-            // Get the process directory
-            string toolsroot = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+            // Get the assembly directory
+            string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             if (toolsroot == null) throw new ArgumentNullException(nameof(toolsroot));
 
-            // Create the root from the process relative directory
-            return Path.GetFullPath(Path.Combine(toolsroot, Settings.Default.ToolsRootPath));
+            // Create the root from the relative directory
+            return Path.GetFullPath(Path.Combine(toolsroot, ToolOptions.Default.RootPath));
         }
 
         public static string CombineToolPath(string filename)
