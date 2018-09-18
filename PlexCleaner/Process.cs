@@ -110,7 +110,7 @@ namespace PlexCleaner
                     modifiedcount++;
 
                 // Cancel handler
-                if (Program.Default.Cancel.Cancel)
+                if (Program.Default.Cancel.State)
                     return false;
 
                 // Next file
@@ -156,7 +156,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in _fileinfolist)
             {
                 // Cancel handler
-                if (Program.Default.Cancel.Cancel)
+                if (Program.Default.Cancel.State)
                     return false;
 
                 // Handle only MKV files, and files in the remux extension list
@@ -203,7 +203,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in _fileinfolist)
             {
                 // Cancel handler
-                if (Program.Default.Cancel.Cancel)
+                if (Program.Default.Cancel.State)
                     return false;
 
                 // Handle only MKV files
@@ -256,7 +256,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in _fileinfolist)
             {
                 // Cancel handler
-                if (Program.Default.Cancel.Cancel)
+                if (Program.Default.Cancel.State)
                     return false;
 
                 // Handle only MKV files
@@ -343,7 +343,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in _fileinfolist)
             {
                 // Cancel handler
-                if (Program.Default.Cancel.Cancel)
+                if (Program.Default.Cancel.State)
                     return false;
 
                 // Handle only MKV files

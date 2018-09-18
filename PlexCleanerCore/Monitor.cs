@@ -48,7 +48,7 @@ namespace PlexCleaner
                 watch.EnableRaisingEvents = true;
 
             // Wait for exit to be signalled
-            while (!Program.Default.Cancel.WaitForCancel(1000))
+            while (!Program.Default.Cancel.WaitForSet(1000))
             {
                 // Lock and process the list of folders
                 List<string> watchlist = new List<string>();
@@ -164,7 +164,7 @@ namespace PlexCleaner
         {
             // Cancel in case of error
             WriteLineError($"OnError : {e.GetException()}");
-            Program.Default.Cancel.Cancel = true;
+            Program.Default.Cancel.State = true;
         }
 
         // Write to the console, but only write if the output is different to the previous output

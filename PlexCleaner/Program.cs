@@ -265,11 +265,11 @@ namespace PlexCleaner
             e.Cancel = true;
 
             // Signal the cancel event
-            program.Cancel.Cancel = true;
+            program.Cancel.State = true;
         }
 
         private Options Options { get; }
-        public FileEx.CancelEx Cancel { get; }
+        public Signal Cancel { get; }
 
         public List<Iso6393> Iso6393List;
         public static Program Default;

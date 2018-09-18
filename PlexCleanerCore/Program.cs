@@ -6,6 +6,7 @@ using CommandLine;
 using CommandLine.Text;
 using ISO6393Library;
 using InsaneGenius.Utilities;
+using Microsoft.Extensions.Configuration;
 
 // TODO : Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color
 // TODO : Reenable the file watcher when directory disappears
@@ -42,6 +43,11 @@ namespace PlexCleaner
         // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
         private static int Main()
         {
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json");
+            IConfiguration config = builder.Build();
+
             // TODO : Core replacement
             // https://github.com/dotnet/corefx/issues/16596
             // Redirect debug output to console
@@ -272,11 +278,11 @@ namespace PlexCleaner
             e.Cancel = true;
 
             // Signal the cancel event
-            program.Cancel.Cancel = true;
+            program.Cancel.State = true;
         }
 
         private Options Options { get; }
-        public FileEx.CancelEx Cancel { get; }
+        public Signal Cancel { get; }
 
         public List<Iso6393> Iso6393List;
         public static Program Default;

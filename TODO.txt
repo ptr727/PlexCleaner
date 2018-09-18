@@ -1,1 +1,5 @@
-Refactor CancelEx class to be generally usefull and accessible
+Compile T4 as part of build
+https://github.com/clariuslabs/TransformOnBuild
+https://github.com/bennor/AutoT4
+
+Convert from settings to json
