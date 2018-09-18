@@ -125,23 +125,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\PlexCleaner\Commands.cs" />
-    <Compile Include="..\PlexCleaner\SevenZipTool.cs" />
-    <Compile Include="..\PlexCleaner\Convert.cs" />
-    <Compile Include="..\PlexCleaner\FfMpegTool.cs" />
-    <Compile Include="..\PlexCleaner\Info.cs" />
-    <Compile Include="..\PlexCleaner\Language.cs" />
-    <Compile Include="..\PlexCleaner\MediaInfoTool.cs" />
-    <Compile Include="..\PlexCleaner\MkvTool.cs" />
-    <Compile Include="..\PlexCleaner\Monitor.cs" />
-    <Compile Include="..\PlexCleaner\Options.cs" />
-    <Compile Include="..\PlexCleaner\Process.cs" />
-    <Compile Include="..\PlexCleaner\Program.cs" />
+    <Compile Include="..\PlexCleanerCore\Commands.cs" />
+    <Compile Include="..\PlexCleanerCore\SevenZipTool.cs" />
+    <Compile Include="..\PlexCleanerCore\Convert.cs" />
+    <Compile Include="..\PlexCleanerCore\FfMpegTool.cs" />
+    <Compile Include="..\PlexCleanerCore\Info.cs" />
+    <Compile Include="..\PlexCleanerCore\Language.cs" />
+    <Compile Include="..\PlexCleanerCore\MediaInfoTool.cs" />
+    <Compile Include="..\PlexCleanerCore\MkvTool.cs" />
+    <Compile Include="..\PlexCleanerCore\Monitor.cs" />
+    <Compile Include="..\PlexCleanerCore\Options.cs" />
+    <Compile Include="..\PlexCleanerCore\Process.cs" />
+    <Compile Include="..\PlexCleanerCore\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\PlexCleaner\Tools.cs" />
-    <Compile Include="..\PlexCleaner\Updater.cs" />
+    <Compile Include="..\PlexCleanerCore\Tools.cs" />
+    <Compile Include="..\PlexCleanerCore\Updater.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\PlexCleanerCore\appSettings.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
