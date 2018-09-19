@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using InsaneGenius.Utilities;
 
-// We are using genrated code to read XML
+// We are using generated code to read XML
 // http://xmltocsharp.azurewebsites.net/
 
 namespace PlexCleaner
