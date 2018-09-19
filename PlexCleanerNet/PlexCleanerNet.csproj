@@ -62,7 +62,7 @@
       <HintPath>..\packages\HtmlAgilityPack.1.8.7\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
     <Reference Include="InsaneGenius.Utilities, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\InsaneGenius.Utilities.1.0.20180919.1\lib\netstandard2.0\InsaneGenius.Utilities.dll</HintPath>
+      <HintPath>..\packages\InsaneGenius.Utilities.1.0.20180919.2\lib\netstandard2.0\InsaneGenius.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.Configuration, Version=2.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.Configuration.2.1.1\lib\netstandard2.0\Microsoft.Extensions.Configuration.dll</HintPath>
@@ -130,7 +130,6 @@
     <Compile Include="..\PlexCleanerCore\Convert.cs" />
     <Compile Include="..\PlexCleanerCore\FfMpegTool.cs" />
     <Compile Include="..\PlexCleanerCore\Info.cs" />
-    <Compile Include="..\PlexCleanerCore\Language.cs" />
     <Compile Include="..\PlexCleanerCore\MediaInfoTool.cs" />
     <Compile Include="..\PlexCleanerCore\MkvTool.cs" />
     <Compile Include="..\PlexCleanerCore\Monitor.cs" />

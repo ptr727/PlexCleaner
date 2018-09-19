@@ -67,7 +67,7 @@ namespace PlexCleaner
                 {
                     // MediaInfo uses ab or abc or ab-cd tags, we need to convert to ISO 639-2
                     // https://github.com/MediaArea/MediaAreaXml/issues/33
-                    Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Language);
+                    Iso6393 lang = Iso6393.FromString(track.Language, Program.Default.Iso6393List);
                     Language = lang != null ? lang.Part2B : "und";
                 }
                 else
