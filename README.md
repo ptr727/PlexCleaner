@@ -1,14 +1,17 @@
 # Introduction
 Clean media files for Plex playback. 
 
+# Build Status
+[![Build status](https://dev.azure.com/pieterv/Plex%20Cleaner/_apis/build/status/Plex%20Cleaner%20-%20.NET%20Core%20-%20CI)](https://dev.azure.com/pieterv/Plex%20Cleaner/_build/latest?definitionId=17)
+
 # Getting Started
 TODO.
 
 # Build and Test
-TODO. 
+https://dev.azure.com/pieterv/Plex%20Cleaner/
 
 # Contribute
-TODO.
+https://dev.azure.com/pieterv/Plex%20Cleaner/
 
 # TODO
 - Compile T4 as part of build
