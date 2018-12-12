@@ -5,7 +5,27 @@ Clean media files for Plex playback.
 [![Build status](https://dev.azure.com/pieterv/Plex%20Cleaner/_apis/build/status/Plex%20Cleaner%20-%20.NET%20Core%20-%20CI)](https://dev.azure.com/pieterv/Plex%20Cleaner/_build/latest?definitionId=17)
 
 # Getting Started
-TODO.
+
+## Installation
+Install .NET Core for your platform.
+
+## Update Tools
+Make sure the Tools folder exists, the default Tools folder is in the root of the binary folder.
+Make sure the 7-Zip commandline tool exists, the 7-Zip folder is in Tools\7Zip\x64
+Download the 7-Zip commandline tools from https://www.7-zip.org/download.html, e.g. https://www.7-zip.org/a/7z1805-extra.7z
+Update the tools:
+dotnet.exe plexcleaner.dll --CheckForTools
+
+## TODO
+// Options: Process, ReMux, ReEncode, WriteSidecar, CreateTagMap, CheckForTools, Monitor, Folders
+// Example input:
+// PlexCleaner.exe --Process --Folders "c:\foo" "d:\bar"
+// PlexCleaner.exe --Monitor --Folders "c:\foo" "d:\bar"
+// PlexCleaner.exe --ReMux --Folders "c:\foo" "d:\bar"
+// PlexCleaner.exe --ReEncode --Folders "c:\foo" "d:\bar"
+// PlexCleaner.exe --Process --Monitor --Folders "..\..\..\Test\One" "..\..\..\Test\Two"
+// PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
+
 
 # Build and Test
 https://dev.azure.com/pieterv/Plex%20Cleaner/
