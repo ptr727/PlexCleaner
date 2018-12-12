@@ -294,6 +294,49 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Ajusta los códigos de tiempo de los capítulos en el siguiente archivo de
+                        origen en <span class="parameter">d</span> ms. Como alternativa, se puede usar la
+                        opción <span class="option">--sync</span> con el ID <span class="constant">-2</span> de pista
+                        especial (vea la sección <a href="#mkvmerge.track_ids.special_ids">IDs
+                           de pista especiales</a>) 
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>: ajusta las marcas de
+                        tiempo por <span class="parameter">o</span>/<span class="parameter">p</span> para fijar
+                        desfases lineales. Si se omite, <span class="parameter">p</span> por defecto es
+                        1. Tanto <span class="parameter">o</span> y <span class="parameter">p</span> pueden ser
+                        números decimales. 
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Por defecto: no hay ninguna sincronización manual (que es lo mismo que
+                        <span class="parameter">d</span> = <span class="constant">0</span> y
+                        <span class="parameter">o</span>/<span class="parameter">p</span> =
+                        <span class="constant">1.0</span>). 
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Esta opción se puede utilizar varias veces para un archivo de entrada
+                        aplicándola a diversas pistas seleccionando IDs de pista diferente de pista
+                        cada vez. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">modo</span></a></td>
                   <td>
                      
@@ -580,7 +623,7 @@
          
          
          
-         <h2><a name="d4e765">2.4. Control general de salida (opciones generales avanzadas)</a></h2>
+         <h2><a name="d4e843">2.4. Control general de salida (opciones generales avanzadas)</a></h2>
          
          
          
@@ -776,7 +819,7 @@
          
          
          
-         <h2><a name="d4e1051">2.5. División, vinculación, unión y concatenación de archivos (más opciones
+         <h2><a name="d4e1129">2.5. División, vinculación, unión y concatenación de archivos (más opciones
                generales)</a></h2>
          
          
@@ -1638,7 +1681,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e2112">2.6. Soporte de adjuntos (más opciones globales)</a></h2>
+         <h2><a name="d4e2190">2.6. Soporte de adjuntos (más opciones globales)</a></h2>
          
          
          
@@ -1728,7 +1771,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e2253">2.7. Opciones que se pueden usar para cada archivo de entrada</a></h2>
+         <h2><a name="d4e2331">2.7. Opciones que se pueden usar para cada archivo de entrada</a></h2>
          
          
          
@@ -2468,7 +2511,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e3373">2.8. Opciones que sólo afectan a pistas de video</a></h2>
+         <h2><a name="d4e3451">2.8. Opciones que sólo afectan a pistas de video</a></h2>
          
          
          
@@ -2956,7 +2999,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4190">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
+         <h2><a name="d4e4268">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
          
          
          
@@ -3000,7 +3043,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4233">2.10. Otras opciones</a></h2>
+         <h2><a name="d4e4311">2.10. Otras opciones</a></h2>
          
          
          
@@ -3651,6 +3694,10 @@ mkvmerge -o MM-completa.mkv MiPelícula-con-sonido.mkv MiPelícula-añadir-audio
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. IDs de pista normal</a></h2>
+         
+         
+         
          <p>
             Algunas opciones para <span class="productname">mkvmerge</span>(1) necesitan un ID de pista para especificar a
             qué pista se le tienen que aplicar. Estos IDs de pista son mostrados por los
@@ -3730,13 +3777,6 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
-            El ID de pista especial '<span class="constant">-1</span>' es un comodín y aplica la
-            opción especificada a todas las pistas que se leen del archivo de entrada. 
-            
-         </p>
-         
-         
-         <p>
             Las opciones que utilizan los IDs de pista son aquellos cuya descripción
             contiene un '<span class="literal">TID</span>'. Las siguientes opciones también
             utilizan IDs de pista: <span class="option">--audio-tracks</span>,
@@ -3744,6 +3784,35 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <span class="option">--button-tracks</span> y <span class="option">--track-tags</span>.
             
          </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. IDs de pista especial</a></h2>
+         
+         
+         
+         <p>
+            Existen diversos IDs que tienen un significado especial y no aparecen en la
+            identificación de salida.
+            
+         </p>
+         
+         
+         <p>
+            El ID de pista especial '<span class="constant">-1</span>' es un comodín y aplica la
+            opción especificada a todas las pistas que se leen del archivo de entrada. 
+            
+         </p>
+         
+         
+         <p>
+            El ID de pista especial '<span class="constant">-2</span>'&nbsp;se refiere a los capítulos
+            en un archivo de origen. Actualmente sólo la opción <span class="option">--sync</span>
+            usa este ID especial. Como alternativa a la opción <span class="option">--sync
+               -2:…</span> se puede usar <span class="option">--chapter-sync …</span>.
+            
+         </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. Conversión de archivos de texto y conjunto de caracteres</a></h1>
          
@@ -4364,7 +4433,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
           ChapterProcessData (binario)</pre>
          
          
-         <h2><a name="d4e5885">13.3. Notas generales</a></h2>
+         <h2><a name="d4e5993">13.3. Notas generales</a></h2>
          
          
          <p>
@@ -4396,19 +4465,17 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          
          
          
-         <h2><a name="d4e5953">14.1. Introducción</a></h2>
+         <h2><a name="d4e6061">14.1. Introducción</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup> admite un amplio conjunto de etiquetas que están en desuso así
-            como un nuevo sistema, más simple, como se utiliza en la mayoría de los
-            contenedores: <span class="parameter">CLAVE=VALOR</span>. Sin embargo, en <span class="productname">Matroska</span><sup>(tm)</sup>
-            estas etiquetas también se pueden anidar, y tanto la
-            <span class="parameter">CLAVE</span> como el <span class="parameter">VALOR</span> son
-            elementos propios. El archivo de ejemplo
-            <span class="filename">example-tags-2.xml</span> muestra cómo usar este nuevo
-            sistema. 
+            El sistema de etiquetas de <span class="productname">Matroska</span><sup>(tm)</sup> es parecido al de otros contenedores:
+            un conjunto de pares <span class="parameter">KEY=VALUE</span>. Sin embargo, en
+            <span class="productname">Matroska</span><sup>(tm)</sup> estas etiquetas también se pueden anidar, y tanto
+            <span class="parameter">KEY</span> como<span class="parameter">VALUE</span> son elementos
+            propios. El archivo de ejemplo <span class="filename">example-tags-2.xml</span>
+            muestra cómo usar este sistema.
             
          </p>
          
@@ -4746,7 +4813,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          </p>
          
          
-         <h2><a name="d4e6390">17.1. Formato de archivo de código de tiempo v1</a></h2>
+         <h2><a name="d4e6498">17.1. Formato de archivo de código de tiempo v1</a></h2>
          
          
          <p>
@@ -4767,7 +4834,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6414">17.2. Formato de archivo de código de tiempo v2</a></h2>
+         <h2><a name="d4e6522">17.2. Formato de archivo de código de tiempo v2</a></h2>
          
          
          
@@ -4787,7 +4854,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6429">17.3. Formato de archivo de código de tiempo v3</a></h2>
+         <h2><a name="d4e6537">17.3. Formato de archivo de código de tiempo v3</a></h2>
          
          
          <p>
@@ -4811,7 +4878,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6447">17.4. Formato de archivo de código de tiempo v4</a></h2>
+         <h2><a name="d4e6555">17.4. Formato de archivo de código de tiempo v4</a></h2>
          
          
          <p>

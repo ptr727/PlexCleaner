@@ -10,7 +10,7 @@
 <meta name="description" content="ffplay Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : ffplay ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on July 25, 2018 by texi2html 5.0 -->
+<!-- Created on November 11, 2018 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -552,6 +552,9 @@ see <a href="ffmpeg-utils.html#time-duration-syntax">(ffmpeg-utils)the Time dura
 <dt>&lsquo;<samp>-bytes</samp>&rsquo;</dt>
 <dd><p>Seek by bytes.
 </p></dd>
+<dt>&lsquo;<samp>-seek_interval</samp>&rsquo;</dt>
+<dd><p>Set custom interval, in seconds, for seeking using left/right keys. Default is 10 seconds.
+</p></dd>
 <dt>&lsquo;<samp>-nodisp</samp>&rsquo;</dt>
 <dd><p>Disable graphical display.
 </p></dd>
@@ -568,6 +571,12 @@ as 100.
 </p></dd>
 <dt>&lsquo;<samp>-window_title <var>title</var></samp>&rsquo;</dt>
 <dd><p>Set window title (default is the input filename).
+</p></dd>
+<dt>&lsquo;<samp>-left <var>title</var></samp>&rsquo;</dt>
+<dd><p>Set the x position for the left of the window (default is a centered window).
+</p></dd>
+<dt>&lsquo;<samp>-top <var>title</var></samp>&rsquo;</dt>
+<dd><p>Set the y position for the top of the window (default is a centered window).
 </p></dd>
 <dt>&lsquo;<samp>-loop <var>number</var></samp>&rsquo;</dt>
 <dd><p>Loops movie playback &lt;number&gt; times. 0 means forever.

@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <ApplicationIcon />
+    <StartupObject>PlexCleaner.Program</StartupObject>
+    <AssemblyName>PlexCleaner</AssemblyName>
+    <RootNamespace>PlexCleaner</RootNamespace>
+    <Authors>Pieter Viljoen</Authors>
+    <Company>Pieter Viljoen</Company>
+    <Description>Cleanup media files for Plex playback.</Description>
+    <PackageProjectUrl>https://dev.azure.com/pieterv/Plex%20Cleaner</PackageProjectUrl>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Version>1.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.3.65" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.11" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="1.1.20181212.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="mscorlib">
+      <HintPath>mscorlib</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>System</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

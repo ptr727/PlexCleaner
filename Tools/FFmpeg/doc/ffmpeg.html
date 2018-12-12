@@ -10,7 +10,7 @@
 <meta name="description" content="ffmpeg Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : ffmpeg ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on July 25, 2018 by texi2html 5.0 -->
+<!-- Created on November 11, 2018 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -43,11 +43,21 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-Filtering" href="#Filtering">3.1 Filtering</a>
     <ul class="no-bullet">
       <li><a name="toc-Simple-filtergraphs" href="#Simple-filtergraphs">3.1.1 Simple filtergraphs</a></li>
-      <li><a name="toc-Complex-filtergraphs" href="#Complex-filtergraphs">3.1.2 Complex filtergraphs</a></li>
+      <li><a name="toc-Complex-filtergraphs-1" href="#Complex-filtergraphs-1">3.1.2 Complex filtergraphs</a></li>
     </ul></li>
     <li><a name="toc-Stream-copy" href="#Stream-copy">3.2 Stream copy</a></li>
   </ul></li>
-  <li><a name="toc-Stream-selection" href="#Stream-selection">4 Stream selection</a></li>
+  <li><a name="toc-Stream-selection" href="#Stream-selection">4 Stream selection</a>
+  <ul class="no-bullet">
+    <li><a name="toc-Description-1" href="#Description-1">4.1 Description</a>
+    <ul class="no-bullet">
+      <li><a name="toc-Automatic-stream-selection" href="#Automatic-stream-selection">4.1.1 Automatic stream selection</a></li>
+      <li><a name="toc-Manual-stream-selection" href="#Manual-stream-selection">4.1.2 Manual stream selection</a></li>
+      <li><a name="toc-Complex-filtergraphs" href="#Complex-filtergraphs">4.1.3 Complex filtergraphs</a></li>
+      <li><a name="toc-Stream-handling" href="#Stream-handling">4.1.4 Stream handling</a></li>
+    </ul></li>
+    <li><a name="toc-Examples-1" href="#Examples-1">4.2 Examples</a></li>
+  </ul></li>
   <li><a name="toc-Options" href="#Options">5 Options</a>
   <ul class="no-bullet">
     <li><a name="toc-Stream-specifiers-1" href="#Stream-specifiers-1">5.1 Stream specifiers</a></li>
@@ -222,8 +232,8 @@ A simple filtergraph for video can look for example like this:
 touch the frame contents. Another example is the <code>setpts</code> filter, which
 only sets timestamps and otherwise passes the frames unchanged.
 </p>
-<a name="Complex-filtergraphs"></a>
-<h3 class="subsection"><a href="ffmpeg.html#toc-Complex-filtergraphs">3.1.2 Complex filtergraphs</a></h3>
+<a name="Complex-filtergraphs-1"></a>
+<h3 class="subsection"><a href="ffmpeg.html#toc-Complex-filtergraphs-1">3.1.2 Complex filtergraphs</a></h3>
 <p>Complex filtergraphs are those which cannot be described as simply a linear
 processing chain applied to one stream. This is the case, for example, when the graph has
 more than one input and/or output, or when output stream type is different from
@@ -280,16 +290,216 @@ filters is obviously also impossible, since filters work on uncompressed data.
 <a name="Stream-selection"></a>
 <h1 class="chapter"><a href="ffmpeg.html#toc-Stream-selection">4 Stream selection</a></h1>
 
-<p>By default, <code>ffmpeg</code> includes only one stream of each type (video, audio, subtitle)
-present in the input files and adds them to each output file.  It picks the
-&quot;best&quot; of each based upon the following criteria: for video, it is the stream
-with the highest resolution, for audio, it is the stream with the most channels, for
-subtitles, it is the first subtitle stream. In the case where several streams of
-the same type rate equally, the stream with the lowest index is chosen.
+<p><code>ffmpeg</code> provides the <code>-map</code> option for manual control of stream selection in each
+output file. Users can skip <code>-map</code> and let ffmpeg perform automatic stream selection as
+described below. The <code>-vn / -an / -sn / -dn</code> options can be used to skip inclusion of
+video, audio, subtitle and data streams respectively, whether manually mapped or automatically
+selected, except for those streams which are outputs of complex filtergraphs.
 </p>
-<p>You can disable some of those defaults by using the <code>-vn/-an/-sn/-dn</code> options. For
-full manual control, use the <code>-map</code> option, which disables the defaults just
-described.
+<a name="Description-1"></a>
+<h2 class="section"><a href="ffmpeg.html#toc-Description-1">4.1 Description</a></h2>
+<p>The sub-sections that follow describe the various rules that are involved in stream selection.
+The examples that follow next show how these rules are applied in practice.
+</p>
+<p>While every effort is made to accurately reflect the behavior of the program, FFmpeg is under
+continuous development and the code may have changed since the time of this writing.
+</p>
+<a name="Automatic-stream-selection"></a>
+<h3 class="subsection"><a href="ffmpeg.html#toc-Automatic-stream-selection">4.1.1 Automatic stream selection</a></h3>
+
+<p>In the absence of any map options for a particular output file, ffmpeg inspects the output
+format to check which type of streams can be included in it, viz. video, audio and/or
+subtitles. For each acceptable stream type, ffmpeg will pick one stream, when available,
+from among all the inputs.
+</p>
+<p>It will select that stream based upon the following criteria:
+</p><ul>
+<li>
+for video, it is the stream with the highest resolution,
+</li><li>
+for audio, it is the stream with the most channels,
+</li><li>
+for subtitles, it is the first subtitle stream found but there&rsquo;s a caveat.
+The output format&rsquo;s default subtitle encoder can be either text-based or image-based,
+and only a subtitle stream of the same type will be chosen.
+</li></ul>
+
+<p>In the case where several streams of the same type rate equally, the stream with the lowest
+index is chosen.
+</p>
+<p>Data or attachment streams are not automatically selected and can only be included
+using <code>-map</code>.
+</p><a name="Manual-stream-selection"></a>
+<h3 class="subsection"><a href="ffmpeg.html#toc-Manual-stream-selection">4.1.2 Manual stream selection</a></h3>
+
+<p>When <code>-map</code> is used, only user-mapped streams are included in that output file,
+with one possible exception for filtergraph outputs described below.
+</p>
+<a name="Complex-filtergraphs"></a>
+<h3 class="subsection"><a href="ffmpeg.html#toc-Complex-filtergraphs">4.1.3 Complex filtergraphs</a></h3>
+
+<p>If there are any complex filtergraph output streams with unlabeled pads, they will be added
+to the first output file. This will lead to a fatal error if the stream type is not supported
+by the output format. In the absence of the map option, the inclusion of these streams leads
+to the automatic stream selection of their types being skipped. If map options are present,
+these filtergraph streams are included in addition to the mapped streams.
+</p>
+<p>Complex filtergraph output streams with labeled pads must be mapped once and exactly once.
+</p>
+<a name="Stream-handling"></a>
+<h3 class="subsection"><a href="ffmpeg.html#toc-Stream-handling">4.1.4 Stream handling</a></h3>
+
+<p>Stream handling is independent of stream selection, with an exception for subtitles described
+below. Stream handling is set via the <code>-codec</code> option addressed to streams within a
+specific <em>output</em> file. In particular, codec options are applied by ffmpeg after the
+stream selection process and thus do not influence the latter. If no <code>-codec</code> option is
+specified for a stream type, ffmpeg will select the default encoder registered by the output
+file muxer.
+</p>
+<p>An exception exists for subtitles. If a subtitle encoder is specified for an output file, the
+first subtitle stream found of any type, text or image, will be included. ffmpeg does not validate
+if the specified encoder can convert the selected stream or if the converted stream is acceptable
+within the output format. This applies generally as well: when the user sets an encoder manually,
+the stream selection process cannot check if the encoded stream can be muxed into the output file.
+If it cannot, ffmpeg will abort and <em>all</em> output files will fail to be processed.
+</p>
+<a name="Examples-1"></a>
+<h2 class="section"><a href="ffmpeg.html#toc-Examples-1">4.2 Examples</a></h2>
+
+<p>The following examples illustrate the behavior, quirks and limitations of ffmpeg&rsquo;s stream
+selection methods.
+</p>
+<p>They assume the following three input files.
+</p>
+<pre class="verbatim">
+input file 'A.avi'
+      stream 0: video 640x360
+      stream 1: audio 2 channels
+
+input file 'B.mp4'
+      stream 0: video 1920x1080
+      stream 1: audio 2 channels
+      stream 2: subtitles (text)
+      stream 3: audio 5.1 channels
+      stream 4: subtitles (text)
+
+input file 'C.mkv'
+      stream 0: video 1280x720
+      stream 1: audio 2 channels
+      stream 2: subtitles (image)
+</pre>
+<a name="Example_003a-automatic-stream-selection"></a>
+<h4 class="subsubheading">Example: automatic stream selection</h4>
+<div class="example">
+<pre class="example">ffmpeg -i A.avi -i B.mp4 out1.mkv out2.wav -map 1:a -c:a copy out3.mov
+</pre></div>
+<p>There are three output files specified, and for the first two, no <code>-map</code> options
+are set, so ffmpeg will select streams for these two files automatically.
+</p>
+<p>&lsquo;<tt>out1.mkv</tt>&rsquo; is a Matroska container file and accepts video, audio and subtitle streams,
+so ffmpeg will try to select one of each type.<br>
+For video, it will select <code>stream 0</code> from &lsquo;<tt>B.mp4</tt>&rsquo;, which has the highest
+resolution among all the input video streams.<br>
+For audio, it will select <code>stream 3</code> from &lsquo;<tt>B.mp4</tt>&rsquo;, since it has the greatest
+number of channels.<br>
+For subtitles, it will select <code>stream 2</code> from &lsquo;<tt>B.mp4</tt>&rsquo;, which is the first subtitle
+stream from among &lsquo;<tt>A.avi</tt>&rsquo; and &lsquo;<tt>B.mp4</tt>&rsquo;.
+</p>
+<p>&lsquo;<tt>out2.wav</tt>&rsquo; accepts only audio streams, so only <code>stream 3</code> from &lsquo;<tt>B.mp4</tt>&rsquo; is
+selected.
+</p>
+<p>For &lsquo;<tt>out3.mov</tt>&rsquo;, since a <code>-map</code> option is set, no automatic stream selection will
+occur. The <code>-map 1:a</code> option will select all audio streams from the second input
+&lsquo;<tt>B.mp4</tt>&rsquo;. No other streams will be included in this output file.
+</p>
+<p>For the first two outputs, all included streams will be transcoded. The encoders chosen will
+be the default ones registered by each output format, which may not match the codec of the
+selected input streams.
+</p>
+<p>For the third output, codec option for audio streams has been set
+to <code>copy</code>, so no decoding-filtering-encoding operations will occur, or <em>can</em> occur.
+Packets of selected streams shall be conveyed from the input file and muxed within the output
+file.
+</p>
+<a name="Example_003a-automatic-subtitles-selection"></a>
+<h4 class="subsubheading">Example: automatic subtitles selection</h4>
+<div class="example">
+<pre class="example">ffmpeg -i C.mkv out1.mkv -c:s dvdsub -an out2.mkv
+</pre></div>
+<p>Although &lsquo;<tt>out1.mkv</tt>&rsquo; is a Matroska container file which accepts subtitle streams, only a
+video and audio stream shall be selected. The subtitle stream of &lsquo;<tt>C.mkv</tt>&rsquo; is image-based
+and the default subtitle encoder of the Matroska muxer is text-based, so a transcode operation
+for the subtitles is expected to fail and hence the stream isn&rsquo;t selected. However, in
+&lsquo;<tt>out2.mkv</tt>&rsquo;, a subtitle encoder is specified in the command and so, the subtitle stream is
+selected, in addition to the video stream. The presence of <code>-an</code> disables audio stream
+selection for &lsquo;<tt>out2.mkv</tt>&rsquo;.
+</p>
+<a name="Example_003a-unlabeled-filtergraph-outputs"></a>
+<h4 class="subsubheading">Example: unlabeled filtergraph outputs</h4>
+<div class="example">
+<pre class="example">ffmpeg -i A.avi -i C.mkv -i B.mp4 -filter_complex &quot;overlay&quot; out1.mp4 out2.srt
+</pre></div>
+<p>A filtergraph is setup here using the <code>-filter_complex</code> option and consists of a single
+video filter. The <code>overlay</code> filter requires exactly two video inputs, but none are
+specified, so the first two available video streams are used, those of &lsquo;<tt>A.avi</tt>&rsquo; and
+&lsquo;<tt>C.mkv</tt>&rsquo;. The output pad of the filter has no label and so is sent to the first output file
+&lsquo;<tt>out1.mp4</tt>&rsquo;. Due to this, automatic selection of the video stream is skipped, which would
+have selected the stream in &lsquo;<tt>B.mp4</tt>&rsquo;. The audio stream with most channels viz. <code>stream 3</code>
+in &lsquo;<tt>B.mp4</tt>&rsquo;, is chosen automatically. No subtitle stream is chosen however, since the MP4
+format has no default subtitle encoder registered, and the user hasn&rsquo;t specified a subtitle encoder.
+</p>
+<p>The 2nd output file, &lsquo;<tt>out2.srt</tt>&rsquo;, only accepts text-based subtitle streams. So, even though
+the first subtitle stream available belongs to &lsquo;<tt>C.mkv</tt>&rsquo;, it is image-based and hence skipped.
+The selected stream, <code>stream 2</code> in &lsquo;<tt>B.mp4</tt>&rsquo;, is the first text-based subtitle stream.
+</p>
+<a name="Example_003a-labeled-filtergraph-outputs"></a>
+<h4 class="subsubheading">Example: labeled filtergraph outputs</h4>
+<div class="example">
+<pre class="example">ffmpeg -i A.avi -i B.mp4 -i C.mkv -filter_complex &quot;[1:v]hue=s=0[outv];overlay;aresample&quot; \
+       -map '[outv]' -an        out1.mp4 \
+                                out2.mkv \
+       -map '[outv]' -map 1:a:0 out3.mkv
+</pre></div>
+
+<p>The above command will fail, as the output pad labelled <code>[outv]</code> has been mapped twice.
+None of the output files shall be processed.
+</p>
+<div class="example">
+<pre class="example">ffmpeg -i A.avi -i B.mp4 -i C.mkv -filter_complex &quot;[1:v]hue=s=0[outv];overlay;aresample&quot; \
+       -an        out1.mp4 \
+                  out2.mkv \
+       -map 1:a:0 out3.mkv
+</pre></div>
+
+<p>This command above will also fail as the hue filter output has a label, <code>[outv]</code>,
+and hasn&rsquo;t been mapped anywhere.
+</p>
+<p>The command should be modified as follows,
+</p><div class="example">
+<pre class="example">ffmpeg -i A.avi -i B.mp4 -i C.mkv -filter_complex &quot;[1:v]hue=s=0,split=2[outv1][outv2];overlay;aresample&quot; \
+        -map '[outv1]' -an        out1.mp4 \
+                                  out2.mkv \
+        -map '[outv2]' -map 1:a:0 out3.mkv
+</pre></div>
+<p>The video stream from &lsquo;<tt>B.mp4</tt>&rsquo; is sent to the hue filter, whose output is cloned once using
+the split filter, and both outputs labelled. Then a copy each is mapped to the first and third
+output files.
+</p>
+<p>The overlay filter, requiring two video inputs, uses the first two unused video streams. Those
+are the streams from &lsquo;<tt>A.avi</tt>&rsquo; and &lsquo;<tt>C.mkv</tt>&rsquo;. The overlay output isn&rsquo;t labelled, so it is
+sent to the first output file &lsquo;<tt>out1.mp4</tt>&rsquo;, regardless of the presence of the <code>-map</code> option.
+</p>
+<p>The aresample filter is sent the first unused audio stream, that of &lsquo;<tt>A.avi</tt>&rsquo;. Since this filter
+output is also unlabelled, it too is mapped to the first output file. The presence of <code>-an</code>
+only suppresses automatic or manual stream selection of audio streams, not outputs sent from
+filtergraphs. Both these mapped streams shall be ordered before the mapped stream in &lsquo;<tt>out1.mp4</tt>&rsquo;.
+</p>
+<p>The video, audio and subtitle streams mapped to <code>out2.mkv</code> are entirely determined by
+automatic stream selection.
+</p>
+<p>&lsquo;<tt>out3.mkv</tt>&rsquo; consists of the cloned video output from the hue filter and the first audio
+stream from &lsquo;<tt>B.mp4</tt>&rsquo;.
+<br>
 </p>
 
 <a name="Options"></a>
@@ -826,7 +1036,7 @@ input until the timestamps reach <var>position</var>.
 see <a href="ffmpeg-utils.html#time-duration-syntax">(ffmpeg-utils)the Time duration section in the ffmpeg-utils(1) manual</a>.
 </p>
 </dd>
-<dt>&lsquo;<samp>-sseof <var>position</var> (<em>input/output</em>)</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>-sseof <var>position</var> (<em>input</em>)</samp>&rsquo;</dt>
 <dd>
 <p>Like the <code>-ss</code> option but relative to the &quot;end of file&quot;. That is negative
 values are earlier in the file, 0 is at EOF.
@@ -889,22 +1099,31 @@ possible to delete the disposition by setting it to 0.
 <dt>&lsquo;<samp>hearing_impaired</samp>&rsquo;</dt>
 <dt>&lsquo;<samp>visual_impaired</samp>&rsquo;</dt>
 <dt>&lsquo;<samp>clean_effects</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>attached_pic</samp>&rsquo;</dt>
 <dt>&lsquo;<samp>captions</samp>&rsquo;</dt>
 <dt>&lsquo;<samp>descriptions</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>dependent</samp>&rsquo;</dt>
 <dt>&lsquo;<samp>metadata</samp>&rsquo;</dt>
 </dl>
 
 <p>For example, to make the second audio stream the default stream:
 </p><div class="example">
-<pre class="example">ffmpeg -i in.mkv -disposition:a:1 default out.mkv
+<pre class="example">ffmpeg -i in.mkv -c copy -disposition:a:1 default out.mkv
 </pre></div>
 
 <p>To make the second subtitle stream the default stream and remove the default
 disposition from the first subtitle stream:
 </p><div class="example">
-<pre class="example">ffmpeg -i INPUT -disposition:s:0 0 -disposition:s:1 default OUTPUT
+<pre class="example">ffmpeg -i in.mkv -c copy -disposition:s:0 0 -disposition:s:1 default out.mkv
 </pre></div>
 
+<p>To add an embedded cover/thumbnail:
+</p><div class="example">
+<pre class="example">ffmpeg -i in.mp4 -i IMAGE -map 0 -map 1 -c copy -c:v:1 png -disposition:v:1 attached_pic out.mp4
+</pre></div>
+
+<p>Not all muxers support embedded thumbnails, and those who do, only support a few formats, like JPEG or PNG.
+</p>
 </dd>
 <dt>&lsquo;<samp>-program [title=<var>title</var>:][program_num=<var>program_num</var>:]st=<var>stream</var>[:st=<var>stream</var>...] (<em>output</em>)</samp>&rsquo;</dt>
 <dd>
@@ -1167,9 +1386,6 @@ as the input (or graph output) and automatic conversions are disabled.
 </dd>
 <dt>&lsquo;<samp>-sws_flags <var>flags</var> (<em>input/output</em>)</samp>&rsquo;</dt>
 <dd><p>Set SwScaler flags.
-</p></dd>
-<dt>&lsquo;<samp>-vdt <var>n</var></samp>&rsquo;</dt>
-<dd><p>Discard threshold.
 </p>
 </dd>
 <dt>&lsquo;<samp>-rc_override[:<var>stream_specifier</var>] <var>override</var> (<em>output,per-stream</em>)</samp>&rsquo;</dt>
@@ -1769,13 +1985,13 @@ disable any chapter copying.
 </dd>
 <dt>&lsquo;<samp>-benchmark (<em>global</em>)</samp>&rsquo;</dt>
 <dd><p>Show benchmarking information at the end of an encode.
-Shows CPU time used and maximum memory consumption.
+Shows real, system and user time used and maximum memory consumption.
 Maximum memory consumption is not supported on all systems,
 it will usually display as 0 if not supported.
 </p></dd>
 <dt>&lsquo;<samp>-benchmark_all (<em>global</em>)</samp>&rsquo;</dt>
 <dd><p>Show benchmarking information during the encode.
-Shows CPU time used in various steps (audio/video encode/decode).
+Shows real, system and user time used in various steps (audio/video encode/decode).
 </p></dd>
 <dt>&lsquo;<samp>-timelimit <var>duration</var> (<em>global</em>)</samp>&rsquo;</dt>
 <dd><p>Exit after ffmpeg has been running for <var>duration</var> seconds.

@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Protocols Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Protocols ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on July 25, 2018 by texi2html 5.0 -->
+<!-- Created on November 11, 2018 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -72,7 +72,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-rtp" href="#rtp">3.27 rtp</a></li>
     <li><a name="toc-rtsp" href="#rtsp">3.28 rtsp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-1" href="#Examples-1">3.28.1 Examples</a></li>
+      <li><a name="toc-Examples" href="#Examples">3.28.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sap" href="#sap">3.29 sap</a>
     <ul class="no-bullet">
@@ -88,7 +88,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-tls" href="#tls">3.36 tls</a></li>
     <li><a name="toc-udp" href="#udp">3.37 udp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples" href="#Examples">3.37.1 Examples</a></li>
+      <li><a name="toc-Examples-1" href="#Examples-1">3.37.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-unix" href="#unix">3.38 unix</a></li>
   </ul></li>
@@ -1248,8 +1248,8 @@ streams to display can be chosen with <code>-vst</code> <var>n</var> and
 <code>-ast</code> <var>n</var> for video and audio respectively, and can be switched
 on the fly by pressing <code>v</code> and <code>a</code>.
 </p>
-<a name="Examples-1"></a>
-<h3 class="subsection"><a href="ffmpeg-protocols.html#toc-Examples-1">3.28.1 Examples</a></h3>
+<a name="Examples"></a>
+<h3 class="subsection"><a href="ffmpeg-protocols.html#toc-Examples">3.28.1 Examples</a></h3>
 
 <p>The following examples all make use of the <code>ffplay</code> and
 <code>ffmpeg</code> tools.
@@ -1460,6 +1460,18 @@ the library. Default value is 0.
 <dd><p>IP Time To Live. Applies to sender only. Default value is 64.
 </p>
 </dd>
+<dt>&lsquo;<samp>latency</samp>&rsquo;</dt>
+<dd><p>Timestamp-based Packet Delivery Delay.
+Used to absorb bursts of missed packet retransmissions.
+This flag sets both &lsquo;<samp>rcvlatency</samp>&rsquo; and &lsquo;<samp>peerlatency</samp>&rsquo;
+to the same value. Note that prior to version 1.3.0
+this is the only flag to set the latency, however
+this is effectively equivalent to setting &lsquo;<samp>peerlatency</samp>&rsquo;,
+when side is sender and &lsquo;<samp>rcvlatency</samp>&rsquo;
+when side is receiver, and the bidirectional stream
+sending is not supported.
+</p>
+</dd>
 <dt>&lsquo;<samp>listen_timeout</samp>&rsquo;</dt>
 <dd><p>Set socket listen timeout.
 </p>
@@ -1512,6 +1524,28 @@ the receiver only if the received data is encrypted.
 The configured passphrase cannot be recovered (write-only).
 </p>
 </dd>
+<dt>&lsquo;<samp>payload_size=<var>bytes</var></samp>&rsquo;</dt>
+<dd><p>Sets the maximum declared size of a packet transferred
+during the single call to the sending function in Live
+mode. Use 0 if this value isn&rsquo;t used (which is default in
+file mode).
+Default is -1 (automatic), which typically means MPEG-TS;
+if you are going to use SRT
+to send any different kind of payload, such as, for example,
+wrapping a live stream in very small frames, then you can
+use a bigger maximum frame size, though not greater than
+1456 bytes.
+</p>
+</dd>
+<dt>&lsquo;<samp>pkt_size=<var>bytes</var></samp>&rsquo;</dt>
+<dd><p>Alias for &lsquo;<samp>payload_size</samp>&rsquo;.
+</p>
+</dd>
+<dt>&lsquo;<samp>peerlatency</samp>&rsquo;</dt>
+<dd><p>The latency value (as described in &lsquo;<samp>rcvlatency</samp>&rsquo;) that is
+set by the sender side as a minimum value for the receiver.
+</p>
+</dd>
 <dt>&lsquo;<samp>pbkeylen=<var>bytes</var></samp>&rsquo;</dt>
 <dd><p>Sender encryption key length, in bytes.
 Only can be set to 0, 16, 24 and 32.
@@ -1521,12 +1555,25 @@ key size obtained from sender in HaiCrypt handshake.
 Default value is 0.
 </p>
 </dd>
+<dt>&lsquo;<samp>rcvlatency</samp>&rsquo;</dt>
+<dd><p>The time that should elapse since the moment when the
+packet was sent and the moment when it&rsquo;s delivered to
+the receiver application in the receiving function.
+This time should be a buffer time large enough to cover
+the time spent for sending, unexpectedly extended RTT
+time, and the time needed to retransmit the lost UDP
+packet. The effective latency value will be the maximum
+of this options&rsquo; value and the value of &lsquo;<samp>peerlatency</samp>&rsquo;
+set by the peer side. Before version 1.3.0 this option
+is only available as &lsquo;<samp>latency</samp>&rsquo;.
+</p>
+</dd>
 <dt>&lsquo;<samp>recv_buffer_size=<var>bytes</var></samp>&rsquo;</dt>
-<dd><p>Set receive buffer size, expressed in bytes.
+<dd><p>Set UDP receive buffer size, expressed in bytes.
 </p>
 </dd>
 <dt>&lsquo;<samp>send_buffer_size=<var>bytes</var></samp>&rsquo;</dt>
-<dd><p>Set send buffer size, expressed in bytes.
+<dd><p>Set UDP send buffer size, expressed in bytes.
 </p>
 </dd>
 <dt>&lsquo;<samp>rw_timeout</samp>&rsquo;</dt>
@@ -1549,9 +1596,93 @@ automatically enabled in the sender if the receiver
 supports it.
 </p>
 </dd>
-<dt>&lsquo;<samp>tsbpddelay</samp>&rsquo;</dt>
-<dd><p>Timestamp-based Packet Delivery Delay.
-Used to absorb burst of missed packet retransmission.
+<dt>&lsquo;<samp>sndbuf=<var>bytes</var></samp>&rsquo;</dt>
+<dd><p>Set send buffer size, expressed in bytes.
+</p>
+</dd>
+<dt>&lsquo;<samp>rcvbuf=<var>bytes</var></samp>&rsquo;</dt>
+<dd><p>Set receive buffer size, expressed in bytes.
+</p>
+<p>Receive buffer must not be greater than &lsquo;<samp>ffs</samp>&rsquo;.
+</p>
+</dd>
+<dt>&lsquo;<samp>lossmaxttl=<var>packets</var></samp>&rsquo;</dt>
+<dd><p>The value up to which the Reorder Tolerance may grow. When
+Reorder Tolerance is &gt; 0, then packet loss report is delayed
+until that number of packets come in. Reorder Tolerance
+increases every time a &quot;belated&quot; packet has come, but it
+wasn&rsquo;t due to retransmission (that is, when UDP packets tend
+to come out of order), with the difference between the latest
+sequence and this packet&rsquo;s sequence, and not more than the
+value of this option. By default it&rsquo;s 0, which means that this
+mechanism is turned off, and the loss report is always sent
+immediately upon experiencing a &quot;gap&quot; in sequences.
+</p>
+</dd>
+<dt>&lsquo;<samp>minversion</samp>&rsquo;</dt>
+<dd><p>The minimum SRT version that is required from the peer. A connection
+to a peer that does not satisfy the minimum version requirement
+will be rejected.
+</p>
+<p>The version format in hex is 0xXXYYZZ for x.y.z in human readable
+form.
+</p>
+</dd>
+<dt>&lsquo;<samp>streamid=<var>string</var></samp>&rsquo;</dt>
+<dd><p>A string limited to 512 characters that can be set on the socket prior
+to connecting. This stream ID will be able to be retrieved by the
+listener side from the socket that is returned from srt_accept and
+was connected by a socket with that set stream ID. SRT does not enforce
+any special interpretation of the contents of this string.
+This option doesn’t make sense in Rendezvous connection; the result
+might be that simply one side will override the value from the other
+side and it’s the matter of luck which one would win
+</p>
+</dd>
+<dt>&lsquo;<samp>smoother=<var>live|file</var></samp>&rsquo;</dt>
+<dd><p>The type of Smoother used for the transmission for that socket, which
+is responsible for the transmission and congestion control. The Smoother
+type must be exactly the same on both connecting parties, otherwise
+the connection is rejected.
+</p>
+</dd>
+<dt>&lsquo;<samp>messageapi=<var>1|0</var></samp>&rsquo;</dt>
+<dd><p>When set, this socket uses the Message API, otherwise it uses Buffer
+API. Note that in live mode (see &lsquo;<samp>transtype</samp>&rsquo;) there’s only
+message API available. In File mode you can chose to use one of two modes:
+</p>
+<p>Stream API (default, when this option is false). In this mode you may
+send as many data as you wish with one sending instruction, or even use
+dedicated functions that read directly from a file. The internal facility
+will take care of any speed and congestion control. When receiving, you
+can also receive as many data as desired, the data not extracted will be
+waiting for the next call. There is no boundary between data portions in
+the Stream mode.
+</p>
+<p>Message API. In this mode your single sending instruction passes exactly
+one piece of data that has boundaries (a message). Contrary to Live mode,
+this message may span across multiple UDP packets and the only size
+limitation is that it shall fit as a whole in the sending buffer. The
+receiver shall use as large buffer as necessary to receive the message,
+otherwise the message will not be given up. When the message is not
+complete (not all packets received or there was a packet loss) it will
+not be given up.
+</p>
+</dd>
+<dt>&lsquo;<samp>transtype=<var>live|file</var></samp>&rsquo;</dt>
+<dd><p>Sets the transmission type for the socket, in particular, setting this
+option sets multiple other parameters to their default values as required
+for a particular transmission type.
+</p>
+<p>live: Set options as for live transmission. In this mode, you should
+send by one sending instruction only so many data that fit in one UDP packet,
+and limited to the value defined first in &lsquo;<samp>payload_size</samp>&rsquo; (1316 is
+default in this mode). There is no speed control in this mode, only the
+bandwidth control, if configured, in order to not exceed the bandwidth with
+the overhead transmission (retransmitted and control packets).
+</p>
+<p>file: Set options as for non-live transmission. See &lsquo;<samp>messageapi</samp>&rsquo;
+for further explanations
 </p>
 </dd>
 </dl>
@@ -1673,6 +1804,10 @@ than this time interval, raise error.
 </dd>
 <dt>&lsquo;<samp>tcp_nodelay=<var>1|0</var></samp>&rsquo;</dt>
 <dd><p>Set TCP_NODELAY to disable Nagle&rsquo;s algorithm. Default value is 0.
+</p>
+</dd>
+<dt>&lsquo;<samp>tcp_mss=<var>bytes</var></samp>&rsquo;</dt>
+<dd><p>Set maximum segment size for outgoing TCP packets, expressed in bytes.
 </p></dd>
 </dl>
 
@@ -1790,9 +1925,8 @@ packet bursts.
 </p>
 </dd>
 <dt>&lsquo;<samp>localaddr=<var>addr</var></samp>&rsquo;</dt>
-<dd><p>Choose the local IP address. This is useful e.g. if sending multicast
-and the host has multiple interfaces, where the user can choose
-which interface to send on by specifying the IP address of that interface.
+<dd><p>Local IP address of a network interface used for sending packets or joining
+multicast groups.
 </p>
 </dd>
 <dt>&lsquo;<samp>pkt_size=<var>size</var></samp>&rsquo;</dt>
@@ -1820,13 +1954,13 @@ the specified peer address/port.
 </p>
 </dd>
 <dt>&lsquo;<samp>sources=<var>address</var>[,<var>address</var>]</samp>&rsquo;</dt>
-<dd><p>Only receive packets sent to the multicast group from one of the
-specified sender IP addresses.
+<dd><p>Only receive packets sent from the specified addresses. In case of multicast,
+also subscribe to multicast traffic coming from these addresses only.
 </p>
 </dd>
 <dt>&lsquo;<samp>block=<var>address</var>[,<var>address</var>]</samp>&rsquo;</dt>
-<dd><p>Ignore packets sent to the multicast group from the specified
-sender IP addresses.
+<dd><p>Ignore packets sent from the specified addresses. In case of multicast, also
+exclude the source addresses in the multicast subscription.
 </p>
 </dd>
 <dt>&lsquo;<samp>fifo_size=<var>units</var></samp>&rsquo;</dt>
@@ -1854,8 +1988,8 @@ a broadcast storm protection.
 </p></dd>
 </dl>
 
-<a name="Examples"></a>
-<h3 class="subsection"><a href="ffmpeg-protocols.html#toc-Examples">3.37.1 Examples</a></h3>
+<a name="Examples-1"></a>
+<h3 class="subsection"><a href="ffmpeg-protocols.html#toc-Examples-1">3.37.1 Examples</a></h3>
 
 <ul>
 <li>

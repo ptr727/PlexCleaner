@@ -663,21 +663,21 @@
             
          </p>
          
-         <pre class="screen">$ mkvmerge 影片.mkv chapters 影片章节.xml tags 影片标签.xml</pre>
+         <pre class="screen">$ mkvextract movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
          
          <p>
             同时提取一些轨道及其对应的时间戳:
             
          </p>
          
-         <pre class="screen">$ mkvmerge "另一部影片.mkv" tracks 0:视频.h265 "1:主音轨.aac" "2:导演评论.aac" timestamps_v2 "0:时间戳 视频.txt" "1:时间戳 主音轨.txt" "2:时间戳 导演评论.txt"</pre>
+         <pre class="screen">$ mkvextract "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
          
          <p>
             以 Ogg/OGM 格式提取章节，并将一条文本字幕轨道用另一种字符集重新编码:
             
          </p>
          
-         <pre class="screen">$ mkvmerge "我的影片.mkv" chapters --simple "我的章节.txt" tracks -c MS-ANSI "2:我的字幕.srt"</pre>
+         <pre class="screen">$ mkvextract "My Movie.mkv" chapters --simple "My Chapters.txt" tracks -c MS-ANSI "2:My Subtitles.srt"</pre>
          <h1><a name="mkvextract.text_files_and_charsets">4. 文本文件与字符集转换</a></h1>
          
          

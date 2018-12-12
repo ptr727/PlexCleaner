@@ -1,3 +1,165 @@
+# Version 29.0.0 "Like It Or Not" 2018-12-01
+
+## Important notes
+
+* The string formatting library used was switched from `boost::format` to
+  [`fmt`](http://fmtlib.net/). See the section "Build system changes" for
+  details.
+
+## New features and enhancements
+
+* MKVToolNix GUI: added an option in the preferences for disabling automatic
+  scaling for high DPI displays. Implements #2415.
+* MKVToolNix GUI: the GUI will now prevent the system from going to sleep
+  while the job queue is running. This feature is implemented for macOS,
+  Windows and Linux/Unix systems where the `org.freedesktop.login1.Manager`
+  D-Bus interface is available. Implements #2411.
+
+## Bug fixes
+
+* mkvmerge: chapter generation: the start timestamps of chapters generated in
+  intervals was wrong for files whose smallest video timestamp was bigger than
+  0. Fixes #2432.
+* mkvmerge: MP4 reader: fixed handling of atoms whose size exceeds the parent
+  atom's size. Fixes #2431.
+* mkvmerge, MKVToolNix GUI's chapter editor: the chapter name template will
+  now also be used when reading Ogg-style chapter files with empty chapter
+  names. Fixes #2441.
+* mkvextract: AAC: mkvextract will now write the program config element (PCE)
+  before the first AAC raw data packet if the PCE is present in the
+  `AudioSpecificConfig` structure in the `Codec Private` Matroska element. The
+  PCE carries vital information about the number of channels and is required
+  in certain cases. Fixes #2205 and #2433.
+* mkvpropedit, MKVToolNix GUI's header editor: in situations when a one-byte
+  space must be covered by a new EBML void element the following element must
+  be moved up instead. If that moved element is a cluster, the corresponding
+  cue entries will now be updated to reflect the cluster's new position. Fixes
+  #2408.
+* MKVToolNix GUI: Windows: the application manifest is now included properly
+  so that Windows actually recognizes it. See #2415.
+
+## Build system changes
+
+* Qt's D-Bus implementation is now required for building on systems other than
+  macOS and Windows,
+* The `boost::format` library is not used anymore.
+* The [`fmt` library](http://fmtlib.net/) is now required. Versions 3 and
+  newer are supported. As not all Linux distributions include packages for the
+  library, its release 5.2.1 comes bundled with MKVToolNix. The `configure`
+  script will check for a system version of the library and use it if present
+  and recent enough. Otherwise it will fall back to the bundled version and
+  link that statically.
+
+
+# Version 28.2.0 "The Awakening" 2018-10-25
+
+## Bug fixes
+
+* mkvmerge, mkvinfo, mkvextract, mkvpropedit, MKVToolNix GUI's info tool &
+  chapter editor: fixed a case of memory being accessed after it had been
+  freed earlier. This can be triggered by specially crafted Matroska files and
+  lead to arbitrary code execution. The vulnerability was reported as Cisco
+  TALOS 2018-0694 on 2018-10-25.
+
+
+# Version 28.1.0 "Morning Child" 2018-10-23
+
+## Bug fixes
+
+* mkvmerge: AV1 parser: fixed an error in the sequence header parser if
+  neither the `reduced_still_picture_header` nor the
+  `frame_id_numbers_present_flag` is set. Part of the fix for #2410.
+* mkvmerge: AV1 parser: when creating the `av1C` structure for the Codec
+  Private element the sequence header OBU wasn't copied completely: its common
+  data (type field & OBU size among others) was missing. Part of the fix for
+  #2410.
+* mkvmerge: Matroska reader, AV1: mkvmerge will try to re-create the `av1C`
+  data stored in Codec Private when reading AV1 from Matroska or WebM files
+  created by mkvmerge v28.0.0. Part of the fix for #2410.
+* MKVToolNix GUI: info tool: the tool will no longer stop scanning elements
+  when an EBML Void element is found after the first Cluster element. Fixes
+  #2413.
+
+
+# Version 28.0.0 "Voice In My Head" 2018-10-20
+
+## New features and enhancements
+
+* mkvmerge: AV1 parser: updated the code for the finalized AV1 bitstream
+  specification. Part of the implementation of #2261.
+* mkvmerge: AV1 packetizer: updated the code for the finalized AV1-in-Matroska
+  & WebM mapping specification. Part of the implementation of #2261.
+* mkvmerge: AV1 support: the `--engage enable_av1` option has been removed
+  again. Part of the implementation of #2261.
+* mkvmerge: MP4 reader: added support for AV1. Part of the implementation of
+  #2261.
+* mkvmerge: DTS: implemented dialog normalization gain removal for extension
+  substreams. Implements #2377.
+* mkvmerge, mkvextract: simple text subtitles: added a workaround for simple
+  text subtitle tracks that don't contain a duration. Implements #2397.
+* mkvextract: added support for extracting AV1 to IVF. Part of the
+  implementation of #2261.
+* mkvextract: IVF extractor (AV1, VP8, VP9): precise values will be used for
+  the frame rate numerator & denominator header fields for certain well-known
+  values of the track's default duration.
+* mkvmerge: VP9: mkvmerge will now create codec private data according to the
+  VP9 codec mapping described in the WebM specifications. Implements #2379.
+* MKVToolNix GUI: automatic scaling for high DPI displays is activated if the
+  GUI is compiled with Qt ≥ 5.6.0. Fixes #1996 and #2383.
+* MKVToolNix GUI: added a menu item ("Help" → "System information") for
+  displaying information about the system MKVToolNix is running on in order to
+  make debugging easier.
+* MKVToolNix GUI: multiplexer, header editor: the user can enter a list of
+  predefined track names in the preferences. She can later select from them in
+  "track name" combo box. Implements #2230.
+
+
+## Bug fixes
+
+* mkvmerge: JSON identification: fixed a bug when removing invalid UTF-8 data
+  from strings before they're output as JSON. Fixes #2398.
+* mkvmerge: MP4/QuickTime reader: fixed handling of PCM audio with FourCC
+  `in24`. Fixes #2391.
+* mkvmerge: MPEG transport stream reader, teletext subtitles: the decision
+  whether or not to keep frames around in order to potentially merge them with
+  the following frame is made sooner. That avoids problems if there are large
+  gaps between teletext subtitle frames which could lead to frames being
+  interleaved too late. Fixes #2393.
+* mkvextract: IVF extractor (AV1, VP8, VP8): the frame rate header fields
+  weren't clamped to 16 bits properly causing wrong frame rates to be written
+  in certain situations.
+* mkvpropedit, MKVToolNix GUI's header editor: fixed file corruption when a
+  one-byte space must be covered with a new EBML void element but all
+  surrounding elements have a "size length" field that's eight bytes long
+  already. Fixes #2406.
+
+
+# Version 27.0.0 "Metropolis" 2018-09-26
+
+## New features and enhancements
+
+* mkvmerge: chapters: the timestamps of chapters read from containers or from
+  chapter files can be adjusted (multiplication and addition) with the new
+  `--chapter-sync` option or using the special track ID `-2` for the existing
+  `--sync` option. Part of the implementation of #2358.
+* MKVToolNix GUI: multiplexer: adjusted & added controls for mkvmerge's new
+  feature of being able to adjust chapter timestamps. Part of the
+  implementation of #2358.
+* MKVToolNix GUI: multiplexer: the GUI can now ask for confirmation when the
+  user is about to create a file that won't contain audio tracks. It does this
+  by default if at least one source file contains an audio track. Implements
+  #2380.
+
+## Bug fixes
+
+* mkvmerge: AC-3: dialog normalization gain removal was corrupting E-AC-3
+  frames irreversibly by writing checksums in places where they didn't
+  belong. Additionally only the first E-AC-3 frame in a Matroska was processed
+  but not additional dependent frames in the same block. Fixes #2386.
+* MKVToolNix GUI: fixed a leak of Windows font resources leading to a general
+  slowdown and subsequent crash. Fixes #2372.
+
+
 # Version 26.0.0 "In The Game" 2018-08-26
 
 ## New features and enhancements

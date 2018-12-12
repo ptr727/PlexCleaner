@@ -291,6 +291,48 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Adjust the timestamps of the chapters in the following source file by
+                        <span class="parameter">d</span> ms. Alternatively you can use the
+                        <span class="option">--sync</span> option with the special track ID
+                        <span class="constant">-2</span> (see section <a href="#mkvmerge.track_ids.special_ids">special track IDs</a>).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>: Stel de tijd codes bij
+                        met <span class="parameter">o</span>/<span class="parameter">p</span> om lineaire driften te
+                        corrigeren. <span class="parameter">p</span> standaard naar 1 indien
+                        weggelaten. Beide <span class="parameter">o</span> en <span class="parameter">p</span>
+                        kunnen een veranderbaar nummer zijn.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Standaard: geen handmatige sync correctie (wat hetzelfde is als
+                        <span class="parameter">d</span> = <span class="constant">0</span> en
+                        <span class="parameter">o</span>/<span class="parameter">p</span> =
+                        <span class="constant">1.0</span>).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Deze optie kan meerdere keren worden gebruikt voor een invoer bestand, is
+                        van toepassing op verschillende sporen door het spoor ID elke keer te
+                        selecteren.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">mode</span></a></td>
                   <td>
                      
@@ -572,7 +614,7 @@
          
          
          
-         <h2><a name="d4e763">2.4. Algemene uitvoer controle (geavanceerde globale opties)</a></h2>
+         <h2><a name="d4e841">2.4. Algemene uitvoer controle (geavanceerde globale opties)</a></h2>
          
          
          
@@ -764,7 +806,7 @@
          
          
          
-         <h2><a name="d4e1049">2.5. Bestand splitsen, linken en toevoegen (meer globale opties)</a></h2>
+         <h2><a name="d4e1127">2.5. Bestand splitsen, linken en toevoegen (meer globale opties)</a></h2>
          
          
          
@@ -1616,7 +1658,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2110">2.6. Bijlage ondersteuning (meer globale opties)</a></h2>
+         <h2><a name="d4e2188">2.6. Bijlage ondersteuning (meer globale opties)</a></h2>
          
          
          
@@ -1705,7 +1747,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2251">2.7. Opties welke gebruikt kunnen worden voor elk invoer bestand</a></h2>
+         <h2><a name="d4e2329">2.7. Opties welke gebruikt kunnen worden voor elk invoer bestand</a></h2>
          
          
          
@@ -2422,7 +2464,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3372">2.8. Opties die alleen op video sporen van toepassing zijn</a></h2>
+         <h2><a name="d4e3450">2.8. Opties die alleen op video sporen van toepassing zijn</a></h2>
          
          
          
@@ -2903,7 +2945,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4196">2.9.  Opties alleen geldig voor tekst ondertitel sporen</a></h2>
+         <h2><a name="d4e4274">2.9.  Opties alleen geldig voor tekst ondertitel sporen</a></h2>
          
          
          
@@ -2946,7 +2988,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4236">2.10. Andere opties</a></h2>
+         <h2><a name="d4e4314">2.10. Andere opties</a></h2>
          
          
          
@@ -3589,6 +3631,10 @@ $ mkvmerge -o MM-complete.mkv mijn film-met-geluid.mkv mijn film-voegtoe-geluid.
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. Regular track IDs</a></h2>
+         
+         
+         
          <p>
             Sommige opties voor <span class="productname">mkvmerge</span>(1) hebben een spoor ID nodig, om aan te geven op
             welk spoor zij zouden moeten worden toegepast. Die spoor ID's worden getoond
@@ -3667,6 +3713,28 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
+            De opties die de spoor ID's gebruiken zijn degenen die de beschrijvingen
+            bevatten '<span class="literal">TID</span>'. De volgende optie gebruikt het spoor ID
+            ook: <span class="option">--audio-tracks</span>, <span class="option">--video-tracks</span>,
+            <span class="option">--subtitle-tracks</span>, <span class="option">--button-tracks</span> en
+            <span class="option">--track-tags</span>.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. Special track IDs</a></h2>
+         
+         
+         
+         <p>
+            There are several IDs that have special meaning and do not occur in the
+            identification output.
+            
+         </p>
+         
+         
+         <p>
             Het speciale spoor ID '<span class="constant">-1</span>' is de 'joker' en past de
             bepaalde schakelaar toe op alle sporen die van een invoerbestand worden
             gelezen.
@@ -3675,13 +3743,13 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
-            De opties die de spoor ID's gebruiken zijn degenen die de beschrijvingen
-            bevatten '<span class="literal">TID</span>'. De volgende optie gebruikt het spoor ID
-            ook: <span class="option">--audio-tracks</span>, <span class="option">--video-tracks</span>,
-            <span class="option">--subtitle-tracks</span>, <span class="option">--button-tracks</span> en
-            <span class="option">--track-tags</span>.
+            The special track ID '<span class="constant">-2</span>' refers to the chapters in a
+            source file. Currently only the <span class="option">--sync</span> option uses this
+            special ID. As an alternative to <span class="option">--sync -2:…</span> the option
+            <span class="option">--chapter-sync …</span> can be used.
             
          </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. Tekst bestanden en karakter set conversies</a></h1>
          
@@ -4301,7 +4369,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e5908">13.3. Algemene opmerkingen</a></h2>
+         <h2><a name="d4e6016">13.3. Algemene opmerkingen</a></h2>
          
          
          <p>
@@ -4335,18 +4403,16 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e5973">14.1. Introductie</a></h2>
+         <h2><a name="d4e6081">14.1. Introductie</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup> ondersteunt een uitgebreide set markeringen welke zijn verouderd,
-            een nieuw simpeler systeem welke worden gebruikt in de meeste overige
-            inhoudsformaten: <span class="parameter">KEY=VALUE</span>. Hoewel, in <span class="productname">Matroska</span><sup>(tm)</sup>
-            deze markeringen ook kunnen worden ingekapseld, en beide de
-            <span class="parameter">KEY</span> en de <span class="parameter">VALUE</span> zijn elementen
-            van zichzelf. Het voorbeeld bestand <span class="filename">example-tags-2.xml</span>
-            toont hoe dit nieuwe systeem te gebruiken.
+            <span class="productname">Matroska</span><sup>(tm)</sup>'s tag system is similar to that of other containers: a set of
+            <span class="parameter">KEY=VALUE</span> pairs. However, in <span class="productname">Matroska</span><sup>(tm)</sup> these tags
+            can also be nested, and both the <span class="parameter">KEY</span> and the
+            <span class="parameter">VALUE</span> are elements of their own. The example file
+            <span class="filename">example-tags-2.xml</span> shows how to use this system.
             
          </p>
          
@@ -4683,7 +4749,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6425">17.1. Tijd code bestandsformaat v1</a></h2>
+         <h2><a name="d4e6533">17.1. Tijd code bestandsformaat v1</a></h2>
          
          
          <p>
@@ -4703,7 +4769,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6449">17.2. Tijd code bestandsformaat v2</a></h2>
+         <h2><a name="d4e6557">17.2. Tijd code bestandsformaat v2</a></h2>
          
          
          
@@ -4723,7 +4789,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6464">17.3. Tijd code bestandsformaat v3</a></h2>
+         <h2><a name="d4e6572">17.3. Tijd code bestandsformaat v3</a></h2>
          
          
          <p>
@@ -4747,7 +4813,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6482">17.4. Tijd code bestandsformaat v4</a></h2>
+         <h2><a name="d4e6590">17.4. Tijd code bestandsformaat v4</a></h2>
          
          
          <p>

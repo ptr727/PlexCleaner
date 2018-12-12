@@ -755,14 +755,14 @@
             
          </p>
          
-         <pre class="screen">$ mkvmerge Film.mkv chapters Film-Kapitel.xml tags Film-Tags.xml</pre>
+         <pre class="screen">$ mkvextract movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
          
          <p>
             Gleichzeitig ein paar Spuren und ihre jeweiligen Zeitstempel extrahieren:
             
          </p>
          
-         <pre class="screen">$ mkvmerge "Ein weiterer Film.mkv" tracks 0:Video.h265 "1:Haupt-Audiospur.aac" "2:Kommentar der Regisseurin.aac" timestamps_v2 "0:Zeitstempel Video.txt" "1:Zeitstempel Haupt-Audiospur.txt" "2:Zeitstempel Kommentar der Regisseurin.txt"</pre>
+         <pre class="screen">$ mkvextract "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
          
          <p>
             Kapitel im Ogg/OGM-Format extrahieren und eine Text-Untertitel-Spur in einen
@@ -770,7 +770,7 @@
             
          </p>
          
-         <pre class="screen">$ mkvmerge "Mein Film.mkv" chapters --simple "Meine Kapitel.txt" tracks -c MS-ANSI "2:Meine Untertitel.srt"</pre>
+         <pre class="screen">$ mkvextract "My Movie.mkv" chapters --simple "My Chapters.txt" tracks -c MS-ANSI "2:My Subtitles.srt"</pre>
          <h1><a name="mkvextract.text_files_and_charsets">4. Umwandlungen von Textdateien und Zeichensätzen</a></h1>
          
          

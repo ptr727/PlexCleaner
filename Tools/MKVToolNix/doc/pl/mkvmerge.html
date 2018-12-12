@@ -286,6 +286,47 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Adjust the timestamps of the chapters in the following source file by
+                        <span class="parameter">d</span> ms. Alternatively you can use the
+                        <span class="option">--sync</span> option with the special track ID
+                        <span class="constant">-2</span> (see section <a href="#mkvmerge.track_ids.special_ids">special track IDs</a>).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>: przesuwa czas o wielkość
+                        <span class="parameter">o</span>/<span class="parameter">p</span> aby naprawić liniowe
+                        odchyły. <span class="parameter">p</span> domyślnie jest 1 jeśli nie ustawiony
+                        inaczej. Oba parametry <span class="parameter">o</span> i <span class="parameter">p</span>
+                        mogą być liczbami zmiennoprzecinkowymi.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Domyślnie: brak ręcznej korekcji synchronizacji (co jest tożsame z
+                        <span class="parameter">d</span> = <span class="constant">0</span> i
+                        <span class="parameter">o</span>/<span class="parameter">p</span> =
+                        <span class="constant">1.0</span>).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        This option can be used multiple times for an input file applying to several
+                        tracks by selecting different track IDs each time.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">mode</span></a></td>
                   <td>
                      
@@ -564,7 +605,7 @@
          
          
          
-         <h2><a name="d4e764">2.4. General output control (advanced global options)</a></h2>
+         <h2><a name="d4e842">2.4. General output control (advanced global options)</a></h2>
          
          
          
@@ -752,7 +793,7 @@
          
          
          
-         <h2><a name="d4e1050">2.5. Dzielenie plików, powiązanie, scalanie i łączenie (więcej opcji globalnych)</a></h2>
+         <h2><a name="d4e1128">2.5. Dzielenie plików, powiązanie, scalanie i łączenie (więcej opcji globalnych)</a></h2>
          
          
          
@@ -1584,7 +1625,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2111">2.6. Obsługa załączników (więcej globalnych opcji)</a></h2>
+         <h2><a name="d4e2189">2.6. Obsługa załączników (więcej globalnych opcji)</a></h2>
          
          
          
@@ -1673,7 +1714,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2252">2.7. Opcje mogące być użyte dla każdego pliku wejściowego</a></h2>
+         <h2><a name="d4e2330">2.7. Opcje mogące być użyte dla każdego pliku wejściowego</a></h2>
          
          
          
@@ -2371,7 +2412,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3373">2.8. Opcje mające zastosowanie tylko do ścieżek obrazu</a></h2>
+         <h2><a name="d4e3451">2.8. Opcje mające zastosowanie tylko do ścieżek obrazu</a></h2>
          
          
          
@@ -2852,7 +2893,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4197">2.9. Opcje mające zastosowanie tylko do ścieżek napisów</a></h2>
+         <h2><a name="d4e4275">2.9. Opcje mające zastosowanie tylko do ścieżek napisów</a></h2>
          
          
          
@@ -2893,7 +2934,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4237">2.10. Pozostałe opcje</a></h2>
+         <h2><a name="d4e4315">2.10. Pozostałe opcje</a></h2>
          
          
          
@@ -3525,6 +3566,10 @@ $ mkvmerge -o MF-kompletny.mkv MójFilm-z-dźwiękiem.mkv MójFilm-dodatk-audio.
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. Regular track IDs</a></h2>
+         
+         
+         
          <p>
             Some of the options for <span class="productname">mkvmerge</span>(1) need a track ID to specify which track
             they should be applied to.  Those track IDs are printed by the readers when
@@ -3601,13 +3646,6 @@ Track ID 1: dźwięk (A_MPEG/L3)</pre>
          
          
          <p>
-            The special track ID '<span class="constant">-1</span>' is a wild card and applies
-            the given switch to all tracks that are read from an input file.
-            
-         </p>
-         
-         
-         <p>
             The options that use the track IDs are the ones whose description contains
             '<span class="literal">TID</span>'.  The following options use track IDs as well:
             <span class="option">--audio-tracks</span>, <span class="option">--video-tracks</span>,
@@ -3615,6 +3653,35 @@ Track ID 1: dźwięk (A_MPEG/L3)</pre>
             <span class="option">--track-tags</span>.
             
          </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. Special track IDs</a></h2>
+         
+         
+         
+         <p>
+            There are several IDs that have special meaning and do not occur in the
+            identification output.
+            
+         </p>
+         
+         
+         <p>
+            The special track ID '<span class="constant">-1</span>' is a wild card and applies
+            the given switch to all tracks that are read from an input file.
+            
+         </p>
+         
+         
+         <p>
+            The special track ID '<span class="constant">-2</span>' refers to the chapters in a
+            source file. Currently only the <span class="option">--sync</span> option uses this
+            special ID. As an alternative to <span class="option">--sync -2:…</span> the option
+            <span class="option">--chapter-sync …</span> can be used.
+            
+         </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. Text files and character set conversions</a></h1>
          
@@ -4223,7 +4290,7 @@ CHAPTER03NAME=Rozdział III</pre>
           ChapterProcessData (liczba binarna)</pre>
          
          
-         <h2><a name="d4e5910">13.3. Uwagi ogólne</a></h2>
+         <h2><a name="d4e6018">13.3. Uwagi ogólne</a></h2>
          
          
          <p>
@@ -4255,17 +4322,16 @@ CHAPTER03NAME=Rozdział III</pre>
          
          
          
-         <h2><a name="d4e5975">14.1. Wprowadzenie</a></h2>
+         <h2><a name="d4e6083">14.1. Wprowadzenie</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup> wspiera rozszerzony zestaw tagów będący już nieaktualnym oraz
-            nowy, prostszy system jaki jest używany w większości innych kontenerów:
-            <span class="parameter">KLUCZ=WARTOŚĆ</span>. Jednakże, w pliku <span class="productname">Matroska</span><sup>(tm)</sup> te tagi
-            mogą być również zagnieżdżone, i oba elementy <span class="parameter">KLUCZ</span>
-            oraz <span class="parameter">WARTOŚĆ</span> żyją własnym życiem. Przykładowy plik
-            <span class="filename">example-tags-2.xml</span> pokazuje jak używać nowego systemu.
+            <span class="productname">Matroska</span><sup>(tm)</sup>'s tag system is similar to that of other containers: a set of
+            <span class="parameter">KEY=VALUE</span> pairs. However, in <span class="productname">Matroska</span><sup>(tm)</sup> these tags
+            can also be nested, and both the <span class="parameter">KEY</span> and the
+            <span class="parameter">VALUE</span> are elements of their own. The example file
+            <span class="filename">example-tags-2.xml</span> shows how to use this system.
             
          </p>
          
@@ -4592,7 +4658,7 @@ CHAPTER03NAME=Rozdział III</pre>
          </p>
          
          
-         <h2><a name="d4e6428">17.1. Format kodów czasowych v1</a></h2>
+         <h2><a name="d4e6536">17.1. Format kodów czasowych v1</a></h2>
          
          
          <p>
@@ -4612,7 +4678,7 @@ przykładowo 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6452">17.2. Format kodów czasowych v2</a></h2>
+         <h2><a name="d4e6560">17.2. Format kodów czasowych v2</a></h2>
          
          
          
@@ -4631,7 +4697,7 @@ przykładowo 27.930
 80</pre>
          
          
-         <h2><a name="d4e6467">17.3. Format kodów czasowych v3</a></h2>
+         <h2><a name="d4e6575">17.3. Format kodów czasowych v3</a></h2>
          
          
          <p>
@@ -4654,7 +4720,7 @@ przerwa, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6485">17.4. Format kodów czasowych v4</a></h2>
+         <h2><a name="d4e6593">17.4. Format kodów czasowych v4</a></h2>
          
          
          <p>

@@ -263,6 +263,41 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Adjust the timestamps of the chapters in the following source file by
+                        <span class="parameter">d</span> ms. Alternatively you can use the
+                        <span class="option">--sync</span> option with the special track ID
+                        <span class="constant">-2</span> (see section <a href="#mkvmerge.track_ids.special_ids">special track IDs</a>).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>:
+                        タイムスタンプを<span class="parameter">o</span>/<span class="parameter">p</span>の割合で調整し、リニアドリフトを修正します。<span class="parameter">p</span>が省略された場合、デフォルトで1が使用されます。<span class="parameter">o</span>及び<span class="parameter">p</span>には小数を指定できます。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        デフォルト: マニュアル同期修正は行われません(<span class="parameter">d</span> = <span class="constant">0</span>
+                        かつ<span class="parameter">o</span> = <span class="constant">1.0</span>の場合と同じです)。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        このオプションは異るトラックIDを指定することで複数の入力トラックに対して使用することができます。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">mode</span></a></td>
                   <td>
                      
@@ -528,7 +563,7 @@
          
          
          
-         <h2><a name="d4e756">2.4. 出力一般のコントロール（高度なグローバルオプション）</a></h2>
+         <h2><a name="d4e831">2.4. 出力一般のコントロール（高度なグローバルオプション）</a></h2>
          
          
          
@@ -681,7 +716,7 @@
          
          
          
-         <h2><a name="d4e1000">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
+         <h2><a name="d4e1075">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
          
          
          
@@ -1439,7 +1474,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2058">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
+         <h2><a name="d4e2133">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
          
          
          
@@ -1510,7 +1545,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2199">2.7. 各入力ファイルに指定できるオプション</a></h2>
+         <h2><a name="d4e2274">2.7. 各入力ファイルに指定できるオプション</a></h2>
          
          
          
@@ -2126,7 +2161,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3318">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e3393">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2582,7 +2617,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4142">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e4217">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2616,7 +2651,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4179">2.10. その他のオプション</a></h2>
+         <h2><a name="d4e4254">2.10. その他のオプション</a></h2>
          
          
          
@@ -3166,6 +3201,10 @@ $ mkvmerge -o MM-complete.mkv MyMovie-with-sound.mkv MyMovie-add-audio.ogg</pre>
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. Regular track IDs</a></h2>
+         
+         
+         
          <p>
             <span class="productname">mkvmerge</span>(1)のオプションの中には、どのトラックに適用するかを特定するために、トラックIDを指定する必要なものがあります。このトラックIDは、入力ファイルがdemuxされる際に表示されるほか、<span class="productname">mkvmerge</span>(1)に<a href="#mkvmerge.description.identify">--identify</a>オプションを指定して表示させることもできます。この場合の出力は次のようになります。
             
@@ -3231,15 +3270,37 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
+            トラックIDを使用するオプションの説明には、'<span class="literal">TID</span>'が含まれています。また、<span class="option">--audio-tracks</span>、<span class="option">--video-tracks</span>、<span class="option">--subtitle-tracks</span>、<span class="option">--button-tracks</span>及び<span class="option">--track-tags</span>オプションもトラックIDを使用します。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. Special track IDs</a></h2>
+         
+         
+         
+         <p>
+            There are several IDs that have special meaning and do not occur in the
+            identification output.
+            
+         </p>
+         
+         
+         <p>
             '<span class="constant">-1</span>'は特殊で、そのスイッチが入力ファイルから読み込まれる全てのトラックに適用されることを示します。
             
          </p>
          
          
          <p>
-            トラックIDを使用するオプションの説明には、'<span class="literal">TID</span>'が含まれています。また、<span class="option">--audio-tracks</span>、<span class="option">--video-tracks</span>、<span class="option">--subtitle-tracks</span>、<span class="option">--button-tracks</span>及び<span class="option">--track-tags</span>オプションもトラックIDを使用します。
+            The special track ID '<span class="constant">-2</span>' refers to the chapters in a
+            source file. Currently only the <span class="option">--sync</span> option uses this
+            special ID. As an alternative to <span class="option">--sync -2:…</span> the option
+            <span class="option">--chapter-sync …</span> can be used.
             
          </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. テキストファイルと文字コード変換</a></h1>
          
@@ -3751,7 +3812,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e5850">13.3. 注意</a></h2>
+         <h2><a name="d4e5955">13.3. 注意</a></h2>
          
          
          <p>
@@ -3770,12 +3831,16 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e5915">14.1. はじめに</a></h2>
+         <h2><a name="d4e6020">14.1. はじめに</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup>は廃止予定の拡張可能なタグのセットと、新しい、他のよくあるコンテナで採用されているようなより単純な、<span class="parameter">KEY=VALUE</span>というシステムをサポートします。しかし、<span class="productname">Matroska</span><sup>(tm)</sup>では、これらのタグはネストすることも可能で、さらに<span class="parameter">KEY</span>と<span class="parameter">VALUE</span>は両方がそれ自信のエレメントです。サンプルファイル<span class="filename">example-tags-2.xml</span>がこの新しいシステムの使い方の例を示しています。
+            <span class="productname">Matroska</span><sup>(tm)</sup>'s tag system is similar to that of other containers: a set of
+            <span class="parameter">KEY=VALUE</span> pairs. However, in <span class="productname">Matroska</span><sup>(tm)</sup> these tags
+            can also be nested, and both the <span class="parameter">KEY</span> and the
+            <span class="parameter">VALUE</span> are elements of their own. The example file
+            <span class="filename">example-tags-2.xml</span> shows how to use this system.
             
          </p>
          
@@ -4039,7 +4104,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6359">17.1. タイムコードファイルフォーマット v1</a></h2>
+         <h2><a name="d4e6464">17.1. タイムコードファイルフォーマット v1</a></h2>
          
          
          <p>
@@ -4053,7 +4118,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6383">17.2. タイムコードファイルフォーマット v2</a></h2>
+         <h2><a name="d4e6488">17.2. タイムコードファイルフォーマット v2</a></h2>
          
          
          
@@ -4068,7 +4133,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6398">17.3. タイムコードファイルフォーマット v3</a></h2>
+         <h2><a name="d4e6503">17.3. タイムコードファイルフォーマット v3</a></h2>
          
          
          <p>
@@ -4084,7 +4149,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6416">17.4. タイムコードファイルフォーマット v4</a></h2>
+         <h2><a name="d4e6521">17.4. タイムコードファイルフォーマット v4</a></h2>
          
          
          <p>

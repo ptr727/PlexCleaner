@@ -291,6 +291,47 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        passt die Zeitstempel von Kapiteln in der folgenden Quelldatei um
+                        <span class="parameter">d</span> ms an. Alternativ kann die Option
+                        <span class="option">--sync</span> mit der speziellen Spur-ID <span class="constant">-2</span>
+                        benutzt werden (siehe Abschnitt <a href="#mkvmerge.track_ids.special_ids">Spezielle Spur-IDs</a>)."
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>: passen die Zeitstempel um
+                        <span class="parameter">o</span>/<span class="parameter">p</span> an, um lineare
+                        Verschiebungen zu beheben. Falls <span class="parameter">p</span> weggelassen wird,
+                        ist sie standardmäßig 1. Sowohl <span class="parameter">o</span> als auch
+                        <span class="parameter">p</span> können Fließkommazahlen sein.
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Voreinstellung: keine manuelle Synchronisationskorrektur (was dasselbe wie
+                        <span class="parameter">d</span> = <span class="constant">0</span> und
+                        <span class="parameter">o</span>/<span class="parameter">p</span> =
+                        <span class="constant">1.0</span>ist).
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        Diese Option kann mehrfach für eine Eingabedatei benutzt werden und gilt für
+                        mehrere Spuren, indem jedesmal eine andere Spur-ID ausgewählt wird.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">Modus</span></a></td>
                   <td>
                      
@@ -575,7 +616,7 @@
          
          
          
-         <h2><a name="d4e755">2.4. Allgemeine Ausgabesteuerung (fortgeschrittene globale Optionen)</a></h2>
+         <h2><a name="d4e833">2.4. Allgemeine Ausgabesteuerung (fortgeschrittene globale Optionen)</a></h2>
          
          
          
@@ -767,7 +808,7 @@
          
          
          
-         <h2><a name="d4e1041">2.5. Datei aufteilen, verknüpfen, anhängen und verketten (weitere globale
+         <h2><a name="d4e1119">2.5. Datei aufteilen, verknüpfen, anhängen und verketten (weitere globale
                Optionen)</a></h2>
          
          
@@ -1627,7 +1668,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2129">2.6. Unterstützung von Anhängen (weitere globale Optionen)</a></h2>
+         <h2><a name="d4e2207">2.6. Unterstützung von Anhängen (weitere globale Optionen)</a></h2>
          
          
          
@@ -1719,7 +1760,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2270">2.7. Optionen, die für jede Eingabedatei verwendet werden können</a></h2>
+         <h2><a name="d4e2348">2.7. Optionen, die für jede Eingabedatei verwendet werden können</a></h2>
          
          
          
@@ -2450,7 +2491,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3403">2.8. Optionen, die nur für Videospuren gelten</a></h2>
+         <h2><a name="d4e3481">2.8. Optionen, die nur für Videospuren gelten</a></h2>
          
          
          
@@ -2945,7 +2986,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4227">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
+         <h2><a name="d4e4305">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
          
          
          
@@ -2987,7 +3028,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4267">2.10. Weitere Optionen</a></h2>
+         <h2><a name="d4e4345">2.10. Weitere Optionen</a></h2>
          
          
          
@@ -3641,6 +3682,10 @@ $ mkvmerge -o MM-komplett.mkv MeinFilm-mit-Ton.mkv MeinFilm-fügt-Ton-hinzu.ogg<
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. Normale Spur-IDs</a></h2>
+         
+         
+         
          <p>
             Einige der Optionen für <span class="productname">mkvmerge</span>(1) benötigen eine Spur-ID als Angabe, für
             welche Spur sie gelten. Diese Spur-IDs werden durch die Leseprogramme beim
@@ -3720,6 +3765,28 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
          
          
          <p>
+            Die Optionen, die die Spur-IDs benutzen, enthalten in der Beschreibung
+            »<span class="literal">TID</span>«. Die folgenden Optionen verwenden die Spur-IDs
+            ebenfalls: <span class="option">--audio-tracks</span>, <span class="option">--video-tracks</span>,
+            <span class="option">--subtitle-tracks</span>, <span class="option">--button-tracks</span> und
+            <span class="option">--track-tags</span>.
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. Spezielle Spur-IDs</a></h2>
+         
+         
+         
+         <p>
+            Es gibt mehrere IDs, die eine spezielle Bedeutung haben und nicht in der
+            Ausgabe während der Identifikation auftauchen.
+            
+         </p>
+         
+         
+         <p>
             Die spezielle Spur-ID »<span class="constant">-1</span>« ist ein Platzhalter und
             wendet den angegebenen Schalter auf alle Spuren an, die aus einer
             Eingabedatei gelesen werden.
@@ -3728,13 +3795,14 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
          
          
          <p>
-            Die Optionen, die die Spur-IDs benutzen, enthalten in der Beschreibung
-            »<span class="literal">TID</span>«. Die folgenden Optionen verwenden die Spur-IDs
-            ebenfalls: <span class="option">--audio-tracks</span>, <span class="option">--video-tracks</span>,
-            <span class="option">--subtitle-tracks</span>, <span class="option">--button-tracks</span> und
-            <span class="option">--track-tags</span>.
+            Die spezielle Spur-ID »<span class="constant">-2</span>« bezieht sich auf die Kapitel
+            einer Quelldatei. Momentan unterstützt nur die Option
+            <span class="option">--sync</span> diese spezielle ID. Die Option
+            <span class="option">--chapter-sync …</span> kann alternativ  zu <span class="option">--sync
+               -2:…</span> benutzt werden.
             
          </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. Umwandlungen von Textdateien und Zeichensätzen</a></h1>
          
@@ -4364,7 +4432,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e5943">13.3. Allgemeine Hinweise</a></h2>
+         <h2><a name="d4e6051">13.3. Allgemeine Hinweise</a></h2>
          
          
          <p>
@@ -4398,18 +4466,18 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          
          
-         <h2><a name="d4e6008">14.1. Einleitung</a></h2>
+         <h2><a name="d4e6116">14.1. Einleitung</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup> unterstützt einen umfangreichen (missbilligten) Satz an Tags und
-            ein neueres, einfacheres System, wie es in den meisten anderen Containern
-            verwandt wird: <span class="parameter">SCHLÜSSEL=WERT</span>. In <span class="productname">Matroska</span><sup>(tm)</sup> können
-            diese Tags jedoch ebenfalls verschachtelt werden und sowohl
-            <span class="parameter">SCHLÜSSEL</span> als auch <span class="parameter">WERT</span> sind
-            Elemente für sich. Die Beispieldatei <span class="filename">example-tags-2.xml</span>
-            zeigt, wie dieses neue System benutzt wird.
+            <span class="productname">Matroska</span><sup>(tm)</sup>s Tag-System ist den von anderen Containern verwendeten Systemen
+            ähnlich: ein Satz aus <span class="parameter">SCHLÜSSEL=WERT</span>-Paaren. In
+            <span class="productname">Matroska</span><sup>(tm)</sup> können diese Tags jedoch ebenfalls verschachtelt werden, und
+            sowohl <span class="parameter">SCHLÜSSEL</span> als auch <span class="parameter">WERT</span>
+            sind Elemente für sich. Die Beispieldatei
+            <span class="filename">example-tags-2.xml</span> zeigt, wie dieses System benutzt
+            wird.
             
          </p>
          
@@ -4745,7 +4813,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          </p>
          
          
-         <h2><a name="d4e6459">17.1. Zeitstempeldateiformat v1</a></h2>
+         <h2><a name="d4e6567">17.1. Zeitstempeldateiformat v1</a></h2>
          
          
          <p>
@@ -4766,7 +4834,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6483">17.2. Zeitstempeldateiformat v2</a></h2>
+         <h2><a name="d4e6591">17.2. Zeitstempeldateiformat v2</a></h2>
          
          
          
@@ -4786,7 +4854,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6498">17.3. Zeitstempeldateiformat v3</a></h2>
+         <h2><a name="d4e6606">17.3. Zeitstempeldateiformat v3</a></h2>
          
          
          <p>
@@ -4809,7 +4877,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6516">17.4. Zeitstempeldateiformat v4</a></h2>
+         <h2><a name="d4e6624">17.4. Zeitstempeldateiformat v4</a></h2>
          
          
          <p>

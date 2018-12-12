@@ -259,6 +259,42 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_sync"><span class="option">--chapter-sync</span>
+                        <span class="parameter">d[,o[/p]]</span></a></td>
+                  <td>
+                     
+                     <p>
+                        将章节的时间戳平移 <span class="parameter">d</span> ms。您也可以使用 <span class="option">--sync</span>
+                        选项操作特殊轨道 ID <span class="constant">-2</span> (参见 <a href="#mkvmerge.track_ids.special_ids">特殊轨道 ID</a> 段落)。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        <span class="parameter">o</span>/<span class="parameter">p</span>: 按
+                        <span class="parameter">o</span>/<span class="parameter">p</span> 调整时间戳以修复线性偏移。如果省略
+                        <span class="parameter">p</span> 则默认为 1。<span class="parameter">o</span> 与
+                        <span class="parameter">p</span> 均可为浮点数。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        默认: 无手动同步校正 (与 <span class="parameter">d</span> = <span class="constant">0</span> 及
+                        <span class="parameter">o</span>/<span class="parameter">p</span> = <span class="constant">1.0</span>
+                        效果相同)。
+                        
+                     </p>
+                     
+                     
+                     <p>
+                        此选项可以对同一输入文件多次使用，通过每次选择不同轨道 ID 分别应用到多个轨道。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.generate_chapters"><span class="option">--generate-chapters</span> <span class="parameter">模式</span></a></td>
                   <td>
                      
@@ -509,7 +545,7 @@
          
          
          
-         <h2><a name="d4e764">2.4. 全局输出控制 (高级全局选项)</a></h2>
+         <h2><a name="d4e842">2.4. 全局输出控制 (高级全局选项)</a></h2>
          
          
          
@@ -670,7 +706,7 @@
          
          
          
-         <h2><a name="d4e1050">2.5. 文件切割、连接、追加及合并 (其他全局选项)</a></h2>
+         <h2><a name="d4e1128">2.5. 文件切割、连接、追加及合并 (其他全局选项)</a></h2>
          
          
          
@@ -1399,7 +1435,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2111">2.6. 附件支持 (其他全局选项)</a></h2>
+         <h2><a name="d4e2189">2.6. 附件支持 (其他全局选项)</a></h2>
          
          
          
@@ -1478,7 +1514,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2252">2.7. 用于各输入文件的选项</a></h2>
+         <h2><a name="d4e2330">2.7. 用于各输入文件的选项</a></h2>
          
          
          
@@ -2105,7 +2141,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3373">2.8. 仅用于视频轨的选项</a></h2>
+         <h2><a name="d4e3451">2.8. 仅用于视频轨的选项</a></h2>
          
          
          
@@ -2538,7 +2574,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4197">2.9. 仅适用于文本字幕轨道的选项</a></h2>
+         <h2><a name="d4e4275">2.9. 仅适用于文本字幕轨道的选项</a></h2>
          
          
          
@@ -2575,7 +2611,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4237">2.10. 其他选项</a></h2>
+         <h2><a name="d4e4315">2.10. 其他选项</a></h2>
          
          
          
@@ -3139,6 +3175,10 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          
          
+         <h2><a name="mkvmerge.track_ids.regular_ids">6.1. 常规轨道 ID</a></h2>
+         
+         
+         
          <p>
             <span class="productname">mkvmerge</span>(1) 的一些选项要求提供轨道 ID 以指定应应用到的轨道。 当读取器分离当前输入文件时，或者使用 <a href="#mkvmerge.description.identify">--identify</a>
             选项调用 <span class="productname">mkvmerge</span>(1) 时这些轨道 ID 会被显示出来。此类输出的一个示例：
@@ -3206,17 +3246,37 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          
          <p>
+            使用轨道 ID 的选项的描述中均含有 '<span class="literal">TID</span>'。此外下列选项也使用轨道 ID:
+            <span class="option">--audio-tracks</span>、<span class="option">--video-tracks</span>、<span class="option">--subtitle-tracks</span>、<span class="option">--button-tracks</span>
+            以及 <span class="option">--track-tags</span>。
+            
+         </p>
+         
+         
+         
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. 特殊轨道 ID</a></h2>
+         
+         
+         
+         <p>
+            一些 ID 具有特殊含义，不会出现在 id 输出结果中。
+            
+         </p>
+         
+         
+         <p>
             特殊的轨道 ID '<span class="constant">-1</span>' 是个百搭号，它将使给定的开关应用到从输入文件中读到的所有轨道。
             
          </p>
          
          
          <p>
-            使用轨道 ID 的选项的描述中均含有 '<span class="literal">TID</span>'。此外下列选项也使用轨道 ID:
-            <span class="option">--audio-tracks</span>、<span class="option">--video-tracks</span>、<span class="option">--subtitle-tracks</span>、<span class="option">--button-tracks</span>
-            以及 <span class="option">--track-tags</span>。
+            特殊轨道 ID '<span class="constant">-2</span>' 指输入文件中的章节。目前只有 <span class="option">--sync</span>
+            选项会用到此特殊 ID。<span class="option">--sync -2:…</span> 与 <span class="option">--chapter-sync …</span>
+            等效。
             
          </p>
+         
          
          <h1><a name="mkvmerge.text_files_and_charsets">7. 文本文件与字符集转换</a></h1>
          
@@ -3753,7 +3813,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
           ChapterProcessData (二进制)</pre>
          
          
-         <h2><a name="d4e5909">13.3. 一般性备注</a></h2>
+         <h2><a name="d4e6017">13.3. 一般性备注</a></h2>
          
          
          <p>
@@ -3777,15 +3837,14 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          
          
          
-         <h2><a name="d4e5974">14.1. 介绍</a></h2>
+         <h2><a name="d4e6082">14.1. 介绍</a></h2>
          
          
          
          <p>
-            <span class="productname">Matroska</span><sup>(tm)</sup> 广泛支持废弃标签，还支持一种新式的、类似其他大多数容器使用的较简单的标签系统:
-            <span class="parameter">KEY=VALUE</span>。然而，在 <span class="productname">Matroska</span><sup>(tm)</sup>
-            中这些标签也可以嵌套，<span class="parameter">KEY</span> 与 <span class="parameter">VALUE</span>
-            都是属于它们自身的元素。示例文件 <span class="filename">example-tags-2.xml</span> 展示了如何使用这个新系统。
+            <span class="productname">Matroska</span><sup>(tm)</sup> 的标签系统与其他容器类似: 一组 <span class="parameter">键=值</span> 对。不过，<span class="productname">Matroska</span><sup>(tm)</sup>
+            中的标签还可以嵌套，<span class="parameter">键</span> 与 <span class="parameter">值</span>
+            都是属于它们自身的元素。示例文件 <span class="filename">example-tags-2.xml</span> 展示了如何使用该系统。
             
          </p>
          
@@ -4068,7 +4127,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          </p>
          
          
-         <h2><a name="d4e6426">17.1. 时间戳文件格式 v1</a></h2>
+         <h2><a name="d4e6534">17.1. 时间戳文件格式 v1</a></h2>
          
          
          <p>
@@ -4084,7 +4143,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6450">17.2. 时间戳文件格式 v2</a></h2>
+         <h2><a name="d4e6558">17.2. 时间戳文件格式 v2</a></h2>
          
          
          
@@ -4100,7 +4159,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6465">17.3. 时间戳文件格式 v3</a></h2>
+         <h2><a name="d4e6573">17.3. 时间戳文件格式 v3</a></h2>
          
          
          <p>
@@ -4118,7 +4177,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6483">17.4. 时间戳文件格式 v4</a></h2>
+         <h2><a name="d4e6591">17.4. 时间戳文件格式 v4</a></h2>
          
          
          <p>

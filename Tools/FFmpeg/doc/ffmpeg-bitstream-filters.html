@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Bitstream Filters Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Bitstream Filters ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on July 25, 2018 by texi2html 5.0 -->
+<!-- Created on November 11, 2018 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -40,33 +40,35 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <li><a name="toc-Bitstream-Filters" href="#Bitstream-Filters">2 Bitstream Filters</a>
   <ul class="no-bullet">
     <li><a name="toc-aac_005fadtstoasc" href="#aac_005fadtstoasc">2.1 aac_adtstoasc</a></li>
-    <li><a name="toc-chomp" href="#chomp">2.2 chomp</a></li>
-    <li><a name="toc-dca_005fcore" href="#dca_005fcore">2.3 dca_core</a></li>
-    <li><a name="toc-dump_005fextra" href="#dump_005fextra">2.4 dump_extra</a></li>
-    <li><a name="toc-eac3_005fcore" href="#eac3_005fcore">2.5 eac3_core</a></li>
-    <li><a name="toc-extract_005fextradata" href="#extract_005fextradata">2.6 extract_extradata</a></li>
-    <li><a name="toc-filter_005funits" href="#filter_005funits">2.7 filter_units</a></li>
-    <li><a name="toc-hapqa_005fextract" href="#hapqa_005fextract">2.8 hapqa_extract</a></li>
-    <li><a name="toc-h264_005fmetadata" href="#h264_005fmetadata">2.9 h264_metadata</a></li>
-    <li><a name="toc-h264_005fmp4toannexb" href="#h264_005fmp4toannexb">2.10 h264_mp4toannexb</a></li>
-    <li><a name="toc-h264_005fredundant_005fpps" href="#h264_005fredundant_005fpps">2.11 h264_redundant_pps</a></li>
-    <li><a name="toc-hevc_005fmetadata" href="#hevc_005fmetadata">2.12 hevc_metadata</a></li>
-    <li><a name="toc-hevc_005fmp4toannexb" href="#hevc_005fmp4toannexb">2.13 hevc_mp4toannexb</a></li>
-    <li><a name="toc-imxdump" href="#imxdump">2.14 imxdump</a></li>
-    <li><a name="toc-mjpeg2jpeg" href="#mjpeg2jpeg">2.15 mjpeg2jpeg</a></li>
-    <li><a name="toc-mjpegadump" href="#mjpegadump">2.16 mjpegadump</a></li>
-    <li><a name="toc-mov2textsub-1" href="#mov2textsub-1">2.17 mov2textsub</a></li>
-    <li><a name="toc-mp3decomp" href="#mp3decomp">2.18 mp3decomp</a></li>
-    <li><a name="toc-mpeg2_005fmetadata" href="#mpeg2_005fmetadata">2.19 mpeg2_metadata</a></li>
-    <li><a name="toc-mpeg4_005funpack_005fbframes" href="#mpeg4_005funpack_005fbframes">2.20 mpeg4_unpack_bframes</a></li>
-    <li><a name="toc-noise" href="#noise">2.21 noise</a></li>
-    <li><a name="toc-null" href="#null">2.22 null</a></li>
-    <li><a name="toc-remove_005fextra" href="#remove_005fextra">2.23 remove_extra</a></li>
-    <li><a name="toc-text2movsub-1" href="#text2movsub-1">2.24 text2movsub</a></li>
-    <li><a name="toc-trace_005fheaders" href="#trace_005fheaders">2.25 trace_headers</a></li>
-    <li><a name="toc-vp9_005fsuperframe" href="#vp9_005fsuperframe">2.26 vp9_superframe</a></li>
-    <li><a name="toc-vp9_005fsuperframe_005fsplit" href="#vp9_005fsuperframe_005fsplit">2.27 vp9_superframe_split</a></li>
-    <li><a name="toc-vp9_005fraw_005freorder" href="#vp9_005fraw_005freorder">2.28 vp9_raw_reorder</a></li>
+    <li><a name="toc-av1_005fmetadata" href="#av1_005fmetadata">2.2 av1_metadata</a></li>
+    <li><a name="toc-chomp" href="#chomp">2.3 chomp</a></li>
+    <li><a name="toc-dca_005fcore" href="#dca_005fcore">2.4 dca_core</a></li>
+    <li><a name="toc-dump_005fextra" href="#dump_005fextra">2.5 dump_extra</a></li>
+    <li><a name="toc-eac3_005fcore" href="#eac3_005fcore">2.6 eac3_core</a></li>
+    <li><a name="toc-extract_005fextradata" href="#extract_005fextradata">2.7 extract_extradata</a></li>
+    <li><a name="toc-filter_005funits" href="#filter_005funits">2.8 filter_units</a></li>
+    <li><a name="toc-hapqa_005fextract" href="#hapqa_005fextract">2.9 hapqa_extract</a></li>
+    <li><a name="toc-h264_005fmetadata" href="#h264_005fmetadata">2.10 h264_metadata</a></li>
+    <li><a name="toc-h264_005fmp4toannexb" href="#h264_005fmp4toannexb">2.11 h264_mp4toannexb</a></li>
+    <li><a name="toc-h264_005fredundant_005fpps" href="#h264_005fredundant_005fpps">2.12 h264_redundant_pps</a></li>
+    <li><a name="toc-hevc_005fmetadata" href="#hevc_005fmetadata">2.13 hevc_metadata</a></li>
+    <li><a name="toc-hevc_005fmp4toannexb" href="#hevc_005fmp4toannexb">2.14 hevc_mp4toannexb</a></li>
+    <li><a name="toc-imxdump" href="#imxdump">2.15 imxdump</a></li>
+    <li><a name="toc-mjpeg2jpeg" href="#mjpeg2jpeg">2.16 mjpeg2jpeg</a></li>
+    <li><a name="toc-mjpegadump" href="#mjpegadump">2.17 mjpegadump</a></li>
+    <li><a name="toc-mov2textsub-1" href="#mov2textsub-1">2.18 mov2textsub</a></li>
+    <li><a name="toc-mp3decomp" href="#mp3decomp">2.19 mp3decomp</a></li>
+    <li><a name="toc-mpeg2_005fmetadata" href="#mpeg2_005fmetadata">2.20 mpeg2_metadata</a></li>
+    <li><a name="toc-mpeg4_005funpack_005fbframes" href="#mpeg4_005funpack_005fbframes">2.21 mpeg4_unpack_bframes</a></li>
+    <li><a name="toc-noise" href="#noise">2.22 noise</a></li>
+    <li><a name="toc-null" href="#null">2.23 null</a></li>
+    <li><a name="toc-remove_005fextra" href="#remove_005fextra">2.24 remove_extra</a></li>
+    <li><a name="toc-text2movsub-1" href="#text2movsub-1">2.25 text2movsub</a></li>
+    <li><a name="toc-trace_005fheaders" href="#trace_005fheaders">2.26 trace_headers</a></li>
+    <li><a name="toc-vp9_005fmetadata" href="#vp9_005fmetadata">2.27 vp9_metadata</a></li>
+    <li><a name="toc-vp9_005fsuperframe" href="#vp9_005fsuperframe">2.28 vp9_superframe</a></li>
+    <li><a name="toc-vp9_005fsuperframe_005fsplit" href="#vp9_005fsuperframe_005fsplit">2.29 vp9_superframe_split</a></li>
+    <li><a name="toc-vp9_005fraw_005freorder" href="#vp9_005fraw_005freorder">2.30 vp9_raw_reorder</a></li>
   </ul></li>
   <li><a name="toc-See-Also" href="#See-Also">3 See Also</a></li>
   <li><a name="toc-Authors" href="#Authors">4 Authors</a></li>
@@ -125,19 +127,84 @@ raw ADTS AAC or an MPEG-TS container to MP4A-LATM, to an FLV file, or
 to MOV/MP4 files and related formats such as 3GP or M4A. Please note
 that it is auto-inserted for MP4A-LATM and MOV/MP4 and related formats.
 </p>
+<a name="av1_005fmetadata"></a>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-av1_005fmetadata">2.2 av1_metadata</a></h2>
+
+<p>Modify metadata embedded in an AV1 stream.
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>td</samp>&rsquo;</dt>
+<dd><p>Insert or remove temporal delimiter OBUs in all temporal units of the
+stream.
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>insert</samp>&rsquo;</dt>
+<dd><p>Insert a TD at the beginning of every TU which does not already have one.
+</p></dd>
+<dt>&lsquo;<samp>remove</samp>&rsquo;</dt>
+<dd><p>Remove the TD from the beginning of every TU which has one.
+</p></dd>
+</dl>
+
+</dd>
+<dt>&lsquo;<samp>color_primaries</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>transfer_characteristics</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>matrix_coefficients</samp>&rsquo;</dt>
+<dd><p>Set the color description fields in the stream (see AV1 section 6.4.2).
+</p>
+</dd>
+<dt>&lsquo;<samp>color_range</samp>&rsquo;</dt>
+<dd><p>Set the color range in the stream (see AV1 section 6.4.2; note that
+this cannot be set for streams using BT.709 primaries, sRGB transfer
+characteristic and identity (RGB) matrix coefficients).
+</p><dl compact="compact">
+<dt>&lsquo;<samp>tv</samp>&rsquo;</dt>
+<dd><p>Limited range.
+</p></dd>
+<dt>&lsquo;<samp>pc</samp>&rsquo;</dt>
+<dd><p>Full range.
+</p></dd>
+</dl>
+
+</dd>
+<dt>&lsquo;<samp>chroma_sample_position</samp>&rsquo;</dt>
+<dd><p>Set the chroma sample location in the stream (see AV1 section 6.4.2).
+This can only be set for 4:2:0 streams.
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>vertical</samp>&rsquo;</dt>
+<dd><p>Left position (matching the default in MPEG-2 and H.264).
+</p></dd>
+<dt>&lsquo;<samp>colocated</samp>&rsquo;</dt>
+<dd><p>Top-left position.
+</p></dd>
+</dl>
+
+</dd>
+<dt>&lsquo;<samp>tick_rate</samp>&rsquo;</dt>
+<dd><p>Set the tick rate (<em>num_units_in_display_tick / time_scale</em>) in
+the timing info in the sequence header.
+</p></dd>
+<dt>&lsquo;<samp>num_ticks_per_picture</samp>&rsquo;</dt>
+<dd><p>Set the number of ticks in each picture, to indicate that the stream
+has a fixed framerate.  Ignored if &lsquo;<samp>tick_rate</samp>&rsquo; is not also set.
+</p>
+</dd>
+</dl>
+
 <a name="chomp"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-chomp">2.2 chomp</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-chomp">2.3 chomp</a></h2>
 
 <p>Remove zero padding at the end of a packet.
 </p>
 <a name="dca_005fcore"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-dca_005fcore">2.3 dca_core</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-dca_005fcore">2.4 dca_core</a></h2>
 
 <p>Extract the core from a DCA/DTS stream, dropping extensions such as
 DTS-HD.
 </p>
 <a name="dump_005fextra"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-dump_005fextra">2.4 dump_extra</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-dump_005fextra">2.5 dump_extra</a></h2>
 
 <p>Add extradata to the beginning of the filtered packets.
 </p>
@@ -170,12 +237,12 @@ the header stored in extradata to the key packets:
 </pre></div>
 
 <a name="eac3_005fcore"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-eac3_005fcore">2.5 eac3_core</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-eac3_005fcore">2.6 eac3_core</a></h2>
 
 <p>Extract the core from a E-AC-3 stream, dropping extra channels.
 </p>
 <a name="extract_005fextradata"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-extract_005fextradata">2.6 extract_extradata</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-extract_005fextradata">2.7 extract_extradata</a></h2>
 
 <p>Extract the in-band extradata.
 </p>
@@ -195,7 +262,7 @@ bitstream after extraction.
 </dl>
 
 <a name="filter_005funits"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-filter_005funits">2.7 filter_units</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-filter_005funits">2.8 filter_units</a></h2>
 
 <p>Remove units with types in or not in a given set from the stream.
 </p>
@@ -227,7 +294,7 @@ removed.
 </pre></div>
 
 <a name="hapqa_005fextract"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hapqa_005fextract">2.8 hapqa_extract</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hapqa_005fextract">2.9 hapqa_extract</a></h2>
 
 <p>Extract Rgb or Alpha part of an HAPQA file, without recompression, in order to create an HAPQ or an HAPAlphaOnly file.
 </p>
@@ -254,7 +321,7 @@ removed.
 </pre></div>
 
 <a name="h264_005fmetadata"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fmetadata">2.9 h264_metadata</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fmetadata">2.10 h264_metadata</a></h2>
 
 <p>Modify metadata embedded in an H.264 stream.
 </p>
@@ -328,10 +395,20 @@ insert the string &ldquo;hello&rdquo; associated with the given UUID.
 <dd><p>Deletes both filler NAL units and filler SEI messages.
 </p>
 </dd>
+<dt>&lsquo;<samp>level</samp>&rsquo;</dt>
+<dd><p>Set the level in the SPS.  Refer to H.264 section A.3 and tables A-1
+to A-5.
+</p>
+<p>The argument must be the name of a level (for example, &lsquo;<samp>4.2</samp>&rsquo;), a
+level_idc value (for example, &lsquo;<samp>42</samp>&rsquo;), or the special name &lsquo;<samp>auto</samp>&rsquo;
+indicating that the filter should attempt to guess the level from the
+input stream properties.
+</p>
+</dd>
 </dl>
 
 <a name="h264_005fmp4toannexb"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fmp4toannexb">2.10 h264_mp4toannexb</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fmp4toannexb">2.11 h264_mp4toannexb</a></h2>
 
 <p>Convert an H.264 bitstream from length prefixed mode to start code
 prefixed mode (as defined in the Annex B of the ITU-T H.264
@@ -351,7 +428,7 @@ format with <code>ffmpeg</code>, you can use the command:
 <code>mpegts</code>) and raw H.264 (muxer <code>h264</code>) output formats.
 </p>
 <a name="h264_005fredundant_005fpps"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fredundant_005fpps">2.11 h264_redundant_pps</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-h264_005fredundant_005fpps">2.12 h264_redundant_pps</a></h2>
 
 <p>This applies a specific fixup to some Blu-ray streams which contain
 redundant PPSs modifying irrelevant parameters of the stream which
@@ -361,7 +438,7 @@ confuse other transformations which require correct extradata.
 within the stream are removed.
 </p>
 <a name="hevc_005fmetadata"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hevc_005fmetadata">2.12 hevc_metadata</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hevc_005fmetadata">2.13 hevc_metadata</a></h2>
 
 <p>Modify metadata embedded in an HEVC stream.
 </p>
@@ -424,7 +501,7 @@ representable if the chroma is subsampled (H.265 section 7.4.3.2.1).
 </dl>
 
 <a name="hevc_005fmp4toannexb"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hevc_005fmp4toannexb">2.13 hevc_mp4toannexb</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-hevc_005fmp4toannexb">2.14 hevc_mp4toannexb</a></h2>
 
 <p>Convert an HEVC/H.265 bitstream from length prefixed mode to start code
 prefixed mode (as defined in the Annex B of the ITU-T H.265
@@ -445,7 +522,7 @@ format with <code>ffmpeg</code>, you can use the command:
 <code>hevc</code>) output formats.
 </p>
 <a name="imxdump"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-imxdump">2.14 imxdump</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-imxdump">2.15 imxdump</a></h2>
 
 <p>Modifies the bitstream to fit in MOV and to be usable by the Final Cut
 Pro decoder. This filter only applies to the mpeg2video codec, and is
@@ -459,7 +536,7 @@ likely not needed for Final Cut Pro 7 and newer with the appropriate
 </pre></div>
 
 <a name="mjpeg2jpeg"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mjpeg2jpeg">2.15 mjpeg2jpeg</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mjpeg2jpeg">2.16 mjpeg2jpeg</a></h2>
 
 <p>Convert MJPEG/AVI1 packets to full JPEG/JFIF packets.
 </p>
@@ -497,14 +574,14 @@ ffmpeg -i frame_%d.jpg -c:v copy rotated.avi
 </pre></div>
 
 <a name="mjpegadump"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mjpegadump">2.16 mjpegadump</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mjpegadump">2.17 mjpegadump</a></h2>
 
 <p>Add an MJPEG A header to the bitstream, to enable decoding by
 Quicktime.
 </p>
 <p><a name="mov2textsub"></a>
 </p><a name="mov2textsub-1"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mov2textsub-1">2.17 mov2textsub</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mov2textsub-1">2.18 mov2textsub</a></h2>
 
 <p>Extract a representable text file from MOV subtitles, stripping the
 metadata header from each subtitle packet.
@@ -512,12 +589,12 @@ metadata header from each subtitle packet.
 <p>See also the <a href="#text2movsub">text2movsub</a> filter.
 </p>
 <a name="mp3decomp"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mp3decomp">2.18 mp3decomp</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mp3decomp">2.19 mp3decomp</a></h2>
 
 <p>Decompress non-standard compressed MP3 audio headers.
 </p>
 <a name="mpeg2_005fmetadata"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mpeg2_005fmetadata">2.19 mpeg2_metadata</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mpeg2_005fmetadata">2.20 mpeg2_metadata</a></h2>
 
 <p>Modify metadata embedded in an MPEG-2 stream.
 </p>
@@ -558,7 +635,7 @@ and tables 6-7, 6-8 and 6-9).
 </dl>
 
 <a name="mpeg4_005funpack_005fbframes"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mpeg4_005funpack_005fbframes">2.20 mpeg4_unpack_bframes</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-mpeg4_005funpack_005fbframes">2.21 mpeg4_unpack_bframes</a></h2>
 
 <p>Unpack DivX-style packed B-frames.
 </p>
@@ -579,7 +656,7 @@ DivX-style packed B-frames using <code>ffmpeg</code>, you can use the command:
 </pre></div>
 
 <a name="noise"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-noise">2.21 noise</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-noise">2.22 noise</a></h2>
 
 <p>Damages the contents of packets or simply drops them without damaging the
 container. Can be used for fuzzing or testing error resilience/concealment.
@@ -606,11 +683,11 @@ any packets.
 </pre></div>
 
 <a name="null"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-null">2.22 null</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-null">2.23 null</a></h2>
 <p>This bitstream filter passes the packets through unchanged.
 </p>
 <a name="remove_005fextra"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-remove_005fextra">2.23 remove_extra</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-remove_005fextra">2.24 remove_extra</a></h2>
 
 <p>Remove extradata from packets.
 </p>
@@ -638,7 +715,7 @@ any packets.
 
 <p><a name="text2movsub"></a>
 </p><a name="text2movsub-1"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-text2movsub-1">2.24 text2movsub</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-text2movsub-1">2.25 text2movsub</a></h2>
 
 <p>Convert text subtitles to MOV subtitles (as used by the <code>mov_text</code>
 codec) with metadata headers.
@@ -646,28 +723,57 @@ codec) with metadata headers.
 <p>See also the <a href="#mov2textsub">mov2textsub</a> filter.
 </p>
 <a name="trace_005fheaders"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-trace_005fheaders">2.25 trace_headers</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-trace_005fheaders">2.26 trace_headers</a></h2>
 
 <p>Log trace output containing all syntax elements in the coded stream
 headers (everything above the level of individual coded blocks).
 This can be useful for debugging low-level stream issues.
 </p>
-<p>Supports H.264, H.265 and MPEG-2.
+<p>Supports H.264, H.265, MPEG-2 and VP9.
 </p>
+<a name="vp9_005fmetadata"></a>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fmetadata">2.27 vp9_metadata</a></h2>
+
+<p>Modify metadata embedded in a VP9 stream.
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>color_space</samp>&rsquo;</dt>
+<dd><p>Set the color space value in the frame header.
+</p><dl compact="compact">
+<dt>&lsquo;<samp>unknown</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt601</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt709</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>smpte170</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>smpte240</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt2020</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>rgb</samp>&rsquo;</dt>
+</dl>
+
+</dd>
+<dt>&lsquo;<samp>color_range</samp>&rsquo;</dt>
+<dd><p>Set the color range value in the frame header.  Note that this cannot
+be set in RGB streams.
+</p><dl compact="compact">
+<dt>&lsquo;<samp>tv</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>pc</samp>&rsquo;</dt>
+</dl>
+</dd>
+</dl>
+
 <a name="vp9_005fsuperframe"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe">2.26 vp9_superframe</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe">2.28 vp9_superframe</a></h2>
 
 <p>Merge VP9 invisible (alt-ref) frames back into VP9 superframes. This
 fixes merging of split/segmented VP9 streams where the alt-ref frame
 was split from its visible counterpart.
 </p>
 <a name="vp9_005fsuperframe_005fsplit"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe_005fsplit">2.27 vp9_superframe_split</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe_005fsplit">2.29 vp9_superframe_split</a></h2>
 
 <p>Split VP9 superframes into single frames.
 </p>
 <a name="vp9_005fraw_005freorder"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fraw_005freorder">2.28 vp9_raw_reorder</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fraw_005freorder">2.30 vp9_raw_reorder</a></h2>
 
 <p>Given a VP9 stream with correct timestamps but possibly out of order,
 insert additional show-existing-frame packets to correct the ordering.

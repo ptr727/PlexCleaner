@@ -10,7 +10,7 @@
 <meta name="description" content="Platform Specific Information: ">
 <meta name="keywords" content="FFmpeg documentation : Platform Specific Information: ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on July 25, 2018 by texi2html 5.0 -->
+<!-- Created on November 11, 2018 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -213,17 +213,12 @@ pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2
 <a name="Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows"></a>
 <h2 class="section"><a href="platform.html#toc-Microsoft-Visual-C_002b_002b-or-Intel-C_002b_002b-Compiler-for-Windows">4.2 Microsoft Visual C++ or Intel C++ Compiler for Windows</a></h2>
 
-<p>FFmpeg can be built with MSVC 2012 or earlier using a C99-to-C89 conversion utility
-and wrapper, or with MSVC 2013 and ICL natively.
+<p>FFmpeg can be built with MSVC 2013 or later.
 </p>
 <p>You will need the following prerequisites:
 </p>
 <ul>
-<li> <a href="https://github.com/libav/c99-to-c89/">C99-to-C89 Converter &amp; Wrapper</a>
-(if using MSVC 2012 or earlier)
-</li><li> <a href="http://code.google.com/p/msinttypes/">msinttypes</a>
-(if using MSVC 2012 or earlier)
-</li><li> <a href="http://msys2.github.io/">MSYS2</a>
+<li> <a href="http://msys2.github.io/">MSYS2</a>
 </li><li> <a href="http://www.nasm.us/">NASM</a>
 (Also available via MSYS2&rsquo;s package manager.)
 </li></ul>
@@ -231,16 +226,13 @@ and wrapper, or with MSVC 2013 and ICL natively.
 <p>To set up a proper environment in MSYS2, you need to run <code>msys_shell.bat</code> from
 the Visual Studio or Intel Compiler command prompt.
 </p>
-<p>Place <code>yasm.exe</code> somewhere in your <code>PATH</code>. If using MSVC 2012 or
-earlier, place <code>c99wrap.exe</code> and <code>c99conv.exe</code> somewhere in your
-<code>PATH</code> as well.
+<p>Place <code>yasm.exe</code> somewhere in your <code>PATH</code>.
 </p>
 <p>Next, make sure any other headers and libs you want to use, such as zlib, are
 located in a spot that the compiler can see. Do so by modifying the <code>LIB</code>
 and <code>INCLUDE</code> environment variables to include the <strong>Windows-style</strong>
 paths to these directories. Alternatively, you can try to use the
-<code>--extra-cflags</code>/<code>--extra-ldflags</code> configure options. If using MSVC
-2012 or earlier, place <code>inttypes.h</code> somewhere the compiler can see too.
+<code>--extra-cflags</code>/<code>--extra-ldflags</code> configure options.
 </p>
 <p>Finally, run:
 </p>
@@ -281,9 +273,7 @@ can see.
 
 </li><li> FFmpeg has been tested with the following on i686 and x86_64:
 <ul>
-<li> Visual Studio 2010 Pro and Express
-</li><li> Visual Studio 2012 Pro and Express
-</li><li> Visual Studio 2013 Pro and Express
+<li> Visual Studio 2013 Pro and Express
 </li><li> Intel Composer XE 2013
 </li><li> Intel Composer XE 2013 SP1
 </li></ul>

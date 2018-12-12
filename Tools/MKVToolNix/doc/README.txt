@@ -1,30 +1,37 @@
-MKVToolNix 26.0.0
+MKVToolNix 29.0.0
 =================
 
 # Table of contents
 
 1. [Introduction](#1-introduction)
 2. [Installation](#2-installation)
-  1. [Requirements](#21-requirements)
-  2. [Optional components](#22-optional-components)
-  3. [Building libEBML and libMatroska](#23-building-libebml-and-libmatroska)
-  4. [Building MKVToolNix](#24-building-mkvtoolnix)
-    1. [Getting and building a development snapshot](#241-getting-and-building-a-development-snapshot)
-    2. [Configuration and compilation](#242-configuration-and-compilation)
-  5. [Notes for compilation on (Open)Solaris](#25-notes-for-compilation-on-opensolaris)
-  6. [Unit tests](#26-unit-tests)
+    1. [Requirements](#21-requirements)
+        1. [Hard requirements](#211-hard-requirements)
+        2. [Requirements with bundled fallbacks](#212-requirements-with-bundled-fallbacks)
+    2. [Optional components](#22-optional-components)
+    3. [Building libEBML and libMatroska](#23-building-libebml-and-libmatroska)
+    4. [Building MKVToolNix](#24-building-mkvtoolnix)
+        1. [Getting and building a development snapshot](#241-getting-and-building-a-development-snapshot)
+        2. [Configuration and compilation](#242-configuration-and-compilation)
+    5. [Notes for compilation on (Open)Solaris](#25-notes-for-compilation-on-opensolaris)
+    6. [Unit tests](#26-unit-tests)
 3. [Reporting bugs](#3-reporting-bugs)
 4. [Test suite and continuous integration tests](#4-test-suite-and-continuous-integration-tests)
 5. [Code of Conduct](#5-code-of-conduct)
-6. [Included libraries and their licenses](#6-included-libraries-and-their-licenses)
-  1. [avilib](#61-avilib)
-  2. [Boost's utf8_codecvt_facet](#62-boosts-utf8_codecvt_facet)
-  3. [libEBML](#63-libebml)
-  4. [libMatroska](#64-libmatroska)
-  5. [librmff](#65-librmff)
-  6. [nlohmann's JSON](#66-nlohmanns-json)
-  7. [pugixml](#67-pugixml)
-  8. [utf8-cpp](#68-utf8-cpp)
+6. [Included third-party components and their licenses](#6-included-third-party-components-and-their-licenses)
+    1. [avilib](#61-avilib)
+    2. [Boost's utf8_codecvt_facet](#62-boosts-utf8_codecvt_facet)
+    3. [libEBML](#63-libebml)
+    4. [libMatroska](#64-libmatroska)
+    5. [librmff](#65-librmff)
+    6. [nlohmann's JSON](#66-nlohmanns-json)
+    7. [pugixml](#67-pugixml)
+    8. [utf8-cpp](#68-utf8-cpp)
+    9. [Oxygen icons and sound files](#69-oxygen-icons-and-sound-files)
+    10. [MKVToolNix icons](#610-mkvtoolnix-icons)
+    11. [QtWaitingSpinner](#611-qtwaitingspinner)
+    12. [Fancy tab widget](#612-fancy-tab-widget)
+    13. [fmt](#613-fmt)
 
 -----------------
 
@@ -66,6 +73,8 @@ repository version might not even compile.
 
 ## 2.1. Requirements
 
+### 2.1.1. Hard requirements
+
 In order to compile MKVToolNix, you need a couple of libraries. Most of
 them should be available pre-compiled for your distribution. The
 programs and libraries you absolutely need are:
@@ -78,11 +87,6 @@ programs and libraries you absolutely need are:
   for `std::string`. Others may be needed, too. For GCC this means at
   least v5.x; for clang v3.4 or later.
 
-- [libEBML v1.3.5](http://dl.matroska.org/downloads/libebml/) or later
-  and [libMatroska v1.4.8](http://dl.matroska.org/downloads/libmatroska/)
-  or later for low-level access to Matroska files. Instructions on how to
-  compile them are a bit further down in this file.
-
 - [libOgg](http://downloads.xiph.org/releases/ogg/) and
   [libVorbis](http://downloads.xiph.org/releases/vorbis/) for access to Ogg/OGM
   files and Vorbis support
@@ -90,8 +94,8 @@ programs and libraries you absolutely need are:
 - [zlib](http://www.zlib.net/) — a compression library
 
 - [Boost](http://www.boost.org/) — Several of Boost's libraries are
-  used: `format`, `RegEx`, `filesystem`, `system`, `math`,
-  `Range`, `rational`, `variant`. At least v1.49.0 is required.
+  used: `RegEx`, `filesystem`, `system`, `math`, `Range`, `rational`,
+  `variant`. At least v1.49.0 is required.
 
 - [libxslt's xsltproc binary](http://xmlsoft.org/libxslt/) and
   [DocBook XSL stylesheets](https://sourceforge.net/projects/docbook/files/docbook-xsl/)
@@ -101,6 +105,39 @@ You also need the `rake` or `drake` build program. I suggest `rake`
 v10.0.0 or newer (this is included with Ruby 2.1) as it offers
 parallel builds out of the box. If you only have an earlier version of
 `rake`, you can install and use the `drake` gem for the same gain.
+
+### 2.1.2. Requirements with bundled fallbacks
+
+Several required libraries might not be available for your
+distribution. Therefore they're bundled with the MKVToolNix source
+code. The `configure` script will look for those libraries and use
+existing versions if present. If not, the bundled versions are used
+instead.
+
+It is highly recommended to install the versions provided by your
+distribution instead of relying on the bundled versions.
+
+These libraries are:
+
+- [fmt](http://fmtlib.net/) — a small, safe and fast formatting
+  library. Version 3 or later is required.
+
+- [libEBML v1.3.5](http://dl.matroska.org/downloads/libebml/) or later
+  and [libMatroska v1.4.8](http://dl.matroska.org/downloads/libmatroska/)
+  or later for low-level access to Matroska files. Instructions on how to
+  compile them are a bit further down in this file.
+
+- [librmff](https://www.bunkus.org/videotools/librmff/index.html) — a
+  library for accessing RealMedia files
+
+- [nlohmann's JSON](https://github.com/nlohmann/json) — JSON for
+  Modern C++
+
+- [pugixml](http://pugixml.org/) — light-weight, simple and fast XML
+  parser for C++ with XPath support
+
+- [utf8-cpp](http://utfcpp.sourceforge.net/) — UTF-8 with C++ in a
+  Portable Way
 
 ## 2.2. Optional components
 
@@ -415,3 +452,12 @@ A beefed-up tab widget class for Qt extracted from the Qt Creator project
   * Copyright: 2011 Nokia Corporation and/or its subsidiary(-ies).
   * License: GNU General Public License v2 (see `COPYING`)
   * Corresponding files: `src/mkvtoolnix-gui/util/fancy_tab_widget.{h,cpp}`
+
+## 6.13. fmt
+
+Small, safe and fast formatting library
+
+  * Copyright: 2012–2018 by Victor Zverovich
+  * License: BSD (see `doc/licenses/fmt-BSD.txt`)
+  * URL: http://fmtlib.net/latest/
+  * Corresponding files: `lib/fmt/*`
