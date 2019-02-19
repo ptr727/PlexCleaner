@@ -1,3 +1,103 @@
+# Version 31.0.0 "Dolores In A Shoestand" 2019-02-09
+
+## New features and enhancements
+
+* all programs: added a new option `--abort-on-warnings` that will cause the
+  program to abort after it has emitted the first warning, similar to how it
+  aborts after the first error. Implements #2493.
+* mkvmerge, mkvextract: when closing files that were opened for writing,
+  cached data will not be flushed to storage automatically anymore. This
+  reverts the workaround implemented for #2469. A new option was added to both
+  programs (`--flush-on-close`) that re-enables flushing for people who are
+  affected by data loss such as described in #2469.
+
+  The reason is that automatic flushing causes long delays in processing
+  queues when the output by mkvmerge/mkvextract isn't the final product but
+  just an intermediate result to be processed further.
+
+  Implements #2480.
+* MKVToolNix GUI: multiplexer: the dialog previewing different character sets
+  for text subtitles will now keep the position of the displayed text when
+  switching between character sets. Implements #2489.
+
+## Bug fixes
+
+* mkvmerge: AVI reader: using DV type 1 AVIs will now result in an unsupported
+  file type being reported (as the underlying AVI library doesn't support
+  them) instead of crashing mkvmerge. Fixes #2491.
+* mkvmerge: HEVC: the height of interlaced streams will now be set correctly
+  to the height of the full frame instead of the height of a single interlaced
+  field. Fixes #2446.
+* mkvmerge: MP4 reader: edit lists consisting solely of elements that mkvmerge
+  doesn't support (such as dwells) are simply ignored. Before no data was read
+  for such tracks at all. Fixes #2487.
+* mkvmerge: text subtitles: entries with an explicit duration of 0ms will now
+  be handled correctly: the 0ms duration will be stored in Matroska instead of
+  the difference between the current and the following entry. Fixes #2490.
+* MKVToolNix GUI: multiplexer, chapter editor: fixed drag & drop handling with
+  Qt 5.12.0 and newer. Fixes #2472.
+* MKVToolNix GUI: multiplexer: the GUI did not clean up temporary files
+  created when running `mkvmerge`. Fixes #2499.
+
+## Build system changes
+
+* Qt 5.4.0 or newer has required (up from 5.3.0) since version 30.0.0; I just
+  forgot to include this entry.
+
+
+# Version 30.1.0 "Forever And More" 2019-01-05
+
+## Bug fixes
+
+* build system: fixed building on non-UTF-8 locales. Fixes #2474.
+* MKVToolNix GUI: multiplexer: implemented a workaround for drag & drop not
+  working on macOS with Qt 5.12 due to a bug in Qt 5.12. Fixes #2472.
+* MKVToolNix GUI: chapter editor: when opening a Matroska/WebM file that
+  doesn't contain chapters and later saving chapters back to them, the editor
+  was truncating the file down to a couple of KB in size. This was a
+  regression introduced with the implementation of #2439 in v30.0.0 Fixes
+  #2476.
+
+
+# Version 30.0.0 "Interstellar" 2019-01-04
+
+## New features and enhancements
+
+* mkvextract: WAV extractor: mkvextract will now write W64 files instead of
+  WAV files if the file name extension is `.w64` or if the final file size is
+  bigger than 4 GB, the file size limit for WAV files. Implements #2458.
+* MKVToolNix GUI: multiplexer: a new button was added next to the "destination
+  file" controls. Clicking it shows a menu with the ten most recently used
+  output directories. Selecting one of them will change the destination file
+  to the selected directory keeping the file name. Implements #2468.
+* MKVToolNix GUI: multiplexer (preferences): the ten most recently used values
+  for the "relative output directory" and "fixed output directory" settings
+  are now saved. The corresponding settings have been changed into combo boxes
+  allowing quick access to those recent values.
+* MKVToolNix GUI: multiplexer (preferences): the predefined split sizes and
+  durations can now be customized in the preferences.
+* MKVToolNix GUI: chapter editor: added an option in the "Chapter editor" menu
+  for appending chapters from an existing file to the currently open editor
+  tab. Part of the implementation of #2439.
+* MKVToolNix GUI: chapter editor: added an action in the context menu for
+  copying the selected entry and all of its children to another open editor
+  tab. Part of the implementation of #2439.
+
+## Bug fixes
+
+* mkvmerge: all files opened for writing will now be flushed once before
+  they're closed. This ensures the operating system actually writes all cached
+  data to disk preventing data loss in certain situations such as power
+  outages or buggy drivers in combination with suspending the computer. Fixes
+  #2469.
+* mkvmerge: AAC: under certain conditions 8 channel audio files were taken for
+  7 channel ones.
+* MKVToolNix GUI: multiplexer: removing a file added as an "additional part"
+  will no longer cause a crash. Fixes #2461.
+* source code: fixed compilation with Boost 1.69.0 after API-breaking change
+  to the `boost::tribool` class. Fixes #2460.
+
+
 # Version 29.0.0 "Like It Or Not" 2018-12-01
 
 ## Important notes

@@ -3246,6 +3246,24 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Weist mkvmerge an, alle gepufferten Daten auf den Datenspeicher zu
+                        schreiben, wenn eine zum Schreiben geöffnete Datei geschlossen wird.  Das
+                        kann benutzt werden, um Datenverlust bei Stromausfall vorzubeugen oder
+                        bestimmte Probleme im Betriebssystem oder Treibern zu vermeiden.  Der
+                        Nachteil ist, dass das Multiplexen länger dauert, da mkvmerge vor dem
+                        Beenden wartet, bis alle Daten auf den Datenspeicher geschrieben wurden.
+                        Siehe Probleme #2469 und #2480 im MKVToolNix-Bugtracker für eine
+                        tiefergehende Diskussion der Vor- und Nachteile.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">Code</span></a></td>
                   <td>
                      
@@ -3255,6 +3273,18 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                         Übersetzungen). Bei der Eingabe von »<span class="literal">list</span>« als
                         <span class="parameter">Code</span> gibt das Programm eine Liste der verfügbaren
                         Übersetzungen aus.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Weist das Programm an abzubrechen, nachdem die erste Warnung ausgegeben
+                        wurde. Der Rückgabewert des Programms wird in dem Fall 1 sein.
                         
                      </p>
                      
@@ -4432,7 +4462,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6051">13.3. Allgemeine Hinweise</a></h2>
+         <h2><a name="d4e6077">13.3. Allgemeine Hinweise</a></h2>
          
          
          <p>
@@ -4466,7 +4496,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          
          
-         <h2><a name="d4e6116">14.1. Einleitung</a></h2>
+         <h2><a name="d4e6142">14.1. Einleitung</a></h2>
          
          
          
@@ -4813,7 +4843,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          </p>
          
          
-         <h2><a name="d4e6567">17.1. Zeitstempeldateiformat v1</a></h2>
+         <h2><a name="d4e6593">17.1. Zeitstempeldateiformat v1</a></h2>
          
          
          <p>
@@ -4834,7 +4864,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6591">17.2. Zeitstempeldateiformat v2</a></h2>
+         <h2><a name="d4e6617">17.2. Zeitstempeldateiformat v2</a></h2>
          
          
          
@@ -4854,7 +4884,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6606">17.3. Zeitstempeldateiformat v3</a></h2>
+         <h2><a name="d4e6632">17.3. Zeitstempeldateiformat v3</a></h2>
          
          
          <p>
@@ -4877,7 +4907,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6624">17.4. Zeitstempeldateiformat v4</a></h2>
+         <h2><a name="d4e6650">17.4. Zeitstempeldateiformat v4</a></h2>
          
          
          <p>

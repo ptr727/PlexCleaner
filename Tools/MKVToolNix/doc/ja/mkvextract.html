@@ -18,7 +18,7 @@
             <li><a href="#mkvextract.examples">3. 例</a></li>
             <li><a href="#mkvextract.text_files_and_charsets">4. テキストファイルと文字コード変換</a></li>
             <li><a href="#mkvextract.output_file_formats">5. 出力ファイルフォーマット</a></li>
-            <li><a href="#d4e1764">6. 返り値</a></li>
+            <li><a href="#d4e1790">6. 返り値</a></li>
             <li><a href="#mkvextract.environment_variables">7. 環境変数</a></li>
             <li><a href="#mkvextract.seealso">8. 関連項目</a></li>
             <li><a href="#mkvextract.www">9. ウェブ</a></li>
@@ -122,6 +122,23 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to flush all data cached in memory to storage when closing
+                        files opened for writing.  This can be used to prevent data loss on power
+                        outages or to circumvent certain problems in the operating system or
+                        drivers.  The downside is that multiplexing will take longer as mkvmerge
+                        will wait until all data has been written to the storage before exiting.
+                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth
+                        discussions on the pros and cons.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
                   <td>
                      
@@ -131,6 +148,18 @@
                         translations). Entering '<span class="literal">list</span>' as the
                         <span class="parameter">code</span> will cause the program to output a list of
                         available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to abort after the first warning is emitted. The program's
+                        exit code will be 1.
                         
                      </p>
                      
@@ -1118,7 +1147,7 @@
             </tbody>
          </table>
          
-         <h1><a name="d4e1764">6. 返り値</a></h1>
+         <h1><a name="d4e1790">6. 返り値</a></h1>
          
          
          

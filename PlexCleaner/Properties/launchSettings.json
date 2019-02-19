@@ -2,7 +2,7 @@
   "profiles": {
     "PlexCleanerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--CheckForTools"
+      "commandLineArgs": "--Process --Folders \"D:\\Rip\""
     }
   }
 }

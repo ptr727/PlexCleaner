@@ -2,7 +2,7 @@
 .PluginContents=7-Zip Plugin
 
 @Contents
-$^#7-Zip Plugin 18.05#
+$^#7-Zip Plugin 18.06#
 $^#Copyright (c) 1999-2018 Igor Pavlov#
     This FAR module performs transparent #archive# processing.
 Files in the archive are handled in the same manner as if they

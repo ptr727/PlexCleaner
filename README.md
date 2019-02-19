@@ -1,5 +1,5 @@
 # Introduction
-Clean media files for Plex playback. 
+Clean media files for Plex friendly playback. 
 
 # Build Status
 [![Build status](https://dev.azure.com/pieterv/Plex%20Cleaner/_apis/build/status/Plex%20Cleaner%20-%20.NET%20Core%20-%20CI)](https://dev.azure.com/pieterv/Plex%20Cleaner/_build/latest?definitionId=17)
@@ -7,7 +7,7 @@ Clean media files for Plex playback.
 # Getting Started
 
 ## Installation
-Install .NET Core for your platform.
+Install .NET Core 2.2 or later for your platform.
 
 ## Update Tools
 Make sure the Tools folder exists, the default Tools folder is in the root of the binary folder.
@@ -16,7 +16,7 @@ Download the 7-Zip commandline tools from https://www.7-zip.org/download.html, e
 Update the tools:
 dotnet.exe plexcleaner.dll --CheckForTools
 
-## TODO
+## Usage
 // Options: Process, ReMux, ReEncode, WriteSidecar, CreateTagMap, CheckForTools, Monitor, Folders
 // Example input:
 // PlexCleaner.exe --Process --Folders "c:\foo" "d:\bar"
@@ -26,7 +26,6 @@ dotnet.exe plexcleaner.dll --CheckForTools
 // PlexCleaner.exe --Process --Monitor --Folders "..\..\..\Test\One" "..\..\..\Test\Two"
 // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
 
-
 # Build and Test
 https://dev.azure.com/pieterv/Plex%20Cleaner/
 
@@ -34,32 +33,22 @@ https://dev.azure.com/pieterv/Plex%20Cleaner/
 https://dev.azure.com/pieterv/Plex%20Cleaner/
 
 # TODO
-- Compile T4 as part of build
-https://github.com/clariuslabs/TransformOnBuild
-https://github.com/bennor/AutoT4
-
-- Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color
-
-- Reenable the file watcher when directory disappears
-e.GetException().GetType() == typeof(SomethingPathNotAccessibleException)), retry waiting with with Directory.Exists(path)
-if (e is Win32Exception)
-OnError : System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available
-
-- Retrieve SRT subtitles using original file details, before the sourced file gets modified
-
-- Embed SRT files in MKV file
-
-- Consider converting DIVX to H264 or just re-tag as XVID
-cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID
-
-- Compare folder with file name and rename to match
-
-- Check if more than two audio or subtitle tracks of the same language
-Prefer DTS over AC3, if same language, change order, e.g. the breakfast club
-
-- Keep machine from sleeping while processing
-
-- Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS
+* Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color.
+* Capture FFMpeg console output, it is currently not being displayd.
+* Reenable the file watcher when directory disappears.
+	e.GetException().GetType() == typeof(SomethingPathNotAccessibleException)), retry waiting with with Directory.Exists(path)
+	if (e is Win32Exception)
+	OnError : System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available
+* Retrieve SRT subtitles using original file details, before the sourced file gets modified.
+* Embed SRT files in MKV file.
+* Consider converting DIVX to H264 or just re-tag as XVID.
+	cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID
+* Compare folder with file name and rename to match.
+* Check if more than two audio or subtitle tracks of the same language exists, and prefer DTS over AC3 by changing the track order.
+* Keep machine from sleeping while processing.
+* Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS.
+* Console writeline sometimes ignores the newline around AudioInfo.Numer
+	2/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : chi, Id : 1, Number : 12/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : eng, Id : 2, Number : 22/18/2019 6:08:32 PM : Passthrough : Subtitle : Format : dvd_subtitle, Codec : DVD subtitles, MuxingMode : , Language : chi, Id : 3, Number : 3
 
 # Tools
 
@@ -69,7 +58,6 @@ https://regex101.com/
 https://www.myregextester.com/
 http://www.txt2re.com
 
-
 ## MediaInfo CLI
 https://mediaarea.net/en-us/MediaInfo/Download/Windows
 https://mediaarea.net/download/snapshots/binary/mediainfo/
@@ -78,12 +66,10 @@ https://github.com/MediaArea/MediaInfo/blob/master/History_CLI.txt
 https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
 https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/Audio.csv
 
-
 ## Handbrake CLI
 https://handbrake.fr/downloads2.php
 https://handbrake.fr/rotation.php?file=HandBrakeCLI-1.0.7-win-x86_64.zip
 https://handbrake.fr/mirror/HandBrakeCLI-1.0.7-win-x86_64.zip
-
 
 ## MKVToolNix
 https://mkvtoolnix.download/
@@ -92,22 +78,18 @@ https://www.fosshub.com/MKVToolNix.html
 https://www.fosshub.com/MKVToolNix.html/mkvtoolnix-64-bit-17.0.0.7z
 https://mkvtoolnix.download/latest-release.xml.gz
 
-
 ## FFMPEG
 https://www.ffmpeg.org/download.html#build-windows
 http://ffmpeg.zeranoe.com/builds/
 http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.4-win64-static.zip
 http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.7z
 
-
 ## ISO language codes
 http://www-01.sil.org/iso639-3/download.asp
 
-
-## HTTP Downlaod
+## HTTP Download
 http://faithlife.codes/blog/2009/06/using_if-modified-since_in_http_requests/
 https://stackoverflow.com/questions/6481073/how-to-download-a-file-only-when-the-local-file-is-older
-
 
 ## Samples
 http://kodi.wiki/view/Samples
@@ -115,12 +97,9 @@ http://jell.yfish.us/
 https://www.demo-world.eu/2d-demo-trailers-hd/
 http://samples.mplayerhq.hu/
 
-
 # Tool Usage 
-
 ## XSD
 xsd.exe /c /namespace:PlexCleaner.MediaInfoXml /language:CS mediainfo_2_0.xsd
-
 
 ## FFMpeg
 https://trac.ffmpeg.org/wiki/audio%20types
@@ -134,13 +113,11 @@ ffmpeg.exe -i "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" -c:v copy -c:
 ffmpeg.exe -i "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mp4" -map 0 -codec copy -f matroska "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mkv"
 ffmpeg.exe -i "\\STORAGE\Media\Samples\H264+EAC3.mkv" -map 0 -codec copy -f mp4 "\\STORAGE\Media\Samples\H264+EAC3.mp4"
 
-
 ## Handbrake CLI
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.eac3.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback eac3 --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.avaac.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback av_aac --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.caaac.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ca_aac --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.ac3.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 --start-at duration:30 --stop-at duration:30
-
 
 ## MKVPropEdit
 mkvmerge.exe --identify ".\Test\One\ShieldTV - Transcode - 50 First Dates (2004).mkv" --identification-format json >mkvmerge.eng.json
@@ -148,7 +125,6 @@ mediainfo.exe --Output=XML ".\Test\One\ShieldTV - Transcode - 50 First Dates (20
 mkvpropedit.exe ".\Test\One\ShieldTV - Transcode - 50 First Dates (2004).mkv" --edit track:@1 --set language=und
 mkvmerge.exe --identify ".\Test\One\ShieldTV - Transcode - 50 First Dates (2004).mkv" --identification-format json >mkvmerge.und.json
 mediainfo.exe --Output=XML ".\Test\One\ShieldTV - Transcode - 50 First Dates (2004).mkv" >mediainfo.und.xml
-
 
 ## MKV Tools
 mkvmerge.exe --output "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mkv" "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mp4"
@@ -159,12 +135,10 @@ mkvmerge.exe --identify "\\STORAGE\Media\Troublesome\none.mkv" --identification-
 mkvmerge.exe --output "zlib.mkv" --compression 2:zlib --compression 3:zlib "\\STORAGE\Media\Troublesome\ShieldTV - Transcode - Kill Bill Volume 1 (2003).mkv"
 mkvmerge.exe --output "none.mkv" --compression 2:none --compression 3:none "\\STORAGE\Media\Troublesome\ShieldTV - Transcode - Kill Bill Volume 1 (2003).mkv"
 
-
 ## MediaInfo
 mediainfo.exe --Output=XML "\\STORAGE\Media\Troublesome\ShieldTV - Transcode - Kill Bill Volume 1 (2003).mkv" json >orig.xml
 mediainfo.exe --Output=XML "\\STORAGE\Media\Troublesome\zlib.mkv" json >zlib.xml
 mediainfo.exe --Output=XML "\\STORAGE\Media\Troublesome\none.mkv" json >none.xml
-
 
 # Crashes
 Application: PlexCleaner.exe
@@ -182,7 +156,6 @@ Exception Info: System.IO.IOException
    at PlexCleaner.Program.Process()
    at PlexCleaner.Program.Run()
    at PlexCleaner.Program.Main()
-
 
 # Media Types
 11/12/2017 5:15:04 PM : FFProbe:

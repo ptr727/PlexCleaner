@@ -18,7 +18,7 @@
             <li><a href="#mkvextract.examples">3. 示例</a></li>
             <li><a href="#mkvextract.text_files_and_charsets">4. 文本文件与字符集转换</a></li>
             <li><a href="#mkvextract.output_file_formats">5. 输出文件格式</a></li>
-            <li><a href="#d4e1768">6. 退出代码</a></li>
+            <li><a href="#d4e1794">6. 退出代码</a></li>
             <li><a href="#mkvextract.environment_variables">7. 环境变量</a></li>
             <li><a href="#mkvextract.seealso">8. 参阅</a></li>
             <li><a href="#mkvextract.www">9. 网络</a></li>
@@ -123,6 +123,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        让程序在关闭以写入模式打开的文件时，强制将内存中已缓存的所有数据写入到存储设备。可用于在电源中断时避免数据损失，或规避操作系统或驱动程序的特定问题。缺点是混流耗时更长，因为
+                        mkvmerge 在退出前需要等待所有数据写入存储设备。关于优劣的深入讨论，请参见 MKVToolNix bug 跟踪平台中的问题 #2469 与问题
+                        #2480。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">语言代码</span></a></td>
                   <td>
                      
@@ -130,6 +143,17 @@
                         强制使用 <span class="parameter">语言代码</span> 所对应的翻译 (例如  '<span class="literal">de_DE</span>'
                         表示德文翻译)。在 <span class="parameter">语言代码</span> 处输入 '<span class="literal">list</span>'
                         可让程序输出可用翻译的列表。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvextract.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        让程序在出现警告时即中止。程序的退出代码将返回 1。
                         
                      </p>
                      
@@ -663,21 +687,21 @@
             
          </p>
          
-         <pre class="screen">$ mkvextract movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
+         <pre class="screen">$ mkvextract 影片.mkv chapters 影片章节.xml tags 影片标签.xml</pre>
          
          <p>
             同时提取一些轨道及其对应的时间戳:
             
          </p>
          
-         <pre class="screen">$ mkvextract "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
+         <pre class="screen">$ mkvextract "另一部影片.mkv" tracks 0:video.h265 "1:主音轨.aac" "2:导演评论.aac" timestamps_v2 "0:视频时间戳.txt" "1:主音轨时间戳.txt" "2:导演评论音轨时间戳.txt"</pre>
          
          <p>
             以 Ogg/OGM 格式提取章节，并将一条文本字幕轨道用另一种字符集重新编码:
             
          </p>
          
-         <pre class="screen">$ mkvextract "My Movie.mkv" chapters --simple "My Chapters.txt" tracks -c MS-ANSI "2:My Subtitles.srt"</pre>
+         <pre class="screen">$ mkvextract "我的影片.mkv" chapters --simple "我的章节.txt" tracks -c MS-ANSI "2:我的字幕.srt"</pre>
          <h1><a name="mkvextract.text_files_and_charsets">4. 文本文件与字符集转换</a></h1>
          
          
@@ -1088,7 +1112,7 @@
             </tbody>
          </table>
          
-         <h1><a name="d4e1768">6. 退出代码</a></h1>
+         <h1><a name="d4e1794">6. 退出代码</a></h1>
          
          
          

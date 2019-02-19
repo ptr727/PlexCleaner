@@ -42,7 +42,7 @@ namespace PlexCleaner
                 // Set language if Tags is not null
                 // TODO : Language in some sample files is "???", set to und
                 Language = stream.Tags?.Language;
-                if (String.IsNullOrEmpty(Language))
+                if (string.IsNullOrEmpty(Language))
                     Language = "und";
                 else if (Language.Equals("???"))
                     Language = "und";
@@ -63,7 +63,7 @@ namespace PlexCleaner
                 Profile = track.FormatProfile;
 
                 Language = track.Language;
-                if (!String.IsNullOrEmpty(track.Language))
+                if (!string.IsNullOrEmpty(track.Language))
                 {
                     // MediaInfo uses ab or abc or ab-cd tags, we need to convert to ISO 639-2
                     // https://github.com/MediaArea/MediaAreaXml/issues/33
@@ -81,12 +81,12 @@ namespace PlexCleaner
 
                 // ID can be an integer or an integer-type, e.g. 3-CC1
                 // https://github.com/MediaArea/MediaInfo/issues/201
-                Id = Int32.Parse(track.Id.All(Char.IsDigit) ? track.Id : track.Id.Substring(0, track.Id.IndexOf('-')));
+                Id = int.Parse(track.Id.All(char.IsDigit) ? track.Id : track.Id.Substring(0, track.Id.IndexOf('-')));
 
                 // Use streamorder for number
                 // StreamOrder is not always present
-                if (!String.IsNullOrEmpty(track.StreamOrder))
-                    Number = Int32.Parse(track.StreamOrder);
+                if (!string.IsNullOrEmpty(track.StreamOrder))
+                    Number = int.Parse(track.StreamOrder);
             }
             public string Format { get; set; }
             public string Codec { get; set; }
@@ -99,7 +99,7 @@ namespace PlexCleaner
             public bool IsLanguageUnknown()
             {
                 // Test for empty or "und" field values
-                return String.IsNullOrEmpty(Language) ||
+                return string.IsNullOrEmpty(Language) ||
                        Language.Equals("und", StringComparison.OrdinalIgnoreCase);
             }
         }
@@ -120,17 +120,17 @@ namespace PlexCleaner
                 // https://www.ffmpeg.org/doxygen/3.2/avcodec_8h_source.html#l03210
                 // https://www.ffmpeg.org/doxygen/3.2/mpeg12enc_8c_source.html#l00138
                 // https://en.wikipedia.org/wiki/H.264/MPEG-4_AVC#Levels
-                if (!String.IsNullOrEmpty(stream.Profile) && !String.IsNullOrEmpty(stream.Level))
+                if (!string.IsNullOrEmpty(stream.Profile) && !string.IsNullOrEmpty(stream.Level))
                     Profile = $"{stream.Profile}@{stream.Level}";
-                else if (!String.IsNullOrEmpty(stream.Profile))
+                else if (!string.IsNullOrEmpty(stream.Profile))
                     Profile = stream.Profile;
             }
             public VideoInfo(MediaInfoTool.TrackXml track) : base(track)
             {
                 // TODO : Find a better way to do this
-                if (!String.IsNullOrEmpty(track.FormatProfile) && !String.IsNullOrEmpty(track.FormatLevel))
+                if (!string.IsNullOrEmpty(track.FormatProfile) && !string.IsNullOrEmpty(track.FormatLevel))
                     Profile = $"{track.FormatProfile}@{track.FormatLevel}";
-                else if (!String.IsNullOrEmpty(track.FormatProfile))
+                else if (!string.IsNullOrEmpty(track.FormatProfile))
                     Profile = track.FormatProfile;
             }
 
@@ -141,7 +141,7 @@ namespace PlexCleaner
                 if (!Format.Equals(compare.Format, StringComparison.OrdinalIgnoreCase))
                     return false;
 
-                if (String.IsNullOrEmpty(compare.Profile) || 
+                if (string.IsNullOrEmpty(compare.Profile) || 
                     compare.Profile.Equals("*", StringComparison.OrdinalIgnoreCase) ||
                     Profile.Equals(compare.Profile, StringComparison.OrdinalIgnoreCase))
                     return true;
@@ -283,7 +283,7 @@ namespace PlexCleaner
                 //  https://github.com/mbunkus/mkvtoolnix/issues/2131
                 foreach (SubtitleInfo subtitle in Subtitle)
                     if (subtitle.Codec.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) && 
-                        String.IsNullOrEmpty(subtitle.MuxingMode))
+                        string.IsNullOrEmpty(subtitle.MuxingMode))
                         remux.Subtitle.Add(subtitle);
                     else
                         keep.Subtitle.Add(subtitle);
@@ -573,7 +573,7 @@ namespace PlexCleaner
                     {
                         // We need to exclude cover art, look for mimetype in tags
                         // TODO : Find a more reliable way of identifying cover art
-                        if (!String.IsNullOrEmpty(stream.Tags?.MimeType))
+                        if (!string.IsNullOrEmpty(stream.Tags?.MimeType))
                             continue;
 
                         VideoInfo info = new VideoInfo(stream);

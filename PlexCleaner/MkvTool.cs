@@ -84,13 +84,13 @@ namespace PlexCleaner
 
         public static int MkvMerge(string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MKVToolNix, MkvMergeBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
         public static int MkvMerge(string parameters, out string output)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MKVToolNix, MkvMergeBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -104,13 +104,13 @@ namespace PlexCleaner
 
         public static int MkvPropEdit(string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MKVToolNix, MkvPropEditBinary);
+            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvPropEditBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(ToolOptions.Default.MKVToolNix);
+            return Tools.CombineToolPath(ToolOptions.Default.MkvToolNix);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

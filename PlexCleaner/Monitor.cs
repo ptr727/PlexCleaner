@@ -13,7 +13,7 @@ namespace PlexCleaner
             _watcher = new List<FileSystemWatcher>();
             _watchfolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
             _watchlock = new object();
-            _lastwriteline = String.Empty;
+            _lastwriteline = string.Empty;
             _lastwritelinelock = new object();
         }
 
@@ -216,7 +216,7 @@ namespace PlexCleaner
             }
 
             // Did we get a folder
-            if (String.IsNullOrEmpty(foldername))
+            if (string.IsNullOrEmpty(foldername))
                 return;
             lock (_watchlock)
             {

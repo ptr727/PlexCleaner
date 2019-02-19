@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PlexCleaner
+﻿namespace PlexCleaner
 {
     public class ToolOptions
     {
@@ -14,10 +10,10 @@ namespace PlexCleaner
 
         public string RootPath { get; set; } = @".\Tools\";
         public bool RootRelative { get; set; } = true;
-        public string MKVToolNix { get; set; } = "MKVToolNix";
+        public string MkvToolNix { get; set; } = "MKVToolNix";
         public string Handbrake { get; set; } = "Handbrake";
         public string MediaInfo { get; set; } = "MediaInfo";
-        public string FFMpeg { get; set; } = "FFMpeg";
+        public string FfMpeg { get; set; } = "FFMpeg";
         public string EchoArgs { get; set; } = "EchoArgs";
         public string SevenZip { get; set; } = "7Zip";
     }

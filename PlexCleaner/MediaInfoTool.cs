@@ -104,7 +104,7 @@ namespace PlexCleaner
                     if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
                         break;
                 }
-                if (String.IsNullOrEmpty(line)) throw new ArgumentException("Did not find version number field");
+                if (string.IsNullOrEmpty(line)) throw new ArgumentException("Did not find version number field");
 
                 // Extract the version number from the line
                 // // E.g. Version 17.10, 2017-11-02

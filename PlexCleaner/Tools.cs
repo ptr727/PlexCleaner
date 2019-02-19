@@ -9,7 +9,7 @@ namespace PlexCleaner
         public static bool VerifyTools()
         {
             // Make sure the tools root folder exists
-            if (!Directory.Exists(Tools.GetToolsRoot()))
+            if (!Directory.Exists(GetToolsRoot()))
                 return false;
 
             // Make sure that the 7-Zip tool exists

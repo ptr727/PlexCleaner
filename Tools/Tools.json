@@ -1,21 +1,21 @@
 {
-  "lastcheck": "2018-12-12 19:26:36Z",
+  "lastcheck": "2019-02-19 01:58:28Z",
   "tools": [
     {
-      "filename": "7z1805-extra.7z",
-      "modifiedtime": "2018-04-30 22:09:59Z",
-      "size": 923870,
+      "filename": "7z1806-extra.7z",
+      "modifiedtime": "2018-12-30 01:12:16Z",
+      "size": 926829,
       "tool": "SevenZipTool",
-      "url": "https://www.7-zip.org/a/7z1805-extra.7z",
-      "version": "18.05"
+      "url": "https://www.7-zip.org/a/7z1806-extra.7z",
+      "version": "18.06"
     },
     {
-      "filename": "mkvtoolnix-64-bit-29.0.0.7z",
-      "modifiedtime": "2018-12-01 03:37:37Z",
-      "size": 14618233,
+      "filename": "mkvtoolnix-64-bit-31.0.0.7z",
+      "modifiedtime": "2019-02-09 02:59:17Z",
+      "size": 14813526,
       "tool": "MkvTool",
-      "url": "https://mkvtoolnix.download/windows/releases/29.0.0/mkvtoolnix-64-bit-29.0.0.7z",
-      "version": "29.0.0"
+      "url": "https://mkvtoolnix.download/windows/releases/31.0.0/mkvtoolnix-64-bit-31.0.0.7z",
+      "version": "31.0.0"
     },
     {
       "filename": "ffmpeg-4.1-win64-static.zip",

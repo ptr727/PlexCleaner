@@ -5,6 +5,13 @@ This file contains only information about changes related to that package exclus
 The full history of changes is listed in history.txt in main 7-Zip program.
 
 
+18.06          2018-12-30
+-------------------------
+- The speed for LZMA/LZMA2 compressing was increased by 3-10%,
+  and there are minor changes in compression ratio.
+- Some bugs were fixed.
+
+
 18.05          2018-04-30
 -------------------------
 - The speed for LZMA/LZMA2 compressing was increased 

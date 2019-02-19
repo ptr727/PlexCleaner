@@ -2948,6 +2948,24 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to flush all data cached in memory to storage when closing files
+                        opened for writing.
+                        This can be used to prevent data loss on power outages or to circumvent certain problems
+                        in the operating system or drivers.
+                        The downside is that multiplexing will take longer as mkvmerge will wait until all
+                        data has been written to the storage before exiting.
+                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth discussions
+                        on the pros and cons.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
                   <td>
                      
@@ -2955,6 +2973,18 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                         Forces the translations for the language <span class="parameter">code</span> to be used (e.g.  '<span class="literal">de_DE</span>' for the German
                         translations). Entering '<span class="literal">list</span>' as the <span class="parameter">code</span> will cause the program to output a list of
                         available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to abort after the first warning is emitted. The program's exit
+                        code will be 1.
                         
                      </p>
                      
@@ -4023,7 +4053,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6021">13.3. General notes</a></h2>
+         <h2><a name="d4e6047">13.3. General notes</a></h2>
          
          
          <p>
@@ -4051,7 +4081,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6086">14.1. Introduction</a></h2>
+         <h2><a name="d4e6112">14.1. Introduction</a></h2>
          
          
          
@@ -4359,7 +4389,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6540">17.1. Timestamp file format v1</a></h2>
+         <h2><a name="d4e6566">17.1. Timestamp file format v1</a></h2>
          
          
          <p>
@@ -4377,7 +4407,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6564">17.2. Timestamp file format v2</a></h2>
+         <h2><a name="d4e6590">17.2. Timestamp file format v2</a></h2>
          
          
          
@@ -4396,7 +4426,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6579">17.3. Timestamp file format v3</a></h2>
+         <h2><a name="d4e6605">17.3. Timestamp file format v3</a></h2>
          
          
          <p>
@@ -4417,7 +4447,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6597">17.4. Timestamp file format v4</a></h2>
+         <h2><a name="d4e6623">17.4. Timestamp file format v4</a></h2>
          
          
          <p>

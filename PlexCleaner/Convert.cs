@@ -150,9 +150,9 @@ namespace PlexCleaner
 
             // Create the track number filters
             // The track numbers are reported by MKVMerge --identify, use the track.id values
-            string videotracks = keep.Video.Count > 0 ? $"--video-tracks {String.Join(",", keep.Video.Select(info => info.Id.ToString()))} " : "--no-video ";
-            string audiotracks = keep.Audio.Count > 0 ? $"--audio-tracks {String.Join(",", keep.Audio.Select(info => info.Id.ToString()))} " : "--no-audio ";
-            string subtitletracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {String.Join(",", keep.Subtitle.Select(info => info.Id.ToString()))} " : "--no-subtitles ";
+            string videotracks = keep.Video.Count > 0 ? $"--video-tracks {string.Join(",", keep.Video.Select(info => info.Id.ToString()))} " : "--no-video ";
+            string audiotracks = keep.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keep.Audio.Select(info => info.Id.ToString()))} " : "--no-audio ";
+            string subtitletracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keep.Subtitle.Select(info => info.Id.ToString()))} " : "--no-subtitles ";
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html

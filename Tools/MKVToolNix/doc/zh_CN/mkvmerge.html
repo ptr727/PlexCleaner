@@ -2804,6 +2804,19 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        让程序在关闭以写入模式打开的文件时，强制将内存中已缓存的所有数据写入到存储设备。可用于在电源中断时避免数据损失，或规避操作系统或驱动程序的特定问题。缺点是混流耗时更长，因为
+                        mkvmerge 在退出前需要等待所有数据写入存储设备。关于优劣的深入讨论，请参见 MKVToolNix bug 跟踪平台中的问题 #2469 与问题
+                        #2480。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">语言代码</span></a></td>
                   <td>
                      
@@ -2811,6 +2824,17 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                         强制使用 <span class="parameter">语言代码</span> 所对应的翻译 (例如  '<span class="literal">de_DE</span>'
                         表示德文翻译)。在 <span class="parameter">语言代码</span> 处输入 '<span class="literal">list</span>'
                         可让程序输出可用翻译的列表。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        让程序在出现警告时即中止。程序的退出代码将返回 1。
                         
                      </p>
                      
@@ -3813,7 +3837,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
           ChapterProcessData (二进制)</pre>
          
          
-         <h2><a name="d4e6017">13.3. 一般性备注</a></h2>
+         <h2><a name="d4e6043">13.3. 一般性备注</a></h2>
          
          
          <p>
@@ -3837,7 +3861,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          
          
          
-         <h2><a name="d4e6082">14.1. 介绍</a></h2>
+         <h2><a name="d4e6108">14.1. 介绍</a></h2>
          
          
          
@@ -4127,7 +4151,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          </p>
          
          
-         <h2><a name="d4e6534">17.1. 时间戳文件格式 v1</a></h2>
+         <h2><a name="d4e6560">17.1. 时间戳文件格式 v1</a></h2>
          
          
          <p>
@@ -4143,7 +4167,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6558">17.2. 时间戳文件格式 v2</a></h2>
+         <h2><a name="d4e6584">17.2. 时间戳文件格式 v2</a></h2>
          
          
          
@@ -4159,7 +4183,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6573">17.3. 时间戳文件格式 v3</a></h2>
+         <h2><a name="d4e6599">17.3. 时间戳文件格式 v3</a></h2>
          
          
          <p>
@@ -4177,7 +4201,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6591">17.4. 时间戳文件格式 v4</a></h2>
+         <h2><a name="d4e6617">17.4. 时间戳文件格式 v4</a></h2>
          
          
          <p>

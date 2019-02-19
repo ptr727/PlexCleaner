@@ -3146,6 +3146,23 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.flush_on_close"><span class="option">--flush-on-close</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to flush all data cached in memory to storage when closing
+                        files opened for writing.  This can be used to prevent data loss on power
+                        outages or to circumvent certain problems in the operating system or
+                        drivers.  The downside is that multiplexing will take longer as mkvmerge
+                        will wait until all data has been written to the storage before exiting.
+                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth
+                        discussions on the pros and cons.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">kod</span></a></td>
                   <td>
                      
@@ -3155,6 +3172,18 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
                         translations). Entering '<span class="literal">list</span>' as the
                         <span class="parameter">code</span> will cause the program to output a list of
                         available translations.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.abort_on_warnings"><span class="option">--abort-on-warnings</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Tells the program to abort after the first warning is emitted. The program's
+                        exit code will be 1.
                         
                      </p>
                      
@@ -4290,7 +4319,7 @@ CHAPTER03NAME=Rozdział III</pre>
           ChapterProcessData (liczba binarna)</pre>
          
          
-         <h2><a name="d4e6018">13.3. Uwagi ogólne</a></h2>
+         <h2><a name="d4e6044">13.3. Uwagi ogólne</a></h2>
          
          
          <p>
@@ -4322,7 +4351,7 @@ CHAPTER03NAME=Rozdział III</pre>
          
          
          
-         <h2><a name="d4e6083">14.1. Wprowadzenie</a></h2>
+         <h2><a name="d4e6109">14.1. Wprowadzenie</a></h2>
          
          
          
@@ -4658,7 +4687,7 @@ CHAPTER03NAME=Rozdział III</pre>
          </p>
          
          
-         <h2><a name="d4e6536">17.1. Format kodów czasowych v1</a></h2>
+         <h2><a name="d4e6562">17.1. Format kodów czasowych v1</a></h2>
          
          
          <p>
@@ -4678,7 +4707,7 @@ przykładowo 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6560">17.2. Format kodów czasowych v2</a></h2>
+         <h2><a name="d4e6586">17.2. Format kodów czasowych v2</a></h2>
          
          
          
@@ -4697,7 +4726,7 @@ przykładowo 27.930
 80</pre>
          
          
-         <h2><a name="d4e6575">17.3. Format kodów czasowych v3</a></h2>
+         <h2><a name="d4e6601">17.3. Format kodów czasowych v3</a></h2>
          
          
          <p>
@@ -4720,7 +4749,7 @@ przerwa, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6593">17.4. Format kodów czasowych v4</a></h2>
+         <h2><a name="d4e6619">17.4. Format kodów czasowych v4</a></h2>
          
          
          <p>

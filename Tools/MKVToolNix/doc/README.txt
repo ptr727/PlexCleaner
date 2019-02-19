@@ -1,4 +1,4 @@
-MKVToolNix 29.0.0
+MKVToolNix 31.0.0
 =================
 
 # Table of contents
@@ -144,7 +144,7 @@ These libraries are:
 Other libraries are optional and only limit the features that are
 built. These include:
 
-- [Qt](http://www.qt.io/) v5.3 or newer — a cross-platform GUI
+- [Qt](http://www.qt.io/) v5.4 or newer — a cross-platform GUI
   toolkit. You need this if you want to use the MKVToolNix GUI.
 
 - [cmark](https://github.com/commonmark/cmark) — the CommonMark
@@ -379,7 +379,7 @@ files.
 
 JSON for Modern C++
 
-  * Copyright: 2013-2016 Niels Lohmann
+  * Copyright: 2013-2018 Niels Lohmann
   * License: MIT (see `doc/licenses/nlohmann-json-MIT.txt`)
   * URL: https://github.com/nlohmann/json
   * Corresponding files: `lib/nlohmann-json/*`
@@ -388,7 +388,7 @@ JSON for Modern C++
 
 An XML processing library
 
-  * Copyright: 2006–2018 by Arseny Kapoulkine <arseny.kapoulkine@gmail.com>
+  * Copyright: 2006–2019 by Arseny Kapoulkine <arseny.kapoulkine@gmail.com>
   * License: MIT (see `doc/licenses/pugixml-MIT.txt`)
   * URL: http://pugixml.org/
   * Corresponding files: `lib/pugixml/*`

@@ -40,7 +40,7 @@ namespace PlexCleaner
             // zxx = no linguistic content, und = undetermined
             // Default language
             _defaultlanguage = EncodeOptions.Default.DefaultLanguage;
-            if (String.IsNullOrEmpty(_defaultlanguage))
+            if (string.IsNullOrEmpty(_defaultlanguage))
                 _defaultlanguage = "eng";
 
             // Languages to keep, always keep no linguistic content and the default language
@@ -75,7 +75,7 @@ namespace PlexCleaner
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
             _audioencodecodec = EncodeOptions.Default.AudioEncodeCodec;
-            if (String.IsNullOrEmpty(_audioencodecodec))
+            if (string.IsNullOrEmpty(_audioencodecodec))
                 _audioencodecodec = "ac3";
             stringlist = EncodeOptions.Default.ReEncodeAudioCodec.Split(',').ToList();
             _reencodeaudiocodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
