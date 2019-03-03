@@ -2,7 +2,7 @@
   "profiles": {
     "PlexCleanerCore": {
       "commandName": "Project",
-      "commandLineArgs": "--Process --Folders \"D:\\Rip\""
+      "commandLineArgs": "--Remux --Folders \"D:\\Temp\""
     }
   }
 }
