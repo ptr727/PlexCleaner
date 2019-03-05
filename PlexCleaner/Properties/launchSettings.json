@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "PlexCleanerCore": {
+    "Process Folders": {
       "commandName": "Project",
-      "commandLineArgs": "--Remux --Folders \"D:\\Temp\""
+      "commandLineArgs": "--Process --Folders \"D:\\Temp\""
     }
   }
 }
