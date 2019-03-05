@@ -15,7 +15,7 @@ namespace PlexCleaner
             // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
 
             // Sidecar extension, use the enum names
-            _sidecarextensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            sidecarExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 $".{Info.MediaInfo.ParserType.MediaInfo.ToString()}",
                 $".{Info.MediaInfo.ParserType.MkvMerge.ToString()}",
@@ -24,32 +24,32 @@ namespace PlexCleaner
 
             // Wanted extensions, always keep .mkv and sidecar files
             List<string> stringlist = EncodeOptions.Default.KeepExtensions.Split(',').ToList();
-            _keepextensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+            keepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 ".mkv"
             };
-            foreach (string extension in _sidecarextensions)
-                _keepextensions.Add(extension);
+            foreach (string extension in sidecarExtensions)
+                keepExtensions.Add(extension);
 
             // Containers types that can be remuxed to MKV
             stringlist = EncodeOptions.Default.ReMuxExtensions.Split(',').ToList();
-            _remuxextensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            remuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Languages are in short form using ISO 639-2 notation
             // https://www.loc.gov/standards/iso639-2/php/code_list.php
             // zxx = no linguistic content, und = undetermined
             // Default language
-            _defaultlanguage = EncodeOptions.Default.DefaultLanguage;
-            if (string.IsNullOrEmpty(_defaultlanguage))
-                _defaultlanguage = "eng";
+            defaultLanguage = EncodeOptions.Default.DefaultLanguage;
+            if (string.IsNullOrEmpty(defaultLanguage))
+                defaultLanguage = "eng";
 
             // Languages to keep, always keep no linguistic content and the default language
             // The languages must be in ISO 639-2 form
             stringlist = EncodeOptions.Default.KeepLanguages.Split(',').ToList();
-            _keeplanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+            keepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 "zxx",
-                _defaultlanguage
+                defaultLanguage
             };
 
             // Re-encode any video track that match the list
@@ -57,7 +57,7 @@ namespace PlexCleaner
             // All other formats will be encoded to h264
             List<string> codeclist = EncodeOptions.Default.ReEncodeVideoCodec.Split(',').ToList();
             List<string> profilelist = EncodeOptions.Default.ReEncodeVideoProfile.Split(',').ToList();
-            _reencodevideocodecs = new List<Info.VideoInfo>();
+            reencodeVideoCodecs = new List<Info.VideoInfo>();
             for (int i = 0; i < codeclist.Count; i++)
             {
                 // We match against the format and profile
@@ -68,39 +68,37 @@ namespace PlexCleaner
                     Format = codeclist.ElementAt(i),
                     Profile = profilelist.ElementAt(i)
                 };
-                _reencodevideocodecs.Add(videoinfo);
+                reencodeVideoCodecs.Add(videoinfo);
             }
 
             // Re-encode any audio track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
-            _audioencodecodec = EncodeOptions.Default.AudioEncodeCodec;
-            if (string.IsNullOrEmpty(_audioencodecodec))
-                _audioencodecodec = "ac3";
+            audioEncodeCodec = EncodeOptions.Default.AudioEncodeCodec;
+            if (string.IsNullOrEmpty(audioEncodeCodec))
+                audioEncodeCodec = "ac3";
             stringlist = EncodeOptions.Default.ReEncodeAudioCodec.Split(',').ToList();
-            _reencodeaudiocodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            reencodeAudioCodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Video encode constant quality factor, e.g. 20
-            _videoencodequality = EncodeOptions.Default.VideoEncodeQuality;
-            if (_videoencodequality == 0)
-                _videoencodequality = 20;
+            videoEncodeQuality = EncodeOptions.Default.VideoEncodeQuality;
+            if (videoEncodeQuality == 0)
+                videoEncodeQuality = 20;
         }
 
-        public bool ProcessFolders(List<string> folders)
+        public bool ProcessFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("Processing folders ...");
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("Processing files ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
-            // Create a list of all the directories and files to process
-            CreateDirectoryList(folders);
-
             // Process all files
             int errorcount = 0;
             int modifiedcount = 0;
-            foreach (FileInfo fileinfo in _fileinfolist)
+            foreach (FileInfo fileinfo in fileList)
             {
                 // Process the file
                 if (!ProcessFile(fileinfo, out bool modified))
@@ -115,21 +113,10 @@ namespace PlexCleaner
                 // Next file
             }
 
-            // Delete all empty folders
-            if (AppOptions.Default.DeleteEmptyFolders)
-                foreach (string folder in folders)
-                {
-                    ConsoleEx.WriteLine($"Deleting empty folders : \"{folder}\"");
-                    int deleted = 0;
-                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
-                    modifiedcount += deleted;
-                }
-
             // Stop the timer
             timer.Stop();
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Total directories : {_dirinfolist.Count}");
-            ConsoleEx.WriteLine($"Total files : {_fileinfolist.Count}");
+            ConsoleEx.WriteLine($"Total files : {fileList.Count}");
             ConsoleEx.WriteLine($"Modified files : {modifiedcount}");
             ConsoleEx.WriteLine($"Error files : {errorcount}");
             ConsoleEx.WriteLine($"Processing time : {timer.Elapsed}");
@@ -138,21 +125,53 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool ReMuxFolders(List<string> folders)
+        public bool ProcessFolders(List<string> folderList)
         {
-            ConsoleEx.WriteLine("ReMuxing folders ...");
+            // Create the file and directory list
+            List<FileInfo> fileList;
+            List<DirectoryInfo> directoryList;
+            if (CreateFileAndFolderList(folderList, out fileList, out directoryList))
+                return false;
+
+            // Process the files
+            return ProcessFiles(fileList);
+        }
+
+        public bool DeleteEmptyFolders(List<string> folderList)
+        {
+            if (!AppOptions.Default.DeleteEmptyFolders)
+                return true;
+
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("Deleting empty folders ...");
+
+            // Delete all empty folders
+            int deleted = 0;
+            foreach (string folder in folderList)
+            {
+                ConsoleEx.WriteLine($"Deleting empty folders : \"{folder}\"");
+                FileEx.DeleteEmptyDirectories(folder, ref deleted);
+            }
+
+            ConsoleEx.WriteLine($"Deleted folders : {deleted}");
+            ConsoleEx.WriteLine("");
+
+            return true;
+        }
+
+        public bool ReMuxFiles(List<FileInfo> fileList)
+        {
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("ReMuxing files ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
-            // Create a list of all the directories and files to process
-            CreateDirectoryList(folders);
-
             // Process all files
             int errorcount = 0;
             int modifiedcount = 0;
-            foreach (FileInfo fileinfo in _fileinfolist)
+            foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
                 if (Program.Default.Cancel.State)
@@ -160,7 +179,7 @@ namespace PlexCleaner
 
                 // Handle only MKV files, and files in the remux extension list
                 if (!Tools.IsMkvFile(fileinfo) &&
-                    !_remuxextensions.Contains(fileinfo.Extension))
+                    !remuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
                 // ReMux file
@@ -175,8 +194,7 @@ namespace PlexCleaner
             // Stop the timer
             timer.Stop();
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Total directories : {_dirinfolist.Count}");
-            ConsoleEx.WriteLine($"Total files : {_fileinfolist.Count}");
+            ConsoleEx.WriteLine($"Total files : {fileList.Count}");
             ConsoleEx.WriteLine($"Modified files : {modifiedcount}");
             ConsoleEx.WriteLine($"Error files : {errorcount}");
             ConsoleEx.WriteLine($"Processing time : {timer.Elapsed}");
@@ -185,21 +203,19 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool ReEncodeFolders(List<string> folders)
+        public bool ReEncodeFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("ReEncoding folders ...");
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("ReEncoding files ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
-            // Create a list of all the directories and files to process
-            CreateDirectoryList(folders);
-
             // Process all files
             int errorcount = 0;
             int modifiedcount = 0;
-            foreach (FileInfo fileinfo in _fileinfolist)
+            foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
                 if (Program.Default.Cancel.State)
@@ -222,8 +238,7 @@ namespace PlexCleaner
             // Stop the timer
             timer.Stop();
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Total directories : {_dirinfolist.Count}");
-            ConsoleEx.WriteLine($"Total files : {_fileinfolist.Count}");
+            ConsoleEx.WriteLine($"Total files : {fileList.Count}");
             ConsoleEx.WriteLine($"Modified files : {modifiedcount}");
             ConsoleEx.WriteLine($"Error files : {errorcount}");
             ConsoleEx.WriteLine($"Processing time : {timer.Elapsed}");
@@ -232,16 +247,14 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool CreateTagMapFolders(List<string> folders)
+        public bool CreateTagMapFiles(List<FileInfo> fileList)
         {
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Creating tag map for folders ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
-
-            // Create a list of all the directories and files to process
-            CreateDirectoryList(folders);
 
             // We want to create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
             // And how they map to each other for the same media file
@@ -252,7 +265,7 @@ namespace PlexCleaner
             // Process all files
             int errorcount = 0;
             int modifiedcount = 0;
-            foreach (FileInfo fileinfo in _fileinfolist)
+            foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
                 if (Program.Default.Cancel.State)
@@ -315,8 +328,7 @@ namespace PlexCleaner
             // Stop the timer
             timer.Stop();
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Total directories : {_dirinfolist.Count}");
-            ConsoleEx.WriteLine($"Total files : {_fileinfolist.Count}");
+            ConsoleEx.WriteLine($"Total files : {fileList.Count}");
             ConsoleEx.WriteLine($"Modified files : {modifiedcount}");
             ConsoleEx.WriteLine($"Error files : {errorcount}");
             ConsoleEx.WriteLine($"Processing time : {timer.Elapsed}");
@@ -325,21 +337,19 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool WriteSidecarFolders(List<string> folders)
+        public bool WriteSidecarFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("Writing sidecar files for folders ...");
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("Writing sidecar files ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
-            // Create a list of all the directories and files to process
-            CreateDirectoryList(folders);
-
             // Process all files
             int errorcount = 0;
             int modifiedcount = 0;
-            foreach (FileInfo fileinfo in _fileinfolist)
+            foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
                 if (Program.Default.Cancel.State)
@@ -362,8 +372,7 @@ namespace PlexCleaner
             // Stop the timer
             timer.Stop();
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Total directories : {_dirinfolist.Count}");
-            ConsoleEx.WriteLine($"Total files : {_fileinfolist.Count}");
+            ConsoleEx.WriteLine($"Total files : {fileList.Count}");
             ConsoleEx.WriteLine($"Modified files : {modifiedcount}");
             ConsoleEx.WriteLine($"Error files : {errorcount}");
             ConsoleEx.WriteLine($"Processing time : {timer.Elapsed}");
@@ -378,8 +387,8 @@ namespace PlexCleaner
             modified = false;
 
             // Delete unwanted files, anything not in our extensions lists
-            if (!_keepextensions.Contains(fileinfo.Extension)  &&
-                !_remuxextensions.Contains(fileinfo.Extension))
+            if (!keepExtensions.Contains(fileinfo.Extension)  &&
+                !remuxExtensions.Contains(fileinfo.Extension))
             {
                 // Delete the file
                 ConsoleEx.WriteLine($"Deleting file with undesired extension : {fileinfo.Extension}");
@@ -392,7 +401,7 @@ namespace PlexCleaner
             }
 
             // Sidecar files must have a matching MKV media file
-            if (_sidecarextensions.Contains(fileinfo.Extension))
+            if (sidecarExtensions.Contains(fileinfo.Extension))
             {
                 // Get the matching MKV file
                 string mediafile = Path.ChangeExtension(fileinfo.FullName, ".mkv");
@@ -411,14 +420,14 @@ namespace PlexCleaner
             }
 
             // ReMux undesirable containers matched by extension
-            if (_remuxextensions.Contains(fileinfo.Extension))
+            if (remuxExtensions.Contains(fileinfo.Extension))
             {
                 // ReMux the file
                 ConsoleEx.WriteLine($"ReMux file matched by extension : {fileinfo.Extension}");
                 if (!Convert.ReMuxToMkv(fileinfo.FullName, out string outputname))
                     return false;
 
-                // Continue processing with the new name
+                // Continue processing with the new file name
                 modified = true;
                 fileinfo = new FileInfo(outputname);
             }
@@ -429,23 +438,22 @@ namespace PlexCleaner
                 return true;
 
             // Get the file media info
-            // We use various tools and various data, so just collect all the tools data at the same time
             if (!GetMediaInfo(fileinfo, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo))
                 return false;
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
             // Logic uses FFProbe data
-            if (ffprobe.FindNeedReEncode(_reencodevideocodecs, _reencodeaudiocodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
+            if (ffprobe.FindNeedReEncode(reencodeVideoCodecs, reencodeAudioCodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be re-encoded:");
                 keep.WriteLine("Passthrough");
                 reencode.WriteLine("ReEncode");
 
-                // Convert streams that need re-encoding, copy the rest
-                if (!Convert.ConvertToMkv(fileinfo.FullName, _videoencodequality, _audioencodecodec, keep, reencode, out string outputname))
+                // Convert streams that need re-encoding, copy the rest of the streams as is
+                if (!Convert.ConvertToMkv(fileinfo.FullName, videoEncodeQuality, audioEncodeCodec, keep, reencode, out string outputname))
                     return false;
 
-                // Continue processing with the new name and new media info
+                // Continue processing with the new file name and new media info
                 modified = true;
                 fileinfo = new FileInfo(outputname);
                 if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
@@ -456,13 +464,13 @@ namespace PlexCleaner
             // Logic uses MKVMerge data
             if (mkvmerge.FindUnknownLanguage(out Info.MediaInfo known, out Info.MediaInfo unknown))
             {
-                ConsoleEx.WriteLine($"Found tracks with an unknown language, setting to \"{_defaultlanguage}\":");
+                ConsoleEx.WriteLine($"Found tracks with an unknown language, setting to \"{defaultLanguage}\":");
                 known.WriteLine("Known");
                 unknown.WriteLine("Unknown");
 
                 // Set the track language to the default language
                 // MKVPropEdit uses track numbers, not track id's
-                if (unknown.GetTrackList().Any(info => !Info.SetMkvTrackLanguage(fileinfo.FullName, info.Number, _defaultlanguage)))
+                if (unknown.GetTrackList().Any(info => !Info.SetMkvTrackLanguage(fileinfo.FullName, info.Number, defaultLanguage)))
                 {
                     return false;
                 }
@@ -475,7 +483,7 @@ namespace PlexCleaner
             }
 
             // Filter out all the undesired tracks
-            if (mkvmerge.FindNeedRemove(_keeplanguages, out keep, out Info.MediaInfo remove))
+            if (mkvmerge.FindNeedRemove(keepLanguages, out keep, out Info.MediaInfo remove))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be removed:");
                 keep.WriteLine("Keep");
@@ -512,35 +520,24 @@ namespace PlexCleaner
             }
 
             // TODO : Verify content can DirectPlay
-            // Shield by default only DirectPlay's H264 content up to level 5.1
-            /*
-            string profile = mediainfo.Video.First().Profile;
-            if (!String.IsNullOrEmpty(profile) && profile.Equals("High@5.2"))
-            {
-                ConsoleEx.WriteLineError("Video may not DirectPlay");
-            }
-            */
-
             // TODO : Verify the integrity of the media file and the streams in the file
-            // Info.VerifyMedia(fileinfo.FullName)
 
-            // Integrity check
-            // Our file must have 1 video track
-            // One or more audio tracks
-            // Zero or more subtitle tracks
-            if (mediainfo.Video.Count >= 1 && mediainfo.Audio.Count >= 1)
-                return !modified || GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo);
-            ConsoleEx.WriteLineError($"File missing required tracks : Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
+            // Stream check
+            // Our file must have just 1 video track, 1 or more audio tracks, 0 or more subtitle tracks
+            if (mediainfo.Video.Count != 1 || mediainfo.Audio.Count == 0)
+            {
+                // File is missing required streams
+                ConsoleEx.WriteLineError($"File missing required tracks : Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
 
-            // Delete the file
-            if (AppOptions.Default.DeleteFailedFiles)
-                FileEx.DeleteFile(fileinfo.FullName);
+                // Delete the file
+                if (AppOptions.Default.DeleteFailedFiles)
+                    FileEx.DeleteFile(fileinfo.FullName);
 
-            return false;
-
-            // If we modified the file update the sidecar
+                return false;
+            }
 
             // Done
+            return true;
         }
 
         private bool ReMuxFile(FileInfo fileinfo, out bool modified)
@@ -734,45 +731,48 @@ namespace PlexCleaner
             }
         }
 
-        private void CreateDirectoryList(List<string> folders)
+        public static bool CreateFileAndFolderList(List<string> folderList, out List<FileInfo> fileList, out List<DirectoryInfo> directoryList)
         {
-            // Create a list of all the directories to process
-            _dirinfolist = new List<DirectoryInfo>();
-            foreach (string folder in folders)
-            {
-                // Add this folder
-                DirectoryInfo dirinfo = new DirectoryInfo(folder);
-                _dirinfolist.Add(dirinfo);
-                ConsoleEx.WriteLine($"Enumerating directories : \"{dirinfo.FullName}\"");
+            directoryList = new List<DirectoryInfo>();
+            fileList = new List<FileInfo>();
 
-                // Recursive add all child folders
-                _dirinfolist.AddRange(dirinfo.EnumerateDirectories("*", SearchOption.AllDirectories));
+            try
+            {
+                // Add all directories from the commandline folders
+                foreach (string folder in folderList)
+                {
+                    // Add this folder to the directory list
+                    DirectoryInfo dirinfo = new DirectoryInfo(folder);
+                    directoryList.Add(dirinfo);
+
+                    // Recursive add all child folders
+                    directoryList.AddRange(dirinfo.EnumerateDirectories("*", SearchOption.AllDirectories));
+                }
+
+                // Add all files from all the directories to the file list
+                foreach (DirectoryInfo dirinfo in directoryList)
+                {
+                    // Add all files in this folder
+                    fileList.AddRange(dirinfo.EnumerateFiles("*.*", SearchOption.TopDirectoryOnly));
+                }
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
             }
 
-            // Create a list of all the files to process
-            _fileinfolist = new List<FileInfo>();
-            foreach (DirectoryInfo dirinfo in _dirinfolist)
-            {
-                // Add all files in this folder
-                ConsoleEx.WriteLine($"Enumerating files : \"{dirinfo.FullName}\"");
-                _fileinfolist.AddRange(dirinfo.EnumerateFiles("*.*", SearchOption.TopDirectoryOnly));
-            }
-
-            // Report
-            ConsoleEx.WriteLine($"Discovered {_dirinfolist.Count} directories and {_fileinfolist.Count} files");
-            ConsoleEx.WriteLine("");
+            return true;
         }
 
-        private HashSet<string> _sidecarextensions;
-        private HashSet<string> _keepextensions;
-        private HashSet<string> _remuxextensions;
-        private HashSet<string> _reencodeaudiocodecs;
-        private HashSet<string> _keeplanguages;
-        private string _defaultlanguage;
-        private string _audioencodecodec;
-        private int _videoencodequality;
-        private List<Info.VideoInfo> _reencodevideocodecs;
-        private List<DirectoryInfo> _dirinfolist;
-        private List<FileInfo> _fileinfolist;
+        private HashSet<string> sidecarExtensions;
+        private HashSet<string> keepExtensions;
+        private HashSet<string> remuxExtensions;
+        private HashSet<string> reencodeAudioCodecs;
+        private HashSet<string> keepLanguages;
+        private string defaultLanguage;
+        private string audioEncodeCodec;
+        private int videoEncodeQuality;
+        private List<Info.VideoInfo> reencodeVideoCodecs;
     }
 }

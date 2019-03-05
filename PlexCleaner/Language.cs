@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Globalization;
 using InsaneGenius.Utilities;
+using System.Collections.Generic;
 
 namespace PlexCleaner
 {
@@ -10,10 +11,12 @@ namespace PlexCleaner
         public static Iso6393 GetIso6393(string language)
         {
             // Create list if it does not exist
-            if (Program.Default.Iso6393List == null)
+            if (iso6393List == null)
             {
-                Program.Default.Iso6393List = Iso6393.Create();
+                iso6393List = Iso6393.Create();
             }
+
+            // TODO : Call Iso6393.FromString() instead
 
             // Match the input string type
             Iso6393 lang;
@@ -28,26 +31,26 @@ namespace PlexCleaner
             if (language.Length > 3)
             {
                 // Try long form
-                lang = Program.Default.Iso6393List.FirstOrDefault(item => item.RefName.Equals(language, StringComparison.OrdinalIgnoreCase));
+                lang = iso6393List.FirstOrDefault(item => item.RefName.Equals(language, StringComparison.OrdinalIgnoreCase));
                 if (lang != null)
                     return lang;
             }
             if (language.Length == 3)
             {
                 // Try 639-3
-                lang = Program.Default.Iso6393List.FirstOrDefault(item =>
+                lang = iso6393List.FirstOrDefault(item =>
                     item.Id.Equals(language, StringComparison.OrdinalIgnoreCase));
                 if (lang != null)
                     return lang;
 
                 // Try the 639-2/B
-                lang = Program.Default.Iso6393List.FirstOrDefault(item =>
+                lang = iso6393List.FirstOrDefault(item =>
                     item.Part2B.Equals(language, StringComparison.OrdinalIgnoreCase));
                 if (lang != null)
                     return lang;
 
                 // Try the 639-2/T
-                lang = Program.Default.Iso6393List.FirstOrDefault(item =>
+                lang = iso6393List.FirstOrDefault(item =>
                     item.Part2T.Equals(language, StringComparison.OrdinalIgnoreCase));
                 if (lang != null)
                     return lang;
@@ -55,7 +58,7 @@ namespace PlexCleaner
             if (language.Length == 2)
             {
                 // Try 639-1
-                lang = Program.Default.Iso6393List.FirstOrDefault(item =>
+                lang = iso6393List.FirstOrDefault(item =>
                     item.Part1.Equals(language, StringComparison.OrdinalIgnoreCase));
                 if (lang != null)
                     return lang;
@@ -65,5 +68,6 @@ namespace PlexCleaner
             return null;
         }
 
+        private static List<Iso6393> iso6393List = Iso6393.Create();
     }
 }

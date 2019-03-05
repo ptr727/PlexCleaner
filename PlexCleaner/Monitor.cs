@@ -19,6 +19,7 @@ namespace PlexCleaner
 
         public bool MonitorFolders(List<string> folders)
         {
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Monitoring folders ...");
 
             void Changehandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
@@ -82,9 +83,10 @@ namespace PlexCleaner
 
                 // Process changes in the watched folders
                 foreach (string folder in watchlist)
-                    ConsoleEx.WriteLine($"Processing folder : \"{folder}\"");
+                    ConsoleEx.WriteLine($"Monitored changes in : \"{folder}\"");
                 Process process = new Process();
                 process.ProcessFolders(watchlist);
+                process.DeleteEmptyFolders(watchlist);
             }
 
             // Disable event watching

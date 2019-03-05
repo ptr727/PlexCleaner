@@ -25,15 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="mscorlib">
-      <HintPath>mscorlib</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <HintPath>System</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="appSettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

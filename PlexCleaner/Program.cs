@@ -12,9 +12,10 @@ namespace PlexCleaner
 {
     public class Program
     {
-        // Options: Process, ReMux, ReEncode, WriteSidecar, CreateTagMap, CheckForTools, Monitor, Folders
+        // Options: Process, ReMux, ReEncode, WriteSidecar, CreateTagMap, CheckForTools, Monitor, Folders, Files
         // Example input:
         // PlexCleaner.exe --Process --Folders "c:\foo" "d:\bar"
+        // PlexCleaner.exe --Process --Files "c:\foo\bar.mp4" "d:\bar\foo.mkv"
         // PlexCleaner.exe --Monitor --Folders "c:\foo" "d:\bar"
         // PlexCleaner.exe --ReMux --Folders "c:\foo" "d:\bar"
         // PlexCleaner.exe --ReEncode --Folders "c:\foo" "d:\bar"
@@ -34,15 +35,12 @@ namespace PlexCleaner
             config.Bind(options);
 
             // Make sure that the tools folder exists
-            if (Tools.VerifyTools())
-            { 
-                ConsoleEx.WriteLine($"Using Tools from : {Tools.GetToolsRoot()}");
-            }
-            else
-            { 
+            if (!Tools.VerifyTools())
+            {
                 ConsoleEx.WriteLineError($"Tools folder or 7-Zip does not exist : {Tools.GetToolsRoot()}");
                 return -1;
             }
+            ConsoleEx.WriteLine($"Using Tools from : {Tools.GetToolsRoot()}");
 
             // TODO : Find a .NET Core replacement
             // https://github.com/dotnet/corefx/issues/16596
@@ -90,8 +88,8 @@ namespace PlexCleaner
 
         private Program(Commands commands, Options options)
         {
-            ProgCommands = commands;
-            ProgOptions = options;
+            ProgramCommands = commands;
+            ProgramOptions = options;
 
             // Share the cancel object and settings with the utilities FileEx project
             FileEx.Options.TestNoModify = AppOptions.Default.TestNoModify;
@@ -105,23 +103,20 @@ namespace PlexCleaner
 
         private int Run()
         {
+            // Create the list of files and folders to process
+            if (!CreateFileList())
+                return -1;
+
             // Register cancel handler
             void Cancelhandler(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
             Console.CancelKeyPress += Cancelhandler;
 
-            // Process the commands
+            // Process all the commands
             int ret;
             while (true)
             {
-                // Test for existence and normalize the folder paths
-                if (!NormalizeFolders())
-                {
-                    ret = -1;
-                    break;
-                }
-
                 // Process
-                if (ProgCommands.Process &&
+                if (ProgramCommands.Process &&
                     !Process())
                 {
                     ret = -1;
@@ -129,7 +124,7 @@ namespace PlexCleaner
                 }
 
                 // ReMux
-                if (ProgCommands.ReMux &&
+                if (ProgramCommands.ReMux &&
                     !ReMux())
                 {
                     ret = -1;
@@ -137,7 +132,7 @@ namespace PlexCleaner
                 }
 
                 // ReEncode
-                if (ProgCommands.ReEncode &&
+                if (ProgramCommands.ReEncode &&
                     !ReEncode())
                 {
                     ret = -1;
@@ -145,7 +140,7 @@ namespace PlexCleaner
                 }
 
                 // WriteSidecar
-                if (ProgCommands.WriteSidecar &&
+                if (ProgramCommands.WriteSidecar &&
                     !WriteSidecar())
                 {
                     ret = -1;
@@ -153,7 +148,7 @@ namespace PlexCleaner
                 }
 
                 // CreateTagMap
-                if (ProgCommands.CreateTagMap &&
+                if (ProgramCommands.CreateTagMap &&
                     !CreateTagMap())
                 {
                     ret = -1;
@@ -161,7 +156,7 @@ namespace PlexCleaner
                 }
 
                 // CheckForTools
-                if (ProgCommands.CheckForTools &&
+                if (ProgramCommands.CheckForTools &&
                     !CheckForTools())
                 {
                     ret = -1;
@@ -169,7 +164,7 @@ namespace PlexCleaner
                 }
 
                 // Monitor
-                if (ProgCommands.Monitor &&
+                if (ProgramCommands.Monitor &&
                     !Monitor())
                 {
                     ret = -1;
@@ -187,37 +182,38 @@ namespace PlexCleaner
             return ret;
         }
 
-        private bool NormalizeFolders()
+        private bool CreateFileList()
         {
-            List<string> infolders = ProgCommands.Folders.ToList();
-            List<string> norfolders = new List<string>();
-            foreach (string infolder in infolders)
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine("Creating file and folder list ...");
+
+            // Trim quotes from input paths
+            ProgramCommands.Folders = ProgramCommands.Folders.Select(folder => folder.Trim('"'));
+            ProgramCommands.Files = ProgramCommands.Files.Select(file => file.Trim('"'));
+
+            // Create the file and directory list
+            if (!PlexCleaner.Process.CreateFileAndFolderList(ProgramCommands.Folders.ToList(), out fileList, out directoryList))
+                return false;
+
+            try
             {
-                string norfolder;
-                try
+                // Add all the commandline files to the file list
+                foreach (string file in ProgramCommands.Files)
                 {
-                    // Normalize the folder
-                    norfolder = Path.GetFullPath(infolder.Trim('"'));
-
-                    // Make sure it exists
-                    if (!Directory.Exists(norfolder))
-                    {
-                        ConsoleEx.WriteLineError($"Folder does not exist : \"{infolder}\"");
-                        return false;
-                    }
+                    // Add the file to the list
+                    FileInfo fileinfo = new FileInfo(file);
+                    fileList.Add(fileinfo);
                 }
-                catch (Exception)
-                {
-                    ConsoleEx.WriteLineError($"Problem with folder : \"{infolder}\"");
-                    return false;
-                }
-
-                // Save normalized folder
-                norfolders.Add(norfolder);
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
             }
 
-            // Swap the input folders with the normalized folders
-            ProgCommands.Folders = norfolders;
+            // Report
+            ConsoleEx.WriteLine($"Discovered {directoryList.Count} directories and {fileList.Count} files");
+            ConsoleEx.WriteLine("");
 
             return true;
         }
@@ -225,31 +221,32 @@ namespace PlexCleaner
         private bool Process()
         {
             Process process = new Process();
-            return process.ProcessFolders(ProgCommands.Folders.ToList());
+            return (process.ProcessFiles(fileList) && 
+                process.DeleteEmptyFolders(ProgramCommands.Folders.ToList()));
         }
 
         private bool ReMux()
         {
             Process process = new Process();
-            return process.ReMuxFolders(ProgCommands.Folders.ToList());
+            return process.ReMuxFiles(fileList);
         }
 
         private bool ReEncode()
         {
             Process process = new Process();
-            return process.ReEncodeFolders(ProgCommands.Folders.ToList());
+            return process.ReEncodeFiles(fileList);
         }
 
         private bool WriteSidecar()
         {
             Process process = new Process();
-            return process.WriteSidecarFolders(ProgCommands.Folders.ToList());
+            return process.WriteSidecarFiles(fileList);
         }
 
         private bool CreateTagMap()
         {
             Process process = new Process();
-            return process.CreateTagMapFolders(ProgCommands.Folders.ToList());
+            return process.CreateTagMapFiles(fileList);
         }
 
         private bool CheckForTools()
@@ -260,7 +257,7 @@ namespace PlexCleaner
         private bool Monitor()
         {
             Monitor monitor = new Monitor();
-            return monitor.MonitorFolders(ProgCommands.Folders.ToList());
+            return monitor.MonitorFolders(ProgramCommands.Folders.ToList());
         }
 
         private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
@@ -272,11 +269,13 @@ namespace PlexCleaner
             program.Cancel.State = true;
         }
 
-        private Commands ProgCommands { get; }
-        public Options ProgOptions { get; }
+        private List<DirectoryInfo> directoryList;
+        private List<FileInfo> fileList;
+
+        private Commands ProgramCommands { get; }
+        public Options ProgramOptions { get; }
         public Signal Cancel { get; }
 
-        public List<Iso6393> Iso6393List;
         public static Program Default;
     }
 }
