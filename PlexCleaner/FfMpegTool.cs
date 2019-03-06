@@ -60,6 +60,7 @@ namespace PlexCleaner
         public static int FfMpeg(string parameters)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.FfMpeg, FfMpegBinary);
+            ConsoleEx.WriteLineTool($"FFMpeg : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -74,6 +75,7 @@ namespace PlexCleaner
         public static int FfProbe(string parameters, out string output, out string error)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.FfMpeg, FfProbeBinary);
+            ConsoleEx.WriteLineTool($"FFProbe : {parameters}");
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 

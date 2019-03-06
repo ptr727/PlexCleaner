@@ -71,6 +71,7 @@ namespace PlexCleaner
         public static int MediaInfo(string parameters, out string output)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.MediaInfo, MediaInfoBinary);
+            ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
 

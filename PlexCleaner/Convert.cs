@@ -156,7 +156,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = AppOptions.Default.TestSnippets ? MkvMergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? mkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -172,7 +172,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = AppOptions.Default.TestSnippets ? MkvMergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? mkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -198,7 +198,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -217,7 +217,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -331,8 +331,8 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
-            string commandline = $"-v warning -i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
+            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
+            string commandline = $"{ffmpegPrefix} -i \"{inputname}\" {snippets} {input} {output} {ffmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
@@ -347,10 +347,10 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputname);
 
             // Create the FFmpeg commandline and execute
-            // Copy all streams
+            // Copy audio and subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = AppOptions.Default.TestSnippets ? FfMpegSnippet : "";
-            string commandline = $"-v warning -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -f matroska \"{outputname}\"";
+            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
+            string commandline = $"{ffmpegPrefix} -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy {ffmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
@@ -358,7 +358,9 @@ namespace PlexCleaner
         }
 
         // File split options
-        private const string FfMpegSnippet = "-ss 0 -t 60";
-        private const string MkvMergeSnippet = "--split parts:00:00:00-00:01:00";
+        private const string ffmpegSnippet = "-ss 0 -t 60";
+        private const string ffmpegPrefix = "-v warning"; // info
+        private const string ffmpegPostfix = "-max_muxing_queue_size 1024"; // -analyzeduration 100M -probesize 100M 
+        private const string mkvmergeSnippet = "--split parts:00:00:00-00:01:00";
     }
 }

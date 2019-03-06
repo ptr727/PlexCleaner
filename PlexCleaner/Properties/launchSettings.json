@@ -1,8 +1,20 @@
 {
   "profiles": {
-    "Process Folders": {
+    "Check For Tools": {
       "commandName": "Project",
-      "commandLineArgs": "--Process --Folders \"D:\\Temp\""
+      "commandLineArgs": "--CheckForTools"
+    },
+    "ReMux": {
+      "commandName": "Project",
+      "commandLineArgs": "--ReMux --Folders \"D:\\Temp\""
+    },
+    "ReEncode": {
+      "commandName": "Project",
+      "commandLineArgs": "--ReEncode --Folders \"D:\\Temp\""
+    },
+    "Process": {
+      "commandName": "Project",
+      "commandLineArgs": "--Process --Folders \"C:\\Users\\piete\\OneDrive\\Projects\\PlexCleaner\\Test\" --Files \"D:\\Temp\\Fantastic Beasts The Crimes of Grindelwald (2018).mkv\""
     }
   }
 }

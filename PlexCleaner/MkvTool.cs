@@ -85,12 +85,14 @@ namespace PlexCleaner
         public static int MkvMerge(string parameters)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
+            ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
         public static int MkvMerge(string parameters, out string output)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
+            ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -105,6 +107,7 @@ namespace PlexCleaner
         public static int MkvPropEdit(string parameters)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvPropEditBinary);
+            ConsoleEx.WriteLineTool($"MKVPropEdit : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 

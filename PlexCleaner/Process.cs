@@ -90,6 +90,7 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Processing files ...");
+            ConsoleEx.WriteLine("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -101,6 +102,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Process the file
+                ConsoleEx.WriteLine($"Processing \"{fileinfo.FullName}\"");
                 if (!ProcessFile(fileinfo, out bool modified))
                     errorcount++;
                 else if (modified)
@@ -130,7 +132,7 @@ namespace PlexCleaner
             // Create the file and directory list
             List<FileInfo> fileList;
             List<DirectoryInfo> directoryList;
-            if (CreateFileAndFolderList(folderList, out fileList, out directoryList))
+            if (!FileEx.EnumerateDirectories(folderList, out fileList, out directoryList))
                 return false;
 
             // Process the files
@@ -144,15 +146,17 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Deleting empty folders ...");
+            ConsoleEx.WriteLine("");
 
             // Delete all empty folders
             int deleted = 0;
             foreach (string folder in folderList)
             {
-                ConsoleEx.WriteLine($"Deleting empty folders : \"{folder}\"");
+                ConsoleEx.WriteLine($"Deleting \"{folder}\"");
                 FileEx.DeleteEmptyDirectories(folder, ref deleted);
             }
 
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine($"Deleted folders : {deleted}");
             ConsoleEx.WriteLine("");
 
@@ -163,6 +167,7 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("ReMuxing files ...");
+            ConsoleEx.WriteLine("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -183,6 +188,7 @@ namespace PlexCleaner
                     continue;
 
                 // ReMux file
+                ConsoleEx.WriteLine($"ReMuxing \"{fileinfo.FullName}\"");
                 if (!ReMuxFile(fileinfo, out bool modified))
                     errorcount++;
                 else if (modified)
@@ -207,6 +213,7 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("ReEncoding files ...");
+            ConsoleEx.WriteLine("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -227,6 +234,7 @@ namespace PlexCleaner
                     continue;
 
                 // Process the file
+                ConsoleEx.WriteLine($"ReEncoding \"{fileinfo.FullName}\"");
                 if (!ReEncodeFile(fileinfo, out bool modified))
                     errorcount++;
                 else if (modified)
@@ -251,6 +259,7 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Creating tag map for folders ...");
+            ConsoleEx.WriteLine("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -341,6 +350,7 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Writing sidecar files ...");
+            ConsoleEx.WriteLine("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -729,40 +739,6 @@ namespace PlexCleaner
                 default:
                     throw new ArgumentOutOfRangeException(nameof(parser), parser, null);
             }
-        }
-
-        public static bool CreateFileAndFolderList(List<string> folderList, out List<FileInfo> fileList, out List<DirectoryInfo> directoryList)
-        {
-            directoryList = new List<DirectoryInfo>();
-            fileList = new List<FileInfo>();
-
-            try
-            {
-                // Add all directories from the commandline folders
-                foreach (string folder in folderList)
-                {
-                    // Add this folder to the directory list
-                    DirectoryInfo dirinfo = new DirectoryInfo(folder);
-                    directoryList.Add(dirinfo);
-
-                    // Recursive add all child folders
-                    directoryList.AddRange(dirinfo.EnumerateDirectories("*", SearchOption.AllDirectories));
-                }
-
-                // Add all files from all the directories to the file list
-                foreach (DirectoryInfo dirinfo in directoryList)
-                {
-                    // Add all files in this folder
-                    fileList.AddRange(dirinfo.EnumerateFiles("*.*", SearchOption.TopDirectoryOnly));
-                }
-            }
-            catch (Exception e)
-            {
-                ConsoleEx.WriteLineError(e);
-                return false;
-            }
-
-            return true;
         }
 
         private HashSet<string> sidecarExtensions;

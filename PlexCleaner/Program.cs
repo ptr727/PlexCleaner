@@ -184,6 +184,13 @@ namespace PlexCleaner
 
         private bool CreateFileList()
         {
+            if (ProgramCommands.Folders.Count() == 0 &&
+                ProgramCommands.Files.Count() == 0)
+            {
+                // Nothing to do
+                return true;
+            }
+
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine("Creating file and folder list ...");
 
@@ -191,8 +198,8 @@ namespace PlexCleaner
             ProgramCommands.Folders = ProgramCommands.Folders.Select(folder => folder.Trim('"'));
             ProgramCommands.Files = ProgramCommands.Files.Select(file => file.Trim('"'));
 
-            // Create the file and directory list
-            if (!PlexCleaner.Process.CreateFileAndFolderList(ProgramCommands.Folders.ToList(), out fileList, out directoryList))
+            // Create the file and directory list from the folder list
+            if (!FileEx.EnumerateDirectories(ProgramCommands.Folders.ToList(), out fileList, out directoryList))
                 return false;
 
             try

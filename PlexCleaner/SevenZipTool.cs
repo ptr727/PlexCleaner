@@ -27,6 +27,7 @@ namespace PlexCleaner
         public static int SevenZip(string parameters)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.SevenZip, SevenZipBinary);
+            ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
