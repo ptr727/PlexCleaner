@@ -10,11 +10,11 @@ namespace PlexCleaner
     {
         public Monitor()
         {
-            _watcher = new List<FileSystemWatcher>();
-            _watchfolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
-            _watchlock = new object();
-            _lastwriteline = string.Empty;
-            _lastwritelinelock = new object();
+            Watcher = new List<FileSystemWatcher>();
+            WatchFolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+            WatchLock = new object();
+            LastWriteLine = string.Empty;
+            LastWriteLineLock = new object();
         }
 
         public bool MonitorFolders(List<string> folders)
@@ -32,7 +32,7 @@ namespace PlexCleaner
                 // Create a file system watcher for the folder
                 ConsoleEx.WriteLine($"Monitoring : \"{folder}\"");
                 FileSystemWatcher watch = new FileSystemWatcher();
-                _watcher.Add(watch);
+                Watcher.Add(watch);
                 watch.Path = folder;
                 watch.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
                 watch.Filter = "*.*";
@@ -45,7 +45,7 @@ namespace PlexCleaner
             }
 
             // Enable event watching
-            foreach (FileSystemWatcher watch in _watcher)
+            foreach (FileSystemWatcher watch in Watcher)
                 watch.EnableRaisingEvents = true;
 
             // Wait for exit to be signalled
@@ -53,17 +53,17 @@ namespace PlexCleaner
             {
                 // Lock and process the list of folders
                 List<string> watchlist = new List<string>();
-                lock (_watchlock)
+                lock (WatchLock)
                 {
-                    if (_watchfolders.Any())
+                    if (WatchFolders.Any())
                     {
                         // Remove root folders from the watchlist
                         foreach (string folder in folders)
-                            _watchfolders.Remove(folder);
+                            WatchFolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
                         DateTime settletime = DateTime.UtcNow.AddSeconds(-AppOptions.Default.MonitorWaitTime);
-                        foreach (KeyValuePair<string, DateTime> pair in _watchfolders)
+                        foreach (KeyValuePair<string, DateTime> pair in WatchFolders)
                         // If not recently modified and all files in the folder are readable
                             if (pair.Value < settletime)
                                 if (!FileEx.AreFilesInDirectoryReadable(pair.Key))
@@ -73,7 +73,7 @@ namespace PlexCleaner
 
                         // Remove watched folders from the watchlist
                         foreach (string folder in watchlist)
-                            _watchfolders.Remove(folder);
+                            WatchFolders.Remove(folder);
                     }
                 }
 
@@ -90,9 +90,9 @@ namespace PlexCleaner
             }
 
             // Disable event watching
-            foreach (FileSystemWatcher watch in _watcher)
+            foreach (FileSystemWatcher watch in Watcher)
                 watch.EnableRaisingEvents = false;
-            _watcher.Clear();
+            Watcher.Clear();
 
             return true;
         }
@@ -187,13 +187,13 @@ namespace PlexCleaner
 
         private void WriteLine(ConsoleColor color, string value)
         {
-            lock (_lastwritelinelock)
+            lock (LastWriteLineLock)
             {
-                if (_lastwriteline.Equals(value, StringComparison.OrdinalIgnoreCase))
+                if (LastWriteLine.Equals(value, StringComparison.OrdinalIgnoreCase))
                     return;
 
                 ConsoleEx.WriteLineColor(color, value);
-                _lastwriteline = value;
+                LastWriteLine = value;
             }
         }
 
@@ -220,19 +220,19 @@ namespace PlexCleaner
             // Did we get a folder
             if (string.IsNullOrEmpty(foldername))
                 return;
-            lock (_watchlock)
+            lock (WatchLock)
             {
                 // Add new folder or update existing timestamp
-                if (_watchfolders.ContainsKey(foldername))
+                if (WatchFolders.ContainsKey(foldername))
                 {
                     // Update the modified time
-                    _watchfolders[foldername] = DateTime.UtcNow;
+                    WatchFolders[foldername] = DateTime.UtcNow;
                 }
                 else
                 {
                     // Add the folder
                     WriteLine($"Adding folder for processing : \"{foldername}\"");
-                    _watchfolders.Add(foldername, DateTime.UtcNow);
+                    WatchFolders.Add(foldername, DateTime.UtcNow);
                 }
             }
         }
@@ -252,10 +252,10 @@ namespace PlexCleaner
         }
 
 
-        private List<FileSystemWatcher> _watcher;
-        private Dictionary<string, DateTime> _watchfolders;
-        private object _watchlock;
-        private String _lastwriteline;
-        private object _lastwritelinelock;
+        private readonly List<FileSystemWatcher> Watcher;
+        private readonly Dictionary<string, DateTime> WatchFolders;
+        private readonly object WatchLock;
+        private string LastWriteLine;
+        private readonly object LastWriteLineLock;
     }
 }

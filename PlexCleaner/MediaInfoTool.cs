@@ -64,8 +64,12 @@ namespace PlexCleaner
 
             [XmlElement(ElementName = "Language", Namespace = "https://mediaarea.net/mediainfo")]
             public string Language { get; set; }
+
             [XmlElement(ElementName = "MuxingMode", Namespace = "https://mediaarea.net/mediainfo")]
             public string MuxingMode { get; set; }
+            
+            [XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
+            public string ScanType { get; set; }
         }
 
         public static int MediaInfo(string parameters, out string output)

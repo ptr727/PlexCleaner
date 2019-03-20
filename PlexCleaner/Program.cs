@@ -21,6 +21,7 @@ namespace PlexCleaner
         // PlexCleaner.exe --ReEncode --Folders "c:\foo" "d:\bar"
         // PlexCleaner.exe --Process --Monitor --Folders "..\..\..\Test\One" "..\..\..\Test\Two"
         // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
+        // PlexCleaner.exe --WriteSidecar --Folders "d:\temp"
         private static int Main()
         {
             // Load options from appsettings.json
@@ -184,8 +185,7 @@ namespace PlexCleaner
 
         private bool CreateFileList()
         {
-            if (ProgramCommands.Folders.Count() == 0 &&
-                ProgramCommands.Files.Count() == 0)
+            if (!ProgramCommands.Folders.Any() && !ProgramCommands.Files.Any())
             {
                 // Nothing to do
                 return true;
@@ -199,7 +199,7 @@ namespace PlexCleaner
             ProgramCommands.Files = ProgramCommands.Files.Select(file => file.Trim('"'));
 
             // Create the file and directory list from the folder list
-            if (!FileEx.EnumerateDirectories(ProgramCommands.Folders.ToList(), out fileList, out directoryList))
+            if (!FileEx.EnumerateDirectories(ProgramCommands.Folders.ToList(), out FileList, out DirectoryList))
                 return false;
 
             try
@@ -209,7 +209,7 @@ namespace PlexCleaner
                 {
                     // Add the file to the list
                     FileInfo fileinfo = new FileInfo(file);
-                    fileList.Add(fileinfo);
+                    FileList.Add(fileinfo);
                 }
             }
             catch (Exception e)
@@ -219,7 +219,7 @@ namespace PlexCleaner
             }
 
             // Report
-            ConsoleEx.WriteLine($"Discovered {directoryList.Count} directories and {fileList.Count} files");
+            ConsoleEx.WriteLine($"Discovered {DirectoryList.Count} directories and {FileList.Count} files");
             ConsoleEx.WriteLine("");
 
             return true;
@@ -228,32 +228,32 @@ namespace PlexCleaner
         private bool Process()
         {
             Process process = new Process();
-            return (process.ProcessFiles(fileList) && 
+            return (process.ProcessFiles(FileList) && 
                 process.DeleteEmptyFolders(ProgramCommands.Folders.ToList()));
         }
 
         private bool ReMux()
         {
             Process process = new Process();
-            return process.ReMuxFiles(fileList);
+            return process.ReMuxFiles(FileList);
         }
 
         private bool ReEncode()
         {
             Process process = new Process();
-            return process.ReEncodeFiles(fileList);
+            return process.ReEncodeFiles(FileList);
         }
 
         private bool WriteSidecar()
         {
             Process process = new Process();
-            return process.WriteSidecarFiles(fileList);
+            return process.WriteSidecarFiles(FileList);
         }
 
         private bool CreateTagMap()
         {
             Process process = new Process();
-            return process.CreateTagMapFiles(fileList);
+            return process.CreateTagMapFiles(FileList);
         }
 
         private bool CheckForTools()
@@ -276,8 +276,8 @@ namespace PlexCleaner
             program.Cancel.State = true;
         }
 
-        private List<DirectoryInfo> directoryList;
-        private List<FileInfo> fileList;
+        private List<DirectoryInfo> DirectoryList;
+        private List<FileInfo> FileList;
 
         private Commands ProgramCommands { get; }
         public Options ProgramOptions { get; }

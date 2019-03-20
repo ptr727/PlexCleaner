@@ -34,7 +34,6 @@ https://dev.azure.com/pieterv/Plex%20Cleaner/
 
 # TODO
 * Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color.
-* Capture FFMpeg console output, it is currently not being displayd.
 * Reenable the file watcher when directory disappears.
 	e.GetException().GetType() == typeof(SomethingPathNotAccessibleException)), retry waiting with with Directory.Exists(path)
 	if (e is Win32Exception)
@@ -112,12 +111,14 @@ ffmpeg.exe -i "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" -c:v copy -c:
 ffmpeg.exe -i "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" -c:v copy -c:a eac3 -f matroska "wmv.eac3.mkv"
 ffmpeg.exe -i "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mp4" -map 0 -codec copy -f matroska "\\STORAGE\Media\Troublesome\Roku - Hang - Baseline@L3 - Blaze and the Monster Machines - S01E12 - The Mystery Bandit.mkv"
 ffmpeg.exe -i "\\STORAGE\Media\Samples\H264+EAC3.mkv" -map 0 -codec copy -f mp4 "\\STORAGE\Media\Samples\H264+EAC3.mp4"
+ffmpeg -report -i "d:\temp\top.gear.s26e04.1080p.hdtv.h264-mtb (Original).mkv" -vf idet -f null -
 
 ## Handbrake CLI
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.eac3.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback eac3 --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.avaac.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback av_aac --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.caaac.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ca_aac --start-at duration:30 --stop-at duration:30
 handbrakecli.exe --input "C:\Users\piete\Downloads\Shaolin Soccer (2001).wmv" --output "hbcli.ac3.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 --start-at duration:30 --stop-at duration:30
+handbrakecli.exe --input "D:\Temp\top.gear.s26e04.1080p.hdtv.h264-mtb.snippet.mkv" --output "D:\Temp\top.gear.s26e04.1080p.hdtv.h264-mtb.hbcli.mkv" --format av_mkv --encoder x264 --encoder-preset medium --quality 21.0 --comb-detect --decomb --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback eac3
 
 ## MKVPropEdit
 mkvmerge.exe --identify ".\Test\One\ShieldTV - Transcode - 50 First Dates (2004).mkv" --identification-format json >mkvmerge.eng.json

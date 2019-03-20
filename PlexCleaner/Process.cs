@@ -15,7 +15,7 @@ namespace PlexCleaner
             // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
 
             // Sidecar extension, use the enum names
-            sidecarExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            SidecarExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 $".{Info.MediaInfo.ParserType.MediaInfo.ToString()}",
                 $".{Info.MediaInfo.ParserType.MkvMerge.ToString()}",
@@ -24,32 +24,32 @@ namespace PlexCleaner
 
             // Wanted extensions, always keep .mkv and sidecar files
             List<string> stringlist = EncodeOptions.Default.KeepExtensions.Split(',').ToList();
-            keepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+            KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 ".mkv"
             };
-            foreach (string extension in sidecarExtensions)
-                keepExtensions.Add(extension);
+            foreach (string extension in SidecarExtensions)
+                KeepExtensions.Add(extension);
 
             // Containers types that can be remuxed to MKV
             stringlist = EncodeOptions.Default.ReMuxExtensions.Split(',').ToList();
-            remuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            RemuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Languages are in short form using ISO 639-2 notation
             // https://www.loc.gov/standards/iso639-2/php/code_list.php
             // zxx = no linguistic content, und = undetermined
             // Default language
-            defaultLanguage = EncodeOptions.Default.DefaultLanguage;
-            if (string.IsNullOrEmpty(defaultLanguage))
-                defaultLanguage = "eng";
+            DefaultLanguage = EncodeOptions.Default.DefaultLanguage;
+            if (string.IsNullOrEmpty(DefaultLanguage))
+                DefaultLanguage = "eng";
 
             // Languages to keep, always keep no linguistic content and the default language
             // The languages must be in ISO 639-2 form
             stringlist = EncodeOptions.Default.KeepLanguages.Split(',').ToList();
-            keepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+            KeepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 "zxx",
-                defaultLanguage
+                DefaultLanguage
             };
 
             // Re-encode any video track that match the list
@@ -57,7 +57,7 @@ namespace PlexCleaner
             // All other formats will be encoded to h264
             List<string> codeclist = EncodeOptions.Default.ReEncodeVideoCodec.Split(',').ToList();
             List<string> profilelist = EncodeOptions.Default.ReEncodeVideoProfile.Split(',').ToList();
-            reencodeVideoCodecs = new List<Info.VideoInfo>();
+            ReencodeVideoCodecs = new List<Info.VideoInfo>();
             for (int i = 0; i < codeclist.Count; i++)
             {
                 // We match against the format and profile
@@ -68,22 +68,22 @@ namespace PlexCleaner
                     Format = codeclist.ElementAt(i),
                     Profile = profilelist.ElementAt(i)
                 };
-                reencodeVideoCodecs.Add(videoinfo);
+                ReencodeVideoCodecs.Add(videoinfo);
             }
 
             // Re-encode any audio track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
-            audioEncodeCodec = EncodeOptions.Default.AudioEncodeCodec;
-            if (string.IsNullOrEmpty(audioEncodeCodec))
-                audioEncodeCodec = "ac3";
+            AudioEncodeCodec = EncodeOptions.Default.AudioEncodeCodec;
+            if (string.IsNullOrEmpty(AudioEncodeCodec))
+                AudioEncodeCodec = "ac3";
             stringlist = EncodeOptions.Default.ReEncodeAudioCodec.Split(',').ToList();
-            reencodeAudioCodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            ReencodeAudioCodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Video encode constant quality factor, e.g. 20
-            videoEncodeQuality = EncodeOptions.Default.VideoEncodeQuality;
-            if (videoEncodeQuality == 0)
-                videoEncodeQuality = 20;
+            VideoEncodeQuality = EncodeOptions.Default.VideoEncodeQuality;
+            if (VideoEncodeQuality == 0)
+                VideoEncodeQuality = 20;
         }
 
         public bool ProcessFiles(List<FileInfo> fileList)
@@ -130,13 +130,8 @@ namespace PlexCleaner
         public bool ProcessFolders(List<string> folderList)
         {
             // Create the file and directory list
-            List<FileInfo> fileList;
-            List<DirectoryInfo> directoryList;
-            if (!FileEx.EnumerateDirectories(folderList, out fileList, out directoryList))
-                return false;
-
             // Process the files
-            return ProcessFiles(fileList);
+            return FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileList, out _) && ProcessFiles(fileList);
         }
 
         public bool DeleteEmptyFolders(List<string> folderList)
@@ -152,7 +147,7 @@ namespace PlexCleaner
             int deleted = 0;
             foreach (string folder in folderList)
             {
-                ConsoleEx.WriteLine($"Deleting \"{folder}\"");
+                ConsoleEx.WriteLine($"Looking for empty folders in \"{folder}\"");
                 FileEx.DeleteEmptyDirectories(folder, ref deleted);
             }
 
@@ -184,7 +179,7 @@ namespace PlexCleaner
 
                 // Handle only MKV files, and files in the remux extension list
                 if (!Tools.IsMkvFile(fileinfo) &&
-                    !remuxExtensions.Contains(fileinfo.Extension))
+                    !RemuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
                 // ReMux file
@@ -371,10 +366,17 @@ namespace PlexCleaner
 
                 // Write all the different sidecar file types
                 foreach (Info.MediaInfo.ParserType parser in Enum.GetValues(typeof(Info.MediaInfo.ParserType)))
-                    if (!GetMediaInfoSidecar(fileinfo, parser, out bool modified, out Info.MediaInfo _))
-                        errorcount++;
-                    else if (modified)
-                        modifiedcount++;
+                {
+                    if (parser == Info.MediaInfo.ParserType.None) 
+                        continue;
+                    else 
+                    { 
+                        if (!GetMediaInfoSidecar(fileinfo, parser, out bool modified, out Info.MediaInfo _))
+                            errorcount++;
+                        else if (modified)
+                            modifiedcount++;
+                    }
+                }
 
                 // Next file
             }
@@ -397,8 +399,8 @@ namespace PlexCleaner
             modified = false;
 
             // Delete unwanted files, anything not in our extensions lists
-            if (!keepExtensions.Contains(fileinfo.Extension)  &&
-                !remuxExtensions.Contains(fileinfo.Extension))
+            if (!KeepExtensions.Contains(fileinfo.Extension)  &&
+                !RemuxExtensions.Contains(fileinfo.Extension))
             {
                 // Delete the file
                 ConsoleEx.WriteLine($"Deleting file with undesired extension : {fileinfo.Extension}");
@@ -411,7 +413,7 @@ namespace PlexCleaner
             }
 
             // Sidecar files must have a matching MKV media file
-            if (sidecarExtensions.Contains(fileinfo.Extension))
+            if (SidecarExtensions.Contains(fileinfo.Extension))
             {
                 // Get the matching MKV file
                 string mediafile = Path.ChangeExtension(fileinfo.FullName, ".mkv");
@@ -430,7 +432,7 @@ namespace PlexCleaner
             }
 
             // ReMux undesirable containers matched by extension
-            if (remuxExtensions.Contains(fileinfo.Extension))
+            if (RemuxExtensions.Contains(fileinfo.Extension))
             {
                 // ReMux the file
                 ConsoleEx.WriteLine($"ReMux file matched by extension : {fileinfo.Extension}");
@@ -451,16 +453,33 @@ namespace PlexCleaner
             if (!GetMediaInfo(fileinfo, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo))
                 return false;
 
+            // Re-Encode interlaced content
+            // TODO : Move this into FindNeedReEncode()
+            if (mediainfo.IsVideoInterlaced())
+            {
+                ConsoleEx.WriteLine("Found interlaced video");
+
+                // Convert using HandBrakeCLI, it produces the best de-interlacing results
+                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, VideoEncodeQuality, out string outputname))
+                    return false;
+
+                // Continue processing with the new file name and new media info
+                modified = true;
+                fileinfo = new FileInfo(outputname);
+                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                    return false;
+            }
+
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
             // Logic uses FFProbe data
-            if (ffprobe.FindNeedReEncode(reencodeVideoCodecs, reencodeAudioCodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
+            if (ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be re-encoded:");
                 keep.WriteLine("Passthrough");
                 reencode.WriteLine("ReEncode");
 
                 // Convert streams that need re-encoding, copy the rest of the streams as is
-                if (!Convert.ConvertToMkv(fileinfo.FullName, videoEncodeQuality, audioEncodeCodec, keep, reencode, out string outputname))
+                if (!Convert.ConvertToMkv(fileinfo.FullName, VideoEncodeQuality, AudioEncodeCodec, keep, reencode, out string outputname))
                     return false;
 
                 // Continue processing with the new file name and new media info
@@ -474,13 +493,13 @@ namespace PlexCleaner
             // Logic uses MKVMerge data
             if (mkvmerge.FindUnknownLanguage(out Info.MediaInfo known, out Info.MediaInfo unknown))
             {
-                ConsoleEx.WriteLine($"Found tracks with an unknown language, setting to \"{defaultLanguage}\":");
+                ConsoleEx.WriteLine($"Found tracks with an unknown language, setting to \"{DefaultLanguage}\":");
                 known.WriteLine("Known");
                 unknown.WriteLine("Unknown");
 
                 // Set the track language to the default language
                 // MKVPropEdit uses track numbers, not track id's
-                if (unknown.GetTrackList().Any(info => !Info.SetMkvTrackLanguage(fileinfo.FullName, info.Number, defaultLanguage)))
+                if (unknown.GetTrackList().Any(info => !Info.SetMkvTrackLanguage(fileinfo.FullName, info.Number, DefaultLanguage)))
                 {
                     return false;
                 }
@@ -493,7 +512,7 @@ namespace PlexCleaner
             }
 
             // Filter out all the undesired tracks
-            if (mkvmerge.FindNeedRemove(keepLanguages, out keep, out Info.MediaInfo remove))
+            if (mkvmerge.FindNeedRemove(KeepLanguages, out keep, out Info.MediaInfo remove))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be removed:");
                 keep.WriteLine("Keep");
@@ -529,12 +548,11 @@ namespace PlexCleaner
                     return false;
             }
 
-            // TODO : Verify content can DirectPlay
             // TODO : Verify the integrity of the media file and the streams in the file
 
-            // Stream check
-            // Our file must have just 1 video track, 1 or more audio tracks, 0 or more subtitle tracks
-            if (mediainfo.Video.Count != 1 || mediainfo.Audio.Count == 0)
+            // Stream check, at least one video and audio track
+            // There can be multiple video tracks, where one track is a V_MJPEG embedded image
+            if (mediainfo.Video.Count == 0 || mediainfo.Audio.Count == 0)
             {
                 // File is missing required streams
                 ConsoleEx.WriteLineError($"File missing required tracks : Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
@@ -741,14 +759,14 @@ namespace PlexCleaner
             }
         }
 
-        private HashSet<string> sidecarExtensions;
-        private HashSet<string> keepExtensions;
-        private HashSet<string> remuxExtensions;
-        private HashSet<string> reencodeAudioCodecs;
-        private HashSet<string> keepLanguages;
-        private string defaultLanguage;
-        private string audioEncodeCodec;
-        private int videoEncodeQuality;
-        private List<Info.VideoInfo> reencodeVideoCodecs;
+        private readonly HashSet<string> SidecarExtensions;
+        private readonly HashSet<string> KeepExtensions;
+        private readonly HashSet<string> RemuxExtensions;
+        private readonly HashSet<string> ReencodeAudioCodecs;
+        private readonly HashSet<string> KeepLanguages;
+        private readonly string DefaultLanguage;
+        private readonly string AudioEncodeCodec;
+        private readonly int VideoEncodeQuality;
+        private readonly List<Info.VideoInfo> ReencodeVideoCodecs;
     }
 }

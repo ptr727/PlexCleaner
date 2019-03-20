@@ -64,14 +64,6 @@ namespace PlexCleaner
             return ProcessEx.Execute(path, parameters);
         }
 
-/*
-        public static int FfMpeg(string parameters, out string output, out string error)
-        {
-            string path = Tools.CombineToolPath(Settings.Default.FFmpeg, @"ffmpeg.exe");
-            return Tools.Execute(path, parameters, out output, out error);
-        }
-*/
-
         public static int FfProbe(string parameters, out string output, out string error)
         {
             string path = Tools.CombineToolPath(ToolOptions.Default.FfMpeg, FfProbeBinary);

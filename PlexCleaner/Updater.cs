@@ -117,6 +117,19 @@ namespace PlexCleaner
                         return false;
                 }
 
+                // HandBrake
+                ConsoleEx.WriteLine("Getting latest version of HandBrake ...");
+                toolinfo.Tool = nameof(HandBrakeTool);
+                if (HandBrakeTool.GetLatestVersion(toolinfo) &&
+                    GetUrlDetails(toolinfo))
+                {
+                    // Update the tool
+                    if (!UpdateTool(tools, toolinfo))
+                        return false;
+                }
+
+                // TODO : Convert handcoded tools to enum and enumerate
+
                 // Write json to file
                 string json = ToolsJson.ToJson(tools);
                 File.WriteAllText(toolsfile, json);
@@ -182,13 +195,6 @@ namespace PlexCleaner
                         // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
                         toolpath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
                         break;
-                    case nameof(MkvTool):
-                        // Get the path and clean the destination directory
-                        toolpath = MkvTool.GetToolPath();
-                        if (!FileEx.CreateDirectory(toolpath) ||
-                            !FileEx.DeleteInsideDirectory(toolpath))
-                            return false;
-                        break;
                     case nameof(FfMpegTool):
                         // FFMpeg archives have versioned folders in the zip
                         // The 7Zip -spe option does not work for zip files
@@ -196,16 +202,26 @@ namespace PlexCleaner
                         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
                         toolpath = Tools.GetToolsRoot();
                         break;
+                    case nameof(MkvTool):
+                        toolpath = MkvTool.GetToolPath();
+                        break;
                     case nameof(MediaInfoTool):
-                        // Get the path and clean the destination directory
                         toolpath = MediaInfoTool.GetToolPath();
                         if (!FileEx.CreateDirectory(toolpath) ||
                             !FileEx.DeleteInsideDirectory(toolpath))
                             return false;
                         break;
+                    case nameof(HandBrakeTool):
+                        toolpath = HandBrakeTool.GetToolPath();
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+                // Make sure the output folder exists and is empty
+                if (!FileEx.CreateDirectory(toolpath) ||
+                    !FileEx.DeleteInsideDirectory(toolpath))
+                    return false;
 
                 // Extract the tool
                 ConsoleEx.WriteLine($"Extracting \"{toolinfo.FileName}\" ...");
@@ -230,9 +246,6 @@ namespace PlexCleaner
                         if (!FileEx.RenameFolder(sourcepath, toolpath))
                             return false;
                         break;
-                    case nameof(MkvTool):
-                        // Nothing to do
-                        break;
                     case nameof(FfMpegTool):
                         // Get the path and and clean the destination directory
                         toolpath = FfMpegTool.GetToolPath();
@@ -248,7 +261,9 @@ namespace PlexCleaner
                         if (!FileEx.RenameFolder(sourcepath, toolpath))
                             return false;
                         break;
+                    case nameof(MkvTool):
                     case nameof(MediaInfoTool):
+                    case nameof(HandBrakeTool):
                         // Nothing to do
                         break;
                     default:

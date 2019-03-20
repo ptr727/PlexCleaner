@@ -14,6 +14,7 @@
         public string Handbrake { get; set; } = "Handbrake";
         public string MediaInfo { get; set; } = "MediaInfo";
         public string FfMpeg { get; set; } = "FFMpeg";
+        public string HandBrake { get; set; } = "HandBrake";
         public string EchoArgs { get; set; } = "EchoArgs";
         public string SevenZip { get; set; } = "7Zip";
     }

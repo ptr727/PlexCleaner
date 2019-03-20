@@ -14,7 +14,11 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--Process --Folders \"C:\\Users\\piete\\OneDrive\\Projects\\PlexCleaner\\Test\" --Files \"D:\\Temp\\Fantastic Beasts The Crimes of Grindelwald (2018).mkv\""
+      "commandLineArgs": "--Process --Folders \"\\\\STORAGE\\Media\\Series\\Series\" \"\\\\STORAGE\\Media\\Movies\\Movies\""
+    },
+    "WriteSideCar": {
+      "commandName": "Project",
+      "commandLineArgs": "--WriteSidecar --Folders \"d:\\temp\""
     }
   }
 }

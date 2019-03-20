@@ -9,12 +9,9 @@ namespace PlexCleaner
         public static bool VerifyTools()
         {
             // Make sure the tools root folder exists
-            if (!Directory.Exists(GetToolsRoot()))
-                return false;
-
             // Make sure that the 7-Zip tool exists
             // We need at least 7-Zip to be able to download and extract the other tools
-            return SevenZipTool.VerifyTool();
+            return Directory.Exists(GetToolsRoot()) && SevenZipTool.VerifyTool();
         }
 
         public static string GetToolsRoot()
@@ -41,26 +38,6 @@ namespace PlexCleaner
         {
             return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, filename));
         }
-
-        // EchoArgs app
-/*
-        public static int EchoArgs(string parameters)
-        {
-            string path = CombineToolPath(Settings.Default.EchoArgs, @"echoargs.exe");
-            return Execute(path, parameters);
-        }
-*/
-
-        // Handbrake app
-/*
-        public static int Handbrake(string parameters)
-        {
-            string path = CombineToolPath(Settings.Default.Handbrake, @"handbrakecli.exe");
-            return Execute(path, parameters);
-        }
-*/
-
-
 
         public static bool IsMkvFile(string filename)
         {
@@ -91,8 +68,5 @@ namespace PlexCleaner
             return Regex.IsMatch(value, regex);
         }
 */
-
-
-
     }
 }

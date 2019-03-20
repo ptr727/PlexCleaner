@@ -111,32 +111,65 @@ namespace PlexCleaner
             return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || FileEx.DeleteFile(inputname);
         }
 
+        // De-interlace to MKV
+        public static bool DeInterlaceToMkv(string inputname, int quality, out string outputname)
+        {
+            if (inputname == null) throw new ArgumentNullException(nameof(inputname));
+
+            // Match the logic in ConvertToMKV()
+
+            // Test
+            if (AppOptions.Default.TestNoModify)
+            {
+                outputname = inputname;
+                return true;
+            }
+
+            // Create a temp filename based on the input name
+            outputname = Path.ChangeExtension(inputname, ".mkv");
+            string tempname = Path.ChangeExtension(inputname, ".tmp");
+
+            // HandBrake produces the best de-interlacing results
+            if (!ConvertToMkvHandbrake(inputname, quality, tempname))
+            {
+                FileEx.DeleteFile(tempname);
+                return false;
+            }
+
+            // Rename the temp file to the output file
+            if (!FileEx.RenameFile(tempname, outputname))
+                return false;
+
+            // If the input and output names are not the same, delete the input
+            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || FileEx.DeleteFile(inputname);
+        }
+
         // ReMux the file to MKV using mkvmerge
         // Include only tracks with an unknown language or the specified language
-/*
-        private static bool RemuxToMkvMkvToolNix(string inputname, string language, string outputname)
-        {
-            if (String.IsNullOrEmpty(language))
-                return RemuxToMkvMkvToolNix(inputname, outputname);
+        /*
+                private static bool RemuxToMkvMkvToolNix(string inputname, string language, string outputname)
+                {
+                    if (String.IsNullOrEmpty(language))
+                        return RemuxToMkvMkvToolNix(inputname, outputname);
 
-            // Delete output file
-            Tools.DeleteFile(outputname);
+                    // Delete output file
+                    Tools.DeleteFile(outputname);
 
-            // Cut part of file
-            // --split parts:00:00:30-00:01:00
+                    // Cut part of file
+                    // --split parts:00:00:30-00:01:00
 
-            // Create the MKVMerge commandline and execute
-            // https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
-            // https://mkvtoolnix.download/doc/mkvmerge.html
-            string commandline = $"--default-language {language} --output \"{outputname}\" --audio-tracks {language} --subtitle-tracks {language} \"{inputname}\"";
-            Tools.WriteLine("");
-            int exitcode = MkvTool.MkvMerge(commandline);
-            Tools.WriteLine("");
-            if (exitcode != 0 && exitcode != 1)
-                return false;
-            return true;
-        }
-*/
+                    // Create the MKVMerge commandline and execute
+                    // https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
+                    // https://mkvtoolnix.download/doc/mkvmerge.html
+                    string commandline = $"--default-language {language} --output \"{outputname}\" --audio-tracks {language} --subtitle-tracks {language} \"{inputname}\"";
+                    Tools.WriteLine("");
+                    int exitcode = MkvTool.MkvMerge(commandline);
+                    Tools.WriteLine("");
+                    if (exitcode != 0 && exitcode != 1)
+                        return false;
+                    return true;
+                }
+        */
 
         // ReMux the file to MKV using mkvmerge
         // Include only the tracks from the filter
@@ -156,7 +189,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = AppOptions.Default.TestSnippets ? mkvmergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -172,7 +205,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = AppOptions.Default.TestSnippets ? mkvmergeSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvTool.MkvMerge(commandline);
@@ -198,7 +231,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
@@ -217,35 +250,13 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
+            string snippets = AppOptions.Default.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
-
-        // ReEncode to MKV H264
-        // Video is always re-encoded, audio is copied if supported, else AC3
-        /*
-                private static bool ConvertToMkvHandbrake(string inputname, int quality, string outputname)
-                {
-                    // Delete output file
-                    Tools.DeleteFile(outputname);
-
-                    // Create the HandbrakeCLI commandline and execute
-                    // https://handbrake.fr/docs/en/latest/cli/cli-guide.html
-                    string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 " +
-                                         $"--encoder-preset medium --quality {quality} --subtitle 1,2,3,4 --audio 1,2,3,4 " +
-                                         $"--aencoder copy --audio-fallback ac3";
-                    Tools.WriteLine("");
-                    int exitcode = Tools.Handbrake(commandline);
-                    Tools.WriteLine("");
-                    if (exitcode != 0)
-                        return false;
-                    return true;
-                }
-        */
 
         private static void CreateFfMpegMap(Info.MediaInfo keep, out string input, out string output)
         {
@@ -331,8 +342,8 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
-            string commandline = $"{ffmpegPrefix} -i \"{inputname}\" {snippets} {input} {output} {ffmpegPostfix} -f matroska \"{outputname}\"";
+            string snippets = AppOptions.Default.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} {input} {output} {FfmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
@@ -349,18 +360,37 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // Copy audio and subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = AppOptions.Default.TestSnippets ? ffmpegSnippet : "";
-            string commandline = $"{ffmpegPrefix} -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy {ffmpegPostfix} -f matroska \"{outputname}\"";
+            string snippets = AppOptions.Default.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy {FfmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
+        // ReEncode to MKV H264
+        // Video is always re-encoded, audio is copied if supported, else AC3
+        private static bool ConvertToMkvHandbrake(string inputname, int quality, string outputname)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create the HandbrakeCLI commandline and execute
+            // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
+            // https://handbrake.fr/docs/en/latest/cli/cli-options.html
+            string snippets = AppOptions.Default.TestSnippets ? HandBrakeSnippet : "";
+            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 {snippets}";
+            ConsoleEx.WriteLine("");
+            int exitcode = HandBrakeTool.HandBrake(commandline);
+            ConsoleEx.WriteLine("");
+            return (exitcode == 0);
+        }
+
         // File split options
-        private const string ffmpegSnippet = "-ss 0 -t 60";
-        private const string ffmpegPrefix = "-v warning"; // info
-        private const string ffmpegPostfix = "-max_muxing_queue_size 1024"; // -analyzeduration 100M -probesize 100M 
-        private const string mkvmergeSnippet = "--split parts:00:00:00-00:01:00";
+        private const string FfmpegSnippet = "-ss 0 -t 60";
+        private const string FfmpegPrefix = "-v warning"; // info
+        private const string FfmpegPostfix = "-max_muxing_queue_size 1024"; // -analyzeduration 100M -probesize 100M 
+        private const string MkvmergeSnippet = "--split parts:00:00:00-00:01:00";
+        private const string HandBrakeSnippet = "--start-at duration:00 --stop-at duration:60";
     }
 }
