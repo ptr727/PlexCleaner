@@ -48,6 +48,7 @@ https://dev.azure.com/pieterv/Plex%20Cleaner/
 * Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS.
 * Console writeline sometimes ignores the newline around AudioInfo.Numer
 	2/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : chi, Id : 1, Number : 12/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : eng, Id : 2, Number : 22/18/2019 6:08:32 PM : Passthrough : Subtitle : Format : dvd_subtitle, Codec : DVD subtitles, MuxingMode : , Language : chi, Id : 3, Number : 3
+* Switch commandline to mcmaster or https://github.com/dotnet/command-line-api
 
 # Tools
 

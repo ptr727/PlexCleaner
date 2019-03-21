@@ -19,6 +19,14 @@
     "WriteSideCar": {
       "commandName": "Project",
       "commandLineArgs": "--WriteSidecar --Folders \"d:\\temp\""
+    },
+    "Version": {
+      "commandName": "Project",
+      "commandLineArgs": "--version"
+    },
+    "Help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
     }
   }
 }

@@ -19,9 +19,11 @@
     <PackageReference Include="CommandLineParser" Version="2.4.3" />
     <PackageReference Include="HtmlAgilityPack" Version="1.9.1" />
     <PackageReference Include="InsaneGenius.Utilities" Version="1.1.20190306.2" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.3.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.0.0-preview.19074.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0-preview.19074.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="System.CommandLine.Experimental" Version="0.2.0-alpha.19169.1" />
   </ItemGroup>
 
   <ItemGroup>
