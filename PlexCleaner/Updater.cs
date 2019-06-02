@@ -207,9 +207,6 @@ namespace PlexCleaner
                         break;
                     case nameof(MediaInfoTool):
                         toolpath = MediaInfoTool.GetToolPath();
-                        if (!FileEx.CreateDirectory(toolpath) ||
-                            !FileEx.DeleteInsideDirectory(toolpath))
-                            return false;
                         break;
                     case nameof(HandBrakeTool):
                         toolpath = HandBrakeTool.GetToolPath();
@@ -218,10 +215,20 @@ namespace PlexCleaner
                         throw new ArgumentOutOfRangeException();
                 }
 
-                // Make sure the output folder exists and is empty
-                if (!FileEx.CreateDirectory(toolpath) ||
-                    !FileEx.DeleteInsideDirectory(toolpath))
-                    return false;
+                // Make sure the tool folder exists and is empty
+                // FfMpegTool will be in tools root, do not delete
+                switch (toolinfo.Tool)
+                {
+                    // case nameof(FfMpegTool):
+                    case nameof(SevenZipTool):
+                    case nameof(MkvTool):
+                    case nameof(MediaInfoTool):
+                    case nameof(HandBrakeTool):
+                        if (!FileEx.CreateDirectory(toolpath) ||
+                            !FileEx.DeleteInsideDirectory(toolpath))
+                            return false;
+                        break;
+                }
 
                 // Extract the tool
                 ConsoleEx.WriteLine($"Extracting \"{toolinfo.FileName}\" ...");

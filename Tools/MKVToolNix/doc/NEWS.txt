@@ -1,3 +1,91 @@
+# Version 34.0.0 "Sight and Seen" 2019-05-18
+
+## Bug fixes
+
+* mkvmerge: all subtitle frames are now treated as key frames in order to fix
+  wrong data in source files. Fixes #2541.
+* mkvmerge: AV1: fixed frame timestamp calculation when reading bitstreams
+  that lack timing information from IVF files. Fixes #2553.
+* mkvmerge: Matroska reader: fixed an infinite loop that could happen with
+  large video frames and applied timestamp files due to too much data being
+  buffered at the wrong time. Fixes #2550.
+
+
+# Version 33.1.0 "Primrose" 2019-04-15
+
+## Bug fixes
+
+* MKVToolNix GUI: multiplexer: Windows: using UNC paths
+  (e.g. `\\server\Videos`) when the option "automatically set the destination
+  file name" was set in the preferences, the GUI would create a destination
+  file name with forward slashes (e.g. `//server/Videos/outputfile.mkv`), a
+  syntax not supported by `mkvmerge`. Fixes #2533 & #2534.
+* build system: the programs were accidentally built without stack protection
+  (`-fstack-protector-strong`) on recent versions of gcc and clang.
+
+
+# Version 33.0.0 "A Little Bit of Madness" 2019-04-12
+
+## Bug fixes
+
+* mkvinfo: when using the `--size` option, mkvinfo will now report the
+  correctly if an element has an unknown size. Part of the fix of #2530.
+* MKVToolNix GUI: info tool: clusters with an unknown size will now be read
+  and displayed correctly. Part of the fix of #2530.
+* MKVToolNix GUI: multiplexer: Windows: trying to open Blu-ray index or
+  playlist files failed when the path to the files contained symbolic links
+  (e.g. when mounting a drive in a sub-folder via Windows' disk management
+  utility). Fixes #2522.
+* MKVToolNix GUI: multiplexer: if a destination file names ends with a number
+  in parenthesis (e.g. a year such as "(2017)"), that number will not be
+  stripped anymore during the process of ensuring the destination file name is
+  unique. Only those suffixes added automatically in prior attempts to make
+  the file name unique will be removed. Fixes #2521.
+* MKVToolNix GUI: multiplexer: Windows: the GUI will let the user change the
+  drive letter part of the destination file name freely again and only verify
+  its validity right before starting to mux/adding to the job queue. Before it
+  tried to force that into something valid, often resulting in unintentional
+  paths (such as "C:\users\…\DC\files\…"). Fixes #2527.
+
+
+# Version 32.0.0 "Astral Progressions" 2019-03-12
+
+## New features and enhancements
+
+* mkvinfo: when sizes are output the size of the element's data portion is
+  output in addition to the element's total size.
+* MKVToolNix GUI: info tool: the element's data portion is
+  shown as an extra column.
+* MKVToolNix GUI: multiplexer: added column "Delay" to the track list
+  containing the additional delay to apply during multiplexing. Implements
+  #2506.
+
+## Bug fixes
+
+* all: fixed handling of Unicode code points > U+FFFF. Fixes #2516.
+* mkvmerge: Windows: mkvmerge was crashing with an exception when trying to
+  identify certain files that can be used on Blu-rays (such as MPEG transport
+  streams of MPLS play list files) and when the file name was given as a UNC
+  path (e.g. `\\servername\sharename\path\to\file.m2ts`). The GUI emitted
+  errors such as "the JSON output could not be parsed" in that case. Fixes
+  #2507.
+* MKVToolNix GUI: the portable mode wasn't detected correctly when the current
+  working directory the GUI was started from wasn't the directory the GUI's
+  executable file was located it. Examples for when this is the case are
+  Windows' "send to" or "open with" functions. Fixes #2501.
+* MKVToolNix GUI: multiplexer: using button to change the current destination
+  directory to one of the recently used ones did not update the file name
+  according to the "make file name unique" setting. Part of the fix of #2519.
+* MKVToolNix GUI: multiplexer: the function "set destination file name from
+  selected file's name" will now only change the destination file's name but
+  not its path. Part of the fix of #2519.
+
+## Build system changes
+
+* libEBML v1.3.7 and libMatroska 1.5.0 are now required as they fix their
+  handling of Unicode code points > U+FFFF (see #2516).
+
+
 # Version 31.0.0 "Dolores In A Shoestand" 2019-02-09
 
 ## New features and enhancements

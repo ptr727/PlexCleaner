@@ -38,6 +38,25 @@
         public string AudioEncodeCodec { get; set; } = "ac3";
     }
 
+    public class ProcessOptions
+    {
+        public ProcessOptions()
+        {
+            Default = this;
+        }
+        public static ProcessOptions Default;
+
+        public bool DeleteEmptyFolders { get; set; } = true;
+        public bool UseSidecarFiles { get; set; } = true;
+        public bool DeleteUnwantedExtensions { get; set; } = true;
+        public bool RemuxExtensions { get; set; } = true;
+        public bool DeInterlace { get; set; } = true;
+        public bool ReEncode { get; set; } = true;
+        public bool SetUnknownLanguage { get; set; } = true;
+        public bool RemoveUnwanted { get; set; } = false;
+        public bool ReMux { get; set; } = false;
+    }
+
     public class AppOptions
     {
         public AppOptions()
@@ -47,10 +66,8 @@
         public static AppOptions Default;
 
         public int MonitorWaitTime { get; set; } = 60;
-        public int FileRetryWaitTime { get; set; } = 60;
-        public int FileRetryCount { get; set; } = 30;
-        public bool DeleteEmptyFolders { get; set; } = true;
-        public bool UseSidecarFiles { get; set; } = true;
+        public int FileRetryWaitTime { get; set; } = 5;
+        public int FileRetryCount { get; set; } = 2;
         public bool DeleteFailedFiles { get; set; } = true;
         public bool TestNoModify { get; set; } = false;
         public bool TestSnippets { get; set; } = false;
@@ -66,6 +83,7 @@
 
         public ToolOptions Tools { get; set; } = new ToolOptions();
         public EncodeOptions Encode { get; set; } = new EncodeOptions();
+        public ProcessOptions Process { get; set; } = new ProcessOptions();
         public AppOptions App { get; set; } = new AppOptions();
     }
 }

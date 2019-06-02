@@ -61,6 +61,7 @@ namespace PlexCleaner
             ParserResult<Commands> result = parser.ParseArguments<Commands>(CommandLineEx.GetCommandlineArgs());
             if (result.Tag == ParserResultType.NotParsed)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError("Failed to parse commandline.");
                 return -1;
             }

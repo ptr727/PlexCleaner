@@ -136,7 +136,7 @@ namespace PlexCleaner
 
         public bool DeleteEmptyFolders(List<string> folderList)
         {
-            if (!AppOptions.Default.DeleteEmptyFolders)
+            if (!ProcessOptions.Default.DeleteEmptyFolders)
                 return true;
 
             ConsoleEx.WriteLine("");
@@ -282,7 +282,7 @@ namespace PlexCleaner
                 // Write all the different sidecar file types
                 Info.MediaInfo mi = null, mk = null, ff = null;
                 foreach (Info.MediaInfo.ParserType parser in Enum.GetValues(typeof(Info.MediaInfo.ParserType)))
-                    if (GetMediaInfoSidecar(fileinfo, parser, out bool modified, out Info.MediaInfo info))
+                    if (GetMediaInfoSidecar(fileinfo, false, parser, out bool modified, out Info.MediaInfo info))
                     {
                         switch (parser)
                         {
@@ -371,7 +371,7 @@ namespace PlexCleaner
                         continue;
                     else 
                     { 
-                        if (!GetMediaInfoSidecar(fileinfo, parser, out bool modified, out Info.MediaInfo _))
+                        if (!GetMediaInfoSidecar(fileinfo, true, parser, out bool modified, out Info.MediaInfo _))
                             errorcount++;
                         else if (modified)
                             modifiedcount++;
@@ -399,7 +399,8 @@ namespace PlexCleaner
             modified = false;
 
             // Delete unwanted files, anything not in our extensions lists
-            if (!KeepExtensions.Contains(fileinfo.Extension)  &&
+            if (ProcessOptions.Default.DeleteUnwantedExtensions &&
+                !KeepExtensions.Contains(fileinfo.Extension)  &&
                 !RemuxExtensions.Contains(fileinfo.Extension))
             {
                 // Delete the file
@@ -432,7 +433,8 @@ namespace PlexCleaner
             }
 
             // ReMux undesirable containers matched by extension
-            if (RemuxExtensions.Contains(fileinfo.Extension))
+            if (ProcessOptions.Default.RemuxExtensions &&
+                RemuxExtensions.Contains(fileinfo.Extension))
             {
                 // ReMux the file
                 ConsoleEx.WriteLine($"ReMux file matched by extension : {fileinfo.Extension}");
@@ -450,12 +452,13 @@ namespace PlexCleaner
                 return true;
 
             // Get the file media info
-            if (!GetMediaInfo(fileinfo, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo))
+            // Force a sidecar refresh only if the file had been modified, else read the exisintg sidecar values
+            if (!GetMediaInfo(fileinfo, modified, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo))
                 return false;
 
             // Re-Encode interlaced content
-            // TODO : Move this into FindNeedReEncode()
-            if (mediainfo.IsVideoInterlaced())
+            if (ProcessOptions.Default.DeInterlace &&
+                mediainfo.IsVideoInterlaced())
             {
                 ConsoleEx.WriteLine("Found interlaced video");
 
@@ -466,13 +469,14 @@ namespace PlexCleaner
                 // Continue processing with the new file name and new media info
                 modified = true;
                 fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
                     return false;
             }
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
             // Logic uses FFProbe data
-            if (ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
+            if (ProcessOptions.Default.ReEncode &&
+                ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out Info.MediaInfo keep, out Info.MediaInfo reencode))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be re-encoded:");
                 keep.WriteLine("Passthrough");
@@ -485,13 +489,14 @@ namespace PlexCleaner
                 // Continue processing with the new file name and new media info
                 modified = true;
                 fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
                     return false;
             }
 
             // Change all tracks with an unknown language to the default language
             // Logic uses MKVMerge data
-            if (mkvmerge.FindUnknownLanguage(out Info.MediaInfo known, out Info.MediaInfo unknown))
+            if (ProcessOptions.Default.SetUnknownLanguage &&
+                mkvmerge.FindUnknownLanguage(out Info.MediaInfo known, out Info.MediaInfo unknown))
             {
                 ConsoleEx.WriteLine($"Found tracks with an unknown language, setting to \"{DefaultLanguage}\":");
                 known.WriteLine("Known");
@@ -507,12 +512,13 @@ namespace PlexCleaner
                 // Continue processing with new media info
                 modified = true;
                 fileinfo.Refresh();
-                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
                     return false;
             }
 
             // Filter out all the undesired tracks
-            if (mkvmerge.FindNeedRemove(KeepLanguages, out keep, out Info.MediaInfo remove))
+            if (ProcessOptions.Default.RemoveUnwanted &&
+                mkvmerge.FindNeedRemove(KeepLanguages, out keep, out Info.MediaInfo remove))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be removed:");
                 keep.WriteLine("Keep");
@@ -526,12 +532,13 @@ namespace PlexCleaner
                 // Continue processing with new media info
                 modified = true;
                 fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
                     return false;
             }
 
             // Do we need to remux any tracks
-            if (mediainfo.FindNeedReMux(out keep, out Info.MediaInfo remux))
+            if (ProcessOptions.Default.ReMux &&
+                mediainfo.FindNeedReMux(out keep, out Info.MediaInfo remux))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be re-muxed:");
                 keep.WriteLine("Keep");
@@ -544,7 +551,7 @@ namespace PlexCleaner
                 // Continue processing with new media info
                 modified = true;
                 fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo))
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
                     return false;
             }
 
@@ -596,7 +603,7 @@ namespace PlexCleaner
             return true;
         }
 
-        private bool GetMediaInfoSidecar(FileInfo fileinfo, Info.MediaInfo.ParserType parser, out bool modified, out Info.MediaInfo mediainfo)
+        private bool GetMediaInfoSidecar(FileInfo fileinfo, bool update, Info.MediaInfo.ParserType parser, out bool modified, out Info.MediaInfo mediainfo)
         {
             // Init
             modified = false;
@@ -610,6 +617,7 @@ namespace PlexCleaner
             }
 
             // TODO : Chance of race condition between reading media, external write to same media, and writing sidecar
+            // TODO : On non-NTFS filesystems the timestamp granularity is insufficient to use as a reliable method of change detection
 
             // Create or read the sidecar file
             bool createsidecar = false;
@@ -625,6 +633,10 @@ namespace PlexCleaner
             }
             else
                 // Create the file
+                createsidecar = true;
+
+            // If update is set we always create a fresh sidecar
+            if (update)
                 createsidecar = true;
 
             // Create the sidecar
@@ -719,15 +731,15 @@ namespace PlexCleaner
         }
 */
 
-        private bool GetMediaInfo(FileInfo fileinfo, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo)
+        private bool GetMediaInfo(FileInfo fileinfo, bool update, out Info.MediaInfo ffprobe, out Info.MediaInfo mkvmerge, out Info.MediaInfo mediainfo)
         {
             ffprobe = null;
             mkvmerge = null;
             mediainfo = null;
 
-            return GetMediaInfo(fileinfo, Info.MediaInfo.ParserType.FfProbe, out ffprobe) && 
-                   GetMediaInfo(fileinfo, Info.MediaInfo.ParserType.MkvMerge, out mkvmerge) && 
-                   GetMediaInfo(fileinfo, Info.MediaInfo.ParserType.MediaInfo, out mediainfo);
+            return GetMediaInfo(fileinfo, update, Info.MediaInfo.ParserType.FfProbe, out ffprobe) && 
+                   GetMediaInfo(fileinfo, update, Info.MediaInfo.ParserType.MkvMerge, out mkvmerge) && 
+                   GetMediaInfo(fileinfo, update, Info.MediaInfo.ParserType.MediaInfo, out mediainfo);
         }
 
 /*
@@ -738,12 +750,12 @@ namespace PlexCleaner
         }
 */
 
-        private bool GetMediaInfo(FileInfo fileinfo, Info.MediaInfo.ParserType parser, out Info.MediaInfo mediainfo)
+        private bool GetMediaInfo(FileInfo fileinfo, bool update, Info.MediaInfo.ParserType parser, out Info.MediaInfo mediainfo)
         {
             // Read or create sidecar file
             mediainfo = null;
-            if (AppOptions.Default.UseSidecarFiles)
-                return GetMediaInfoSidecar(fileinfo, parser, out bool _, out mediainfo);
+            if (ProcessOptions.Default.UseSidecarFiles)
+                return GetMediaInfoSidecar(fileinfo, update, parser, out bool _, out mediainfo);
             
             // Use the specified stream parser tool
             switch (parser)

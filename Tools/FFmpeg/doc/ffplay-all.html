@@ -10,7 +10,7 @@
 <meta name="description" content="ffplay Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : ffplay ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on November 11, 2018 by texi2html 5.0 -->
+<!-- Created on April 26, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -38,7 +38,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
 <ul class="no-bullet">
   <li><a name="toc-Synopsis" href="#Synopsis">1 Synopsis</a></li>
   <li><a name="toc-Description" href="#Description">2 Description</a></li>
-  <li><a name="toc-Options-26" href="#Options-26">3 Options</a>
+  <li><a name="toc-Options-23" href="#Options-23">3 Options</a>
   <ul class="no-bullet">
     <li><a name="toc-Stream-specifiers-1" href="#Stream-specifiers-1">3.1 Stream specifiers</a></li>
     <li><a name="toc-Generic-options" href="#Generic-options">3.2 Generic options</a></li>
@@ -51,12 +51,12 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <ul class="no-bullet">
     <li><a name="toc-Quoting-and-escaping" href="#Quoting-and-escaping">4.1 Quoting and escaping</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples" href="#Examples">4.1.1 Examples</a></li>
+      <li><a name="toc-Examples-95" href="#Examples-95">4.1.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-Date" href="#Date">4.2 Date</a></li>
     <li><a name="toc-Time-duration" href="#Time-duration">4.3 Time duration</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-122" href="#Examples-122">4.3.1 Examples</a></li>
+      <li><a name="toc-Examples-26" href="#Examples-26">4.3.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-Video-size" href="#Video-size">4.4 Video size</a></li>
     <li><a name="toc-Video-rate" href="#Video-rate">4.5 Video rate</a></li>
@@ -69,9 +69,9 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <li><a name="toc-Decoders" href="#Decoders">7 Decoders</a></li>
   <li><a name="toc-Video-Decoders" href="#Video-Decoders">8 Video Decoders</a>
   <ul class="no-bullet">
-    <li><a name="toc-rawvideo-1" href="#rawvideo-1">8.1 rawvideo</a>
+    <li><a name="toc-rawvideo" href="#rawvideo">8.1 rawvideo</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-29" href="#Options-29">8.1.1 Options</a></li>
+      <li><a name="toc-Options-15" href="#Options-15">8.1.1 Options</a></li>
     </ul></li>
     <li><a name="toc-libdavs2" href="#libdavs2">8.2 libdavs2</a></li>
   </ul></li>
@@ -90,7 +90,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-libgsm" href="#libgsm">9.5 libgsm</a></li>
     <li><a name="toc-libilbc" href="#libilbc">9.6 libilbc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options" href="#Options">9.6.1 Options</a></li>
+      <li><a name="toc-Options-18" href="#Options-18">9.6.1 Options</a></li>
     </ul></li>
     <li><a name="toc-libopencore_002damrnb" href="#libopencore_002damrnb">9.7 libopencore-amrnb</a></li>
     <li><a name="toc-libopencore_002damrwb" href="#libopencore_002damrwb">9.8 libopencore-amrwb</a></li>
@@ -100,15 +100,15 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <ul class="no-bullet">
     <li><a name="toc-dvbsub" href="#dvbsub">10.1 dvbsub</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-32" href="#Options-32">10.1.1 Options</a></li>
+      <li><a name="toc-Options-12" href="#Options-12">10.1.1 Options</a></li>
     </ul></li>
     <li><a name="toc-dvdsub" href="#dvdsub">10.2 dvdsub</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-11" href="#Options-11">10.2.1 Options</a></li>
+      <li><a name="toc-Options-24" href="#Options-24">10.2.1 Options</a></li>
     </ul></li>
     <li><a name="toc-libzvbi_002dteletext" href="#libzvbi_002dteletext">10.3 libzvbi-teletext</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-25" href="#Options-25">10.3.1 Options</a></li>
+      <li><a name="toc-Options-30" href="#Options-30">10.3.1 Options</a></li>
     </ul>
 </li>
   </ul></li>
@@ -155,26 +155,26 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-applehttp" href="#applehttp">13.2 applehttp</a></li>
     <li><a name="toc-apng" href="#apng">13.3 apng</a></li>
     <li><a name="toc-asf" href="#asf">13.4 asf</a></li>
-    <li><a name="toc-concat-1" href="#concat-1">13.5 concat</a>
+    <li><a name="toc-concat-2" href="#concat-2">13.5 concat</a>
     <ul class="no-bullet">
-      <li><a name="toc-Syntax" href="#Syntax">13.5.1 Syntax</a></li>
-      <li><a name="toc-Options-20" href="#Options-20">13.5.2 Options</a></li>
-      <li><a name="toc-Examples-129" href="#Examples-129">13.5.3 Examples</a></li>
+      <li><a name="toc-Syntax-2" href="#Syntax-2">13.5.1 Syntax</a></li>
+      <li><a name="toc-Options-3" href="#Options-3">13.5.2 Options</a></li>
+      <li><a name="toc-Examples-108" href="#Examples-108">13.5.3 Examples</a></li>
     </ul></li>
     <li><a name="toc-dash" href="#dash">13.6 dash</a></li>
     <li><a name="toc-flv_002c-live_005fflv" href="#flv_002c-live_005fflv">13.7 flv, live_flv</a></li>
     <li><a name="toc-gif" href="#gif">13.8 gif</a></li>
-    <li><a name="toc-hls" href="#hls">13.9 hls</a></li>
+    <li><a name="toc-hls-1" href="#hls-1">13.9 hls</a></li>
     <li><a name="toc-image2" href="#image2">13.10 image2</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-78" href="#Examples-78">13.10.1 Examples</a></li>
+      <li><a name="toc-Examples-10" href="#Examples-10">13.10.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-libgme" href="#libgme">13.11 libgme</a></li>
     <li><a name="toc-libopenmpt" href="#libopenmpt">13.12 libopenmpt</a></li>
     <li><a name="toc-mov_002fmp4_002f3gp_002fQuickTime" href="#mov_002fmp4_002f3gp_002fQuickTime">13.13 mov/mp4/3gp/QuickTime</a></li>
     <li><a name="toc-mpegts" href="#mpegts">13.14 mpegts</a></li>
     <li><a name="toc-mpjpeg" href="#mpjpeg">13.15 mpjpeg</a></li>
-    <li><a name="toc-rawvideo" href="#rawvideo">13.16 rawvideo</a></li>
+    <li><a name="toc-rawvideo-1" href="#rawvideo-1">13.16 rawvideo</a></li>
     <li><a name="toc-sbg" href="#sbg">13.17 sbg</a></li>
     <li><a name="toc-tedcaptions" href="#tedcaptions">13.18 tedcaptions</a></li>
   </ul></li>
@@ -185,13 +185,13 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-async" href="#async">16.1 async</a></li>
     <li><a name="toc-bluray" href="#bluray">16.2 bluray</a></li>
     <li><a name="toc-cache" href="#cache">16.3 cache</a></li>
-    <li><a name="toc-concat-2" href="#concat-2">16.4 concat</a></li>
+    <li><a name="toc-concat-3" href="#concat-3">16.4 concat</a></li>
     <li><a name="toc-crypto" href="#crypto">16.5 crypto</a></li>
     <li><a name="toc-data" href="#data">16.6 data</a></li>
     <li><a name="toc-file" href="#file">16.7 file</a></li>
     <li><a name="toc-ftp" href="#ftp">16.8 ftp</a></li>
     <li><a name="toc-gopher" href="#gopher">16.9 gopher</a></li>
-    <li><a name="toc-hls-1" href="#hls-1">16.10 hls</a></li>
+    <li><a name="toc-hls" href="#hls">16.10 hls</a></li>
     <li><a name="toc-http" href="#http">16.11 http</a>
     <ul class="no-bullet">
       <li><a name="toc-HTTP-Cookies" href="#HTTP-Cookies">16.11.1 HTTP Cookies</a></li>
@@ -214,7 +214,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-rtp" href="#rtp">16.27 rtp</a></li>
     <li><a name="toc-rtsp" href="#rtsp">16.28 rtsp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-58" href="#Examples-58">16.28.1 Examples</a></li>
+      <li><a name="toc-Examples-93" href="#Examples-93">16.28.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sap" href="#sap">16.29 sap</a>
     <ul class="no-bullet">
@@ -230,7 +230,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-tls" href="#tls">16.36 tls</a></li>
     <li><a name="toc-udp" href="#udp">16.37 udp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-79" href="#Examples-79">16.37.1 Examples</a></li>
+      <li><a name="toc-Examples-84" href="#Examples-84">16.37.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-unix" href="#unix">16.38 unix</a></li>
   </ul></li>
@@ -239,89 +239,89 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <ul class="no-bullet">
     <li><a name="toc-alsa" href="#alsa">18.1 alsa</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-28" href="#Options-28">18.1.1 Options</a></li>
+      <li><a name="toc-Options-4" href="#Options-4">18.1.1 Options</a></li>
     </ul></li>
     <li><a name="toc-android_005fcamera" href="#android_005fcamera">18.2 android_camera</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-22" href="#Options-22">18.2.1 Options</a></li>
+      <li><a name="toc-Options-11" href="#Options-11">18.2.1 Options</a></li>
     </ul></li>
     <li><a name="toc-avfoundation" href="#avfoundation">18.3 avfoundation</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-24" href="#Options-24">18.3.1 Options</a></li>
-      <li><a name="toc-Examples-17" href="#Examples-17">18.3.2 Examples</a></li>
+      <li><a name="toc-Options" href="#Options">18.3.1 Options</a></li>
+      <li><a name="toc-Examples-115" href="#Examples-115">18.3.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-bktr" href="#bktr">18.4 bktr</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-12" href="#Options-12">18.4.1 Options</a></li>
+      <li><a name="toc-Options-13" href="#Options-13">18.4.1 Options</a></li>
     </ul></li>
     <li><a name="toc-decklink" href="#decklink">18.5 decklink</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-6" href="#Options-6">18.5.1 Options</a></li>
-      <li><a name="toc-Examples-133" href="#Examples-133">18.5.2 Examples</a></li>
+      <li><a name="toc-Options-2" href="#Options-2">18.5.1 Options</a></li>
+      <li><a name="toc-Examples-97" href="#Examples-97">18.5.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-dshow" href="#dshow">18.6 dshow</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-2" href="#Options-2">18.6.1 Options</a></li>
-      <li><a name="toc-Examples-11" href="#Examples-11">18.6.2 Examples</a></li>
+      <li><a name="toc-Options-14" href="#Options-14">18.6.1 Options</a></li>
+      <li><a name="toc-Examples-124" href="#Examples-124">18.6.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-fbdev" href="#fbdev">18.7 fbdev</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-21" href="#Options-21">18.7.1 Options</a></li>
+      <li><a name="toc-Options-20" href="#Options-20">18.7.1 Options</a></li>
     </ul></li>
     <li><a name="toc-gdigrab" href="#gdigrab">18.8 gdigrab</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-31" href="#Options-31">18.8.1 Options</a></li>
+      <li><a name="toc-Options-22" href="#Options-22">18.8.1 Options</a></li>
     </ul></li>
     <li><a name="toc-iec61883" href="#iec61883">18.9 iec61883</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-18" href="#Options-18">18.9.1 Options</a></li>
-      <li><a name="toc-Examples-127" href="#Examples-127">18.9.2 Examples</a></li>
+      <li><a name="toc-Options-16" href="#Options-16">18.9.1 Options</a></li>
+      <li><a name="toc-Examples-4" href="#Examples-4">18.9.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-jack" href="#jack">18.10 jack</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-14" href="#Options-14">18.10.1 Options</a></li>
+      <li><a name="toc-Options-6" href="#Options-6">18.10.1 Options</a></li>
     </ul></li>
     <li><a name="toc-kmsgrab" href="#kmsgrab">18.11 kmsgrab</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-4" href="#Options-4">18.11.1 Options</a></li>
-      <li><a name="toc-Examples-14" href="#Examples-14">18.11.2 Examples</a></li>
+      <li><a name="toc-Options-19" href="#Options-19">18.11.1 Options</a></li>
+      <li><a name="toc-Examples-6" href="#Examples-6">18.11.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-lavfi" href="#lavfi">18.12 lavfi</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-3" href="#Options-3">18.12.1 Options</a></li>
-      <li><a name="toc-Examples-23" href="#Examples-23">18.12.2 Examples</a></li>
+      <li><a name="toc-Options-10" href="#Options-10">18.12.1 Options</a></li>
+      <li><a name="toc-Examples-60" href="#Examples-60">18.12.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-libcdio" href="#libcdio">18.13 libcdio</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-23" href="#Options-23">18.13.1 Options</a></li>
+      <li><a name="toc-Options-25" href="#Options-25">18.13.1 Options</a></li>
     </ul></li>
     <li><a name="toc-libdc1394" href="#libdc1394">18.14 libdc1394</a></li>
     <li><a name="toc-libndi_005fnewtek" href="#libndi_005fnewtek">18.15 libndi_newtek</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-30" href="#Options-30">18.15.1 Options</a></li>
-      <li><a name="toc-Examples-47" href="#Examples-47">18.15.2 Examples</a></li>
+      <li><a name="toc-Options-26" href="#Options-26">18.15.1 Options</a></li>
+      <li><a name="toc-Examples-137" href="#Examples-137">18.15.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-openal" href="#openal">18.16 openal</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-15" href="#Options-15">18.16.1 Options</a></li>
-      <li><a name="toc-Examples-99" href="#Examples-99">18.16.2 Examples</a></li>
+      <li><a name="toc-Options-27" href="#Options-27">18.16.1 Options</a></li>
+      <li><a name="toc-Examples-21" href="#Examples-21">18.16.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-oss" href="#oss">18.17 oss</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-13" href="#Options-13">18.17.1 Options</a></li>
+      <li><a name="toc-Options-28" href="#Options-28">18.17.1 Options</a></li>
     </ul></li>
     <li><a name="toc-pulse" href="#pulse">18.18 pulse</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-16" href="#Options-16">18.18.1 Options</a></li>
-      <li><a name="toc-Examples-38" href="#Examples-38">18.18.2 Examples</a></li>
+      <li><a name="toc-Options-32" href="#Options-32">18.18.1 Options</a></li>
+      <li><a name="toc-Examples-70" href="#Examples-70">18.18.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-sndio" href="#sndio">18.19 sndio</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-1" href="#Options-1">18.19.1 Options</a></li>
+      <li><a name="toc-Options-17" href="#Options-17">18.19.1 Options</a></li>
     </ul></li>
     <li><a name="toc-video4linux2_002c-v4l2" href="#video4linux2_002c-v4l2">18.20 video4linux2, v4l2</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-5" href="#Options-5">18.20.1 Options</a></li>
+      <li><a name="toc-Options-9" href="#Options-9">18.20.1 Options</a></li>
     </ul></li>
     <li><a name="toc-vfwcap" href="#vfwcap">18.21 vfwcap</a>
     <ul class="no-bullet">
@@ -329,7 +329,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     </ul></li>
     <li><a name="toc-x11grab" href="#x11grab">18.22 x11grab</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-17" href="#Options-17">18.22.1 Options</a></li>
+      <li><a name="toc-Options-21" href="#Options-21">18.22.1 Options</a></li>
     </ul>
 </li>
   </ul></li>
@@ -351,7 +351,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-acopy" href="#acopy">26.3 acopy</a></li>
     <li><a name="toc-acrossfade" href="#acrossfade">26.4 acrossfade</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-120" href="#Examples-120">26.4.1 Examples</a></li>
+      <li><a name="toc-Examples-107" href="#Examples-107">26.4.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-acrossover" href="#acrossover">26.5 acrossover</a></li>
     <li><a name="toc-acrusher" href="#acrusher">26.6 acrusher</a></li>
@@ -360,71 +360,71 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-adeclip" href="#adeclip">26.9 adeclip</a></li>
     <li><a name="toc-adelay" href="#adelay">26.10 adelay</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-41" href="#Examples-41">26.10.1 Examples</a></li>
+      <li><a name="toc-Examples-149" href="#Examples-149">26.10.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-aderivative_002c-aintegral" href="#aderivative_002c-aintegral">26.11 aderivative, aintegral</a></li>
     <li><a name="toc-aecho" href="#aecho">26.12 aecho</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-96" href="#Examples-96">26.12.1 Examples</a></li>
+      <li><a name="toc-Examples-105" href="#Examples-105">26.12.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-aemphasis" href="#aemphasis">26.13 aemphasis</a></li>
     <li><a name="toc-aeval" href="#aeval">26.14 aeval</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-52" href="#Examples-52">26.14.1 Examples</a></li>
+      <li><a name="toc-Examples-148" href="#Examples-148">26.14.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-afade-1" href="#afade-1">26.15 afade</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-148" href="#Examples-148">26.15.1 Examples</a></li>
+      <li><a name="toc-Examples-104" href="#Examples-104">26.15.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-afftdn" href="#afftdn">26.16 afftdn</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-2" href="#Commands-2">26.16.1 Commands</a></li>
+      <li><a name="toc-Commands-8" href="#Commands-8">26.16.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-afftfilt" href="#afftfilt">26.17 afftfilt</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-65" href="#Examples-65">26.17.1 Examples</a></li>
+      <li><a name="toc-Examples-20" href="#Examples-20">26.17.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-afir-1" href="#afir-1">26.18 afir</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-149" href="#Examples-149">26.18.1 Examples</a></li>
+      <li><a name="toc-Examples-133" href="#Examples-133">26.18.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-aformat-1" href="#aformat-1">26.19 aformat</a></li>
     <li><a name="toc-agate" href="#agate">26.20 agate</a></li>
     <li><a name="toc-aiir" href="#aiir">26.21 aiir</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-26" href="#Examples-26">26.21.1 Examples</a></li>
+      <li><a name="toc-Examples-75" href="#Examples-75">26.21.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-alimiter" href="#alimiter">26.22 alimiter</a></li>
     <li><a name="toc-allpass" href="#allpass">26.23 allpass</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-3" href="#Commands-3">26.23.1 Commands</a></li>
+      <li><a name="toc-Commands-17" href="#Commands-17">26.23.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-aloop" href="#aloop">26.24 aloop</a></li>
     <li><a name="toc-amerge-1" href="#amerge-1">26.25 amerge</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-94" href="#Examples-94">26.25.1 Examples</a></li>
+      <li><a name="toc-Examples-90" href="#Examples-90">26.25.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-amix" href="#amix">26.26 amix</a></li>
     <li><a name="toc-amultiply" href="#amultiply">26.27 amultiply</a></li>
     <li><a name="toc-anequalizer" href="#anequalizer">26.28 anequalizer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-110" href="#Examples-110">26.28.1 Examples</a></li>
-      <li><a name="toc-Commands-22" href="#Commands-22">26.28.2 Commands</a></li>
+      <li><a name="toc-Examples-44" href="#Examples-44">26.28.1 Examples</a></li>
+      <li><a name="toc-Commands-13" href="#Commands-13">26.28.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-anull" href="#anull">26.29 anull</a></li>
     <li><a name="toc-apad" href="#apad">26.30 apad</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-74" href="#Examples-74">26.30.1 Examples</a></li>
+      <li><a name="toc-Examples-18" href="#Examples-18">26.30.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-aphaser" href="#aphaser">26.31 aphaser</a></li>
     <li><a name="toc-apulsator" href="#apulsator">26.32 apulsator</a></li>
     <li><a name="toc-aresample-1" href="#aresample-1">26.33 aresample</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-37" href="#Examples-37">26.33.1 Examples</a></li>
+      <li><a name="toc-Examples-118" href="#Examples-118">26.33.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-areverse" href="#areverse">26.34 areverse</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-1" href="#Examples-1">26.34.1 Examples</a></li>
+      <li><a name="toc-Examples-110" href="#Examples-110">26.34.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-asetnsamples" href="#asetnsamples">26.35 asetnsamples</a></li>
     <li><a name="toc-asetrate" href="#asetrate">26.36 asetrate</a></li>
@@ -432,41 +432,41 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-astats-1" href="#astats-1">26.38 astats</a></li>
     <li><a name="toc-atempo" href="#atempo">26.39 atempo</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-144" href="#Examples-144">26.39.1 Examples</a></li>
+      <li><a name="toc-Examples-143" href="#Examples-143">26.39.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-atrim" href="#atrim">26.40 atrim</a></li>
     <li><a name="toc-bandpass" href="#bandpass">26.41 bandpass</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-20" href="#Commands-20">26.41.1 Commands</a></li>
+      <li><a name="toc-Commands-19" href="#Commands-19">26.41.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-bandreject" href="#bandreject">26.42 bandreject</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-6" href="#Commands-6">26.42.1 Commands</a></li>
+      <li><a name="toc-Commands-14" href="#Commands-14">26.42.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-bass_002c-lowshelf" href="#bass_002c-lowshelf">26.43 bass, lowshelf</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands" href="#Commands">26.43.1 Commands</a></li>
+      <li><a name="toc-Commands-21" href="#Commands-21">26.43.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-biquad" href="#biquad">26.44 biquad</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-21" href="#Commands-21">26.44.1 Commands</a></li>
+      <li><a name="toc-Commands-18" href="#Commands-18">26.44.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-bs2b" href="#bs2b">26.45 bs2b</a></li>
     <li><a name="toc-channelmap" href="#channelmap">26.46 channelmap</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-119" href="#Examples-119">26.46.1 Examples</a></li>
+      <li><a name="toc-Examples-127" href="#Examples-127">26.46.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-channelsplit" href="#channelsplit">26.47 channelsplit</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-24" href="#Examples-24">26.47.1 Examples</a></li>
+      <li><a name="toc-Examples-81" href="#Examples-81">26.47.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-chorus" href="#chorus">26.48 chorus</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-19" href="#Examples-19">26.48.1 Examples</a></li>
+      <li><a name="toc-Examples-109" href="#Examples-109">26.48.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-compand" href="#compand">26.49 compand</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-139" href="#Examples-139">26.49.1 Examples</a></li>
+      <li><a name="toc-Examples-28" href="#Examples-28">26.49.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-compensationdelay" href="#compensationdelay">26.50 compensationdelay</a></li>
     <li><a name="toc-crossfeed" href="#crossfeed">26.51 crossfeed</a></li>
@@ -477,40 +477,40 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-earwax" href="#earwax">26.56 earwax</a></li>
     <li><a name="toc-equalizer" href="#equalizer">26.57 equalizer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-75" href="#Examples-75">26.57.1 Examples</a></li>
-      <li><a name="toc-Commands-12" href="#Commands-12">26.57.2 Commands</a></li>
+      <li><a name="toc-Examples-151" href="#Examples-151">26.57.1 Examples</a></li>
+      <li><a name="toc-Commands-20" href="#Commands-20">26.57.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-extrastereo" href="#extrastereo">26.58 extrastereo</a></li>
     <li><a name="toc-firequalizer" href="#firequalizer">26.59 firequalizer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-10" href="#Examples-10">26.59.1 Examples</a></li>
+      <li><a name="toc-Examples-85" href="#Examples-85">26.59.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-flanger" href="#flanger">26.60 flanger</a></li>
     <li><a name="toc-haas" href="#haas">26.61 haas</a></li>
     <li><a name="toc-hdcd" href="#hdcd">26.62 hdcd</a></li>
     <li><a name="toc-headphone" href="#headphone">26.63 headphone</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-130" href="#Examples-130">26.63.1 Examples</a></li>
+      <li><a name="toc-Examples-9" href="#Examples-9">26.63.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-highpass" href="#highpass">26.64 highpass</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-19" href="#Commands-19">26.64.1 Commands</a></li>
+      <li><a name="toc-Commands-22" href="#Commands-22">26.64.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-join" href="#join">26.65 join</a></li>
     <li><a name="toc-ladspa" href="#ladspa">26.66 ladspa</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-67" href="#Examples-67">26.66.1 Examples</a></li>
-      <li><a name="toc-Commands-18" href="#Commands-18">26.66.2 Commands</a></li>
+      <li><a name="toc-Examples-76" href="#Examples-76">26.66.1 Examples</a></li>
+      <li><a name="toc-Commands-9" href="#Commands-9">26.66.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-loudnorm" href="#loudnorm">26.67 loudnorm</a></li>
     <li><a name="toc-lowpass" href="#lowpass">26.68 lowpass</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-71" href="#Examples-71">26.68.1 Examples</a></li>
-      <li><a name="toc-Commands-8" href="#Commands-8">26.68.2 Commands</a></li>
+      <li><a name="toc-Examples-1" href="#Examples-1">26.68.1 Examples</a></li>
+      <li><a name="toc-Commands-6" href="#Commands-6">26.68.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-lv2" href="#lv2">26.69 lv2</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-73" href="#Examples-73">26.69.1 Examples</a></li>
+      <li><a name="toc-Examples-50" href="#Examples-50">26.69.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-mcompand" href="#mcompand">26.70 mcompand</a></li>
     <li><a name="toc-pan-1" href="#pan-1">26.71 pan</a>
@@ -523,42 +523,42 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-rubberband" href="#rubberband">26.74 rubberband</a></li>
     <li><a name="toc-sidechaincompress" href="#sidechaincompress">26.75 sidechaincompress</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-89" href="#Examples-89">26.75.1 Examples</a></li>
+      <li><a name="toc-Examples-141" href="#Examples-141">26.75.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sidechaingate" href="#sidechaingate">26.76 sidechaingate</a></li>
     <li><a name="toc-silencedetect" href="#silencedetect">26.77 silencedetect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-92" href="#Examples-92">26.77.1 Examples</a></li>
+      <li><a name="toc-Examples-111" href="#Examples-111">26.77.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-silenceremove" href="#silenceremove">26.78 silenceremove</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-93" href="#Examples-93">26.78.1 Examples</a></li>
+      <li><a name="toc-Examples-102" href="#Examples-102">26.78.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sofalizer" href="#sofalizer">26.79 sofalizer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-59" href="#Examples-59">26.79.1 Examples</a></li>
+      <li><a name="toc-Examples-144" href="#Examples-144">26.79.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-stereotools" href="#stereotools">26.80 stereotools</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-61" href="#Examples-61">26.80.1 Examples</a></li>
+      <li><a name="toc-Examples-116" href="#Examples-116">26.80.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-stereowiden" href="#stereowiden">26.81 stereowiden</a></li>
     <li><a name="toc-superequalizer" href="#superequalizer">26.82 superequalizer</a></li>
     <li><a name="toc-surround" href="#surround">26.83 surround</a></li>
     <li><a name="toc-treble_002c-highshelf" href="#treble_002c-highshelf">26.84 treble, highshelf</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-11" href="#Commands-11">26.84.1 Commands</a></li>
+      <li><a name="toc-Commands-2" href="#Commands-2">26.84.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-tremolo" href="#tremolo">26.85 tremolo</a></li>
     <li><a name="toc-vibrato" href="#vibrato">26.86 vibrato</a></li>
     <li><a name="toc-volume" href="#volume">26.87 volume</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-10" href="#Commands-10">26.87.1 Commands</a></li>
-      <li><a name="toc-Examples-63" href="#Examples-63">26.87.2 Examples</a></li>
+      <li><a name="toc-Commands-12" href="#Commands-12">26.87.1 Commands</a></li>
+      <li><a name="toc-Examples-96" href="#Examples-96">26.87.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-volumedetect" href="#volumedetect">26.88 volumedetect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-128" href="#Examples-128">26.88.1 Examples</a></li>
+      <li><a name="toc-Examples-120" href="#Examples-120">26.88.1 Examples</a></li>
     </ul>
 </li>
   </ul></li>
@@ -566,29 +566,29 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <ul class="no-bullet">
     <li><a name="toc-abuffer" href="#abuffer">27.1 abuffer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-117" href="#Examples-117">27.1.1 Examples</a></li>
+      <li><a name="toc-Examples-13" href="#Examples-13">27.1.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-aevalsrc" href="#aevalsrc">27.2 aevalsrc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-35" href="#Examples-35">27.2.1 Examples</a></li>
+      <li><a name="toc-Examples-12" href="#Examples-12">27.2.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-anullsrc" href="#anullsrc">27.3 anullsrc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-126" href="#Examples-126">27.3.1 Examples</a></li>
+      <li><a name="toc-Examples-87" href="#Examples-87">27.3.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-flite" href="#flite">27.4 flite</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-18" href="#Examples-18">27.4.1 Examples</a></li>
+      <li><a name="toc-Examples-77" href="#Examples-77">27.4.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-anoisesrc" href="#anoisesrc">27.5 anoisesrc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-45" href="#Examples-45">27.5.1 Examples</a></li>
+      <li><a name="toc-Examples-82" href="#Examples-82">27.5.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-hilbert" href="#hilbert">27.6 hilbert</a></li>
     <li><a name="toc-sinc" href="#sinc">27.7 sinc</a></li>
     <li><a name="toc-sine" href="#sine">27.8 sine</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-102" href="#Examples-102">27.8.1 Examples</a></li>
+      <li><a name="toc-Examples-119" href="#Examples-119">27.8.1 Examples</a></li>
     </ul>
 </li>
   </ul></li>
@@ -611,75 +611,75 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-blackframe" href="#blackframe">29.10 blackframe</a></li>
     <li><a name="toc-blend_002c-tblend" href="#blend_002c-tblend">29.11 blend, tblend</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-145" href="#Examples-145">29.11.1 Examples</a></li>
+      <li><a name="toc-Examples-142" href="#Examples-142">29.11.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-bm3d" href="#bm3d">29.12 bm3d</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-39" href="#Examples-39">29.12.1 Examples</a></li>
+      <li><a name="toc-Examples-123" href="#Examples-123">29.12.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-boxblur" href="#boxblur">29.13 boxblur</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-2" href="#Examples-2">29.13.1 Examples</a></li>
+      <li><a name="toc-Examples-43" href="#Examples-43">29.13.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-bwdif" href="#bwdif">29.14 bwdif</a></li>
     <li><a name="toc-chromahold" href="#chromahold">29.15 chromahold</a></li>
     <li><a name="toc-chromakey" href="#chromakey">29.16 chromakey</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-91" href="#Examples-91">29.16.1 Examples</a></li>
+      <li><a name="toc-Examples" href="#Examples">29.16.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-ciescope" href="#ciescope">29.17 ciescope</a></li>
     <li><a name="toc-codecview" href="#codecview">29.18 codecview</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-134" href="#Examples-134">29.18.1 Examples</a></li>
+      <li><a name="toc-Examples-62" href="#Examples-62">29.18.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-colorbalance" href="#colorbalance">29.19 colorbalance</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-49" href="#Examples-49">29.19.1 Examples</a></li>
+      <li><a name="toc-Examples-51" href="#Examples-51">29.19.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-colorkey" href="#colorkey">29.20 colorkey</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-77" href="#Examples-77">29.20.1 Examples</a></li>
+      <li><a name="toc-Examples-23" href="#Examples-23">29.20.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-colorlevels" href="#colorlevels">29.21 colorlevels</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-140" href="#Examples-140">29.21.1 Examples</a></li>
+      <li><a name="toc-Examples-106" href="#Examples-106">29.21.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-colorchannelmixer" href="#colorchannelmixer">29.22 colorchannelmixer</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-106" href="#Examples-106">29.22.1 Examples</a></li>
+      <li><a name="toc-Examples-22" href="#Examples-22">29.22.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-colormatrix" href="#colormatrix">29.23 colormatrix</a></li>
     <li><a name="toc-colorspace" href="#colorspace">29.24 colorspace</a></li>
     <li><a name="toc-convolution" href="#convolution">29.25 convolution</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-36" href="#Examples-36">29.25.1 Examples</a></li>
+      <li><a name="toc-Examples-39" href="#Examples-39">29.25.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-convolve" href="#convolve">29.26 convolve</a></li>
     <li><a name="toc-copy" href="#copy">29.27 copy</a></li>
     <li><a name="toc-coreimage-1" href="#coreimage-1">29.28 coreimage</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-137" href="#Examples-137">29.28.1 Examples</a></li>
+      <li><a name="toc-Examples-47" href="#Examples-47">29.28.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-crop" href="#crop">29.29 crop</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-131" href="#Examples-131">29.29.1 Examples</a></li>
-      <li><a name="toc-Commands-15" href="#Commands-15">29.29.2 Commands</a></li>
+      <li><a name="toc-Examples-98" href="#Examples-98">29.29.1 Examples</a></li>
+      <li><a name="toc-Commands-10" href="#Commands-10">29.29.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-cropdetect" href="#cropdetect">29.30 cropdetect</a></li>
     <li><a name="toc-cue-1" href="#cue-1">29.31 cue</a></li>
     <li><a name="toc-curves-1" href="#curves-1">29.32 curves</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-85" href="#Examples-85">29.32.1 Examples</a></li>
+      <li><a name="toc-Examples-112" href="#Examples-112">29.32.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-datascope" href="#datascope">29.33 datascope</a></li>
     <li><a name="toc-dctdnoiz" href="#dctdnoiz">29.34 dctdnoiz</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-15" href="#Examples-15">29.34.1 Examples</a></li>
+      <li><a name="toc-Examples-126" href="#Examples-126">29.34.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-deband" href="#deband">29.35 deband</a></li>
     <li><a name="toc-deblock" href="#deblock">29.36 deblock</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-88" href="#Examples-88">29.36.1 Examples</a></li>
+      <li><a name="toc-Examples-66" href="#Examples-66">29.36.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-decimate-1" href="#decimate-1">29.37 decimate</a></li>
     <li><a name="toc-deconvolve" href="#deconvolve">29.38 deconvolve</a></li>
@@ -688,7 +688,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-dejudder" href="#dejudder">29.41 dejudder</a></li>
     <li><a name="toc-delogo" href="#delogo">29.42 delogo</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-113" href="#Examples-113">29.42.1 Examples</a></li>
+      <li><a name="toc-Examples-67" href="#Examples-67">29.42.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-deshake" href="#deshake">29.43 deshake</a></li>
     <li><a name="toc-despill" href="#despill">29.44 despill</a></li>
@@ -696,44 +696,44 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-dilation" href="#dilation">29.46 dilation</a></li>
     <li><a name="toc-displace" href="#displace">29.47 displace</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-60" href="#Examples-60">29.47.1 Examples</a></li>
+      <li><a name="toc-Examples-55" href="#Examples-55">29.47.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-drawbox" href="#drawbox">29.48 drawbox</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-55" href="#Examples-55">29.48.1 Examples</a></li>
+      <li><a name="toc-Examples-114" href="#Examples-114">29.48.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-drawgrid" href="#drawgrid">29.49 drawgrid</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-114" href="#Examples-114">29.49.1 Examples</a></li>
+      <li><a name="toc-Examples-37" href="#Examples-37">29.49.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-drawtext-1" href="#drawtext-1">29.50 drawtext</a>
     <ul class="no-bullet">
-      <li><a name="toc-Syntax-2" href="#Syntax-2">29.50.1 Syntax</a></li>
+      <li><a name="toc-Syntax" href="#Syntax">29.50.1 Syntax</a></li>
       <li><a name="toc-Text-expansion" href="#Text-expansion">29.50.2 Text expansion</a></li>
-      <li><a name="toc-Examples-72" href="#Examples-72">29.50.3 Examples</a></li>
+      <li><a name="toc-Examples-80" href="#Examples-80">29.50.3 Examples</a></li>
     </ul></li>
     <li><a name="toc-edgedetect" href="#edgedetect">29.51 edgedetect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-34" href="#Examples-34">29.51.1 Examples</a></li>
+      <li><a name="toc-Examples-73" href="#Examples-73">29.51.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-eq" href="#eq">29.52 eq</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-16" href="#Commands-16">29.52.1 Commands</a></li>
+      <li><a name="toc-Commands-7" href="#Commands-7">29.52.1 Commands</a></li>
     </ul></li>
     <li><a name="toc-erosion" href="#erosion">29.53 erosion</a></li>
     <li><a name="toc-extractplanes" href="#extractplanes">29.54 extractplanes</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-100" href="#Examples-100">29.54.1 Examples</a></li>
+      <li><a name="toc-Examples-138" href="#Examples-138">29.54.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-elbg" href="#elbg">29.55 elbg</a></li>
     <li><a name="toc-entropy" href="#entropy">29.56 entropy</a></li>
     <li><a name="toc-fade" href="#fade">29.57 fade</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-80" href="#Examples-80">29.57.1 Examples</a></li>
+      <li><a name="toc-Examples-3" href="#Examples-3">29.57.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-fftfilt" href="#fftfilt">29.58 fftfilt</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-87" href="#Examples-87">29.58.1 Examples</a></li>
+      <li><a name="toc-Examples-52" href="#Examples-52">29.58.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-fftdnoiz" href="#fftdnoiz">29.59 fftdnoiz</a></li>
     <li><a name="toc-field" href="#field">29.60 field</a></li>
@@ -745,49 +745,49 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
         <li><a name="toc-p_002fc_002fn" href="#p_002fc_002fn">29.62.1.1 p/c/n</a></li>
         <li><a name="toc-u_002fb" href="#u_002fb">29.62.1.2 u/b</a></li>
       </ul></li>
-      <li><a name="toc-Examples-42" href="#Examples-42">29.62.2 Examples</a></li>
+      <li><a name="toc-Examples-88" href="#Examples-88">29.62.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-fieldorder" href="#fieldorder">29.63 fieldorder</a></li>
     <li><a name="toc-fifo_002c-afifo" href="#fifo_002c-afifo">29.64 fifo, afifo</a></li>
     <li><a name="toc-fillborders" href="#fillborders">29.65 fillborders</a></li>
     <li><a name="toc-find_005frect" href="#find_005frect">29.66 find_rect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-66" href="#Examples-66">29.66.1 Examples</a></li>
+      <li><a name="toc-Examples-34" href="#Examples-34">29.66.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-cover_005frect" href="#cover_005frect">29.67 cover_rect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-81" href="#Examples-81">29.67.1 Examples</a></li>
+      <li><a name="toc-Examples-45" href="#Examples-45">29.67.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-floodfill" href="#floodfill">29.68 floodfill</a></li>
     <li><a name="toc-format-1" href="#format-1">29.69 format</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-62" href="#Examples-62">29.69.1 Examples</a></li>
+      <li><a name="toc-Examples-40" href="#Examples-40">29.69.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-fps-1" href="#fps-1">29.70 fps</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-141" href="#Examples-141">29.70.1 Examples</a></li>
+      <li><a name="toc-Examples-33" href="#Examples-33">29.70.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-framepack" href="#framepack">29.71 framepack</a></li>
     <li><a name="toc-framerate" href="#framerate">29.72 framerate</a></li>
     <li><a name="toc-framestep" href="#framestep">29.73 framestep</a></li>
     <li><a name="toc-frei0r-1" href="#frei0r-1">29.74 frei0r</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-21" href="#Examples-21">29.74.1 Examples</a></li>
+      <li><a name="toc-Examples-125" href="#Examples-125">29.74.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-fspp" href="#fspp">29.75 fspp</a></li>
     <li><a name="toc-gblur" href="#gblur">29.76 gblur</a></li>
     <li><a name="toc-geq" href="#geq">29.77 geq</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-70" href="#Examples-70">29.77.1 Examples</a></li>
+      <li><a name="toc-Examples-136" href="#Examples-136">29.77.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-gradfun" href="#gradfun">29.78 gradfun</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-13" href="#Examples-13">29.78.1 Examples</a></li>
+      <li><a name="toc-Examples-53" href="#Examples-53">29.78.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-graphmonitor_002c-agraphmonitor" href="#graphmonitor_002c-agraphmonitor">29.79 graphmonitor, agraphmonitor</a></li>
     <li><a name="toc-greyedge" href="#greyedge">29.80 greyedge</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-7" href="#Examples-7">29.80.1 Examples</a></li>
+      <li><a name="toc-Examples-101" href="#Examples-101">29.80.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-haldclut-1" href="#haldclut-1">29.81 haldclut</a>
     <ul class="no-bullet">
@@ -802,7 +802,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-histeq" href="#histeq">29.83 histeq</a></li>
     <li><a name="toc-histogram" href="#histogram">29.84 histogram</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-108" href="#Examples-108">29.84.1 Examples</a></li>
+      <li><a name="toc-Examples-68" href="#Examples-68">29.84.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-hqdn3d-1" href="#hqdn3d-1">29.85 hqdn3d</a></li>
     <li><a name="toc-hwdownload" href="#hwdownload">29.86 hwdownload</a></li>
@@ -813,8 +813,8 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-hstack" href="#hstack">29.91 hstack</a></li>
     <li><a name="toc-hue" href="#hue">29.92 hue</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-118" href="#Examples-118">29.92.1 Examples</a></li>
-      <li><a name="toc-Commands-14" href="#Commands-14">29.92.2 Commands</a></li>
+      <li><a name="toc-Examples-38" href="#Examples-38">29.92.1 Examples</a></li>
+      <li><a name="toc-Commands-16" href="#Commands-16">29.92.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-hysteresis" href="#hysteresis">29.93 hysteresis</a></li>
     <li><a name="toc-idet" href="#idet">29.94 idet</a></li>
@@ -823,39 +823,39 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-interlace" href="#interlace">29.97 interlace</a></li>
     <li><a name="toc-kerndeint" href="#kerndeint">29.98 kerndeint</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-25" href="#Examples-25">29.98.1 Examples</a></li>
+      <li><a name="toc-Examples-8" href="#Examples-8">29.98.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-lenscorrection" href="#lenscorrection">29.99 lenscorrection</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-9" href="#Options-9">29.99.1 Options</a></li>
+      <li><a name="toc-Options-31" href="#Options-31">29.99.1 Options</a></li>
     </ul></li>
     <li><a name="toc-lensfun" href="#lensfun">29.100 lensfun</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-147" href="#Examples-147">29.100.1 Examples</a></li>
+      <li><a name="toc-Examples-32" href="#Examples-32">29.100.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-libvmaf" href="#libvmaf">29.101 libvmaf</a></li>
     <li><a name="toc-limiter" href="#limiter">29.102 limiter</a></li>
     <li><a name="toc-loop" href="#loop">29.103 loop</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-28" href="#Examples-28">29.103.1 Examples</a></li>
+      <li><a name="toc-Examples-46" href="#Examples-46">29.103.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-lut1d" href="#lut1d">29.104 lut1d</a></li>
     <li><a name="toc-lut3d-1" href="#lut3d-1">29.105 lut3d</a></li>
     <li><a name="toc-lumakey" href="#lumakey">29.106 lumakey</a></li>
     <li><a name="toc-lut_002c-lutrgb_002c-lutyuv" href="#lut_002c-lutrgb_002c-lutyuv">29.107 lut, lutrgb, lutyuv</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-5" href="#Examples-5">29.107.1 Examples</a></li>
+      <li><a name="toc-Examples-56" href="#Examples-56">29.107.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-lut2_002c-tlut2" href="#lut2_002c-tlut2">29.108 lut2, tlut2</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-50" href="#Examples-50">29.108.1 Examples</a></li>
+      <li><a name="toc-Examples-57" href="#Examples-57">29.108.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-maskedclamp" href="#maskedclamp">29.109 maskedclamp</a></li>
     <li><a name="toc-maskedmerge" href="#maskedmerge">29.110 maskedmerge</a></li>
     <li><a name="toc-mcdeint" href="#mcdeint">29.111 mcdeint</a></li>
     <li><a name="toc-mergeplanes" href="#mergeplanes">29.112 mergeplanes</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-69" href="#Examples-69">29.112.1 Examples</a></li>
+      <li><a name="toc-Examples-24" href="#Examples-24">29.112.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-mestimate" href="#mestimate">29.113 mestimate</a></li>
     <li><a name="toc-midequalizer" href="#midequalizer">29.114 midequalizer</a></li>
@@ -867,15 +867,15 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-nnedi" href="#nnedi">29.120 nnedi</a></li>
     <li><a name="toc-noformat" href="#noformat">29.121 noformat</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-32" href="#Examples-32">29.121.1 Examples</a></li>
+      <li><a name="toc-Examples-130" href="#Examples-130">29.121.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-noise-1" href="#noise-1">29.122 noise</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-33" href="#Examples-33">29.122.1 Examples</a></li>
+      <li><a name="toc-Examples-78" href="#Examples-78">29.122.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-normalize" href="#normalize">29.123 normalize</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-112" href="#Examples-112">29.123.1 Examples</a></li>
+      <li><a name="toc-Examples-54" href="#Examples-54">29.123.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-null-1" href="#null-1">29.124 null</a></li>
     <li><a name="toc-ocr" href="#ocr">29.125 ocr</a></li>
@@ -887,25 +887,25 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     </ul></li>
     <li><a name="toc-oscilloscope" href="#oscilloscope">29.127 oscilloscope</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-31" href="#Examples-31">29.127.1 Examples</a></li>
+      <li><a name="toc-Examples-132" href="#Examples-132">29.127.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-overlay-1" href="#overlay-1">29.128 overlay</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-7" href="#Commands-7">29.128.1 Commands</a></li>
-      <li><a name="toc-Examples-8" href="#Examples-8">29.128.2 Examples</a></li>
+      <li><a name="toc-Commands-3" href="#Commands-3">29.128.1 Commands</a></li>
+      <li><a name="toc-Examples-16" href="#Examples-16">29.128.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-owdenoise" href="#owdenoise">29.129 owdenoise</a></li>
     <li><a name="toc-pad-1" href="#pad-1">29.130 pad</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-64" href="#Examples-64">29.130.1 Examples</a></li>
+      <li><a name="toc-Examples-7" href="#Examples-7">29.130.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-palettegen-1" href="#palettegen-1">29.131 palettegen</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-90" href="#Examples-90">29.131.1 Examples</a></li>
+      <li><a name="toc-Examples-15" href="#Examples-15">29.131.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-paletteuse" href="#paletteuse">29.132 paletteuse</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-29" href="#Examples-29">29.132.1 Examples</a></li>
+      <li><a name="toc-Examples-135" href="#Examples-135">29.132.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-perspective" href="#perspective">29.133 perspective</a></li>
     <li><a name="toc-phase" href="#phase">29.134 phase</a></li>
@@ -913,7 +913,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-pixscope" href="#pixscope">29.136 pixscope</a></li>
     <li><a name="toc-pp" href="#pp">29.137 pp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-138" href="#Examples-138">29.137.1 Examples</a></li>
+      <li><a name="toc-Examples-128" href="#Examples-128">29.137.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-pp7" href="#pp7">29.138 pp7</a></li>
     <li><a name="toc-premultiply" href="#premultiply">29.139 premultiply</a></li>
@@ -921,22 +921,22 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-program_005fopencl-1" href="#program_005fopencl-1">29.141 program_opencl</a></li>
     <li><a name="toc-pseudocolor" href="#pseudocolor">29.142 pseudocolor</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-6" href="#Examples-6">29.142.1 Examples</a></li>
+      <li><a name="toc-Examples-19" href="#Examples-19">29.142.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-psnr" href="#psnr">29.143 psnr</a></li>
     <li><a name="toc-pullup-1" href="#pullup-1">29.144 pullup</a></li>
     <li><a name="toc-qp" href="#qp">29.145 qp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-16" href="#Examples-16">29.145.1 Examples</a></li>
+      <li><a name="toc-Examples-42" href="#Examples-42">29.145.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-random" href="#random">29.146 random</a></li>
     <li><a name="toc-readeia608" href="#readeia608">29.147 readeia608</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-135" href="#Examples-135">29.147.1 Examples</a></li>
+      <li><a name="toc-Examples-91" href="#Examples-91">29.147.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-readvitc" href="#readvitc">29.148 readvitc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-146" href="#Examples-146">29.148.1 Examples</a></li>
+      <li><a name="toc-Examples-134" href="#Examples-134">29.148.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-remap" href="#remap">29.149 remap</a></li>
     <li><a name="toc-removegrain" href="#removegrain">29.150 removegrain</a></li>
@@ -944,34 +944,34 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-repeatfields" href="#repeatfields">29.152 repeatfields</a></li>
     <li><a name="toc-reverse" href="#reverse">29.153 reverse</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-98" href="#Examples-98">29.153.1 Examples</a></li>
+      <li><a name="toc-Examples-100" href="#Examples-100">29.153.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-roberts" href="#roberts">29.154 roberts</a></li>
     <li><a name="toc-rotate" href="#rotate">29.155 rotate</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-107" href="#Examples-107">29.155.1 Examples</a></li>
-      <li><a name="toc-Commands-5" href="#Commands-5">29.155.2 Commands</a></li>
+      <li><a name="toc-Examples-25" href="#Examples-25">29.155.1 Examples</a></li>
+      <li><a name="toc-Commands-4" href="#Commands-4">29.155.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-sab" href="#sab">29.156 sab</a></li>
     <li><a name="toc-scale-1" href="#scale-1">29.157 scale</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-10" href="#Options-10">29.157.1 Options</a></li>
-      <li><a name="toc-Examples-12" href="#Examples-12">29.157.2 Examples</a></li>
-      <li><a name="toc-Commands-1" href="#Commands-1">29.157.3 Commands</a></li>
+      <li><a name="toc-Options-1" href="#Options-1">29.157.1 Options</a></li>
+      <li><a name="toc-Examples-121" href="#Examples-121">29.157.2 Examples</a></li>
+      <li><a name="toc-Commands-11" href="#Commands-11">29.157.3 Commands</a></li>
     </ul></li>
     <li><a name="toc-scale_005fnpp" href="#scale_005fnpp">29.158 scale_npp</a></li>
     <li><a name="toc-scale2ref" href="#scale2ref">29.159 scale2ref</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-95" href="#Examples-95">29.159.1 Examples</a></li>
+      <li><a name="toc-Examples-69" href="#Examples-69">29.159.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-selectivecolor-1" href="#selectivecolor-1">29.160 selectivecolor</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-124" href="#Examples-124">29.160.1 Examples</a></li>
+      <li><a name="toc-Examples-36" href="#Examples-36">29.160.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-separatefields-1" href="#separatefields-1">29.161 separatefields</a></li>
     <li><a name="toc-setdar_002c-setsar" href="#setdar_002c-setsar">29.162 setdar, setsar</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-104" href="#Examples-104">29.162.1 Examples</a></li>
+      <li><a name="toc-Examples-65" href="#Examples-65">29.162.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-setfield-1" href="#setfield-1">29.163 setfield</a></li>
     <li><a name="toc-setparams-1" href="#setparams-1">29.164 setparams</a></li>
@@ -979,30 +979,30 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-showpalette" href="#showpalette">29.166 showpalette</a></li>
     <li><a name="toc-shuffleframes" href="#shuffleframes">29.167 shuffleframes</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-105" href="#Examples-105">29.167.1 Examples</a></li>
+      <li><a name="toc-Examples-146" href="#Examples-146">29.167.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-shuffleplanes" href="#shuffleplanes">29.168 shuffleplanes</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-76" href="#Examples-76">29.168.1 Examples</a></li>
+      <li><a name="toc-Examples-72" href="#Examples-72">29.168.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-signalstats-1" href="#signalstats-1">29.169 signalstats</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-46" href="#Examples-46">29.169.1 Examples</a></li>
+      <li><a name="toc-Examples-103" href="#Examples-103">29.169.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-signature-1" href="#signature-1">29.170 signature</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-83" href="#Examples-83">29.170.1 Examples</a></li>
+      <li><a name="toc-Examples-92" href="#Examples-92">29.170.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-smartblur-1" href="#smartblur-1">29.171 smartblur</a></li>
     <li><a name="toc-ssim" href="#ssim">29.172 ssim</a></li>
     <li><a name="toc-stereo3d" href="#stereo3d">29.173 stereo3d</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-44" href="#Examples-44">29.173.1 Examples</a></li>
+      <li><a name="toc-Examples-41" href="#Examples-41">29.173.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-streamselect_002c-astreamselect" href="#streamselect_002c-astreamselect">29.174 streamselect, astreamselect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Commands-4" href="#Commands-4">29.174.1 Commands</a></li>
-      <li><a name="toc-Examples-111" href="#Examples-111">29.174.2 Examples</a></li>
+      <li><a name="toc-Commands-15" href="#Commands-15">29.174.1 Commands</a></li>
+      <li><a name="toc-Examples-63" href="#Examples-63">29.174.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-sobel" href="#sobel">29.175 sobel</a></li>
     <li><a name="toc-spp-1" href="#spp-1">29.176 spp</a></li>
@@ -1014,24 +1014,24 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-telecine" href="#telecine">29.182 telecine</a></li>
     <li><a name="toc-threshold" href="#threshold">29.183 threshold</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-68" href="#Examples-68">29.183.1 Examples</a></li>
+      <li><a name="toc-Examples-49" href="#Examples-49">29.183.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-thumbnail" href="#thumbnail">29.184 thumbnail</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-109" href="#Examples-109">29.184.1 Examples</a></li>
+      <li><a name="toc-Examples-29" href="#Examples-29">29.184.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-tile" href="#tile">29.185 tile</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-136" href="#Examples-136">29.185.1 Examples</a></li>
+      <li><a name="toc-Examples-117" href="#Examples-117">29.185.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-tinterlace" href="#tinterlace">29.186 tinterlace</a></li>
     <li><a name="toc-tmix" href="#tmix">29.187 tmix</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-40" href="#Examples-40">29.187.1 Examples</a></li>
+      <li><a name="toc-Examples-150" href="#Examples-150">29.187.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-tonemap" href="#tonemap">29.188 tonemap</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-19" href="#Options-19">29.188.1 Options</a></li>
+      <li><a name="toc-Options-29" href="#Options-29">29.188.1 Options</a></li>
     </ul></li>
     <li><a name="toc-transpose-1" href="#transpose-1">29.189 transpose</a></li>
     <li><a name="toc-transpose_005fnpp" href="#transpose_005fnpp">29.190 transpose_npp</a></li>
@@ -1039,19 +1039,19 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-unpremultiply" href="#unpremultiply">29.192 unpremultiply</a></li>
     <li><a name="toc-unsharp-1" href="#unsharp-1">29.193 unsharp</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-115" href="#Examples-115">29.193.1 Examples</a></li>
+      <li><a name="toc-Examples-113" href="#Examples-113">29.193.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-uspp" href="#uspp">29.194 uspp</a></li>
     <li><a name="toc-vaguedenoiser" href="#vaguedenoiser">29.195 vaguedenoiser</a></li>
     <li><a name="toc-vectorscope" href="#vectorscope">29.196 vectorscope</a></li>
     <li><a name="toc-vidstabdetect-1" href="#vidstabdetect-1">29.197 vidstabdetect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-142" href="#Examples-142">29.197.1 Examples</a></li>
+      <li><a name="toc-Examples-99" href="#Examples-99">29.197.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-vidstabtransform-1" href="#vidstabtransform-1">29.198 vidstabtransform</a>
     <ul class="no-bullet">
       <li><a name="toc-Options-7" href="#Options-7">29.198.1 Options</a></li>
-      <li><a name="toc-Examples-132" href="#Examples-132">29.198.2 Examples</a></li>
+      <li><a name="toc-Examples-83" href="#Examples-83">29.198.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-vflip" href="#vflip">29.199 vflip</a></li>
     <li><a name="toc-vfrdet" href="#vfrdet">29.200 vfrdet</a></li>
@@ -1059,7 +1059,7 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-vignette-1" href="#vignette-1">29.202 vignette</a>
     <ul class="no-bullet">
       <li><a name="toc-Expressions" href="#Expressions">29.202.1 Expressions</a></li>
-      <li><a name="toc-Examples-3" href="#Examples-3">29.202.2 Examples</a></li>
+      <li><a name="toc-Examples-74" href="#Examples-74">29.202.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-vmafmotion" href="#vmafmotion">29.203 vmafmotion</a></li>
     <li><a name="toc-vstack" href="#vstack">29.204 vstack</a></li>
@@ -1067,22 +1067,22 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-waveform" href="#waveform">29.206 waveform</a></li>
     <li><a name="toc-weave_002c-doubleweave" href="#weave_002c-doubleweave">29.207 weave, doubleweave</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-82" href="#Examples-82">29.207.1 Examples</a></li>
+      <li><a name="toc-Examples-71" href="#Examples-71">29.207.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-xbr" href="#xbr">29.208 xbr</a></li>
     <li><a name="toc-xstack" href="#xstack">29.209 xstack</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-30" href="#Examples-30">29.209.1 Examples</a></li>
+      <li><a name="toc-Examples-94" href="#Examples-94">29.209.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-yadif-1" href="#yadif-1">29.210 yadif</a></li>
     <li><a name="toc-yadif_005fcuda" href="#yadif_005fcuda">29.211 yadif_cuda</a></li>
     <li><a name="toc-zoompan" href="#zoompan">29.212 zoompan</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-123" href="#Examples-123">29.212.1 Examples</a></li>
+      <li><a name="toc-Examples-129" href="#Examples-129">29.212.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-zscale-1" href="#zscale-1">29.213 zscale</a>
     <ul class="no-bullet">
-      <li><a name="toc-Options-27" href="#Options-27">29.213.1 Options</a></li>
+      <li><a name="toc-Options-5" href="#Options-5">29.213.1 Options</a></li>
     </ul>
 </li>
   </ul></li>
@@ -1091,23 +1091,23 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-buffer" href="#buffer">30.1 buffer</a></li>
     <li><a name="toc-cellauto" href="#cellauto">30.2 cellauto</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-97" href="#Examples-97">30.2.1 Examples</a></li>
+      <li><a name="toc-Examples-131" href="#Examples-131">30.2.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-coreimagesrc-1" href="#coreimagesrc-1">30.3 coreimagesrc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-9" href="#Examples-9">30.3.1 Examples</a></li>
+      <li><a name="toc-Examples-139" href="#Examples-139">30.3.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-mandelbrot" href="#mandelbrot">30.4 mandelbrot</a></li>
     <li><a name="toc-mptestsrc" href="#mptestsrc">30.5 mptestsrc</a></li>
     <li><a name="toc-frei0r_005fsrc" href="#frei0r_005fsrc">30.6 frei0r_src</a></li>
     <li><a name="toc-life" href="#life">30.7 life</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-56" href="#Examples-56">30.7.1 Examples</a></li>
+      <li><a name="toc-Examples-17" href="#Examples-17">30.7.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-allrgb_002c-allyuv_002c-color_002c-haldclutsrc_002c-nullsrc_002c-pal75bars_002c-pal100bars_002c-rgbtestsrc_002c-smptebars_002c-smptehdbars_002c-testsrc_002c-testsrc2_002c-yuvtestsrc" href="#allrgb_002c-allyuv_002c-color_002c-haldclutsrc_002c-nullsrc_002c-pal75bars_002c-pal100bars_002c-rgbtestsrc_002c-smptebars_002c-smptehdbars_002c-testsrc_002c-testsrc2_002c-yuvtestsrc">30.8 allrgb, allyuv, color, haldclutsrc, nullsrc, pal75bars, pal100bars, rgbtestsrc, smptebars, smptehdbars, testsrc, testsrc2, yuvtestsrc</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-101" href="#Examples-101">30.8.1 Examples</a></li>
-      <li><a name="toc-Commands-13" href="#Commands-13">30.8.2 Commands</a></li>
+      <li><a name="toc-Examples-30" href="#Examples-30">30.8.1 Examples</a></li>
+      <li><a name="toc-Commands-5" href="#Commands-5">30.8.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-openclsrc" href="#openclsrc">30.9 openclsrc</a></li>
   </ul></li>
@@ -1123,84 +1123,84 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-aphasemeter" href="#aphasemeter">32.3 aphasemeter</a></li>
     <li><a name="toc-avectorscope" href="#avectorscope">32.4 avectorscope</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-151" href="#Examples-151">32.4.1 Examples</a></li>
+      <li><a name="toc-Examples-2" href="#Examples-2">32.4.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-bench_002c-abench" href="#bench_002c-abench">32.5 bench, abench</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-116" href="#Examples-116">32.5.1 Examples</a></li>
+      <li><a name="toc-Examples-27" href="#Examples-27">32.5.1 Examples</a></li>
     </ul></li>
-    <li><a name="toc-concat-3" href="#concat-3">32.6 concat</a>
+    <li><a name="toc-concat-1" href="#concat-1">32.6 concat</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-53" href="#Examples-53">32.6.1 Examples</a></li>
-      <li><a name="toc-Commands-9" href="#Commands-9">32.6.2 Commands</a></li>
+      <li><a name="toc-Examples-140" href="#Examples-140">32.6.1 Examples</a></li>
+      <li><a name="toc-Commands" href="#Commands">32.6.2 Commands</a></li>
     </ul></li>
     <li><a name="toc-drawgraph_002c-adrawgraph" href="#drawgraph_002c-adrawgraph">32.7 drawgraph, adrawgraph</a></li>
     <li><a name="toc-ebur128-1" href="#ebur128-1">32.8 ebur128</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-27" href="#Examples-27">32.8.1 Examples</a></li>
+      <li><a name="toc-Examples-59" href="#Examples-59">32.8.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-interleave_002c-ainterleave" href="#interleave_002c-ainterleave">32.9 interleave, ainterleave</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-4" href="#Examples-4">32.9.1 Examples</a></li>
+      <li><a name="toc-Examples-64" href="#Examples-64">32.9.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-metadata_002c-ametadata" href="#metadata_002c-ametadata">32.10 metadata, ametadata</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-125" href="#Examples-125">32.10.1 Examples</a></li>
+      <li><a name="toc-Examples-61" href="#Examples-61">32.10.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-perms_002c-aperms" href="#perms_002c-aperms">32.11 perms, aperms</a></li>
     <li><a name="toc-realtime_002c-arealtime" href="#realtime_002c-arealtime">32.12 realtime, arealtime</a></li>
     <li><a name="toc-select_002c-aselect" href="#select_002c-aselect">32.13 select, aselect</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-48" href="#Examples-48">32.13.1 Examples</a></li>
+      <li><a name="toc-Examples-14" href="#Examples-14">32.13.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sendcmd_002c-asendcmd" href="#sendcmd_002c-asendcmd">32.14 sendcmd, asendcmd</a>
     <ul class="no-bullet">
       <li><a name="toc-Commands-syntax" href="#Commands-syntax">32.14.1 Commands syntax</a></li>
-      <li><a name="toc-Examples-103" href="#Examples-103">32.14.2 Examples</a></li>
+      <li><a name="toc-Examples-11" href="#Examples-11">32.14.2 Examples</a></li>
     </ul></li>
     <li><a name="toc-setpts_002c-asetpts" href="#setpts_002c-asetpts">32.15 setpts, asetpts</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-43" href="#Examples-43">32.15.1 Examples</a></li>
+      <li><a name="toc-Examples-31" href="#Examples-31">32.15.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-setrange" href="#setrange">32.16 setrange</a></li>
     <li><a name="toc-settb_002c-asettb" href="#settb_002c-asettb">32.17 settb, asettb</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-150" href="#Examples-150">32.17.1 Examples</a></li>
+      <li><a name="toc-Examples-86" href="#Examples-86">32.17.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-showcqt" href="#showcqt">32.18 showcqt</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-54" href="#Examples-54">32.18.1 Examples</a></li>
+      <li><a name="toc-Examples-79" href="#Examples-79">32.18.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-showfreqs" href="#showfreqs">32.19 showfreqs</a></li>
     <li><a name="toc-showspectrum-1" href="#showspectrum-1">32.20 showspectrum</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-86" href="#Examples-86">32.20.1 Examples</a></li>
+      <li><a name="toc-Examples-5" href="#Examples-5">32.20.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-showspectrumpic" href="#showspectrumpic">32.21 showspectrumpic</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-84" href="#Examples-84">32.21.1 Examples</a></li>
+      <li><a name="toc-Examples-35" href="#Examples-35">32.21.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-showvolume" href="#showvolume">32.22 showvolume</a></li>
     <li><a name="toc-showwaves" href="#showwaves">32.23 showwaves</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-143" href="#Examples-143">32.23.1 Examples</a></li>
+      <li><a name="toc-Examples-145" href="#Examples-145">32.23.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-showwavespic" href="#showwavespic">32.24 showwavespic</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-22" href="#Examples-22">32.24.1 Examples</a></li>
+      <li><a name="toc-Examples-122" href="#Examples-122">32.24.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-sidedata_002c-asidedata" href="#sidedata_002c-asidedata">32.25 sidedata, asidedata</a></li>
     <li><a name="toc-spectrumsynth" href="#spectrumsynth">32.26 spectrumsynth</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-121" href="#Examples-121">32.26.1 Examples</a></li>
+      <li><a name="toc-Examples-89" href="#Examples-89">32.26.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-split_002c-asplit" href="#split_002c-asplit">32.27 split, asplit</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-57" href="#Examples-57">32.27.1 Examples</a></li>
+      <li><a name="toc-Examples-58" href="#Examples-58">32.27.1 Examples</a></li>
     </ul></li>
     <li><a name="toc-zmq_002c-azmq" href="#zmq_002c-azmq">32.28 zmq, azmq</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-51" href="#Examples-51">32.28.1 Examples</a></li>
+      <li><a name="toc-Examples-147" href="#Examples-147">32.28.1 Examples</a></li>
     </ul>
 </li>
   </ul></li>
@@ -1209,8 +1209,8 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-amovie" href="#amovie">33.1 amovie</a></li>
     <li><a name="toc-movie-1" href="#movie-1">33.2 movie</a>
     <ul class="no-bullet">
-      <li><a name="toc-Examples-20" href="#Examples-20">33.2.1 Examples</a></li>
-      <li><a name="toc-Commands-17" href="#Commands-17">33.2.2 Commands</a></li>
+      <li><a name="toc-Examples-48" href="#Examples-48">33.2.1 Examples</a></li>
+      <li><a name="toc-Commands-1" href="#Commands-1">33.2.2 Commands</a></li>
     </ul>
 </li>
   </ul></li>
@@ -1233,8 +1233,8 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
 libraries and the SDL library. It is mostly used as a testbed for the
 various FFmpeg APIs.
 </p>
-<a name="Options-26"></a>
-<h1 class="chapter"><a href="ffplay-all.html#toc-Options-26">3 Options</a></h1>
+<a name="Options-23"></a>
+<h1 class="chapter"><a href="ffplay-all.html#toc-Options-23">3 Options</a></h1>
 
 <p>All the numerical options, if not specified otherwise, accept a string
 representing a number as input, which may be followed by one of the SI
@@ -2015,8 +2015,8 @@ escaped according to the rules defined above.
 <p>The tool &lsquo;<tt>tools/ffescape</tt>&rsquo; in the FFmpeg source tree can be used
 to automatically quote or escape a string in a script.
 </p>
-<a name="Examples"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples">4.1.1 Examples</a></h3>
+<a name="Examples-95"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-95">4.1.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -2095,8 +2095,8 @@ maximum of 2 digits. The <var>m</var> at the end expresses decimal value for
 </p>
 <p>In both expressions, the optional &lsquo;<samp>-</samp>&rsquo; indicates negative duration.
 </p>
-<a name="Examples-122"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-122">4.3.1 Examples</a></h3>
+<a name="Examples-26"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-26">4.3.1 Examples</a></h3>
 
 <p>The following examples are all valid time duration:
 </p>
@@ -4912,15 +4912,15 @@ enabled decoders.
 <p>A description of some of the currently available video decoders
 follows.
 </p>
-<a name="rawvideo-1"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-rawvideo-1">8.1 rawvideo</a></h2>
+<a name="rawvideo"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-rawvideo">8.1 rawvideo</a></h2>
 
 <p>Raw video decoder.
 </p>
 <p>This decoder decodes rawvideo streams.
 </p>
-<a name="Options-29"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-29">8.1.1 Options</a></h3>
+<a name="Options-15"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-15">8.1.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>top <var>top_field_first</var></samp>&rsquo;</dt>
@@ -5045,8 +5045,8 @@ audio codec. Requires the presence of the libilbc headers and library during
 configuration. You need to explicitly configure the build with
 <code>--enable-libilbc</code>.
 </p>
-<a name="Options"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options">9.6.1 Options</a></h3>
+<a name="Options-18"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-18">9.6.1 Options</a></h3>
 
 <p>The following option is supported by the libilbc wrapper.
 </p>
@@ -5105,8 +5105,8 @@ without this library.
 <a name="dvbsub"></a>
 <h2 class="section"><a href="ffplay-all.html#toc-dvbsub">10.1 dvbsub</a></h2>
 
-<a name="Options-32"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-32">10.1.1 Options</a></h3>
+<a name="Options-12"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-12">10.1.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>compute_clut</samp>&rsquo;</dt>
@@ -5134,8 +5134,8 @@ without this library.
 <p>This codec decodes the bitmap subtitles used in DVDs; the same subtitles can
 also be found in VobSub file pairs and in some Matroska files.
 </p>
-<a name="Options-11"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-11">10.2.1 Options</a></h3>
+<a name="Options-24"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-24">10.2.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>palette</samp>&rsquo;</dt>
@@ -5171,8 +5171,8 @@ subtitles. Requires the presence of the libzvbi headers and library during
 configuration. You need to explicitly configure the build with
 <code>--enable-libzvbi</code>.
 </p>
-<a name="Options-25"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-25">10.3.1 Options</a></h3>
+<a name="Options-30"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-30">10.3.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>txt_page</samp>&rsquo;</dt>
@@ -6318,8 +6318,8 @@ between the last fcTL and IEND chunks.
 </dl>
 
 <p><a name="concat"></a>
-</p><a name="concat-1"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-concat-1">13.5 concat</a></h2>
+</p><a name="concat-2"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-concat-2">13.5 concat</a></h2>
 
 <p>Virtual concatenation script demuxer.
 </p>
@@ -6340,8 +6340,8 @@ because the file is truncated, for example), it can cause artifacts. The
 <code>duration</code> directive can be used to override the duration stored in
 each file.
 </p>
-<a name="Syntax"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Syntax">13.5.1 Syntax</a></h3>
+<a name="Syntax-2"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Syntax-2">13.5.1 Syntax</a></h3>
 
 <p>The script is a text file in extended-ASCII, with one directive per line.
 Empty lines, leading spaces and lines starting with &rsquo;#&rsquo; are ignored. The
@@ -6437,8 +6437,8 @@ streams is not reliable.
 </dd>
 </dl>
 
-<a name="Options-20"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-20">13.5.2 Options</a></h3>
+<a name="Options-3"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-3">13.5.2 Options</a></h3>
 
 <p>This demuxer accepts the following option:
 </p>
@@ -6479,8 +6479,8 @@ The default is 0.
 </dd>
 </dl>
 
-<a name="Examples-129"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-129">13.5.3 Examples</a></h3>
+<a name="Examples-108"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-108">13.5.3 Examples</a></h3>
 
 <ul>
 <li>
@@ -6589,8 +6589,8 @@ used to end the output video at the length of the shortest input file,
 which in this case is &lsquo;<tt>input.mp4</tt>&rsquo; as the GIF in this example loops
 infinitely.
 </p>
-<a name="hls"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-hls">13.9 hls</a></h2>
+<a name="hls-1"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-hls-1">13.9 hls</a></h2>
 
 <p>HLS demuxer
 </p>
@@ -6744,8 +6744,8 @@ size is guessed from the first image file in the sequence.
 </p></dd>
 </dl>
 
-<a name="Examples-78"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-78">13.10.1 Examples</a></h3>
+<a name="Examples-10"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-10">13.10.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -6891,8 +6891,8 @@ of the boundary value.
 </p></dd>
 </dl>
 
-<a name="rawvideo"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-rawvideo">13.16 rawvideo</a></h2>
+<a name="rawvideo-1"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-rawvideo-1">13.16 rawvideo</a></h2>
 
 <p>Raw video demuxer.
 </p>
@@ -7174,8 +7174,8 @@ async:cache:http://host/resource
 <pre class="example">cache:<var>URL</var>
 </pre></div>
 
-<a name="concat-2"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-concat-2">16.4 concat</a></h2>
+<a name="concat-3"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-concat-3">16.4 concat</a></h2>
 
 <p>Physical concatenation protocol.
 </p>
@@ -7329,8 +7329,8 @@ you either need to use the rw_timeout option, or use the interrupt callback
 
 <p>Gopher protocol.
 </p>
-<a name="hls-1"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-hls-1">16.10 hls</a></h2>
+<a name="hls"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-hls">16.10 hls</a></h2>
 
 <p>Read Apple HTTP Live Streaming compliant segmented stream as
 a uniform one. The M3U8 playlists describing the segments can be
@@ -8205,8 +8205,8 @@ streams to display can be chosen with <code>-vst</code> <var>n</var> and
 <code>-ast</code> <var>n</var> for video and audio respectively, and can be switched
 on the fly by pressing <code>v</code> and <code>a</code>.
 </p>
-<a name="Examples-58"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-58">16.28.1 Examples</a></h3>
+<a name="Examples-93"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-93">16.28.1 Examples</a></h3>
 
 <p>The following examples all make use of the <code>ffplay</code> and
 <code>ffmpeg</code> tools.
@@ -8945,8 +8945,8 @@ a broadcast storm protection.
 </p></dd>
 </dl>
 
-<a name="Examples-79"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-79">16.37.1 Examples</a></h3>
+<a name="Examples-84"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-84">16.37.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -9064,8 +9064,8 @@ card id 0, you may run the command:
 <p>For more information see:
 <a href="http://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html">http://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html</a>
 </p>
-<a name="Options-28"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-28">18.1.1 Options</a></h3>
+<a name="Options-4"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-4">18.1.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>sample_rate</samp>&rsquo;</dt>
@@ -9097,8 +9097,8 @@ discarded.
 <p>Generally the back facing camera has index 0 while the front facing
 camera has index 1.
 </p>
-<a name="Options-22"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-22">18.2.1 Options</a></h3>
+<a name="Options-11"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-11">18.2.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>video_size</samp>&rsquo;</dt>
@@ -9163,8 +9163,8 @@ This is equivalent to specifying an empty device name or index.
 </dd>
 </dl>
 
-<a name="Options-24"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-24">18.3.1 Options</a></h3>
+<a name="Options"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options">18.3.1 Options</a></h3>
 
 <p>AVFoundation supports the following options:
 </p>
@@ -9210,8 +9210,8 @@ frame rate of <code>30000/1001</code>.
 </dd>
 </dl>
 
-<a name="Examples-17"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-17">18.3.2 Examples</a></h3>
+<a name="Examples-115"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-115">18.3.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -9245,8 +9245,8 @@ Record video from the system default video device using the pixel format bgr0 an
 
 <p>BSD video input device.
 </p>
-<a name="Options-12"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-12">18.4.1 Options</a></h3>
+<a name="Options-13"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-13">18.4.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>framerate</samp>&rsquo;</dt>
@@ -9290,8 +9290,8 @@ Framerate and video size must be determined for your device with
 of channels can be 2, 8 or 16. Note that all audio channels are bundled in one single
 audio track.
 </p>
-<a name="Options-6"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-6">18.5.1 Options</a></h3>
+<a name="Options-2"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-2">18.5.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>list_devices</samp>&rsquo;</dt>
@@ -9415,7 +9415,7 @@ Defaults to &lsquo;<samp>false</samp>&rsquo;.
 <dt>&lsquo;<samp>timestamp_align</samp>&rsquo;</dt>
 <dd><p>Capture start time alignment in seconds. If set to nonzero, input frames are
 dropped till the system timestamp aligns with configured value.
-Alignment difference of upto one frame duration is tolerated.
+Alignment difference of up to one frame duration is tolerated.
 This is useful for maintaining input synchronization across N different
 hardware devices deployed for &rsquo;N-way&rsquo; redundancy. The system time of different
 hardware devices should be synchronized with protocols such as NTP or PTP,
@@ -9429,8 +9429,8 @@ Defaults to &lsquo;<samp>0</samp>&rsquo;.
 </dd>
 </dl>
 
-<a name="Examples-133"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-133">18.5.2 Examples</a></h3>
+<a name="Examples-97"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-97">18.5.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -9485,8 +9485,8 @@ opened on the same input, which should improve synchronism between them.
 <p>where <var>TYPE</var> can be either <var>audio</var> or <var>video</var>,
 and <var>NAME</var> is the device&rsquo;s name or alternative name..
 </p>
-<a name="Options-2"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-2">18.6.1 Options</a></h3>
+<a name="Options-14"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-14">18.6.1 Options</a></h3>
 
 <p>If no options are specified, the device&rsquo;s defaults are used.
 If the device does not support the requested options, it will
@@ -9642,8 +9642,8 @@ If a file with the same name exists it will be overwritten.
 </dd>
 </dl>
 
-<a name="Examples-11"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-11">18.6.2 Examples</a></h3>
+<a name="Examples-124"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-124">18.6.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -9717,8 +9717,8 @@ Documentation/fb/framebuffer.txt included in the Linux source tree.
 <pre class="example">ffmpeg -f fbdev -framerate 1 -i /dev/fb0 -frames:v 1 screenshot.jpeg
 </pre></div>
 
-<a name="Options-21"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-21">18.7.1 Options</a></h3>
+<a name="Options-20"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-20">18.7.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>framerate</samp>&rsquo;</dt>
@@ -9762,8 +9762,8 @@ window, regardless of its position on the screen.
 <pre class="example">ffmpeg -f gdigrab -framerate 6 -i title=Calculator out.mpg
 </pre></div>
 
-<a name="Options-31"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-31">18.8.1 Options</a></h3>
+<a name="Options-22"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-22">18.8.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>draw_mouse</samp>&rsquo;</dt>
@@ -9827,8 +9827,8 @@ Kernel 2.6.37 and later, since the old FireWire stack was removed.
 <p>Specify the FireWire port to be used as input file, or &quot;auto&quot;
 to choose the first port connected.
 </p>
-<a name="Options-18"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-18">18.9.1 Options</a></h3>
+<a name="Options-16"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-16">18.9.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>dvtype</samp>&rsquo;</dt>
@@ -9855,8 +9855,8 @@ Look at /sys/bus/firewire/devices to find out the GUIDs.
 </dd>
 </dl>
 
-<a name="Examples-127"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-127">18.9.2 Examples</a></h3>
+<a name="Examples-4"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-4">18.9.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -9924,8 +9924,8 @@ $ jack_connect metro:120_bpm ffmpeg:input_1
 <p>For more information read:
 <a href="http://jackaudio.org/">http://jackaudio.org/</a>
 </p>
-<a name="Options-14"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-14">18.10.1 Options</a></h3>
+<a name="Options-6"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-6">18.10.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>channels</samp>&rsquo;</dt>
@@ -9947,8 +9947,8 @@ DRM object that can be passed to other hardware functions.
 <p>If you don&rsquo;t understand what all of that means, you probably don&rsquo;t want this.  Look at
 &lsquo;<samp>x11grab</samp>&rsquo; instead.
 </p>
-<a name="Options-4"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-4">18.11.1 Options</a></h3>
+<a name="Options-19"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-19">18.11.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>device</samp>&rsquo;</dt>
@@ -9983,8 +9983,8 @@ content.  Defaults to <code>30</code>.
 </dd>
 </dl>
 
-<a name="Examples-14"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-14">18.11.2 Examples</a></h3>
+<a name="Examples-6"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-6">18.11.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -10016,8 +10016,8 @@ corresponding stream which is mapped to the generated output. Currently
 only video data is supported. The filtergraph is specified through the
 option &lsquo;<samp>graph</samp>&rsquo;.
 </p>
-<a name="Options-3"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-3">18.12.1 Options</a></h3>
+<a name="Options-10"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-10">18.12.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>graph</samp>&rsquo;</dt>
@@ -10052,8 +10052,8 @@ the option <var>graph</var>.
 </dd>
 </dl>
 
-<a name="Examples-23"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-23">18.12.2 Examples</a></h3>
+<a name="Examples-60"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-60">18.12.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -10114,8 +10114,8 @@ you may run the command:
 <pre class="example">ffmpeg -f libcdio -i /dev/sr0 cd.wav
 </pre></div>
 
-<a name="Options-23"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-23">18.13.1 Options</a></h3>
+<a name="Options-25"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-25">18.13.1 Options</a></h3>
 <dl compact="compact">
 <dt>&lsquo;<samp>speed</samp>&rsquo;</dt>
 <dd><p>Set drive reading speed. Default value is 0.
@@ -10164,8 +10164,8 @@ to command line - it has no specific syntax but human-readable formatted.
 need to configure with the appropriate <code>--extra-cflags</code>
 and <code>--extra-ldflags</code>.
 </p>
-<a name="Options-30"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-30">18.15.1 Options</a></h3>
+<a name="Options-26"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-26">18.15.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>find_sources</samp>&rsquo;</dt>
@@ -10190,8 +10190,8 @@ using mDNS but also use unicast ip addresses specified by this list.
 </dd>
 </dl>
 
-<a name="Examples-47"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-47">18.15.2 Examples</a></h3>
+<a name="Examples-137"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-137">18.15.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -10265,8 +10265,8 @@ filename. If the empty string is provided, the device will
 automatically select the default device. You can get the list of the
 supported devices by using the option <var>list_devices</var>.
 </p>
-<a name="Options-15"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-15">18.16.1 Options</a></h3>
+<a name="Options-27"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-27">18.16.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>channels</samp>&rsquo;</dt>
@@ -10293,8 +10293,8 @@ Defaults to &lsquo;<samp>false</samp>&rsquo;.
 </dd>
 </dl>
 
-<a name="Examples-99"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-99">18.16.2 Examples</a></h3>
+<a name="Examples-21"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-21">18.16.2 Examples</a></h3>
 
 <p>Print the list of OpenAL supported devices and exit:
 </p><div class="example">
@@ -10337,8 +10337,8 @@ command:
 <p>For more information about OSS see:
 <a href="http://manuals.opensound.com/usersguide/dsp.html">http://manuals.opensound.com/usersguide/dsp.html</a>
 </p>
-<a name="Options-13"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-13">18.17.1 Options</a></h3>
+<a name="Options-28"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-28">18.17.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>sample_rate</samp>&rsquo;</dt>
@@ -10366,8 +10366,8 @@ the command <code>pactl list sources</code>.
 </p>
 <p>More information about PulseAudio can be found on <a href="http://www.pulseaudio.org">http://www.pulseaudio.org</a>.
 </p>
-<a name="Options-16"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-16">18.18.1 Options</a></h3>
+<a name="Options-32"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-32">18.18.1 Options</a></h3>
 <dl compact="compact">
 <dt>&lsquo;<samp>server</samp>&rsquo;</dt>
 <dd><p>Connect to a specific PulseAudio server, specified by an IP address.
@@ -10407,8 +10407,8 @@ audio latency. By default it is unset.
 </dd>
 </dl>
 
-<a name="Examples-38"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-38">18.18.2 Examples</a></h3>
+<a name="Examples-70"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-70">18.18.2 Examples</a></h3>
 <p>Record a stream from default device:
 </p><div class="example">
 <pre class="example">ffmpeg -f pulse -i default /tmp/pulse.wav
@@ -10432,8 +10432,8 @@ command:
 <pre class="example">ffmpeg -f sndio -i /dev/audio0 /tmp/oss.wav
 </pre></div>
 
-<a name="Options-1"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-1">18.19.1 Options</a></h3>
+<a name="Options-17"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-17">18.19.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>sample_rate</samp>&rsquo;</dt>
@@ -10501,8 +10501,8 @@ frame rate and size as previously set:
 
 <p>For more information about Video4Linux, check <a href="http://linuxtv.org/">http://linuxtv.org/</a>.
 </p>
-<a name="Options-5"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-5">18.20.1 Options</a></h3>
+<a name="Options-9"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-9">18.20.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>standard</samp>&rsquo;</dt>
@@ -10659,8 +10659,8 @@ the properties of your X11 display (e.g. grep for &quot;name&quot; or
 <pre class="example">ffmpeg -f x11grab -framerate 25 -video_size cif -i :0.0+10,20 out.mpg
 </pre></div>
 
-<a name="Options-17"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-17">18.22.1 Options</a></h3>
+<a name="Options-21"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-21">18.22.1 Options</a></h3>
 
 <dl compact="compact">
 <dt>&lsquo;<samp>draw_mouse</samp>&rsquo;</dt>
@@ -11705,8 +11705,8 @@ If set this option is used instead of <var>nb_samples</var>.
 </p></dd>
 </dl>
 
-<a name="Examples-120"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-120">26.4.1 Examples</a></h3>
+<a name="Examples-107"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-107">26.4.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -11950,8 +11950,8 @@ If you want to delay exact number of samples, append &rsquo;S&rsquo; to number.
 </p></dd>
 </dl>
 
-<a name="Examples-41"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-41">26.10.1 Examples</a></h3>
+<a name="Examples-149"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-149">26.10.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12013,8 +12013,8 @@ Default is <code>0.5</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-96"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-96">26.12.1 Examples</a></h3>
+<a name="Examples-105"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-105">26.12.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12159,8 +12159,8 @@ use by default the same input channel layout.
 <p>Note: this filter is slow. For faster processing you should use a
 dedicated filter.
 </p>
-<a name="Examples-52"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-52">26.14.1 Examples</a></h3>
+<a name="Examples-148"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-148">26.14.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12281,8 +12281,8 @@ If set this option is used instead of <var>nb_samples</var>.
 </dd>
 </dl>
 
-<a name="Examples-148"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-148">26.15.1 Examples</a></h3>
+<a name="Examples-104"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-104">26.15.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12381,8 +12381,8 @@ With this enabled, noise floor is automatically adjusted.
 </dd>
 </dl>
 
-<a name="Commands-2"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-2">26.16.1 Commands</a></h3>
+<a name="Commands-8"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-8">26.16.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -12488,8 +12488,8 @@ window function will be picked. Default is <code>0.75</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-65"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-65">26.17.1 Examples</a></h3>
+<a name="Examples-20"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-20">26.17.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12587,8 +12587,8 @@ displayed. This option is used only when <var>response</var> is enabled.
 </p></dd>
 </dl>
 
-<a name="Examples-149"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-149">26.18.1 Examples</a></h3>
+<a name="Examples-133"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-133">26.18.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12799,8 +12799,8 @@ imaginary unit.
 use &rsquo;|&rsquo; to separate coefficients or gains. Last provided coefficients will be
 used for all remaining channels.
 </p>
-<a name="Examples-26"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-26">26.21.1 Examples</a></h3>
+<a name="Examples-75"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-75">26.21.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -12914,8 +12914,8 @@ without changing its frequency to amplitude relationship.
 </p></dd>
 </dl>
 
-<a name="Commands-3"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-3">26.23.1 Commands</a></h3>
+<a name="Commands-17"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-17">26.23.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -12994,8 +12994,8 @@ arbitrarily set to 4.0, which may or may not be the expected value.
 <p>If inputs do not have the same duration, the output will stop with the
 shortest.
 </p>
-<a name="Examples-94"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-94">26.25.1 Examples</a></h3>
+<a name="Examples-90"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-90">26.25.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13153,8 +13153,8 @@ Unrecognised or missing colors will be replaced by white color.
 </p></dd>
 </dl>
 
-<a name="Examples-110"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-110">26.28.1 Examples</a></h3>
+<a name="Examples-44"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-44">26.28.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13165,8 +13165,8 @@ for first 2 channels using Chebyshev type 1 filter:
 </pre></div>
 </li></ul>
 
-<a name="Commands-22"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-22">26.28.2 Commands</a></h3>
+<a name="Commands-13"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-13">26.28.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -13223,8 +13223,8 @@ with &lsquo;<samp>pad_len</samp>&rsquo;.
 set, the filter will add silence to the end of the input stream
 indefinitely.
 </p>
-<a name="Examples-74"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-74">26.30.1 Examples</a></h3>
+<a name="Examples-18"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-18">26.30.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13379,8 +13379,8 @@ expresses a sample rate and <var>resampler_options</var> is a list of
 <a href="ffmpeg-resampler.html#Resampler-Options">(ffmpeg-resampler)&quot;Resampler Options&quot; section in the ffmpeg-resampler(1) manual</a>
 for the complete list of supported options.
 </p>
-<a name="Examples-37"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-37">26.33.1 Examples</a></h3>
+<a name="Examples-118"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-118">26.33.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13405,8 +13405,8 @@ samples per second compensation:
 <p>Warning: This filter requires memory to buffer the entire clip, so trimming
 is suggested.
 </p>
-<a name="Examples-1"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-1">26.34.1 Examples</a></h3>
+<a name="Examples-110"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-110">26.34.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13673,8 +13673,8 @@ blend them in.  If for any reason this is a concern it is always
 possible to daisy-chain several instances of atempo to achieve the
 desired product tempo.
 </p>
-<a name="Examples-144"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-144">26.39.1 Examples</a></h3>
+<a name="Examples-143"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-143">26.39.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -13823,8 +13823,8 @@ The filter roll off at 6dB per octave (20dB per decade).
 </p></dd>
 </dl>
 
-<a name="Commands-20"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-20">26.41.1 Commands</a></h3>
+<a name="Commands-19"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-19">26.41.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -13888,8 +13888,8 @@ The filter roll off at 6dB per octave (20dB per decade).
 </p></dd>
 </dl>
 
-<a name="Commands-6"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-6">26.42.1 Commands</a></h3>
+<a name="Commands-14"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-14">26.42.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -13961,8 +13961,8 @@ The default value is <code>100</code> Hz.
 </p></dd>
 </dl>
 
-<a name="Commands"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands">26.43.1 Commands</a></h3>
+<a name="Commands-21"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-21">26.43.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -13996,8 +13996,8 @@ are the numerator and denominator coefficients respectively.
 and <var>channels</var>, <var>c</var> specify which channels to filter, by default all
 available are filtered.
 </p>
-<a name="Commands-21"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-21">26.44.1 Commands</a></h3>
+<a name="Commands-18"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-18">26.44.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -14075,8 +14075,8 @@ index, starting with zero and increasing by one for each mapping.
 <p>If no mapping is present, the filter will implicitly map input channels to
 output channels, preserving indices.
 </p>
-<a name="Examples-119"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-119">26.46.1 Examples</a></h3>
+<a name="Examples-127"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-127">26.46.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -14112,8 +14112,8 @@ or &quot;all&quot; to extract each input channel as a separate stream. The defau
 </p></dd>
 </dl>
 
-<a name="Examples-24"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-24">26.47.1 Examples</a></h3>
+<a name="Examples-81"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-81">26.47.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -14182,8 +14182,8 @@ off key.
 </p></dd>
 </dl>
 
-<a name="Examples-19"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-19">26.48.1 Examples</a></h3>
+<a name="Examples-109"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-109">26.48.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -14264,8 +14264,8 @@ operate in predictive rather than reactive mode. It defaults to 0.
 </dd>
 </dl>
 
-<a name="Examples-139"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-139">26.49.1 Examples</a></h3>
+<a name="Examples-28"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-28">26.49.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -14737,8 +14737,8 @@ Beware of clipping when using a positive gain.
 </p></dd>
 </dl>
 
-<a name="Examples-75"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-75">26.57.1 Examples</a></h3>
+<a name="Examples-151"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-151">26.57.1 Examples</a></h3>
 <ul>
 <li>
 Attenuate 10 dB at 1000 Hz, with a bandwidth of 200 Hz:
@@ -14753,8 +14753,8 @@ Apply 2 dB gain at 1000 Hz with Q 1 and attenuate 5 dB at 100 Hz with Q 2:
 </pre></div>
 </li></ul>
 
-<a name="Commands-12"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-12">26.57.2 Commands</a></h3>
+<a name="Commands-20"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-20">26.57.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -14950,8 +14950,8 @@ Default is disabled.
 </p></dd>
 </dl>
 
-<a name="Examples-10"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-10">26.59.1 Examples</a></h3>
+<a name="Examples-85"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-85">26.59.1 Examples</a></h3>
 <ul>
 <li>
 lowpass at 1000 Hz:
@@ -15229,8 +15229,8 @@ stream.
 </p></dd>
 </dl>
 
-<a name="Examples-130"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-130">26.63.1 Examples</a></h3>
+<a name="Examples-9"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-9">26.63.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -15301,8 +15301,8 @@ The default is 0.707q and gives a Butterworth response.
 </p></dd>
 </dl>
 
-<a name="Commands-19"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-19">26.64.1 Commands</a></h3>
+<a name="Commands-22"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-22">26.64.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -15424,8 +15424,8 @@ Only used if plugin have zero inputs.
 </dd>
 </dl>
 
-<a name="Examples-67"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-67">26.66.1 Examples</a></h3>
+<a name="Examples-76"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-76">26.66.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -15514,8 +15514,8 @@ Dynamic volume normalization using <code>VLevel</code> plugin:
 </pre></div>
 </li></ul>
 
-<a name="Commands-18"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-18">26.66.2 Commands</a></h3>
+<a name="Commands-9"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-9">26.66.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -15649,8 +15649,8 @@ The default is 0.707q and gives a Butterworth response.
 </p></dd>
 </dl>
 
-<a name="Examples-71"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-71">26.68.1 Examples</a></h3>
+<a name="Examples-1"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-1">26.68.1 Examples</a></h3>
 <ul>
 <li>
 Lowpass only LFE channel, it LFE is not present it does nothing:
@@ -15659,8 +15659,8 @@ Lowpass only LFE channel, it LFE is not present it does nothing:
 </pre></div>
 </li></ul>
 
-<a name="Commands-8"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-8">26.68.2 Commands</a></h3>
+<a name="Commands-6"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-6">26.68.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -15723,8 +15723,8 @@ Only used if plugin have zero inputs.
 </p></dd>
 </dl>
 
-<a name="Examples-73"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-73">26.69.1 Examples</a></h3>
+<a name="Examples-50"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-50">26.69.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16041,8 +16041,8 @@ Range is between 0 and 1.
 </p></dd>
 </dl>
 
-<a name="Examples-89"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-89">26.75.1 Examples</a></h3>
+<a name="Examples-141"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-141">26.75.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16158,8 +16158,8 @@ specified value) or amplitude ratio. Default is -60dB, or 0.001.
 </p></dd>
 </dl>
 
-<a name="Examples-92"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-92">26.77.1 Examples</a></h3>
+<a name="Examples-111"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-111">26.77.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16275,8 +16275,8 @@ Default value is <code>0.02</code>. Allowed range is from <code>0</code> to <cod
 </p></dd>
 </dl>
 
-<a name="Examples-93"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-93">26.78.1 Examples</a></h3>
+<a name="Examples-102"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-102">26.78.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16355,8 +16355,8 @@ Descriptions with unrecognised channel names are ignored.
 </p></dd>
 </dl>
 
-<a name="Examples-59"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-59">26.79.1 Examples</a></h3>
+<a name="Examples-144"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-144">26.79.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16531,8 +16531,8 @@ Gain is raised up to 1.
 </dd>
 </dl>
 
-<a name="Examples-61"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-61">26.80.1 Examples</a></h3>
+<a name="Examples-116"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-116">26.80.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -16754,8 +16754,8 @@ The default value is <code>3000</code> Hz.
 </p></dd>
 </dl>
 
-<a name="Commands-11"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-11">26.84.1 Commands</a></h3>
+<a name="Commands-2"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-2">26.84.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -16952,8 +16952,8 @@ when the &lsquo;<samp>volume</samp>&rsquo; command is sent
 <var>sample_rate</var> and <var>tb</var> variables are available, all other
 variables will evaluate to NAN.
 </p>
-<a name="Commands-10"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-10">26.87.1 Commands</a></h3>
+<a name="Commands-12"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-12">26.87.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -16972,8 +16972,8 @@ value.
 </dd>
 </dl>
 
-<a name="Examples-63"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-63">26.87.2 Examples</a></h3>
+<a name="Examples-96"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-96">26.87.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -17018,8 +17018,8 @@ the samples).
 </p>
 <p>All volumes are in decibels relative to the maximum PCM value.
 </p>
-<a name="Examples-128"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-128">26.88.1 Examples</a></h3>
+<a name="Examples-120"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-120">26.88.1 Examples</a></h3>
 
 <p>Here is an excerpt of the output:
 </p><div class="example">
@@ -17093,8 +17093,8 @@ must be consistent.
 </dd>
 </dl>
 
-<a name="Examples-117"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-117">27.1.1 Examples</a></h3>
+<a name="Examples-13"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-13">27.1.1 Examples</a></h3>
 
 <div class="example">
 <pre class="example">abuffer=sample_rate=44100:sample_fmt=s16p:channel_layout=stereo
@@ -17171,8 +17171,8 @@ default to 1024.
 </dd>
 </dl>
 
-<a name="Examples-35"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-35">27.2.1 Examples</a></h3>
+<a name="Examples-12"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-12">27.2.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -17247,8 +17247,8 @@ channel layout values.
 </dd>
 </dl>
 
-<a name="Examples-126"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-126">27.3.1 Examples</a></h3>
+<a name="Examples-87"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-87">27.3.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -17302,8 +17302,8 @@ immediately. Default value is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-18"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-18">27.4.1 Examples</a></h3>
+<a name="Examples-77"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-77">27.4.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -17372,8 +17372,8 @@ blue and violet. Default color is white.
 </p></dd>
 </dl>
 
-<a name="Examples-45"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-45">27.5.1 Examples</a></h3>
+<a name="Examples-82"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-82">27.5.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -17523,8 +17523,8 @@ expressed in <var>TB</var> units.
 </p></dd>
 </dl>
 
-<a name="Examples-102"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-102">27.8.1 Examples</a></h3>
+<a name="Examples-119"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-119">27.8.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -17998,8 +17998,8 @@ the luma plane and <code>0.5,0.5</code> for the chroma planes.
 
 <p>The <code>blend</code> filter also supports the <a href="#framesync">framesync</a> options.
 </p>
-<a name="Examples-145"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-145">29.11.1 Examples</a></h3>
+<a name="Examples-142"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-142">29.11.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18120,8 +18120,8 @@ and always enabled if value of <var>estim</var> is <code>final</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-39"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-39">29.12.1 Examples</a></h3>
+<a name="Examples-123"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-123">29.12.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18217,8 +18217,8 @@ corresponding value set for &lsquo;<samp>luma_power</samp>&rsquo;.
 </p></dd>
 </dl>
 
-<a name="Examples-2"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-2">29.13.1 Examples</a></h3>
+<a name="Examples-43"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-43">29.13.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18364,8 +18364,8 @@ This can be used to pass exact YUV values as hexadecimal numbers.
 </p></dd>
 </dl>
 
-<a name="Examples-91"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-91">29.16.1 Examples</a></h3>
+<a name="Examples"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples">29.16.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18514,8 +18514,8 @@ means. For example, some MPEG based codecs export motion vectors through the
 </dd>
 </dl>
 
-<a name="Examples-134"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-134">29.18.1 Examples</a></h3>
+<a name="Examples-62"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-62">29.18.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18565,8 +18565,8 @@ value towards the complementary color.
 </p></dd>
 </dl>
 
-<a name="Examples-49"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-49">29.19.1 Examples</a></h3>
+<a name="Examples-51"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-51">29.19.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18603,8 +18603,8 @@ the more similar the pixels color is to the key color.
 </p></dd>
 </dl>
 
-<a name="Examples-77"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-77">29.20.1 Examples</a></h3>
+<a name="Examples-23"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-23">29.20.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18666,8 +18666,8 @@ Allowed ranges for options are <code>[0, 1.0]</code>. Defaults are <code>1</code
 </p></dd>
 </dl>
 
-<a name="Examples-140"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-140">29.21.1 Examples</a></h3>
+<a name="Examples-106"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-106">29.21.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -18745,8 +18745,8 @@ Default is <code>1</code> for <var>aa</var>, and <code>0</code> for <var>ar</var
 </p></dd>
 </dl>
 
-<a name="Examples-106"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-106">29.22.1 Examples</a></h3>
+<a name="Examples-22"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-22">29.22.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -19201,8 +19201,8 @@ Default is <var>square</var>.
 </p></dd>
 </dl>
 
-<a name="Examples-36"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-36">29.25.1 Examples</a></h3>
+<a name="Examples-39"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-39">29.25.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -19347,8 +19347,8 @@ output image.
 which are directly fed into the filter chain. By using it, providing input
 images by another video source or an input video is not required.
 </p>
-<a name="Examples-137"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-137">29.28.1 Examples</a></h3>
+<a name="Examples-47"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-47">29.28.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -19498,8 +19498,8 @@ is approximated to the nearest valid value.
 <p>The expression for <var>x</var> may depend on <var>y</var>, and the expression
 for <var>y</var> may depend on <var>x</var>.
 </p>
-<a name="Examples-131"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-131">29.29.1 Examples</a></h3>
+<a name="Examples-98"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-98">29.29.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -19578,8 +19578,8 @@ Set x depending on the value of y:
 </pre></div>
 </li></ul>
 
-<a name="Commands-15"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-15">29.29.2 Commands</a></h3>
+<a name="Commands-10"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-10">29.29.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -19746,8 +19746,8 @@ options. In this case, the unset component(s) will fallback on this
 <p>To avoid some filtergraph syntax conflicts, each key points list need to be
 defined using the following syntax: <code>x0/y0 x1/y1 x2/y2 ...</code>.
 </p>
-<a name="Examples-85"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-85">29.32.1 Examples</a></h3>
+<a name="Examples-112"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-112">29.32.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -19906,8 +19906,8 @@ better de-noising.
 </p></dd>
 </dl>
 
-<a name="Examples-15"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-15">29.34.1 Examples</a></h3>
+<a name="Examples-126"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-126">29.34.1 Examples</a></h3>
 
 <p>Apply a denoise with a &lsquo;<samp>sigma</samp>&rsquo; of <code>4.5</code>:
 </p><div class="example">
@@ -20007,8 +20007,8 @@ deblocking.
 </p></dd>
 </dl>
 
-<a name="Examples-88"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-88">29.36.1 Examples</a></h3>
+<a name="Examples-66"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-66">29.36.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -20259,8 +20259,8 @@ compute the interpolated pixel values inside the rectangle.
 </dd>
 </dl>
 
-<a name="Examples-113"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-113">29.42.1 Examples</a></h3>
+<a name="Examples-67"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-67">29.42.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -20513,8 +20513,8 @@ displacement map will be used.
 </dd>
 </dl>
 
-<a name="Examples-60"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-60">29.47.1 Examples</a></h3>
+<a name="Examples-55"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-55">29.47.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -20612,8 +20612,8 @@ each other, so you may for example specify <code>y=x/dar</code> or <code>h=w/dar
 </dd>
 </dl>
 
-<a name="Examples-55"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-55">29.48.1 Examples</a></h3>
+<a name="Examples-114"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-114">29.48.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -20728,8 +20728,8 @@ each other, so you may for example specify <code>y=x/dar</code> or <code>h=w/dar
 </dd>
 </dl>
 
-<a name="Examples-114"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-114">29.49.1 Examples</a></h3>
+<a name="Examples-37"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-37">29.49.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -20759,8 +20759,8 @@ configure FFmpeg with <code>--enable-libfontconfig</code>.
 To enable the <var>text_shaping</var> option, you need to configure FFmpeg with
 <code>--enable-libfribidi</code>.
 </p>
-<a name="Syntax-2"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Syntax-2">29.50.1 Syntax</a></h3>
+<a name="Syntax"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Syntax">29.50.1 Syntax</a></h3>
 
 <p>It accepts the following parameters:
 </p>
@@ -21152,8 +21152,8 @@ By default, <var>YYYY-MM-DD HH:MM:SS</var> format will be used.
 </p></dd>
 </dl>
 
-<a name="Examples-72"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-72">29.50.3 Examples</a></h3>
+<a name="Examples-80"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-80">29.50.3 Examples</a></h3>
 
 <ul>
 <li>
@@ -21307,8 +21307,8 @@ is <code>50/255</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-34"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-34">29.51.1 Examples</a></h3>
+<a name="Examples-73"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-73">29.51.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -21415,8 +21415,8 @@ unspecified
 </p></dd>
 </dl>
 
-<a name="Commands-16"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-16">29.52.1 Commands</a></h3>
+<a name="Commands-7"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-7">29.52.1 Commands</a></h3>
 <p>The filter supports the following commands:
 </p>
 <dl compact="compact">
@@ -21518,8 +21518,8 @@ with <code>y</code>, <code>u</code>, <code>v</code> planes at same time.
 </p></dd>
 </dl>
 
-<a name="Examples-100"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-100">29.54.1 Examples</a></h3>
+<a name="Examples-138"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-138">29.54.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -21633,8 +21633,8 @@ If both duration and nb_frames are specified, duration is used. Default is 0
 </p></dd>
 </dl>
 
-<a name="Examples-80"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-80">29.57.1 Examples</a></h3>
+<a name="Examples-3"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-3">29.57.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -21749,8 +21749,8 @@ default value is set to <code>0</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-87"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-87">29.58.1 Examples</a></h3>
+<a name="Examples-52"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-52">29.58.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22235,8 +22235,8 @@ Output frames:
                  2          1          3          2          2
 </pre></div>
 
-<a name="Examples-42"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-42">29.62.2 Examples</a></h3>
+<a name="Examples-88"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-88">29.62.2 Examples</a></h3>
 
 <p>Simple IVTC of a top field first telecined stream:
 </p><div class="example">
@@ -22367,8 +22367,8 @@ crop video input to keep size multiple of some number.
 </p></dd>
 </dl>
 
-<a name="Examples-66"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-66">29.66.1 Examples</a></h3>
+<a name="Examples-34"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-34">29.66.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22407,8 +22407,8 @@ Generate a representative palette of a given video using <code>ffmpeg</code>:
 </p></dd>
 </dl>
 
-<a name="Examples-81"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-81">29.67.1 Examples</a></h3>
+<a name="Examples-45"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-45">29.67.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22483,8 +22483,8 @@ the next filter.
 </dd>
 </dl>
 
-<a name="Examples-62"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-62">29.69.1 Examples</a></h3>
+<a name="Examples-40"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-40">29.69.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22567,8 +22567,8 @@ frames with a negative PTS.
 </p>
 <p>See also the <a href="#setpts">setpts</a> filter.
 </p>
-<a name="Examples-141"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-141">29.70.1 Examples</a></h3>
+<a name="Examples-33"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-33">29.70.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22737,8 +22737,8 @@ a position (specified as <var>X</var>/<var>Y</var>, where
 <p>The number and types of parameters depend on the loaded effect. If an
 effect parameter is not specified, the default value is set.
 </p>
-<a name="Examples-21"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-21">29.74.1 Examples</a></h3>
+<a name="Examples-125"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-125">29.74.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -22936,8 +22936,8 @@ plane. Return 0 if there is no such plane.
 <p>For functions, if <var>x</var> and <var>y</var> are outside the area, the value will be
 automatically clipped to the closer edge.
 </p>
-<a name="Examples-70"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-70">29.77.1 Examples</a></h3>
+<a name="Examples-136"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-136">29.77.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -23013,8 +23013,8 @@ values will be clipped to the valid range.
 <p>Alternatively, the options can be specified as a flat string:
 <var>strength</var>[:<var>radius</var>]
 </p>
-<a name="Examples-13"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-13">29.78.1 Examples</a></h3>
+<a name="Examples-53"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-53">29.78.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -23132,8 +23132,8 @@ can&rsquo;t be euqal to 0 if <var>difford</var> is greater than 0.
 </p></dd>
 </dl>
 
-<a name="Examples-7"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-7">29.80.1 Examples</a></h3>
+<a name="Examples-101"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-101">29.80.1 Examples</a></h3>
 <ul>
 <li>
 Grey Edge:
@@ -23341,8 +23341,8 @@ Default is <code>7</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-108"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-108">29.84.1 Examples</a></h3>
+<a name="Examples-68"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-68">29.84.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -23602,8 +23602,8 @@ expressions containing the following constants:
 </p></dd>
 </dl>
 
-<a name="Examples-118"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-118">29.92.1 Examples</a></h3>
+<a name="Examples-38"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-38">29.92.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -23649,8 +23649,8 @@ Apply a 3 seconds saturation fade-out effect starting at 5 seconds:
 
 </li></ul>
 
-<a name="Commands-14"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-14">29.92.2 Commands</a></h3>
+<a name="Commands-16"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-16">29.92.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -23940,8 +23940,8 @@ Default is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-25"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-25">29.98.1 Examples</a></h3>
+<a name="Examples-8"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-8">29.98.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -23983,8 +23983,8 @@ brightness distribution, so you may want to use both filters together in certain
 cases, though you will have to take care of ordering, i.e. whether vignetting should
 be applied before or after lens correction.
 </p>
-<a name="Options-9"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-9">29.99.1 Options</a></h3>
+<a name="Options-31"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-31">29.99.1 Options</a></h3>
 
 <p>The filter accepts the following options:
 </p>
@@ -24131,8 +24131,8 @@ are valid options:
 </dd>
 </dl>
 
-<a name="Examples-147"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-147">29.100.1 Examples</a></h3>
+<a name="Examples-32"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-32">29.100.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -24277,8 +24277,8 @@ Default is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-28"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-28">29.103.1 Examples</a></h3>
+<a name="Examples-46"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-46">29.103.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -24514,8 +24514,8 @@ expression
 
 <p>All expressions default to &quot;val&quot;.
 </p>
-<a name="Examples-5"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-5">29.107.1 Examples</a></h3>
+<a name="Examples-56"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-56">29.107.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -24638,8 +24638,8 @@ format in inputs.
 
 <p>All expressions default to &quot;x&quot;.
 </p>
-<a name="Examples-50"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-50">29.108.1 Examples</a></h3>
+<a name="Examples-57"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-57">29.108.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -24787,8 +24787,8 @@ plane, &rsquo;Cc&rsquo; describes the mapping for the output stream third plane 
 </p></dd>
 </dl>
 
-<a name="Examples-69"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-69">29.112.1 Examples</a></h3>
+<a name="Examples-24"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-24">29.112.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -25296,8 +25296,8 @@ pix_fmts=yuv420p|monow|rgb24&quot;.
 </dd>
 </dl>
 
-<a name="Examples-32"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-32">29.121.1 Examples</a></h3>
+<a name="Examples-130"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-130">29.121.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -25364,8 +25364,8 @@ Available values for component flags are:
 </dd>
 </dl>
 
-<a name="Examples-33"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-33">29.122.1 Examples</a></h3>
+<a name="Examples-78"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-78">29.122.1 Examples</a></h3>
 
 <p>Add temporal and uniform noise to input video:
 </p><div class="example">
@@ -25428,8 +25428,8 @@ expensive no-op. Defaults to 1.0 (full strength).
 </dd>
 </dl>
 
-<a name="Examples-112"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-112">29.123.1 Examples</a></h3>
+<a name="Examples-54"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-54">29.123.1 Examples</a></h3>
 
 <p>Stretch video contrast to use the full dynamic range, with no temporal
 smoothing; may flicker depending on the source content:
@@ -25666,8 +25666,8 @@ libopencv function <code>cvSmooth</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-31"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-31">29.127.1 Examples</a></h3>
+<a name="Examples-132"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-132">29.127.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -25843,8 +25843,8 @@ the <var>movie</var> filter does.
 <p>You can chain together more overlays but you should test the
 efficiency of such approach.
 </p>
-<a name="Commands-7"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-7">29.128.1 Commands</a></h3>
+<a name="Commands-3"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-3">29.128.1 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -25858,8 +25858,8 @@ value.
 </p></dd>
 </dl>
 
-<a name="Examples-8"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-8">29.128.2 Examples</a></h3>
+<a name="Examples-16"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-16">29.128.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -26096,8 +26096,8 @@ pixel format &quot;yuv422p&quot; <var>hsub</var> is 2 and <var>vsub</var> is 1.
 </p></dd>
 </dl>
 
-<a name="Examples-64"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-64">29.130.1 Examples</a></h3>
+<a name="Examples-7"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-7">29.130.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -26210,8 +26210,8 @@ the background is static.
 color quantization of the palette. This information is also visible at
 <var>info</var> logging level.
 </p>
-<a name="Examples-90"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-90">29.131.1 Examples</a></h3>
+<a name="Examples-15"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-15">29.131.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -26296,8 +26296,8 @@ treated as completely transparent.
 </p></dd>
 </dl>
 
-<a name="Examples-29"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-29">29.132.1 Examples</a></h3>
+<a name="Examples-135"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-135">29.132.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -26704,8 +26704,8 @@ specify.
 </p></dd>
 </dl>
 
-<a name="Examples-138"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-138">29.137.1 Examples</a></h3>
+<a name="Examples-128"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-128">29.137.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -26991,8 +26991,8 @@ the corresponding pixel component values.
 
 <p>All expressions default to &quot;val&quot;.
 </p>
-<a name="Examples-6"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-6">29.142.1 Examples</a></h3>
+<a name="Examples-19"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-19">29.142.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27210,8 +27210,8 @@ the following constants:
 </p></dd>
 </dl>
 
-<a name="Examples-16"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-16">29.145.1 Examples</a></h3>
+<a name="Examples-42"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-42">29.145.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27316,8 +27316,8 @@ Default is <code>0.75</code>. Allowed range is <code>[0.01 - 1]</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-135"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-135">29.147.1 Examples</a></h3>
+<a name="Examples-91"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-91">29.147.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27357,8 +27357,8 @@ default value is <code>0.6</code>. The value must be equal or greater than <code
 </p></dd>
 </dl>
 
-<a name="Examples-146"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-146">29.148.1 Examples</a></h3>
+<a name="Examples-134"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-134">29.148.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27562,8 +27562,8 @@ fields based on its value.
 <p>Warning: This filter requires memory to buffer the entire clip, so trimming
 is suggested.
 </p>
-<a name="Examples-98"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-98">29.153.1 Examples</a></h3>
+<a name="Examples-100"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-100">29.153.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27678,8 +27678,8 @@ video rotated by <var>a</var> radians.
 </p></dd>
 </dl>
 
-<a name="Examples-107"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-107">29.155.1 Examples</a></h3>
+<a name="Examples-25"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-25">29.155.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -27728,8 +27728,8 @@ shown:
 </pre></div>
 </li></ul>
 
-<a name="Commands-5"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-5">29.155.2 Commands</a></h3>
+<a name="Commands-4"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-4">29.155.2 Commands</a></h3>
 
 <p>The filter supports the following commands:
 </p>
@@ -27799,8 +27799,8 @@ of the input, by changing the output sample aspect ratio.
 the next filter, the scale filter will convert the input to the
 requested format.
 </p>
-<a name="Options-10"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-10">29.157.1 Options</a></h3>
+<a name="Options-1"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-1">29.157.1 Options</a></h3>
 <p>The filter accepts the following options, or any of the options
 supported by the libswscale scaler.
 </p>
@@ -28044,8 +28044,8 @@ pixel format &quot;yuv422p&quot; <var>hsub</var> is 2 and <var>vsub</var> is 1.
 </p></dd>
 </dl>
 
-<a name="Examples-12"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-12">29.157.2 Examples</a></h3>
+<a name="Examples-121"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-121">29.157.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -28146,8 +28146,8 @@ making sure the resulting resolution is even (required by some codecs):
 </pre></div>
 </li></ul>
 
-<a name="Commands-1"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-1">29.157.3 Commands</a></h3>
+<a name="Commands-11"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-11">29.157.3 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -28244,8 +28244,8 @@ is 1.
 </p></dd>
 </dl>
 
-<a name="Examples-95"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-95">29.159.1 Examples</a></h3>
+<a name="Examples-69"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-69">29.159.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -28320,8 +28320,8 @@ component value).
 respectively to adjust the amount of cyan, magenta, yellow and black for the
 pixels of its range.
 </p>
-<a name="Examples-124"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-124">29.160.1 Examples</a></h3>
+<a name="Examples-36"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-36">29.160.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -28433,8 +28433,8 @@ pixel format &quot;yuv422p&quot; <var>hsub</var> is 2 and <var>vsub</var> is 1.
 </p></dd>
 </dl>
 
-<a name="Examples-104"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-104">29.162.1 Examples</a></h3>
+<a name="Examples-65"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-65">29.162.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -28737,8 +28737,8 @@ frames. Number of indexes also sets maximal value that each index may have.
 
 <p>The first frame has the index 0. The default is to keep the input unchanged.
 </p>
-<a name="Examples-105"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-105">29.167.1 Examples</a></h3>
+<a name="Examples-146"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-146">29.167.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -28782,8 +28782,8 @@ Swap 10th and 1st frame of every ten frames of the input:
 
 <p>The first plane has the index 0. The default is to keep the input unchanged.
 </p>
-<a name="Examples-76"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-76">29.168.1 Examples</a></h3>
+<a name="Examples-72"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-72">29.168.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -28984,8 +28984,8 @@ yellow.
 </p></dd>
 </dl>
 
-<a name="Examples-46"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-46">29.169.1 Examples</a></h3>
+<a name="Examples-103"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-103">29.169.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -29109,8 +29109,8 @@ The option value must be a double value between 0 and 1. The default value is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-83"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-83">29.170.1 Examples</a></h3>
+<a name="Examples-92"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-92">29.170.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -29486,8 +29486,8 @@ is stored in &lsquo;<tt>stats.log</tt>&rsquo;.
 </p></dd>
 </dl>
 
-<a name="Examples-44"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-44">29.173.1 Examples</a></h3>
+<a name="Examples-41"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-41">29.173.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -29519,8 +29519,8 @@ Convert input video from above below (left eye above, right eye below) to side b
 </p></dd>
 </dl>
 
-<a name="Commands-4"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-4">29.174.1 Commands</a></h3>
+<a name="Commands-15"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-15">29.174.1 Commands</a></h3>
 
 <p>The <code>streamselect</code> and <code>astreamselect</code> filter supports the following
 commands:
@@ -29531,8 +29531,8 @@ commands:
 </p></dd>
 </dl>
 
-<a name="Examples-111"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-111">29.174.2 Examples</a></h3>
+<a name="Examples-63"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-63">29.174.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -29898,8 +29898,8 @@ otherwise fourth stream pixel component value will be picked.
 </p>
 <p>Using color source filter one can perform various types of thresholding:
 </p>
-<a name="Examples-68"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-68">29.183.1 Examples</a></h3>
+<a name="Examples-49"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-49">29.183.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -29950,8 +29950,8 @@ the end. Default is <code>100</code>.
 <p>Since the filter keeps track of the whole frames sequence, a bigger <var>n</var>
 value will result in a higher memory usage, so a high value is not recommended.
 </p>
-<a name="Examples-109"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-109">29.184.1 Examples</a></h3>
+<a name="Examples-29"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-29">29.184.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -30015,8 +30015,8 @@ The value must be between <code>0</code> and <var>nb_frames - 1</var>.
 </p></dd>
 </dl>
 
-<a name="Examples-136"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-136">29.185.1 Examples</a></h3>
+<a name="Examples-117"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-117">29.185.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -30311,8 +30311,8 @@ pixel value. By default <var>scale</var> is auto scaled to sum of weights.
 </p></dd>
 </dl>
 
-<a name="Examples-40"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-40">29.187.1 Examples</a></h3>
+<a name="Examples-150"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-150">29.187.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -30349,8 +30349,8 @@ data should be linearized beforehand (and possibly correctly tagged).
 <pre class="example">ffmpeg -i INPUT -vf zscale=transfer=linear,tonemap=clip,zscale=transfer=bt709,format=yuv420p OUTPUT
 </pre></div>
 
-<a name="Options-19"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-19">29.188.1 Options</a></h3>
+<a name="Options-29"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-29">29.188.1 Options</a></h3>
 <p>The filter accepts the following options.
 </p>
 <dl compact="compact">
@@ -30755,8 +30755,8 @@ sharpen it, a value of zero will disable the effect.
 <p>All parameters are optional and default to the equivalent of the
 string &rsquo;5:5:1.0:5:5:0.0&rsquo;.
 </p>
-<a name="Examples-115"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-115">29.193.1 Examples</a></h3>
+<a name="Examples-113"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-113">29.193.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -31065,8 +31065,8 @@ visualization.
 </p></dd>
 </dl>
 
-<a name="Examples-142"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-142">29.197.1 Examples</a></h3>
+<a name="Examples-99"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-99">29.197.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -31247,8 +31247,8 @@ value is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-132"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-132">29.198.2 Examples</a></h3>
+<a name="Examples-83"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-83">29.198.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -31443,8 +31443,8 @@ expressed in seconds, NAN if undefined
 </dl>
 
 
-<a name="Examples-3"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-3">29.202.2 Examples</a></h3>
+<a name="Examples-74"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-74">29.202.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -31749,8 +31749,8 @@ halving frame rate and frame count.
 </dd>
 </dl>
 
-<a name="Examples-82"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-82">29.207.1 Examples</a></h3>
+<a name="Examples-71"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-71">29.207.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -31807,8 +31807,8 @@ terminates. Default value is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-30"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-30">29.209.1 Examples</a></h3>
+<a name="Examples-94"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-94">29.209.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -32078,8 +32078,8 @@ for each input frame.
 </dd>
 </dl>
 
-<a name="Examples-123"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-123">29.212.1 Examples</a></h3>
+<a name="Examples-129"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-129">29.212.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -32115,8 +32115,8 @@ as the input, by changing the output sample aspect ratio.
 the next filter, the zscale filter will convert the input to the
 requested format.
 </p>
-<a name="Options-27"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Options-27">29.213.1 Options</a></h3>
+<a name="Options-5"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Options-5">29.213.1 Options</a></h3>
 <p>The filter accepts the following options.
 </p>
 <dl compact="compact">
@@ -32563,8 +32563,8 @@ This is the default behavior, for disabling set the value to 0.
 </p></dd>
 </dl>
 
-<a name="Examples-97"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-97">30.2.1 Examples</a></h3>
+<a name="Examples-131"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-131">30.2.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -32648,8 +32648,8 @@ A complete filterchain can be used for further processing of the
 generated input without CPU-HOST transfer. See <a href="#coreimage">coreimage</a> documentation
 and examples for details.
 </p>
-<a name="Examples-9"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-9">30.3.1 Examples</a></h3>
+<a name="Examples-139"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-139">30.3.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -32957,8 +32957,8 @@ used to represent a dead cell.
 </p></dd>
 </dl>
 
-<a name="Examples-56"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-56">30.7.1 Examples</a></h3>
+<a name="Examples-17"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-17">30.7.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -33105,8 +33105,8 @@ value. Default value is 0.
 </p></dd>
 </dl>
 
-<a name="Examples-101"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-101">30.8.1 Examples</a></h3>
+<a name="Examples-30"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-30">30.8.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -33133,8 +33133,8 @@ the <code>geq</code> filter:
 </pre></div>
 </li></ul>
 
-<a name="Commands-13"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-13">30.8.2 Commands</a></h3>
+<a name="Commands-5"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-5">30.8.2 Commands</a></h3>
 
 <p>The <code>color</code> source supports the following commands:
 </p>
@@ -33555,8 +33555,8 @@ Values lower than <var>1</var> will auto adjust zoom factor to maximal possible 
 </dd>
 </dl>
 
-<a name="Examples-151"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-151">32.4.1 Examples</a></h3>
+<a name="Examples-2"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-2">32.4.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -33595,8 +33595,8 @@ maximum and minimum time (respectively <code>t</code>, <code>avg</code>, <code>m
 </dd>
 </dl>
 
-<a name="Examples-116"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-116">32.5.1 Examples</a></h3>
+<a name="Examples-27"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-27">32.5.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -33606,8 +33606,8 @@ Benchmark <a href="#selectivecolor">selectivecolor</a> filter:
 </pre></div>
 </li></ul>
 
-<a name="concat-3"></a>
-<h2 class="section"><a href="ffplay-all.html#toc-concat-3">32.6 concat</a></h2>
+<a name="concat-1"></a>
+<h2 class="section"><a href="ffplay-all.html#toc-concat-1">32.6 concat</a></h2>
 
 <p>Concatenate audio and video streams, joining them together one after the
 other.
@@ -33664,8 +33664,8 @@ explicitly by the user.
 <p>Different frame rates are acceptable but will result in variable frame rate
 at output; be sure to configure the output file to handle it.
 </p>
-<a name="Examples-53"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-53">32.6.1 Examples</a></h3>
+<a name="Examples-140"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-140">32.6.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -33691,8 +33691,8 @@ do not have exactly the same duration in the first file.
 </p>
 </li></ul>
 
-<a name="Commands-9"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-9">32.6.2 Commands</a></h3>
+<a name="Commands"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands">32.6.2 Commands</a></h3>
 
 <p>This filter supports the following commands:
 </p><dl compact="compact">
@@ -33958,8 +33958,8 @@ video output, not the summary or continuous log output.
 </p></dd>
 </dl>
 
-<a name="Examples-27"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-27">32.8.1 Examples</a></h3>
+<a name="Examples-59"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-59">32.8.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -34009,8 +34009,8 @@ the queue is already filled.
 </p></dd>
 </dl>
 
-<a name="Examples-4"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-4">32.9.1 Examples</a></h3>
+<a name="Examples-64"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-64">32.9.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -34136,8 +34136,8 @@ with AV_LOG_INFO loglevel.
 </dd>
 </dl>
 
-<a name="Examples-125"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-125">32.10.1 Examples</a></h3>
+<a name="Examples-61"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-61">32.10.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -34380,8 +34380,8 @@ interval set by the concat demuxer.
 
 <p>The default value of the select expression is &quot;1&quot;.
 </p>
-<a name="Examples-48"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-48">32.13.1 Examples</a></h3>
+<a name="Examples-14"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-14">32.13.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -34564,8 +34564,8 @@ follows:
 <var>INTERVALS</var>     ::= <var>INTERVAL</var>[;<var>INTERVALS</var>]
 </pre></div>
 
-<a name="Examples-103"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-103">32.14.2 Examples</a></h3>
+<a name="Examples-11"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-11">32.14.2 Examples</a></h3>
 
 <ul>
 <li>
@@ -34703,8 +34703,8 @@ instead.
 </dd>
 </dl>
 
-<a name="Examples-43"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-43">32.15.1 Examples</a></h3>
+<a name="Examples-31"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-31">32.15.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -34813,8 +34813,8 @@ rational. The expression can contain the constants &quot;AVTB&quot; (the default
 timebase), &quot;intb&quot; (the input timebase) and &quot;sr&quot; (the sample rate,
 audio only). Default value is &quot;intb&quot;.
 </p>
-<a name="Examples-150"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-150">32.17.1 Examples</a></h3>
+<a name="Examples-86"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-86">32.17.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -35104,8 +35104,8 @@ The default is <code>1|0.5|0|0|0.5|1</code>.
 </dd>
 </dl>
 
-<a name="Examples-54"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-54">32.18.1 Examples</a></h3>
+<a name="Examples-79"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-79">32.18.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -35547,8 +35547,8 @@ Default value is <code>0</code>.
 <p>The usage is very similar to the showwaves filter; see the examples in that
 section.
 </p>
-<a name="Examples-86"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-86">32.20.1 Examples</a></h3>
+<a name="Examples-5"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-5">32.20.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -35729,8 +35729,8 @@ Default value is <code>0</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-84"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-84">32.21.1 Examples</a></h3>
+<a name="Examples-35"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-35">32.21.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -35936,8 +35936,8 @@ option <var>n</var>. Default value is &quot;25&quot;.
 </p></dd>
 </dl>
 
-<a name="Examples-143"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-143">32.23.1 Examples</a></h3>
+<a name="Examples-145"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-145">32.23.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -36003,8 +36003,8 @@ Default value is <code>600x240</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-22"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-22">32.24.1 Examples</a></h3>
+<a name="Examples-122"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-122">32.24.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -36107,8 +36107,8 @@ Default is <code>vertical</code>.
 </p></dd>
 </dl>
 
-<a name="Examples-121"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-121">32.26.1 Examples</a></h3>
+<a name="Examples-89"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-89">32.26.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -36131,8 +36131,8 @@ ffmpeg -i magnitude.nut -i phase.nut -lavfi spectrumsynth=channels=2:sample_rate
 <p>The filter accepts a single parameter which specifies the number of outputs. If
 unspecified, it defaults to 2.
 </p>
-<a name="Examples-57"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-57">32.27.1 Examples</a></h3>
+<a name="Examples-58"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-58">32.27.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -36213,8 +36213,8 @@ will send a reply to the client, adopting the format:
 
 <p><var>MESSAGE</var> is optional.
 </p>
-<a name="Examples-51"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-51">32.28.1 Examples</a></h3>
+<a name="Examples-147"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-147">32.28.1 Examples</a></h3>
 
 <p>Look at &lsquo;<tt>tools/zmqsend</tt>&rsquo; for an example of a zmq client which can
 be used to send commands processed by these filters.
@@ -36327,8 +36327,8 @@ a filtergraph, as shown in this graph:
                                     |
 movie --&gt; scale--&gt; deltapts1 -------+
 </pre></div>
-<a name="Examples-20"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-20">33.2.1 Examples</a></h3>
+<a name="Examples-48"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Examples-48">33.2.1 Examples</a></h3>
 
 <ul>
 <li>
@@ -36358,8 +36358,8 @@ connected to the pad named &quot;audio&quot;:
 </pre></div>
 </li></ul>
 
-<a name="Commands-17"></a>
-<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-17">33.2.2 Commands</a></h3>
+<a name="Commands-1"></a>
+<h3 class="subsection"><a href="ffplay-all.html#toc-Commands-1">33.2.2 Commands</a></h3>
 
 <p>Both movie and amovie support the following commands:
 </p><dl compact="compact">

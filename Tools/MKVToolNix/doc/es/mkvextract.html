@@ -148,13 +148,13 @@
                   <td>
                      
                      <p>
-                        Tells the program to flush all data cached in memory to storage when closing
-                        files opened for writing.  This can be used to prevent data loss on power
-                        outages or to circumvent certain problems in the operating system or
-                        drivers.  The downside is that multiplexing will take longer as mkvmerge
-                        will wait until all data has been written to the storage before exiting.
-                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth
-                        discussions on the pros and cons.
+                        Le dice al programa que libere de datos la memoria cache cuando se cierren
+                        los archivos para su escritura. Esto se puede usar para evitar la pérdida de
+                        datos en cortes de energía o para evitar ciertos problemas en el sistema
+                        operativo o los controladores.  La desventaja es que el multiplexado tardará
+                        más, ya que mkvmerge deberá esperar hasta que todos los datos se hayan
+                        escrito en el almacenamiento antes de salir. Ver falos #2469 y #2480 en el
+                        servidor de MKVToolNix para analizar los pros y los contras en profundidad. 
                         
                      </p>
                      
@@ -180,8 +180,8 @@
                   <td>
                      
                      <p>
-                        Tells the program to abort after the first warning is emitted. The program's
-                        exit code will be 1.
+                        Le dice al programa que cancele después de emitir la primera advertencia. El
+                        código de salida del programa será 1.
                         
                      </p>
                      
@@ -787,14 +787,14 @@
             
          </p>
          
-         <pre class="screen">$ mkvextract movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
+         <pre class="screen">$ mkvextract pelicula.mkv chapters capitulos-pelicula.xml tags etiquetas-pelicula.xml</pre>
          
          <p>
             Extrayendo un par de pistas y sus respectivos códigos de tiempo a la vez:
             
          </p>
          
-         <pre class="screen">$ mkvextract "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
+         <pre class="screen">$ mkvextract "Otra pelicula.mkv" tracks 0:video.h265 "1:audio principal.aac" "2:comentarios del director.aac" timestamps_v2 "0:marcas tiempo del video.txt" "1:marcas de tiempo del audio principal.txt" "2:marcas de tiempo de los comentarios del director.txt"</pre>
          
          <p>
             Extrayendo capítulos en el formato Ogg/OGM y recodificando el texto de una
@@ -802,7 +802,7 @@
             
          </p>
          
-         <pre class="screen">$ mkvextract "My Movie.mkv" chapters --simple "My Chapters.txt" tracks -c MS-ANSI "2:My Subtitles.srt"</pre>
+         <pre class="screen">$ mkvextract "Mi pelicula.mkv" chapters --simple "Mis capitulos.txt" tracks -c MS-ANSI "2:Mis subtitulos.srt"</pre>
          <h1><a name="mkvextract.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></h1>
          
          
