@@ -115,7 +115,7 @@ namespace PlexCleaner
                 // Test for MBAFF or not Progressive
                 if (string.IsNullOrEmpty(ScanType))
                     return false;
-                return (string.Compare(ScanType, "Progressive", StringComparison.OrdinalIgnoreCase) != 0);
+                return string.Compare(ScanType, "Progressive", StringComparison.OrdinalIgnoreCase) != 0;
             }
         }
 

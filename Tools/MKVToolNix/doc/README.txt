@@ -1,4 +1,4 @@
-MKVToolNix 34.0.0
+MKVToolNix 41.0.0
 =================
 
 # Table of contents
@@ -79,13 +79,14 @@ In order to compile MKVToolNix, you need a couple of libraries. Most of
 them should be available pre-compiled for your distribution. The
 programs and libraries you absolutely need are:
 
-- A C++ compiler that supports several features of the C++11 and C++14
-  standards: initializer lists, range-based `for` loops, right angle
-  brackets, the `auto` keyword, lambda functions, the `nullptr`
-  keyword, tuples, alias declarations, `std::make_unique()`, digit
-  separators, binary literals, generic lambdas, user-defined literals
-  for `std::string`. Others may be needed, too. For GCC this means at
-  least v5.x; for clang v3.4 or later.
+- A C++ compiler that supports several features of the C++11, C++14
+  and C++17 standards: initializer lists, range-based `for` loops,
+  right angle brackets, the `auto` keyword, lambda functions, the
+  `nullptr` keyword, tuples, alias declarations, `std::make_unique()`,
+  digit separators, binary literals, generic lambdas, user-defined
+  literals for `std::string`, `[[maybe_unused]]` attribute, nested
+  namespace definition, structured bindings. Others may be needed,
+  too. For GCC this means at least v7; for clang v4 or later.
 
 - [libOgg](http://downloads.xiph.org/releases/ogg/) and
   [libVorbis](http://downloads.xiph.org/releases/vorbis/) for access to Ogg/OGM
@@ -94,8 +95,8 @@ programs and libraries you absolutely need are:
 - [zlib](http://www.zlib.net/) — a compression library
 
 - [Boost](http://www.boost.org/) — Several of Boost's libraries are
-  used: `RegEx`, `filesystem`, `system`, `math`, `Range`, `rational`,
-  `variant`. At least v1.49.0 is required.
+  used: `RegEx`, `filesystem`, `system`, `math`, `operators`, `Range`,
+  `rational`, `variant`. At least v1.60.0 is required.
 
 - [libxslt's xsltproc binary](http://xmlsoft.org/libxslt/) and
   [DocBook XSL stylesheets](https://sourceforge.net/projects/docbook/files/docbook-xsl/)
@@ -144,7 +145,7 @@ These libraries are:
 Other libraries are optional and only limit the features that are
 built. These include:
 
-- [Qt](http://www.qt.io/) v5.4 or newer — a cross-platform GUI
+- [Qt](http://www.qt.io/) v5.9.0 or newer — a cross-platform GUI
   toolkit. You need this if you want to use the MKVToolNix GUI.
 
 - [cmark](https://github.com/commonmark/cmark) — the CommonMark
@@ -379,7 +380,7 @@ files.
 
 JSON for Modern C++
 
-  * Copyright: 2013-2018 Niels Lohmann
+  * Copyright: 2013-2019 Niels Lohmann
   * License: MIT (see `doc/licenses/nlohmann-json-MIT.txt`)
   * URL: https://github.com/nlohmann/json
   * Corresponding files: `lib/nlohmann-json/*`
@@ -457,7 +458,7 @@ A beefed-up tab widget class for Qt extracted from the Qt Creator project
 
 Small, safe and fast formatting library
 
-  * Copyright: 2012–2018 by Victor Zverovich
+  * Copyright: 2012–2019 by Victor Zverovich
   * License: BSD (see `doc/licenses/fmt-BSD.txt`)
   * URL: http://fmtlib.net/latest/
   * Corresponding files: `lib/fmt/*`

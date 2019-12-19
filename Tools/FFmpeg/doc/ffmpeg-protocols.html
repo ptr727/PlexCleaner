@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Protocols Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Protocols ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -314,6 +314,22 @@ truncating. Default value is 1.
 <code>INT_MAX</code>, which results in not limiting the requested block size.
 Setting this value reasonably low improves user termination request reaction
 time, which is valuable for files on slow medium.
+</p>
+</dd>
+<dt>&lsquo;<samp>follow</samp>&rsquo;</dt>
+<dd><p>If set to 1, the protocol will retry reading at the end of the file, allowing
+reading files that still are being written. In order for this to terminate,
+you either need to use the rw_timeout option, or use the interrupt callback
+(for API users).
+</p>
+</dd>
+<dt>&lsquo;<samp>seekable</samp>&rsquo;</dt>
+<dd><p>Controls if seekability is advertised on the file. 0 means non-seekable, -1
+means auto (seekable for normal files, non-seekable for named pipes).
+</p>
+<p>Many demuxers handle seekable and non-seekable resources differently,
+overriding this might speed up opening certain files at the cost of losing some
+features (e.g. accurate seeking).
 </p></dd>
 </dl>
 
@@ -355,18 +371,6 @@ it, unless special care is taken (tests, customized server configuration
 etc.). Different FTP servers behave in different way during seek
 operation. ff* tools may produce incomplete content due to server limitations.
 </p>
-<p>This protocol accepts the following options:
-</p>
-<dl compact="compact">
-<dt>&lsquo;<samp>follow</samp>&rsquo;</dt>
-<dd><p>If set to 1, the protocol will retry reading at the end of the file, allowing
-reading files that still are being written. In order for this to terminate,
-you either need to use the rw_timeout option, or use the interrupt callback
-(for API users).
-</p>
-</dd>
-</dl>
-
 <a name="gopher"></a>
 <h2 class="section"><a href="ffmpeg-protocols.html#toc-gopher">3.9 gopher</a></h2>
 
@@ -543,6 +547,12 @@ ffmpeg -i somefile.ogg -chunked_post 0 -c copy -f ogg http://<var>server</var>:<
 wget --post-file=somefile.ogg http://<var>server</var>:<var>port</var>
 </pre></div>
 
+</dd>
+<dt>&lsquo;<samp>send_expect_100</samp>&rsquo;</dt>
+<dd><p>Send an Expect: 100-continue header for POST. If set to 1 it will send, if set
+to 0 it won&rsquo;t, if set to -1 it will try to send if it is applicable. Default
+value is -1.
+</p>
 </dd>
 </dl>
 

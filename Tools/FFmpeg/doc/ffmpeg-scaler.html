@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Scaler Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Scaler ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -60,7 +60,8 @@ image rescaling and pixel format conversion.
 <p>The video scaler supports the following named options.
 </p>
 <p>Options may be set by specifying -<var>option</var> <var>value</var> in the
-FFmpeg tools. For programmatic use, they can be set explicitly in the
+FFmpeg tools, with a few API-only exceptions noted below.
+For programmatic use, they can be set explicitly in the
 <code>SwsContext</code> options or through the &lsquo;<tt>libavutil/opt.h</tt>&rsquo; API.
 </p>
 <dl compact="compact">
@@ -112,7 +113,8 @@ chroma components.
 </p>
 </dd>
 <dt>&lsquo;<samp>lanczos</samp>&rsquo;</dt>
-<dd><p>Select Lanczos rescaling algorithm.
+<dd><p>Select Lanczos rescaling algorithm. The default width (alpha) is 3 and can be
+changed by setting <code>param0</code>.
 </p>
 </dd>
 <dt>&lsquo;<samp>spline</samp>&rsquo;</dt>
@@ -141,36 +143,38 @@ chroma components.
 </dl>
 
 </dd>
-<dt>&lsquo;<samp>srcw</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>srcw <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set source width.
 </p>
 </dd>
-<dt>&lsquo;<samp>srch</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>srch <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set source height.
 </p>
 </dd>
-<dt>&lsquo;<samp>dstw</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>dstw <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set destination width.
 </p>
 </dd>
-<dt>&lsquo;<samp>dsth</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>dsth <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set destination height.
 </p>
 </dd>
-<dt>&lsquo;<samp>src_format</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>src_format <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set source pixel format (must be expressed as an integer).
 </p>
 </dd>
-<dt>&lsquo;<samp>dst_format</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>dst_format <var>(API only)</var></samp>&rsquo;</dt>
 <dd><p>Set destination pixel format (must be expressed as an integer).
 </p>
 </dd>
-<dt>&lsquo;<samp>src_range</samp>&rsquo;</dt>
-<dd><p>Select source range.
+<dt>&lsquo;<samp>src_range <var>(boolean)</var></samp>&rsquo;</dt>
+<dd><p>If value is set to <code>1</code>, indicates source is full range. Default value is
+<code>0</code>, which indicates source is limited range.
 </p>
 </dd>
-<dt>&lsquo;<samp>dst_range</samp>&rsquo;</dt>
-<dd><p>Select destination range.
+<dt>&lsquo;<samp>dst_range <var>(boolean)</var></samp>&rsquo;</dt>
+<dd><p>If value is set to <code>1</code>, enable full range for destination. Default value
+is <code>0</code>, which enables limited range.
 </p>
 <p><a name="sws_005fparams"></a>
 </p></dd>

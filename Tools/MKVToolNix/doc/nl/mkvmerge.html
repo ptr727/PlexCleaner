@@ -243,7 +243,7 @@
                   <td>
                      
                      <p>
-                        Stelt de ISO639-2 land code waarde in welke geschreven wordt voor elk
+                        Stelt de ISO 639-2 land code waarde in welke geschreven wordt voor elk
                         hoofdstuk ingang. Standaard naar '<span class="literal">eng</span>'. Zie de sectie
                         over: <a href="#mkvmerge.chapters">Hoofdstukken</a> hieronder voor
                         details.
@@ -2051,7 +2051,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Zet de ISO639-2 taal code, welke wordt geschreven voor elk hoofdstuk
+                        Zet de ISO 639-2 taal code, welke wordt geschreven voor elk hoofdstuk
                         ingang. Deze optie kan gebruikt worden, voor bronbestanden welke hoofdstuk
                         informatie bevatten maar géén informatie over de talen, b.v. voor MP4 en OGM
                         bestanden.
@@ -2216,9 +2216,9 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Stelt de taal in voor het opgegeven spoor (zie sectie <a href="#mkvmerge.track_ids">Spoor ID's</a>). Beide ISO639-2 taal codes
-                        en ISO639-1 land codes zijn toegestaan. Het land code wordt automatisch
-                        vertaald naar taal code. Alle talen inclusief hun ISO639-2 codes kunnen uit
+                        Stelt de taal in voor het opgegeven spoor (zie sectie <a href="#mkvmerge.track_ids">Spoor ID's</a>). Beide ISO 639-2 taal codes
+                        en ISO 639-1 land codes zijn toegestaan. Het land code wordt automatisch
+                        vertaald naar taal code. Alle talen inclusief hun ISO 639-2 codes kunnen uit
                         gelijst worden met <a href="#mkvmerge.description.list_languages">--list-languages</a>
                         optie. 
                         
@@ -2373,7 +2373,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <p>
                         Als de standaard duur niet is geforceerd dan zal mkvmerge proberen de spoor
                         standaard duur proberen te verkrijgen uit de inhoud en/of de gecodeerde bit
-                        stroom voor bepaalde spoortypen, b.v. AVC/h.264 of MPEG-2.
+                        stroom voor bepaalde spoortypen, b.v. AVC/H.264 of MPEG-2.
                         
                      </p>
                      
@@ -2406,7 +2406,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>This has only been implemented for AVC/h.264 video tracks so far.</p>
+                        <p>This has only been implemented for AVC/H.264 video tracks so far.</p>
                         
                      </div>
                      
@@ -2419,11 +2419,10 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <p>
                         Forceert de <span class="abbrev">NALU</span> lengte grootte naar
                         <span class="parameter">n</span> bytes. Deze parameter wordt alleen gebruikt als de
-                        <span class="foreignphrase">AVC/h.264</span> elementaire stroom inpakker is
-                        gebruikt. Indien weggelaten is de standaard waarde 4 bytes, maar er zijn
-                        bestanden die beelden of delen bevatten die kleiner zijn dan 65536
-                        bytes. Voor dergelijke bestanden kan je deze parameter gebruiken en de
-                        grootte verminderen naar 2.
+                        AVC/H.264 elementaire stroom inpakker is gebruikt. Indien weggelaten is de
+                        standaard waarde 4 bytes, maar er zijn bestanden die beelden of delen
+                        bevatten die kleiner zijn dan 65536 bytes. Voor dergelijke bestanden kan je
+                        deze parameter gebruiken en de grootte verminderen naar 2.
                         
                      </p>
                      
@@ -2444,8 +2443,8 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <p>
                         De compressie methode
                         '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>' is een speciale
-                        compressie methode genoemd '<span class="foreignphrase">header removal</span>'
-                        die is alléén beschikbaar voor<span class="abbrev">MPEG4</span> deel 2 video sporen.
+                        compressie methode genoemd 'header removal' die is alléén beschikbaar
+                        voor<span class="abbrev">MPEG4</span> deel 2 video sporen.
                         
                      </p>
                      
@@ -2464,7 +2463,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3450">2.8. Opties die alleen op video sporen van toepassing zijn</a></h2>
+         <h2><a name="d4e3444">2.8. Opties die alleen op video sporen van toepassing zijn</a></h2>
          
          
          
@@ -2483,8 +2482,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      
                      <p>
                         Forceert de <span class="classname">FourCC</span> naar de opgegeven waarde. Werkt
-                        alléén voor video sporen in de '<span class="foreignphrase">MS verenigbare
-                           mode</span>'.
+                        alléén voor video sporen in de 'MS verenigbare mode'.
                         
                      </p>
                      
@@ -2520,12 +2518,12 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      
                      <p>
                         <span class="productname">Matroska</span><sup>(tm)</sup> bestanden bevatten twee waarden die de scherm eigenschappen
-                        instelt waarnaar een af speler met afspelen naar toe zou moeten schalen:
+                        instellen waarnaar een speler met afspelen naar toe zou moeten schalen:
                         scherm breedte en scherm hoogte. Met deze optie zal <span class="productname">mkvmerge</span>(1) automatisch
-                        calculeren het scherm breedte en het scherm hoogte gebaseerd, op de
-                        originele beelden/plaatjes breedte en hoogte en de opgegeven verwachte
-                        verhouding met deze optie. De verhouding kan één van beiden zijn een
-                        veranderbaar nummer <span class="parameter">verhouding</span> of als een fractie
+                        de scherm breedte en hoogte berekenen,  gebaseerd op de breedte en hoogte
+                        van de originele beelden/plaatjes en de opgegeven beeldverhouding met deze
+                        optie. De verhouding kan één van beiden zijn een veranderbaar nummer
+                        <span class="parameter">verhouding</span> of als een fractie
                         '<span class="parameter">breedte</span>/<span class="parameter">hoogte</span>',
                         b.v. '<span class="literal">16/9</span>'.
                         
@@ -2547,9 +2545,9 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Een andere manier om de verwachtte verhouding te specificeren is een
-                        <span class="parameter">factor</span>. De originele verwachtte verhouding factor
-                        wordt eerst vermenigvuldigd met deze <span class="parameter">factor</span> en daarna
+                        Een andere manier om de beeldverhouding te specificeren is een
+                        <span class="parameter">factor</span>. De originele beeldverhouding factor wordt
+                        eerst vermenigvuldigd met deze <span class="parameter">factor</span> en daarna
                         gebruikt als doel verhouding.
                         
                      </p>
@@ -2945,7 +2943,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4274">2.9.  Opties alleen geldig voor tekst ondertitel sporen</a></h2>
+         <h2><a name="d4e4265">2.9.  Opties alleen geldig voor tekst ondertitel sporen</a></h2>
          
          
          
@@ -2967,7 +2965,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                         verkregen besturingssysteem locatie gebruikt. Opmerking: een karakter set
                         voor ondertitels is niet nodig wanneer er gelezen wordt vanuit een
                         <span class="productname">Matroska</span><sup>(tm)</sup> bestand of van Kate stromen, omdat deze altijd zijn opgeslagen in
-                        het UTF-8 format. Zie de sectie over: <a href="#mkvmerge.text_files_and_charsets"> Tekst bestanden en karakter set
+                        het UTF-8 format. Zie de sectie over: <a href="#mkvmerge.text_files_and_charsets">Tekst bestanden en karakter set
                            conversies</a> voor een uitleg hoe <span class="productname">mkvmerge</span>(1) converteert tussen het
                         verschillende karakter sets.
                         
@@ -2988,7 +2986,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4314">2.10. Andere opties</a></h2>
+         <h2><a name="d4e4305">2.10. Andere opties</a></h2>
          
          
          
@@ -3070,7 +3068,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -3125,8 +3123,8 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Somt alle talen en hun ISO639-2 codes op welke gebruikt kunnen worden met de
-                        <a href="#mkvmerge.description.language">--language</a>
+                        Somt alle talen en hun ISO 639-2 codes op welke gebruikt kunnen worden met
+                        de <a href="#mkvmerge.description.language">--language</a>
                         optie.
                         
                      </p>
@@ -3608,7 +3606,7 @@ $ mkvmerge -o MM-complete.mkv mijn film-met-geluid.mkv mijn film-voegtoe-geluid.
          
          <p>
             Als je een taal wilt opgeven voor een gegeven spoor kan dit héél makkelijk
-            gedaan worden. Zoek eerst de ISO639-2 code voor jouw taal. <span class="productname">mkvmerge</span>(1) kan
+            gedaan worden. Zoek eerst de ISO 639-2 code voor jouw taal. <span class="productname">mkvmerge</span>(1) kan
             alle codes uitlijsten voor je:
             
          </p>
@@ -3812,11 +3810,10 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) doet deze conversie automatisch gebaseerd op de aanwezigheid van
-            een <span class="foreignphrase">Byte Order Marker (byte volgorde
-               markering)</span> (kort: <span class="abbrev">BOM</span>) of op basis van het
-            huidige besturingssysteem locatie. Hoe het karakter van de locatie wordt
-            'achterhaald' hangt af van het besturingssysteem waarop <span class="productname">mkvmerge</span>(1) is
-            opgestart.
+            een Byte Order Marker (byte volgorde markering) (kort: <span class="abbrev">BOM</span>)
+            of op basis van het huidige besturingssysteem locatie. Hoe het karakter van
+            de locatie wordt 'achterhaald' hangt af van het besturingssysteem waarop
+            <span class="productname">mkvmerge</span>(1) is opgestart.
             
          </p>
          
@@ -3839,7 +3836,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux and Unix-like systems including Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux and Unix-like systems including macOS</a></h2>
          
          
          
@@ -4003,9 +4000,8 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          <p>
             An option file contains JSON-formatted data. Its content must be a valid
             JSON array consisting solely of JSON strings. The file's encoding must be
-            UTF-8. The file should not start with a <span class="foreignphrase">byte order
-               marker</span> (<span class="abbrev">BOM</span>), but if one exists, it will be
-            skipped.
+            UTF-8. The file should not start with a byte order marker
+            (<span class="abbrev">BOM</span>), but if one exists, it will be skipped.
             
          </p>
          
@@ -4254,10 +4250,10 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) ondersteunt twee soorten van hoofdstuk bestanden als invoer. Het
-            eerste formaat, genoemd '<span class="foreignphrase">simpel hoofdstuk
-               format</span>', is hetzelfde format dat het <span class="abbrev">OGM</span>
-            hulpmiddel verwacht. Het tweede format is een <span class="abbrev">XML</span> gebaseerd hoofdstuk
-            format welke alle <span class="productname">Matroska</span><sup>(tm)</sup>'s hoofdstuk functionaliteiten ondersteunt.
+            eerste formaat, genoemd 'simpel hoofdstuk format', is hetzelfde format dat
+            het <span class="abbrev">OGM</span> hulpmiddel verwacht. Het tweede format is een <span class="abbrev">XML</span>
+            gebaseerd hoofdstuk format welke alle <span class="productname">Matroska</span><sup>(tm)</sup>'s hoofdstuk
+            functionaliteiten ondersteunt.
             
          </p>
          
@@ -4398,7 +4394,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6042">13.3. Algemene opmerkingen</a></h2>
+         <h2><a name="d4e6024">13.3. Algemene opmerkingen</a></h2>
          
          
          <p>
@@ -4432,7 +4428,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6107">14.1. Introductie</a></h2>
+         <h2><a name="d4e6089">14.1. Introductie</a></h2>
          
          
          
@@ -4573,11 +4569,10 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          <p>
-            Anders zou de gegeven data moeten zijn een gecodeerde
-            <span class="foreignphrase">Base64</span>. Dit is een codering die binaire data
-            codeert naar een gelimiteerde set van <span class="abbrev">ASCII</span> karakters en
-            wordt gebruikt in b.v. email programma's. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> zal uitvoeren
-            <span class="foreignphrase">Base64</span> gecodeerde data voor binaire
+            Anders zou de gegeven data moeten zijn een gecodeerde Base64. Dit is een
+            codering die binaire data codeert naar een gelimiteerde set van
+            <span class="abbrev">ASCII</span> karakters en wordt gebruikt in b.v. email
+            programma's. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> zal uitvoeren Base64 gecodeerde data voor binaire
             elementen.
             
          </p>
@@ -4778,7 +4773,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6559">17.1. Tijd code bestandsformaat v1</a></h2>
+         <h2><a name="d4e6535">17.1. Tijd code bestandsformaat v1</a></h2>
          
          
          <p>
@@ -4798,7 +4793,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6583">17.2. Tijd code bestandsformaat v2</a></h2>
+         <h2><a name="d4e6559">17.2. Tijd code bestandsformaat v2</a></h2>
          
          
          
@@ -4818,7 +4813,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6598">17.3. Tijd code bestandsformaat v3</a></h2>
+         <h2><a name="d4e6574">17.3. Tijd code bestandsformaat v3</a></h2>
          
          
          <p>
@@ -4842,7 +4837,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6616">17.4. Tijd code bestandsformaat v4</a></h2>
+         <h2><a name="d4e6592">17.4. Tijd code bestandsformaat v4</a></h2>
          
          
          <p>

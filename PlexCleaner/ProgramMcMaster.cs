@@ -2,8 +2,6 @@
 using McMaster.Extensions.CommandLineUtils;
 using InsaneGenius.Utilities;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
@@ -15,8 +13,8 @@ namespace PlexCleaner
     public class ProgramMcMaster
     {
         // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
-        // https://github.com/gsscoder/commandline/issues/473
-        static Task<int> MainMcMaster(string[] args) => CommandLineApplication.ExecuteAsync<Program>(CommandLineEx.GetCommandlineArgs());
+        // https://github.com/natemcmaster/CommandLineUtils/issues/220
+        static Task<int> Main(string[] _) => CommandLineApplication.ExecuteAsync<Program>(CommandLineEx.GetCommandlineArgs());
 
         [Option(Description = "Process the files or folders.")]
         public bool Process { get; }
@@ -83,7 +81,6 @@ namespace PlexCleaner
                 !CheckForTools)
             {
                 // TODO : Write commandline help output on demand
-                // https://github.com/gsscoder/commandline/issues/445#issuecomment-317901624
                 ConsoleEx.WriteLineError("Failed to parse commandline, missing action.");
                 return -1;
             }

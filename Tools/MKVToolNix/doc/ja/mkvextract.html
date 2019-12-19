@@ -28,32 +28,26 @@
          <h1><a name="mkvextract.synopsis">1. 書式</a></h1>
          
          
-         <div class="cmdsynopsis"><span class="commandname">mkvextract</span> {source-filename} {mode1} options extraction-spec1 mode2 options extraction-spec2 …
+         <div class="cmdsynopsis"><span class="commandname">mkvextract</span> {対象ファイル名} {モード1} オプション 抽出仕様1 モード2 オプション 抽出仕様2 …
          </div>
          
          <h1><a name="mkvextract.description">2. 説明</a></h1>
          
          
          <p>
-            This program extracts specific parts from a <span class="productname">Matroska</span><sup>(tm)</sup> file to other useful
-            formats. The first argument is the name of the source file which must be a
-            <span class="productname">Matroska</span><sup>(tm)</sup> file.
+            このプログラムは<span class="productname">Matroska</span><sup>(tm)</sup>ファイルから特定部分を抽出して他の利便な形式に書き出します。第1引数は抽出する対象のファイル名であり、<span class="productname">Matroska</span><sup>(tm)</sup>ファイルでなくてはなりません。
             
          </p>
          
          
          <p>
-            All other arguments either switch to a certain extraction mode, change
-            options for the currently active mode or specify what to extract into which
-            file.  Multiple modes can be used in the same invocation of mkvextract
-            allowing the extraction of multiple things in a single pass.  Most options
-            can only be used in certain modes with a few options applying to all modes.
+            他の全ての引数はそれぞれ、定められた抽出モードに切り替える、現行で有効モードのオプションを変更する、又はどのファイルに何を抽出して書き出すかを指定します。一度のmkvextract呼出しで複数のモードが使え、単一のコマンドラインで複数種類の抽出が可能です。ほとんどのオプションは特定のモードでのみ利用でき、いくつかのオプションは全てのモードに適用できます。
             
          </p>
          
          
          <p>
-            Currently supported is the extraction of <a href="#mkvextract.description.tracks">tracks</a>, <a href="#mkvextract.description.tags">tags</a>, <a href="#mkvextract.description.attachments">attachments</a>, <a href="#mkvextract.description.chapters">chapters</a>, <a href="#mkvextract.description.cuesheets">CUE sheets</a>, <a href="#mkvextract.description.timestamps_v2">timestamps</a> and <a href="#mkvextract.description.cues">cues</a>.
+            現在次の抽出に対応しています。<a href="#mkvextract.description.tracks">トラック</a>・<a href="#mkvextract.description.tags">タグ</a>・<a href="#mkvextract.description.attachments">添付ファイル</a>・<a href="#mkvextract.description.chapters">チャプター</a>・<a href="#mkvextract.description.cuesheets">CUEシート</a>・<a href="#mkvextract.description.timestamps_v2">タイムスタンプ</a>及び<a href="#mkvextract.description.cues">キュー</a>。
             
          </p>
          
@@ -88,7 +82,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.common.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.common.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -99,7 +93,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.common.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.common.output_charset"><span class="option">--output-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -126,28 +120,19 @@
                   <td>
                      
                      <p>
-                        Tells the program to flush all data cached in memory to storage when closing
-                        files opened for writing.  This can be used to prevent data loss on power
-                        outages or to circumvent certain problems in the operating system or
-                        drivers.  The downside is that multiplexing will take longer as mkvmerge
-                        will wait until all data has been written to the storage before exiting.
-                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth
-                        discussions on the pros and cons.
+                        プログラムが、書き込み用に開かれたファイルを保存する際に、RAM上にある全データをストレージに書き出すようにします。停電時のデータ損失を防いだり、OSやデバイスに固有の問題を避けるのに用います。欠点として、mkvmergeが終了する前に全データをストレージに書き出し終わるまで待機する為に、多重化に長い時間が掛かります。MKVToolNixバグ追跡システムの第2469号及び第2480号に長所・短所に関する詳細な議論があります。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.common.ui_language"><span class="option">--ui-language</span> <span class="parameter">コード</span></a></td>
                   <td>
                      
                      <p>
-                        Forces the translations for the language <span class="parameter">code</span> to be
-                        used (e.g.  '<span class="literal">de_DE</span>' for the German
-                        translations). Entering '<span class="literal">list</span>' as the
-                        <span class="parameter">code</span> will cause the program to output a list of
-                        available translations.
+                        指定した<span class="parameter">コード</span>言語（例
+                        日本語なら「<span class="literal">ja_JP</span>」）での翻訳を強制します。<span class="parameter">code</span>に「<span class="literal">list</span>」を指定すると、利用可能な翻訳の一覧を出力します。
                         
                      </p>
                      
@@ -158,15 +143,14 @@
                   <td>
                      
                      <p>
-                        Tells the program to abort after the first warning is emitted. The program's
-                        exit code will be 1.
+                        最初の警告が発された後プログラムを停止するよう伝えます。プログラムの終了コードは1になります。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.debug"><span class="option">--debug</span> <span class="parameter">項目</span></a></td>
                   <td>
                      
                      <p>
@@ -177,7 +161,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.engage"><span class="option">--engage</span> <span class="parameter">機能</span></a></td>
                   <td>
                      
                      <p>
@@ -193,12 +177,7 @@
                   <td>
                      
                      <p>
-                        Turns on GUI mode. In this mode specially-formatted lines may be output that
-                        can tell a controlling GUI what's happening. These messages follow the
-                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
-                        key/value pairs as in
-                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
-                        messages nor the keys are ever translated and always output in English.
+                        GUIモードに切り替えます。このモードではGUI操作の状況を伝える特殊な形式の行が出力されます。これらの通知は「<span class="literal">#GUI#通知内容</span>」という形式に従います。「<span class="literal">#GUI#通知内容#キー1=値1#キー2=値2...</span>」のようにキー・値の組が通知内容に続くことがあります。通知内容やキーは翻訳されることなく、常に英語で出力されます。
                         
                      </p>
                      
@@ -238,14 +217,11 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">オプションファイル.json</span></td>
                   <td>
                      
                      <p>
-                        Reads additional command line arguments from the file
-                        <span class="parameter">options-file</span>. For a full explanation on the supported
-                        formats for such files see the section called "Option files" in the
-                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+                        <span class="parameter">オプションファイル</span>から追加のコマンドライン引数を読み込みます。このようなファイルに対応している形式の詳細については<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>のマニュアルページ「オプションファイル」節をご覧ください。
                         
                      </p>
                      
@@ -261,11 +237,10 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
-               <span class="option">tracks</span> [<span class="parameter">options</span>]
-               <span class="parameter">TID1:dest-filename1</span>
-               [<span class="parameter">TID2:dest-filename2</span>
-               ...]</span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span>
+               <span class="option">tracks</span> [<span class="parameter">オプション</span>]
+               <span class="parameter">TID1:出力ファイル名1</span>
+               [<span class="parameter">TID2:出力ファイル名2</span> ...]</span>
             
          </p>
          
@@ -285,7 +260,7 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="option">-c</span> <span class="parameter">character-set</span></td>
+                  <td class="varlistoption"><span class="option">-c</span> <span class="parameter">文字コード</span></td>
                   <td>
                      
                      <p>
@@ -367,11 +342,11 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span>
                <span class="option">attachments</span>
-               [<span class="parameter">options</span>]
-               <span class="parameter">AID1:outname1</span>
-               [<span class="parameter">AID2:outname2</span> ...]</span>
+               [<span class="parameter">オプション</span>]
+               <span class="parameter">AID1:出力名1</span> [<span class="parameter">AID2:出力名2</span>
+               ...]</span>
             
          </p>
          
@@ -385,11 +360,11 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="parameter">AID</span>:<span class="parameter">outname</span></td>
+                  <td class="varlistoption"><span class="parameter">AID</span>:<span class="parameter">出力名</span></td>
                   <td>
                      
                      <p>
-                        IDが<span class="parameter">AID</span>である添付ファイルがもしソースファイルに存在すれば抽出します。<span class="parameter">outname</span>が指定されない場合、<span class="productname">Matroska</span><sup>(tm)</sup>に格納された添付ファイルの名前が使用されます。このオプションは複数回指定できます。添付ファイルIDは、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>に<span class="option">--identify</span>オプションを指定したときに出力されるものと同じです。
+                        IDが<span class="parameter">AID</span>である添付ファイルがもしソースファイルに存在すれば抽出します。<span class="parameter">出力名</span>が指定されない場合、<span class="productname">Matroska</span><sup>(tm)</sup>に格納された添付ファイルの名前が使用されます。このオプションは複数回指定できます。添付ファイルIDは、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>に<span class="option">--identify</span>オプションを指定したときに出力されるものと同じです。
                         
                      </p>
                      
@@ -405,10 +380,9 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
-               <span class="option">chapters</span>
-               [<span class="parameter">options</span>]
-               <span class="parameter">output-filename.xml</span></span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span>
+               <span class="option">chapters</span> [<span class="parameter">オプション</span>]
+               <span class="parameter">出力ファイル名.xml</span></span>
             
          </p>
          
@@ -434,23 +408,18 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">--simple-language</span> <span class="parameter">language</span></td>
+                  <td class="varlistoption"><span class="option">--simple-language</span> <span class="parameter">言語</span></td>
                   <td>
                      
                      <p>
-                        If the simple format is enabled then <span class="productname">mkvextract</span>(1) will only output a single
-                        entry for each chapter atom encountered even if a chapter atom contains more
-                        than one chapter name.  By default <span class="productname">mkvextract</span>(1) will use the first chapter
-                        name found for each atom regardless of its language.
+                        単純形式が有効の場合、<span class="productname">mkvextract</span>(1)はたとえチャプタ素片が複数のチャプタ名を含んでいる場合でも検出したチャプタ素片毎に一項目のみを出力します。既定では<span class="productname">mkvextract</span>(1)は言語に関係なく各素片に見付かった最初のチャプタ名を使用します。
                         
                      </p>
                      
                      
                      <p>
-                        Using this option allows the user to determine which chapter names are
-                        output if atoms contain more than one chapter name.  The
-                        <span class="parameter">language</span> parameter must be an ISO 639-1 or ISO 639-2
-                        code.
+                        このオプションを用いて素片が複数のチャプタ名を含んでいた場合に出力されるチャプタ名を定められます。<span class="parameter">言語</span>はJIS
+                        X 0412-1又はJIS X 0412-2の言語名コードでなくてはなりません。
                         
                      </p>
                      
@@ -461,9 +430,7 @@
          
          
          <p>
-            The chapters are written to specified output file. By default the <span class="abbrev">XML</span>
-            format understood by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> is used. If no chapters are found in the
-            file, the output file is not created.
+            チャプタは指定された出力ファイルに書き込まれます。既定では<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>が解釈できる<span class="abbrev">XML</span>形式が用いられます。ファイル中にチャプタが見付からなかった場合、ファイルは出力されません。
             
          </p>
          
@@ -474,17 +441,15 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
-               <span class="option">tags</span> [<span class="parameter">options</span>]
-               <span class="parameter">output-filename.xml</span></span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span> <span class="option">tags</span>
+               [<span class="parameter">オプション</span>]
+               <span class="parameter">出力ファイル名.xml</span></span>
             
          </p>
          
          
          <p>
-            The tags are written to specified output file in the <span class="abbrev">XML</span> format understood
-            by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. If no tags are found in the file, the output file is not
-            created.
+            タグは指定された出力ファイルに既定では<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>が解釈できる<span class="abbrev">XML</span>形式で書き込まれます。ファイル中にタグが見付からなかった場合、ファイルは出力されません。
             
          </p>
          
@@ -495,17 +460,15 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
-               <span class="option">cuesheet</span>
-               [<span class="parameter">options</span>]
-               <span class="parameter">output-filename.cue</span></span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span>
+               <span class="option">cuesheet</span> [<span class="parameter">オプション</span>]
+               <span class="parameter">出力ファイル名.cue</span></span>
             
          </p>
          
          
          <p>
-            The cue sheet is written to specified output file. If no chapters or tags
-            are found in the file, the output file is not created.
+            キューシートは指定された出力ファイルに書き込まれます。ファイル中にキューシートが見付からなかった場合、ファイルは出力されません。
             
          </p>
          
@@ -516,12 +479,11 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span>
                <span class="option">timestamps_v2</span>
-               [<span class="parameter">options</span>]
-               <span class="parameter">TID1:dest-filename1</span>
-               [<span class="parameter">TID2:dest-filename2</span>
-               ...]</span>
+               [<span class="parameter">オプション</span>]
+               <span class="parameter">TID1:出力ファイル名1</span>
+               [<span class="parameter">TID2:出力ファイル名2</span> ...]</span>
             
          </p>
          
@@ -557,16 +519,15 @@
          
          
          
-         <h2><a name="mkvextract.description.cues">2.8. Cues extraction mode</a></h2>
+         <h2><a name="mkvextract.description.cues">2.8. キュー抽出モード</a></h2>
          
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
-               <span class="option">cues</span> [<span class="parameter">options</span>]
-               <span class="parameter">TID1:dest-filename1</span>
-               [<span class="parameter">TID2:dest-filename2</span>
-               ...]</span>
+            書式: <span class="command">mkvextract <span class="parameter">対象ファイル名</span> <span class="option">cues</span>
+               [<span class="parameter">オプション</span>]
+               <span class="parameter">TID1:出力ファイル名1</span>
+               [<span class="parameter">TID2:出力ファイル名2</span> ...]</span>
             
          </p>
          
@@ -580,16 +541,11 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="parameter">TID:dest-filename</span></td>
+                  <td class="varlistoption"><span class="parameter">TID:出力ファイル名</span></td>
                   <td>
                      
                      <p>
-                        Causes extraction of the cues for the track with the ID
-                        <span class="parameter">TID</span> into the file <span class="parameter">outname</span> if
-                        such a track exists in the source file. This option can be given multiple
-                        times. The track IDs are the same as the ones output by <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>'s
-                        <span class="option">--identify</span> option and not the numbers contained in the
-                        <span class="classname">CueTrack</span> element.
+                        識別子が<span class="parameter">TID</span>のトラックのキューを、そのようなトラックが対象ファイルに存在していれば、<span class="parameter">出力名</span>ファイルに抽出します。このオプションは複数回与えることができます。トラック識別子は<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>の<span class="option">--identify</span>オプションで出力されたものと同じであり、<span class="classname">CueTrack</span>要素に含まれる数値ではありません。
                         
                      </p>
                      
@@ -600,11 +556,8 @@
          
          
          <p>
-            The format output is a simple text format: one line per
-            <span class="classname">CuePoint</span> element with <span class="literal">key=value</span>
-            pairs. If an optional element is not present in a
-            <span class="classname">CuePoint</span> (e.g. <span class="classname">CueDuration</span>)
-            then a dash will be output as the value.
+            形式オプションは単純なテキスト形式です。<span class="classname">CuePoint</span>要素と<span class="literal">キー=値</span>の組毎に一行です。追加の要素（例:
+            <span class="classname">CueDuration</span>）が<span class="classname">CuePoint</span>中に表われなかった場合、値としてダッシュが出力されます。
             
          </p>
          
@@ -616,7 +569,7 @@
          
          <pre class="screen">timestamp=00:00:13.305000000 duration=- cluster_position=757741 relative_position=11</pre>
          
-         <p>The possible keys are:</p>
+         <p>指定できるキーは次の通りです。</p>
          
          
          <table class="variablelist">
@@ -631,8 +584,7 @@
                   <td class="varlistoption">timestamp</td>
                   <td>
                      
-                     <p>The cue point's timestamp with nanosecond precision. The format is
-                        <span class="literal">HH:MM:SS.nnnnnnnnn</span>. This element is always set.
+                     <p>キューポイントのナノ秒精度のタイムスタンプ。<span class="literal">HH:MM:SS.nnnnnnnnn</span>形式。この要素は常に設定されています。
                      </p>
                      
                   </td>
@@ -641,8 +593,7 @@
                   <td class="varlistoption">duration</td>
                   <td>
                      
-                     <p>The cue point's duration with nanosecond precision. The format is
-                        <span class="literal">HH:MM:SS.nnnnnnnnn</span>.
+                     <p>キューポイントのナノ秒精度のタイムスタンプ。<span class="literal">HH:MM:SS.nnnnnnnnn</span>形式。
                      </p>
                      
                   </td>
@@ -651,8 +602,7 @@
                   <td class="varlistoption">cluster_position</td>
                   <td>
                      
-                     <p>The absolute position in bytes inside the <span class="productname">Matroska</span><sup>(tm)</sup> file where the cluster
-                        containing the referenced element starts.
+                     <p>被参照要素を含んだクラスタが始まる<span class="productname">Matroska</span><sup>(tm)</sup>ファイル内部の絶対バイト位置。
                      </p>
                      
                      
@@ -726,8 +676,7 @@
          <pre class="screen">$ mkvextract "Another Movie.mkv" tracks 0:video.h265 "1:main audio.aac" "2:director's comments.aac" timestamps_v2 "0:timestamps video.txt" "1:timestamps main audio.txt" "2:timestamps director's comments.txt"</pre>
          
          <p>
-            Extracting chapters in the Ogg/OGM format and re-encoding a text subtitle
-            track to another character set:
+            チャプターをOgg/OGM形式で展開し、テキスト字幕を別の文字コードに再符号化します。
             
          </p>
          
@@ -737,10 +686,8 @@
          
          
          <p>
-            For an in-depth discussion about how all tools in the MKVToolNix suite
-            handle character set conversions, input/output encoding, command line
-            encoding and console encoding please see the identically-named section in
-            the <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+            MKVToolNixスイートの全てのツールが文字コード変換・入出力に係る文字コード・コマンドライン及びコンソール上の文字コードをどのように処理するかについての詳細な議論については、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            man ページの同名の節を参照して下さい。
             
          </p>
          
@@ -1222,8 +1169,8 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
-                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>,
+                     <span class="varname">MKVTOOLNIX_ENGAGE</span>とその短縮形<span class="varname">MTX_ENGAGE</span></td>
                   <td>
                      
                      <p>その内容は、あたかも<a href="#mkvextract.description.engage">--engage</a>オプション経由で渡されたかのように扱われます。

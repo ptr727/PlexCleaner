@@ -222,7 +222,7 @@
                   <td>
                      
                      <p>
-                        设置各章节项的 ISO639-2 语言代码。 默认为 '<span class="literal">eng</span>'。 详情参见下文中关于 <a href="#mkvmerge.chapters">章节</a> 的段落。
+                        设置各章节项的 ISO 639-2 语言代码。 默认为 '<span class="literal">eng</span>'。 详情参见下文中关于 <a href="#mkvmerge.chapters">章节</a> 的段落。
                         
                      </p>
                      
@@ -1793,7 +1793,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        选择各章节项所用的 ISO639-2 语言代码。 此选项可用于包含章节但不含关于章节语言的信息的输入文件，如 MP4 与 OGM 文件。
+                        选择各章节项所用的 ISO 639-2 语言代码。 此选项可用于包含章节但不含关于章节语言的信息的输入文件，如 MP4 与 OGM 文件。
                         
                      </p>
                      
@@ -1934,9 +1934,9 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        为指定轨道 (参见 <a href="#mkvmerge.track_ids">轨道 ID</a>) 设置语言。允许使用
-                        ISO639-2 语言代码与 ISO639-1 国家代码。国家代码将被自动转换为语言代码。 可以使用 <a href="#mkvmerge.description.list_languages">--list-languages</a>
-                        选项列出所有语言以及它们的 ISO639-2 代码。
+                        为指定轨道 (参见 <a href="#mkvmerge.track_ids">轨道 ID</a>) 设置语言。允许使用 ISO
+                        639-2 语言代码与 ISO 639-1 国家代码。国家代码将被自动转换为语言代码。 可以使用 <a href="#mkvmerge.description.list_languages">--list-languages</a>
+                        选项列出所有语言以及它们的 ISO 639-2 代码。
                         
                      </p>
                      
@@ -2061,7 +2061,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                      
                      
                      <p>
-                        如果未强制指定默认时长，mkvmerge 将尝试继承容器中（及/或特定轨道类型，如 AVC/h.264 或 MPEG-2
+                        如果未强制指定默认时长，mkvmerge 将尝试继承容器中（及/或特定轨道类型，如 AVC/H.264 或 MPEG-2
                         已编码的位流中）该轨道的默认时长。
                         
                      </p>
@@ -2090,7 +2090,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>目前仅完成对 AVC/h.264 视频轨的实现。</p>
+                        <p>目前仅完成对 AVC/H.264 视频轨的实现。</p>
                         
                      </div>
                      
@@ -2101,9 +2101,9 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        强制 <span class="abbrev">NALU</span> 长度为 <span class="parameter">n</span> 字节。 此变量仅当使用
-                        <span class="foreignphrase">AVC/h.264</span> 基本流分包器时使用。 如果留空，则默认为 4
-                        字节，然而有的文件包含的所有帧或切片都小于 65536 字节。 对此类文件您可以使用此参数并将长度降为 2。
+                        强制 <span class="abbrev">NALU</span> 长度为 <span class="parameter">n</span> 字节。 此变量仅当使用 AVC/H.264
+                        基本流分包器时使用。 如果留空，则默认为 4 字节，然而有的文件包含的所有帧或切片都小于 65536 字节。 对此类文件您可以使用此参数并将长度降为
+                        2。
                         
                      </p>
                      
@@ -2121,9 +2121,8 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                      </p>
                      
                      <p>
-                        压缩方式 '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>' 是一种称为
-                        '<span class="foreignphrase">去头</span>' 的特殊压缩方式，只对 <span class="abbrev">MPEG4</span> part 2
-                        视频轨可用。
+                        压缩方式 '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>' 是一种称为 '去头'
+                        的特殊压缩方式，只对 <span class="abbrev">MPEG4</span> part 2 视频轨可用。
                         
                      </p>
                      
@@ -2141,7 +2140,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3451">2.8. 仅用于视频轨的选项</a></h2>
+         <h2><a name="d4e3445">2.8. 仅用于视频轨的选项</a></h2>
          
          
          
@@ -2159,8 +2158,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        强制 <span class="classname">FourCC</span> 为指定值。仅对
-                        '<span class="foreignphrase">微软兼容模式</span>' 的视频轨有效。
+                        强制 <span class="classname">FourCC</span> 为指定值。仅对 '微软兼容模式' 的视频轨有效。
                         
                      </p>
                      
@@ -2574,7 +2572,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4275">2.9. 仅适用于文本字幕轨道的选项</a></h2>
+         <h2><a name="d4e4266">2.9. 仅适用于文本字幕轨道的选项</a></h2>
          
          
          
@@ -2611,7 +2609,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4315">2.10. 其他选项</a></h2>
+         <h2><a name="d4e4306">2.10. 其他选项</a></h2>
          
          
          
@@ -2686,7 +2684,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -2737,7 +2735,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        列出所有语言及其 ISO639-2 代码，这些代码可以在 <a href="#mkvmerge.description.language">--language</a>
+                        列出所有语言及其 ISO 639-2 代码，这些代码可以在 <a href="#mkvmerge.description.language">--language</a>
                         选项中使用。
                         
                      </p>
@@ -3154,7 +3152,7 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          <pre class="screen">$ mkvmerge -o 我的影片.mkv 我的影片.avi 我的影片.srt</pre>
          
          <p>
-            如果您希望为指定轨道指定语言，这将很容易完成。首先找到您所需语言的 ISO639-2 代码。<span class="productname">mkvmerge</span>(1) 会为您列出所有代码:
+            如果您希望为指定轨道指定语言，这将很容易完成。首先找到您所需语言的 ISO 639-2 代码。<span class="productname">mkvmerge</span>(1) 会为您列出所有代码:
             
          </p>
          
@@ -3329,9 +3327,8 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          
          <p>
-            <span class="productname">mkvmerge</span>(1) 根据是否有 <span class="foreignphrase">字节顺序标记</span> (英文缩写:
-            <span class="abbrev">BOM</span>) 出现以及系统的当前区域来进行自动转换。如何根据区域推定字符集取决于 <span class="productname">mkvmerge</span>(1)
-            所执行在的操作系统。
+            <span class="productname">mkvmerge</span>(1) 根据是否有 字节顺序标记 (英文缩写: <span class="abbrev">BOM</span>)
+            出现以及系统的当前区域来进行自动转换。如何根据区域推定字符集取决于 <span class="productname">mkvmerge</span>(1) 所执行在的操作系统。
             
          </p>
          
@@ -3350,7 +3347,7 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux 及类 Unix 系统，包括 Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux 及类 Unix 系统，包括 macOS</a></h2>
          
          
          
@@ -3493,8 +3490,7 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          <p>
             包含 JSON 格式数据的选项文件。其内容必须为有效的 JSON 数组，数组元素只能为 JSON 字符串。文件编码必须为
-            UTF-8。文件开头不需要有字节序标记 (<span class="foreignphrase">byte order
-               marker</span>，<span class="abbrev">BOM</span>)，但即使有也没关系，会跳过它。
+            UTF-8。文件开头不需要有字节序标记 (byte order marker，<span class="abbrev">BOM</span>)，但即使有也没关系，会跳过它。
             
          </p>
          
@@ -3704,8 +3700,8 @@ $ mkvmerge -o 影片-成品.mkv 我的有声影片.mkv 我影片的另一音轨.
          
          
          <p>
-            <span class="productname">mkvmerge</span>(1) 支持输入两种章节文件。第一种格式，叫作 '<span class="foreignphrase">简单章节格式</span>'，与
-            <span class="abbrev">OGM</span> tools 所用的相同。第二种是基于 <span class="abbrev">XML</span> 的章节格式，它支持 <span class="productname">Matroska</span><sup>(tm)</sup> 的所有章节功能。
+            <span class="productname">mkvmerge</span>(1) 支持输入两种章节文件。第一种格式，叫作 '简单章节格式'，与 <span class="abbrev">OGM</span> tools
+            所用的相同。第二种是基于 <span class="abbrev">XML</span> 的章节格式，它支持 <span class="productname">Matroska</span><sup>(tm)</sup> 的所有章节功能。
             
          </p>
          
@@ -3837,7 +3833,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
           ChapterProcessData (二进制)</pre>
          
          
-         <h2><a name="d4e6043">13.3. 一般性备注</a></h2>
+         <h2><a name="d4e6025">13.3. 一般性备注</a></h2>
          
          
          <p>
@@ -3861,7 +3857,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          
          
          
-         <h2><a name="d4e6108">14.1. 介绍</a></h2>
+         <h2><a name="d4e6090">14.1. 介绍</a></h2>
          
          
          
@@ -3978,9 +3974,8 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          
          
          <p>
-            还有一种可能，即数据经 <span class="foreignphrase">Base64</span> 编码。这是将二进制数据转换为一定的
-            <span class="abbrev">ASCII</span> 字集字符，在电子邮件等程序中有所应用。<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> 将将二进制元素以
-            <span class="foreignphrase">Base64</span> 编码的数据的形式输出。
+            还有一种可能，即数据经 Base64 编码。这是将二进制数据转换为一定的 <span class="abbrev">ASCII</span>
+            字集字符，在电子邮件等程序中有所应用。<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> 将将二进制元素以 Base64 编码的数据的形式输出。
             
          </p>
          
@@ -4151,7 +4146,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          </p>
          
          
-         <h2><a name="d4e6560">17.1. 时间戳文件格式 v1</a></h2>
+         <h2><a name="d4e6536">17.1. 时间戳文件格式 v1</a></h2>
          
          
          <p>
@@ -4167,7 +4162,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6584">17.2. 时间戳文件格式 v2</a></h2>
+         <h2><a name="d4e6560">17.2. 时间戳文件格式 v2</a></h2>
          
          
          
@@ -4183,7 +4178,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6599">17.3. 时间戳文件格式 v3</a></h2>
+         <h2><a name="d4e6575">17.3. 时间戳文件格式 v3</a></h2>
          
          
          <p>
@@ -4201,7 +4196,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6617">17.4. 时间戳文件格式 v4</a></h2>
+         <h2><a name="d4e6593">17.4. 时间戳文件格式 v4</a></h2>
          
          
          <p>

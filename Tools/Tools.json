@@ -1,5 +1,5 @@
 {
-  "lastcheck": "2019-05-31 23:42:57Z",
+  "lastcheck": "2019-12-18 19:45:16Z",
   "tools": [
     {
       "filename": "7z1900-extra.7z",
@@ -10,36 +10,36 @@
       "version": "19.00"
     },
     {
-      "filename": "mkvtoolnix-64-bit-34.0.0.7z",
-      "modifiedtime": "2019-05-18 04:39:29Z",
-      "size": 14944323,
+      "filename": "mkvtoolnix-64-bit-41.0.0.7z",
+      "modifiedtime": "2019-12-06 09:56:33Z",
+      "size": 16291068,
       "tool": "MkvTool",
-      "url": "https://mkvtoolnix.download/windows/releases/34.0.0/mkvtoolnix-64-bit-34.0.0.7z",
-      "version": "34.0.0"
+      "url": "https://mkvtoolnix.download/windows/releases/41.0.0/mkvtoolnix-64-bit-41.0.0.7z",
+      "version": "41.0.0"
     },
     {
-      "filename": "ffmpeg-4.1.3-win64-static.zip",
-      "modifiedtime": "2019-04-26 09:10:18Z",
-      "size": 66519801,
+      "filename": "ffmpeg-4.2.1-win64-static.zip",
+      "modifiedtime": "2019-09-15 20:05:34Z",
+      "size": 71475092,
       "tool": "FfMpegTool",
-      "url": "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.1.3-win64-static.zip",
-      "version": "4.1.3"
+      "url": "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.1-win64-static.zip",
+      "version": "4.2.1"
     },
     {
-      "filename": "MediaInfo_CLI_19.04_Windows_x64.zip",
-      "modifiedtime": "2019-04-23 07:25:26Z",
-      "size": 2762169,
+      "filename": "MediaInfo_CLI_19.09_Windows_x64.zip",
+      "modifiedtime": "2019-09-10 13:40:57Z",
+      "size": 2785214,
       "tool": "MediaInfoTool",
-      "url": "https://mediaarea.net/download/binary/mediainfo/19.04/MediaInfo_CLI_19.04_Windows_x64.zip",
-      "version": "19.04"
+      "url": "https://mediaarea.net/download/binary/mediainfo/19.09/MediaInfo_CLI_19.09_Windows_x64.zip",
+      "version": "19.09"
     },
     {
-      "filename": "HandBrakeCLI-1.2.2-win-x86_64.zip",
-      "modifiedtime": "2019-02-23 09:07:52Z",
-      "size": 17198833,
+      "filename": "HandBrakeCLI-1.3.0-win-x86_64.zip",
+      "modifiedtime": "2019-11-09 13:23:46Z",
+      "size": 15714028,
       "tool": "HandBrakeTool",
-      "url": "https://download2.handbrake.fr/1.2.2/HandBrakeCLI-1.2.2-win-x86_64.zip",
-      "version": "1.2.2"
+      "url": "https://download2.handbrake.fr/1.3.0/HandBrakeCLI-1.3.0-win-x86_64.zip",
+      "version": "1.3.0"
     }
   ]
 }

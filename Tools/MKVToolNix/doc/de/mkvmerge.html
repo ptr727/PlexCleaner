@@ -2398,7 +2398,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      <p>
                         Falls die Standarddauer nicht erzwungen wird, dann wird <span class="productname">mkvmerge</span>(1)
                         versuchen, die Standarddauer der Spur, des Containers und/oder des codierten
-                        Bitstroms bei bestimmten Spurtypen, z.B. AVC/h.264 oder MPEG-2, abzuleiten.
+                        Bitstroms bei bestimmten Spurtypen, z.B. AVC/H.264 oder MPEG-2, abzuleiten.
                         
                      </p>
                      
@@ -2430,7 +2430,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>Dies wurde bisher nur für AVC/h.264-Videospuren implementiert.</p>
+                        <p>Dies wurde bisher nur für AVC/H.264-Videospuren implementiert.</p>
                         
                      </div>
                      
@@ -2443,11 +2443,10 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      <p>
                         erzwingt eine Länge der <span class="abbrev">NALU</span>-Größe von
                         <span class="parameter">n</span> Byte. Dieser Parameter wird nur benutzt, falls der
-                        einfache <span class="foreignphrase">AVC/h.264</span>-Datenströme verwendet
-                        wird. Falls er weggelassen wird, ist die Voreinstellung 4 Byte, es gibt aber
-                        Dateien, die Bilder oder Teile enthalten, die alle kleiner als 65536 Byte
-                        sind. Für derartige Dateien können Sie diesen Parameter benutzen und die
-                        Größe auf 2 vermindern.
+                        einfache AVC/H.264-Datenströme verwendet wird. Falls er weggelassen wird,
+                        ist die Voreinstellung 4 Byte, es gibt aber Dateien, die Bilder oder Teile
+                        enthalten, die alle kleiner als 65536 Byte sind. Für derartige Dateien
+                        können Sie diesen Parameter benutzen und die Größe auf 2 vermindern.
                         
                      </p>
                      
@@ -2469,8 +2468,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      <p>
                         Die Komprimierungsmethode
                         »<span class="literal">mpeg4_p2</span>«/»<span class="literal">mpeg4p2</span>« ist eine
-                        besondere Komprimierungsmethode, genannt »<span class="foreignphrase">Kopfdaten
-                           entfernen</span>«, die nur für
+                        besondere Komprimierungsmethode, genannt »Kopfdaten entfernen«, die nur für
                         <span class="abbrev">MPEG4</span>-Teil-2-Videospuren verfügbar ist.
                         
                      </p>
@@ -2491,7 +2489,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3481">2.8. Optionen, die nur für Videospuren gelten</a></h2>
+         <h2><a name="d4e3475">2.8. Optionen, die nur für Videospuren gelten</a></h2>
          
          
          
@@ -2510,8 +2508,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      
                      <p>
                         erzwingt, dass <span class="classname">FourCC</span> den angegebenen Wert annimmt;
-                        funktioniert nur bei Videospuren im
-                        »<span class="foreignphrase">MS-Kompatibilitätsmodus</span>«.
+                        funktioniert nur bei Videospuren im »MS-Kompatibilitätsmodus«.
                         
                      </p>
                      
@@ -2986,7 +2983,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4305">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
+         <h2><a name="d4e4296">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
          
          
          
@@ -3028,7 +3025,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4345">2.10. Weitere Optionen</a></h2>
+         <h2><a name="d4e4336">2.10. Weitere Optionen</a></h2>
          
          
          
@@ -3113,7 +3110,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -3866,10 +3863,10 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) erledigt dies automatisch, basierend auf dem Vorhandensein einer
-            <span class="foreignphrase">Byte-Reihenfolgenmarkierung</span>, kurz
-            <span class="abbrev">BOM</span> (Byte Order Marker) oder der aktuellen Locale des
-            Systems. Wie der Zeichensatz von der Locale geschlussfolgert wird, hängt vom
-            Betriebssystem ab, auf dem <span class="productname">mkvmerge</span>(1) läuft.
+            Byte-Reihenfolgenmarkierung, kurz <span class="abbrev">BOM</span> (Byte Order Marker)
+            oder der aktuellen Locale des Systems. Wie der Zeichensatz von der Locale
+            geschlussfolgert wird, hängt vom Betriebssystem ab, auf dem <span class="productname">mkvmerge</span>(1)
+            läuft.
             
          </p>
          
@@ -3892,7 +3889,7 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux und Unixoide Betriebssysteme inklusive Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux und Unixoide Betriebssysteme inklusive macOS</a></h2>
          
          
          
@@ -4062,9 +4059,8 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
             Eine Options-Datei enthält Daten im JSON-Format. Ihr Inhalt muss aus einem
             gültigen JSON-Array bestehen, das ausschließlich JSON-Zeichenketten
             enthält. Der Kodierung der Datei muss UTF-8 sein. Die Datei sollte nicht mit
-            einer <span class="foreignphrase">Byte-Reihenfolgemarkierung</span>
-            (<span class="abbrev">BOM</span>) beginnen; tut sie es aber doch, so wird die
-            Markierung übersprungen.
+            einer Byte-Reihenfolgemarkierung (<span class="abbrev">BOM</span>) beginnen; tut sie es
+            aber doch, so wird die Markierung übersprungen.
             
          </p>
          
@@ -4317,10 +4313,10 @@ Spur-ID 1: Ton (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) unterstützt als Eingabe zwei Arten von Kapiteldateien. Das erste
-            Format, »<span class="foreignphrase">einfaches Kapitelformat</span>« genannt,
-            ist dasselbe, das die <span class="abbrev">OGM</span>-Werkzeuge erwarten. Das zweite
-            Format ist ein <span class="abbrev">XML</span>-basiertes Kapitelformat, das alle
-            Kapitelfunktionalitäten von <span class="productname">Matroska</span><sup>(tm)</sup> unterstützt.
+            Format, »einfaches Kapitelformat« genannt, ist dasselbe, das die
+            <span class="abbrev">OGM</span>-Werkzeuge erwarten. Das zweite Format ist ein
+            <span class="abbrev">XML</span>-basiertes Kapitelformat, das alle Kapitelfunktionalitäten von
+            <span class="productname">Matroska</span><sup>(tm)</sup> unterstützt.
             
          </p>
          
@@ -4462,7 +4458,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6077">13.3. Allgemeine Hinweise</a></h2>
+         <h2><a name="d4e6059">13.3. Allgemeine Hinweise</a></h2>
          
          
          <p>
@@ -4496,7 +4492,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          
          
-         <h2><a name="d4e6142">14.1. Einleitung</a></h2>
+         <h2><a name="d4e6124">14.1. Einleitung</a></h2>
          
          
          
@@ -4521,9 +4517,8 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
             <span class="productname">Matroska</span><sup>(tm)</sup>-Tags gelten nicht automatisch für die gesamte Datei. Sie können,
             aber sie können auch für unterschiedliche Teile der Datei gelten: für eine
             oder mehrere Spuren, für ein oder mehrere Kapitel oder sogar für eine
-            Kombination von beiden. <a href="http://matroska.org/technical/specs/index.html">Die
-               Matroska-Spezifikation</a> liefert weitere Einzelheiten zu diesem
-            Umstand.
+            Kombination von beiden. Die <a href="http://matroska.org/technical/specs/index.html">Matroska-Spezifikation</a>
+            liefert weitere Einzelheiten zu diesem Umstand.
             
          </p>
          
@@ -4579,11 +4574,11 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) unterstützt ein <span class="abbrev">XML</span>-basiertes Tag-Dateifomat. Das Format ist
-            sehr eng an <a href="http://matroska.org/technical/specs/index.html">die
-               Matroska-Spezifikation</a> angelehnt. Sowohl die Binär- als auch die
-            Quelldistribution von MKVToolNix bringen eine Musterdatei namens
-            <span class="filename">example-tags-2.xml</span> mit, die einfach alle bekannten Tags
-            aufführt und als Basis für Tag-Dateien in der Praxis benutzt werden kann.
+            sehr eng an die <a href="http://matroska.org/technical/specs/index.html">Matroska-Spezifikation</a>
+            angelehnt. Sowohl die Binär- als auch die Quelldistribution von MKVToolNix
+            bringen eine Musterdatei namens <span class="filename">example-tags-2.xml</span> mit,
+            die einfach alle bekannten Tags aufführt und als Basis für Tag-Dateien in
+            der Praxis benutzt werden kann.
             
          </p>
          
@@ -4641,12 +4636,11 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          
          <p>
-            Andernfalls wird erwartet, dass die Daten
-            <span class="foreignphrase">Base64</span>-codiert vorliegen. Dies ist eine
-            Codierung, die binäre Daten in einen eingeschränkten Satz von
+            Andernfalls wird erwartet, dass die Daten Base64-codiert vorliegen. Dies ist
+            eine Codierung, die binäre Daten in einen eingeschränkten Satz von
             <span class="abbrev">ASCII</span>-Zeichen umwandelt und z.B. in E-Mail-Programmen
-            benutzt wird. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> wird für binäre Elemente
-            <span class="foreignphrase">Base64</span>-codierte Daten ausgeben.
+            benutzt wird. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> wird für binäre Elemente Base64-codierte Daten
+            ausgeben.
             
          </p>
          
@@ -4742,7 +4736,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          <p>
             Das <span class="productname">Matroska</span><sup>(tm)</sup>-Dateilayout ist ziemlich flexibel. <span class="productname">mkvmerge</span>(1) wird eine Datei
-            auf eine vordefinierte Art rendern. Die resultierende Datei sieht wie folgt
+            auf eine vordefinierte Art erzeugen. Die resultierende Datei sieht wie folgt
             aus:
             
          </p>
@@ -4843,7 +4837,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          </p>
          
          
-         <h2><a name="d4e6593">17.1. Zeitstempeldateiformat v1</a></h2>
+         <h2><a name="d4e6567">17.1. Zeitstempeldateiformat v1</a></h2>
          
          
          <p>
@@ -4864,7 +4858,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6617">17.2. Zeitstempeldateiformat v2</a></h2>
+         <h2><a name="d4e6591">17.2. Zeitstempeldateiformat v2</a></h2>
          
          
          
@@ -4884,7 +4878,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6632">17.3. Zeitstempeldateiformat v3</a></h2>
+         <h2><a name="d4e6606">17.3. Zeitstempeldateiformat v3</a></h2>
          
          
          <p>
@@ -4907,7 +4901,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6650">17.4. Zeitstempeldateiformat v4</a></h2>
+         <h2><a name="d4e6624">17.4. Zeitstempeldateiformat v4</a></h2>
          
          
          <p>

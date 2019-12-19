@@ -10,7 +10,7 @@
 <meta name="description" content="ffmpeg Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : ffmpeg ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -542,29 +542,26 @@ or <code>-codec: copy</code> would copy all the streams without reencoding.
 </p><dl compact="compact">
 <dt>&lsquo;<samp><var>stream_index</var></samp>&rsquo;</dt>
 <dd><p>Matches the stream with this index. E.g. <code>-threads:1 4</code> would set the
-thread count for the second stream to 4.
+thread count for the second stream to 4. If <var>stream_index</var> is used as an
+additional stream specifier (see below), then it selects stream number
+<var>stream_index</var> from the matching streams. Stream numbering is based on the
+order of the streams as detected by libavformat except when a program ID is
+also specified. In this case it is based on the ordering of the streams in the
+program.
 </p></dd>
-<dt>&lsquo;<samp><var>stream_type</var>[:<var>stream_index</var>]</samp>&rsquo;</dt>
+<dt>&lsquo;<samp><var>stream_type</var>[:<var>additional_stream_specifier</var>]</samp>&rsquo;</dt>
 <dd><p><var>stream_type</var> is one of following: &rsquo;v&rsquo; or &rsquo;V&rsquo; for video, &rsquo;a&rsquo; for audio, &rsquo;s&rsquo;
 for subtitle, &rsquo;d&rsquo; for data, and &rsquo;t&rsquo; for attachments. &rsquo;v&rsquo; matches all video
 streams, &rsquo;V&rsquo; only matches video streams which are not attached pictures, video
-thumbnails or cover arts.  If <var>stream_index</var> is given, then it matches
-stream number <var>stream_index</var> of this type. Otherwise, it matches all
-streams of this type.
+thumbnails or cover arts. If <var>additional_stream_specifier</var> is used, then
+it matches streams which both have this type and match the
+<var>additional_stream_specifier</var>. Otherwise, it matches all streams of the
+specified type.
 </p></dd>
-<dt>&lsquo;<samp>p:<var>program_id</var>[:<var>stream_index</var>] or p:<var>program_id</var>[:<var>stream_type</var>[:<var>stream_index</var>]] or</samp>&rsquo;</dt>
-<dd><p>p:<var>program_id</var>:m:<var>key</var>[:<var>value</var>]
-In first version, if <var>stream_index</var> is given, then it matches the stream with number <var>stream_index</var>
-in the program with the id <var>program_id</var>. Otherwise, it matches all streams in the
-program. In the second version, <var>stream_type</var> is one of following: &rsquo;v&rsquo; for video, &rsquo;a&rsquo; for audio, &rsquo;s&rsquo;
-for subtitle, &rsquo;d&rsquo; for data. If <var>stream_index</var> is also given, then it matches
-stream number <var>stream_index</var> of this type in the program with the id <var>program_id</var>.
-Otherwise, if only <var>stream_type</var> is given, it matches all
-streams of this type in the program with the id <var>program_id</var>.
-In the third version matches streams in the program with the id <var>program_id</var> with the metadata
-tag <var>key</var> having the specified value. If
-<var>value</var> is not given, matches streams that contain the given tag with any
-value.
+<dt>&lsquo;<samp>p:<var>program_id</var>[:<var>additional_stream_specifier</var>]</samp>&rsquo;</dt>
+<dd><p>Matches streams which are in the program with the id <var>program_id</var>. If
+<var>additional_stream_specifier</var> is used, then it matches streams which both
+are part of the program and match the <var>additional_stream_specifier</var>.
 </p>
 </dd>
 <dt>&lsquo;<samp>#<var>stream_id</var> or i:<var>stream_id</var></samp>&rsquo;</dt>
@@ -633,6 +630,11 @@ for encoders, decoders, demuxers, muxers, filters, etc.
 <dt>&lsquo;<samp>filter=<var>filter_name</var></samp>&rsquo;</dt>
 <dd><p>Print detailed information about the filter name <var>filter_name</var>. Use the
 &lsquo;<samp>-filters</samp>&rsquo; option to get a list of all filters.
+</p>
+</dd>
+<dt>&lsquo;<samp>bsf=<var>bitstream_filter_name</var></samp>&rsquo;</dt>
+<dd><p>Print detailed information about the bitstream filter name <var>bitstream_filter_name</var>.
+Use the &lsquo;<samp>-bsfs</samp>&rsquo; option to get a list of all bitstream filters.
 </p></dd>
 </dl>
 
@@ -796,7 +798,7 @@ will be dropped in a future FFmpeg version.
 <code><var>program</var>-<var>YYYYMMDD</var>-<var>HHMMSS</var>.log</code> in the current
 directory.
 This file can be useful for bug reports.
-It also implies <code>-loglevel verbose</code>.
+It also implies <code>-loglevel debug</code>.
 </p>
 <p>Setting the environment variable <code>FFREPORT</code> to any value has the
 same effect. If the value is a &rsquo;:&rsquo;-separated key=value sequence, these
@@ -935,7 +937,15 @@ muxer:
 </pre></div>
 
 <p>All codec AVOptions are per-stream, and thus a stream specifier
-should be attached to them.
+should be attached to them:
+</p><div class="example">
+<pre class="example">ffmpeg -i multichannel.mxf -map 0:v:0 -map 0:a:0 -map 0:a:0 -c:a:0 ac3 -b:a:0 640k -ac:a:1 2 -c:a:1 aac -b:2 128k out.mp4
+</pre></div>
+
+<p>In the above example, a multichannel audio stream is mapped twice for output.
+The first instance is encoded with codec ac3 and bitrate 640k.
+The second instance is downmixed to 2 channels and encoded with codec aac. A bitrate of 128k is specified for it using
+absolute index of the output stream.
 </p>
 <p>Note: the &lsquo;<samp>-nooption</samp>&rsquo; syntax cannot be used for boolean
 AVOptions, use &lsquo;<samp>-option 0</samp>&rsquo;/&lsquo;<samp>-option 1</samp>&rsquo;.
@@ -1053,6 +1063,10 @@ a positive offset means that the corresponding streams are delayed by
 the time duration specified in <var>offset</var>.
 </p>
 </dd>
+<dt>&lsquo;<samp>-itsscale <var>scale</var> (<em>input,per-stream</em>)</samp>&rsquo;</dt>
+<dd><p>Rescale input timestamps. <var>scale</var> should be a floating point number.
+</p>
+</dd>
 <dt>&lsquo;<samp>-timestamp <var>date</var> (<em>output</em>)</samp>&rsquo;</dt>
 <dd><p>Set the recording timestamp in the container.
 </p>
@@ -1149,8 +1163,13 @@ they do not conflict with the standard, as in:
 </pre></div>
 
 </dd>
-<dt>&lsquo;<samp>-dn (<em>output</em>)</samp>&rsquo;</dt>
-<dd><p>Disable data recording. For full manual control see the <code>-map</code>
+<dt>&lsquo;<samp>-dn (<em>input/output</em>)</samp>&rsquo;</dt>
+<dd><p>As an input option, blocks all data streams of a file from being filtered or
+being automatically selected or mapped for any output. See <code>-discard</code>
+option to disable streams individually.
+</p>
+<p>As an output option, disables data recording i.e. automatic selection or
+mapping of any data stream. For full manual control see the <code>-map</code>
 option.
 </p>
 </dd>
@@ -1330,8 +1349,13 @@ stored at container level, but not the aspect ratio stored in encoded
 frames, if it exists.
 </p>
 </dd>
-<dt>&lsquo;<samp>-vn (<em>output</em>)</samp>&rsquo;</dt>
-<dd><p>Disable video recording. For full manual control see the <code>-map</code>
+<dt>&lsquo;<samp>-vn (<em>input/output</em>)</samp>&rsquo;</dt>
+<dd><p>As an input option, blocks all video streams of a file from being filtered or
+being automatically selected or mapped for any output. See <code>-discard</code>
+option to disable streams individually.
+</p>
+<p>As an output option, disables video recording i.e. automatic selection or
+mapping of any video stream. For full manual control see the <code>-map</code>
 option.
 </p>
 </dd>
@@ -1696,8 +1720,13 @@ default to the number of input audio channels. For input streams
 this option only makes sense for audio grabbing devices and raw demuxers
 and is mapped to the corresponding demuxer options.
 </p></dd>
-<dt>&lsquo;<samp>-an (<em>output</em>)</samp>&rsquo;</dt>
-<dd><p>Disable audio recording. For full manual control see the <code>-map</code>
+<dt>&lsquo;<samp>-an (<em>input/output</em>)</samp>&rsquo;</dt>
+<dd><p>As an input option, blocks all audio streams of a file from being filtered or
+being automatically selected or mapped for any output. See <code>-discard</code>
+option to disable streams individually.
+</p>
+<p>As an output option, disables audio recording i.e. automatic selection or
+mapping of any audio stream. For full manual control see the <code>-map</code>
 option.
 </p></dd>
 <dt>&lsquo;<samp>-acodec <var>codec</var> (<em>input/output</em>)</samp>&rsquo;</dt>
@@ -1742,8 +1771,13 @@ stereo but not 6 channels as 5.1. The default is to always try to guess. Use
 <dt>&lsquo;<samp>-scodec <var>codec</var> (<em>input/output</em>)</samp>&rsquo;</dt>
 <dd><p>Set the subtitle codec. This is an alias for <code>-codec:s</code>.
 </p></dd>
-<dt>&lsquo;<samp>-sn (<em>output</em>)</samp>&rsquo;</dt>
-<dd><p>Disable subtitle recording. For full manual control see the <code>-map</code>
+<dt>&lsquo;<samp>-sn (<em>input/output</em>)</samp>&rsquo;</dt>
+<dd><p>As an input option, blocks all subtitle streams of a file from being filtered or
+being automatically selected or mapped for any output. See <code>-discard</code>
+option to disable streams individually.
+</p>
+<p>As an output option, disables subtitle recording i.e. automatic selection or
+mapping of any subtitle stream. For full manual control see the <code>-map</code>
 option.
 </p></dd>
 <dt>&lsquo;<samp>-sbsf <var>bitstream_filter</var></samp>&rsquo;</dt>
@@ -2011,11 +2045,6 @@ By default <code>ffmpeg</code> attempts to read the input(s) as fast as possible
 This option will slow down the reading of the input(s) to the native frame rate
 of the input(s). It is useful for real-time output (e.g. live streaming).
 </p></dd>
-<dt>&lsquo;<samp>-loop_output <var>number_of_times</var></samp>&rsquo;</dt>
-<dd><p>Repeatedly loop output for formats that support looping such as animated GIF
-(0 will loop the output infinitely).
-This option is deprecated, use -loop.
-</p></dd>
 <dt>&lsquo;<samp>-vsync <var>parameter</var></samp>&rsquo;</dt>
 <dd><p>Video sync method.
 For compatibility reasons old values can be specified as numbers.
@@ -2156,10 +2185,10 @@ or as a floating point number (e.g. 0.04166, 2.0833e-5)
 <dt>&lsquo;<samp>-dts_delta_threshold</samp>&rsquo;</dt>
 <dd><p>Timestamp discontinuity delta threshold.
 </p></dd>
-<dt>&lsquo;<samp>-muxdelay <var>seconds</var> (<em>input</em>)</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>-muxdelay <var>seconds</var> (<em>output</em>)</samp>&rsquo;</dt>
 <dd><p>Set the maximum demux-decode delay.
 </p></dd>
-<dt>&lsquo;<samp>-muxpreload <var>seconds</var> (<em>input</em>)</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>-muxpreload <var>seconds</var> (<em>output</em>)</samp>&rsquo;</dt>
 <dd><p>Set the initial demux-decode delay.
 </p></dd>
 <dt>&lsquo;<samp>-streamid <var>output-stream-index</var>:<var>new-value</var> (<em>output</em>)</samp>&rsquo;</dt>
@@ -2294,8 +2323,10 @@ rtp stream. (Requires at least one of the output formats to be rtp).
 </p>
 </dd>
 <dt>&lsquo;<samp>-discard (<em>input</em>)</samp>&rsquo;</dt>
-<dd><p>Allows discarding specific streams or frames of streams at the demuxer.
-Not all demuxers support this.
+<dd><p>Allows discarding specific streams or frames from streams.
+Any input stream can be fully discarded, using value <code>all</code> whereas
+selective discarding of frames from a stream occurs at the demuxer
+and is not supported by all demuxers.
 </p>
 <dl compact="compact">
 <dt>&lsquo;<samp>none</samp>&rsquo;</dt>

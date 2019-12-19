@@ -15,8 +15,8 @@
          <ul>
             <li><a href="#mkvpropedit.synopsis">1. 書式</a></li>
             <li><a href="#mkvpropedit.description">2. 説明</a></li>
-            <li><a href="#mkvpropedit.edit_selectors">3. エディットセレクタ</a></li>
-            <li><a href="#mkvpropedit.attachment_selectors">4. Attachment selectors</a></li>
+            <li><a href="#mkvpropedit.edit_selectors">3. エディット選択子</a></li>
+            <li><a href="#mkvpropedit.attachment_selectors">4. 添付ファイル選択子</a></li>
             <li><a href="#mkvpropedit.examples">5. 例</a></li>
             <li><a href="#d4e1396">6. 返り値</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">7. テキストファイルと文字コード変換</a></li>
@@ -312,7 +312,7 @@
                      
                      <p>
                         The <span class="parameter">selector</span> can have one of four forms. They're
-                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        explained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
                         
                      </p>
                      
@@ -365,7 +365,7 @@
                      
                      <p>
                         The <span class="parameter">selector</span> can have one of four forms. They're
-                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        explained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
                         
                      </p>
                      
@@ -415,7 +415,7 @@
                      
                      <p>
                         The <span class="parameter">selector</span> can have one of four forms. They're
-                        exlained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
+                        explained below in the section <a href="#mkvpropedit.attachment_selectors">attachment selectors</a>.
                         
                      </p>
                      
@@ -496,7 +496,7 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><a name="mkvpropedit.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvpropedit.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -507,7 +507,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvpropedit.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvpropedit.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -530,15 +530,12 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvpropedit.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td class="varlistoption"><a name="mkvpropedit.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">コード</span></a></td>
                   <td>
                      
                      <p>
-                        Forces the translations for the language <span class="parameter">code</span> to be
-                        used (e.g.  '<span class="literal">de_DE</span>' for the German
-                        translations). Entering '<span class="literal">list</span>' as the
-                        <span class="parameter">code</span> will cause the program to output a list of
-                        available translations.
+                        指定した<span class="parameter">コード</span>言語（例
+                        日本語なら「<span class="literal">ja_JP</span>」）での翻訳を強制します。<span class="parameter">code</span>に「<span class="literal">list</span>」を指定すると、利用可能な翻訳の一覧を出力します。
                         
                      </p>
                      
@@ -549,15 +546,14 @@
                   <td>
                      
                      <p>
-                        Tells the program to abort after the first warning is emitted. The program's
-                        exit code will be 1.
+                        最初の警告が発された後プログラムを停止するよう伝えます。プログラムの終了コードは1になります。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvpropedit.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td class="varlistoption"><a name="mkvpropedit.description.debug"><span class="option">--debug</span> <span class="parameter">項目</span></a></td>
                   <td>
                      
                      <p>
@@ -568,7 +564,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvpropedit.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td class="varlistoption"><a name="mkvpropedit.description.engage"><span class="option">--engage</span> <span class="parameter">機能</span></a></td>
                   <td>
                      
                      <p>
@@ -584,12 +580,7 @@
                   <td>
                      
                      <p>
-                        Turns on GUI mode. In this mode specially-formatted lines may be output that
-                        can tell a controlling GUI what's happening. These messages follow the
-                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
-                        key/value pairs as in
-                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
-                        messages nor the keys are ever translated and always output in English.
+                        GUIモードに切り替えます。このモードではGUI操作の状況を伝える特殊な形式の行が出力されます。これらの通知は「<span class="literal">#GUI#通知内容</span>」という形式に従います。「<span class="literal">#GUI#通知内容#キー1=値1#キー2=値2...</span>」のようにキー・値の組が通知内容に続くことがあります。通知内容やキーは翻訳されることなく、常に英語で出力されます。
                         
                      </p>
                      
@@ -629,14 +620,11 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">オプションファイル.json</span></td>
                   <td>
                      
                      <p>
-                        Reads additional command line arguments from the file
-                        <span class="parameter">options-file</span>. For a full explanation on the supported
-                        formats for such files see the section called "Option files" in the
-                        <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+                        <span class="parameter">オプションファイル</span>から追加のコマンドライン引数を読み込みます。このようなファイルに対応している形式の詳細については<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>のマニュアルページ「オプションファイル」節をご覧ください。
                         
                      </p>
                      
@@ -645,11 +633,11 @@
             </tbody>
          </table>
          
-         <h1><a name="mkvpropedit.edit_selectors">3. エディットセレクタ</a></h1>
+         <h1><a name="mkvpropedit.edit_selectors">3. エディット選択子</a></h1>
          
          
          <p>
-            <a href="#mkvpropedit.description.edit">--edit</a>オプションは、以降の<a href="#mkvpropedit.description.add">add</a>、<a href="#mkvpropedit.description.set">set</a>及び<a href="#mkvpropedit.description.delete">delete</a>アクションが適用される<span class="productname">Matroska</span><sup>(tm)</sup>ファイルセクション(セグメント情報または特定のトラックヘッダ)を設定します。これは次の<a href="#mkvpropedit.description.edit">--edit</a>オプションが見付かるまでずっと有効です。このオプションへの引数はエディットセレクタと呼ばれます。
+            <a href="#mkvpropedit.description.edit">--edit</a>オプションは、以降の<a href="#mkvpropedit.description.add">add</a>、<a href="#mkvpropedit.description.set">set</a>及び<a href="#mkvpropedit.description.delete">delete</a>アクションが適用される<span class="productname">Matroska</span><sup>(tm)</sup>ファイルセクション(セグメント情報または特定のトラックヘッダ)を設定します。これは次の<a href="#mkvpropedit.description.edit">--edit</a>オプションが見付かるまでずっと有効です。このオプションへの引数はエディット選択子と呼ばれます。
             
          </p>
          
@@ -726,7 +714,10 @@
                   <td>
                      
                      <p>
-                        パラメータが'<span class="literal">=</span>'で始まり、次に<span class="parameter">uid</span>が続く場合は、トラック<span class="abbrev">UID</span>エレメントが<span class="parameter">uid</span>のトラックが選択されます。トラック<span class="abbrev">UID</span>は<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>で取得できます。
+                        If the parameter starts with a '<span class="literal">=</span>' followed by a number
+                        <span class="parameter">uid</span>, the track whose track <span class="abbrev">UID</span>
+                        element equals the given <span class="parameter">uid</span> will be selected. Track
+                        <span class="abbrev">UIDs</span> can be obtained with <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>.
                         
                      </p>
                      
@@ -737,7 +728,10 @@
                   <td>
                      
                      <p>
-                        パラメータが'<span class="literal">@</span>'で始まり、次に<span class="parameter">number</span>が続く場合は、トラックナンバーエレメントが<span class="parameter">number</span>と等しいトラックが選択されます。トラックナンバーは<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>で取得できます。
+                        If the parameter starts with a '<span class="literal">@</span>' followed by a number
+                        <span class="parameter">number</span>, the track whose track number element equals
+                        this <span class="parameter">number</span> will be selected. Track numbers can be
+                        obtained with <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>.
                         
                      </p>
                      
@@ -757,7 +751,7 @@
          </p>
          
          
-         <h1><a name="mkvpropedit.attachment_selectors">4. Attachment selectors</a></h1>
+         <h1><a name="mkvpropedit.attachment_selectors">4. 添付ファイル選択子</a></h1>
          
          
          
@@ -868,37 +862,36 @@
          <pre class="screen">$ mkvpropedit movie.mkv --chapters ''</pre>
          
          <p>
-            Adding a font file (<span class="literal">Arial.ttf</span>) as an attachment:
+            フォントファイル（<span class="literal">VL-PGothic-Regular.ttf</span>）を添付ファイルとして追加する。
             
          </p>
          
-         <pre class="screen">$ mkvpropedit movie.mkv --add-attachment Arial.ttf</pre>
+         <pre class="screen">$ mkvpropedit movie.mkv --add-attachment VL-PGothic-Regular.ttf</pre>
          
          <p>
-            Adding a font file (<span class="literal">89719823.ttf</span>) as an attachment and
-            providing some information as it really is just Arial:
+            フォントファイル（<span class="literal">89719823.ttf</span>）を添付ファイルとして追加し、それがVL
+            Pゴシックであるという情報を提供する。
             
          </p>
          
-         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'The Arial font as a TrueType font' --attachment-mime-type application/x-truetype-font --add-attachment 89719823.ttf</pre>
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name VL-PGothic-Regular.ttf --attachment-description 'VL PゴシックのTrueTypeフォント' --attachment-mime-type application/x-truetype-font --add-attachment 89719823.ttf</pre>
          
          <p>
-            Replacing one attached font (<span class="literal">Comic.ttf</span>) file with another
-            one (<span class="literal">Arial.ttf</span>):
+            附属のフォントファイル（<span class="literal">ipagp.ttf</span>）を別のもの（<span class="literal">VL-PGothic-Regular.ttf</span>）に置き換える。
             
          </p>
          
-         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name Arial.ttf --attachment-description 'The Arial font as a TrueType font' --replace-attachment name:Comic.ttf:Arial.ttf</pre>
+         <pre class="screen">$ mkvpropedit movie.mkv --attachment-name VL-PGothic-Regular.ttf --attachment-description 'VL PゴシックのTrueTypeフォント' --replace-attachment name:ipagp.ttf:VL-PGothic-Regular.ttf</pre>
          
          <p>
-            Deleting the second attached file, whatever it may be:
+            2番目の添付ファイルを、それが何であれ削除する。
             
          </p>
          
          <pre class="screen">$ mkvpropedit movie.mkv --delete-attachment 2</pre>
          
          <p>
-            Deleting all attached fonts by MIME type:
+            MIMEタイプによって全ての附属フォントを削除する。
             
          </p>
          
@@ -954,10 +947,8 @@
          
          
          <p>
-            For an in-depth discussion about how all tools in the MKVToolNix suite
-            handle character set conversions, input/output encoding, command line
-            encoding and console encoding please see the identically-named section in
-            the <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> man page.
+            MKVToolNixスイートの全てのツールが文字コード変換・入出力に係る文字コード・コマンドライン及びコンソール上の文字コードをどのように処理するかについての詳細な議論については、<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>
+            man ページの同名の節を参照して下さい。
             
          </p>
          
@@ -980,8 +971,7 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span>
-                     and its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_DEBUG</span>，<span class="varname">MKVTOOLNIX_DEBUG</span>とその短縮形<span class="varname">MTX_DEBUG</span></td>
                   <td>
                      
                      <p>その内容は、あたかも<a href="#mkvpropedit.description.debug">--debug</a>オプション経由で渡されたかのように扱われます。
@@ -990,8 +980,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
-                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td class="varlistoption"><span class="varname">MKVPROPEDIT_ENGAGE</span>，<span class="varname">MKVTOOLNIX_ENGAGE</span>とその短縮形<span class="varname">MTX_ENGAGE</span></td>
                   <td>
                      
                      <p>その内容は、あたかも<a href="#mkvpropedit.description.engage">--engage</a>オプション経由で渡されたかのように扱われます。

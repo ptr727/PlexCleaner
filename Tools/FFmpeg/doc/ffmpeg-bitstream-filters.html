@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Bitstream Filters Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Bitstream Filters ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -62,13 +62,15 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-mpeg4_005funpack_005fbframes" href="#mpeg4_005funpack_005fbframes">2.21 mpeg4_unpack_bframes</a></li>
     <li><a name="toc-noise" href="#noise">2.22 noise</a></li>
     <li><a name="toc-null" href="#null">2.23 null</a></li>
-    <li><a name="toc-remove_005fextra" href="#remove_005fextra">2.24 remove_extra</a></li>
-    <li><a name="toc-text2movsub-1" href="#text2movsub-1">2.25 text2movsub</a></li>
-    <li><a name="toc-trace_005fheaders" href="#trace_005fheaders">2.26 trace_headers</a></li>
-    <li><a name="toc-vp9_005fmetadata" href="#vp9_005fmetadata">2.27 vp9_metadata</a></li>
-    <li><a name="toc-vp9_005fsuperframe" href="#vp9_005fsuperframe">2.28 vp9_superframe</a></li>
-    <li><a name="toc-vp9_005fsuperframe_005fsplit" href="#vp9_005fsuperframe_005fsplit">2.29 vp9_superframe_split</a></li>
-    <li><a name="toc-vp9_005fraw_005freorder" href="#vp9_005fraw_005freorder">2.30 vp9_raw_reorder</a></li>
+    <li><a name="toc-prores_005fmetadata" href="#prores_005fmetadata">2.24 prores_metadata</a></li>
+    <li><a name="toc-remove_005fextra" href="#remove_005fextra">2.25 remove_extra</a></li>
+    <li><a name="toc-text2movsub-1" href="#text2movsub-1">2.26 text2movsub</a></li>
+    <li><a name="toc-trace_005fheaders" href="#trace_005fheaders">2.27 trace_headers</a></li>
+    <li><a name="toc-truehd_005fcore" href="#truehd_005fcore">2.28 truehd_core</a></li>
+    <li><a name="toc-vp9_005fmetadata" href="#vp9_005fmetadata">2.29 vp9_metadata</a></li>
+    <li><a name="toc-vp9_005fsuperframe" href="#vp9_005fsuperframe">2.30 vp9_superframe</a></li>
+    <li><a name="toc-vp9_005fsuperframe_005fsplit" href="#vp9_005fsuperframe_005fsplit">2.31 vp9_superframe_split</a></li>
+    <li><a name="toc-vp9_005fraw_005freorder" href="#vp9_005fraw_005freorder">2.32 vp9_raw_reorder</a></li>
   </ul></li>
   <li><a name="toc-See-Also" href="#See-Also">3 See Also</a></li>
   <li><a name="toc-Authors" href="#Authors">4 Authors</a></li>
@@ -190,6 +192,10 @@ the timing info in the sequence header.
 has a fixed framerate.  Ignored if &lsquo;<samp>tick_rate</samp>&rsquo; is not also set.
 </p>
 </dd>
+<dt>&lsquo;<samp>delete_padding</samp>&rsquo;</dt>
+<dd><p>Deletes Padding OBUs.
+</p>
+</dd>
 </dl>
 
 <a name="chomp"></a>
@@ -206,7 +212,9 @@ DTS-HD.
 <a name="dump_005fextra"></a>
 <h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-dump_005fextra">2.5 dump_extra</a></h2>
 
-<p>Add extradata to the beginning of the filtered packets.
+<p>Add extradata to the beginning of the filtered packets except when
+said packets already exactly begin with the extradata that is intended
+to be added.
 </p>
 <dl compact="compact">
 <dt>&lsquo;<samp>freq</samp>&rsquo;</dt>
@@ -226,7 +234,7 @@ It accepts the values:
 </dd>
 </dl>
 
-<p>If not specified it is assumed &lsquo;<samp>e</samp>&rsquo;.
+<p>If not specified it is assumed &lsquo;<samp>k</samp>&rsquo;.
 </p>
 <p>For example the following <code>ffmpeg</code> command forces a global
 header (thus disabling individual packet headers) in the H.264 packets
@@ -498,6 +506,16 @@ will replace the current ones if the stream is already cropped.
 representable if the chroma is subsampled (H.265 section 7.4.3.2.1).
 </p>
 </dd>
+<dt>&lsquo;<samp>level</samp>&rsquo;</dt>
+<dd><p>Set the level in the VPS and SPS.  See H.265 section A.4 and tables
+A.6 and A.7.
+</p>
+<p>The argument must be the name of a level (for example, &lsquo;<samp>5.1</samp>&rsquo;), a
+<em>general_level_idc</em> value (for example, &lsquo;<samp>153</samp>&rsquo; for level 5.1),
+or the special name &lsquo;<samp>auto</samp>&rsquo; indicating that the filter should
+attempt to guess the level from the input stream properties.
+</p>
+</dd>
 </dl>
 
 <a name="hevc_005fmp4toannexb"></a>
@@ -686,8 +704,87 @@ any packets.
 <h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-null">2.23 null</a></h2>
 <p>This bitstream filter passes the packets through unchanged.
 </p>
+<a name="prores_005fmetadata"></a>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-prores_005fmetadata">2.24 prores_metadata</a></h2>
+
+<p>Modify color property metadata embedded in prores stream.
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>color_primaries</samp>&rsquo;</dt>
+<dd><p>Set the color primaries.
+Available values are:
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>auto</samp>&rsquo;</dt>
+<dd><p>Keep the same color primaries property (default).
+</p>
+</dd>
+<dt>&lsquo;<samp>unknown</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt709</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt470bg</samp>&rsquo;</dt>
+<dd><p>BT601 625
+</p>
+</dd>
+<dt>&lsquo;<samp>smpte170m</samp>&rsquo;</dt>
+<dd><p>BT601 525
+</p>
+</dd>
+<dt>&lsquo;<samp>bt2020</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>smpte431</samp>&rsquo;</dt>
+<dd><p>DCI P3
+</p>
+</dd>
+<dt>&lsquo;<samp>smpte432</samp>&rsquo;</dt>
+<dd><p>P3 D65
+</p>
+</dd>
+</dl>
+
+</dd>
+<dt>&lsquo;<samp>transfer_characteristics</samp>&rsquo;</dt>
+<dd><p>Set the color transfer.
+Available values are:
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>auto</samp>&rsquo;</dt>
+<dd><p>Keep the same transfer characteristics property (default).
+</p>
+</dd>
+<dt>&lsquo;<samp>unknown</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt709</samp>&rsquo;</dt>
+<dd><p>BT 601, BT 709, BT 2020
+</p></dd>
+</dl>
+
+
+</dd>
+<dt>&lsquo;<samp>matrix_coefficients</samp>&rsquo;</dt>
+<dd><p>Set the matrix coefficient.
+Available values are:
+</p>
+<dl compact="compact">
+<dt>&lsquo;<samp>auto</samp>&rsquo;</dt>
+<dd><p>Keep the same transfer characteristics property (default).
+</p>
+</dd>
+<dt>&lsquo;<samp>unknown</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>bt709</samp>&rsquo;</dt>
+<dt>&lsquo;<samp>smpte170m</samp>&rsquo;</dt>
+<dd><p>BT 601
+</p>
+</dd>
+<dt>&lsquo;<samp>bt2020nc</samp>&rsquo;</dt>
+</dl>
+</dd>
+</dl>
+
+<p>Set Rec709 colorspace for each frame of the file
+</p><div class="example">
+<pre class="example">ffmpeg -i INPUT -c copy -bsf:v prores_metadata=color_primaries=bt709:color_trc=bt709:colorspace=bt709 output.mov
+</pre></div>
+
 <a name="remove_005fextra"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-remove_005fextra">2.24 remove_extra</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-remove_005fextra">2.25 remove_extra</a></h2>
 
 <p>Remove extradata from packets.
 </p>
@@ -715,7 +812,7 @@ any packets.
 
 <p><a name="text2movsub"></a>
 </p><a name="text2movsub-1"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-text2movsub-1">2.25 text2movsub</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-text2movsub-1">2.26 text2movsub</a></h2>
 
 <p>Convert text subtitles to MOV subtitles (as used by the <code>mov_text</code>
 codec) with metadata headers.
@@ -723,16 +820,22 @@ codec) with metadata headers.
 <p>See also the <a href="#mov2textsub">mov2textsub</a> filter.
 </p>
 <a name="trace_005fheaders"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-trace_005fheaders">2.26 trace_headers</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-trace_005fheaders">2.27 trace_headers</a></h2>
 
 <p>Log trace output containing all syntax elements in the coded stream
 headers (everything above the level of individual coded blocks).
 This can be useful for debugging low-level stream issues.
 </p>
-<p>Supports H.264, H.265, MPEG-2 and VP9.
+<p>Supports AV1, H.264, H.265, (M)JPEG, MPEG-2 and VP9, but depending
+on the build only a subset of these may be available.
+</p>
+<a name="truehd_005fcore"></a>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-truehd_005fcore">2.28 truehd_core</a></h2>
+
+<p>Extract the core from a TrueHD stream, dropping ATMOS data.
 </p>
 <a name="vp9_005fmetadata"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fmetadata">2.27 vp9_metadata</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fmetadata">2.29 vp9_metadata</a></h2>
 
 <p>Modify metadata embedded in a VP9 stream.
 </p>
@@ -761,19 +864,19 @@ be set in RGB streams.
 </dl>
 
 <a name="vp9_005fsuperframe"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe">2.28 vp9_superframe</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe">2.30 vp9_superframe</a></h2>
 
 <p>Merge VP9 invisible (alt-ref) frames back into VP9 superframes. This
 fixes merging of split/segmented VP9 streams where the alt-ref frame
 was split from its visible counterpart.
 </p>
 <a name="vp9_005fsuperframe_005fsplit"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe_005fsplit">2.29 vp9_superframe_split</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fsuperframe_005fsplit">2.31 vp9_superframe_split</a></h2>
 
 <p>Split VP9 superframes into single frames.
 </p>
 <a name="vp9_005fraw_005freorder"></a>
-<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fraw_005freorder">2.30 vp9_raw_reorder</a></h2>
+<h2 class="section"><a href="ffmpeg-bitstream-filters.html#toc-vp9_005fraw_005freorder">2.32 vp9_raw_reorder</a></h2>
 
 <p>Given a VP9 stream with correct timestamps but possibly out of order,
 insert additional show-existing-frame packets to correct the ordering.

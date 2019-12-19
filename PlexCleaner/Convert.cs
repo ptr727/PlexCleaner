@@ -383,7 +383,7 @@ namespace PlexCleaner
             ConsoleEx.WriteLine("");
             int exitcode = HandBrakeTool.HandBrake(commandline);
             ConsoleEx.WriteLine("");
-            return (exitcode == 0);
+            return exitcode == 0;
         }
 
         // File split options

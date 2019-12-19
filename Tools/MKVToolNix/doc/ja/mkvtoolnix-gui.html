@@ -23,18 +23,15 @@
          <h1><a name="mkvtoolnix-gui.synopsis">1. 書式</a></h1>
          
          
-         <div class="cmdsynopsis"><span class="commandname">mkvtoolnix-gui</span> [[configuration-file-name.mtxcfg] | [source-file.ext] | [matroska-file.mkv] | [chapter-file.ext] | [matroska-file.mkv]]
+         <div class="cmdsynopsis"><span class="commandname">mkvtoolnix-gui</span> [[設定ファイル名.mtxcfg] | [対象ファイル.ext] | [Matroskaファイル.mkv] | [チャプタファイル.ext] | [Matroskaファイル.mkv]]
          </div>
          
          <h1><a name="mkvtoolnix-gui.description">2. 説明</a></h1>
          
          
          <p>
-            <span class="productname">mkvtoolnix-gui</span>(1) is a <span class="productname">Qt</span><sup>(tm)</sup> based
-            <span class="abbrev">GUI</span> for <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. It also implements <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>'s and
-            <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>'s functionality and will evolve to cover <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> as
-            well. All settings (e.g. source files, track options etc) can be saved and
-            restored.
+            <span class="productname">mkvtoolnix-gui</span>(1)は<span class="productname">Qt</span><sup>(tm)</sup>に基づいた<a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>コマンドの<span class="abbrev">GUI</span>です。<a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>及び<a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>の機能も実装しており、<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>への対応も予定しています。全設定（例:
+            対象ファイル・トラック設定 等）は保存・復元できます。
             
          </p>
          
@@ -72,9 +69,7 @@
                   <td class="varlistoption"><span class="option">--merge</span></td>
                   <td>
                      
-                     <p>All following file names will be added as source files to the current
-                        multiplex job. This is the default mode.
-                     </p>
+                     <p>以降に続く全てのファイル名が現在のマルチプレックスジョブに入力ファイルとして追加されます。これは既定のモードです。</p>
                      
                   </td>
                </tr>
@@ -82,7 +77,7 @@
                   <td class="varlistoption"><span class="option">--info</span></td>
                   <td>
                      
-                     <p>All following file names will be opened in the info tool.</p>
+                     <p>以降に続く全てのファイル名が情報ツールで開かれます。</p>
                      
                   </td>
                </tr>
@@ -90,7 +85,7 @@
                   <td class="varlistoption"><span class="option">--edit-chapters</span></td>
                   <td>
                      
-                     <p>All following file names will be opened in the chapter editor.</p>
+                     <p>以降に続く全てのファイル名がチャプタエディタで開かれます。</p>
                      
                   </td>
                </tr>
@@ -98,7 +93,7 @@
                   <td class="varlistoption"><span class="option">--edit-headers</span></td>
                   <td>
                      
-                     <p>All following file names will be opened in the header editor.</p>
+                     <p>以降に続く全てのファイル名がヘッダエディタで開かれます。</p>
                      
                   </td>
                </tr>

@@ -10,7 +10,7 @@
 <meta name="description" content="General Documentation: ">
 <meta name="keywords" content="FFmpeg documentation : General ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -38,31 +38,36 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
 <ul class="no-bullet">
   <li><a name="toc-External-libraries" href="#External-libraries">1 External libraries</a>
   <ul class="no-bullet">
-    <li><a name="toc-libxavs2" href="#libxavs2">1.1 libxavs2</a></li>
-    <li><a name="toc-libdavs2" href="#libdavs2">1.2 libdavs2</a></li>
-    <li><a name="toc-Alliance-for-Open-Media-libaom" href="#Alliance-for-Open-Media-libaom">1.3 Alliance for Open Media libaom</a></li>
-    <li><a name="toc-OpenJPEG" href="#OpenJPEG">1.4 OpenJPEG</a></li>
-    <li><a name="toc-OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries" href="#OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries">1.5 OpenCORE, VisualOn, and Fraunhofer libraries</a>
+    <li><a name="toc-Alliance-for-Open-Media-_0028AOM_0029" href="#Alliance-for-Open-Media-_0028AOM_0029">1.1 Alliance for Open Media (AOM)</a></li>
+    <li><a name="toc-AMD-AMF_002fVCE" href="#AMD-AMF_002fVCE">1.2 AMD AMF/VCE</a></li>
+    <li><a name="toc-AviSynth" href="#AviSynth">1.3 AviSynth</a></li>
+    <li><a name="toc-Chromaprint" href="#Chromaprint">1.4 Chromaprint</a></li>
+    <li><a name="toc-codec2" href="#codec2">1.5 codec2</a></li>
+    <li><a name="toc-dav1d" href="#dav1d">1.6 dav1d</a></li>
+    <li><a name="toc-davs2" href="#davs2">1.7 davs2</a></li>
+    <li><a name="toc-Game-Music-Emu" href="#Game-Music-Emu">1.8 Game Music Emu</a></li>
+    <li><a name="toc-Intel-QuickSync-Video" href="#Intel-QuickSync-Video">1.9 Intel QuickSync Video</a></li>
+    <li><a name="toc-Kvazaar" href="#Kvazaar">1.10 Kvazaar</a></li>
+    <li><a name="toc-LAME" href="#LAME">1.11 LAME</a></li>
+    <li><a name="toc-libilbc" href="#libilbc">1.12 libilbc</a></li>
+    <li><a name="toc-libvpx" href="#libvpx">1.13 libvpx</a></li>
+    <li><a name="toc-ModPlug" href="#ModPlug">1.14 ModPlug</a></li>
+    <li><a name="toc-OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries" href="#OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries">1.15 OpenCORE, VisualOn, and Fraunhofer libraries</a>
     <ul class="no-bullet">
-      <li><a name="toc-OpenCORE-AMR" href="#OpenCORE-AMR">1.5.1 OpenCORE AMR</a></li>
-      <li><a name="toc-VisualOn-AMR_002dWB-encoder-library" href="#VisualOn-AMR_002dWB-encoder-library">1.5.2 VisualOn AMR-WB encoder library</a></li>
-      <li><a name="toc-Fraunhofer-AAC-library" href="#Fraunhofer-AAC-library">1.5.3 Fraunhofer AAC library</a></li>
+      <li><a name="toc-OpenCORE-AMR" href="#OpenCORE-AMR">1.15.1 OpenCORE AMR</a></li>
+      <li><a name="toc-VisualOn-AMR_002dWB-encoder-library" href="#VisualOn-AMR_002dWB-encoder-library">1.15.2 VisualOn AMR-WB encoder library</a></li>
+      <li><a name="toc-Fraunhofer-AAC-library" href="#Fraunhofer-AAC-library">1.15.3 Fraunhofer AAC library</a></li>
     </ul></li>
-    <li><a name="toc-LAME" href="#LAME">1.6 LAME</a></li>
-    <li><a name="toc-TwoLAME" href="#TwoLAME">1.7 TwoLAME</a></li>
-    <li><a name="toc-libcodec2-_002f-codec2-general" href="#libcodec2-_002f-codec2-general">1.8 libcodec2 / codec2 general</a></li>
-    <li><a name="toc-libvpx" href="#libvpx">1.9 libvpx</a></li>
-    <li><a name="toc-libwavpack" href="#libwavpack">1.10 libwavpack</a></li>
-    <li><a name="toc-libxavs" href="#libxavs">1.11 libxavs</a></li>
-    <li><a name="toc-OpenH264" href="#OpenH264">1.12 OpenH264</a></li>
-    <li><a name="toc-x264" href="#x264">1.13 x264</a></li>
-    <li><a name="toc-x265" href="#x265">1.14 x265</a></li>
-    <li><a name="toc-kvazaar" href="#kvazaar">1.15 kvazaar</a></li>
-    <li><a name="toc-libilbc" href="#libilbc">1.16 libilbc</a></li>
-    <li><a name="toc-libzvbi" href="#libzvbi">1.17 libzvbi</a></li>
-    <li><a name="toc-AviSynth" href="#AviSynth">1.18 AviSynth</a></li>
-    <li><a name="toc-Intel-QuickSync-Video" href="#Intel-QuickSync-Video">1.19 Intel QuickSync Video</a></li>
-    <li><a name="toc-AMD-VCE" href="#AMD-VCE">1.20 AMD VCE</a></li>
+    <li><a name="toc-OpenH264" href="#OpenH264">1.16 OpenH264</a></li>
+    <li><a name="toc-OpenJPEG" href="#OpenJPEG">1.17 OpenJPEG</a></li>
+    <li><a name="toc-TwoLAME" href="#TwoLAME">1.18 TwoLAME</a></li>
+    <li><a name="toc-VapourSynth" href="#VapourSynth">1.19 VapourSynth</a></li>
+    <li><a name="toc-WavPack" href="#WavPack">1.20 WavPack</a></li>
+    <li><a name="toc-x264" href="#x264">1.21 x264</a></li>
+    <li><a name="toc-x265" href="#x265">1.22 x265</a></li>
+    <li><a name="toc-xavs" href="#xavs">1.23 xavs</a></li>
+    <li><a name="toc-xavs2" href="#xavs2">1.24 xavs2</a></li>
+    <li><a name="toc-ZVBI" href="#ZVBI">1.25 ZVBI</a></li>
   </ul></li>
   <li><a name="toc-Supported-File-Formats_002c-Codecs-or-Features" href="#Supported-File-Formats_002c-Codecs-or-Features">2 Supported File Formats, Codecs or Features</a>
   <ul class="no-bullet">
@@ -89,22 +94,99 @@ for more formats. None of them are used by default, their use has to be
 explicitly requested by passing the appropriate flags to
 <code>./configure</code>.
 </p>
-<a name="libxavs2"></a>
-<h2 class="section"><a href="general.html#toc-libxavs2">1.1 libxavs2</a></h2>
+<a name="Alliance-for-Open-Media-_0028AOM_0029"></a>
+<h2 class="section"><a href="general.html#toc-Alliance-for-Open-Media-_0028AOM_0029">1.1 Alliance for Open Media (AOM)</a></h2>
 
-<p>FFmpeg can make use of the xavs2 library for AVS2-P2/IEEE1857.4 video encoding.
+<p>FFmpeg can make use of the AOM library for AV1 decoding and encoding.
 </p>
-<p>Go to <a href="https://github.com/pkuvcl/xavs2">https://github.com/pkuvcl/xavs2</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libxavs2</code> to configure to
+<p>Go to <a href="http://aomedia.org/">http://aomedia.org/</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libaom</code> to configure to
 enable it.
 </p>
+<a name="AMD-AMF_002fVCE"></a>
+<h2 class="section"><a href="general.html#toc-AMD-AMF_002fVCE">1.2 AMD AMF/VCE</a></h2>
+
+<p>FFmpeg can use the AMD Advanced Media Framework library under Windows
+for accelerated H.264 and HEVC encoding on hardware with Video Coding Engine (VCE).
+</p>
+<p>To enable support you must obtain the AMF framework header files from
+<a href="https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git">https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git</a>.
+</p>
+<p>Create an <code>AMF/</code> directory in the system include path.
+Copy the contents of <code>AMF/amf/public/include/</code> into that directory.
+Then configure FFmpeg with <code>--enable-amf</code>.
+</p>
+<a name="AviSynth"></a>
+<h2 class="section"><a href="general.html#toc-AviSynth">1.3 AviSynth</a></h2>
+
+<p>FFmpeg can read AviSynth scripts as input. To enable support, pass
+<code>--enable-avisynth</code> to configure.  The correct headers are
+included in compat/avisynth/, which allows the user to enable support
+without needing to search for these headers themselves.
+</p>
+<p>For Windows, supported AviSynth variants are
+<a href="http://avisynth.nl">AviSynth 2.6 RC1 or higher</a> for 32-bit builds and
+<a href="http://avisynth.nl/index.php/AviSynth+">AviSynth+ r1718 or higher</a> for 32-bit and 64-bit builds.
+</p>
+<p>For Linux and OS X, the supported AviSynth variant is
+<a href="https://github.com/avxsynth/avxsynth">AvxSynth</a>.
+</p>
 <div class="float alert alert-info">
-<p>libxavs2 is under the GNU Public License Version 2 or later
-(see <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</a> for
-details), you must upgrade FFmpeg&rsquo;s license to GPL in order to use it.
+<p>In 2016, AviSynth+ added support for building with GCC. However, due to
+the eccentricities of Windows&rsquo; calling conventions, 32-bit GCC builds
+of AviSynth+ are not compatible with typical 32-bit builds of FFmpeg.
+</p>
+<p>By default, FFmpeg assumes compatibility with 32-bit MSVC builds of
+AviSynth+ since that is the most widely-used and entrenched build
+configuration.  Users can override this and enable support for 32-bit
+GCC builds of AviSynth+ by passing <code>-DAVSC_WIN32_GCC32</code> to
+<code>--extra-cflags</code> when configuring FFmpeg.
+</p>
+<p>64-bit builds of FFmpeg are not affected, and can use either MSVC or
+GCC builds of AviSynth+ without any special flags.
 </p></div>
-<a name="libdavs2"></a>
-<h2 class="section"><a href="general.html#toc-libdavs2">1.2 libdavs2</a></h2>
+<div class="float alert alert-info">
+<p>AviSynth and AvxSynth are loaded dynamically.  Distributors can build FFmpeg
+with <code>--enable-avisynth</code>, and the binaries will work regardless of the
+end user having AviSynth or AvxSynth installed - they&rsquo;ll only need to be
+installed to use AviSynth scripts (obviously).
+</p></div>
+<a name="Chromaprint"></a>
+<h2 class="section"><a href="general.html#toc-Chromaprint">1.4 Chromaprint</a></h2>
+
+<p>FFmpeg can make use of the Chromaprint library for generating audio fingerprints.
+Pass <code>--enable-chromaprint</code> to configure to
+enable it. See <a href="https://acoustid.org/chromaprint">https://acoustid.org/chromaprint</a>.
+</p>
+<a name="codec2"></a>
+<h2 class="section"><a href="general.html#toc-codec2">1.5 codec2</a></h2>
+
+<p>FFmpeg can make use of the codec2 library for codec2 decoding and encoding.
+There is currently no native decoder, so libcodec2 must be used for decoding.
+</p>
+<p>Go to <a href="http://freedv.org/">http://freedv.org/</a>, download &quot;Codec 2 source archive&quot;.
+Build and install using CMake. Debian users can install the libcodec2-dev package instead.
+Once libcodec2 is installed you can pass <code>--enable-libcodec2</code> to configure to enable it.
+</p>
+<p>The easiest way to use codec2 is with .c2 files, since they contain the mode information required for decoding.
+To encode such a file, use a .c2 file extension and give the libcodec2 encoder the -mode option:
+<code>ffmpeg -i input.wav -mode 700C output.c2</code>.
+Playback is as simple as <code>ffplay output.c2</code>.
+For a list of supported modes, run <code>ffmpeg -h encoder=libcodec2</code>.
+Raw codec2 files are also supported.
+To make sense of them the mode in use needs to be specified as a format option:
+<code>ffmpeg -f codec2raw -mode 1300 -i input.raw output.wav</code>.
+</p>
+<a name="dav1d"></a>
+<h2 class="section"><a href="general.html#toc-dav1d">1.6 dav1d</a></h2>
+
+<p>FFmpeg can make use of the dav1d library for AV1 video decoding.
+</p>
+<p>Go to <a href="https://code.videolan.org/videolan/dav1d">https://code.videolan.org/videolan/dav1d</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libdav1d</code> to configure to enable it.
+</p>
+<a name="davs2"></a>
+<h2 class="section"><a href="general.html#toc-davs2">1.7 davs2</a></h2>
 
 <p>FFmpeg can make use of the davs2 library for AVS2-P2/IEEE1857.4 video decoding.
 </p>
@@ -117,26 +199,73 @@ enable it.
 (see <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</a> for
 details), you must upgrade FFmpeg&rsquo;s license to GPL in order to use it.
 </p></div>
-<a name="Alliance-for-Open-Media-libaom"></a>
-<h2 class="section"><a href="general.html#toc-Alliance-for-Open-Media-libaom">1.3 Alliance for Open Media libaom</a></h2>
+<a name="Game-Music-Emu"></a>
+<h2 class="section"><a href="general.html#toc-Game-Music-Emu">1.8 Game Music Emu</a></h2>
 
-<p>FFmpeg can make use of the libaom library for AV1 decoding.
+<p>FFmpeg can make use of the Game Music Emu library to read audio from supported video game
+music file formats. Pass <code>--enable-libgme</code> to configure to
+enable it. See <a href="https://bitbucket.org/mpyne/game-music-emu/overview">https://bitbucket.org/mpyne/game-music-emu/overview</a>.
 </p>
-<p>Go to <a href="http://aomedia.org/">http://aomedia.org/</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libaom</code> to configure to
+<a name="Intel-QuickSync-Video"></a>
+<h2 class="section"><a href="general.html#toc-Intel-QuickSync-Video">1.9 Intel QuickSync Video</a></h2>
+
+<p>FFmpeg can use Intel QuickSync Video (QSV) for accelerated decoding and encoding
+of multiple codecs. To use QSV, FFmpeg must be linked against the <code>libmfx</code>
+dispatcher, which loads the actual decoding libraries.
+</p>
+<p>The dispatcher is open source and can be downloaded from
+<a href="https://github.com/lu-zero/mfx_dispatch.git">https://github.com/lu-zero/mfx_dispatch.git</a>. FFmpeg needs to be configured
+with the <code>--enable-libmfx</code> option and <code>pkg-config</code> needs to be able to
+locate the dispatcher&rsquo;s <code>.pc</code> files.
+</p>
+<a name="Kvazaar"></a>
+<h2 class="section"><a href="general.html#toc-Kvazaar">1.10 Kvazaar</a></h2>
+
+<p>FFmpeg can make use of the Kvazaar library for HEVC encoding.
+</p>
+<p>Go to <a href="https://github.com/ultravideo/kvazaar">https://github.com/ultravideo/kvazaar</a> and follow the
+instructions for installing the library. Then pass
+<code>--enable-libkvazaar</code> to configure to enable it.
+</p>
+<a name="LAME"></a>
+<h2 class="section"><a href="general.html#toc-LAME">1.11 LAME</a></h2>
+
+<p>FFmpeg can make use of the LAME library for MP3 encoding.
+</p>
+<p>Go to <a href="http://lame.sourceforge.net/">http://lame.sourceforge.net/</a> and follow the
+instructions for installing the library.
+Then pass <code>--enable-libmp3lame</code> to configure to enable it.
+</p>
+<a name="libilbc"></a>
+<h2 class="section"><a href="general.html#toc-libilbc">1.12 libilbc</a></h2>
+
+<p>iLBC is a narrowband speech codec that has been made freely available
+by Google as part of the WebRTC project. libilbc is a packaging friendly
+copy of the iLBC codec. FFmpeg can make use of the libilbc library for
+iLBC decoding and encoding.
+</p>
+<p>Go to <a href="https://github.com/TimothyGu/libilbc">https://github.com/TimothyGu/libilbc</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libilbc</code> to configure to
 enable it.
 </p>
-<a name="OpenJPEG"></a>
-<h2 class="section"><a href="general.html#toc-OpenJPEG">1.4 OpenJPEG</a></h2>
+<a name="libvpx"></a>
+<h2 class="section"><a href="general.html#toc-libvpx">1.13 libvpx</a></h2>
 
-<p>FFmpeg can use the OpenJPEG libraries for encoding/decoding J2K videos.  Go to
-<a href="http://www.openjpeg.org/">http://www.openjpeg.org/</a> to get the libraries and follow the installation
-instructions.  To enable using OpenJPEG in FFmpeg, pass <code>--enable-libopenjpeg</code> to
-&lsquo;<tt>./configure</tt>&rsquo;.
+<p>FFmpeg can make use of the libvpx library for VP8/VP9 decoding and encoding.
 </p>
+<p>Go to <a href="http://www.webmproject.org/">http://www.webmproject.org/</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libvpx</code> to configure to
+enable it.
+</p>
+<a name="ModPlug"></a>
+<h2 class="section"><a href="general.html#toc-ModPlug">1.14 ModPlug</a></h2>
 
+<p>FFmpeg can make use of this library, originating in Modplug-XMMS, to read from MOD-like music files.
+See <a href="https://github.com/Konstanty/libmodplug">https://github.com/Konstanty/libmodplug</a>. Pass <code>--enable-libmodplug</code> to configure to
+enable it.
+</p>
 <a name="OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries"></a>
-<h2 class="section"><a href="general.html#toc-OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries">1.5 OpenCORE, VisualOn, and Fraunhofer libraries</a></h2>
+<h2 class="section"><a href="general.html#toc-OpenCORE_002c-VisualOn_002c-and-Fraunhofer-libraries">1.15 OpenCORE, VisualOn, and Fraunhofer libraries</a></h2>
 
 <p>Spun off Google Android sources, OpenCore, VisualOn and Fraunhofer
 libraries provide encoders for a number of audio codecs.
@@ -155,7 +284,7 @@ configure in order to use it. To the best of our knowledge, it is
 compatible with the LGPL.
 </p></div>
 <a name="OpenCORE-AMR"></a>
-<h3 class="subsection"><a href="general.html#toc-OpenCORE-AMR">1.5.1 OpenCORE AMR</a></h3>
+<h3 class="subsection"><a href="general.html#toc-OpenCORE-AMR">1.15.1 OpenCORE AMR</a></h3>
 
 <p>FFmpeg can make use of the OpenCORE libraries for AMR-NB
 decoding/encoding and AMR-WB decoding.
@@ -166,7 +295,7 @@ Then pass <code>--enable-libopencore-amrnb</code> and/or
 <code>--enable-libopencore-amrwb</code> to configure to enable them.
 </p>
 <a name="VisualOn-AMR_002dWB-encoder-library"></a>
-<h3 class="subsection"><a href="general.html#toc-VisualOn-AMR_002dWB-encoder-library">1.5.2 VisualOn AMR-WB encoder library</a></h3>
+<h3 class="subsection"><a href="general.html#toc-VisualOn-AMR_002dWB-encoder-library">1.15.2 VisualOn AMR-WB encoder library</a></h3>
 
 <p>FFmpeg can make use of the VisualOn AMR-WBenc library for AMR-WB encoding.
 </p>
@@ -175,7 +304,7 @@ instructions for installing the library.
 Then pass <code>--enable-libvo-amrwbenc</code> to configure to enable it.
 </p>
 <a name="Fraunhofer-AAC-library"></a>
-<h3 class="subsection"><a href="general.html#toc-Fraunhofer-AAC-library">1.5.3 Fraunhofer AAC library</a></h3>
+<h3 class="subsection"><a href="general.html#toc-Fraunhofer-AAC-library">1.15.3 Fraunhofer AAC library</a></h3>
 
 <p>FFmpeg can make use of the Fraunhofer AAC library for AAC decoding &amp; encoding.
 </p>
@@ -183,74 +312,10 @@ Then pass <code>--enable-libvo-amrwbenc</code> to configure to enable it.
 instructions for installing the library.
 Then pass <code>--enable-libfdk-aac</code> to configure to enable it.
 </p>
-<a name="LAME"></a>
-<h2 class="section"><a href="general.html#toc-LAME">1.6 LAME</a></h2>
-
-<p>FFmpeg can make use of the LAME library for MP3 encoding.
-</p>
-<p>Go to <a href="http://lame.sourceforge.net/">http://lame.sourceforge.net/</a> and follow the
-instructions for installing the library.
-Then pass <code>--enable-libmp3lame</code> to configure to enable it.
-</p>
-<a name="TwoLAME"></a>
-<h2 class="section"><a href="general.html#toc-TwoLAME">1.7 TwoLAME</a></h2>
-
-<p>FFmpeg can make use of the TwoLAME library for MP2 encoding.
-</p>
-<p>Go to <a href="http://www.twolame.org/">http://www.twolame.org/</a> and follow the
-instructions for installing the library.
-Then pass <code>--enable-libtwolame</code> to configure to enable it.
-</p>
-<a name="libcodec2-_002f-codec2-general"></a>
-<h2 class="section"><a href="general.html#toc-libcodec2-_002f-codec2-general">1.8 libcodec2 / codec2 general</a></h2>
-
-<p>FFmpeg can make use of libcodec2 for codec2 encoding and decoding.
-There is currently no native decoder, so libcodec2 must be used for decoding.
-</p>
-<p>Go to <a href="http://freedv.org/">http://freedv.org/</a>, download &quot;Codec 2 source archive&quot;.
-Build and install using CMake. Debian users can install the libcodec2-dev package instead.
-Once libcodec2 is installed you can pass <code>--enable-libcodec2</code> to configure to enable it.
-</p>
-<p>The easiest way to use codec2 is with .c2 files, since they contain the mode information required for decoding.
-To encode such a file, use a .c2 file extension and give the libcodec2 encoder the -mode option:
-<code>ffmpeg -i input.wav -mode 700C output.c2</code>.
-Playback is as simple as <code>ffplay output.c2</code>.
-For a list of supported modes, run <code>ffmpeg -h encoder=libcodec2</code>.
-Raw codec2 files are also supported.
-To make sense of them the mode in use needs to be specified as a format option:
-<code>ffmpeg -f codec2raw -mode 1300 -i input.raw output.wav</code>.
-</p>
-<a name="libvpx"></a>
-<h2 class="section"><a href="general.html#toc-libvpx">1.9 libvpx</a></h2>
-
-<p>FFmpeg can make use of the libvpx library for VP8/VP9 encoding.
-</p>
-<p>Go to <a href="http://www.webmproject.org/">http://www.webmproject.org/</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libvpx</code> to configure to
-enable it.
-</p>
-<a name="libwavpack"></a>
-<h2 class="section"><a href="general.html#toc-libwavpack">1.10 libwavpack</a></h2>
-
-<p>FFmpeg can make use of the libwavpack library for WavPack encoding.
-</p>
-<p>Go to <a href="http://www.wavpack.com/">http://www.wavpack.com/</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libwavpack</code> to configure to
-enable it.
-</p>
-<a name="libxavs"></a>
-<h2 class="section"><a href="general.html#toc-libxavs">1.11 libxavs</a></h2>
-
-<p>FFmpeg can make use of the libxavs library for Xavs encoding.
-</p>
-<p>Go to <a href="http://xavs.sf.net/">http://xavs.sf.net/</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libxavs</code> to configure to
-enable it.
-</p>
 <a name="OpenH264"></a>
-<h2 class="section"><a href="general.html#toc-OpenH264">1.12 OpenH264</a></h2>
+<h2 class="section"><a href="general.html#toc-OpenH264">1.16 OpenH264</a></h2>
 
-<p>FFmpeg can make use of the OpenH264 library for H.264 encoding and decoding.
+<p>FFmpeg can make use of the OpenH264 library for H.264 decoding and encoding.
 </p>
 <p>Go to <a href="http://www.openh264.org/">http://www.openh264.org/</a> and follow the instructions for
 installing the library. Then pass <code>--enable-libopenh264</code> to configure to
@@ -263,8 +328,46 @@ constrained baseline profile and CABAC.) Using it is mostly useful for
 testing and for taking advantage of Cisco&rsquo;s patent portfolio license
 (<a href="http://www.openh264.org/BINARY_LICENSE.txt">http://www.openh264.org/BINARY_LICENSE.txt</a>).
 </p>
+<a name="OpenJPEG"></a>
+<h2 class="section"><a href="general.html#toc-OpenJPEG">1.17 OpenJPEG</a></h2>
+
+<p>FFmpeg can use the OpenJPEG libraries for decoding/encoding J2K videos.  Go to
+<a href="http://www.openjpeg.org/">http://www.openjpeg.org/</a> to get the libraries and follow the installation
+instructions.  To enable using OpenJPEG in FFmpeg, pass <code>--enable-libopenjpeg</code> to
+&lsquo;<tt>./configure</tt>&rsquo;.
+</p>
+<a name="TwoLAME"></a>
+<h2 class="section"><a href="general.html#toc-TwoLAME">1.18 TwoLAME</a></h2>
+
+<p>FFmpeg can make use of the TwoLAME library for MP2 encoding.
+</p>
+<p>Go to <a href="http://www.twolame.org/">http://www.twolame.org/</a> and follow the
+instructions for installing the library.
+Then pass <code>--enable-libtwolame</code> to configure to enable it.
+</p>
+<a name="VapourSynth"></a>
+<h2 class="section"><a href="general.html#toc-VapourSynth">1.19 VapourSynth</a></h2>
+
+<p>FFmpeg can read VapourSynth scripts as input. To enable support, pass
+<code>--enable-vapoursynth</code> to configure. Vapoursynth is detected via
+<code>pkg-config</code>. Versions 42 or greater supported.
+See <a href="http://www.vapoursynth.com/">http://www.vapoursynth.com/</a>.
+</p>
+<p>Due to security concerns, Vapoursynth scripts will not
+be autodetected so the input format has to be forced. For ff* CLI tools,
+add <code>-f vapoursynth</code> before the input <code>-i yourscript.vpy</code>.
+</p>
+<a name="WavPack"></a>
+<h2 class="section"><a href="general.html#toc-WavPack">1.20 WavPack</a></h2>
+
+<p>FFmpeg can make use of the libwavpack library for WavPack encoding.
+</p>
+<p>Go to <a href="http://www.wavpack.com/">http://www.wavpack.com/</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libwavpack</code> to configure to
+enable it.
+</p>
 <a name="x264"></a>
-<h2 class="section"><a href="general.html#toc-x264">1.13 x264</a></h2>
+<h2 class="section"><a href="general.html#toc-x264">1.21 x264</a></h2>
 
 <p>FFmpeg can make use of the x264 library for H.264 encoding.
 </p>
@@ -278,7 +381,7 @@ configure to enable it.
 details), you must upgrade FFmpeg&rsquo;s license to GPL in order to use it.
 </p></div>
 <a name="x265"></a>
-<h2 class="section"><a href="general.html#toc-x265">1.14 x265</a></h2>
+<h2 class="section"><a href="general.html#toc-x265">1.22 x265</a></h2>
 
 <p>FFmpeg can make use of the x265 library for HEVC encoding.
 </p>
@@ -291,96 +394,39 @@ to enable it.
 (see <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</a> for
 details), you must upgrade FFmpeg&rsquo;s license to GPL in order to use it.
 </p></div>
-<a name="kvazaar"></a>
-<h2 class="section"><a href="general.html#toc-kvazaar">1.15 kvazaar</a></h2>
+<a name="xavs"></a>
+<h2 class="section"><a href="general.html#toc-xavs">1.23 xavs</a></h2>
 
-<p>FFmpeg can make use of the kvazaar library for HEVC encoding.
+<p>FFmpeg can make use of the xavs library for AVS encoding.
 </p>
-<p>Go to <a href="https://github.com/ultravideo/kvazaar">https://github.com/ultravideo/kvazaar</a> and follow the
-instructions for installing the library. Then pass
-<code>--enable-libkvazaar</code> to configure to enable it.
-</p>
-<a name="libilbc"></a>
-<h2 class="section"><a href="general.html#toc-libilbc">1.16 libilbc</a></h2>
-
-<p>iLBC is a narrowband speech codec that has been made freely available
-by Google as part of the WebRTC project. libilbc is a packaging friendly
-copy of the iLBC codec. FFmpeg can make use of the libilbc library for
-iLBC encoding and decoding.
-</p>
-<p>Go to <a href="https://github.com/TimothyGu/libilbc">https://github.com/TimothyGu/libilbc</a> and follow the instructions for
-installing the library. Then pass <code>--enable-libilbc</code> to configure to
+<p>Go to <a href="http://xavs.sf.net/">http://xavs.sf.net/</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libxavs</code> to configure to
 enable it.
 </p>
-<a name="libzvbi"></a>
-<h2 class="section"><a href="general.html#toc-libzvbi">1.17 libzvbi</a></h2>
+<a name="xavs2"></a>
+<h2 class="section"><a href="general.html#toc-xavs2">1.24 xavs2</a></h2>
 
-<p>libzvbi is a VBI decoding library which can be used by FFmpeg to decode DVB
+<p>FFmpeg can make use of the xavs2 library for AVS2-P2/IEEE1857.4 video encoding.
+</p>
+<p>Go to <a href="https://github.com/pkuvcl/xavs2">https://github.com/pkuvcl/xavs2</a> and follow the instructions for
+installing the library. Then pass <code>--enable-libxavs2</code> to configure to
+enable it.
+</p>
+<div class="float alert alert-info">
+<p>libxavs2 is under the GNU Public License Version 2 or later
+(see <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</a> for
+details), you must upgrade FFmpeg&rsquo;s license to GPL in order to use it.
+</p></div>
+<a name="ZVBI"></a>
+<h2 class="section"><a href="general.html#toc-ZVBI">1.25 ZVBI</a></h2>
+
+<p>ZVBI is a VBI decoding library which can be used by FFmpeg to decode DVB
 teletext pages and DVB teletext subtitles.
 </p>
 <p>Go to <a href="http://sourceforge.net/projects/zapping/">http://sourceforge.net/projects/zapping/</a> and follow the instructions for
 installing the library. Then pass <code>--enable-libzvbi</code> to configure to
 enable it.
 </p>
-<a name="AviSynth"></a>
-<h2 class="section"><a href="general.html#toc-AviSynth">1.18 AviSynth</a></h2>
-
-<p>FFmpeg can read AviSynth scripts as input. To enable support, pass
-<code>--enable-avisynth</code> to configure.  The correct headers are
-included in compat/avisynth/, which allows the user to enable support
-without needing to search for these headers themselves.
-</p>
-<p>For Windows, supported AviSynth variants are
-<a href="http://avisynth.nl">AviSynth 2.6 RC1 or higher</a> for 32-bit builds and
-<a href="http://avs-plus.net">AviSynth+ r1718 or higher</a> for 32-bit and 64-bit builds.
-</p>
-<p>For Linux and OS X, the supported AviSynth variant is
-<a href="https://github.com/avxsynth/avxsynth">AvxSynth</a>.
-</p>
-<div class="float alert alert-info">
-<p>There is currently a regression in AviSynth+&rsquo;s <code>capi.h</code> header as of
-October 2016, which interferes with the ability for builds of FFmpeg to use
-MSVC-built binaries of AviSynth. Until this is resolved, you can make sure
-a known good version is installed by checking out a version from before
-the regression occurred:
-</p>
-<p><code>git clone -b MT git://github.com/AviSynth/AviSynthPlus.git <br>
-cd AviSynthPlus <br>
-git checkout -b oldheader b4f292b4dbfad149697fb65c6a037bb3810813f9 <br>
-make install PREFIX=/install/prefix</code>
-</p></div>
-<div class="float alert alert-info">
-<p>AviSynth and AvxSynth are loaded dynamically.  Distributors can build FFmpeg
-with <code>--enable-avisynth</code>, and the binaries will work regardless of the
-end user having AviSynth or AvxSynth installed - they&rsquo;ll only need to be
-installed to use AviSynth scripts (obviously).
-</p></div>
-<a name="Intel-QuickSync-Video"></a>
-<h2 class="section"><a href="general.html#toc-Intel-QuickSync-Video">1.19 Intel QuickSync Video</a></h2>
-
-<p>FFmpeg can use Intel QuickSync Video (QSV) for accelerated encoding and decoding
-of multiple codecs. To use QSV, FFmpeg must be linked against the <code>libmfx</code>
-dispatcher, which loads the actual decoding libraries.
-</p>
-<p>The dispatcher is open source and can be downloaded from
-<a href="https://github.com/lu-zero/mfx_dispatch.git">https://github.com/lu-zero/mfx_dispatch.git</a>. FFmpeg needs to be configured
-with the <code>--enable-libmfx</code> option and <code>pkg-config</code> needs to be able to
-locate the dispatcher&rsquo;s <code>.pc</code> files.
-</p>
-<a name="AMD-VCE"></a>
-<h2 class="section"><a href="general.html#toc-AMD-VCE">1.20 AMD VCE</a></h2>
-
-<p>FFmpeg can use the AMD Advanced Media Framework library for accelerated H.264
-and HEVC encoding on VCE enabled hardware under Windows.
-</p>
-<p>To enable support you must obtain the AMF framework header files from
-<a href="https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git">https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git</a>.
-</p>
-<p>Create an <code>AMF/</code> directory in the system include path.
-Copy the contents of <code>AMF/amf/public/include/</code> into that directory.
-Then configure FFmpeg with <code>--enable-amf</code>.
-</p>
-
 <a name="Supported-File-Formats_002c-Codecs-or-Features"></a>
 <h1 class="chapter"><a href="general.html#toc-Supported-File-Formats_002c-Codecs-or-Features">2 Supported File Formats, Codecs or Features</a></h1>
 
@@ -479,6 +525,7 @@ library:
 <tr><td width="40%">id RoQ</td><td width="10%">X</td><td width="10%">X</td><td width="40%">Used in Quake III, Jedi Knight 2 and other computer games.</td></tr>
 <tr><td width="40%">IEC61937 encapsulation</td><td width="10%">X</td><td width="10%">X</td></tr>
 <tr><td width="40%">IFF</td><td width="10%"></td><td width="10%">X</td><td width="40%">Interchange File Format</td></tr>
+<tr><td width="40%">IFV</td><td width="10%"></td><td width="10%">X</td><td width="40%">A format used by some old CCTV DVRs.</td></tr>
 <tr><td width="40%">iLBC</td><td width="10%">X</td><td width="10%">X</td></tr>
 <tr><td width="40%">Interplay MVE</td><td width="10%"></td><td width="10%">X</td><td width="40%">Format used in various Interplay computer games.</td></tr>
 <tr><td width="40%">Iterated Systems ClearVideo</td><td width="10%"></td><td width="10%">X</td><td width="40%">I-frames only</td></tr>
@@ -652,7 +699,7 @@ library:
 <tr><td width="40%">Psygnosis YOP</td><td width="10%"></td><td width="10%">X</td></tr>
 </table>
 
-<p><code>X</code> means that encoding (resp. decoding) is supported.
+<p><code>X</code> means that the feature in that column (encoding / decoding) is supported.
 </p>
 <a name="Image-Formats"></a>
 <h2 class="section"><a href="general.html#toc-Image-Formats">2.2 Image Formats</a></h2>
@@ -696,7 +743,7 @@ following image formats are supported:
 <tr><td width="40%">XWD</td><td width="10%">X</td><td width="10%">X</td><td width="40%">X Window Dump image format</td></tr>
 </table>
 
-<p><code>X</code> means that encoding (resp. decoding) is supported.
+<p><code>X</code> means that the feature in that column (encoding / decoding) is supported.
 </p>
 <p><code>E</code> means that support is provided through an external library.
 </p>
@@ -725,7 +772,7 @@ following image formats are supported:
 <tr><td width="40%">Auravision Aura 2</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">Autodesk Animator Flic video</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">Autodesk RLE</td><td width="10%"></td><td width="10%">X</td><td width="40%">fourcc: AASC</td></tr>
-<tr><td width="40%">AV1</td><td width="10%"></td><td width="10%">E</td><td width="40%">Supported through external library libaom</td></tr>
+<tr><td width="40%">AV1</td><td width="10%">E</td><td width="10%">E</td><td width="40%">Supported through external libraries libaom and libdav1d</td></tr>
 <tr><td width="40%">Avid 1:1 10-bit RGB Packer</td><td width="10%">X</td><td width="10%">X</td><td width="40%">fourcc: AVrp</td></tr>
 <tr><td width="40%">AVS (Audio Video Standard) video</td><td width="10%"></td><td width="10%">X</td><td width="40%">Video encoding used by the Creature Shock game.</td></tr>
 <tr><td width="40%">AYUV</td><td width="10%">X</td><td width="10%">X</td><td width="40%">Microsoft uncompressed packed 4:4:4:4</td></tr>
@@ -828,6 +875,7 @@ following image formats are supported:
 <tr><td width="40%">Nintendo Gamecube THP video</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">NuppelVideo/RTjpeg</td><td width="10%"></td><td width="10%">X</td><td width="40%">Video encoding used in NuppelVideo files.</td></tr>
 <tr><td width="40%">On2 VP3</td><td width="10%"></td><td width="10%">X</td><td width="40%">still experimental</td></tr>
+<tr><td width="40%">On2 VP4</td><td width="10%"></td><td width="10%">X</td><td width="40%">fourcc: VP40</td></tr>
 <tr><td width="40%">On2 VP5</td><td width="10%"></td><td width="10%">X</td><td width="40%">fourcc: VP50</td></tr>
 <tr><td width="40%">On2 VP6</td><td width="10%"></td><td width="10%">X</td><td width="40%">fourcc: VP60,VP61,VP62</td></tr>
 <tr><td width="40%">On2 VP7</td><td width="10%"></td><td width="10%">X</td><td width="40%">fourcc: VP70,VP71</td></tr>
@@ -891,7 +939,7 @@ following image formats are supported:
 <tr><td width="40%">Zip Motion Blocks Video</td><td width="10%">X</td><td width="10%">X</td><td width="40%">Encoder works only in PAL8.</td></tr>
 </table>
 
-<p><code>X</code> means that encoding (resp. decoding) is supported.
+<p><code>X</code> means that the feature in that column (encoding / decoding) is supported.
 </p>
 <p><code>E</code> means that support is provided through an external library.
 </p>
@@ -970,10 +1018,10 @@ following image formats are supported:
 <tr><td width="40%">DPCM Sierra Online</td><td width="10%"></td><td width="10%">X</td><td width="40%">Used in Sierra Online game audio files.</td></tr>
 <tr><td width="40%">DPCM Sol</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">DPCM Xan</td><td width="10%"></td><td width="10%">X</td><td width="40%">Used in Origin&rsquo;s Wing Commander IV AVI files.</td></tr>
-<tr><td width="40%">DSD (Direct Stream Digitial), least significant bit first</td><td width="10%"></td><td width="10%">X</td></tr>
-<tr><td width="40%">DSD (Direct Stream Digitial), most significant bit first</td><td width="10%"></td><td width="10%">X</td></tr>
-<tr><td width="40%">DSD (Direct Stream Digitial), least significant bit first, planar</td><td width="10%"></td><td width="10%">X</td></tr>
-<tr><td width="40%">DSD (Direct Stream Digitial), most significant bit first, planar</td><td width="10%"></td><td width="10%">X</td></tr>
+<tr><td width="40%">DSD (Direct Stream Digital), least significant bit first</td><td width="10%"></td><td width="10%">X</td></tr>
+<tr><td width="40%">DSD (Direct Stream Digital), most significant bit first</td><td width="10%"></td><td width="10%">X</td></tr>
+<tr><td width="40%">DSD (Direct Stream Digital), least significant bit first, planar</td><td width="10%"></td><td width="10%">X</td></tr>
+<tr><td width="40%">DSD (Direct Stream Digital), most significant bit first, planar</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">DSP Group TrueSpeech</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">DST (Direct Stream Transfer)</td><td width="10%"></td><td width="10%">X</td></tr>
 <tr><td width="40%">DV audio</td><td width="10%"></td><td width="10%">X</td></tr>
@@ -1064,7 +1112,7 @@ following image formats are supported:
 <tr><td width="40%">Xbox Media Audio 2</td><td width="10%"></td><td width="10%">X</td></tr>
 </table>
 
-<p><code>X</code> means that encoding (resp. decoding) is supported.
+<p><code>X</code> means that the feature in that column (encoding / decoding) is supported.
 </p>
 <p><code>E</code> means that support is provided through an external library.
 </p>

@@ -247,7 +247,7 @@
                   <td>
                      
                      <p>
-                        Estableix el codi d'idioma ISO639-2 que s'escriurà en cada entrada de
+                        Estableix el codi d'idioma ISO 639-2 que s'escriurà en cada entrada de
                         capítol. Per omissió és «<span class="literal">eng</span>». Per a més detalls, vegeu
                         més endavant la secció sobre <a href="#mkvmerge.chapters">els
                            capítols</a>.
@@ -2070,7 +2070,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Estableix el codi d'idioma ISO639-2 que s'escriurà en cada entrada de
+                        Estableix el codi d'idioma ISO 639-2 que s'escriurà en cada entrada de
                         capítol. Aquesta opció es pot emprar per a fitxers d'origen que continguin
                         capítols, però no la informació sobre els idiomes d'aquests, p. ex., per a
                         fitxers MP4 i OGM.
@@ -2243,9 +2243,9 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      
                      <p>
                         Estableix l'idioma de la pista indicada (vegeu la secció sobre <a href="#mkvmerge.track_ids">els ID de les pistes</a>). Estan permesos
-                        tant els codis d'idioma ISO639-2 com els codis de país ISO639-1. Els codis
+                        tant els codis d'idioma ISO 639-2 com els codis de país ISO 639-1. Els codis
                         de país seran convertits a codis d'idioma automàticament. Tots els idiomes
-                        inclosos els seus codis ISO639-2 es poden llistar amb l'opció <a href="#mkvmerge.description.list_languages">--list-languages</a>.
+                        inclosos els seus codis ISO 639-2 es poden llistar amb l'opció <a href="#mkvmerge.description.list_languages">--list-languages</a>.
                         
                      </p>
                      
@@ -2400,7 +2400,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      <p>
                         Si la durada per omissió no és forçada, llavors el mkvmerge intentarà
                         derivar la durada per omissió de la pista des del contenidor i/o flux de
-                        bits codificat per a certs tipus de pista, p. ex., AVC/h.264 o MPEG-2.
+                        bits codificat per a certs tipus de pista, p. ex., AVC/H.264 o MPEG-2.
                         
                      </p>
                      
@@ -2433,7 +2433,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>Per ara, només s'ha implementat per a pistes de vídeo AVC/h.264.</p>
+                        <p>Per ara, només s'ha implementat per a pistes de vídeo AVC/H.264.</p>
                         
                      </div>
                      
@@ -2446,11 +2446,10 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      <p>
                         Força la longitud de la mida <span class="abbrev">NALU</span> en
                         <span class="parameter">n</span> bytes. Aquest paràmetre només s'empra si s'empra
-                        l'empaquetador de fluxos elementals
-                        <span class="foreignphrase">AVC/h.264</span>. Si s'omet, per omissió emprarà 4
-                        bytes, però hi ha fitxers que contenen fotogrames o talls els quals són tots
-                        menors que 65536 bytes. Per a aquests fitxers, podeu emprar aquest paràmetre
-                        i disminuir la mida a 2.
+                        l'empaquetador de fluxos elementals AVC/H.264. Si s'omet, per omissió
+                        emprarà 4 bytes, però hi ha fitxers que contenen fotogrames o talls els
+                        quals són tots menors que 65536 bytes. Per a aquests fitxers, podeu emprar
+                        aquest paràmetre i disminuir la mida a 2.
                         
                      </p>
                      
@@ -2471,9 +2470,8 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      <p>
                         El mètode de compressió
                         «<span class="literal">mpeg4_p2</span>»/«<span class="literal">mpeg4p2</span>» és un mètode
-                        especial anomenat «<span class="foreignphrase">eliminador de la
-                           capçalera</span>» que només està disponible per a les pistes de
-                        vídeo <span class="abbrev">MPEG4</span> part 2.
+                        especial anomenat «eliminador de la capçalera» que només està disponible per
+                        a les pistes de vídeo <span class="abbrev">MPEG4</span> part 2.
                         
                      </p>
                      
@@ -2493,7 +2491,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3467">2.8. Opcions que només s'apliquen a les pistes de vídeo</a></h2>
+         <h2><a name="d4e3461">2.8. Opcions que només s'apliquen a les pistes de vídeo</a></h2>
          
          
          
@@ -2512,8 +2510,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      
                      <p>
                         Força el <span class="classname">FourCC</span> al valor especificat. Només funciona
-                        per a les pistes de vídeo en el <span class="foreignphrase">mode compatibilitat amb
-                           MS</span>.
+                        per a les pistes de vídeo en el mode compatibilitat amb MS.
                         
                      </p>
                      
@@ -2981,7 +2978,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4291">2.9. Opcions que només s'apliquen a les pistes de subtítols de text</a></h2>
+         <h2><a name="d4e4282">2.9. Opcions que només s'apliquen a les pistes de subtítols de text</a></h2>
          
          
          
@@ -3024,7 +3021,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4331">2.10. Altres opcions</a></h2>
+         <h2><a name="d4e4322">2.10. Altres opcions</a></h2>
          
          
          
@@ -3106,7 +3103,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -3162,7 +3159,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Llista tots els idiomes i el seu codi ISO639-2 que es poden emprar amb
+                        Llista tots els idiomes i el seu codi ISO 639-2 que es poden emprar amb
                         l'opció <a href="#mkvmerge.description.language">--language</a>.
                         
                      </p>
@@ -3646,7 +3643,7 @@ $ mkvmerge -o MM-completa.mkv meva_peli-amb-so.mkv meva_peli-afegeix-àudio.ogg<
          
          <p>
             Si voleu especificar l'idioma per a una pista concreta, això és realment
-            fàcil. Primer cerqueu el codi ISO639-2 pel vostre idioma. El <span class="productname">mkvmerge</span>(1) pot
+            fàcil. Primer cerqueu el codi ISO 639-2 pel vostre idioma. El <span class="productname">mkvmerge</span>(1) pot
             llistar tots aquests codis:
             
          </p>
@@ -3850,10 +3847,10 @@ ID de la pista 1: audio (A_MPEG/L3)</pre>
          
          <p>
             El <span class="productname">mkvmerge</span>(1) realitzarà automàticament aquesta conversió en funció de la
-            presència d'un <span class="foreignphrase">marcador d'ordre de byte</span>
-            (abreujat: <span class="abbrev">BOM</span>) o de la configuració regional del
-            sistema. Com el joc de caràcters es dedueix de la configuració regional,
-            dependrà del sistema operatiu on s'executi el <span class="productname">mkvmerge</span>(1).
+            presència d'un marcador d'ordre de byte (abreujat: <span class="abbrev">BOM</span>) o
+            de la configuració regional del sistema. Com el joc de caràcters es dedueix
+            de la configuració regional, dependrà del sistema operatiu on s'executi el
+            <span class="productname">mkvmerge</span>(1).
             
          </p>
          
@@ -3876,7 +3873,7 @@ ID de la pista 1: audio (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Sistemes Linux i Unix, inclòs el Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Sistemes Linux i Unix, inclòs el macOS</a></h2>
          
          
          
@@ -4041,8 +4038,8 @@ ID de la pista 1: audio (A_MPEG/L3)</pre>
             Un fitxer d'opcions amb dades en el format JSON. El seu contingut haurà de
             ser una matriu JSON vàlida que consisteixi únicament de cadenes JSON. La
             codificació del fitxer haurà de ser en UTF-8. El fitxer no podrà començar
-            amb un <span class="foreignphrase">marcador d'ordre de bytes</span>
-            (<span class="abbrev">BOM</span>), però si hi és, serà omès.
+            amb un marcador d'ordre de bytes (<span class="abbrev">BOM</span>), però si hi és, serà
+            omès.
             
          </p>
          
@@ -4293,11 +4290,10 @@ ID de la pista 1: audio (A_MPEG/L3)</pre>
          
          <p>
             El <span class="productname">mkvmerge</span>(1) admet dos tipus de fitxers de capítols com a entrada. El
-            primer format, anomenat «<span class="foreignphrase">format de capítols
-               senzill</span>», és el mateix format que s'espera en les eines
-            <span class="abbrev">OGM</span>. El segon format es basa en el format de capítols en
-            <span class="abbrev">XML</span>, el qual implementa totes les funcionalitats de capítols del
-            <span class="productname">Matroska</span><sup>(tm)</sup>.
+            primer format, anomenat «format de capítols senzill», és el mateix format
+            que s'espera en les eines <span class="abbrev">OGM</span>. El segon format es basa en
+            el format de capítols en <span class="abbrev">XML</span>, el qual implementa totes les funcionalitats
+            de capítols del <span class="productname">Matroska</span><sup>(tm)</sup>.
             
          </p>
          
@@ -4438,7 +4434,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
           ChapterProcessData (binari)</pre>
          
          
-         <h2><a name="d4e6058">13.3. Notes generals</a></h2>
+         <h2><a name="d4e6040">13.3. Notes generals</a></h2>
          
          
          <p>
@@ -4470,7 +4466,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
          
          
          
-         <h2><a name="d4e6123">14.1. Introducció</a></h2>
+         <h2><a name="d4e6105">14.1. Introducció</a></h2>
          
          
          
@@ -4614,12 +4610,11 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
          
          
          <p>
-            Altrament, les dades s'esperen codificades en
-            <span class="foreignphrase">Base64</span>. Aquesta és una codificació que
-            transforma les dades binàries en un conjunt limitat de caràcters
-            <span class="abbrev">ASCII</span> i s'empra, p. ex., en programes de correu
-            electrònic. El <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> generarà dades codificades en
-            <span class="foreignphrase">Base64</span> pels elements binaris.
+            Altrament, les dades s'esperen codificades en Base64. Aquesta és una
+            codificació que transforma les dades binàries en un conjunt limitat de
+            caràcters <span class="abbrev">ASCII</span> i s'empra, p. ex., en programes de correu
+            electrònic. El <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> generarà dades codificades en Base64 pels
+            elements binaris.
             
          </p>
          
@@ -4818,7 +4813,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
          </p>
          
          
-         <h2><a name="d4e6575">17.1.  Format v1 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6551">17.1.  Format v1 pel fitxer del codi de temps</a></h2>
          
          
          <p>
@@ -4839,7 +4834,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6599">17.2.  Format v2 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6575">17.2.  Format v2 pel fitxer del codi de temps</a></h2>
          
          
          
@@ -4859,7 +4854,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6614">17.3.  Format v3 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6590">17.3.  Format v3 pel fitxer del codi de temps</a></h2>
          
          
          <p>
@@ -4883,7 +4878,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6632">17.4.  Format v4 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6608">17.4.  Format v4 pel fitxer del codi de temps</a></h2>
          
          
          <p>

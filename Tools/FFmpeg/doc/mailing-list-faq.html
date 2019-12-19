@@ -10,7 +10,7 @@
 <meta name="description" content="FFmpeg Mailing List FAQ: ">
 <meta name="keywords" content="FFmpeg documentation : FFmpeg Mailing List FAQ: ">
 <meta name="Generator" content="texi2html 5.0">
-<!-- Created on April 26, 2019 by texi2html 5.0 -->
+<!-- Created on September 15, 2019 by texi2html 5.0 -->
 <!--
 texi2html was written by: 
             Lionel Cons <Lionel.Cons@cern.ch> (original author)
@@ -67,6 +67,8 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
     <li><a name="toc-Where-can-I-upload-sample-files_003f" href="#Where-can-I-upload-sample-files_003f">5.4 Where can I upload sample files?</a></li>
     <li><a name="toc-Will-I-receive-spam-if-I-send-and_002for-subscribe-to-a-mailing-list_003f" href="#Will-I-receive-spam-if-I-send-and_002for-subscribe-to-a-mailing-list_003f">5.5 Will I receive spam if I send and/or subscribe to a mailing list?</a></li>
     <li><a name="toc-How-do-I-filter-mailing-list-messages_003f" href="#How-do-I-filter-mailing-list-messages_003f">5.6 How do I filter mailing list messages?</a></li>
+    <li><a name="toc-How-do-I-disable-mail-delivery-without-unsubscribing_003f-1" href="#How-do-I-disable-mail-delivery-without-unsubscribing_003f-1">5.7 How do I disable mail delivery without unsubscribing?</a></li>
+    <li><a name="toc-Why-is-the-mailing-list-munging-my-address_003f-1" href="#Why-is-the-mailing-list-munging-my-address_003f-1">5.8 Why is the mailing list munging my address?</a></li>
   </ul></li>
   <li><a name="toc-Rules-and-Etiquette" href="#Rules-and-Etiquette">6 Rules and Etiquette</a>
   <ul class="no-bullet">
@@ -76,7 +78,8 @@ Send bugs and suggestions to <texi2html-bug@nongnu.org>
   <ul class="no-bullet">
     <li><a name="toc-Why-am-I-not-receiving-any-messages_003f" href="#Why-am-I-not-receiving-any-messages_003f">7.1 Why am I not receiving any messages?</a></li>
     <li><a name="toc-Why-are-my-sent-messages-not-showing-up_003f" href="#Why-are-my-sent-messages-not-showing-up_003f">7.2 Why are my sent messages not showing up?</a></li>
-    <li><a name="toc-Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1" href="#Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1">7.3 Who do I contact if I have a problem with the mailing list?</a></li>
+    <li><a name="toc-Why-do-I-keep-getting-unsubscribed-from-ffmpeg_002ddevel_003f-1" href="#Why-do-I-keep-getting-unsubscribed-from-ffmpeg_002ddevel_003f-1">7.3 Why do I keep getting unsubscribed from ffmpeg-devel?</a></li>
+    <li><a name="toc-Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1" href="#Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1">7.4 Who do I contact if I have a problem with the mailing list?</a></li>
   </ul>
 </li>
 </ul>
@@ -142,10 +145,6 @@ Email <a href="mailto:ffmpeg-devel@ffmpeg.org">ffmpeg-devel@ffmpeg.org</a> to se
 ffmpeg-devel mailing list.
 </li></ul>
 
-<p>Note that the ffmpeg-devel mailing list does not require you to subscribe
-to send a message or patch, but ffmpeg-user and libav-user do require
-subscription.
-</p>
 <a name="Subscribing-_002f-Unsubscribing"></a>
 <h1 class="chapter"><a href="mailing-list-faq.html#toc-Subscribing-_002f-Unsubscribing">2 Subscribing / Unsubscribing</a></h1>
 
@@ -175,6 +174,9 @@ the <em>Unsubscribe or edit options</em> button.
 <p>Please avoid asking a mailing list admin to unsubscribe you unless you
 are absolutely unable to do so by yourself. See <a href="#Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f">Who do I contact if I have a problem with the mailing list?</a>
 </p>
+<p>Note that it is possible to temporarily halt message delivery (vacation mode).
+See <a href="#How-do-I-disable-mail-delivery-without-unsubscribing_003f">How do I disable mail delivery without unsubscribing?</a>
+</p>
 <a name="Moderation-Queue"></a>
 <h1 class="chapter"><a href="mailing-list-faq.html#toc-Moderation-Queue">3 Moderation Queue</a></h1>
 <p><a name="Why-is-my-message-awaiting-moderator-approval_003f"></a>
@@ -199,7 +201,8 @@ or is abusive towards others).
 <a name="How-long-does-it-take-for-my-message-in-the-moderation-queue-to-be-approved_003f"></a>
 <h2 class="section"><a href="mailing-list-faq.html#toc-How-long-does-it-take-for-my-message-in-the-moderation-queue-to-be-approved_003f">3.2 How long does it take for my message in the moderation queue to be approved?</a></h2>
 
-<p>The queue is usually checked daily to several times a week.
+<p>The queue is not checked on a regular basis. You can ask on the
+<tt>#ffmpeg-devel</tt> IRC channel on Freenode for someone to approve your message.
 </p>
 <p><a name="How-do-I-delete-my-message-in-the-moderation-queue_003f"></a>
 </p><a name="How-do-I-delete-my-message-in-the-moderation-queue_003f-1"></a>
@@ -247,11 +250,12 @@ libav-user mailing lists.
 
 <p>You can ask for help in the official <tt>#ffmpeg</tt> IRC channel on Freenode.
 </p>
-<p>Some users prefer the third-party Nabble interface which presents the
-mailing lists in a typical forum layout.
+<p>Some users prefer the third-party <a href="http://www.ffmpeg-archive.org/">Nabble</a>
+interface which presents the mailing lists in a typical forum layout.
 </p>
-<p>There are also numerous third-party help sites such as Super User and
-r/ffmpeg on reddit.
+<p>There are also numerous third-party help sites such as
+<a href="https://superuser.com/tags/ffmpeg">Super User</a> and
+<a href="https://www.reddit.com/r/ffmpeg/">r/ffmpeg on reddit</a>.
 </p>
 <p><a name="What-is-top_002dposting_003f"></a>
 </p><a name="What-is-top_002dposting_003f-1"></a>
@@ -274,7 +278,7 @@ instead of attaching them.
 <p>Anywhere that is not too annoying for us to use.
 </p>
 <p>Google Drive and Dropbox are acceptable if you need a file host, and
-0x0.st is good for files under 256 MiB.
+<a href="https://0x0.st/">0x0.st</a> is good for files under 256 MiB.
 </p>
 <p>Small, short samples are preferred if possible.
 </p>
@@ -322,6 +326,56 @@ to try to prevent this.
 or headers.
 </p>
 <p>You can then filter the mailing list messages to their own folder.
+</p>
+<p><a name="How-do-I-disable-mail-delivery-without-unsubscribing_003f"></a>
+</p><a name="How-do-I-disable-mail-delivery-without-unsubscribing_003f-1"></a>
+<h2 class="section"><a href="mailing-list-faq.html#toc-How-do-I-disable-mail-delivery-without-unsubscribing_003f-1">5.7 How do I disable mail delivery without unsubscribing?</a></h2>
+
+<p>Sometimes you may want to temporarily stop receiving all mailing list
+messages. This &quot;vacation mode&quot; is simple to do:
+</p>
+<ol>
+<li>
+Go to the <a href="https://lists.ffmpeg.org/mailman/listinfo/ffmpeg-user/">ffmpeg-user mailing list info page</a>
+
+</li><li>
+Enter your email address in the box at very bottom of the page and click the
+<em>Unsubscribe or edit options</em> box.
+
+</li><li>
+Enter your password and click the <em>Log in</em> button.
+
+</li><li>
+Look for the <em>Mail delivery</em> option. Here you can disable/enable mail
+delivery. If you check <em>Set globally</em> it will apply your choice to all
+other FFmpeg mailing lists you are subscribed to.
+</li></ol>
+
+<p>Alternatively, from your subscribed address, send a message to <a href="mailto:ffmpeg-user-request@ffmpeg.org">ffmpeg-user-request@ffmpeg.org</a>
+with the subject <em>set delivery off</em>. To re-enable mail delivery send a
+message to <a href="mailto:ffmpeg-user-request@ffmpeg.org">ffmpeg-user-request@ffmpeg.org</a> with the subject
+<em>set delivery on</em>.
+</p>
+<p><a name="Why-is-the-mailing-list-munging-my-address_003f"></a>
+</p><a name="Why-is-the-mailing-list-munging-my-address_003f-1"></a>
+<h2 class="section"><a href="mailing-list-faq.html#toc-Why-is-the-mailing-list-munging-my-address_003f-1">5.8 Why is the mailing list munging my address?</a></h2>
+
+<p>This is due to subscribers that use an email service with a DMARC reject policy
+which adds difficulties to mailing list operators.
+</p>
+<p>The mailing list must re-write (munge) the <em>From:</em> header for such users;
+otherwise their email service will reject and bounce the message resulting in
+automatic unsubscribing from the mailing list.
+</p>
+<p>When sending a message these users will see <em>via &lt;mailing list name&gt;</em>
+added to their name and the <em>From:</em> address munged to the address of
+the particular mailing list.
+</p>
+<p>If you want to avoid this then please use a different email service.
+</p>
+<p>Note that ffmpeg-devel does not apply any munging as it causes issues with
+patch authorship. As a result users with an email service with a DMARC reject
+policy may be automatically unsubscribed due to rejected and bounced messages.
 </p>
 <a name="Rules-and-Etiquette"></a>
 <h1 class="chapter"><a href="mailing-list-faq.html#toc-Rules-and-Etiquette">6 Rules and Etiquette</a></h1>
@@ -426,9 +480,19 @@ form a multi-part message is recommended by email standards.
 Check your spam folder.
 </li></ul>
 
+<p><a name="Why-do-I-keep-getting-unsubscribed-from-ffmpeg_002ddevel_003f"></a>
+</p><a name="Why-do-I-keep-getting-unsubscribed-from-ffmpeg_002ddevel_003f-1"></a>
+<h2 class="section"><a href="mailing-list-faq.html#toc-Why-do-I-keep-getting-unsubscribed-from-ffmpeg_002ddevel_003f-1">7.3 Why do I keep getting unsubscribed from ffmpeg-devel?</a></h2>
+
+<p>Users with an email service that has a DMARC reject or quarantine policy may be
+automatically unsubscribed from the ffmpeg-devel mailing list due to the mailing
+list messages being continuously rejected and bounced back.
+</p>
+<p>Consider using a different email service.
+</p>
 <p><a name="Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f"></a>
 </p><a name="Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1"></a>
-<h2 class="section"><a href="mailing-list-faq.html#toc-Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1">7.3 Who do I contact if I have a problem with the mailing list?</a></h2>
+<h2 class="section"><a href="mailing-list-faq.html#toc-Who-do-I-contact-if-I-have-a-problem-with-the-mailing-list_003f-1">7.4 Who do I contact if I have a problem with the mailing list?</a></h2>
 
 <p>Send a message to <a href="mailto:ffmpeg-user-owner@ffmpeg.org">ffmpeg-user-owner@ffmpeg.org</a>.
 </p>

@@ -14,7 +14,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--Process --Folders \"\\\\STORAGE\\Media\\Series\" \"\\\\STORAGE\\Media\\Movies\""
+      "commandLineArgs": "--Process --Folders \"\\\\STORAGE\\Media\\Series\\Dirty Jobs\""
     },
     "WriteSideCar": {
       "commandName": "Project",

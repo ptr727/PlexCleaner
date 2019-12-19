@@ -40,8 +40,7 @@
          <h1><a name="mkvmerge.synopsis">1. 書式</a></h1>
          
          
-         <div class="cmdsynopsis"><span class="commandname">mkvmerge</span> global options {-o
-            out} options1 {file1} options2 {file2} @options-file.json
+         <div class="cmdsynopsis"><span class="commandname">mkvmerge</span> 広域オプション {-o 出力} オプション1 {ファイル1} オプション2 {ファイル2} @オプションファイル.json
          </div>
          
          <h1><a name="mkvmerge.description">2. 説明</a></h1>
@@ -106,24 +105,20 @@
                   <td class="varlistoption"><span class="option">-w</span>, <span class="option">--webm</span></td>
                   <td>
                      
-                     <p>Create a WebM compliant file. This is also turned on if the output file
-                        name's extension is "webm". This mode enforces several
-                        restrictions. The only allowed codecs are VP8, VP9 video and Opus, Vorbis
-                        audio tracks. The DocType header item is changed to "webm".
+                     <p>WebMに準じたファイルを生成します。出力ファイル名の拡張子が「webm」の場合も有効になります。このモードでは幾つかの制限があります。VP8・VP9の動画及びOpus・Vorbis音声トラックのみがコーデックとして許容されます。DocTypeヘッダー項目は「webm」に変更されます。
                         
                      </p>
                      
                      
                      <p>
-                        For chapters and tags only a subset of elements are allowed. <span class="productname">mkvmerge</span>(1) will
-                        automatically remove all elements not allowed by the specification.
+                        チャプター及びタグに対しては、要素の部分集合のみが許容されます。<span class="productname">mkvmerge</span>(1)は仕様が許可していない項目を全て消去します。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.title"><span class="option">--title</span> <span class="parameter">title</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.title"><span class="option">--title</span> <span class="parameter">タイトル</span></a></td>
                   <td>
                      
                      <p>出力ファイル全体のタイトルを指定します(例:映画のタイトルなど)。</p>
@@ -131,16 +126,14 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">--default-language</span> <span class="parameter">language-code</span></td>
+                  <td class="varlistoption"><span class="option">--default-language</span> <span class="parameter">言語コード</span></td>
                   <td>
                      
-                     <p>Sets the default language code that will be used for tracks for which no
-                        language is set with the <a href="#mkvmerge.description.language">--language</a>
-                        option and for which the source container doesn't provide a language.
+                     <p><a href="#mkvmerge.description.language">--language</a>オプションで言語が設定されていなかったり、ソースコンテナによって言語が提供されていないトラックで用いられる、既定の言語コードを設定します。
                      </p>
                      
                      
-                     <p>The default language code is '<span class="literal">und</span>' for 'undefined'.
+                     <p>既定の言語コードは「<span class="literal">und</span>」つまり「未定義」です。
                      </p>
                      
                   </td>
@@ -150,7 +143,7 @@
          
          
          
-         <h2><a name="d4e260">2.2. セグメント情報の扱い (グローバルオプション)</a></h2>
+         <h2><a name="d4e259">2.2. セグメント情報の扱い (グローバルオプション)</a></h2>
          
          
          
@@ -190,8 +183,7 @@
                      
                      
                      <p>
-                        If SID starts with = then its rest is interpreted as the name of a Matroska
-                        file whose segment UID is read and used.
+                        SIDが=で始まる場合、それ以降は、セグメントUIDが読み取られ使用されたMatroskaファイルの名前として解釈されます。
                         
                      </p>
                      
@@ -208,7 +200,7 @@
          
          
          
-         <h2><a name="d4e329">2.3. チャプタ及びタグの扱い (グローバルオプション)</a></h2>
+         <h2><a name="d4e328">2.3. チャプタ及びタグの扱い (グローバルオプション)</a></h2>
          
          
          
@@ -225,7 +217,8 @@
                   <td>
                      
                      <p>
-                        各チャプタのエントリに書き込むISO639-2言語コードを指定します。デフォルトは'<span class="literal">eng</span>'です。詳細は<a href="#mkvmerge.chapters">チャプタ</a>のセクションを参照してください。
+                        各チャプタのエントリに書き込むJIS X
+                        0412-2言語コードを指定します。デフォルトは'<span class="literal">eng</span>'です。詳細は<a href="#mkvmerge.chapters">チャプタ</a>のセクションを参照してください。
                         
                      </p>
                      
@@ -237,20 +230,18 @@
                      
                      
                      <p>
-                        The language set with this option is also used when chapters are generated
-                        with the <a href="#mkvmerge.description.generate_chapters">--generate-chapters
-                           option</a>.
+                        このオプションで指定された言語は<a href="#mkvmerge.description.generate_chapters">--generate-chaptersオプション</a>で生成されたチャプターにも使用されます。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.chapter_charset"><span class="option">--chapter-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.chapter_charset"><span class="option">--chapter-charset</span> <span class="parameter">文字集合</span></a></td>
                   <td>
                      
                      <p>
-                        シンプルチャプタファイルをUTF-8に変換する際の文字コードを指定します。<span class="productname">mkvmerge</span>(1)の文字コード変換については、<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字コード</a>のセクションを参照してください。
+                        シンプルチャプタファイルをUTF-8に変換する際の文字集合を指定します。<span class="productname">mkvmerge</span>(1)の文字集合変換については、<a href="#mkvmerge.text_files_and_charsets">テキストファイルと文字集合</a>のセクションを参照してください。
                         
                      </p>
                      
@@ -563,7 +554,7 @@
          
          
          
-         <h2><a name="d4e831">2.4. 出力一般のコントロール（高度なグローバルオプション）</a></h2>
+         <h2><a name="d4e830">2.4. 出力一般のコントロール（高度なグローバルオプション）</a></h2>
          
          
          
@@ -716,7 +707,7 @@
          
          
          
-         <h2><a name="d4e1075">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
+         <h2><a name="d4e1074">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
          
          
          
@@ -1146,7 +1137,7 @@
                            
                            
                            <p>
-                              The '<span class="literal">frames:</span>' prefix must not be omitted.
+                              接頭辞「<span class="literal">frames:</span>」は省略できません。
                               
                            </p>
                            
@@ -1180,46 +1171,40 @@
                         <li>
                            
                            <p>
-                              Splitting before specific chapters.
+                              指定した各チャプタで分割します。
                               
                            </p>
                            
                            
                            <p>
-                              Syntax: <span class="option">--split</span> <span class="literal">chapters:all</span> or
-                              <span class="option">--split</span>
+                              書式: <span class="option">--split</span>
+                              <span class="literal">chapters:all</span>又は<span class="option">--split</span>
                               <span class="literal">chapters:</span><span class="parameter">A</span>[,<span class="parameter">B</span>[,<span class="parameter">C</span>...]]
                               
                            </p>
                            
                            
                            <p>
-                              Example: <span class="code">--split chapters:5,8</span>
+                              例: <span class="code">--split chapters:5,8</span>
                               
                            </p>
                            
                            
                            <p>
-                              The parameters <span class="parameter">A</span>, <span class="parameter">B</span>,
-                              <span class="parameter">C</span> etc must all be positive integers.  Numbering
-                              starts at 1.  The list of chapter numbers is separated by commas.  Splitting
-                              will occur right before the first key frame whose timestamp is equal to or
-                              bigger than the start timestamp for the chapters whose numbers are listed.
-                              A chapter starting at 0s is never considered for splitting and discarded
-                              silently.
+                              <span class="parameter">A</span>, <span class="parameter">B</span>,
+                              <span class="parameter">C</span>等のパラメータは正整数でなくてはなりません。番号は1始まりです。複数のチャプタ番号はコンマで区切られます。分割が行なわれるのは、指定された番号の各チャプタが開始するタイムスタンプと等しい又はより大きいタイムスタンプである最初のキーフレームの直前です。0秒から開始するチャプタは分割されることなく、通知なしに破棄されます。
                               
                            </p>
                            
                            
                            <p>
-                              The keyword <span class="literal">all</span> can be used instead of listing all
-                              chapter numbers manually.
+                              全てのチャプタ番号を手で入力する代わりに、<span class="literal">all</span>キーワードが使えます。
                               
                            </p>
                            
                            
                            <p>
-                              The '<span class="literal">chapters:</span>' prefix must not be omitted.
+                              接頭辞「<span class="literal">chapters:</span>」は省略できません。
                               
                            </p>
                            
@@ -1271,8 +1256,7 @@
                      
                      
                      <p>
-                        If SID starts with = then its rest is interpreted as the name of a Matroska
-                        file whose segment UID is read and used.
+                        SIDが=で始まる場合、それ以降は、セグメントUIDが読み取られ使用されたMatroskaファイルの名前として解釈されます。
                         
                      </p>
                      
@@ -1289,8 +1273,7 @@
                      
                      
                      <p>
-                        If SID starts with = then its rest is interpreted as the name of a Matroska
-                        file whose segment UID is read and used.
+                        SIDが=で始まる場合、それ以降は、セグメントUIDが読み取られ使用されたMatroskaファイルの名前として解釈されます。
                         
                      </p>
                      
@@ -1474,7 +1457,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2133">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
+         <h2><a name="d4e2132">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
          
          
          
@@ -1545,7 +1528,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2274">2.7. 各入力ファイルに指定できるオプション</a></h2>
+         <h2><a name="d4e2273">2.7. 各入力ファイルに指定できるオプション</a></h2>
          
          
          
@@ -1807,7 +1790,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">--chapter-charset</span> <span class="parameter">character-set</span></td>
+                  <td class="varlistoption"><span class="option">--chapter-charset</span> <span class="parameter">文字集合</span></td>
                   <td>
                      
                      <p>
@@ -1822,7 +1805,8 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        各チャプタエントリのISO639-2言語コードを指定します。このオプションはソースファイルがチャプタは含みますが、チャプタの言語情報を含まない場合(例:MP4、OGMファイル)に使用されます。
+                        各チャプタエントリのISO
+                        639-2言語コードを指定します。このオプションはソースファイルがチャプタは含みますが、チャプタの言語情報を含まない場合(例:MP4、OGMファイル)に使用されます。
                         
                      </p>
                      
@@ -1951,8 +1935,8 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        指定したトラックの言語を設定します(<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照)。ISO639-2 言語コード及び
-                        ISO639-1 国別コードが使用できます。国別コードは言語コードへ自動的に変換されます。ISO639-2 に含まれる全てのコードは<a href="#mkvmerge.description.list_languages">--list-languages</a>オプションで一覧できます。
+                        指定したトラックの言語を設定します(<a href="#mkvmerge.track_ids">トラックID</a>のセクションも参照)。ISO 639-2 言語コード及び ISO
+                        639-1 国別コードが使用できます。国別コードは言語コードへ自動的に変換されます。ISO 639-2 に含まれる全てのコードは<a href="#mkvmerge.description.list_languages">--list-languages</a>オプションで一覧できます。
                         
                      </p>
                      
@@ -2079,7 +2063,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      
                      
                      <p>
-                        デフォルトのフレーム持続時間が指定されなかった場合は、mkvmergeはそのトラックのデフォルトのフレーム持続時間を、コンテナと、AVC/h.264やMPEG-2のような特定のトラックタイプの場合はエンコードされたビットストリームから取得しようと試みます。
+                        デフォルトのフレーム持続時間が指定されなかった場合は、mkvmergeはそのトラックのデフォルトのフレーム持続時間を、コンテナと、AVC/H.264やMPEG-2のような特定のトラックタイプの場合はエンコードされたビットストリームから取得しようと試みます。
                         
                      </p>
                      
@@ -2110,7 +2094,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>This has only been implemented for AVC/h.264 video tracks so far.</p>
+                        <p>This has only been implemented for AVC/H.264 video tracks so far.</p>
                         
                      </div>
                      
@@ -2121,7 +2105,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        <span class="abbrev">NALU</span>サイズ長を<span class="parameter">n</span>バイトに強制設定します。このパラメータは<span class="foreignphrase">AVC/h.264</span>エレメンタリストリームパケタイザが使用される場合にのみ使用されます。何も指定しなかった時のデフォルト値は4バイトですが、65535バイト以上のフレームやスライスが含まれていないファイルも存在します。そのようなファイルでは、このパラメータを使用してNALUサイズ長を2に減らすことができます。
+                        <span class="abbrev">NALU</span>サイズ長を<span class="parameter">n</span>バイトに強制設定します。このパラメータはAVC/H.264エレメンタリストリームパケタイザが使用される場合にのみ使用されます。何も指定しなかった時のデフォルト値は4バイトですが、65535バイト以上のフレームやスライスが含まれていないファイルも存在します。そのようなファイルでは、このパラメータを使用してNALUサイズ長を2に減らすことができます。
                         
                      </p>
                      
@@ -2141,8 +2125,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      
                      <p>
                         '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>'圧縮法は、
-                        <span class="abbrev">MPEG4</span> part2 ビデオトラックにのみ適用できる、'<span class="foreignphrase">header
-                           removal</span>'と呼ばれる特殊な圧縮法です。
+                        <span class="abbrev">MPEG4</span> part2 ビデオトラックにのみ適用できる、'header removal'と呼ばれる特殊な圧縮法です。
                         
                      </p>
                      
@@ -2161,7 +2144,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3393">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e3386">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2179,7 +2162,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        <span class="classname">FourCC</span>を指定した値に強制設定します。ビデオトラックが'<span class="foreignphrase">MS互換モード</span>'である場合にのみ有効です。
+                        <span class="classname">FourCC</span>を指定した値に強制設定します。ビデオトラックが'MS互換モード'である場合にのみ有効です。
                         
                      </p>
                      
@@ -2617,7 +2600,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4217">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e4207">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2651,7 +2634,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4254">2.10. その他のオプション</a></h2>
+         <h2><a name="d4e4244">2.10. その他のオプション</a></h2>
          
          
          
@@ -2731,7 +2714,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -2786,7 +2769,8 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        <a href="#mkvmerge.description.language">--language</a>オプションに指定できる、ISO639-2言語コードの一覧を出力します。
+                        <a href="#mkvmerge.description.language">--language</a>オプションに指定できる、ISO
+                        639-2言語コードの一覧を出力します。
                         
                      </p>
                      
@@ -2809,7 +2793,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.command_line_charset"><span class="option">--command-line-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -2820,7 +2804,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">character-set</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.output_charset"><span class="option">--output-charset</span> <span class="parameter">文字コード</span></a></td>
                   <td>
                      
                      <p>
@@ -2847,28 +2831,19 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Tells the program to flush all data cached in memory to storage when closing
-                        files opened for writing.  This can be used to prevent data loss on power
-                        outages or to circumvent certain problems in the operating system or
-                        drivers.  The downside is that multiplexing will take longer as mkvmerge
-                        will wait until all data has been written to the storage before exiting.
-                        See issues #2469 and #2480 on the MKVToolNix bug tracker for in-depth
-                        discussions on the pros and cons.
+                        プログラムが、書き込み用に開かれたファイルを保存する際に、RAM上にある全データをストレージに書き出すようにします。停電時のデータ損失を防いだり、OSやデバイスに固有の問題を避けるのに用います。欠点として、mkvmergeが終了する前に全データをストレージに書き出し終わるまで待機する為に、多重化に長い時間が掛かります。MKVToolNixバグ追跡システムの第2469号及び第2480号に長所・短所に関する詳細な議論があります。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">code</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.ui_language"><span class="option">--ui-language</span> <span class="parameter">コード</span></a></td>
                   <td>
                      
                      <p>
-                        Forces the translations for the language <span class="parameter">code</span> to be
-                        used (e.g.  '<span class="literal">de_DE</span>' for the German
-                        translations). Entering '<span class="literal">list</span>' as the
-                        <span class="parameter">code</span> will cause the program to output a list of
-                        available translations.
+                        指定した<span class="parameter">コード</span>言語（例
+                        日本語なら「<span class="literal">ja_JP</span>」）での翻訳を強制します。<span class="parameter">code</span>に「<span class="literal">list</span>」を指定すると、利用可能な翻訳の一覧を出力します。
                         
                      </p>
                      
@@ -2879,15 +2854,14 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Tells the program to abort after the first warning is emitted. The program's
-                        exit code will be 1.
+                        最初の警告が発された後プログラムを停止するよう伝えます。プログラムの終了コードは1になります。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.debug"><span class="option">--debug</span> <span class="parameter">項目</span></a></td>
                   <td>
                      
                      <p>
@@ -2898,7 +2872,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvmerge.description.engage"><span class="option">--engage</span> <span class="parameter">feature</span></a></td>
+                  <td class="varlistoption"><a name="mkvmerge.description.engage"><span class="option">--engage</span> <span class="parameter">機能</span></a></td>
                   <td>
                      
                      <p>
@@ -2914,19 +2888,14 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   <td>
                      
                      <p>
-                        Turns on GUI mode. In this mode specially-formatted lines may be output that
-                        can tell a controlling GUI what's happening. These messages follow the
-                        format '<span class="literal">#GUI#message</span>'. The message may be followed by
-                        key/value pairs as in
-                        '<span class="literal">#GUI#message#key1=value1#key2=value2…</span>'. Neither the
-                        messages nor the keys are ever translated and always output in English.
+                        GUIモードに切り替えます。このモードではGUI操作の状況を伝える特殊な形式の行が出力されます。これらの通知は「<span class="literal">#GUI#通知内容</span>」という形式に従います。「<span class="literal">#GUI#通知内容#キー1=値1#キー2=値2...</span>」のようにキー・値の組が通知内容に続くことがあります。通知内容やキーは翻訳されることなく、常に英語で出力されます。
                         
                      </p>
                      
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="option">@</span><span class="parameter">options-file.json</span></td>
+                  <td class="varlistoption"><span class="option">@</span><span class="parameter">オプションファイル.json</span></td>
                   <td>
                      
                      <p>
@@ -3187,7 +3156,8 @@ $ mkvmerge -o MM-complete.mkv MyMovie-with-sound.mkv MyMovie-add-audio.ogg</pre>
          <pre class="screen">$ mkvmerge -o mymovie.mkv mymovie.avi mymovie.srt</pre>
          
          <p>
-            もし、あるトラックに言語コードを指定したいならば、簡単に指定できます。まず、指定する言語のISO639-2コードを調べます。次のようにすれば<span class="productname">mkvmerge</span>(1)に全ての言語コードを一覧表示させることができます。
+            もし、あるトラックに言語コードを指定したいならば、簡単に指定できます。まず、指定する言語のISO
+            639-2コードを調べます。次のようにすれば<span class="productname">mkvmerge</span>(1)に全ての言語コードを一覧表示させることができます。
             
          </p>
          
@@ -3305,13 +3275,12 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.track_ids.special_ids">6.2. Special track IDs</a></h2>
+         <h2><a name="mkvmerge.track_ids.special_ids">6.2. 特殊トラックID</a></h2>
          
          
          
          <p>
-            There are several IDs that have special meaning and do not occur in the
-            identification output.
+            識別出力には表われない、特別な意味を持つIDが幾つかあります。
             
          </p>
          
@@ -3355,13 +3324,13 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
-            <span class="productname">mkvmerge</span>(1)はこの変換を<span class="foreignphrase">バイト・オーダー・マーク</span>(<span class="abbrev">BOM</span>)の有無、又はシステムのロケールに基づいて自動的に行ないます。ロケールからどのように文字コードが推測されるかは、<span class="productname">mkvmerge</span>(1)を実行するシステムに依存します。
+            <span class="productname">mkvmerge</span>(1)はこの変換をバイト・オーダー・マーク(<span class="abbrev">BOM</span>)の有無、又はシステムのロケールに基づいて自動的に行ないます。ロケールからどのように文字コードが推測されるかは、<span class="productname">mkvmerge</span>(1)を実行するシステムに依存します。
             
          </p>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.byte_order_markers">7.2. Byte order markers (BOM)</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.byte_order_markers">7.2. バイト順記号 (BOM)</a></h2>
          
          
          
@@ -3373,7 +3342,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux and Unix-like systems including Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Linux、及びmacOSを含むUnix系システム</a></h2>
          
          
          
@@ -3389,8 +3358,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
-            On Windows the default character set used for converting text files is
-            determined by a call to the <span class="function">GetACP()</span> system call.
+            Windowsにおいては、文章ファイルを変換するのに用いられる既定の文字コードはシステム呼出し<span class="function">GetACP()</span>を呼び出すことで決定されます。
             
          </p>
          
@@ -3520,9 +3488,8 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          <p>
             An option file contains JSON-formatted data. Its content must be a valid
             JSON array consisting solely of JSON strings. The file's encoding must be
-            UTF-8. The file should not start with a <span class="foreignphrase">byte order
-               marker</span> (<span class="abbrev">BOM</span>), but if one exists, it will be
-            skipped.
+            UTF-8. The file should not start with a byte order marker
+            (<span class="abbrev">BOM</span>), but if one exists, it will be skipped.
             
          </p>
          
@@ -3711,7 +3678,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          <p>
-            <span class="productname">mkvmerge</span>(1)は2種類のチャプタファイルを入力としてサポートしています。一つ目は'<span class="foreignphrase">シンプルチャプタファイル</span>'と呼ばれるもので、<span class="abbrev">OGM</span>
+            <span class="productname">mkvmerge</span>(1)は2種類のチャプタファイルを入力としてサポートしています。一つ目は'シンプルチャプタファイル'と呼ばれるもので、<span class="abbrev">OGM</span>
             toolsが想定しているものと同じフォーマットです。二つ目は<span class="abbrev">XML</span>ベースのチャプタフォーマットで、<span class="productname">Matroska</span><sup>(tm)</sup>のチャプタ機能の全てをサポートしています。
             
          </p>
@@ -3841,7 +3808,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e5981">13.3. 注意</a></h2>
+         <h2><a name="d4e5962">13.3. 注意</a></h2>
          
          
          <p>
@@ -3860,7 +3827,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6046">14.1. はじめに</a></h2>
+         <h2><a name="d4e6027">14.1. はじめに</a></h2>
          
          
          
@@ -3965,7 +3932,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          <p>
-            もう一つの方法では、データは<span class="foreignphrase">Base64</span>エンコードされる必要があります。これは、バイナリデータを<span class="abbrev">ASCII</span>キャラクタの一部だけで表現するためのエンコードで、例えばEメールなどに使用されています。<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>は、バイナリエレメントを<span class="foreignphrase">Base64</span>エンコードされたデータとして出力します。
+            もう一つの方法では、データはBase64エンコードされる必要があります。これは、バイナリデータを<span class="abbrev">ASCII</span>キャラクタの一部だけで表現するためのエンコードで、例えばEメールなどに使用されています。<a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>は、バイナリエレメントをBase64エンコードされたデータとして出力します。
             
          </p>
          
@@ -4133,7 +4100,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6490">17.1. タイムコードファイルフォーマット v1</a></h2>
+         <h2><a name="d4e6465">17.1. タイムコードファイルフォーマット v1</a></h2>
          
          
          <p>
@@ -4147,7 +4114,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6514">17.2. タイムコードファイルフォーマット v2</a></h2>
+         <h2><a name="d4e6489">17.2. タイムコードファイルフォーマット v2</a></h2>
          
          
          
@@ -4162,7 +4129,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6529">17.3. タイムコードファイルフォーマット v3</a></h2>
+         <h2><a name="d4e6504">17.3. タイムコードファイルフォーマット v3</a></h2>
          
          
          <p>
@@ -4178,7 +4145,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6547">17.4. タイムコードファイルフォーマット v4</a></h2>
+         <h2><a name="d4e6522">17.4. タイムコードファイルフォーマット v4</a></h2>
          
          
          <p>

@@ -245,7 +245,7 @@
                   <td>
                      
                      <p>
-                        Establece el código de idioma ISO639-2 que se escribe en cada entrada de
+                        Establece el código de idioma ISO 639-2 que se escribe en cada entrada de
                         capítulo. Por defecto se establece a '<span class="literal">eng</span>'. Mire la
                         sección de más adelante sobre <a href="#mkvmerge.chapters">los
                            capítulos</a> para obtener más detalles. 
@@ -2087,10 +2087,10 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                   <td>
                      
                      <p>
-                        Establece el código de idioma ISO639-2 que será escrito para cada entrada de
-                        capítulo. Esta opción puede ser usada para archivo de entrada que contengan
-                        capítulos sin información sobre los idiomas de los capítulos, p.e. para
-                        archivos MP4 y OGM. 
+                        Establece el código de idioma ISO 639-2 que será escrito para cada entrada
+                        de capítulo. Esta opción puede ser usada para archivo de entrada que
+                        contengan capítulos sin información sobre los idiomas de los capítulos,
+                        p.e. para archivos MP4 y OGM. 
                         
                      </p>
                      
@@ -2257,10 +2257,10 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      
                      <p>
                         Establece el idioma de la pista especificada (mire la sección <a href="#mkvmerge.track_ids">IDs de pista</a>). Tanto los códigos de
-                        idioma ISO639-2 y los códigos de país ISO639-1 están permitidos. Los códigos
-                        de los países serán convertidos a códigos de idioma automáticamente. Todos
-                        los idiomas incluidos sus códigos ISO639-2 pueden ser listados con la opción
-                        <a href="#mkvmerge.description.list_languages">--list-languages</a>.
+                        idioma ISO 639-2 y los códigos de país ISO 639-1 están permitidos. Los
+                        códigos de los países serán convertidos a códigos de idioma
+                        automáticamente. Todos los idiomas incluidos sus códigos ISO 639-2 pueden
+                        ser listados con la opción <a href="#mkvmerge.description.list_languages">--list-languages</a>.
                         
                      </p>
                      
@@ -2417,7 +2417,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      <p>
                         Si no se fuerza la duración predeterminada entonces mkvmerge intentará
                         generar la duración predeterminada de la pista a partir del contenedor y/o
-                        el bitstream codificado para ciertos tipos de pista, p.e. AVC/h.264 o
+                        el bitstream codificado para ciertos tipos de pista, p.e. AVC/H.264 o
                         MPEG-2.
                         
                      </p>
@@ -2451,7 +2451,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      <div class="note">
                         <p class="note-title">Note:</p>
                         
-                        <p>Por ahora, sólo ha sido implementado para pistas AVC/h.264.</p>
+                        <p>Por ahora, sólo ha sido implementado para pistas AVC/H.264.</p>
                         
                      </div>
                      
@@ -2463,11 +2463,10 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      
                      <p>
                         Fuerza la longitud del tamaño <span class="abbrev">NALU</span> en
-                        <span class="parameter">n</span> bytes. Este parámetro sólo se utiliza si el
-                        empaquetador de secuencias elementales
-                        <span class="foreignphrase">AVC/h.264</span> es usado. Si se omite por defecto
-                        usa 4 bytes, pero hay archivos que contienen fotogramas o slices los cuales
-                        son todos menores de 65536 bytes. Para dichos archivos puede usar este
+                        <span class="parameter">n</span> bytes. Este parámetro sólo se utiliza al usar el
+                        empaquetador de secuencias elementales AVC/H.264. Si se omite por defecto
+                        usa 4 bytes, pero pueden existir archivos que contengan fotogramas o
+                        fragmentos menores de 65536 bytes. Para dichos archivos puede usar este
                         parámetro y disminuir el tamaño a 2. 
                         
                      </p>
@@ -2489,9 +2488,8 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      <p>
                         El método de compresión
                         '<span class="literal">mpeg4_p2</span>'/'<span class="literal">mpeg4p2</span>' es un método
-                        especial llamado '<span class="foreignphrase">eliminador de encabezado</span>'
-                        que sólo está disponible para pistas de video <span class="abbrev">MPEG4</span> part
-                        2. 
+                        especial llamado 'eliminador de encabezado' que sólo está disponible para
+                        pistas de video <span class="abbrev">MPEG4</span> part 2. 
                         
                      </p>
                      
@@ -2511,7 +2509,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e3451">2.8. Opciones que sólo afectan a pistas de video</a></h2>
+         <h2><a name="d4e3445">2.8. Opciones que sólo afectan a pistas de video</a></h2>
          
          
          
@@ -2530,8 +2528,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      
                      <p>
                         Fuerza el <span class="classname">FourCC</span> a un valor especificado. Sólo
-                        funciona para pistas de video en el modo '<span class="foreignphrase">modo compatibilidad
-                           de MS</span>'. 
+                        funciona para pistas de video en el modo 'modo compatibilidad de MS'. 
                         
                      </p>
                      
@@ -2999,7 +2996,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4268">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
+         <h2><a name="d4e4259">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
          
          
          
@@ -3043,7 +3040,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4311">2.10. Otras opciones</a></h2>
+         <h2><a name="d4e4302">2.10. Otras opciones</a></h2>
          
          
          
@@ -3126,7 +3123,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                            
                            
                            <p>
-                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v11.json">mkvmerge-identification-output-schema-v11.json</a>
+                              <a href="https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json">mkvmerge-identification-output-schema-v12.json</a>
                               
                            </p>
                            
@@ -3182,7 +3179,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                   <td>
                      
                      <p>
-                        Muestra una lista de idiomas y sus códigos ISO639-2 que se pueden utilizar
+                        Muestra una lista de idiomas y sus códigos ISO 639-2 que se pueden utilizar
                         con la opción <a href="#mkvmerge.description.language">--language</a>. 
                         
                      </p>
@@ -3494,9 +3491,8 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          <p>
             Las opciones se procesan de izquierda a derecha. Si una opción aparece
-            varias veces en el mismo ámbito, se utilizará la ultima ocurrencia. Por lo
-            tanto, el título se establecerá a "Algo más" en el siguiente
-            ejemplo: 
+            varias veces en el mismo ámbito, se utilizará la última. Por lo tanto, el
+            título se establecerá a "Otra cosa" en el siguiente ejemplo: 
             
          </p>
          
@@ -3672,7 +3668,7 @@ mkvmerge -o MM-completa.mkv MiPelícula-con-sonido.mkv MiPelícula-añadir-audio
          
          <p>
             Si necesitas especificar un idioma para una pista concreta, esto es
-            realmente fácil. Primero busca tu idioma en el código ISO639-2. <span class="productname">mkvmerge</span>(1)
+            realmente fácil. Primero busca tu idioma en el código ISO 639-2. <span class="productname">mkvmerge</span>(1)
             puede mostrarte todos esos códigos para ti: 
             
          </p>
@@ -3875,10 +3871,10 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) realiza esta conversión automáticamente en función de la
-            presencia de un <span class="foreignphrase">Marcador de Orden Bytes (abreviado:
-               BOM)</span> o de la configuración regional actual. Cómo el conjunto
-            de caracteres se deduce de la configuración regional depende del sistema
-            operativo donde se ejecute <span class="productname">mkvmerge</span>(1)
+            presencia de un Marcador de Orden Bytes (abreviado: BOM) o de la
+            configuración regional actual. Cómo el conjunto de caracteres se deduce de
+            la configuración regional depende del sistema operativo donde se ejecute
+            <span class="productname">mkvmerge</span>(1)
             
          </p>
          
@@ -3901,7 +3897,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Sistemas Linux y Unix-like incluido Mac OS</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.unix">7.3. Sistemas Linux y Unix-like incluido macOS</a></h2>
          
          
          
@@ -4067,8 +4063,8 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             Un archivo de opciones que contiene datos con formato JSON. El contenido
             debe ser un vector JSON compuesto únicamente de cadenas de caracteres
             JSON. El archivo debe estar codificado en formato UTF-8. El archivo no debe
-            comenzar con un <span class="foreignphrase">marcador de orden de bits</span>
-            (<span class="abbrev">BOM</span>), pero si lo hiciese, será omitido.
+            comenzar con un marcador de orden de bits  (<span class="abbrev">BOM</span>), pero si
+            lo hiciese, será omitido.
             
          </p>
          
@@ -4317,11 +4313,10 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          
          <p>
             <span class="productname">mkvmerge</span>(1) admite dos tipos de archivos de capítulos como entrada. El primer
-            formato, denominado '<span class="foreignphrase">formato simple de
-               capítulos</span>', que es el mismo formato que se encuentra en las
-            herramientas <span class="abbrev">OGM</span>. El segundo formato se basa en el formato
-            de capítulos <span class="abbrev">XML</span> que son admitidos por todas las funcionalidades de
-            capítulos de <span class="productname">Matroska</span><sup>(tm)</sup>. 
+            formato, denominado 'formato simple de capítulos', que es el mismo formato
+            que se encuentra en las herramientas <span class="abbrev">OGM</span>. El segundo
+            formato se basa en el formato de capítulos <span class="abbrev">XML</span> que son admitidos por todas
+            las funcionalidades de capítulos de <span class="productname">Matroska</span><sup>(tm)</sup>. 
             
          </p>
          
@@ -4356,7 +4351,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          
          <p>
             Como se trata de un archivo de texto, podría ser necesaria realizar una
-            conversión del conjunto de caracteres. Mire la sección acerca de <a href="#mkvmerge.text_files_and_charsets"> archivos de texto y conjunto de
+            conversión del conjunto de caracteres. Mire la sección acerca de <a href="#mkvmerge.text_files_and_charsets">archivos de texto y conjunto de
                caracteres</a> para una explicación sobre cómo <span class="productname">mkvmerge</span>(1) realiza la
             conversión entre conjunto de caracteres. 
             
@@ -4462,7 +4457,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
           ChapterProcessData (binario)</pre>
          
          
-         <h2><a name="d4e6019">13.3. Notas generales</a></h2>
+         <h2><a name="d4e6001">13.3. Notas generales</a></h2>
          
          
          <p>
@@ -4494,7 +4489,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          
          
          
-         <h2><a name="d4e6087">14.1. Introducción</a></h2>
+         <h2><a name="d4e6069">14.1. Introducción</a></h2>
          
          
          
@@ -4639,12 +4634,11 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          
          
          <p>
-            De lo contrario, se espera que la información se codifique en
-            <span class="foreignphrase">Base64</span>. Esta es una codificación que
-            transforma datos binarios en un conjunto limitado de caracteres
-            <span class="abbrev">ASCII</span> y p.e. se usa en programas de
-            mensajería. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> generará datos codificados en
-            <span class="foreignphrase">Base64</span> para elementos binarios. 
+            De lo contrario, se espera que la información se codifique en Base64. Esta
+            es una codificación que transforma datos binarios en un conjunto limitado de
+            caracteres <span class="abbrev">ASCII</span> y p.e. se usa en programas de
+            mensajería. <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a> generará datos codificados en Base64 para elementos
+            binarios. 
             
          </p>
          
@@ -4842,7 +4836,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          </p>
          
          
-         <h2><a name="d4e6524">17.1. Formato de archivo de código de tiempo v1</a></h2>
+         <h2><a name="d4e6500">17.1. Formato de archivo de código de tiempo v1</a></h2>
          
          
          <p>
@@ -4863,7 +4857,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6548">17.2. Formato de archivo de código de tiempo v2</a></h2>
+         <h2><a name="d4e6524">17.2. Formato de archivo de código de tiempo v2</a></h2>
          
          
          
@@ -4883,7 +4877,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6563">17.3. Formato de archivo de código de tiempo v3</a></h2>
+         <h2><a name="d4e6539">17.3. Formato de archivo de código de tiempo v3</a></h2>
          
          
          <p>
@@ -4907,7 +4901,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6581">17.4. Formato de archivo de código de tiempo v4</a></h2>
+         <h2><a name="d4e6557">17.4. Formato de archivo de código de tiempo v4</a></h2>
          
          
          <p>

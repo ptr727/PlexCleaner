@@ -2,12 +2,12 @@
 Clean media files for Plex friendly playback. 
 
 # Build Status
-[![Build status](https://dev.azure.com/pieterv/Plex%20Cleaner/_apis/build/status/Plex%20Cleaner%20-%20.NET%20Core%20-%20CI)](https://dev.azure.com/pieterv/Plex%20Cleaner/_build/latest?definitionId=17)
+[![Build status](https://dev.azure.com/pieterv/Plex-Cleaner/_apis/build/status/Plex-Cleaner%20-%20.NET%20Core%20-%20CI)](https://dev.azure.com/pieterv/Plex-Cleaner/_build/latest?definitionId=17)
 
 # Getting Started
 
 ## Installation
-Install .NET Core 2.2 or later for your platform.
+Install .NET Core 3.1 or later for your platform.
 
 ## Update Tools
 Make sure the Tools folder exists, the default Tools folder is in the root of the binary folder.
@@ -27,10 +27,10 @@ dotnet.exe plexcleaner.dll --CheckForTools
 // PlexCleaner.exe --Process --Monitor --Folders "\\STORAGE\Media\Series\Series" "\\STORAGE\Media\Movies\Movies"
 
 # Build and Test
-https://dev.azure.com/pieterv/Plex%20Cleaner/
+https://dev.azure.com/pieterv/Plex-Cleaner/
 
 # Contribute
-https://dev.azure.com/pieterv/Plex%20Cleaner/
+https://dev.azure.com/pieterv/Plex-Cleaner/
 
 # TODO
 * Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color.
@@ -48,7 +48,7 @@ https://dev.azure.com/pieterv/Plex%20Cleaner/
 * Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS.
 * Console writeline sometimes ignores the newline around AudioInfo.Numer
 	2/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : chi, Id : 1, Number : 12/18/2019 6:08:32 PM : Passthrough : Audio : Format : ac3, Codec : ATSC A/52A (AC-3), Language : eng, Id : 2, Number : 22/18/2019 6:08:32 PM : Passthrough : Subtitle : Format : dvd_subtitle, Codec : DVD subtitles, MuxingMode : , Language : chi, Id : 3, Number : 3
-* Switch commandline to mcmaster or https://github.com/dotnet/command-line-api
+* Switch gsscode commandline to mcmaster or https://github.com/dotnet/command-line-api
 * Remove readonly flag before trying to delete
 
 # Tools
