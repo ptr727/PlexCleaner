@@ -1,13 +1,10 @@
-﻿namespace PlexCleaner
-{
-    public class ToolOptions
-    {
-        public ToolOptions()
-        {
-            Default = this;
-        }
-        public static ToolOptions Default;
+﻿using Newtonsoft.Json;
+using System.IO;
 
+namespace PlexCleaner
+{
+    public class Config
+    {
         public string RootPath { get; set; } = @".\Tools\";
         public bool RootRelative { get; set; } = true;
         public string MkvToolNix { get; set; } = "MKVToolNix";
@@ -17,15 +14,6 @@
         public string HandBrake { get; set; } = "HandBrake";
         public string EchoArgs { get; set; } = "EchoArgs";
         public string SevenZip { get; set; } = "7Zip";
-    }
-
-    public class EncodeOptions
-    {
-        public EncodeOptions()
-        {
-            Default = this;
-        }
-        public static EncodeOptions Default;
 
         public string KeepExtensions { get; set; } = "";
         public string ReMuxExtensions { get; set; } = ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv";
@@ -36,15 +24,6 @@
         public string KeepLanguages { get; set; } = "eng,afr,chi,ind";
         public string ReEncodeAudioCodec { get; set; } = "flac,mp2,vorbis,wmapro";
         public string AudioEncodeCodec { get; set; } = "ac3";
-    }
-
-    public class ProcessOptions
-    {
-        public ProcessOptions()
-        {
-            Default = this;
-        }
-        public static ProcessOptions Default;
 
         public bool DeleteEmptyFolders { get; set; } = true;
         public bool UseSidecarFiles { get; set; } = true;
@@ -55,15 +34,6 @@
         public bool SetUnknownLanguage { get; set; } = true;
         public bool RemoveUnwanted { get; set; } = false;
         public bool ReMux { get; set; } = false;
-    }
-
-    public class AppOptions
-    {
-        public AppOptions()
-        {
-            Default = this;
-        }
-        public static AppOptions Default;
 
         public int MonitorWaitTime { get; set; } = 60;
         public int FileRetryWaitTime { get; set; } = 5;
@@ -71,19 +41,28 @@
         public bool DeleteFailedFiles { get; set; } = true;
         public bool TestNoModify { get; set; } = false;
         public bool TestSnippets { get; set; } = false;
-    }
 
-    public class Options
-    {
-        public Options()
+        public static Config FromFile(string path)
         {
-            Default = this;
+            return FromJson(File.ReadAllText(path));
         }
-        public static Options Default;
 
-        public ToolOptions Tools { get; set; } = new ToolOptions();
-        public EncodeOptions Encode { get; set; } = new EncodeOptions();
-        public ProcessOptions Process { get; set; } = new ProcessOptions();
-        public AppOptions App { get; set; } = new AppOptions();
+        public static void ToFile(string path, Config settings)
+        {
+            File.WriteAllText(path, ToJson(settings));
+        }
+
+        public static string ToJson(Config settings) =>
+            JsonConvert.SerializeObject(settings, JsonSettings);
+
+        public static Config FromJson(string json) =>
+            JsonConvert.DeserializeObject<Config>(json, JsonSettings);
+
+        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
+        {
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            DateParseHandling = DateParseHandling.None,
+            Formatting = Formatting.Indented
+        };
     }
 }

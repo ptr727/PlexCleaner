@@ -1,24 +1,36 @@
 {
   "profiles": {
-    "Check For Tools": {
+    "Check For New Tools": {
       "commandName": "Project",
-      "commandLineArgs": "--CheckForTools"
+      "commandLineArgs": "--settings \"PlexCleaner.json\" checkfornewtools"
     },
-    "ReMux": {
+    "Write Defaults": {
       "commandName": "Project",
-      "commandLineArgs": "--ReMux --Folders \"D:\\Temp\""
-    },
-    "ReEncode": {
-      "commandName": "Project",
-      "commandLineArgs": "--ReEncode --Folders \"D:\\Temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" writedefaults"
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--Process --Folders \"\\\\STORAGE\\Media\\Series\\Dirty Jobs\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\Series\\Dirty Jobs\" \"\\\\server-1\\media\\Series\\Billions\""
     },
-    "WriteSideCar": {
+    "Monitor": {
       "commandName": "Project",
-      "commandLineArgs": "--WriteSidecar --Folders \"d:\\temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" monitor --files \"D:\\Temp\""
+    },
+    "Re-Mux": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"D:\\Temp\""
+    },
+    "Re-Encode": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" reencode --files \"D:\\Temp\""
+    },
+    "Write Sidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" writesidecar --files \"D:\\Temp\""
+    },
+    "Create Tag Map": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" createtagmap --files \"D:\\Temp\""
     },
     "Version": {
       "commandName": "Project",

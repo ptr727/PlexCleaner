@@ -58,20 +58,20 @@ namespace PlexCleaner
 
     public static class Updater
     {
-        public static bool CheckForTools()
+        public static bool CheckForTools(Config config)
         {
             ConsoleEx.WriteLine("Checking for new tools ...");
 
             try
             {
                 // Read the current tool versions from the JSON file
-                string toolsfile = Tools.CombineToolPath("Tools.json");
+                string toolsfile = Tools.CombineToolPath(config, "Tools.json");
                 ToolsJson tools = null;
                 if (File.Exists(toolsfile))
                     tools = ToolsJson.FromJson(File.ReadAllText(toolsfile));
                 if (tools == null)
                     tools = new ToolsJson {Tools = new List<ToolInfo>()};
-                tools.LastCheck = DateTime.UtcNow.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern);
+                tools.LastCheck = DateTime.UtcNow.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern, CultureInfo.InvariantCulture);
 
                 // 7-Zip
                 ConsoleEx.WriteLine("Getting latest version of 7-Zip ...");
@@ -80,7 +80,7 @@ namespace PlexCleaner
                     GetUrlDetails(toolinfo))
                 {
                     // Update the tool
-                    if (!UpdateTool(tools, toolinfo))
+                    if (!UpdateTool(config, tools, toolinfo))
                         return false;
                 }
 
@@ -91,7 +91,7 @@ namespace PlexCleaner
                     GetUrlDetails(toolinfo))
                 {
                     // Update the tool
-                    if (!UpdateTool(tools, toolinfo))
+                    if (!UpdateTool(config, tools, toolinfo))
                         return false;
                 }
 
@@ -102,7 +102,7 @@ namespace PlexCleaner
                     GetUrlDetails(toolinfo))
                 {
                     // Update the tool
-                    if (!UpdateTool(tools, toolinfo))
+                    if (!UpdateTool(config, tools, toolinfo))
                         return false;
                 }
 
@@ -113,7 +113,7 @@ namespace PlexCleaner
                     GetUrlDetails(toolinfo))
                 {
                     // Update the tool
-                    if (!UpdateTool(tools, toolinfo))
+                    if (!UpdateTool(config, tools, toolinfo))
                         return false;
                 }
 
@@ -124,7 +124,7 @@ namespace PlexCleaner
                     GetUrlDetails(toolinfo))
                 {
                     // Update the tool
-                    if (!UpdateTool(tools, toolinfo))
+                    if (!UpdateTool(config, tools, toolinfo))
                         return false;
                 }
 
@@ -144,18 +144,18 @@ namespace PlexCleaner
 
         private static bool GetUrlDetails(ToolInfo toolinfo)
         {
-            if (!Download.GetContentInfo(toolinfo.Url, out long size, out DateTime modified))
+            if (!Download.GetContentInfo(new Uri(toolinfo.Url), out long size, out DateTime modified))
                 return false;
             toolinfo.Size = size;
-            toolinfo.ModifiedTime = modified.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern);
+            toolinfo.ModifiedTime = modified.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern, CultureInfo.InvariantCulture);
             return true;
         }
 
-        private static bool UpdateTool(ToolsJson tools, ToolInfo toolinfo)
+        private static bool UpdateTool(Config config, ToolsJson tools, ToolInfo toolinfo)
         {
             // Get the tool info
             bool download = false;
-            ToolInfo tool = tools.Tools.FirstOrDefault(t => t.Tool.Equals(toolinfo.Tool));
+            ToolInfo tool = tools.Tools.FirstOrDefault(t => t.Tool.Equals(toolinfo.Tool, StringComparison.OrdinalIgnoreCase));
             if (tool == null)
             {
                 // No tool found, create a new entry for this tool
@@ -180,8 +180,8 @@ namespace PlexCleaner
             {
                 // Download the file
                 ConsoleEx.WriteLine($"Downloading \"{toolinfo.FileName}\" ...");
-                string filepath = Tools.CombineToolPath(toolinfo.FileName);
-                if (!Download.DownloadFile(toolinfo.Url, filepath))
+                string filepath = Tools.CombineToolPath(config, toolinfo.FileName);
+                if (!Download.DownloadFile(new Uri(toolinfo.Url), filepath))
                     return false;
 
                 // Get the tool folder name
@@ -193,26 +193,26 @@ namespace PlexCleaner
                         // We need to extract to a temp location in the root tools folder, then rename to the destination folder
                         // Build the versioned folder from the downloaded filename
                         // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        toolpath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        toolpath = Tools.CombineToolPath(config, Path.GetFileNameWithoutExtension(toolinfo.FileName));
                         break;
                     case nameof(FfMpegTool):
                         // FFMpeg archives have versioned folders in the zip
                         // The 7Zip -spe option does not work for zip files
                         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
                         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
-                        toolpath = Tools.GetToolsRoot();
+                        toolpath = Tools.GetToolsRoot(config);
                         break;
                     case nameof(MkvTool):
-                        toolpath = MkvTool.GetToolPath();
+                        toolpath = MkvTool.GetToolPath(config);
                         break;
                     case nameof(MediaInfoTool):
-                        toolpath = MediaInfoTool.GetToolPath();
+                        toolpath = MediaInfoTool.GetToolPath(config);
                         break;
                     case nameof(HandBrakeTool):
-                        toolpath = HandBrakeTool.GetToolPath();
+                        toolpath = HandBrakeTool.GetToolPath(config);
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(toolinfo));
                 }
 
                 // Make sure the tool folder exists and is empty
@@ -232,7 +232,7 @@ namespace PlexCleaner
 
                 // Extract the tool
                 ConsoleEx.WriteLine($"Extracting \"{toolinfo.FileName}\" ...");
-                if (!SevenZipTool.UnZip(filepath, toolpath))
+                if (!SevenZipTool.UnZip(config, filepath, toolpath))
                     return false;
 
                 // Process the extracted folder
@@ -240,13 +240,13 @@ namespace PlexCleaner
                 {
                     case nameof(SevenZipTool):
                         // Get the path and and clean the destination directory
-                        toolpath = SevenZipTool.GetToolPath();
+                        toolpath = SevenZipTool.GetToolPath(config);
                         if (!FileEx.DeleteDirectory(toolpath, true))
                             return false;
 
                         // Build the versioned folder from the downloaded filename
                         // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        string sourcepath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        string sourcepath = Tools.CombineToolPath(config, Path.GetFileNameWithoutExtension(toolinfo.FileName));
 
                         // Rename the folder
                         // E.g. 7z1805-extra to .\Tools\7Zip
@@ -255,13 +255,13 @@ namespace PlexCleaner
                         break;
                     case nameof(FfMpegTool):
                         // Get the path and and clean the destination directory
-                        toolpath = FfMpegTool.GetToolPath();
+                        toolpath = FfMpegTool.GetToolPath(config);
                         if (!FileEx.DeleteDirectory(toolpath, true))
                             return false;
 
                         // Build the versioned out folder from the downloaded filename
                         // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFMpeg\ffmpeg-3.4-win64-static
-                        sourcepath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        sourcepath = Tools.CombineToolPath(config, Path.GetFileNameWithoutExtension(toolinfo.FileName));
 
                         // Rename the source folder to the tool folder
                         // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
@@ -274,7 +274,7 @@ namespace PlexCleaner
                         // Nothing to do
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(toolinfo));
                 }
 
                 // Update the tool information

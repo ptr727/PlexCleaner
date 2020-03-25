@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Serialization;
 using InsaneGenius.Utilities;
 
@@ -22,8 +23,9 @@ namespace PlexCleaner
             public static MediaInfoXml FromXml(string xml)
             {
                 XmlSerializer xmlserializer = new XmlSerializer(typeof(MediaInfoXml));
-                TextReader textreader = new StringReader(xml);
-                return xmlserializer.Deserialize(textreader) as MediaInfoXml;
+                using TextReader textreader = new StringReader(xml);
+                using XmlReader xmlReader = XmlReader.Create(textreader);
+                return xmlserializer.Deserialize(xmlReader) as MediaInfoXml;
             }
         }
 
@@ -72,31 +74,40 @@ namespace PlexCleaner
             public string ScanType { get; set; }
         }
 
-        public static int MediaInfo(string parameters, out string output)
+        public static int MediaInfo(Config config, string parameters, out string output)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MediaInfo, MediaInfoBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.MediaInfo, MediaInfoBinary);
             ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
 
-        public static string GetToolPath()
+        public static string GetToolPath(Config config)
         {
-            return Tools.CombineToolPath(ToolOptions.Default.MediaInfo);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            return Tools.CombineToolPath(config, config.MediaInfo);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
         {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
             try
             {
                 // Load the download page
                 // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
                 // https://mediaarea.net/en/MediaInfo/Download/Windows
-                WebClient wc = new WebClient();
+                using WebClient wc = new WebClient();
                 string history = wc.DownloadString("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt");
 
                 // Read each line until we find the first version line
                 // E.g. Version 17.10, 2017-11-02
-                StringReader sr = new StringReader(history);
+                using StringReader sr = new StringReader(history);
                 string line;
                 while (true)
                 {

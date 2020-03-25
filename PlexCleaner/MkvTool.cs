@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.IO.Compression;
 using InsaneGenius.Utilities;
+using System.Xml;
 
 // We are using generated code to read JSON and XML
 // https://quicktype.io/
@@ -69,9 +70,10 @@ namespace PlexCleaner
 
             public static MkvToolNixReleasesXml FromXml(string xml)
             {
-                XmlSerializer xmlserializer = new XmlSerializer(typeof(MkvToolNixReleasesXml));
-                TextReader textreader = new StringReader(xml);
-                return xmlserializer.Deserialize(textreader) as MkvToolNixReleasesXml;
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(MkvToolNixReleasesXml));
+                using TextReader textReader = new StringReader(xml);
+                using XmlReader xmlReader = XmlReader.Create(textReader);
+                return xmlSerializer.Deserialize(xmlReader) as MkvToolNixReleasesXml;
             }
         }
 
@@ -82,16 +84,22 @@ namespace PlexCleaner
             public string Version { get; set; }
         }
 
-        public static int MkvMerge(string parameters)
+        public static int MkvMerge(Config config, string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvMergeBinary);
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static int MkvMerge(string parameters, out string output)
+        public static int MkvMerge(Config config, string parameters, out string output)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvMergeBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvMergeBinary);
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
@@ -104,31 +112,40 @@ namespace PlexCleaner
         }
 */
 
-        public static int MkvPropEdit(string parameters)
+        public static int MkvPropEdit(Config config, string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.MkvToolNix, MkvPropEditBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvPropEditBinary);
             ConsoleEx.WriteLineTool($"MKVPropEdit : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath()
+        public static string GetToolPath(Config config)
         {
-            return Tools.CombineToolPath(ToolOptions.Default.MkvToolNix);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            return Tools.CombineToolPath(config, config.MkvToolNix);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
         {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
             try
             {
                 // Download latest release file
                 // https://mkvtoolnix.download/latest-release.xml.gz
-                WebClient wc = new WebClient();
+                using WebClient wc = new WebClient();
                 Stream wcstream = wc.OpenRead("https://mkvtoolnix.download/latest-release.xml.gz");
-                if (wcstream == null) throw new ArgumentNullException(nameof(wcstream));
+                if (wcstream == null) throw new ArgumentNullException(nameof(toolinfo));
 
                 // Get XML from Gzip
-                GZipStream gzstream = new GZipStream(wcstream, CompressionMode.Decompress);
-                StreamReader sr = new StreamReader(gzstream);
+                using GZipStream gzstream = new GZipStream(wcstream, CompressionMode.Decompress);
+                using StreamReader sr = new StreamReader(gzstream);
                 string xml = sr.ReadToEnd();
 
                 // Get the version number from XML

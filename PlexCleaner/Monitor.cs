@@ -8,8 +8,9 @@ namespace PlexCleaner
 {
     internal class Monitor
     {
-        public Monitor()
+        public Monitor(Program program)
         {
+            Program = program;
             Watcher = new List<FileSystemWatcher>();
             WatchFolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
             WatchLock = new object();
@@ -30,7 +31,7 @@ namespace PlexCleaner
             foreach (string folder in folders)
             {
                 // Create a file system watcher for the folder
-                ConsoleEx.WriteLine($"Monitoring : \"{folder}\"");
+                ConsoleEx.WriteLine($"Monitoring : \"{folder}\".");
                 FileSystemWatcher watch = new FileSystemWatcher();
                 Watcher.Add(watch);
                 watch.Path = folder;
@@ -49,7 +50,7 @@ namespace PlexCleaner
                 watch.EnableRaisingEvents = true;
 
             // Wait for exit to be signalled
-            while (!Program.Default.Cancel.WaitForSet(1000))
+            while (!Program.Cancel.WaitForSet(1000))
             {
                 // Lock and process the list of folders
                 List<string> watchlist = new List<string>();
@@ -62,14 +63,14 @@ namespace PlexCleaner
                             WatchFolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
-                        DateTime settletime = DateTime.UtcNow.AddSeconds(-AppOptions.Default.MonitorWaitTime);
-                        foreach (KeyValuePair<string, DateTime> pair in WatchFolders)
+                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorWaitTime);
+                        foreach ((string key, DateTime value) in WatchFolders)
                         // If not recently modified and all files in the folder are readable
-                            if (pair.Value < settletime)
-                                if (!FileEx.AreFilesInDirectoryReadable(pair.Key))
-                                    WriteLine($"Folder not readable : \"{pair.Key}\"");
+                            if (value < settletime)
+                                if (!FileEx.AreFilesInDirectoryReadable(key))
+                                    WriteLine($"Folder not readable : \"{key}\"");
                                 else
-                                    watchlist.Add(pair.Key);
+                                    watchlist.Add(key);
 
                         // Remove watched folders from the watchlist
                         foreach (string folder in watchlist)
@@ -84,7 +85,7 @@ namespace PlexCleaner
                 // Process changes in the watched folders
                 foreach (string folder in watchlist)
                     ConsoleEx.WriteLine($"Monitored changes in : \"{folder}\"");
-                Process process = new Process();
+                Process process = new Process(Program);
                 process.ProcessFolders(watchlist);
                 process.DeleteEmptyFolders(watchlist);
             }
@@ -122,7 +123,7 @@ namespace PlexCleaner
                 case WatcherChangeTypes.All:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(e));
             }
         }
 
@@ -152,7 +153,7 @@ namespace PlexCleaner
                 case WatcherChangeTypes.All:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(e));
             }
         }
 
@@ -166,7 +167,7 @@ namespace PlexCleaner
         {
             // Cancel in case of error
             WriteLineError($"OnError : {e.GetException()}");
-            Program.Default.Cancel.State = true;
+            Program.Cancel.State = true;
         }
 
         // Write to the console, but only write if the output is different to the previous output
@@ -257,5 +258,6 @@ namespace PlexCleaner
         private readonly object WatchLock;
         private string LastWriteLine;
         private readonly object LastWriteLineLock;
+        private readonly Program Program;
     }
 }

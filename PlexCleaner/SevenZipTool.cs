@@ -8,42 +8,54 @@ namespace PlexCleaner
 {
     public static class SevenZipTool
     {
-        public static bool VerifyTool()
+        public static bool VerifyTool(Config config)
         {
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
             // Make sure the 7-Zip binary exists
-            return File.Exists(Tools.CombineToolPath(ToolOptions.Default.SevenZip, SevenZipBinary));
+            return File.Exists(Tools.CombineToolPath(config, config.SevenZip, SevenZipBinary));
         }
 
-        public static bool UnZip(string archive, string folder)
+        public static bool UnZip(Config config, string archive, string folder)
         {
             // 7z.exe x archive.zip -o"C:\Doc"
             string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = SevenZip(commandline);
+            int exitcode = SevenZip(config, commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
-        public static int SevenZip(string parameters)
+        public static int SevenZip(Config config, string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.SevenZip, SevenZipBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.SevenZip, SevenZipBinary);
             ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath()
+        public static string GetToolPath(Config config)
         {
-            return Tools.CombineToolPath(ToolOptions.Default.SevenZip);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            return Tools.CombineToolPath(config, config.SevenZip);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
         {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
             try
             {
                 // Load the download page
                 // TODO : Find a more reliable way of getting the last released version number
                 // https://www.7-zip.org/download.html
-                WebClient wc = new WebClient();
+                using WebClient wc = new WebClient();
                 string downloadpage = wc.DownloadString("https://www.7-zip.org/download.html");
 
                 // Extract the version number from the page source

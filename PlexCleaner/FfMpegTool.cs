@@ -57,27 +57,39 @@ namespace PlexCleaner
             public string MimeType { get; set; }
         }
 
-        public static int FfMpeg(string parameters)
+        public static int FfMpeg(Config config, string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.FfMpeg, FfMpegBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.FfMpeg, FfMpegBinary);
             ConsoleEx.WriteLineTool($"FFMpeg : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static int FfProbe(string parameters, out string output, out string error)
+        public static int FfProbe(Config config, string parameters, out string output, out string error)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.FfMpeg, FfProbeBinary);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            string path = Tools.CombineToolPath(config, config.FfMpeg, FfProbeBinary);
             ConsoleEx.WriteLineTool($"FFProbe : {parameters}");
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
-        public static string GetToolPath()
+        public static string GetToolPath(Config config)
         {
-            return Tools.CombineToolPath(ToolOptions.Default.FfMpeg);
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            return Tools.CombineToolPath(config, config.FfMpeg);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
         {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
             try
             {
                 // Load the download page
@@ -85,7 +97,7 @@ namespace PlexCleaner
                 // https://www.ffmpeg.org/download.html
                 // https://ffmpeg.zeranoe.com/builds/
                 HtmlWeb web = new HtmlWeb();
-                HtmlDocument doc = web.Load("https://www.ffmpeg.org/download.html");
+                HtmlDocument doc = web.Load(new Uri(@"https://www.ffmpeg.org/download.html"));
 
                 // Get the download element and the download button
                 HtmlNode download = doc.GetElementbyId("download");

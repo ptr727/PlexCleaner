@@ -7,16 +7,16 @@ namespace PlexCleaner
 {
     internal static class HandBrakeTool
     {
-        public static int HandBrake(string parameters)
+        public static int HandBrake(Config config, string parameters)
         {
-            string path = Tools.CombineToolPath(ToolOptions.Default.HandBrake, HandBrakeBinary);
+            string path = Tools.CombineToolPath(config, config.HandBrake, HandBrakeBinary);
             ConsoleEx.WriteLineTool($"HandBrake : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath()
+        public static string GetToolPath(Config config)
         {
-            return Tools.CombineToolPath(ToolOptions.Default.HandBrake);
+            return Tools.CombineToolPath(config, config.HandBrake);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -25,17 +25,15 @@ namespace PlexCleaner
             {
                 // Get the latest rfelease version number from github releases
                 // https://api.github.com/repos/handbrake/handbrake/releases/latest
-                using (WebClient webClient = new WebClient())
-                {
-                    // We need a user agent for GitHub else we get a 403 forbidden error
-                    // https://developer.github.com/v3/#user-agent-required
-                    webClient.Headers.Add("User-Agent", "PlexCleaner Utility");
-                    string json = webClient.DownloadString(@"https://api.github.com/repos/handbrake/handbrake/releases/latest");
-                    JObject releases = JObject.Parse(json);
-                    // "tag_name": "1.2.2",
-                    JToken versiontag = releases["tag_name"];
-                    toolinfo.Version = versiontag.ToString();
-                }
+                // We need a user agent for GitHub else we get a 403 forbidden error
+                // https://developer.github.com/v3/#user-agent-required
+                using WebClient webClient = new WebClient();
+                webClient.Headers.Add("User-Agent", "PlexCleaner Utility");
+                string json = webClient.DownloadString(@"https://api.github.com/repos/handbrake/handbrake/releases/latest");
+                JObject releases = JObject.Parse(json);
+                // "tag_name": "1.2.2",
+                JToken versiontag = releases["tag_name"];
+                toolinfo.Version = versiontag.ToString();
 
                 // Create download URL and the output filename using the version number
                 // https://handbrake.fr/downloads2.php
