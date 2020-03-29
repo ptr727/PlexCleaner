@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PlexCleaner
@@ -35,6 +36,11 @@ namespace PlexCleaner
                     SecondaryTool = sec1.Parser,
                     TertiaryTool = sec2.Parser
                 };
+
+                if (tag.Primary == null)
+                    tag.Primary = "null";
+
+
                 if (!Video.ContainsKey(tag.Primary))
                     Video.Add(tag.Primary, tag);
             }
@@ -49,6 +55,10 @@ namespace PlexCleaner
                     SecondaryTool = sec1.Parser,
                     TertiaryTool = sec2.Parser
                 };
+
+                if (tag.Primary == null)
+                    tag.Primary = "null";
+
                 if (!Audio.ContainsKey(tag.Primary))
                     Audio.Add(tag.Primary, tag);
             }
@@ -63,6 +73,10 @@ namespace PlexCleaner
                     SecondaryTool = sec1.Parser,
                     TertiaryTool = sec2.Parser
                 };
+
+                if (tag.Primary == null)
+                    tag.Primary = "null";
+
                 if (!Subtitle.ContainsKey(tag.Primary))
                     Subtitle.Add(tag.Primary, tag);
             }

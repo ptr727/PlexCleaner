@@ -676,6 +676,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvmerge</span>(1) sets the "date" segment information field to the time &amp; date when multiplexing started.
+                        With this option
+                        that field is not written at all.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -753,7 +766,7 @@
          
          
          
-         <h2><a name="d4e1130">2.5. File splitting, linking, appending and concatenation (more global options)</a></h2>
+         <h2><a name="d4e1149">2.5. File splitting, linking, appending and concatenation (more global options)</a></h2>
          
          
          
@@ -1543,7 +1556,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2191">2.6. Attachment support (more global options)</a></h2>
+         <h2><a name="d4e2210">2.6. Attachment support (more global options)</a></h2>
          
          
          
@@ -1622,7 +1635,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2332">2.7. Options that can be used for each input file</a></h2>
+         <h2><a name="d4e2351">2.7. Options that can be used for each input file</a></h2>
          
          
          
@@ -2270,7 +2283,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3447">2.8. Options that only apply to video tracks</a></h2>
+         <h2><a name="d4e3466">2.8. Options that only apply to video tracks</a></h2>
          
          
          
@@ -2705,7 +2718,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4268">2.9. Options that only apply to text subtitle tracks</a></h2>
+         <h2><a name="d4e4287">2.9. Options that only apply to text subtitle tracks</a></h2>
          
          
          
@@ -2745,7 +2758,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4308">2.10. Other options</a></h2>
+         <h2><a name="d4e4327">2.10. Other options</a></h2>
          
          
          
@@ -2983,6 +2996,63 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      <p>
                         Tells the program to abort after the first warning is emitted. The program's exit
                         code will be 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">seed</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Enables the creation of byte-identical files if the same version of <span class="productname">mkvmerge</span>(1) is used with the same source files, the same set of
+                        options and the same seed.  Note that the "date" segment information field is not
+                        written in this mode.
+                        
+                     </p>
+                     
+                     
+                     <p>The seed can be an arbitrary string and does not have to be a number.</p>
+                     
+                     
+                     <p>
+                        The result of byte-identical files is only guaranteed under the following conditions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The same version of <span class="productname">mkvmerge</span>(1) built with the same versions of libEBML and libMatroska is used.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The source files used are byte-identical.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The same command line options are used in the same order (with the notable exception
+                              of <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Using other versions of <span class="productname">mkvmerge</span>(1) or other command-line options may result in the same byte-identical file but is not
+                        guaranteed to do so.
                         
                      </p>
                      
@@ -4051,7 +4121,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6029">13.3. General notes</a></h2>
+         <h2><a name="d4e6115">13.3. General notes</a></h2>
          
          
          <p>
@@ -4079,7 +4149,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6094">14.1. Introduction</a></h2>
+         <h2><a name="d4e6180">14.1. Introduction</a></h2>
          
          
          
@@ -4387,7 +4457,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6540">17.1. Timestamp file format v1</a></h2>
+         <h2><a name="d4e6626">17.1. Timestamp file format v1</a></h2>
          
          
          <p>
@@ -4405,7 +4475,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6564">17.2. Timestamp file format v2</a></h2>
+         <h2><a name="d4e6650">17.2. Timestamp file format v2</a></h2>
          
          
          
@@ -4424,7 +4494,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6579">17.3. Timestamp file format v3</a></h2>
+         <h2><a name="d4e6665">17.3. Timestamp file format v3</a></h2>
          
          
          <p>
@@ -4445,7 +4515,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6597">17.4. Timestamp file format v4</a></h2>
+         <h2><a name="d4e6683">17.4. Timestamp file format v4</a></h2>
          
          
          <p>
@@ -4471,7 +4541,7 @@ gap, 10.050
             <li>
                
                <p>
-                  <span class="constant">0</span> -- This exit codes means that muxing has completed successfully.
+                  <span class="constant">0</span> -- This exit code means that muxing has completed successfully.
                   
                </p>
                

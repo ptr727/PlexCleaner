@@ -15,15 +15,15 @@
          <ul>
             <li><a href="#mkvmerge.synopsis">1. Короткий опис</a></li>
             <li><a href="#mkvmerge.description">2. Опис</a></li>
-            <li><a href="#mkvmerge.usage">3. Usage</a></li>
+            <li><a href="#mkvmerge.usage">3. Використання</a></li>
             <li><a href="#mkvmerge.option_order">4. Option order</a></li>
-            <li><a href="#mkvmerge.examples">5. Examples</a></li>
-            <li><a href="#mkvmerge.track_ids">6. Track IDs</a></li>
+            <li><a href="#mkvmerge.examples">5. Приклади</a></li>
+            <li><a href="#mkvmerge.track_ids">6. ID доріжок</a></li>
             <li><a href="#mkvmerge.text_files_and_charsets">7. Text files and character set conversions</a></li>
-            <li><a href="#mkvmerge.option_files">8. Option files</a></li>
-            <li><a href="#mkvmerge.subtitles">9. Subtitles</a></li>
+            <li><a href="#mkvmerge.option_files">8. Файли опцій</a></li>
+            <li><a href="#mkvmerge.subtitles">9. Субтитри</a></li>
             <li><a href="#mkvmerge.file_linking">10. File linking</a></li>
-            <li><a href="#mkvmerge.default_values">11. Default values</a></li>
+            <li><a href="#mkvmerge.default_values">11. Значення за замовчуванням</a></li>
             <li><a href="#mkvmerge.attachments">12. Вкладення</a></li>
             <li><a href="#mkvmerge.chapters">13. Розділи</a></li>
             <li><a href="#mkvmerge.tags">14. Теги</a></li>
@@ -378,7 +378,7 @@
                            
                            
                            <p>
-                              Example: <span class="literal">--generate-chapters interval:45s</span>
+                              Приклад: <span class="literal">--generate-chapters interval:45s</span>
                               
                            </p>
                            
@@ -451,7 +451,7 @@
                         
                         <li>
                            
-                           <p><span class="literal">%h</span> – hours
+                           <p><span class="literal">%h</span> – години
                            </p>
                            
                         </li>
@@ -465,7 +465,7 @@
                         
                         <li>
                            
-                           <p><span class="literal">%m</span> – minutes
+                           <p><span class="literal">%m</span> – хвилини
                            </p>
                            
                         </li>
@@ -479,7 +479,7 @@
                         
                         <li>
                            
-                           <p><span class="literal">%s</span> – seconds
+                           <p><span class="literal">%s</span> – секунди
                            </p>
                            
                         </li>
@@ -493,15 +493,15 @@
                         
                         <li>
                            
-                           <p><span class="literal">%n</span> – nanoseconds with nine places
+                           <p><span class="literal">%n</span> – наносекунди з дев'ятьма місцями
                            </p>
                            
                         </li>
                         
                         <li>
                            
-                           <p><span class="literal">%&lt;1-9&gt;n</span> – nanoseconds with up to nine places
-                              (e.g. three places with <span class="literal">%3n</span>)
+                           <p><span class="literal">%&lt;1-9&gt;n</span> – наносекунди з максимум дев'ятьма місцями
+                              (напр. три місця з <span class="literal">%3n</span>)
                            </p>
                            
                         </li>
@@ -711,6 +711,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvmerge</span>(1) sets the "date" segment information field to the time
+                        &amp; date when multiplexing started.  With this option that field is not
+                        written at all.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -794,7 +807,7 @@
          
          
          
-         <h2><a name="d4e1129">2.5. File splitting, linking, appending and concatenation (more global options)</a></h2>
+         <h2><a name="d4e1148">2.5. File splitting, linking, appending and concatenation (more global options)</a></h2>
          
          
          
@@ -842,7 +855,7 @@
                            
                            
                            <p>
-                              Examples: <span class="code">--split size:700m</span> or <span class="code">--split 150000000</span>
+                              Приклад: <span class="code">--split size:700m</span> or <span class="code">--split 150000000</span>
                               
                            </p>
                            
@@ -875,14 +888,14 @@
                            
                            
                            <p>
-                              Syntax: <span class="option">--split</span>
+                              Синтаксис: <span class="option">--split</span>
                               [<span class="literal">duration:</span>]<span class="parameter">HH:MM:SS.nnnnnnnnn</span>|<span class="parameter">d</span>s
                               
                            </p>
                            
                            
                            <p>
-                              Examples: <span class="code">--split duration:00:60:00.000</span> or <span class="code">--split
+                              Приклад: <span class="code">--split duration:00:60:00.000</span> or <span class="code">--split
                                  3600s</span>
                               
                            </p>
@@ -929,7 +942,7 @@
                            
                            
                            <p>
-                              Example: <span class="code">--split timestamps:00:45:00.000,01:20:00.250,6300s</span>
+                              Приклад: <span class="code">--split timestamps:00:45:00.000,01:20:00.250,6300s</span>
                               
                            </p>
                            
@@ -970,7 +983,7 @@
                            
                            
                            <p>
-                              Examples: 
+                              Приклади: 
                               <ol>
                                  
                                  <li>
@@ -1089,7 +1102,7 @@
                            
                            
                            <p>
-                              Examples: 
+                              Приклади: 
                               <ol>
                                  
                                  <li>
@@ -1230,7 +1243,7 @@
                            
                            
                            <p>
-                              Example: <span class="code">--split frames:120,237,891</span>
+                              Приклад: <span class="code">--split frames:120,237,891</span>
                               
                            </p>
                            
@@ -1294,7 +1307,7 @@
                            
                            
                            <p>
-                              Example: <span class="code">--split chapters:5,8</span>
+                              Приклад: <span class="code">--split chapters:5,8</span>
                               
                            </p>
                            
@@ -1626,7 +1639,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2190">2.6. Attachment support (more global options)</a></h2>
+         <h2><a name="d4e2209">2.6. Attachment support (more global options)</a></h2>
          
          
          
@@ -1715,7 +1728,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2331">2.7. Options that can be used for each input file</a></h2>
+         <h2><a name="d4e2350">2.7. Options that can be used for each input file</a></h2>
          
          
          
@@ -2412,7 +2425,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3446">2.8. Options that only apply to video tracks</a></h2>
+         <h2><a name="d4e3465">2.8. Options that only apply to video tracks</a></h2>
          
          
          
@@ -2890,7 +2903,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4267">2.9. Options that only apply to text subtitle tracks</a></h2>
+         <h2><a name="d4e4286">2.9. Options that only apply to text subtitle tracks</a></h2>
          
          
          
@@ -2931,7 +2944,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4307">2.10. Other options</a></h2>
+         <h2><a name="d4e4326">2.10. Інші налаштування</a></h2>
          
          
          
@@ -3189,6 +3202,66 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">seed</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Enables the creation of byte-identical files if the same version of
+                        <span class="productname">mkvmerge</span>(1) is used with the same source files, the same set of options and
+                        the same seed.  Note that the "date" segment information field is not
+                        written in this mode.
+                        
+                     </p>
+                     
+                     
+                     <p>The seed can be an arbitrary string and does not have to be a number.</p>
+                     
+                     
+                     <p>
+                        The result of byte-identical files is only guaranteed under the following
+                        conditions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The same version of <span class="productname">mkvmerge</span>(1) built with the same versions of libEBML and
+                              libMatroska is used.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The source files used are byte-identical.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The same command line options are used in the same order (with the notable
+                              exception of <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Using other versions of <span class="productname">mkvmerge</span>(1) or other command-line options may result
+                        in the same byte-identical file but is not guaranteed to do so.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><a name="mkvmerge.description.debug"><span class="option">--debug</span> <span class="parameter">topic</span></a></td>
                   <td>
                      
@@ -3299,7 +3372,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          </table>
          
          
-         <h1><a name="mkvmerge.usage">3. Usage</a></h1>
+         <h1><a name="mkvmerge.usage">3. Використання</a></h1>
          
          
          <p>
@@ -3388,7 +3461,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          </p>
          
          <pre class="screen">$ mkvmerge -o output.mkv --language 0:fre français.ogg --language 0:deu deutsch.ogg</pre>
-         <h1><a name="mkvmerge.examples">5. Examples</a></h1>
+         <h1><a name="mkvmerge.examples">5. Приклади</a></h1>
          
          
          <p>
@@ -3453,7 +3526,7 @@ $ mkvmerge -o MM-complete.mkv MyMovie-with-sound.mkv MyMovie-add-audio.ogg</pre>
          <pre class="screen">$ mkvmerge --identify outofsync.ogg</pre>
          
          <p>
-            Now you can use that ID in the following command line:
+            Тепер ви можете використовувати цей ID у наступному командному рядку:
             
          </p>
          
@@ -3591,7 +3664,7 @@ $ mkvmerge -o MM-complete.mkv MyMovie-with-sound.mkv MyMovie-add-audio.ogg</pre>
          
          <pre class="screen">$ mkvmerge -o no-compression.mkv --compression -1:none MyMovie.avi --compression -1:none mymovie.srt</pre>
          
-         <h1><a name="mkvmerge.track_ids">6. Track IDs</a></h1>
+         <h1><a name="mkvmerge.track_ids">6. ID доріжок</a></h1>
          
          
          
@@ -3652,9 +3725,9 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <li>
                
                <p>
-                  <span class="abbrev">AAC</span>, <span class="abbrev">AC-3</span>, <span class="abbrev">MP3</span>,
-                  <span class="abbrev">SRT</span> and <span class="abbrev">WAV</span> files: The one 'track' in that
-                  file gets the ID 0.
+                  Файли <span class="abbrev">AAC</span>, <span class="abbrev">AC-3</span>, <span class="abbrev">MP3</span>,
+                  <span class="abbrev">SRT</span> і <span class="abbrev">WAV</span>: одна доріжка у цьому файлі
+                  отримує ID 0.
                   
                </p>
                
@@ -3727,7 +3800,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          </div>
          
          
-         <h2><a name="mkvmerge.text_files_and_charsets.introduction">7.1. Introduction</a></h2>
+         <h2><a name="mkvmerge.text_files_and_charsets.introduction">7.1. Вступ</a></h2>
          
          
          <p>
@@ -3914,7 +3987,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          </ul>
          
          
-         <h1><a name="mkvmerge.option_files">8. Option files</a></h1>
+         <h1><a name="mkvmerge.option_files">8. Файли опцій</a></h1>
          
          
          
@@ -3959,7 +4032,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
   "a movie.avi",
   "sound.ogg"
 ]</pre>
-         <h1><a name="mkvmerge.subtitles">9. Subtitles</a></h1>
+         <h1><a name="mkvmerge.subtitles">9. Субтитри</a></h1>
          
          
          <p>
@@ -3984,7 +4057,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <li>
                
                <p>
-                  Subtitle Ripper (SRT) files
+                  Файли Subtitle Ripper (SRT)
                   
                </p>
                
@@ -4004,7 +4077,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <li>
                
                <p>
-                  Universal Subtitle Format (USF) files
+                  Файли Universal Subtitle Format (USF)
                   
                </p>
                
@@ -4014,7 +4087,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <li>
                
                <p>
-                  OggKate streams
+                  Потоки OggKate
                   
                </p>
                
@@ -4024,7 +4097,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             <li>
                
                <p>
-                  VobSub bitmap subtitle files
+                  Файли субтитрів VobSub bitmap
                   
                </p>
                
@@ -4105,7 +4178,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
             
          </p>
          
-         <h1><a name="mkvmerge.default_values">11. Default values</a></h1>
+         <h1><a name="mkvmerge.default_values">11. Значення за замовчуванням</a></h1>
          
          
          <p>
@@ -4180,7 +4253,7 @@ Track ID 1: audio (A_MPEG/L3)</pre>
          </p>
          
          
-         <h2><a name="mkvmerge.chapters.simple">13.1. The simple chapter format</a></h2>
+         <h2><a name="mkvmerge.chapters.simple">13.1. Простий формат глав</a></h2>
          
          
          
@@ -4218,11 +4291,11 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="mkvmerge.chapters.xml">13.2. The XML based chapter format</a></h2>
+         <h2><a name="mkvmerge.chapters.xml">13.2. Формат глав, що базується на XML</a></h2>
          
          
          <p>
-            The <span class="abbrev">XML</span> based chapter format looks like this example:
+            Формат глав, що базується на <span class="abbrev">XML</span>, виглядає як у наступному прикладі:
             
          </p>
          
@@ -4316,7 +4389,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6028">13.3. General notes</a></h2>
+         <h2><a name="d4e6113">13.3. Загальні примітки</a></h2>
          
          
          <p>
@@ -4348,7 +4421,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6093">14.1. Introduction</a></h2>
+         <h2><a name="d4e6178">14.1. Вступ</a></h2>
          
          
          
@@ -4405,7 +4478,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="mkvmerge.tags.example">14.3. Example</a></h2>
+         <h2><a name="mkvmerge.tags.example">14.3. Приклад</a></h2>
          
          
          <p>
@@ -4463,7 +4536,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="mkvmerge.tags.data_types">14.5. Data types</a></h2>
+         <h2><a name="mkvmerge.tags.data_types">14.5. Типи даних</a></h2>
          
          
          <p>
@@ -4680,7 +4753,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6539">17.1. Timestamp file format v1</a></h2>
+         <h2><a name="d4e6624">17.1. Timestamp file format v1</a></h2>
          
          
          <p>
@@ -4700,7 +4773,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6563">17.2. Timestamp file format v2</a></h2>
+         <h2><a name="d4e6648">17.2. Timestamp file format v2</a></h2>
          
          
          
@@ -4719,7 +4792,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6578">17.3. Timestamp file format v3</a></h2>
+         <h2><a name="d4e6663">17.3. Timestamp file format v3</a></h2>
          
          
          <p>
@@ -4742,7 +4815,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6596">17.4. Timestamp file format v4</a></h2>
+         <h2><a name="d4e6681">17.4. Timestamp file format v4</a></h2>
          
          
          <p>
@@ -4768,7 +4841,7 @@ gap, 10.050
             <li>
                
                <p>
-                  <span class="constant">0</span> -- This exit codes means that muxing has completed
+                  <span class="constant">0</span> -- This exit code means that muxing has completed
                   successfully.
                   
                </p>
@@ -4825,8 +4898,8 @@ gap, 10.050
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVMERGE_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> and
-                     its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td class="varlistoption"><span class="varname">MKVMERGE_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> і їх
+                     коротка форма <span class="varname">MTX_DEBUG</span></td>
                   <td>
                      
                      <p>The content is treated as if it had been passed via the <a href="#mkvmerge.description.debug">--debug</a> option.
@@ -4835,8 +4908,8 @@ gap, 10.050
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVMERGE_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> and
-                     its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td class="varlistoption"><span class="varname">MKVMERGE_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> і
+                     їх коротка форма <span class="varname">MTX_ENGAGE</span></td>
                   <td>
                      
                      <p>The content is treated as if it had been passed via the <a href="#mkvmerge.description.engage">--engage</a>

@@ -634,6 +634,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvmerge</span>(1) sets the "date" segment information field to the time
+                        &amp; date when multiplexing started.  With this option that field is not
+                        written at all.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -706,7 +719,7 @@
          
          
          
-         <h2><a name="d4e1128">2.5. 文件切割、连接、追加及合并 (其他全局选项)</a></h2>
+         <h2><a name="d4e1147">2.5. 文件切割、连接、追加及合并 (其他全局选项)</a></h2>
          
          
          
@@ -1435,7 +1448,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2189">2.6. 附件支持 (其他全局选项)</a></h2>
+         <h2><a name="d4e2208">2.6. 附件支持 (其他全局选项)</a></h2>
          
          
          
@@ -1514,7 +1527,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2330">2.7. 用于各输入文件的选项</a></h2>
+         <h2><a name="d4e2349">2.7. 用于各输入文件的选项</a></h2>
          
          
          
@@ -2140,7 +2153,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3445">2.8. 仅用于视频轨的选项</a></h2>
+         <h2><a name="d4e3464">2.8. 仅用于视频轨的选项</a></h2>
          
          
          
@@ -2572,7 +2585,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4266">2.9. 仅适用于文本字幕轨道的选项</a></h2>
+         <h2><a name="d4e4285">2.9. 仅适用于文本字幕轨道的选项</a></h2>
          
          
          
@@ -2609,7 +2622,7 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4306">2.10. 其他选项</a></h2>
+         <h2><a name="d4e4325">2.10. 其他选项</a></h2>
          
          
          
@@ -2833,6 +2846,66 @@ $ mkvmerge -o 输出.mkv '(' 文件.mkv ')'</pre>
                      
                      <p>
                         让程序在出现警告时即中止。程序的退出代码将返回 1。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">seed</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Enables the creation of byte-identical files if the same version of
+                        <span class="productname">mkvmerge</span>(1) is used with the same source files, the same set of options and
+                        the same seed.  Note that the "date" segment information field is not
+                        written in this mode.
+                        
+                     </p>
+                     
+                     
+                     <p>The seed can be an arbitrary string and does not have to be a number.</p>
+                     
+                     
+                     <p>
+                        The result of byte-identical files is only guaranteed under the following
+                        conditions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The same version of <span class="productname">mkvmerge</span>(1) built with the same versions of libEBML and
+                              libMatroska is used.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The source files used are byte-identical.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The same command line options are used in the same order (with the notable
+                              exception of <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Using other versions of <span class="productname">mkvmerge</span>(1) or other command-line options may result
+                        in the same byte-identical file but is not guaranteed to do so.
                         
                      </p>
                      
@@ -3833,7 +3906,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
           ChapterProcessData (二进制)</pre>
          
          
-         <h2><a name="d4e6025">13.3. 一般性备注</a></h2>
+         <h2><a name="d4e6111">13.3. 一般性备注</a></h2>
          
          
          <p>
@@ -3857,7 +3930,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          
          
          
-         <h2><a name="d4e6090">14.1. 介绍</a></h2>
+         <h2><a name="d4e6176">14.1. 介绍</a></h2>
          
          
          
@@ -4146,7 +4219,7 @@ CHAPTER03NAME=宝宝摇屋子</pre>
          </p>
          
          
-         <h2><a name="d4e6536">17.1. 时间戳文件格式 v1</a></h2>
+         <h2><a name="d4e6622">17.1. 时间戳文件格式 v1</a></h2>
          
          
          <p>
@@ -4162,7 +4235,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6560">17.2. 时间戳文件格式 v2</a></h2>
+         <h2><a name="d4e6646">17.2. 时间戳文件格式 v2</a></h2>
          
          
          
@@ -4178,7 +4251,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6575">17.3. 时间戳文件格式 v3</a></h2>
+         <h2><a name="d4e6661">17.3. 时间戳文件格式 v3</a></h2>
          
          
          <p>
@@ -4196,7 +4269,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6593">17.4. 时间戳文件格式 v4</a></h2>
+         <h2><a name="d4e6679">17.4. 时间戳文件格式 v4</a></h2>
          
          
          <p>

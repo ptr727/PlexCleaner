@@ -41,9 +41,18 @@ namespace PlexCleaner
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            Format = stream.CodecName;
-            Codec = stream.CodecLongName;
-            Profile = stream.Profile;
+            if (!string.IsNullOrEmpty(stream.CodecName))
+                Format = stream.CodecName;
+            else
+                Format = "null";
+            if (!string.IsNullOrEmpty(stream.CodecLongName))
+                Codec = stream.CodecLongName;
+            else
+                Codec = "null";
+            if (!string.IsNullOrEmpty(stream.Profile))
+                Profile = stream.Profile;
+            else
+                Profile = "null";
 
             // TODO : FFProbe interprets the language tag instead of tag_language
             // Result is MediaInfo and MKVMerge say language is "eng", FFProbe says language is "und"
@@ -73,7 +82,10 @@ namespace PlexCleaner
 
             Format = track.Format;
             Codec = track.CodecId;
-            Profile = track.FormatProfile;
+            if (!string.IsNullOrEmpty(track.FormatProfile))
+                Profile = track.FormatProfile;
+            else
+                Profile = "null";
 
             // Set language
             Language = track.Language;

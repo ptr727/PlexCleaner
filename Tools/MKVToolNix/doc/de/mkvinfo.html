@@ -17,7 +17,7 @@
             <li><a href="#mkvinfo.description">2. Beschreibung</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. Detailstufen</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. Umwandlungen von Textdateien und Zeichensätzen</a></li>
-            <li><a href="#d4e533">5. Rückgabewerte</a></li>
+            <li><a href="#d4e633">5. Rückgabewerte</a></li>
             <li><a href="#mkvinfo.environment_variables">6. Umgebungsvariablen</a></li>
             <li><a href="#mkvinfo.seealso">7. Siehe auch</a></li>
             <li><a href="#mkvinfo.www">8. WWW</a></li>
@@ -50,12 +50,63 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        Standardmäßig hält <span class="productname">mkvinfo</span>(1) an, wenn es auf den ersten Cluster trifft.
+                        Weiterhin zeigt es bestimmte oft auftretende Elemente nicht an.  Mit dieser
+                        Option wird <span class="productname">mkvinfo</span>(1) die Bearbeitung unabhängig von der Detailstufe
+                        fortsetzen und alle Elemente anzeigen.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         berechnet für jedes Bild die <span class="function">Adler-32</span>-Prüfsumme und
                         zeigt sie an. Nur nützlich zur Fehlersuche.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        Standardmäßig hält <span class="productname">mkvinfo</span>(1) an, wenn es auf den ersten Cluster trifft.  Mit
+                        dieser Option wird <span class="productname">mkvinfo</span>(1) die Bearbeitung unabhängig von der Detailstufe
+                        fortsetzen.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Zeige die Positionen aller Elemente unabhängig von der Detailstufe
+                        hexadezimal an.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Zeige die Positionen aller Elemente unabhängig von der Detailstufe dezimal
+                        an.
                         
                      </p>
                      
@@ -315,9 +366,23 @@
          
          
          <p>
+            Der selbe Effekt kann mit der Option <span class="option">--continue</span> erzielt
+            werden.
+            
+         </p>
+         
+         
+         <p>
             Auf Stufe 2 wird <span class="productname">mkvinfo</span>(1) auch die Suchkopfeinträge, die Indexeinträge und
             die Dateiposition ausgeben, an der jedes <span class="productname">Matroska</span><sup>(tm)</sup>-Element gefunden werden
             kann.
+            
+         </p>
+         
+         
+         <p>
+            Der selbe Effekt kann mit den Optionen <span class="option">--all --positions</span>
+            erzielt werden.
             
          </p>
          
@@ -347,7 +412,7 @@
             
          </p>
          
-         <h1><a name="d4e533">5. Rückgabewerte</a></h1>
+         <h1><a name="d4e633">5. Rückgabewerte</a></h1>
          
          
          

@@ -16,7 +16,7 @@
             <li><a href="#mkvinfo.description">2. Descripción</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. Niveles de detalle</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. Conversión de archivos de texto y conjunto de caracteres</a></li>
-            <li><a href="#d4e526">5. Códigos de salida</a></li>
+            <li><a href="#d4e626">5. Códigos de salida</a></li>
             <li><a href="#mkvinfo.environment_variables">6. Variables de entorno</a></li>
             <li><a href="#mkvinfo.seealso">7. Vea también</a></li>
             <li><a href="#mkvinfo.www">8. WWW</a></li>
@@ -49,12 +49,63 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        Por defecto <span class="productname">mkvinfo</span>(1) se detiene cuando encuentra un primer clúster. Además,
+                        no muestra ciertos elementos que ocurren con frecuencia. Con esta opción
+                        <span class="productname">mkvinfo</span>(1) continuará el proceso sin importar el nivel de verbosidad
+                        mostrando todos los elementos.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         Calcula y muestra el checksum <span class="function">Adler-32</span> para cada
                         fotograma. Útil sólo para depuración. 
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        Por defecto <span class="productname">mkvinfo</span>(1) se detiene cuando encuentra un primer clúster. Con
+                        esta opción <span class="productname">mkvinfo</span>(1) continuará el proceso sin importar el nivel de
+                        verbosidad.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra en hexadecimal las posiciones de todos los elementos sin importar el
+                        nivel de verbosidad.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Muestra en decimal las posiciones de todos los elementos sin importar el
+                        nivel de verbosidad.
                         
                      </p>
                      
@@ -322,9 +373,22 @@
          
          
          <p>
+            Se puede lograr el mismo efecto con la opción <span class="option">--continue</span>.
+            
+         </p>
+         
+         
+         <p>
             En el nivel 2 <span class="productname">mkvinfo</span>(1) también imprimirá las entradas buscadas del
             encabezado, las del índice y la posición en el archivo en el que cada
             elemento <span class="productname">Matroska</span><sup>(tm)</sup> pudo ser encontrado. 
+            
+         </p>
+         
+         
+         <p>
+            Se puede lograr el mismo efecto con las opciones <span class="option">--all
+               --positions</span>.
             
          </p>
          
@@ -351,7 +415,7 @@
             
          </p>
          
-         <h1><a name="d4e526">5. Códigos de salida</a></h1>
+         <h1><a name="d4e626">5. Códigos de salida</a></h1>
          
          
          

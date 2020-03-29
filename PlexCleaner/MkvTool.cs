@@ -84,22 +84,16 @@ namespace PlexCleaner
             public string Version { get; set; }
         }
 
-        public static int MkvMerge(Config config, string parameters)
+        public static int MkvMerge(string parameters)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvMergeBinary);
+            string path = Tools.CombineToolPath(Tools.Options.MkvToolNix, MkvMergeBinary);
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static int MkvMerge(Config config, string parameters, out string output)
+        public static int MkvMerge(string parameters, out string output)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvMergeBinary);
+            string path = Tools.CombineToolPath(Tools.Options.MkvToolNix, MkvMergeBinary);
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
@@ -112,22 +106,16 @@ namespace PlexCleaner
         }
 */
 
-        public static int MkvPropEdit(Config config, string parameters)
+        public static int MkvPropEdit(string parameters)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.MkvToolNix, MkvPropEditBinary);
+            string path = Tools.CombineToolPath(Tools.Options.MkvToolNix, MkvPropEditBinary);
             ConsoleEx.WriteLineTool($"MKVPropEdit : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath(Config config)
+        public static string GetToolPath()
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            return Tools.CombineToolPath(config, config.MkvToolNix);
+            return Tools.CombineToolPath(Tools.Options.MkvToolNix);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

@@ -1,0 +1,169 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <title>mkvtoolnix-gui -- une interface graphique utilisateur pour mkvmerge1 incluant un éditeur de
+         chapitres et d'entêtes
+      </title>
+      <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
+   </head>
+   <body>
+      <div class="heading">mkvtoolnix-gui -- une interface graphique utilisateur pour <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a> incluant un éditeur de
+         chapitres et d'entêtes
+      </div>
+      <hr>
+      <div id="toc" class="toc">
+         <h1>Table of contents</h1>
+         <ul>
+            <li><a href="#mkvtoolnix-gui.synopsis">1. Résumé</a></li>
+            <li><a href="#mkvtoolnix-gui.description">2. Description</a></li>
+            <li><a href="#mkvtoolnix-gui.seealso">3. Voir aussi</a></li>
+            <li><a href="#mkvtoolnix-gui.www">4. WWW</a></li>
+         </ul>
+      </div>
+      <div class="content">
+         <h1><a name="mkvtoolnix-gui.synopsis">1. Résumé</a></h1>
+         
+         
+         <div class="cmdsynopsis"><span class="commandname">mkvtoolnix-gui</span> [[configuration-file-name.mtxcfg] | [source-file.ext] | [matroska-file.mkv] | [chapter-file.ext] | [matroska-file.mkv]]
+         </div>
+         
+         <h1><a name="mkvtoolnix-gui.description">2. Description</a></h1>
+         
+         
+         <p>
+            <span class="productname">mkvtoolnix-gui</span>(1) est une interface graphique basée sur
+            <span class="productname">Qt</span><sup>(tm)</sup> pour <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>. Elle implémente aussi les
+            fonctionnalités de <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a> et <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a> et évoluera pour couvrir en
+            plus <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>. Tous les paramètres (par ex.. fichiers source, options de
+            piste, etc.) peuvent être enregistrés et restaurés.
+            
+         </p>
+         
+         
+         <p>
+            Lister les noms de fichiers de configuration avec l'extension
+            <span class="literal">.mtxcfg</span> oblige l'interface graphique à les charger dans
+            l'outil approprié. Tout autre nom de fichier est ajouté comme fichier source
+            pour multiplexage, ouvert dans l'outil d'information, l'éditeur de chapitres
+            ou d'entêtes selon le mode courant. Ce mode peut être modifié avec
+            <span class="option">--merge</span>, <span class="option">--info</span>,
+            <span class="option">--edit-chapters</span> ou <span class="option">--edit-headers</span>. Le mode
+            par défaut est l'ajout des fichiers pour le multiplexage.
+            
+         </p>
+         
+         
+         <p>
+            Remarque : si une instance de l'application est déjà exécutée quand elle est
+            lancée une seconde fois, tous les noms saisis sur le ligne de commande
+            seront pris en charge par l'instance déjà exécutée.
+            
+         </p>
+         
+         
+         <table class="variablelist">
+            <thead>
+               <tr>
+                  <th>Option</th>
+                  <th>Description</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr>
+                  <td class="varlistoption"><span class="option">--merge</span></td>
+                  <td>
+                     
+                     <p>Tous les noms de fichiers suivants seront ajoutés comme fichiers source à la
+                        tâche actuelle de multiplexage. Mode par défaut.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--info</span></td>
+                  <td>
+                     
+                     <p>Tous les noms de fichiers suivants seront ouverts dans l'outil
+                        d'information.
+                        
+                        
+                     </p>
+                     
+                     <p>De plus l'outil d'informations sera sélectionné au démarrage au lieu de
+                        l'outil de multiplexage.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-chapters</span></td>
+                  <td>
+                     
+                     <p>Tous les noms de fichier suivants seront ouverts dans l'éditeur de
+                        chapitres.
+                     </p>
+                     
+                     <p>De plus l'éditeur de chapitres sera sélectionné au démarrage au lieu de
+                        l'outil de multiplexage.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">--edit-headers</span></td>
+                  <td>
+                     
+                     <p>Tous les noms de fichier suivants seront ouverts dans l'éditeur d'entêtes.</p>
+                     
+                     <p>De plus l'éditeur d'entêtes sera sélectionné au démarrage au lieu de l'outil
+                        de multiplexage.
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-h</span>, <span class="option">--help</span></td>
+                  <td>
+                     
+                     <p>
+                        Affiche les informations d'utilisation et quitte.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-V</span>, <span class="option">--version</span></td>
+                  <td>
+                     
+                     <p>
+                        Affiche les informations de version et quitte.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+            </tbody>
+         </table>
+         
+         <h1><a name="mkvtoolnix-gui.seealso">3. Voir aussi</a></h1>
+         
+         
+         <p>
+            <a href="mkvmerge.html"><span class="productname">mkvmerge</span>(1)</a>, <a href="mkvextract.html"><span class="productname">mkvextract</span>(1)</a>, <a href="mkvinfo.html"><span class="productname">mkvinfo</span>(1)</a>, <a href="mkvpropedit.html"><span class="productname">mkvpropedit</span>(1)</a>
+            
+         </p>
+         
+         <h1><a name="mkvtoolnix-gui.www">4. WWW</a></h1>
+         
+         
+         <p>
+            La dernière version peut toujours être trouvée à <a href="https://mkvtoolnix.download/">la page d'accueil de MKVToolNix</a>.
+            
+         </p>
+         
+      </div>
+   </body>
+</html>

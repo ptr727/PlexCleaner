@@ -17,7 +17,7 @@
             <li><a href="#mkvinfo.description">2. 説明</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. 冗長レベル</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. テキストファイルと文字コード変換</a></li>
-            <li><a href="#d4e496">5. 返り値</a></li>
+            <li><a href="#d4e596">5. 返り値</a></li>
             <li><a href="#mkvinfo.environment_variables">6. 環境変数</a></li>
             <li><a href="#mkvinfo.seealso">7. 関連項目</a></li>
             <li><a href="#mkvinfo.www">8. ウェブ</a></li>
@@ -49,11 +49,61 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.
+                        Additionally it doesn't show certain often occurring elements.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level
+                        and show all elements.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         フレームごとに<span class="function">Adler-32</span>チェックサムを計算し、表示します。デバッグのためにのみ有用です。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in hexadecimal regardless of the
+                        verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in decimal regardless of the verbosity
+                        level.
                         
                      </p>
                      
@@ -275,7 +325,20 @@
          
          
          <p>
+            The same effect can be achieved with the option <span class="option">--continue</span>.
+            
+         </p>
+         
+         
+         <p>
             レベル2では、シークヘッドエントリ、CUE、及び各<span class="productname">Matroska</span><sup>(tm)</sup>エレメントのファイル内位置も表示します。
+            
+         </p>
+         
+         
+         <p>
+            The same effect can be achieved with the options <span class="option">--all
+               --positions</span>.
             
          </p>
          
@@ -295,7 +358,7 @@
             
          </p>
          
-         <h1><a name="d4e496">5. 返り値</a></h1>
+         <h1><a name="d4e596">5. 返り値</a></h1>
          
          
          

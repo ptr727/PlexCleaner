@@ -74,22 +74,16 @@ namespace PlexCleaner
             public string ScanType { get; set; }
         }
 
-        public static int MediaInfo(Config config, string parameters, out string output)
+        public static int MediaInfo(string parameters, out string output)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.MediaInfo, MediaInfoBinary);
+            string path = Tools.CombineToolPath(Tools.Options.MediaInfo, MediaInfoBinary);
             ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
 
-        public static string GetToolPath(Config config)
+        public static string GetToolPath()
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            return Tools.CombineToolPath(config, config.MediaInfo);
+            return Tools.CombineToolPath(Tools.Options.MediaInfo);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

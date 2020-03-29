@@ -731,6 +731,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Por defecto <span class="productname">mkvmerge</span>(1) establece en el campo "fecha" de información del
+                        segmento el tiempo &amp; fecha del inicio del multiplexado. Con esta opción,
+                        este campo no será escrito.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -819,7 +832,7 @@
          
          
          
-         <h2><a name="d4e1129">2.5. División, vinculación, unión y concatenación de archivos (más opciones
+         <h2><a name="d4e1148">2.5. División, vinculación, unión y concatenación de archivos (más opciones
                generales)</a></h2>
          
          
@@ -1681,7 +1694,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e2190">2.6. Soporte de adjuntos (más opciones globales)</a></h2>
+         <h2><a name="d4e2209">2.6. Soporte de adjuntos (más opciones globales)</a></h2>
          
          
          
@@ -1771,7 +1784,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e2331">2.7. Opciones que se pueden usar para cada archivo de entrada</a></h2>
+         <h2><a name="d4e2350">2.7. Opciones que se pueden usar para cada archivo de entrada</a></h2>
          
          
          
@@ -2509,7 +2522,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e3445">2.8. Opciones que sólo afectan a pistas de video</a></h2>
+         <h2><a name="d4e3464">2.8. Opciones que sólo afectan a pistas de video</a></h2>
          
          
          
@@ -2996,7 +3009,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4259">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
+         <h2><a name="d4e4278">2.9. Opciones que sólo afectan a pistas de subtítulos</a></h2>
          
          
          
@@ -3040,7 +3053,7 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
          
          
          
-         <h2><a name="d4e4302">2.10. Otras opciones</a></h2>
+         <h2><a name="d4e4321">2.10. Otras opciones</a></h2>
          
          
          
@@ -3299,6 +3312,69 @@ mkvmerge -o salida.mkv "(" archivo.mkv ")"</pre>
                      <p>
                         Le dice al programa que cancele después de emitir la primera advertencia. El
                         código de salida del programa será 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> valor inicial</a></td>
+                  <td>
+                     
+                     <p>
+                        Habilita la creación de archivos idénticos en bytes si se usa la misma
+                        versión de <span class="productname">mkvmerge</span>(1) con los mismos archivos de origen, el mismo conjunto
+                        de opciones y valor inicial. Tenga en cuenta que el campo "fecha" de
+                        información del segmento no se escribe en este modo.
+                        
+                     </p>
+                     
+                     
+                     <p>El valor inicial puede ser una cadena arbitraria sin tener que ser un
+                        número.
+                     </p>
+                     
+                     
+                     <p>
+                        Únicamente se garantiza la obtención de archivos idénticos en bytes bajo las
+                        siguientes condiciones:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>Si utiliza una versión de <span class="productname">mkvmerge</span>(1) construída con las mismas versiones de
+                              libEBML y libMatroska.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Los archivos de origen son idénticos en bytes.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Las mismas opciones de la línea de comandos se utilizan en el mismo orden
+                              (con la especial excepción de <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Al usar otras versiones de <span class="productname">mkvmerge</span>(1) u otras opciones de la línea de
+                        comandos, puede que obtenga el mismo archivo con idénticos bytes pero no se
+                        puede asegurar.
                         
                      </p>
                      
@@ -4457,7 +4533,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
           ChapterProcessData (binario)</pre>
          
          
-         <h2><a name="d4e6001">13.3. Notas generales</a></h2>
+         <h2><a name="d4e6085">13.3. Notas generales</a></h2>
          
          
          <p>
@@ -4489,7 +4565,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          
          
          
-         <h2><a name="d4e6069">14.1. Introducción</a></h2>
+         <h2><a name="d4e6153">14.1. Introducción</a></h2>
          
          
          
@@ -4836,7 +4912,7 @@ CHAPTER03NAME=El niño sacude la casa</pre>
          </p>
          
          
-         <h2><a name="d4e6500">17.1. Formato de archivo de código de tiempo v1</a></h2>
+         <h2><a name="d4e6584">17.1. Formato de archivo de código de tiempo v1</a></h2>
          
          
          <p>
@@ -4857,7 +4933,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6524">17.2. Formato de archivo de código de tiempo v2</a></h2>
+         <h2><a name="d4e6608">17.2. Formato de archivo de código de tiempo v2</a></h2>
          
          
          
@@ -4877,7 +4953,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6539">17.3. Formato de archivo de código de tiempo v3</a></h2>
+         <h2><a name="d4e6623">17.3. Formato de archivo de código de tiempo v3</a></h2>
          
          
          <p>
@@ -4901,7 +4977,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6557">17.4. Formato de archivo de código de tiempo v4</a></h2>
+         <h2><a name="d4e6641">17.4. Formato de archivo de código de tiempo v4</a></h2>
          
          
          <p>
@@ -4927,8 +5003,8 @@ gap, 10.050
             <li>
                
                <p>
-                  <span class="constant">0</span> -- Este código de salida significa que la extracción
-                  se ha realizado correctamente. 
+                  <span class="constant">0</span> -- Este código de salida significa que el
+                  multiplexado se ha realizado correctamente. 
                   
                </p>
                

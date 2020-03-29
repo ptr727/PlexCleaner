@@ -228,19 +228,19 @@ namespace PlexCleaner
         }
         
         // Get stream info using MediaInfo
-        public static bool GetMediaInfo(Config config, string filename, out MediaInfo mediainfo)
+        public static bool GetMediaInfo(string filename, out MediaInfo mediainfo)
         {
             mediainfo = null;
-            return GetMediaInfoXml(config, filename, out string xml) && GetMediaInfoFromXml(xml, out mediainfo);
+            return GetMediaInfoXml(filename, out string xml) && GetMediaInfoFromXml(xml, out mediainfo);
         }
 
-        public static bool GetMediaInfoXml(Config config, string filename, out string xml)
+        public static bool GetMediaInfoXml(string filename, out string xml)
         {
             // Create the MediaInfo commandline and execute
             // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
             string commandline = $"--Output=XML \"{filename}\"";
             ConsoleEx.WriteLine($"Getting stream info : \"{filename}\"");
-            int exitcode = MediaInfoTool.MediaInfo(config, commandline, out xml);
+            int exitcode = MediaInfoTool.MediaInfo(commandline, out xml);
             // TODO : No error is returned when the file does not exist
             // https://sourceforge.net/p/mediainfo/bugs/1052/
             // Empty XML files are around 86 bytes
@@ -298,13 +298,13 @@ namespace PlexCleaner
         }
 
         // Get stream info using MKVMerge
-        public static bool GetMkvInfo(Config config, string filename, out MediaInfo mediainfo)
+        public static bool GetMkvInfo(string filename, out MediaInfo mediainfo)
         {
             mediainfo = null;
-            return GetMkvInfoJson(config, filename, out string json) && GetMkvInfoFromJson(json, out mediainfo);
+            return GetMkvInfoJson(filename, out string json) && GetMkvInfoFromJson(json, out mediainfo);
         }
 
-        public static bool GetMkvInfoJson(Config config, string filename, out string json)
+        public static bool GetMkvInfoJson(string filename, out string json)
         {
             // Create the MKVMerge commandline and execute
             // Note the correct usage of "id" or "number" in the MKV tools
@@ -313,7 +313,7 @@ namespace PlexCleaner
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string commandline = $"--identify \"{filename}\" --identification-format json";
             ConsoleEx.WriteLine($"Getting stream info : \"{filename}\"");
-            int exitcode = MkvTool.MkvMerge(config, commandline, out json);
+            int exitcode = MkvTool.MkvMerge(commandline, out json);
             if (exitcode == 0)
                 return true;
 
@@ -365,19 +365,19 @@ namespace PlexCleaner
         }
 
         // Get stream info using FFProbe
-        public static bool GetFfProbeInfo(Config config, string filename, out MediaInfo mediainfo)
+        public static bool GetFfProbeInfo(string filename, out MediaInfo mediainfo)
         {
             mediainfo = null;
-            return GetFfProbeInfoJson(config, filename, out string json) && GetFfProbeInfoFromJson(json, out mediainfo);
+            return GetFfProbeInfoJson(filename, out string json) && GetFfProbeInfoFromJson(json, out mediainfo);
         }
 
-        public static bool GetFfProbeInfoJson(Config config, string filename, out string json)
+        public static bool GetFfProbeInfoJson(string filename, out string json)
         {
             // Create the FFProbe commandline and execute
             // https://ffmpeg.org/ffprobe.html
             string commandline = $"-v quiet -show_streams -print_format json \"{filename}\"";
             ConsoleEx.WriteLine($"Getting stream info : \"{filename}\"");
-            int exitcode = FfMpegTool.FfProbe(config, commandline, out json, out string error);
+            int exitcode = FfMpegTool.FfProbe(commandline, out json, out string error);
             // TODO : Verify that FFProbe returns an error when it fails
             if (exitcode == 0 && error.Length <= 0)
                 return true;
@@ -434,22 +434,15 @@ namespace PlexCleaner
             return true;
         }
 
-        public static bool SetMkvTrackLanguage(Config config, string filename, int track, string language)
+        public static bool SetMkvTrackLanguage(string filename, int track, string language)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            // Test
-            if (config.TestNoModify)
-                return true;
-
             // Create the MKVPropEdit commandline and execute
             // The track number is reported by MKVMerge --identify using the track.properties.number value
             // https://mkvtoolnix.download/doc/mkvpropedit.html
             string commandline = $"\"{filename}\" --edit track:@{track} --set language={language}";
             ConsoleEx.WriteLine($"Setting track language : \"{filename}\" {track} {language}");
             ConsoleEx.WriteLine("");
-            int exitcode = MkvTool.MkvPropEdit(config, commandline);
+            int exitcode = MkvTool.MkvPropEdit(commandline);
             ConsoleEx.WriteLine("");
             if (exitcode == 0)
                 return true;

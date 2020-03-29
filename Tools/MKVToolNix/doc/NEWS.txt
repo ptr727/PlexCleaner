@@ -1,3 +1,114 @@
+# Version 44.0.0 "Domino" 2020-03-08
+
+## New features and enhancements
+
+* MKVToolNix GUI: header editor: the attachments can now be reordered via drag
+  & drop. Implements #2753.
+
+## Bug fixes
+
+* mkvmerge: Matroska reader: when encountering certain errors in the track
+  headers such as the codec ID not being present mkvmerge will simply skip
+  those tracks instead of exiting with an error. Fixes #2737.
+* MKVToolNix GUI: multiplexer: the "ask before overwriting" functionality did
+  not look for the correct file names when splitting was active. Fixes #2741.
+
+
+# Version 43.0.0 "The Quartermaster" 2020-01-26
+
+## New features and enhancements
+
+* MKVToolNix GUI: using one of the command line options `--info`,
+  `--edit-headers` or `--edit-chapters` will make the GUI select the
+  corresponding tool on startup even if no further file name is
+  given. Implements #2723.
+* MKVToolNix GUI: multiplexer: added a setting in the preferences for changing
+  the location of the MediaInfo executable for when the user accidentally
+  selected the wrong one.
+
+## Bug fixes
+
+* mkvmerge: AVC/h.264 parser: the order of the NALUs before each key frame was
+  sometimes wrong: mkvmerge wrote SPS & PPS after SEI NALUs. Now SPS & PPS
+  NALUs are always written before the other NALUs. Patch by Torsten
+  Hauska. Part of the implementation of #2709 and part of the fix of #2250.
+* mkvmerge: AVC/h.264 parser: when additional SPS or PPS NALUs (with IDs that
+  haven't been seen so far) are found mid-stream, mkvmerge will prepend all
+  following key frames with all current valid SPS & PPS NALUs (just like when
+  SPS & PPS NALUs are overwritten mid-stream). Part of the fix of #2250.
+* mkvmerge: MPEG TS reader: fixed detection of MPEG-1/2 video tracks
+  consisting of very few frames. Fixes #2732.
+* mkvmerge: Ogg Opus reader: fixed the handling of Ogg Opus streams that
+  contain a just one Ogg page (`mkvmerge` aborted with an exception). Fixes
+  #2722.
+* MKVToolNix GUI: multiplexer: dragging & dropping XML files with chapters or
+  tags to the GUI's window was broken in v42. Instead of adding the file names
+  to the appropriate input boxes the GUI was running mkvmerge for file
+  identification purposes which then failed. Fixes #2718.
+
+
+# Version 42.0.0 "Overtime" 2020-01-02
+
+## New features and enhancements
+
+* mkvmerge: added an option for creating byte-identical files:
+  `--deterministic <seed>`. Part of the implementation of #2698.
+* mkvmerge: Matroska reader: mkvmerge will remove the `icpf` atom headers if
+  they're present in frames read from Matroska files. Implements #2692.
+* mkvmerge: MP4 reader: ALAC tracks: the number of channels, sampling
+  frequency and bit depth are now taken from the bitstream in order to fix
+  bogus values on the container level. Implements #2714.
+* mkvpropedit: when changing track UIDs the referring elements in existing
+  chapters & tags will be updated automatically, too. Part of the
+  implementation of #2700.
+* mkvinfo: when the option `-p`/`--hex-positions` is used, element positions
+  will be output regardless of the verbosity level. Part of the implementation
+  of #2713.
+* mkvinfo: added the option `-P`/`--positions` for showing the position of
+  each element in decimal regardless of the verbosity level used. Part of the
+  implementation of #2713.
+* mkvinfo: added the option `-o`/`--continue` for continuing processing when
+  the first cluster is encountered regardless of the verbosity level
+  used. Part of the implementation of #2713.
+* mkvinfo: added the option `-a`/`--all` for outputting all sub-elements (even
+  cues & seek head entries) and not stopping at the first cluster regardless
+  of the verbosity level used. Part of the implementation of #2713.
+* MKVToolNix GUI: multiplexer: added an option in the preferences for
+  disabling adding cover images from Blu-ray discs. Implements #2693.
+* MKVToolNix GUI: multiplexer: added mkvmerge's new `--deterministic` option
+  in the "additional command-line options" dialog. Part of the implementation
+  of #2698.
+* MKVToolNix GUI: header editor:: when changing track UIDs the referring
+  elements in existing chapters & tags will be updated automatically,
+  too. Part of the implementation of #2700.
+
+## Bug fixes
+
+* mkvmerge: HEVC ES parser: fixed a bug in the slice parser calculating the
+  size of a field which in turn could have led to the slice's type being read
+  wrong. Patch by Torsten Hauska. Fixes #2710.
+* mkvmerge: Matroska reader: fixed a segmentation fault when trying to read a
+  file that uses header removal compression but no removed bytes are present
+  in the track headers. Fixes #2687.
+* mkvmerge: MPEG elementary stream parser: fixed an invalid memory access and
+  use of uninitialized memory that could happen under certain
+  circumstances. Fixes #2690.
+* mkvmerge: RealMedia reader: fixed a division by zero when all audio
+  timestamps were zero. Fixes #2689.
+* mkvmerge: RealMedia reader: fixed an invalid memory access in the video
+  frame assembly code triggered by invalid data in the file. Fixes #2691.
+
+## Build system changes
+
+* `std::optional` (C++17 feature) is now used instead of `boost::optional`.
+* `std::regex` is now used instead of `boost::regex`.
+
+## Other changes
+
+* New man page translations into French, Italian, Russian and Chinese
+  Traditional have been added.
+
+
 # Version 41.0.0 "Smarra" 2019-12-06
 
 ## New features and enhancements

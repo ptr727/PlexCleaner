@@ -57,32 +57,23 @@ namespace PlexCleaner
             public string MimeType { get; set; }
         }
 
-        public static int FfMpeg(Config config, string parameters)
+        public static int FfMpeg(string parameters)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.FfMpeg, FfMpegBinary);
+            string path = Tools.CombineToolPath(Tools.Options.FfMpeg, FfMpegBinary);
             ConsoleEx.WriteLineTool($"FFMpeg : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static int FfProbe(Config config, string parameters, out string output, out string error)
+        public static int FfProbe(string parameters, out string output, out string error)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.FfMpeg, FfProbeBinary);
+            string path = Tools.CombineToolPath(Tools.Options.FfMpeg, FfProbeBinary);
             ConsoleEx.WriteLineTool($"FFProbe : {parameters}");
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
-        public static string GetToolPath(Config config)
+        public static string GetToolPath()
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            return Tools.CombineToolPath(config, config.FfMpeg);
+            return Tools.CombineToolPath(Tools.Options.FfMpeg);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

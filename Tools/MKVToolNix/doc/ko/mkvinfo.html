@@ -17,7 +17,7 @@
             <li><a href="#mkvinfo.description">2. 설명</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. Verbosity levels</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. 텍스트 파일과 문자셋 변환</a></li>
-            <li><a href="#d4e533">5. 종료 코드</a></li>
+            <li><a href="#d4e633">5. 종료 코드</a></li>
             <li><a href="#mkvinfo.environment_variables">6. 환경 변수</a></li>
             <li><a href="#mkvinfo.seealso">7. 더 보기</a></li>
             <li><a href="#mkvinfo.www">8. WWW</a></li>
@@ -50,12 +50,62 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.
+                        Additionally it doesn't show certain often occurring elements.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level
+                        and show all elements.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         Calculates and display the <span class="function">Adler-32</span> checksum for each
                         frame. Useful for debugging only.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in hexadecimal regardless of the
+                        verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in decimal regardless of the verbosity
+                        level.
                         
                      </p>
                      
@@ -299,8 +349,21 @@
          
          
          <p>
+            The same effect can be achieved with the option <span class="option">--continue</span>.
+            
+         </p>
+         
+         
+         <p>
             At level 2 <span class="productname">mkvinfo</span>(1) will also print the seek head entries, the cue entries
             and the file position at which each <span class="productname">Matroska</span><sup>(tm)</sup> element can be found at.
+            
+         </p>
+         
+         
+         <p>
+            The same effect can be achieved with the options <span class="option">--all
+               --positions</span>.
             
          </p>
          
@@ -327,7 +390,7 @@
             
          </p>
          
-         <h1><a name="d4e533">5. 종료 코드</a></h1>
+         <h1><a name="d4e633">5. 종료 코드</a></h1>
          
          
          
@@ -342,7 +405,7 @@
             <li>
                
                <p>
-                  <span class="constant">0</span> -- This exit codes means that the run has completed
+                  <span class="constant">0</span> -- This exit code means that the run has completed
                   successfully.
                   
                </p>

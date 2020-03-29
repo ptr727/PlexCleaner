@@ -1,4 +1,4 @@
-MKVToolNix 41.0.0
+MKVToolNix 44.0.0
 =================
 
 # Table of contents
@@ -85,8 +85,9 @@ programs and libraries you absolutely need are:
   `nullptr` keyword, tuples, alias declarations, `std::make_unique()`,
   digit separators, binary literals, generic lambdas, user-defined
   literals for `std::string`, `[[maybe_unused]]` attribute, nested
-  namespace definition, structured bindings. Others may be needed,
-  too. For GCC this means at least v7; for clang v4 or later.
+  namespace definition, structured bindings, `std::optional`,
+  `std::regex`. Others may be needed, too. For GCC this means at least
+  v7; for clang v4 or later.
 
 - [libOgg](http://downloads.xiph.org/releases/ogg/) and
   [libVorbis](http://downloads.xiph.org/releases/vorbis/) for access to Ogg/OGM
@@ -95,7 +96,7 @@ programs and libraries you absolutely need are:
 - [zlib](http://www.zlib.net/) — a compression library
 
 - [Boost](http://www.boost.org/) — Several of Boost's libraries are
-  used: `RegEx`, `filesystem`, `system`, `math`, `operators`, `Range`,
+  used: `filesystem`, `system`, `math`, `operators`, `Range`,
   `rational`, `variant`. At least v1.60.0 is required.
 
 - [libxslt's xsltproc binary](http://xmlsoft.org/libxslt/) and

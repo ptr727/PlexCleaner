@@ -8,26 +8,25 @@ using System.Globalization;
 
 namespace PlexCleaner
 {
-    internal static class Convert
+    public static class Convert
     {
-       
+        public static ConvertOptions Options { get; set; } = new ConvertOptions();
+
         // ReEncode to MKV H264
-        public static bool ConvertToMkv(Config config, string inputname, out string outputname)
+        public static bool ConvertToMkv(string inputname, out string outputname)
         {
             // Convert all tracks
-            return ConvertToMkv(config, inputname, config.VideoEncodeQuality, config.AudioEncodeCodec, null, null, out outputname);
+            return ConvertToMkv(inputname, null, null, out outputname);
         }
 
         // ReEncode to MKV H264
         // Re-encode only the specified tracks, and copy the passthrough tracks
-        public static bool ConvertToMkv(Config config, string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, out string outputname)
+        public static bool ConvertToMkv(string inputname, MediaInfo keep, MediaInfo reencode, out string outputname)
         {
-            if (inputname == null) throw new ArgumentNullException(nameof(inputname));
-
             // Match the logic in ReMuxToMKV()
 
             // Test
-            if (config.TestNoModify)
+            if (Process.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -38,7 +37,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Convert using ffmpeg
-            if (!ConvertToMkvFfMpeg(config, inputname, quality, audiocodec, keep, reencode, tempname))
+            if (!ConvertToMkvFfMpeg(inputname, Options.VideoEncodeQuality, Options.AudioEncodeCodec, keep, reencode, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -49,26 +48,26 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || FileEx.DeleteFile(inputname);
+            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
+                return FileEx.DeleteFile(inputname);
+            return true;
         }
 
         // ReMux the file to MKV
-        public static bool ReMuxToMkv(Config config, string inputname, out string outputname)
+        public static bool ReMuxToMkv(string inputname, out string outputname)
         {
             // Remux all tracks
-            return ReMuxToMkv(config, inputname, null, out outputname);
+            return ReMuxToMkv(inputname, null, out outputname);
         }
 
         // ReMux the file to MKV
         // Include only the tracks from the filter
-        public static bool ReMuxToMkv(Config config, string inputname, MediaInfo keep, out string outputname)
+        public static bool ReMuxToMkv(string inputname, MediaInfo keep, out string outputname)
         {
-            if (inputname == null) throw new ArgumentNullException(nameof(inputname));
-
             // Match the logic in ConvertToMKV()
 
             // Test
-            if (config.TestNoModify)
+            if (Process.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -86,18 +85,18 @@ namespace PlexCleaner
             if (Tools.IsMkvFile(inputname))
             {
                 // MKV files always try MKVMerge first
-                result = RemuxToMkvMkvToolNix(config, inputname, keep, tempname);
+                result = RemuxToMkvMkvToolNix(inputname, keep, tempname);
                 if (!result)
                     // Retry using FFMpeg
-                    result = RemuxToMkvFfMpeg(config, inputname, keep, tempname);
+                    result = RemuxToMkvFfMpeg(inputname, keep, tempname);
             }
             else
             {
                 // Non-MKV files always try FFMpeg first
-                result = RemuxToMkvFfMpeg(config, inputname, keep, tempname);
+                result = RemuxToMkvFfMpeg(inputname, keep, tempname);
                 if (!result)
                     // Retry using MKVMerge
-                    result = RemuxToMkvMkvToolNix(config, inputname, keep, tempname);
+                    result = RemuxToMkvMkvToolNix(inputname, keep, tempname);
             }
             if (!result)
             {
@@ -110,18 +109,18 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || FileEx.DeleteFile(inputname);
+            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
+                return FileEx.DeleteFile(inputname);
+            return true;
         }
 
         // De-interlace to MKV
-        public static bool DeInterlaceToMkv(Config config, string inputname, int quality, out string outputname)
+        public static bool DeInterlaceToMkv(string inputname, out string outputname)
         {
-            if (inputname == null) throw new ArgumentNullException(nameof(inputname));
-
             // Match the logic in ConvertToMKV()
 
             // Test
-            if (config.TestNoModify)
+            if (Process.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -132,7 +131,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // HandBrake produces the best de-interlacing results
-            if (!ConvertToMkvHandbrake(config, inputname, quality, tempname))
+            if (!ConvertToMkvHandbrake(inputname, Options.VideoEncodeQuality, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -143,7 +142,9 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || FileEx.DeleteFile(inputname);
+            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
+                return FileEx.DeleteFile(inputname);
+            return true;
         }
 
         // ReMux the file to MKV using mkvmerge
@@ -175,10 +176,10 @@ namespace PlexCleaner
 
         // ReMux the file to MKV using mkvmerge
         // Include only the tracks from the filter
-        private static bool RemuxToMkvMkvToolNix(Config config, string inputname, MediaInfo keep, string outputname)
+        private static bool RemuxToMkvMkvToolNix(string inputname, MediaInfo keep, string outputname)
         {
             if (keep == null)
-                return RemuxToMkvMkvToolNix(config, inputname, outputname);
+                return RemuxToMkvMkvToolNix(inputname, outputname);
 
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -191,26 +192,26 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = config.TestSnippets ? MkvmergeSnippet : "";
+            string snippets = Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = MkvTool.MkvMerge(config, commandline);
+            int exitcode = MkvTool.MkvMerge(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0 || exitcode == 1;
         }
 
         // ReMux the file to MKV using mkvmerge
-        private static bool RemuxToMkvMkvToolNix(Config config, string inputname, string outputname)
+        private static bool RemuxToMkvMkvToolNix(string inputname, string outputname)
         {
             // Delete output file
             FileEx.DeleteFile(outputname);
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = config.TestSnippets ? MkvmergeSnippet : "";
+            string snippets = Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = MkvTool.MkvMerge(config, commandline);
+            int exitcode = MkvTool.MkvMerge(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0 || exitcode == 1;
         }
@@ -218,10 +219,10 @@ namespace PlexCleaner
 
         // ReMux the file to MKV using mkvmerge
         // Include only the tracks from the filter
-        private static bool RemuxToMkvFfMpeg(Config config, string inputname, MediaInfo keep, string outputname)
+        private static bool RemuxToMkvFfMpeg(string inputname, MediaInfo keep, string outputname)
         {
             if (keep == null)
-                return RemuxToMkvFfMpeg(config, inputname, outputname);
+                return RemuxToMkvFfMpeg(inputname, outputname);
 
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -233,16 +234,16 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = config.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = FfMpegTool.FfMpeg(config, commandline);
+            int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
         // ReMux the file to MKV using ffmpeg
-        private static bool RemuxToMkvFfMpeg(Config config, string inputname, string outputname)
+        private static bool RemuxToMkvFfMpeg(string inputname, string outputname)
         {
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -252,10 +253,10 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = config.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = FfMpegTool.FfMpeg(config, commandline);
+            int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
@@ -326,10 +327,10 @@ namespace PlexCleaner
 
         // ReEncode to MKV H264
         // Re-encode only the specified tracks, and copy the passthrough tracks
-        private static bool ConvertToMkvFfMpeg(Config config, string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, string outputname)
+        private static bool ConvertToMkvFfMpeg(string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, string outputname)
         {
             if (keep == null || reencode == null)
-                return ConvertToMkvFfMpeg(config, inputname, quality, outputname);
+                return ConvertToMkvFfMpeg(inputname, quality, outputname);
 
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -344,17 +345,17 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = config.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} {input} {output} {FfmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = FfMpegTool.FfMpeg(config, commandline);
+            int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
         // ReEncode to MKV H264
         // Video is always re-encoded, audio is copied
-        private static bool ConvertToMkvFfMpeg(Config config, string inputname, int quality, string outputname)
+        private static bool ConvertToMkvFfMpeg(string inputname, int quality, string outputname)
         {
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -362,17 +363,17 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // Copy audio and subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = config.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy {FfmpegPostfix} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = FfMpegTool.FfMpeg(config, commandline);
+            int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
         // ReEncode to MKV H264
         // Video is always re-encoded, audio is copied if supported, else AC3
-        private static bool ConvertToMkvHandbrake(Config config, string inputname, int quality, string outputname)
+        private static bool ConvertToMkvHandbrake(string inputname, int quality, string outputname)
         {
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -380,10 +381,10 @@ namespace PlexCleaner
             // Create the HandbrakeCLI commandline and execute
             // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
             // https://handbrake.fr/docs/en/latest/cli/cli-options.html
-            string snippets = config.TestSnippets ? HandBrakeSnippet : "";
+            string snippets = Options.TestSnippets ? HandBrakeSnippet : "";
             string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 {snippets}";
             ConsoleEx.WriteLine("");
-            int exitcode = HandBrakeTool.HandBrake(config, commandline);
+            int exitcode = HandBrakeTool.HandBrake(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }

@@ -15,7 +15,7 @@
          <ul>
             <li><a href="#mkvextract.synopsis">1. Короткий опис</a></li>
             <li><a href="#mkvextract.description">2. Опис</a></li>
-            <li><a href="#mkvextract.examples">3. Examples</a></li>
+            <li><a href="#mkvextract.examples">3. Приклади</a></li>
             <li><a href="#mkvextract.text_files_and_charsets">4. Text files and character set conversions</a></li>
             <li><a href="#mkvextract.output_file_formats">5. Формати файлів на виході</a></li>
             <li><a href="#d4e1798">6. Коди завершення</a></li>
@@ -53,7 +53,8 @@
          
          
          <p>
-            Currently supported is the extraction of <a href="#mkvextract.description.tracks">tracks</a>, <a href="#mkvextract.description.tags">tags</a>, <a href="#mkvextract.description.attachments">attachments</a>, <a href="#mkvextract.description.chapters">chapters</a>, <a href="#mkvextract.description.cuesheets">CUE sheets</a>, <a href="#mkvextract.description.timestamps_v2">timestamps</a> and <a href="#mkvextract.description.cues">cues</a>.
+            В даний час підтримується витягування <a href="#mkvextract.description.tracks">доріжок</a>, <a href="#mkvextract.description.tags">тегів</a>, <a href="#mkvextract.description.attachments">вкладеннь</a>, <a href="#mkvextract.description.chapters">глав</a>, <a href="#mkvextract.description.cuesheets">CUE листів</a>, <a href="#mkvextract.description.timestamps_v2">часових позначок</a> і
+            <a href="#mkvextract.description.cues">cue</a>.
             
          </p>
          
@@ -280,7 +281,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">tracks</span> [<span class="parameter">options</span>]
                <span class="parameter">TID1:dest-filename1</span>
                [<span class="parameter">TID2:dest-filename2</span>
@@ -411,7 +412,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">attachments</span>
                [<span class="parameter">options</span>]
                <span class="parameter">AID1:outname1</span>
@@ -455,7 +456,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">chapters</span>
                [<span class="parameter">options</span>]
                <span class="parameter">output-filename.xml</span></span>
@@ -526,7 +527,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">tags</span> [<span class="parameter">options</span>]
                <span class="parameter">output-filename.xml</span></span>
             
@@ -547,7 +548,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">cuesheet</span>
                [<span class="parameter">options</span>]
                <span class="parameter">output-filename.cue</span></span>
@@ -568,7 +569,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">timestamps_v2</span>
                [<span class="parameter">options</span>]
                <span class="parameter">TID1:dest-filename1</span>
@@ -618,7 +619,7 @@
          
          
          <p>
-            Syntax: <span class="command">mkvextract <span class="parameter">source-filename</span>
+            Синтаксис: <span class="command">mkvextract <span class="parameter">source-filename</span>
                <span class="option">cues</span> [<span class="parameter">options</span>]
                <span class="parameter">TID1:dest-filename1</span>
                [<span class="parameter">TID2:dest-filename2</span>
@@ -761,7 +762,7 @@
          
          <pre class="screen">$ mkvextract input.mkv cues 1:cues-track1.txt 2:cues-track2.txt</pre>
          
-         <h1><a name="mkvextract.examples">3. Examples</a></h1>
+         <h1><a name="mkvextract.examples">3. Приклади</a></h1>
          
          
          
@@ -1299,8 +1300,8 @@
             </thead>
             <tbody>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVEXTRACT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> and
-                     its short form <span class="varname">MTX_DEBUG</span></td>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_DEBUG</span>, <span class="varname">MKVTOOLNIX_DEBUG</span> і
+                     їх коротка форма <span class="varname">MTX_DEBUG</span></td>
                   <td>
                      
                      <p>The content is treated as if it had been passed via the <a href="#mkvextract.description.debug">--debug</a>
@@ -1310,8 +1311,8 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span>
-                     and its short form <span class="varname">MTX_ENGAGE</span></td>
+                  <td class="varlistoption"><span class="varname">MKVEXTRACT_ENGAGE</span>, <span class="varname">MKVTOOLNIX_ENGAGE</span> і
+                     їх коротка форма <span class="varname">MTX_ENGAGE</span></td>
                   <td>
                      
                      <p>The content is treated as if it had been passed via the <a href="#mkvextract.description.engage">--engage</a>

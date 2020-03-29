@@ -77,7 +77,7 @@ namespace PlexCleaner
             Command remuxCommand =
                 new Command("remux")
                 {
-                    Description = "Re-Muxtiplex media files",
+                    Description = "Re-Multiplex media files",
                     Handler = CommandHandler.Create<string, List<string>>(ReMuxCommand)
                 };
             remuxCommand.AddOption(filesOption);
@@ -139,67 +139,89 @@ namespace PlexCleaner
 
         private static int CheckForNewToolsCommand(string settings)
         {
-            Program program = new Program(settings);
-            return Updater.CheckForTools(program.Config) ? 0 : -1;
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
+            return Tools.CheckForNewTools() ? 0 : -1;
         }
 
         private static int ProcessCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
             if (!program.CreateFileList(files))
                 return -1;
 
-            Process process = new Process(program);
-            return process.ProcessFiles(program.FileInfoList) && process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
+            Process process = new Process();
+            return process.ProcessFiles(program.FileInfoList) && Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
 
         private static int ReMuxCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
             if (!program.CreateFileList(files))
                 return -1;
 
-            Process process = new Process(program);
+            Process process = new Process();
             return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
         }
 
         private static int ReEncodeCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
             if (!program.CreateFileList(files))
                 return -1;
 
-            Process process = new Process(program);
+            Process process = new Process();
             return process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
         }
 
         private static int WriteSidecarCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
             if (!program.CreateFileList(files))
                 return -1;
 
-            Process process = new Process(program);
+            Process process = new Process();
             return process.WriteSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
         private static int CreateTagMapCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
             if (!program.CreateFileList(files))
                 return -1;
 
-            Process process = new Process(program);
+            Process process = new Process();
             return process.CreateTagMapFiles(program.FileInfoList) ? 0 : -1;
         }
 
         private static int MonitorCommand(string settings, List<string> files)
         {
-            Program program = new Program(settings);
-            Monitor monitor = new Monitor(program);
+            Program program = Create(settings);
+            if (program == null)
+                return -1;
+
+            Monitor monitor = new Monitor();
             return monitor.MonitorFolders(files) ? 0 : -1;
         }
 
+        // Add a reference to this class in the event handler arguments
         private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
 
         private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
@@ -208,39 +230,64 @@ namespace PlexCleaner
             e.Cancel = true;
 
             // Signal the cancel event
-            program.Cancel.State = true;
+            // We could signal Cancel directly now that it is static
+            program.Break();
         }
 
-        private Program(string settingsFile)
+        private Program()
         {
-            // Load config from JSON
-            // TODO : Error logic
-            ConsoleEx.WriteLine($"Loading settings from \"{settingsFile}\"");
-            Config = Config.FromFile(settingsFile);
-
-            // Set the FileEx options
-            FileEx.Options.TestNoModify = Config.TestNoModify;
-            FileEx.Options.FileRetryCount = Config.FileRetryCount;
-            FileEx.Options.FileRetryWaitTime = Config.FileRetryWaitTime;
-
-            // Use the FileEx Cancel object
-            Cancel = FileEx.Options.Cancel;
-
             // Register cancel handler
             Console.CancelKeyPress += CancelHandlerEx;
-
-            // Make sure that the tools folder exists
-            // TODO : Error logic
-            if (!Tools.VerifyTools(Config))
-                ConsoleEx.WriteLineError($"Tools folder or 7-Zip does not exist : {Tools.GetToolsRoot(Config)}");
-            else
-                ConsoleEx.WriteLine($"Using Tools from : {Tools.GetToolsRoot(Config)}");
         }
 
         ~Program()
         {
             // Unregister cancel handler
             Console.CancelKeyPress -= CancelHandlerEx;
+        }
+
+        private static Program Create(string settingsFile)
+        {
+            // Load config from JSON
+            if (!File.Exists(settingsFile))
+            {
+                ConsoleEx.WriteLineError($"Settings file not found : \"{settingsFile}\"");
+                return null;
+            }
+            ConsoleEx.WriteLine($"Loading settings from : \"{settingsFile}\"");
+            Config config = Config.FromFile(settingsFile);
+
+            // Set the static options from the loded settings
+            Tools.Options = config.ToolsOptions;
+            Process.Options = config.ProcessOptions;
+            Monitor.Options = config.MonitorOptions;
+            Convert.Options = config.ConvertOptions;
+
+            // Set the FileEx options
+            FileEx.Options.TestNoModify = config.ProcessOptions.TestNoModify;
+            FileEx.Options.FileRetryCount = config.MonitorOptions.FileRetryCount;
+            FileEx.Options.FileRetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
+            FileEx.Options.TraceToConsole = true;
+
+            // Share the FileEx Cancel object
+            Program.Cancel = FileEx.Options.Cancel;
+            
+            // Make sure that the tools folder exists
+            if (!Tools.VerifyTools())
+            { 
+                ConsoleEx.WriteLineError($"Tools folder or 7-Zip does not exist : \"{Tools.GetToolsRoot()}\"");
+                return null;
+            }
+            else
+                ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+
+            return new Program();
+        }
+
+        private void Break()
+        {
+            // Signal the cancel event
+            Program.Cancel.State = true;
         }
 
         private bool CreateFileList(List<string> files)
@@ -255,7 +302,18 @@ namespace PlexCleaner
             foreach (string fileorfolder in files)
             {
                 // File or a directory
-                FileAttributes fileAttributes = File.GetAttributes(fileorfolder);
+                FileAttributes fileAttributes;
+                try
+                {
+                    fileAttributes = File.GetAttributes(fileorfolder);
+                }
+                catch (Exception e)
+                {
+                    ConsoleEx.WriteLineError(e);
+                    ConsoleEx.WriteLineError($"Failed to get file attributes \"{fileorfolder}\"");
+                    return false;
+                }
+
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
@@ -265,7 +323,7 @@ namespace PlexCleaner
                     // Create the file list from the directory
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
-                        ConsoleEx.WriteLineError("Failed to enumerate directory \"{file}\"");
+                        ConsoleEx.WriteLineError($"Failed to enumerate directory \"{fileorfolder}\"");
                         return false;
                     }
                     FileInfoList.AddRange(fileInfoList);
@@ -286,8 +344,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public Signal Cancel { get; set; }
-        public Config Config { get; set; }
+        public static Signal Cancel { get; set; }
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

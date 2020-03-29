@@ -8,9 +8,10 @@ namespace PlexCleaner
 {
     internal class Monitor
     {
-        public Monitor(Program program)
+        public static MonitorOptions Options { get; set; }  = new MonitorOptions();
+
+        public Monitor()
         {
-            Program = program;
             Watcher = new List<FileSystemWatcher>();
             WatchFolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
             WatchLock = new object();
@@ -63,7 +64,7 @@ namespace PlexCleaner
                             WatchFolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
-                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorWaitTime);
+                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Options.MonitorWaitTime);
                         foreach ((string key, DateTime value) in WatchFolders)
                         // If not recently modified and all files in the folder are readable
                             if (value < settletime)
@@ -85,9 +86,9 @@ namespace PlexCleaner
                 // Process changes in the watched folders
                 foreach (string folder in watchlist)
                     ConsoleEx.WriteLine($"Monitored changes in : \"{folder}\"");
-                Process process = new Process(Program);
+                Process process = new Process();
                 process.ProcessFolders(watchlist);
-                process.DeleteEmptyFolders(watchlist);
+                Process.DeleteEmptyFolders(watchlist);
             }
 
             // Disable event watching
@@ -258,6 +259,5 @@ namespace PlexCleaner
         private readonly object WatchLock;
         private string LastWriteLine;
         private readonly object LastWriteLineLock;
-        private readonly Program Program;
     }
 }

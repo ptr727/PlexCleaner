@@ -8,41 +8,32 @@ namespace PlexCleaner
 {
     public static class SevenZipTool
     {
-        public static bool VerifyTool(Config config)
+        public static bool VerifyTool()
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
             // Make sure the 7-Zip binary exists
-            return File.Exists(Tools.CombineToolPath(config, config.SevenZip, SevenZipBinary));
+            return File.Exists(Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary));
         }
 
-        public static bool UnZip(Config config, string archive, string folder)
+        public static bool UnZip(string archive, string folder)
         {
             // 7z.exe x archive.zip -o"C:\Doc"
             string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
             ConsoleEx.WriteLine("");
-            int exitcode = SevenZip(config, commandline);
+            int exitcode = SevenZip(commandline);
             ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
-        public static int SevenZip(Config config, string parameters)
+        public static int SevenZip(string parameters)
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            string path = Tools.CombineToolPath(config, config.SevenZip, SevenZipBinary);
+            string path = Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary);
             ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath(Config config)
+        public static string GetToolPath()
         {
-            if (config == null)
-                throw new ArgumentNullException(nameof(config));
-
-            return Tools.CombineToolPath(config, config.SevenZip);
+            return Tools.CombineToolPath(Tools.Options.SevenZip);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)

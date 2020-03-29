@@ -710,6 +710,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvmerge</span>(1) sets the "date" segment information field to the time
+                        &amp; date when multiplexing started.  With this option that field is not
+                        written at all.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -793,7 +806,7 @@
          
          
          
-         <h2><a name="d4e1128">2.5. Dzielenie plików, powiązanie, scalanie i łączenie (więcej opcji globalnych)</a></h2>
+         <h2><a name="d4e1147">2.5. Dzielenie plików, powiązanie, scalanie i łączenie (więcej opcji globalnych)</a></h2>
          
          
          
@@ -1625,7 +1638,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2189">2.6. Obsługa załączników (więcej globalnych opcji)</a></h2>
+         <h2><a name="d4e2208">2.6. Obsługa załączników (więcej globalnych opcji)</a></h2>
          
          
          
@@ -1714,7 +1727,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2330">2.7. Opcje mogące być użyte dla każdego pliku wejściowego</a></h2>
+         <h2><a name="d4e2349">2.7. Opcje mogące być użyte dla każdego pliku wejściowego</a></h2>
          
          
          
@@ -2411,7 +2424,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3445">2.8. Opcje mające zastosowanie tylko do ścieżek obrazu</a></h2>
+         <h2><a name="d4e3464">2.8. Opcje mające zastosowanie tylko do ścieżek obrazu</a></h2>
          
          
          
@@ -2891,7 +2904,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4266">2.9. Opcje mające zastosowanie tylko do ścieżek napisów</a></h2>
+         <h2><a name="d4e4285">2.9. Opcje mające zastosowanie tylko do ścieżek napisów</a></h2>
          
          
          
@@ -2932,7 +2945,7 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4306">2.10. Pozostałe opcje</a></h2>
+         <h2><a name="d4e4325">2.10. Pozostałe opcje</a></h2>
          
          
          
@@ -3183,6 +3196,66 @@ $ mkvmerge -o wyjściowy.mkv '(' plik.mkv ')'</pre>
                      <p>
                         Tells the program to abort after the first warning is emitted. The program's
                         exit code will be 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">seed</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Enables the creation of byte-identical files if the same version of
+                        <span class="productname">mkvmerge</span>(1) is used with the same source files, the same set of options and
+                        the same seed.  Note that the "date" segment information field is not
+                        written in this mode.
+                        
+                     </p>
+                     
+                     
+                     <p>The seed can be an arbitrary string and does not have to be a number.</p>
+                     
+                     
+                     <p>
+                        The result of byte-identical files is only guaranteed under the following
+                        conditions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The same version of <span class="productname">mkvmerge</span>(1) built with the same versions of libEBML and
+                              libMatroska is used.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The source files used are byte-identical.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The same command line options are used in the same order (with the notable
+                              exception of <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Using other versions of <span class="productname">mkvmerge</span>(1) or other command-line options may result
+                        in the same byte-identical file but is not guaranteed to do so.
                         
                      </p>
                      
@@ -4315,7 +4388,7 @@ CHAPTER03NAME=Rozdział III</pre>
           ChapterProcessData (liczba binarna)</pre>
          
          
-         <h2><a name="d4e6026">13.3. Uwagi ogólne</a></h2>
+         <h2><a name="d4e6112">13.3. Uwagi ogólne</a></h2>
          
          
          <p>
@@ -4347,7 +4420,7 @@ CHAPTER03NAME=Rozdział III</pre>
          
          
          
-         <h2><a name="d4e6091">14.1. Wprowadzenie</a></h2>
+         <h2><a name="d4e6177">14.1. Wprowadzenie</a></h2>
          
          
          
@@ -4682,7 +4755,7 @@ CHAPTER03NAME=Rozdział III</pre>
          </p>
          
          
-         <h2><a name="d4e6537">17.1. Format kodów czasowych v1</a></h2>
+         <h2><a name="d4e6623">17.1. Format kodów czasowych v1</a></h2>
          
          
          <p>
@@ -4702,7 +4775,7 @@ przykładowo 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6561">17.2. Format kodów czasowych v2</a></h2>
+         <h2><a name="d4e6647">17.2. Format kodów czasowych v2</a></h2>
          
          
          
@@ -4721,7 +4794,7 @@ przykładowo 27.930
 80</pre>
          
          
-         <h2><a name="d4e6576">17.3. Format kodów czasowych v3</a></h2>
+         <h2><a name="d4e6662">17.3. Format kodów czasowych v3</a></h2>
          
          
          <p>
@@ -4744,7 +4817,7 @@ przerwa, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6594">17.4. Format kodów czasowych v4</a></h2>
+         <h2><a name="d4e6680">17.4. Format kodów czasowych v4</a></h2>
          
          
          <p>

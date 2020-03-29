@@ -17,7 +17,7 @@
             <li><a href="#mkvinfo.description">2. Opis</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. Poziomy szczegółowości</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. Text files and character set conversions</a></li>
-            <li><a href="#d4e527">5. Kody zamknięcia</a></li>
+            <li><a href="#d4e627">5. Kody zamknięcia</a></li>
             <li><a href="#mkvinfo.environment_variables">6. Zmienne środowiskowe</a></li>
             <li><a href="#mkvinfo.seealso">7. Zobacz także</a></li>
             <li><a href="#mkvinfo.www">8. Strona www</a></li>
@@ -51,12 +51,62 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.
+                        Additionally it doesn't show certain often occurring elements.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level
+                        and show all elements.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         Calculates and display the <span class="function">Adler-32</span> checksum for each
                         frame. Useful for debugging only.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in hexadecimal regardless of the
+                        verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in decimal regardless of the verbosity
+                        level.
                         
                      </p>
                      
@@ -310,8 +360,21 @@
          
          
          <p>
+            The same effect can be achieved with the option <span class="option">--continue</span>.
+            
+         </p>
+         
+         
+         <p>
             At level 2 <span class="productname">mkvinfo</span>(1) will also print the seek head entries, the cue entries
             and the file position at which each <span class="productname">Matroska</span><sup>(tm)</sup> element can be found at.
+            
+         </p>
+         
+         
+         <p>
+            The same effect can be achieved with the options <span class="option">--all
+               --positions</span>.
             
          </p>
          
@@ -338,7 +401,7 @@
             
          </p>
          
-         <h1><a name="d4e527">5. Kody zamknięcia</a></h1>
+         <h1><a name="d4e627">5. Kody zamknięcia</a></h1>
          
          
          

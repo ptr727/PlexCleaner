@@ -3,11 +3,11 @@
 <html>
    <head>
       <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-      <title>mkvextract -- извличане на медия-писти (tracks) от Matroska файлове в други файлове</title>
+      <title>mkvextract -- извличане на медийни пътечки (tracks) от Matroska файлове в други файлове</title>
       <link rel="stylesheet" type="text/css" href="mkvtoolnix-doc.css">
    </head>
    <body>
-      <div class="heading">mkvextract -- извличане на медия-писти (tracks) от <span class="productname">Matroska</span><sup>(tm)</sup> файлове в други файлове
+      <div class="heading">mkvextract -- извличане на медийни пътечки (tracks) от <span class="productname">Matroska</span><sup>(tm)</sup> файлове в други файлове
       </div>
       <hr>
       <div id="toc" class="toc">
@@ -18,7 +18,7 @@
             <li><a href="#mkvextract.examples">3. Примери</a></li>
             <li><a href="#mkvextract.text_files_and_charsets">4. Text files and character set conversions</a></li>
             <li><a href="#mkvextract.output_file_formats">5. Файлови разширения на изходните файлове</a></li>
-            <li><a href="#d4e1798">6. Exit codes</a></li>
+            <li><a href="#d4e1798">6. Кодове за изход</a></li>
             <li><a href="#mkvextract.environment_variables">7. Променливи на средата</a></li>
             <li><a href="#mkvextract.seealso">8. Виж също</a></li>
             <li><a href="#mkvextract.www">9. WWW</a></li>
@@ -53,13 +53,14 @@
          
          
          <p>
-            Към момента се поддържа извличането на <a href="#mkvextract.description.tracks">медия-писти (tracks)</a>, <a href="#mkvextract.description.tags">тагове</a>, <a href="#mkvextract.description.attachments">прикачени файлове</a>, <a href="#mkvextract.description.chapters">глави (chapters)</a>, <a href="#mkvextract.description.cuesheets">CUE sheets</a>, <a href="#mkvextract.description.timestamps_v2">времеви клейма
+            Към момента се поддържа извличането на <a href="#mkvextract.description.tracks">медийни пътечки (tracks)</a>,
+            <a href="#mkvextract.description.tags">тагове</a>, <a href="#mkvextract.description.attachments">прикачени файлове</a>, <a href="#mkvextract.description.chapters">епизоди (chapters)</a>, <a href="#mkvextract.description.cuesheets">CUE sheets</a>, <a href="#mkvextract.description.timestamps_v2">времеви клейма
                (timestamps)</a> и <a href="#mkvextract.description.cues">cues</a>.
             
          </p>
          
          
-         <h2><a name="mkvextract.description.common">2.1. Common options</a></h2>
+         <h2><a name="mkvextract.description.common">2.1. Общи опции</a></h2>
          
          
          
@@ -119,8 +120,8 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption"><a name="mkvextract.description.common.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span>
-                        <span class="parameter">file-name</span></a></td>
+                  <td class="varlistoption"><a name="mkvextract.description.common.redirect_output"><span class="option">-r</span>, <span class="option">--redirect-output</span> <span class="parameter">име на
+                           файла</span></a></td>
                   <td>
                      
                      <p>
@@ -235,7 +236,7 @@
                   <td>
                      
                      <p>
-                        Show usage information and exit.
+                        Покажи информацията за употребата и излез.
                         
                      </p>
                      
@@ -271,7 +272,7 @@
          
          
          
-         <h2><a name="mkvextract.description.tracks">2.2. Режим за извличане на медия-писти (tracks)</a></h2>
+         <h2><a name="mkvextract.description.tracks">2.2. Режим за извличане на медийни пътечки (tracks)</a></h2>
          
          
          
@@ -444,7 +445,7 @@
          
          
          
-         <h2><a name="mkvextract.description.chapters">2.4. Режим за извличане на глави (chapters)</a></h2>
+         <h2><a name="mkvextract.description.chapters">2.4. Режим за извличане на епизоди (chapters)</a></h2>
          
          
          
@@ -760,7 +761,7 @@
          
          
          <p>
-            Едновременно извличане на глави (chapters) и тагове в съответните <span class="abbrev">XML</span>
+            Едновременно извличане на епизоди (chapters) и тагове в съответните <span class="abbrev">XML</span>
             формати:
             
          </p>
@@ -768,7 +769,7 @@
          <pre class="screen">$ mkvextract movie.mkv chapters movie-chapters.xml tags movie-tags.xml</pre>
          
          <p>
-            Едновременно извличане на няколко медия-писти (trakcs) и съответните им
+            Едновременно извличане на няколко медийни пътечки (trakcs) и съответните им
             времеви клейма (timestamps):
             
          </p>
@@ -799,8 +800,8 @@
          
          
          <p>
-            Какво ще е файловото разширение се определя от типа на медийната писта, а не
-            от разширението, използвано в името на изходния файл. Към момента се
+            Какво ще е файловото разширение се определя от типа на медийната пътечка, а
+            не от разширението, използвано в името на изходния файл. Към момента се
             поддържат следните типове медийни-писни (tracks):
             
          </p>
@@ -844,7 +845,7 @@
                   <td>
                      
                      <p>
-                        Медийните писти от тип „<span class="abbrev">ALAC</span>“ се записват в
+                        Медийните пътечки от тип „<span class="abbrev">ALAC</span>“ се записват в
                         <span class="abbrev">CAF</span> файлове.
                         
                      </p>
@@ -867,7 +868,7 @@
                   <td>
                      
                      <p>
-                        Медийните писти от тип „<span class="abbrev">FLAC</span>“ се записват като сурови
+                        Медийните пътечки от тип „<span class="abbrev">FLAC</span>“ се записват като сурови
                         <span class="abbrev">FLAC</span> файлове.
                         
                      </p>
@@ -902,7 +903,7 @@
                   <td>
                      
                      <p>
-                        Медийните писти от тип „<span class="productname">Opus</span><sup>(tm)</sup>“ се записват в
+                        Медийните пътечки от тип „<span class="productname">Opus</span><sup>(tm)</sup>“ се записват в
                         <span class="productname">OggOpus</span><sup>(tm)</sup> файлове.
                         
                      </p>
@@ -927,8 +928,8 @@
                   <td>
                      
                      <p>
-                        Медийните писти от тип „<span class="productname">RealAudio</span><sup>(tm)</sup>“ се записват в
-                        <span class="productname">RealMedia</span><sup>(tm)</sup> файлове.
+                        Медийните пътечки от тип „<span class="productname">RealAudio</span><sup>(tm)</sup>“ се записват
+                        в <span class="productname">RealMedia</span><sup>(tm)</sup> файлове.
                         
                      </p>
                      
@@ -1193,7 +1194,7 @@
                   </td>
                </tr>
                <tr>
-                  <td class="varlistoption">Глави (chapters)</td>
+                  <td class="varlistoption">Епизоди (chapters)</td>
                   <td>
                      
                      <p>
@@ -1221,12 +1222,12 @@
             </tbody>
          </table>
          
-         <h1><a name="d4e1798">6. Exit codes</a></h1>
+         <h1><a name="d4e1798">6. Кодове за изход</a></h1>
          
          
          
          <p>
-            <span class="productname">mkvextract</span>(1) exits with one of three exit codes:
+            <span class="productname">mkvextract</span>(1) завършва с един от следните три изходни кода:
             
          </p>
          
@@ -1236,8 +1237,8 @@
             <li>
                
                <p>
-                  <span class="constant">0</span> -- This exit codes means that extraction has
-                  completed successfully.
+                  <span class="constant">0</span> -- Този изходен код означава, че извличането е
+                  завършило успешно.
                   
                </p>
                

@@ -727,6 +727,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        De manera predeterminada, el <span class="productname">mkvmerge</span>(1) establirà el camp d'informació del
+                        segment «data» a la data i hora de quan s'ha iniciat la multiplexació. Amb
+                        aquesta opció, aquest camp no s'escriurà mai.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -811,7 +824,7 @@
          
          
          
-         <h2><a name="d4e1126">2.5. Divisió, vinculació, annexat i concatenació dels fitxers (més opcions
+         <h2><a name="d4e1145">2.5. Divisió, vinculació, annexat i concatenació dels fitxers (més opcions
                globals)</a></h2>
          
          
@@ -1667,7 +1680,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2205">2.6. Implementació per a adjunts (més opcions globals)</a></h2>
+         <h2><a name="d4e2224">2.6. Implementació per a adjunts (més opcions globals)</a></h2>
          
          
          
@@ -1756,7 +1769,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2346">2.7. Opcions que es poden emprar per a cada fitxer d'entrada</a></h2>
+         <h2><a name="d4e2365">2.7. Opcions que es poden emprar per a cada fitxer d'entrada</a></h2>
          
          
          
@@ -2491,7 +2504,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3461">2.8. Opcions que només s'apliquen a les pistes de vídeo</a></h2>
+         <h2><a name="d4e3480">2.8. Opcions que només s'apliquen a les pistes de vídeo</a></h2>
          
          
          
@@ -2978,7 +2991,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4282">2.9. Opcions que només s'apliquen a les pistes de subtítols de text</a></h2>
+         <h2><a name="d4e4301">2.9. Opcions que només s'apliquen a les pistes de subtítols de text</a></h2>
          
          
          
@@ -3021,7 +3034,7 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4322">2.10. Altres opcions</a></h2>
+         <h2><a name="d4e4341">2.10. Altres opcions</a></h2>
          
          
          
@@ -3278,6 +3291,67 @@ $ mkvmerge -o sortida.mkv '(' fitxer.mkv ')'</pre>
                      <p>
                         Indica al programa que interrompi després d'emetre el primer avís. El codi
                         de sortida del programa serà 1.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">llavor</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Permet la creació de fitxers amb bytes idèntics si s'usa la mateixa versió
+                        <span class="productname">mkvmerge</span>(1)  amb els mateixos fitxers d'origen, les mateixes opcions i la
+                        mateixa llavor. Recordeu que en aquest mode el camp d'informació del segment
+                        «data» no serà escrit.
+                        
+                     </p>
+                     
+                     
+                     <p>La llavor podrà ser una cadena arbitrària i no haurà de ser un número.</p>
+                     
+                     
+                     <p>
+                        El resultat de fitxers amb bytes idèntics només està garantit en les
+                        següents condicions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>Si s'utilitza la mateixa versió del <span class="productname">mkvmerge</span>(1) construïda amb les mateixes
+                              versions de la libEBML i la libMatroska.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Si s'utilitzen fitxers d'origen amb bytes idèntics.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Si s'utilitzen les mateixes opcions de la línia d'ordres en el mateix ordre
+                              (amb la notable excepció de <span class="parameter">--output «…»</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        L'ús d'altres versions del <span class="productname">mkvmerge</span>(1) o altres opcions de la línia d'ordres
+                        pot donar com a resultat el mateix fitxer amb bytes idèntics, però no es
+                        garanteix que ho faci.
                         
                      </p>
                      
@@ -4434,7 +4508,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
           ChapterProcessData (binari)</pre>
          
          
-         <h2><a name="d4e6040">13.3. Notes generals</a></h2>
+         <h2><a name="d4e6126">13.3. Notes generals</a></h2>
          
          
          <p>
@@ -4466,7 +4540,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
          
          
          
-         <h2><a name="d4e6105">14.1. Introducció</a></h2>
+         <h2><a name="d4e6191">14.1. Introducció</a></h2>
          
          
          
@@ -4813,7 +4887,7 @@ CHAPTER03NAME=El nen fa trontollar la casa</pre>
          </p>
          
          
-         <h2><a name="d4e6551">17.1.  Format v1 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6637">17.1.  Format v1 pel fitxer del codi de temps</a></h2>
          
          
          <p>
@@ -4834,7 +4908,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6575">17.2.  Format v2 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6661">17.2.  Format v2 pel fitxer del codi de temps</a></h2>
          
          
          
@@ -4854,7 +4928,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6590">17.3.  Format v3 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6676">17.3.  Format v3 pel fitxer del codi de temps</a></h2>
          
          
          <p>
@@ -4878,7 +4952,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6608">17.4.  Format v4 pel fitxer del codi de temps</a></h2>
+         <h2><a name="d4e6694">17.4.  Format v4 pel fitxer del codi de temps</a></h2>
          
          
          <p>

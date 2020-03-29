@@ -17,7 +17,7 @@
             <li><a href="#mkvinfo.description">2. 说明</a></li>
             <li><a href="#mkvinfo.verbosity_levels">3. “详细”程度</a></li>
             <li><a href="#mkvinfo.text_files_and_charsets">4. 文本文件与字符集转换</a></li>
-            <li><a href="#d4e527">5. 退出代码</a></li>
+            <li><a href="#d4e627">5. 退出代码</a></li>
             <li><a href="#mkvinfo.environment_variables">6. 环境变量</a></li>
             <li><a href="#mkvinfo.seealso">7. 参阅</a></li>
             <li><a href="#mkvinfo.www">8. 网络</a></li>
@@ -48,11 +48,61 @@
             </thead>
             <tbody>
                <tr>
+                  <td class="varlistoption"><span class="option">-a</span>, <span class="option">--all</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.
+                        Additionally it doesn't show certain often occurring elements.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level
+                        and show all elements.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">-c</span>, <span class="option">--checksums</span></td>
                   <td>
                      
                      <p>
                         计算并显示各帧的 <span class="function">Adler-32</span> 校验码。仅当调试时有用处。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-o</span>, <span class="option">--continue</span></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvinfo</span>(1) stops when it encounters the first cluster.  With this
+                        option <span class="productname">mkvinfo</span>(1) will continue processing regardless of the verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-p</span>, <span class="option">--hex-positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in hexadecimal regardless of the
+                        verbosity level.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><span class="option">-P</span>, <span class="option">--positions</span></td>
+                  <td>
+                     
+                     <p>
+                        Show the positions of all elements in decimal regardless of the verbosity
+                        level.
                         
                      </p>
                      
@@ -284,7 +334,20 @@
          
          
          <p>
+            The same effect can be achieved with the option <span class="option">--continue</span>.
+            
+         </p>
+         
+         
+         <p>
             在 level 2 <span class="productname">mkvinfo</span>(1) 同样将输出定位头项与 cue 索引项，以及文件中各 <span class="productname">Matroska</span><sup>(tm)</sup> 元素被发现的位置。
+            
+         </p>
+         
+         
+         <p>
+            The same effect can be achieved with the options <span class="option">--all
+               --positions</span>.
             
          </p>
          
@@ -306,7 +369,7 @@
             
          </p>
          
-         <h1><a name="d4e527">5. 退出代码</a></h1>
+         <h1><a name="d4e627">5. 退出代码</a></h1>
          
          
          

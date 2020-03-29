@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\Series\\Dirty Jobs\" \"\\\\server-1\\media\\Series\\Billions\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\series\\The Magicians (2015)\\Season 5\\The Magicians (2015) - S05E08 - Garden Variety Homicide.mkv\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -18,7 +18,7 @@
     },
     "Re-Mux": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"D:\\Temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"\\\\server-1\\media\\series\\The Magicians (2015)\\Season 5\\The Magicians (2015) - S05E08 - Garden Variety Homicide.mkv\""
     },
     "Re-Encode": {
       "commandName": "Project",
@@ -30,7 +30,7 @@
     },
     "Create Tag Map": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" createtagmap --files \"D:\\Temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" createtagmap --files \"\\\\server-1\\media\\series\" \"\\\\server-1\\media\\movies\""
     },
     "Version": {
       "commandName": "Project",

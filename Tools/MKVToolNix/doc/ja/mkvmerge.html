@@ -636,6 +636,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        By default <span class="productname">mkvmerge</span>(1) sets the "date" segment information field to the time
+                        &amp; date when multiplexing started.  With this option that field is not
+                        written at all.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -707,7 +720,7 @@
          
          
          
-         <h2><a name="d4e1074">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
+         <h2><a name="d4e1093">2.5. ファイルの分割と紐付け、追加結合、連結(グローバルオプションの続き):</a></h2>
          
          
          
@@ -1457,7 +1470,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2132">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
+         <h2><a name="d4e2151">2.6. 添付ファイルのサポート（グローバルオプションの続き）</a></h2>
          
          
          
@@ -1528,7 +1541,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2273">2.7. 各入力ファイルに指定できるオプション</a></h2>
+         <h2><a name="d4e2292">2.7. 各入力ファイルに指定できるオプション</a></h2>
          
          
          
@@ -2144,7 +2157,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3386">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e3405">2.8. ビデオトラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2600,7 +2613,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4207">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
+         <h2><a name="d4e4226">2.9. テキスト字幕トラックにのみ適用されるオプション</a></h2>
          
          
          
@@ -2634,7 +2647,7 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4244">2.10. その他のオプション</a></h2>
+         <h2><a name="d4e4263">2.10. その他のオプション</a></h2>
          
          
          
@@ -2855,6 +2868,66 @@ $ mkvmerge -o out.mkv '(' file.mkv ')'</pre>
                      
                      <p>
                         最初の警告が発された後プログラムを停止するよう伝えます。プログラムの終了コードは1になります。
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">seed</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Enables the creation of byte-identical files if the same version of
+                        <span class="productname">mkvmerge</span>(1) is used with the same source files, the same set of options and
+                        the same seed.  Note that the "date" segment information field is not
+                        written in this mode.
+                        
+                     </p>
+                     
+                     
+                     <p>The seed can be an arbitrary string and does not have to be a number.</p>
+                     
+                     
+                     <p>
+                        The result of byte-identical files is only guaranteed under the following
+                        conditions:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>The same version of <span class="productname">mkvmerge</span>(1) built with the same versions of libEBML and
+                              libMatroska is used.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The source files used are byte-identical.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>The same command line options are used in the same order (with the notable
+                              exception of <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Using other versions of <span class="productname">mkvmerge</span>(1) or other command-line options may result
+                        in the same byte-identical file but is not guaranteed to do so.
                         
                      </p>
                      
@@ -3808,7 +3881,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e5962">13.3. 注意</a></h2>
+         <h2><a name="d4e6048">13.3. 注意</a></h2>
          
          
          <p>
@@ -3827,7 +3900,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          
          
          
-         <h2><a name="d4e6027">14.1. はじめに</a></h2>
+         <h2><a name="d4e6113">14.1. はじめに</a></h2>
          
          
          
@@ -4100,7 +4173,7 @@ CHAPTER03NAME=Baby rocks the house</pre>
          </p>
          
          
-         <h2><a name="d4e6465">17.1. タイムコードファイルフォーマット v1</a></h2>
+         <h2><a name="d4e6551">17.1. タイムコードファイルフォーマット v1</a></h2>
          
          
          <p>
@@ -4114,7 +4187,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6489">17.2. タイムコードファイルフォーマット v2</a></h2>
+         <h2><a name="d4e6575">17.2. タイムコードファイルフォーマット v2</a></h2>
          
          
          
@@ -4129,7 +4202,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6504">17.3. タイムコードファイルフォーマット v3</a></h2>
+         <h2><a name="d4e6590">17.3. タイムコードファイルフォーマット v3</a></h2>
          
          
          <p>
@@ -4145,7 +4218,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6522">17.4. タイムコードファイルフォーマット v4</a></h2>
+         <h2><a name="d4e6608">17.4. タイムコードファイルフォーマット v4</a></h2>
          
          
          <p>

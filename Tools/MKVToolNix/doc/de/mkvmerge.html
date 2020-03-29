@@ -722,6 +722,19 @@
                   </td>
                </tr>
                <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.no_date"><span class="option">--no-date</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Standardmäßig setzt <span class="productname">mkvmerge</span>(1) das "Datum"-Segment-Informationen-Feld auf
+                        die Uhrzeit &amp; Datum, als das Multiplexen gestartet wurde.  Mit dieser
+                        Option wird das Feld gar nicht geschrieben.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
                   <td class="varlistoption"><span class="option">--disable-lacing</span></td>
                   <td>
                      
@@ -808,7 +821,7 @@
          
          
          
-         <h2><a name="d4e1119">2.5. Datei aufteilen, verknüpfen, anhängen und verketten (weitere globale
+         <h2><a name="d4e1138">2.5. Datei aufteilen, verknüpfen, anhängen und verketten (weitere globale
                Optionen)</a></h2>
          
          
@@ -1668,7 +1681,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2207">2.6. Unterstützung von Anhängen (weitere globale Optionen)</a></h2>
+         <h2><a name="d4e2226">2.6. Unterstützung von Anhängen (weitere globale Optionen)</a></h2>
          
          
          
@@ -1760,7 +1773,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e2348">2.7. Optionen, die für jede Eingabedatei verwendet werden können</a></h2>
+         <h2><a name="d4e2367">2.7. Optionen, die für jede Eingabedatei verwendet werden können</a></h2>
          
          
          
@@ -2489,7 +2502,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e3475">2.8. Optionen, die nur für Videospuren gelten</a></h2>
+         <h2><a name="d4e3494">2.8. Optionen, die nur für Videospuren gelten</a></h2>
          
          
          
@@ -2983,7 +2996,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4296">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
+         <h2><a name="d4e4315">2.9. Optionen, die nur für Untertitelspuren gelten</a></h2>
          
          
          
@@ -3025,7 +3038,7 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
          
          
          
-         <h2><a name="d4e4336">2.10. Weitere Optionen</a></h2>
+         <h2><a name="d4e4355">2.10. Weitere Optionen</a></h2>
          
          
          
@@ -3282,6 +3295,67 @@ $ mkvmerge -o Ausgabe.mkv '(' Datei.mkv ')'</pre>
                      <p>
                         Weist das Programm an abzubrechen, nachdem die erste Warnung ausgegeben
                         wurde. Der Rückgabewert des Programms wird in dem Fall 1 sein.
+                        
+                     </p>
+                     
+                  </td>
+               </tr>
+               <tr>
+                  <td class="varlistoption"><a name="mkvmerge.description.deterministic"><span class="option">--deterministic</span> <span class="parameter">Initialwert</span></a></td>
+                  <td>
+                     
+                     <p>
+                        Aktiviert das Erzeugen von Byte für Byte identischen Dateien, sofern die
+                        selbe Version von <span class="productname">mkvmerge</span>(1) mit den selben Quelldateien, den selben
+                        Optionen und dem selben Initialwert benutzt werden.  Beachten Sie, dass das
+                        "Datum"-Segment-Informationen-Feld in diesem Modus nicht geschrieben wird.
+                        
+                     </p>
+                     
+                     
+                     <p>Der Initialwert kann eine beliebige Zeichenkette und muss keine Zahl sein.</p>
+                     
+                     
+                     <p>
+                        Das Ergebnis von Byte für Byte identischen Dateien wird nur unter den
+                        folgenden Bedingungen garantiert:
+                        
+                     </p>
+                     
+                     
+                     <ol>
+                        
+                        <li>
+                           
+                           <p>Die selbe Version von <span class="productname">mkvmerge</span>(1), gebaut mit den selben Versionen von
+                              libEBML und libMatroska, wird benutzt.
+                           </p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Die Quelldateien sind Byte für Byte identisch.</p>
+                           
+                        </li>
+                        
+                        
+                        <li>
+                           
+                           <p>Die selben Kommandozeilenoptionen werden in der selben Reihenfolge benutzt
+                              (mit der expliziten Ausnahme der Option <span class="parameter">--output …</span>).
+                           </p>
+                           
+                        </li>
+                        
+                     </ol>
+                     
+                     
+                     <p>
+                        Die Nutzung anderer Versionen von <span class="productname">mkvmerge</span>(1) oder andere
+                        Kommandozeilenoptionen kann ebenfalls zu einer Byte für Byte identischen
+                        Datei führen, was aber nicht garantiert wird.
                         
                      </p>
                      
@@ -4458,7 +4532,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
           ChapterProcessData (binary)</pre>
          
          
-         <h2><a name="d4e6059">13.3. Allgemeine Hinweise</a></h2>
+         <h2><a name="d4e6145">13.3. Allgemeine Hinweise</a></h2>
          
          
          <p>
@@ -4492,7 +4566,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          
          
          
-         <h2><a name="d4e6124">14.1. Einleitung</a></h2>
+         <h2><a name="d4e6210">14.1. Einleitung</a></h2>
          
          
          
@@ -4837,7 +4911,7 @@ CHAPTER03NAME=Baby stellt das Haus auf den Kopf</pre>
          </p>
          
          
-         <h2><a name="d4e6567">17.1. Zeitstempeldateiformat v1</a></h2>
+         <h2><a name="d4e6653">17.1. Zeitstempeldateiformat v1</a></h2>
          
          
          <p>
@@ -4858,7 +4932,7 @@ assume 27.930
 1500,1700,30</pre>
          
          
-         <h2><a name="d4e6591">17.2. Zeitstempeldateiformat v2</a></h2>
+         <h2><a name="d4e6677">17.2. Zeitstempeldateiformat v2</a></h2>
          
          
          
@@ -4878,7 +4952,7 @@ assume 27.930
 80</pre>
          
          
-         <h2><a name="d4e6606">17.3. Zeitstempeldateiformat v3</a></h2>
+         <h2><a name="d4e6692">17.3. Zeitstempeldateiformat v3</a></h2>
          
          
          <p>
@@ -4901,7 +4975,7 @@ gap, 10.050
 2.000,38.236</pre>
          
          
-         <h2><a name="d4e6624">17.4. Zeitstempeldateiformat v4</a></h2>
+         <h2><a name="d4e6710">17.4. Zeitstempeldateiformat v4</a></h2>
          
          
          <p>
