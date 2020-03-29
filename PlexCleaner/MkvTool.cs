@@ -20,7 +20,7 @@ namespace PlexCleaner
 {
     public static class MkvTool
     {
-        public class MkvMergeJson
+        internal class MkvMergeJson
         {
             [JsonProperty("tracks")]
             public List<TrackJson> Tracks { get; set; }
@@ -35,7 +35,7 @@ namespace PlexCleaner
             };
         }
 
-        public class TrackJson
+        internal class TrackJson
         {
             [JsonProperty("codec")]
             public string Codec { get; set; }
@@ -50,7 +50,7 @@ namespace PlexCleaner
             public string Type { get; set; }
         }
 
-        public class PropertiesJson
+        internal class PropertiesJson
         {
             [JsonProperty("codec_id")]
             public string CodecId { get; set; }
@@ -63,7 +63,7 @@ namespace PlexCleaner
         }
 
         [XmlRoot(ElementName = "mkvtoolnix-releases")]
-        public class MkvToolNixReleasesXml
+        internal class MkvToolNixReleasesXml
         {
             [XmlElement(ElementName = "latest-source")]
             public LatestSourceXml LatestSourceXml { get; set; }
@@ -78,7 +78,7 @@ namespace PlexCleaner
         }
 
         [XmlRoot(ElementName = "latest-source")]
-        public class LatestSourceXml
+        internal class LatestSourceXml
         {
             [XmlElement(ElementName = "version")]
             public string Version { get; set; }

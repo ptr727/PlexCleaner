@@ -12,8 +12,8 @@ using InsaneGenius.Utilities;
 namespace PlexCleaner
 {
     public static class FfMpegTool
-    { 
-        public class FfProbeJson
+    {
+        internal class FfProbeJson
         {
             [JsonProperty("streams")]
             public List<StreamJson> Streams { get; set; }
@@ -27,7 +27,7 @@ namespace PlexCleaner
             };
         }
 
-        public class StreamJson
+        internal class StreamJson
         {
             [JsonProperty("index")]
             public int Index { get; set; }
@@ -49,7 +49,7 @@ namespace PlexCleaner
             public TagsJson Tags { get; set; }
         }
 
-        public class TagsJson
+        internal class TagsJson
         {
             [JsonProperty("language")]
             public string Language { get; set; }

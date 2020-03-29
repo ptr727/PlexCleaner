@@ -270,7 +270,7 @@ namespace PlexCleaner
             FileEx.Options.TraceToConsole = true;
 
             // Share the FileEx Cancel object
-            Program.Cancel = FileEx.Options.Cancel;
+            Cancel = FileEx.Options.Cancel;
             
             // Make sure that the tools folder exists
             if (!Tools.VerifyTools())
@@ -278,16 +278,15 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError($"Tools folder or 7-Zip does not exist : \"{Tools.GetToolsRoot()}\"");
                 return null;
             }
-            else
-                ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
 
+            ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
             return new Program();
         }
 
         private void Break()
         {
             // Signal the cancel event
-            Program.Cancel.State = true;
+            Cancel.State = true;
         }
 
         private bool CreateFileList(List<string> files)

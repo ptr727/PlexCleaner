@@ -86,7 +86,7 @@ namespace PlexCleaner
             try
             {
                 // Read the current tool versions from the JSON file
-                string toolsfile = Tools.CombineToolPath("Tools.json");
+                string toolsfile = CombineToolPath("Tools.json");
                 ToolInfoSettings tools = null;
                 if (File.Exists(toolsfile))
                     tools = ToolInfoSettings.FromJson(File.ReadAllText(toolsfile));
@@ -227,7 +227,7 @@ namespace PlexCleaner
             {
                 // Download the file
                 ConsoleEx.WriteLine($"Downloading \"{toolinfo.FileName}\" ...");
-                string filepath = Tools.CombineToolPath(toolinfo.FileName);
+                string filepath = CombineToolPath(toolinfo.FileName);
                 if (!Download.DownloadFile(new Uri(toolinfo.Url), filepath))
                     return false;
 
@@ -240,14 +240,14 @@ namespace PlexCleaner
                         // We need to extract to a temp location in the root tools folder, then rename to the destination folder
                         // Build the versioned folder from the downloaded filename
                         // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        toolpath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        toolpath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
                         break;
                     case nameof(FfMpegTool):
                         // FFMpeg archives have versioned folders in the zip
                         // The 7Zip -spe option does not work for zip files
                         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
                         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
-                        toolpath = Tools.GetToolsRoot();
+                        toolpath = GetToolsRoot();
                         break;
                     case nameof(MkvTool):
                         toolpath = MkvTool.GetToolPath();

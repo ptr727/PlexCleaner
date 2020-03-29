@@ -48,9 +48,7 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
-                return FileEx.DeleteFile(inputname);
-            return true;
+            return string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) == 0 || FileEx.DeleteFile(inputname);
         }
 
         // ReMux the file to MKV
@@ -109,9 +107,7 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
-                return FileEx.DeleteFile(inputname);
-            return true;
+            return string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) == 0 || FileEx.DeleteFile(inputname);
         }
 
         // De-interlace to MKV
@@ -142,9 +138,7 @@ namespace PlexCleaner
                 return false;
 
             // If the input and output names are not the same, delete the input
-            if (string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) != 0)
-                return FileEx.DeleteFile(inputname);
-            return true;
+            return string.Compare(inputname, outputname, StringComparison.OrdinalIgnoreCase) == 0 || FileEx.DeleteFile(inputname);
         }
 
         // ReMux the file to MKV using mkvmerge

@@ -12,7 +12,7 @@ namespace PlexCleaner
             State = StateType.None;
         }
 
-        public TrackInfo(MkvTool.TrackJson track)
+        internal TrackInfo(MkvTool.TrackJson track)
         {
             if (track == null)
                 throw new ArgumentNullException(nameof(track));
@@ -36,7 +36,7 @@ namespace PlexCleaner
             Number = track.Properties.Number;
         }
 
-        public TrackInfo(FfMpegTool.StreamJson stream)
+        internal TrackInfo(FfMpegTool.StreamJson stream)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
@@ -75,7 +75,7 @@ namespace PlexCleaner
             Number = stream.Index;
         }
 
-        public TrackInfo(MediaInfoTool.TrackXml track)
+        internal TrackInfo(MediaInfoTool.TrackXml track)
         {
             if (track == null)
                 throw new ArgumentNullException(nameof(track));

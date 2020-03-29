@@ -3,10 +3,10 @@ namespace PlexCleaner
     public class SubtitleInfo : TrackInfo
     {
         public SubtitleInfo() { }
-        public SubtitleInfo(MkvTool.TrackJson track) : base(track) { }
-        public SubtitleInfo(FfMpegTool.StreamJson stream) : base(stream) { }
+        internal SubtitleInfo(MkvTool.TrackJson track) : base(track) { }
+        internal SubtitleInfo(FfMpegTool.StreamJson stream) : base(stream) { }
 
-        public SubtitleInfo(MediaInfoTool.TrackXml track) : base(track)
+        internal SubtitleInfo(MediaInfoTool.TrackXml track) : base(track)
         {
             MuxingMode = track.MuxingMode;
         }

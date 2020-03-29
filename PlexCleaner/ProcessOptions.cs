@@ -1,10 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
-
-namespace PlexCleaner
+﻿namespace PlexCleaner
 {
     public class ProcessOptions
     {

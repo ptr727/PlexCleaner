@@ -5,12 +5,12 @@ namespace PlexCleaner
     public class VideoInfo : TrackInfo
     {
         public VideoInfo() { }
-        public VideoInfo(MkvTool.TrackJson track) : base(track)
+        internal VideoInfo(MkvTool.TrackJson track) : base(track)
         {
             // No profile information in MKVMerge
         }
 
-        public VideoInfo(FfMpegTool.StreamJson stream) : base(stream)
+        internal VideoInfo(FfMpegTool.StreamJson stream) : base(stream)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
@@ -27,7 +27,7 @@ namespace PlexCleaner
             else if (!string.IsNullOrEmpty(stream.Profile))
                 Profile = stream.Profile;
         }
-        public VideoInfo(MediaInfoTool.TrackXml track) : base(track)
+        internal VideoInfo(MediaInfoTool.TrackXml track) : base(track)
         {
             // TODO : Find a better way to do this
             if (!string.IsNullOrEmpty(track.FormatProfile) && !string.IsNullOrEmpty(track.FormatLevel))

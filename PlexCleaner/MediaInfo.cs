@@ -187,9 +187,8 @@ namespace PlexCleaner
             {
                 // See if the track matches any of the re-encode specs
                 bool match = false;
-                foreach (VideoInfo compare in reencodevideo)
-                    if (video.CompareVideo(compare))
-                        match = true;
+                foreach (VideoInfo compare in reencodevideo.Where(compare => video.CompareVideo(compare)))
+                    match = true;
 
                 // Re-encode or passthrough
                 if (match)
@@ -221,10 +220,7 @@ namespace PlexCleaner
 
         public bool IsVideoInterlaced()
         {
-            foreach (VideoInfo video in Video)
-                if (video.IsInterlaced())
-                    return true;
-            return false;
+            return Video.Any(video => video.IsInterlaced());
         }
         
         // Get stream info using MediaInfo
@@ -257,7 +253,7 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the XML string
             mediainfo = new MediaInfo
             {
-                Parser = MediaInfo.ParserType.MediaInfo
+                Parser = ParserType.MediaInfo
             };
             try
             {
@@ -326,7 +322,7 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             mediainfo = new MediaInfo
             {
-                Parser = MediaInfo.ParserType.MkvMerge
+                Parser = ParserType.MkvMerge
             };
             try
             {
@@ -391,7 +387,7 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             mediainfo = new MediaInfo
             {
-                Parser = MediaInfo.ParserType.FfProbe
+                Parser = ParserType.FfProbe
             };
             try
             {

@@ -15,7 +15,7 @@ namespace PlexCleaner
     public static class MediaInfoTool
     {
         [XmlRoot(ElementName = "MediaInfo", Namespace = "https://mediaarea.net/mediainfo")]
-        public class MediaInfoXml
+        internal class MediaInfoXml
         {
             [XmlElement(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
             public MediaXml Media { get; set; }
@@ -30,7 +30,7 @@ namespace PlexCleaner
         }
 
         [XmlRoot(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-        public class MediaXml
+        internal class MediaXml
         {
             [XmlElement(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
             public List<TrackXml> Track { get; set; }
@@ -38,7 +38,7 @@ namespace PlexCleaner
 
 
         [XmlRoot(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
-        public class TrackXml
+        internal class TrackXml
         {
             [XmlElement(ElementName = "Format", Namespace = "https://mediaarea.net/mediainfo")]
             public string Format { get; set; }

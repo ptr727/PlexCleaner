@@ -1,10 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PlexCleaner
+﻿namespace PlexCleaner
 {
     public class MonitorOptions
     {

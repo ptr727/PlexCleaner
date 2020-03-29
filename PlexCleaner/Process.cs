@@ -367,13 +367,11 @@ namespace PlexCleaner
                 {
                     if (parser == MediaInfo.ParserType.None) 
                         continue;
-                    else 
-                    { 
-                        if (!GetMediaInfoSidecar(fileinfo, true, parser, out bool modified, out MediaInfo _))
-                            errorcount++;
-                        else if (modified)
-                            modifiedcount++;
-                    }
+
+                    if (!GetMediaInfoSidecar(fileinfo, true, parser, out bool modified, out MediaInfo _))
+                        errorcount++;
+                    else if (modified)
+                        modifiedcount++;
                 }
 
                 // Next file
