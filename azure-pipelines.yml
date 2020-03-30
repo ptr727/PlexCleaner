@@ -76,3 +76,11 @@ steps:
     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
     nuGetFeedType: external
     publishFeedCredentials: NuGet
+
+# GitHub Release
+  - task: GithubRelease@0
+    displayName: 'Create GitHub Release'
+    inputs:
+      gitHubConnection: ptr727
+      repositoryName: ptr727/plexcleaner
+      tag: GitVersion.NuGetVersion
