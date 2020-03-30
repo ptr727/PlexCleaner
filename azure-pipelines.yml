@@ -51,13 +51,21 @@ steps:
 # Build
 - task: DotNetCoreCLI@2
   enabled: false
-  displayName: 'Build DotNet Core'
+  displayName: 'DotNetCore Build'
   inputs:
     command: build
     projects: 'PlexCleaner/PlexCleaner.csproj'
     #configuration appears to be ignored, use commandline instead
     arguments: '--configuration $(BuildConfiguration)'
     #configuration: $(BuildConfiguration)
+
+- task: DotNetCoreCLI@2
+  displayName: 'DotNetCore Publish'
+  inputs:
+    command: 'publish'
+    projects: 'PlexCleaner/PlexCleaner.csproj'
+    #configuration appears to be ignored, use commandline instead
+    arguments: '--configuration $(BuildConfiguration)'
 
 # Pack
 - task: DotNetCoreCLI@2
@@ -93,6 +101,7 @@ steps:
 
 # DotNet Restore
 - task: DotNetCoreCLI@2
+  enabled: false
   displayName: 'DotNet Restore'
   inputs:
     command: restore
@@ -102,6 +111,7 @@ steps:
 
 # MSBuild
 - task: MSBuild@1
+  enabled: false
   displayName: 'Build Solution'
   inputs:
     solution: '**/*.sln'
@@ -113,7 +123,7 @@ steps:
     rootFolderOrFile: $(Build.ArtifactStagingDirectory)
     includeRootFolder: true
     archiveType: 7z
-    archiveFile: $(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
     replaceExistingArchive: true
 
 # GitHub Release
@@ -125,6 +135,6 @@ steps:
     #target: $(Build.SourceVersion)
     #tagSource: gitTag
     tagSource: userSpecifiedTag
-    tag: 'test.2'
+    tag: 'test.3'
     #tag: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
