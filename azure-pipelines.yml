@@ -78,9 +78,10 @@ steps:
     publishFeedCredentials: NuGet
 
 # GitHub Release
-  - task: GithubRelease@0
+  - task: GithubRelease@1
     displayName: 'Create GitHub Release'
     inputs:
+      action: Create
       gitHubConnection: ptr727
       repositoryName: ptr727/plexcleaner
       tag: GitVersion.NuGetVersion
