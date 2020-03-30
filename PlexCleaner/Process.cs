@@ -448,7 +448,7 @@ namespace PlexCleaner
                 return true;
 
             // Get the file media info
-            // Force a sidecar refresh only if the file had been modified, else read the exisintg sidecar values
+            // Force a sidecar refresh only if the file had been modified, else read the existing sidecar values
             if (!GetMediaInfo(fileinfo, modified, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo))
                 return false;
 

@@ -3,16 +3,24 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <ApplicationIcon />
+    <ApplicationIcon>Mario.ico</ApplicationIcon>
     <StartupObject>PlexCleaner.Program</StartupObject>
     <AssemblyName>PlexCleaner</AssemblyName>
     <RootNamespace>PlexCleaner</RootNamespace>
     <Authors>Pieter Viljoen</Authors>
     <Company>Pieter Viljoen</Company>
-    <Description>Cleanup media files for Plex playback.</Description>
-    <PackageProjectUrl>https://dev.azure.com/pieterv/Plex%20Cleaner</PackageProjectUrl>
+    <Copyright>Pieter Viljoen</Copyright>
+    <Description>Utility to optimize media files for DirectPlay on Plex.</Description>
+    <PackageProjectUrl>https://github.com/ptr727/plexcleaner</PackageProjectUrl>
     <NeutralLanguage>en</NeutralLanguage>
-    <Version>1.0.1</Version>
+    <Version>1.1.1</Version>
+    <FileVersion>1.1.1.1</FileVersion>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <PackageId>InsaneGenius.PlexCleaner</PackageId>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>

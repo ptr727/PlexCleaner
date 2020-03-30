@@ -29,13 +29,13 @@ namespace PlexCleaner
         private static RootCommand CreateCommandLineOptions()
         {
             // Root command and global options
-            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex");
+            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex.");
 
             // Path to the settings file must always be specified
             rootCommand.AddOption(
                 new Option<string>("--settings")
                 {
-                    Description = "Path to settings file",
+                    Description = "Path to settings file.",
                     Required = true
                 });
 
@@ -43,7 +43,7 @@ namespace PlexCleaner
             rootCommand.AddCommand(
                 new Command("writedefaults")
                 {
-                    Description = "Write default values to settings file",
+                    Description = "Write default values to settings file.",
                     Handler = CommandHandler.Create<string>(WriteDefaultsCommand)
                 });
 
@@ -51,7 +51,7 @@ namespace PlexCleaner
             rootCommand.AddCommand(
                 new Command("checkfornewtools")
                 {
-                    Description = "Check for new tools and download if available",
+                    Description = "Check for new tools and download if available.",
                     Handler = CommandHandler.Create<string>(CheckForNewToolsCommand)
                 });
 
@@ -59,7 +59,7 @@ namespace PlexCleaner
             Option filesOption =
                 new Option<List<string>>("--files")
                 {
-                    Description = "List of files or folders",
+                    Description = "List of files or folders.",
                     Required = true
                 };
 
@@ -67,7 +67,7 @@ namespace PlexCleaner
             Command processCommand = 
                 new Command("process")
                 {
-                    Description = "Process media files",
+                    Description = "Process media files.",
                     Handler = CommandHandler.Create<string, List<string>>(ProcessCommand)
                 };
             processCommand.AddOption(filesOption);
@@ -87,7 +87,7 @@ namespace PlexCleaner
             Command reencodeCommand =
                 new Command("reencode")
                 {
-                    Description = "Re-Encode media files",
+                    Description = "Re-Encode media files.",
                     Handler = CommandHandler.Create<string, List<string>>(ReEncodeCommand)
                 };
             reencodeCommand.AddOption(filesOption);
@@ -97,7 +97,7 @@ namespace PlexCleaner
             Command writesidecarCommand =
                 new Command("writesidecar")
                 {
-                    Description = "Write sidecar files for media files",
+                    Description = "Write sidecar files for media files.",
                     Handler = CommandHandler.Create<string, List<string>>(WriteSidecarCommand)
                 };
             writesidecarCommand.AddOption(filesOption);
@@ -107,7 +107,7 @@ namespace PlexCleaner
             Command createtagmapCommand =
                 new Command("createtagmap")
                 {
-                    Description = "Create a tag-map from media files",
+                    Description = "Create a tag-map from media files.",
                     Handler = CommandHandler.Create<string, List<string>>(CreateTagMapCommand)
                 };
             createtagmapCommand.AddOption(filesOption);
@@ -117,7 +117,7 @@ namespace PlexCleaner
             Command monitorCommand =
                 new Command("monitor")
                 {
-                    Description = "Monitor for changes in folders and process any changed files",
+                    Description = "Monitor for changes in folders and process any changed files.",
                     Handler = CommandHandler.Create<string, List<string>>(MonitorCommand)
                 };
             monitorCommand.AddOption(filesOption);

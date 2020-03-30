@@ -27,8 +27,8 @@ CI is on [Azure DevOps](https://dev.azure.com/pieterv/PlexCleaner).
 
 ### Configuration File
 
-- Create a default configuration file by running:  
-  - `PlexCleaner.exe --settings PlexCleaner.json writedefaults`
+Create a default configuration file by running:  
+`PlexCleaner.exe --settings PlexCleaner.json writedefaults`
 
 ```jsonc
 {
@@ -155,7 +155,7 @@ Example:
 - Reenable the file watcher when directory disappears.`System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available`
 - Retrieve SRT subtitles using original file details, before the sourced file gets modified.
 - Embed SRT subtitles in the MKV file.
-- Convert DIVX to H264 or just re-tag as DIVX as XVID. `cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID`
+- Convert DIVX to H264 or just re-tag as DIVX as XVID using e.g. `cfourcc`
 - Compare folder name with file name and rename to match.
 - Check if more than two audio or subtitle tracks of the same language exists, and prefer DTS over AC3 by changing the track order.
 - Keep machine from sleeping while processing.
@@ -164,12 +164,16 @@ Example:
 
 ## Tools and Utilitites
 
+Tools and utilitites used in the project.
+
 - [7-Zip](https://www.7-zip.org/)
 - [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
 - [HandBrake](https://handbrake.fr/)
 - [MKVToolNix](https://mkvtoolnix.download/)
 - [FFmpeg](https://www.ffmpeg.org/)
 - [ISO language codes](http://www-01.sil.org/iso639-3/download.asp)
+- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
+- [quicktype](https://quicktype.io/)
 - RegEx
   - [regexr.com](https://regexr.com/)
   - [regex101.com](https://regex101.com/)

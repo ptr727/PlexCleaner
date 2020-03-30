@@ -1,0 +1,5 @@
+# https://gitversion.net/docs/build-server-support/build-server/azure-devops
+# https://gitversion.net/docs/configuration
+
+mode: Mainline 
+next-version: 1.1.0 

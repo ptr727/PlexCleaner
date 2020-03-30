@@ -1,0 +1,78 @@
+pool:
+  vmImage: windows-2019
+
+steps:
+
+# Install DotNet Core 2.x
+# Required by GitVersion tool
+- task: UseDotNet@2
+  displayName: 'Install DotNet Core 2.x'
+  inputs:
+    packageType: runtime
+    version: 2.x
+
+# Install DotNet Core 3.1.x
+- task: UseDotNet@2
+  displayName: 'Install DotNet Core SDK 3.1.x'
+  inputs:
+    packageType: sdk
+    version: 3.1.x
+
+# Install NuGet 4.9.x
+# We need to use NuGet and not dotnet so we can get .snupkg symbol support
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet 4.9.x'
+  inputs:
+    versionSpec: 4.9.x
+
+# Calculate the GitFlow version numbers
+# https://gitversion.net/docs/build-server-support/build-server/azure-devops
+- task: GitVersion@5
+  displayName: 'Run GitVersion Tool'
+  inputs:
+    runtime: core
+    configFilePath: gitversion.yml
+
+# Set the manifest versions
+# Modify the csproj file directly and use values calculated by the GitVersion tool
+# https://github.com/BMuuN/vsts-assemblyinfo-task/wiki/Attributes
+- task: Assembly-Info-NetCore@2
+  displayName: 'Set Version Information'
+  inputs:
+    FileNames: 'PlexCleaner/PlexCleaner.csproj'
+    VersionNumber: $(GitVersion.AssemblySemVer)
+    FileVersionNumber: $(GitVersion.AssemblySemFileVer)
+    InformationalVersion: $(GitVersion.InformationalVersion)
+    PackageVersion: $(GitVersion.InformationalVersion)
+    LogLevel: verbose
+
+# Build
+- task: DotNetCoreCLI@2
+  displayName: 'Build DotNet Core'
+  inputs:
+    command: build
+    projects: 'PlexCleaner/PlexCleaner.csproj'
+    #configuration appears to be ignored, use commandline instead
+    arguments: '--configuration $(BuildConfiguration)'
+    #configuration: $(BuildConfiguration)
+
+# Pack
+- task: DotNetCoreCLI@2
+  displayName: 'Pack DotNet Core'
+  inputs:
+    command: pack
+    nobuild: true
+    includesymbols: true
+    includesource: true
+    versioningScheme: byEnvVar 
+    versionEnvVar: GitVersion.NuGetVersion
+
+# Push
+# Use NuGet command task instead of dotnet push so we can get .snupkg symbol support
+- task: NuGetCommand@2
+  displayName: 'Push NuGet'
+  inputs:
+    command: push
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+    nuGetFeedType: external
+    publishFeedCredentials: NuGet

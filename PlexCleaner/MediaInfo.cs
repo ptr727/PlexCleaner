@@ -99,8 +99,9 @@ namespace PlexCleaner
             keep.Audio = Audio;
 
             // We need MuxingMode for VOBSUB else Plex on Nvidia Shield TV has problems
-            //  https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
-            //  https://github.com/mbunkus/mkvtoolnix/issues/2131
+            // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
+            // https://github.com/mbunkus/mkvtoolnix/issues/2131
+            // TODO: Add rules to configuration file
             foreach (SubtitleInfo subtitle in Subtitle)
                 if (subtitle.Codec.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) && 
                     string.IsNullOrEmpty(subtitle.MuxingMode))
