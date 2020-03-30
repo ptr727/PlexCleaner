@@ -29,7 +29,7 @@ namespace PlexCleaner
         private static RootCommand CreateCommandLineOptions()
         {
             // Root command and global options
-            RootCommand rootCommand = new RootCommand("Optimize media files for DirectPlay on Plex");
+            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex");
 
             // Path to the settings file must always be specified
             rootCommand.AddOption(

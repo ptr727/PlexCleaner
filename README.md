@@ -151,71 +151,32 @@ Example:
 
 ## TODO
 
-- Capture standard output and error, and still let the app write formatted output, e.g. FFmpeg that writes in color.
+- Capture standard and error output, but still let the app write formatted output, e.g. FFmpeg that writes in color.
 - Reenable the file watcher when directory disappears.`System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available`
 - Retrieve SRT subtitles using original file details, before the sourced file gets modified.
-- Embed SRT files in MKV file.
-- Consider converting DIVX to H264 or just re-tag as XVID. `cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID`
-- Compare folder with file name and rename to match.
+- Embed SRT subtitles in the MKV file.
+- Convert DIVX to H264 or just re-tag as DIVX as XVID. `cfourcc -i DIVX, DX50, FMP4, cfourcc -u XVID`
+- Compare folder name with file name and rename to match.
 - Check if more than two audio or subtitle tracks of the same language exists, and prefer DTS over AC3 by changing the track order.
 - Keep machine from sleeping while processing.
 - Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS.
-- Remove readonly flag before trying to delete file.
+- Remove readonly attribute before trying to delete file.
 
-## Tools
+## Tools and Utilitites
 
-### RegEx
-
-https://regexr.com/  
-https://regex101.com/  
-https://www.myregextester.com/  
-http://www.txt2re.com
-
-### MediaInfo CLI
-
-https://mediaarea.net/en-us/MediaInfo/Download/Windows  
-https://mediaarea.net/download/snapshots/binary/mediainfo/  
-https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip  
-https://github.com/MediaArea/MediaInfo/blob/master/History_CLI.txt  
-https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt  
-https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/Audio.csv
-
-### Handbrake CLI
-
-https://handbrake.fr/downloads2.php  
-https://handbrake.fr/rotation.php?file=HandBrakeCLI-1.0.7-win-x86_64.zip  
-https://handbrake.fr/mirror/HandBrakeCLI-1.0.7-win-x86_64.zip
-
-### MKVToolNix
-
-https://mkvtoolnix.download/  
-https://mkvtoolnix.download/windows/releases/17.0.0/mkvtoolnix-64-bit-17.0.0.7z  
-https://www.fosshub.com/MKVToolNix.html  
-https://www.fosshub.com/MKVToolNix.html/mkvtoolnix-64-bit-17.0.0.7z  
-https://mkvtoolnix.download/latest-release.xml.gz
-
-### FFMPEG
-
-https://www.ffmpeg.org/download.html#build-windows  
-http://ffmpeg.zeranoe.com/builds/  
-http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.4-win64-static.zip  
-http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.7z  
-https://trac.ffmpeg.org/wiki/audio%20types  
-https://ffmpeg.org/ffmpeg-formats.html  
-https://trac.ffmpeg.org/wiki/Encode/HighQualityAudio
-
-### ISO language codes
-
-http://www-01.sil.org/iso639-3/download.asp
-
-### HTTP Download
-
-http://faithlife.codes/blog/2009/06/  using_if-modified-since_in_http_requests/  
-https://stackoverflow.com/questions/6481073/how-to-download-a-file-only-when-the-local-file-is-older
-
-### Samples
-
-http://kodi.wiki/view/Samples  
-http://jell.yfish.us/  
-https://www.demo-world.eu/2d-demo-trailers-hd/  
-http://samples.mplayerhq.hu/
+- [7-Zip](https://www.7-zip.org/)
+- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
+- [HandBrake](https://handbrake.fr/)
+- [MKVToolNix](https://mkvtoolnix.download/)
+- [FFmpeg](https://www.ffmpeg.org/)
+- [ISO language codes](http://www-01.sil.org/iso639-3/download.asp)
+- RegEx
+  - [regexr.com](https://regexr.com/)
+  - [regex101.com](https://regex101.com/)
+  - [myregextester.com](https://www.myregextester.com/)
+  - [txt2re.com](http://www.txt2re.com)
+- Media Samples
+  - [Kodi](https://kodi.wiki/view/Samples)
+  - [JellyFish](http://jell.yfish.us/)
+  - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
+  - [MPlayer](https://samples.mplayerhq.hu/)
