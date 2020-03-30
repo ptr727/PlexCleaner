@@ -44,7 +44,7 @@ steps:
     FileVersionNumber: $(GitVersion.AssemblySemFileVer)
     InformationalVersion: $(GitVersion.InformationalVersion)
     PackageVersion: $(GitVersion.InformationalVersion)
-    LogLevel: verbose
+    #LogLevel: verbose
 
 # Build
 - task: DotNetCoreCLI@2
