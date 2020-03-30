@@ -86,8 +86,6 @@ steps:
 - task: MSBuild@1
   inputs:
     solution: '**/*.sln'
-    msbuildArchitecture: x64
-    platform: 'Any CPU'
     configuration: $(BuildConfiguration)
 
 # GitHub Release
