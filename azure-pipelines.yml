@@ -82,6 +82,14 @@ steps:
     nuGetFeedType: external
     publishFeedCredentials: NuGet
 
+# NuGet Restore
+- task: NuGetCommand@2
+  inputs:
+    command: restore
+    restoreSolution: '**/*.sln'
+    feedsToUse: select
+    includeNuGetOrg: true
+
 # MSBuild
 - task: MSBuild@1
   inputs:
