@@ -102,7 +102,7 @@ steps:
 
 # MSBuild
 - task: MSBuild@1
-  displayName: 'MSBuild Solutions'
+  displayName: 'Build Solution'
   inputs:
     solution: '**/*.sln'
     configuration: $(BuildConfiguration)
@@ -110,10 +110,10 @@ steps:
 - task: ArchiveFiles@2
   displayName: '7-Zip Output'
   inputs:
-    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    rootFolderOrFile: $(Build.ArtifactStagingDirectory)
     includeRootFolder: true
-    archiveType: '7z'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    archiveType: 7z
+    archiveFile: $(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
     replaceExistingArchive: true
 
 # GitHub Release
@@ -125,6 +125,6 @@ steps:
     #target: $(Build.SourceVersion)
     #tagSource: gitTag
     tagSource: userSpecifiedTag
-    tag: 'test.1'
+    tag: 'test.2'
     #tag: $(GitVersion.NuGetVersion)
-    assets: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
