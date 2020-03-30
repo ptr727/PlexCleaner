@@ -48,6 +48,7 @@ steps:
 
 # Build
 - task: DotNetCoreCLI@2
+  enabled: false
   displayName: 'Build DotNet Core'
   inputs:
     command: build
@@ -58,6 +59,7 @@ steps:
 
 # Pack
 - task: DotNetCoreCLI@2
+  enabled: false
   displayName: 'Pack DotNet Core'
   inputs:
     command: pack
@@ -70,6 +72,7 @@ steps:
 # Push
 # Use NuGet command task instead of dotnet push so we can get .snupkg symbol support
 - task: NuGetCommand@2
+  enabled: false
   displayName: 'Push NuGet'
   inputs:
     command: push
@@ -77,12 +80,20 @@ steps:
     nuGetFeedType: external
     publishFeedCredentials: NuGet
 
+# MSBuild
+- task: MSBuild@1
+  inputs:
+    solution: '**/*.sln'
+    msbuildArchitecture: x64
+    platform: AnyCPU
+    configuration: $(BuildConfiguration)
+
 # GitHub Release
 - task: GitHubRelease@1
   inputs:
     gitHubConnection: 'github.com_ptr727'
-    repositoryName: '$(Build.Repository.Name)'
+    repositoryName: $(Build.Repository.Name)
     action: create
-    target: '$(Build.SourceVersion)'
+    target: $(Build.SourceVersion)
     tagSource: userSpecifiedTag
     tag: $(GitVersion.NuGetVersion)
