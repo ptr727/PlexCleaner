@@ -69,9 +69,10 @@ steps:
 # Release to GitHub
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/github-release?view=azure-devops
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/conditions?view=azure-devops&tabs=yaml
 - task: GitHubRelease@1
   displayName: 'Release to GitHub'
-  condition: in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop')
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop'))
   inputs:
     gitHubConnection: 'github.com_ptr727'
     repositoryName: $(Build.Repository.Name)
@@ -81,4 +82,4 @@ steps:
     tag: $(GitVersion.NuGetVersion)
     title: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
-    isPreRelease: ${{eq(variables['Build.SourceBranch'], 'refs/heads/develop')}}
+    isPreRelease: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/develop') }}
