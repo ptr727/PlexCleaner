@@ -149,19 +149,6 @@ The `--files` option is required for any of the media processing commands. The p
 Example:  
 `PlexCleaner.exe --settings PlexCleaner.json process --files "C:\Foo\Test.mkv" "D:\Media"`
 
-## TODO
-
-- Capture standard and error output, but still let the app write formatted output, e.g. FFmpeg that writes in color.
-- Reenable the file watcher when directory disappears.`System.ComponentModel.Win32Exception (0x80004005): The specified network name is no longer available`
-- Retrieve SRT subtitles using original file details, before the sourced file gets modified.
-- Embed SRT subtitles in the MKV file.
-- Convert DIVX to H264 or just re-tag as DIVX as XVID using e.g. `cfourcc`
-- Compare folder name with file name and rename to match.
-- Check if more than two audio or subtitle tracks of the same language exists, and prefer DTS over AC3 by changing the track order.
-- Keep machine from sleeping while processing.
-- Remove subtitles that cannot DirectPlay, e.g. SubStation Alpha ASS.
-- Remove readonly attribute before trying to delete file.
-
 ## Tools and Utilitites
 
 Tools and utilitites used in the project.
