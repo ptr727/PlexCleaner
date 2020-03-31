@@ -5,6 +5,7 @@ steps:
 
 # Install DotNet Core 2.x
 # Required by GitVersion tool
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/tool/dotnet-core-tool-installer?view=azure-devops
 - task: UseDotNet@2
   displayName: 'Install DotNet Core 2.x'
   inputs:
@@ -12,19 +13,12 @@ steps:
     version: 2.x
 
 # Install DotNet Core SDK 3.1.x
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/tool/dotnet-core-tool-installer?view=azure-devops
 - task: UseDotNet@2
   displayName: 'Install DotNet Core SDK 3.1.x'
   inputs:
     packageType: sdk
     version: 3.1.x
-
-# Install NuGet 4.9.x
-# We need to use NuGet and not dotnet so we can get .snupkg symbol support
-- task: NuGetToolInstaller@1
-  enabled: false
-  displayName: 'Install NuGet 4.9.x'
-  inputs:
-    versionSpec: 4.9.x
 
 # Run GitVersion Tool
 # https://gitversion.net/docs/build-server-support/build-server/azure-devops
@@ -49,59 +43,6 @@ steps:
     PackageVersion: $(GitVersion.InformationalVersion)
     #LogLevel: verbose
 
-# Build
-- task: DotNetCoreCLI@2
-  enabled: false
-  displayName: 'DotNetCore Build'
-  inputs:
-    command: build
-    projects: 'PlexCleaner/PlexCleaner.csproj'
-    #configuration appears to be ignored, use commandline instead
-    arguments: '--configuration $(BuildConfiguration)'
-    #configuration: $(BuildConfiguration)
-
-# Pack
-- task: DotNetCoreCLI@2
-  enabled: false
-  displayName: 'Pack DotNet Core'
-  inputs:
-    command: pack
-    nobuild: true
-    includesymbols: true
-    includesource: true
-    versioningScheme: byEnvVar 
-    versionEnvVar: GitVersion.NuGetVersion
-
-# Push
-# Use NuGet command task instead of dotnet push so we can get .snupkg symbol support
-- task: NuGetCommand@2
-  enabled: false
-  displayName: 'Push NuGet'
-  inputs:
-    command: push
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
-    nuGetFeedType: external
-    publishFeedCredentials: NuGet
-
-# DotNet Restore
-- task: DotNetCoreCLI@2
-  enabled: false
-  displayName: 'DotNet Restore'
-  inputs:
-    command: restore
-    projects: '**/*.csproj'
-    feedsToUse: select
-    includeNuGetOrg: true
-
-# Build Solution using MSBuild
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/msbuild?view=azure-devops
-- task: MSBuild@1
-  enabled: false
-  displayName: 'Build Solution using MSBuild'
-  inputs:
-    solution: '**/*.sln'
-    configuration: $(BuildConfiguration)
-
 # DotNetCore Publish
 - task: DotNetCoreCLI@2
   displayName: 'DotNetCore Publish'
@@ -120,7 +61,7 @@ steps:
   displayName: '7-Zip Build Output'
   inputs:
     rootFolderOrFile: $(Build.ArtifactStagingDirectory)
-    includeRootFolder: true
+    includeRootFolder: false
     archiveType: 7z
     archiveFile: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
     replaceExistingArchive: true
@@ -134,8 +75,6 @@ steps:
     repositoryName: $(Build.Repository.Name)
     action: create
     target: $(Build.SourceVersion)
-    #tagSource: gitTag
     tagSource: userSpecifiedTag
-    #tag: 'test.3'
     tag: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
