@@ -4,4 +4,6 @@
 # https://gitversion.readthedocs.io/en/latest/input/docs/more-info/version-increments/
 
 mode: Mainline
-next-version: 1.6.0
+next-version: 1.5.0
+ignore:
+    commits-before: 2020-03-30T02:55:00
