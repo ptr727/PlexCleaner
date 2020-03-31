@@ -1,6 +1,17 @@
 # https://gitversion.net/docs/build-server-support/build-server/azure-devops
 # https://gitversion.net/docs/configuration
+# https://gitversion.net/docs/reference/versioning-modes/versioning-mode
+# https://gitversion.readthedocs.io/en/latest/input/docs/more-info/version-increments/
 
-#mode: Mainline
-#next-version: 1.3.0
-mode: ContinuousDelivery
+# Use defaults
+# GitVersion ships with internal default configuration which works with GitHubFlow and GitFlow, probably with others too.
+# The develop branch is set to ContinuousDeployment mode by default as we have found that is generally what is needed when using GitFlow.
+
+# Add tags to commit messages
+# +semver: breaking
+# +semver: major
+# +semver: feature
+# +semver: minor
+# +semver: patch
+# +semver: fix
+
