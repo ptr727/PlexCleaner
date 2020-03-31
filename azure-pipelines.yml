@@ -70,6 +70,7 @@ steps:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/github-release?view=azure-devops
 - task: GitHubRelease@1
   displayName: 'Release to GitHub'
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
     gitHubConnection: 'github.com_ptr727'
     repositoryName: $(Build.Repository.Name)
