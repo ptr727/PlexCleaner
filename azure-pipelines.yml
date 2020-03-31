@@ -81,4 +81,4 @@ steps:
     tag: $(GitVersion.NuGetVersion)
     title: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
-    isPreRelease: $[eq(variables['Build.SourceBranch'], 'refs/heads/develop')]
+    isPreRelease: ${{eq(variables['Build.SourceBranch'], 'refs/heads/develop')}}
