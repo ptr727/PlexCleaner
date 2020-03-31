@@ -108,15 +108,17 @@ steps:
     command: 'publish'
     projects: '**/*.csproj'
     #configuration appears to be ignored, use commandline instead
-    arguments: '--configuration $(BuildConfiguration)'
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     publishWebProjects: false
+    modifyOutputPath: true
+    zipAfterPublish: false
 
 # 7-Zip Build Output
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/archive-files?view=azure-devops
 - task: ArchiveFiles@2
   displayName: '7-Zip Build Output'
   inputs:
-    rootFolderOrFile: $(Build.BinariesDirectory)
+    rootFolderOrFile: $(Build.ArtifactStagingDirectory)
     includeRootFolder: true
     archiveType: 7z
     archiveFile: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
