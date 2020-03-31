@@ -21,6 +21,7 @@ steps:
 # Install NuGet 4.9.x
 # We need to use NuGet and not dotnet so we can get .snupkg symbol support
 - task: NuGetToolInstaller@1
+  enabled: false
   displayName: 'Install NuGet 4.9.x'
   inputs:
     versionSpec: 4.9.x
@@ -28,7 +29,7 @@ steps:
 # Run GitVersion Tool
 # https://gitversion.net/docs/build-server-support/build-server/azure-devops
 - task: GitVersion@5
-  enabled: false
+  enabled: true
   displayName: 'Run GitVersion Tool'
   inputs:
     runtime: core
@@ -38,7 +39,7 @@ steps:
 # Modify the csproj file directly and use values calculated by the GitVersion tool
 # https://github.com/BMuuN/vsts-assemblyinfo-task/wiki/Attributes
 - task: Assembly-Info-NetCore@2
-  enabled: false
+  enabled: true
   displayName: 'Set Manifest Version Information'
   inputs:
     FileNames: 'PlexCleaner/PlexCleaner.csproj'
@@ -132,9 +133,9 @@ steps:
     gitHubConnection: 'github.com_ptr727'
     repositoryName: $(Build.Repository.Name)
     action: create
-    #target: $(Build.SourceVersion)
+    target: $(Build.SourceVersion)
     #tagSource: gitTag
     tagSource: userSpecifiedTag
-    tag: 'test.3'
-    #tag: $(GitVersion.NuGetVersion)
+    #tag: 'test.3'
+    tag: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
