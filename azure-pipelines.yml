@@ -77,4 +77,5 @@ steps:
     target: $(Build.SourceVersion)
     tagSource: userSpecifiedTag
     tag: $(GitVersion.NuGetVersion)
+    title: $(GitVersion.NuGetVersion)
     assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
