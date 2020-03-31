@@ -15,15 +15,15 @@ CI is on [Azure DevOps](https://dev.azure.com/pieterv/PlexCleaner).
 
 ## Build Status
 
-[![Build Status](https://dev.azure.com/pieterv/Utilities/_apis/build/status/Utilities-YAML-CI?branchName=master)](https://dev.azure.com/pieterv/PlexCleaner/_build/latest?definitionId=29&branchName=master)
+[![Build Status](https://dev.azure.com/pieterv/PlexCleaner/_apis/build/status/PlexCleaner-Master-CI?branchName=master)](https://dev.azure.com/pieterv/PlexCleaner/_build/latest?definitionId=32&branchName=master)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ptr727/plexcleaner?logo=github&sort=semver)
 
 ## Getting Started
 
 ### Installation
 
-- Install .NET Core 3.1 or later.
-- Clone the code repository.
-- Build the project.
+- Install the [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases) pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download).
 
 ### Configuration File
 
@@ -174,12 +174,12 @@ Tools and utilitites used in the project.
 - [ISO language codes](http://www-01.sil.org/iso639-3/download.asp)
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
-- RegEx
+- RegEx Tools
   - [regexr.com](https://regexr.com/)
   - [regex101.com](https://regex101.com/)
   - [myregextester.com](https://www.myregextester.com/)
   - [txt2re.com](http://www.txt2re.com)
-- Media Samples
+- Media Sample Files
   - [Kodi](https://kodi.wiki/view/Samples)
   - [JellyFish](http://jell.yfish.us/)
   - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
