@@ -22,7 +22,7 @@ CI is on [Azure DevOps](https://dev.azure.com/pieterv/PlexCleaner).
 
 ### Installation
 
-- Install the [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases) pre-compiled binaries.
+- Install the [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download).
 
 ### Configuration File
@@ -110,25 +110,25 @@ Create a default configuration file by running:
 ```console
 C:\...\netcoreapp3.1>PlexCleaner.exe --help
 PlexCleaner:
-  Optimize media files for DirectPlay on Plex
+  Optimize media files for DirectPlay on Plex.
 
 Usage:
   PlexCleaner [options] [command]
 
 Options:
-  --settings <settings> (REQUIRED)    Path to settings file
-  --version                           Show version information
-  -?, -h, --help                      Show help and usage information
+  --settings <settings> (REQUIRED)    Path to settings file.
+  --version                           Show version information.
+  -?, -h, --help                      Show help and usage information.
 
 Commands:
-  writedefaults       Write default values to settings file
-  checkfornewtools    Check for new tools and download if available
-  process             Process media files
-  remux               Re-Multiplex media files
-  reencode            Re-Encode media files
-  writesidecar        Write sidecar files for media files
-  createtagmap        Create a tag-map from media files
-  monitor             Monitor for changes in folders and process any changed files
+  writedefaults       Write default values to settings file.
+  checkfornewtools    Check for new tools and download if available.
+  process             Process media files.
+  remux               Re-Multiplex media files.
+  reencode            Re-Encode media files.
+  writesidecar        Write sidecar files for media files.
+  createtagmap        Create a tag-map from media files.
+  monitor             Monitor for changes in folders and process any changed files.
 ```
 
 ```console
@@ -140,8 +140,8 @@ Usage:
   PlexCleaner process [options]
 
 Options:
-  --files <files> (REQUIRED)    List of files or folders
-  -?, -h, --help                Show help and usage information
+  --files <files> (REQUIRED)    List of files or folders.
+  -?, -h, --help                Show help and usage information.
 ```
 
 The `--files` option is required for any of the media processing commands. The parameter can point to a combination of files or folders.
