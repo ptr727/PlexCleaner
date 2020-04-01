@@ -1,3 +1,7 @@
+variables:
+  # $(BuildConfiguration) must be set in the pipeline variables
+  GitHubConnection: 'github.com_ptr727'
+
 pool:
   vmImage: windows-2019
 
@@ -23,7 +27,6 @@ steps:
 # Run GitVersion Tool
 # https://gitversion.net/docs/build-server-support/build-server/azure-devops
 - task: GitVersion@5
-  enabled: true
   displayName: 'Run GitVersion Tool'
   inputs:
     runtime: core
@@ -33,23 +36,22 @@ steps:
 # Modify the csproj file directly and use values calculated by the GitVersion tool
 # https://github.com/BMuuN/vsts-assemblyinfo-task/wiki/Attributes
 - task: Assembly-Info-NetCore@2
-  enabled: true
   displayName: 'Set Manifest Version Information'
   inputs:
-    FileNames: 'PlexCleaner/PlexCleaner.csproj'
+    FileNames: '**/*.csproj'
     VersionNumber: $(GitVersion.AssemblySemVer)
     FileVersionNumber: $(GitVersion.AssemblySemFileVer)
     InformationalVersion: $(GitVersion.InformationalVersion)
     PackageVersion: $(GitVersion.InformationalVersion)
-    #LogLevel: verbose
 
 # DotNetCore Publish
 - task: DotNetCoreCLI@2
   displayName: 'DotNetCore Publish'
   inputs:
-    command: 'publish'
+    command: publish
     projects: '**/*.csproj'
-    #configuration appears to be ignored, use commandline instead
+    #configuration: $(BuildConfiguration)
+    #configuration is ignored, use commandline instead
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     publishWebProjects: false
     modifyOutputPath: true
@@ -63,23 +65,24 @@ steps:
     rootFolderOrFile: $(Build.ArtifactStagingDirectory)
     includeRootFolder: false
     archiveType: 7z
-    archiveFile: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.Repository.Name).7z'
     replaceExistingArchive: true
 
 # Release to GitHub
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/github-release?view=azure-devops
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/conditions?view=azure-devops&tabs=yaml
 - task: GitHubRelease@1
   displayName: 'Release to GitHub'
-  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop'))
+  # Do not tag any pre-release builds else GitVersion will fail
+  # https://github.com/GitTools/GitVersion/issues/2211
+  #condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   inputs:
-    gitHubConnection: 'github.com_ptr727'
+    gitHubConnection: $(GitHubConnection)
     repositoryName: $(Build.Repository.Name)
     action: create
     target: $(Build.SourceVersion)
     tagSource: userSpecifiedTag
     tag: $(GitVersion.NuGetVersion)
     title: $(GitVersion.NuGetVersion)
-    assets: '$(Build.ArtifactStagingDirectory)/PlexCleaner.7z'
+    assets: '$(Build.ArtifactStagingDirectory)/$(Build.Repository.Name).7z'
     isPreRelease: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/develop') }}
