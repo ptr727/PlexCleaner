@@ -274,10 +274,7 @@ namespace PlexCleaner
             
             // Make sure that the tools folder exists
             if (!Tools.VerifyTools())
-            { 
-                ConsoleEx.WriteLineError($"Tools folder or 7-Zip does not exist : \"{Tools.GetToolsRoot()}\"");
                 return null;
-            }
 
             ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
             return new Program();

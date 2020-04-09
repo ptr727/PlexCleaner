@@ -15,9 +15,20 @@ namespace PlexCleaner
         public static bool VerifyTools()
         {
             // Make sure the tools root folder exists
-            // Make sure that the 7-Zip tool exists
-            // We need at least 7-Zip to be able to download and extract the other tools
-            return Directory.Exists(GetToolsRoot()) && SevenZipTool.VerifyTool();
+            if (!Directory.Exists(GetToolsRoot()))
+            {
+                ConsoleEx.WriteLineError($"Tools directory not found : \"{Tools.GetToolsRoot()}\"");
+                return false;
+            }
+
+            // Make sure the 7-Zip tool exists
+            if (!File.Exists(SevenZipTool.GetToolPath()))
+            {
+                ConsoleEx.WriteLineError($"7-Zip not found : \"{SevenZipTool.GetToolPath()}\"");
+                return false;
+            }
+
+            return true;
         }
 
         public static string GetToolsRoot()
@@ -287,7 +298,7 @@ namespace PlexCleaner
                 {
                     case nameof(SevenZipTool):
                         // Get the path and and clean the destination directory
-                        toolpath = SevenZipTool.GetToolPath();
+                        toolpath = SevenZipTool.GetToolFolder();
                         if (!FileEx.DeleteDirectory(toolpath, true))
                             return false;
 

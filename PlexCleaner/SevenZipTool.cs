@@ -8,12 +8,6 @@ namespace PlexCleaner
 {
     public static class SevenZipTool
     {
-        public static bool VerifyTool()
-        {
-            // Make sure the 7-Zip binary exists
-            return File.Exists(Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary));
-        }
-
         public static bool UnZip(string archive, string folder)
         {
             // 7z.exe x archive.zip -o"C:\Doc"
@@ -31,9 +25,14 @@ namespace PlexCleaner
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath()
+        public static string GetToolFolder()
         {
             return Tools.CombineToolPath(Tools.Options.SevenZip);
+        }
+
+        public static string GetToolPath()
+        {
+            return Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
