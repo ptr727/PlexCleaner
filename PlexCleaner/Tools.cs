@@ -28,6 +28,42 @@ namespace PlexCleaner
                 return false;
             }
 
+            // Make sure the FFmpeg tool exists
+            if (!File.Exists(FfMpegTool.GetToolPath()))
+            {
+                ConsoleEx.WriteLineError($"FFmpeg not found : \"{FfMpegTool.GetToolPath()}\"");
+                return false;
+            }
+
+            // Make sure the HandBrake tool exists
+            if (!File.Exists(HandBrakeTool.GetToolPath()))
+            {
+                ConsoleEx.WriteLineError($"HandBrake not found : \"{HandBrakeTool.GetToolPath()}\"");
+                return false;
+            }
+
+            // Make sure the MediaInfo tool exists
+            if (!File.Exists(MediaInfoTool.GetToolPath()))
+            {
+                ConsoleEx.WriteLineError($"MediaInfo not found : \"{MediaInfoTool.GetToolPath()}\"");
+                return false;
+            }
+
+            // Make sure the MKVToolNix folder exists
+            // We just test for the directory not each tool
+            if (!Directory.Exists(MkvTool.GetToolFolder()))
+            {
+                ConsoleEx.WriteLineError($"MKVToolNix not found : \"{MkvTool.GetToolFolder()}\"");
+                return false;
+            }
+
+            // Look for Tools.json
+            if (!File.Exists(GetToolsJsonPath()))
+            {
+                ConsoleEx.WriteLineError($"Tools.json not found, run the 'checkfornewtools' command : \"{GetToolsJsonPath()}\"");
+                return false;
+            }
+
             return true;
         }
 
@@ -90,6 +126,12 @@ namespace PlexCleaner
             return Regex.IsMatch(value, regex);
         }
 */
+
+        public static string GetToolsJsonPath()
+        {
+            return CombineToolPath("Tools.json");
+        }
+
         public static bool CheckForNewTools()
         {
             ConsoleEx.WriteLine("Checking for new tools ...");
@@ -97,7 +139,7 @@ namespace PlexCleaner
             try
             {
                 // Read the current tool versions from the JSON file
-                string toolsfile = CombineToolPath("Tools.json");
+                string toolsfile = GetToolsJsonPath();
                 ToolInfoSettings tools = null;
                 if (File.Exists(toolsfile))
                     tools = ToolInfoSettings.FromJson(File.ReadAllText(toolsfile));
@@ -261,13 +303,13 @@ namespace PlexCleaner
                         toolpath = GetToolsRoot();
                         break;
                     case nameof(MkvTool):
-                        toolpath = MkvTool.GetToolPath();
+                        toolpath = MkvTool.GetToolFolder();
                         break;
                     case nameof(MediaInfoTool):
-                        toolpath = MediaInfoTool.GetToolPath();
+                        toolpath = MediaInfoTool.GetToolFolder();
                         break;
                     case nameof(HandBrakeTool):
-                        toolpath = HandBrakeTool.GetToolPath();
+                        toolpath = HandBrakeTool.GetToolFolder();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(toolinfo));
@@ -313,7 +355,7 @@ namespace PlexCleaner
                         break;
                     case nameof(FfMpegTool):
                         // Get the path and and clean the destination directory
-                        toolpath = FfMpegTool.GetToolPath();
+                        toolpath = FfMpegTool.GetToolFolder();
                         if (!FileEx.DeleteDirectory(toolpath, true))
                             return false;
 

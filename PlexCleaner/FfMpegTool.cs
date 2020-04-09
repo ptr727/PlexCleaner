@@ -71,9 +71,14 @@ namespace PlexCleaner
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
-        public static string GetToolPath()
+        public static string GetToolFolder()
         {
             return Tools.CombineToolPath(Tools.Options.FfMpeg);
+        }
+
+        public static string GetToolPath()
+        {
+            return Tools.CombineToolPath(Tools.Options.FfMpeg, FfMpegBinary);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
