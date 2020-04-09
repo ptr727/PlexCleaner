@@ -20,6 +20,21 @@ CI is on [Azure DevOps](https://dev.azure.com/pieterv/PlexCleaner).
 
 ## Getting Started
 
+### Use Cases
+
+The objective of the tool is to modify media content such that it will [Direct Play](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/) in Plex.  
+Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes. Sometimes Plex may eventually fix the issue, other times the only solution is modification of the media file.
+
+Below are a few examples of issues I've experienced over the many years of using Plex on Roku, NVidia Shield, and Apple TV:
+
+- Container file formats other than MKV and MP4 are not supported by the client platform, re-multiplex to MKV.
+- MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H264.
+- Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H264.
+- Some H264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H264 "High@40".
+- Interlaced video cause playback issues, re-encode to H264 using HandBrake and de-interlace using `--comb-detect --decomb` options.
+- Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
+- Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
+
 ### Installation
 
 - Install the [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
@@ -94,6 +109,7 @@ Create a default configuration file by running:
 
 ### Update Tools
 
+- The 3rd party tools used by this project are not included, they must be downloaded by the end-user.
 - Make sure the `Tools` folder exists, the default folder is in the same folder as the binary.
 - [Download](https://www.7-zip.org/download.html) the 7-Zip commandline tool, e.g. [7z1805-extra.7z](https://www.7-zip.org/a/7z1805-extra.7z)
 - Extract the contents of the archive to the `Tools\7Zip` folder.
@@ -104,6 +120,7 @@ Create a default configuration file by running:
 
 ## Usage
 
+Commandline options:  
 `Plexcleaner.exe --help`
 
 ```console
@@ -145,12 +162,31 @@ Options:
 
 The `--files` option is required for any of the media processing commands. The parameter can point to a combination of files or folders.
 
-Example:  
+Example usage:  
 `PlexCleaner.exe --settings PlexCleaner.json process --files "C:\Foo\Test.mkv" "D:\Media"`
+
+The `process` command will use the configuration settings to conditionally modify the media content.
+
+The `remux` and `reencode` commands will re-multiplex or re-encode the media files without applying any conditional logic.
 
 ## Tools and Utilitites
 
-Tools and utilitites used in the project.
+### NuGet Component Dependencies
+
+```console
+C:\...\PlexCleaner>dotnet list package
+Project 'PlexCleaner' has the following package references
+   [netcoreapp3.1]:
+   Top-level Package                            Requested             Resolved
+   > HtmlAgilityPack                            1.11.23               1.11.23
+   > InsaneGenius.Utilities                     1.3.89                1.3.89
+   > Microsoft.CodeAnalysis.FxCopAnalyzers      2.9.8                 2.9.8
+   > Microsoft.SourceLink.GitHub                1.0.0                 1.0.0
+   > Newtonsoft.Json                            12.0.3                12.0.3
+   > System.CommandLine                         2.0.0-beta1.20158.1   2.0.0-beta1.20158.1
+```
+
+### 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
 - [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
@@ -160,13 +196,14 @@ Tools and utilitites used in the project.
 - [ISO language codes](http://www-01.sil.org/iso639-3/download.asp)
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
-- RegEx Tools
-  - [regexr.com](https://regexr.com/)
-  - [regex101.com](https://regex101.com/)
-  - [myregextester.com](https://www.myregextester.com/)
-  - [txt2re.com](http://www.txt2re.com)
-- Media Sample Files
-  - [Kodi](https://kodi.wiki/view/Samples)
-  - [JellyFish](http://jell.yfish.us/)
-  - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
-  - [MPlayer](https://samples.mplayerhq.hu/)
+- [regexr.com](https://regexr.com/)
+- [regex101.com](https://regex101.com/)
+- [myregextester.com](https://www.myregextester.com/)
+- [txt2re.com](http://www.txt2re.com)
+
+### Sample Media Files
+
+- [Kodi](https://kodi.wiki/view/Samples)
+- [JellyFish](http://jell.yfish.us/)
+- [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
+- [MPlayer](https://samples.mplayerhq.hu/)
