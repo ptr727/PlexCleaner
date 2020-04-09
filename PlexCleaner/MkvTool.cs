@@ -113,7 +113,7 @@ namespace PlexCleaner
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static string GetToolPath()
+        public static string GetToolFolder()
         {
             return Tools.CombineToolPath(Tools.Options.MkvToolNix);
         }
