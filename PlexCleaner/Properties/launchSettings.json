@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\series\\The Magicians (2015)\\Season 5\\The Magicians (2015) - S05E08 - Garden Variety Homicide.mkv\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
     },
     "Monitor": {
       "commandName": "Project",

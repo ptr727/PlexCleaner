@@ -452,43 +452,6 @@ namespace PlexCleaner
             if (!GetMediaInfo(fileinfo, modified, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo))
                 return false;
 
-            // Re-Encode interlaced content
-            if (Options.DeInterlace &&
-                mediainfo.IsVideoInterlaced())
-            {
-                ConsoleEx.WriteLine("Found interlaced video");
-
-                // Convert using HandBrakeCLI, it produces the best de-interlacing results
-                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string outputname))
-                    return false;
-
-                // Continue processing with the new file name and new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
-
-            // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
-            // Logic uses FFProbe data
-            if (Options.ReEncode &&
-                ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out MediaInfo keep, out MediaInfo reencode))
-            {
-                ConsoleEx.WriteLine("Found tracks that need to be re-encoded:");
-                keep.WriteLine("Passthrough");
-                reencode.WriteLine("ReEncode");
-
-                // Convert streams that need re-encoding, copy the rest of the streams as is
-                if (!Convert.ConvertToMkv(fileinfo.FullName, keep, reencode, out string outputname))
-                    return false;
-
-                // Continue processing with the new file name and new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
-
             // Change all tracks with an unknown language to the default language
             // Logic uses MKVMerge data
             if (Options.SetUnknownLanguage &&
@@ -515,7 +478,7 @@ namespace PlexCleaner
 
             // Filter out all the undesired tracks
             if (Options.RemoveUnwantedTracks &&
-                mkvmerge.FindNeedRemove(KeepLanguages, out keep, out MediaInfo remove))
+                mkvmerge.FindNeedRemove(KeepLanguages, out MediaInfo keep, out MediaInfo remove))
             {
                 ConsoleEx.WriteLine("Found tracks that need to be removed:");
                 keep.WriteLine("Keep");
@@ -552,6 +515,43 @@ namespace PlexCleaner
                     return false;
             }
 
+            // Re-Encode interlaced content
+            if (Options.DeInterlace &&
+                mediainfo.IsVideoInterlaced())
+            {
+                ConsoleEx.WriteLine("Found interlaced video");
+
+                // Convert using HandBrakeCLI, it produces the best de-interlacing results
+                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string outputname))
+                    return false;
+
+                // Continue processing with the new file name and new media info
+                modified = true;
+                fileinfo = new FileInfo(outputname);
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
+                    return false;
+            }
+
+            // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
+            // Logic uses FFProbe data
+            if (Options.ReEncode &&
+                ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out keep, out MediaInfo reencode))
+            {
+                ConsoleEx.WriteLine("Found tracks that need to be re-encoded:");
+                keep.WriteLine("Passthrough");
+                reencode.WriteLine("ReEncode");
+
+                // Convert or passthrough tracks
+                if (!Convert.ConvertToMkv(fileinfo.FullName, keep, reencode, out string outputname))
+                    return false;
+
+                // Continue processing with the new file name and new media info
+                modified = true;
+                fileinfo = new FileInfo(outputname);
+                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
+                    return false;
+            }
+
             // TODO : Verify the integrity of the media file and the streams in the file
 
             // Stream check, at least one video and audio track
@@ -562,7 +562,7 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError($"File missing required tracks : Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
 
                 // Delete the file
-                if (Options.DeleteFailedFiles)
+                if (Options.DeleteInvalidFiles)
                     FileEx.DeleteFile(fileinfo.FullName);
 
                 return false;

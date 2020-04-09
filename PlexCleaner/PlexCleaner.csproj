@@ -38,10 +38,4 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20158.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="PlexCleaner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
