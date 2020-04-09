@@ -13,7 +13,7 @@ namespace PlexCleaner
 {
     public static class FfMpegTool
     {
-        internal class FfProbeJson
+        public class FfProbeJson
         {
             [JsonProperty("streams")]
             public List<StreamJson> Streams { get; set; }
@@ -27,7 +27,7 @@ namespace PlexCleaner
             };
         }
 
-        internal class StreamJson
+        public class StreamJson
         {
             [JsonProperty("index")]
             public int Index { get; set; }
@@ -49,7 +49,7 @@ namespace PlexCleaner
             public TagsJson Tags { get; set; }
         }
 
-        internal class TagsJson
+        public class TagsJson
         {
             [JsonProperty("language")]
             public string Language { get; set; }

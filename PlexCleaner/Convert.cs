@@ -323,7 +323,9 @@ namespace PlexCleaner
         // Re-encode only the specified tracks, and copy the passthrough tracks
         private static bool ConvertToMkvFfMpeg(string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, string outputname)
         {
-            if (keep == null || reencode == null)
+            // Convert video track and passthroug other tracks if no specific tracks are specified, or if only video track need encoding
+            if (keep == null || reencode == null ||
+                reencode.Video.Count > 0 && reencode.Audio.Count == 0 && reencode.Subtitle.Count == 0)
                 return ConvertToMkvFfMpeg(inputname, quality, outputname);
 
             // Delete output file
@@ -340,7 +342,7 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
             string snippets = Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} {input} {output} {FfmpegPostfix} -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
@@ -358,7 +360,7 @@ namespace PlexCleaner
             // Copy audio and subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
             string snippets = Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"{FfmpegPrefix} -i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy {FfmpegPostfix} -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a copy -c:s copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegTool.FfMpeg(commandline);
             ConsoleEx.WriteLine("");
@@ -385,8 +387,6 @@ namespace PlexCleaner
 
         // File split options
         private const string FfmpegSnippet = "-ss 0 -t 60";
-        private const string FfmpegPrefix = "-v warning"; // info
-        private const string FfmpegPostfix = "-max_muxing_queue_size 1024"; // -analyzeduration 100M -probesize 100M 
         private const string MkvmergeSnippet = "--split parts:00:00:00-00:01:00";
         private const string HandBrakeSnippet = "--start-at duration:00 --stop-at duration:60";
     }

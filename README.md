@@ -36,7 +36,7 @@ Create a default configuration file by running:
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
-    "RootRelative": true,
+    "RootRelative": true
   },
   "ConvertOptions": {
     // Encoding video quality
@@ -51,8 +51,8 @@ Create a default configuration file by running:
     "TestNoModify": false,
     // Delete empty folders
     "DeleteEmptyFolders": true,
-    // Delete files if procesing fails
-    "DeleteFailedFiles": true,
+    // Delete invalid media files, e.g. no video or audio track
+    "DeleteInvalidFiles": true,
     // Delete non-media files
     "DeleteUnwantedExtensions": true,
     // Files to keep, e.g. .srt files
@@ -61,21 +61,21 @@ Create a default configuration file by running:
     "ReMux": true,
     // Remux files to MKV if the extension matches
     "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
-    // Enable re-encode
-    "ReEncode": true,
     // Enable de-interlace
     "DeInterlace": true,
+    // Enable re-encode
+    "ReEncode": true,
     // Re-encode if the video codec and profile matches
     // * will match anything, codecs and profiles are treated like a pair
-    "ReEncodeVideoCodecs": "mpeg2video,msmpeg4v3,h264",
-    "ReEncodeVideoProfiles": "*,*,Constrained Baseline@30",
+    "ReEncodeVideoCodecs": "mpeg2video,msmpeg4v3,h264,vc1",
+    "ReEncodeVideoProfiles": "*,*,Constrained Baseline@30,*",
     // Re-encode matching audio codecs
     "ReEncodeAudioCodecs": "flac,mp2,vorbis,wmapro",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
     "DefaultLanguage": "eng",
-    // Enable removing unwanted tracks
+    // Enable removing unwanted language tracks
     "RemoveUnwantedTracks": true,
     // Track languages to keep
     "KeepLanguages": "eng,afr,chi,ind",
@@ -90,7 +90,6 @@ Create a default configuration file by running:
     // Number of times to retry a file operation
     "FileRetryCount": 2
   }
-}
 ```
 
 ### Update Tools
