@@ -33,6 +33,7 @@ Below are a few examples of issues I've experienced over the many years of using
 - Some H264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H264 "High@40".
 - Interlaced video cause playback issues, re-encode to H264 using HandBrake and de-interlace using `--comb-detect --decomb` options.
 - Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
+- Some subtitle tracks like VOBsub cause hangs when the MuxingMode attribute is not set, re-multiplex the track.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 
 ### Installation
