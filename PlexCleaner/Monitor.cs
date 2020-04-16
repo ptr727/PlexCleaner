@@ -36,7 +36,7 @@ namespace PlexCleaner
                 FileSystemWatcher watch = new FileSystemWatcher();
                 Watcher.Add(watch);
                 watch.Path = folder;
-                watch.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+                watch.NotifyFilter = NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
                 watch.Filter = "*.*";
                 watch.IncludeSubdirectories = true;
                 watch.Changed += Changehandler;

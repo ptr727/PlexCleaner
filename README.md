@@ -121,6 +121,8 @@ Create a default configuration file by running:
 
 ## Usage
 
+### Commandline
+
 Commandline options:  
 `Plexcleaner.exe --help`
 
@@ -148,27 +150,75 @@ Commands:
   monitor             Monitor for changes in folders and process any changed files.
 ```
 
+### Process Media Files
+
+The `process` command will use the JSON configuration settings to conditionally modify the media content.  
+The `--files` option can point to a combination of files or folders.
+
+Example:  
+`PlexCleaner.exe --settings "PlexCleaner.json" process --files "C:\Foo\Test.mkv" "D:\Media"`
+
 ```console
-C:\...\netcoreapp3.1>PlexCleaner.exe --help process
+C:\...\netcoreapp3.1>PlexCleaner.exe process --help
 process:
-  Process media files
+  Process media files.
 
 Usage:
   PlexCleaner process [options]
 
 Options:
   --files <files> (REQUIRED)    List of files or folders.
-  -?, -h, --help                Show help and usage information.
+  -?, -h, --help                Show help and usage information
 ```
 
-The `--files` option is required for any of the media processing commands. The parameter can point to a combination of files or folders.
-
-Example usage:  
-`PlexCleaner.exe --settings PlexCleaner.json process --files "C:\Foo\Test.mkv" "D:\Media"`
-
-The `process` command will use the configuration settings to conditionally modify the media content.
+### Re-Multiplex and Re-Encode Media Files
 
 The `remux` and `reencode` commands will re-multiplex or re-encode the media files without applying any conditional logic.
+
+```console
+C:\...\netcoreapp3.1>PlexCleaner.exe reencode --help
+reencode:
+  Re-Encode media files.
+
+Usage:
+  PlexCleaner reencode [options]
+
+Options:
+  --files <files> (REQUIRED)    List of files or folders.
+  -?, -h, --help                Show help and usage information
+```
+
+```console
+C:\...\netcoreapp3.1>PlexCleaner.exe remux --help
+remux:
+  Re-Multiplex media files
+
+Usage:
+  PlexCleaner remux [options]
+
+Options:
+  --files <files> (REQUIRED)    List of files or folders.
+  -?, -h, --help                Show help and usage information
+```
+
+### Monitor
+
+The `monitor` command will watch the specified folders for changes, and process the directories with changes.  
+Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?view=netcore-3.1) is not always reliable on Linux or NAS Samba shares.  
+Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
+
+```console
+C:\...\netcoreapp3.1>PlexCleaner.exe monitor --help
+monitor:
+  Monitor for changes in folders and process any changed files.
+
+Usage:
+  PlexCleaner monitor [options]
+
+Options:
+  --files <files> (REQUIRED)    List of files or folders.
+  -?, -h, --help                Show help and usage information
+```
 
 ## Tools and Utilitites
 
