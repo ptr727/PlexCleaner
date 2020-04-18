@@ -17,7 +17,7 @@ namespace PlexCleaner
             // Make sure the tools root folder exists
             if (!Directory.Exists(GetToolsRoot()))
             {
-                ConsoleEx.WriteLineError($"Tools directory not found : \"{Tools.GetToolsRoot()}\"");
+                ConsoleEx.WriteLineError($"Tools directory not found : \"{GetToolsRoot()}\"");
                 return false;
             }
 
@@ -112,20 +112,45 @@ namespace PlexCleaner
             return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
         }
 
-/*
-        public static bool WildcardMatch(string match, string value)
+        public static bool IsSidecarFile(string filename)
         {
-            // https://stackoverflow.com/questions/30299671/matching-strings-with-wildcard
-            // ? - any character (one and only one)
-            // * - any characters (zero or more)
-
-            // Convert "*" and "?" to regex
-            string regex = "^" + Regex.Escape(match).Replace("\\?", ".").Replace("\\*", ".*") + "$";
-
-            // Match
-            return Regex.IsMatch(value, regex);
+            return IsSidecarExtension(Path.GetExtension(filename));
         }
-*/
+
+        public static bool IsSidecarFile(FileInfo fileinfo)
+        {
+            if (fileinfo == null)
+                throw new ArgumentNullException(nameof(fileinfo));
+
+            return IsSidecarExtension(fileinfo.Extension);
+        }
+
+        public static bool IsSidecarExtension(string extension)
+        {
+            if (extension == null)
+                throw new ArgumentNullException(nameof(extension));
+
+            // TODO: Consolidate the logic with the Process() constructor code
+            return extension.Equals(".FfProbe", StringComparison.OrdinalIgnoreCase) ||
+                   extension.Equals(".MkvMerge", StringComparison.OrdinalIgnoreCase) ||
+                   extension.Equals(".MediaInfo", StringComparison.OrdinalIgnoreCase);
+        }
+
+
+        /*
+                public static bool WildcardMatch(string match, string value)
+                {
+                    // https://stackoverflow.com/questions/30299671/matching-strings-with-wildcard
+                    // ? - any character (one and only one)
+                    // * - any characters (zero or more)
+
+                    // Convert "*" and "?" to regex
+                    string regex = "^" + Regex.Escape(match).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+
+                    // Match
+                    return Regex.IsMatch(value, regex);
+                }
+        */
 
         public static string GetToolsJsonPath()
         {
@@ -143,8 +168,7 @@ namespace PlexCleaner
                 ToolInfoSettings tools = null;
                 if (File.Exists(toolsfile))
                     tools = ToolInfoSettings.FromJson(File.ReadAllText(toolsfile));
-                if (tools == null)
-                    tools = new ToolInfoSettings { Tools = new List<ToolInfo>() };
+                tools ??= new ToolInfoSettings {Tools = new List<ToolInfo>()};
                 tools.LastCheck = DateTime.UtcNow.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern, CultureInfo.InvariantCulture);
 
                 // 7-Zip
@@ -346,7 +370,7 @@ namespace PlexCleaner
 
                         // Build the versioned folder from the downloaded filename
                         // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        string sourcepath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        string sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
 
                         // Rename the folder
                         // E.g. 7z1805-extra to .\Tools\7Zip
@@ -361,7 +385,7 @@ namespace PlexCleaner
 
                         // Build the versioned out folder from the downloaded filename
                         // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFMpeg\ffmpeg-3.4-win64-static
-                        sourcepath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+                        sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
 
                         // Rename the source folder to the tool folder
                         // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg

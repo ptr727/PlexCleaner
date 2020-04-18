@@ -23,11 +23,11 @@ namespace PlexCleaner
         public void WriteLine(string prefix)
         {
             foreach (VideoInfo info in Video)
-                ConsoleEx.WriteLine($"{prefix} : {info}");
+                Program.LogFile.LogConsole($"{prefix} : {info}");
             foreach (AudioInfo info in Audio)
-                ConsoleEx.WriteLine($"{prefix} : {info}");
+                Program.LogFile.LogConsole($"{prefix} : {info}");
             foreach (SubtitleInfo info in Subtitle)
-                ConsoleEx.WriteLine($"{prefix} : {info}");
+                Program.LogFile.LogConsole($"{prefix} : {info}");
         }
 
 /*

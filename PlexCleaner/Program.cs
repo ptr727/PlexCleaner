@@ -39,12 +39,20 @@ namespace PlexCleaner
                     Required = true
                 });
 
+            // Path to the log file is optional
+            rootCommand.AddOption(
+                new Option<string>("--log")
+                {
+                    Description = "Path to log file.",
+                    Required = false
+                });
+
             // Write defaults to settings file
             rootCommand.AddCommand(
                 new Command("writedefaults")
                 {
                     Description = "Write default values to settings file.",
-                    Handler = CommandHandler.Create<string>(WriteDefaultsCommand)
+                    Handler = CommandHandler.Create<string, string>(WriteDefaultsCommand)
                 });
 
             // Check for new tools
@@ -52,10 +60,10 @@ namespace PlexCleaner
                 new Command("checkfornewtools")
                 {
                     Description = "Check for new tools and download if available.",
-                    Handler = CommandHandler.Create<string>(CheckForNewToolsCommand)
+                    Handler = CommandHandler.Create<string, string>(CheckForNewToolsCommand)
                 });
 
-            // Files or folders option is used by various commands
+            // Files or folders option
             Option filesOption =
                 new Option<List<string>>("--files")
                 {
@@ -68,7 +76,7 @@ namespace PlexCleaner
                 new Command("process")
                 {
                     Description = "Process media files.",
-                    Handler = CommandHandler.Create<string, List<string>>(ProcessCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(ProcessCommand)
                 };
             processCommand.AddOption(filesOption);
             rootCommand.AddCommand(processCommand);
@@ -78,7 +86,7 @@ namespace PlexCleaner
                 new Command("remux")
                 {
                     Description = "Re-Multiplex media files",
-                    Handler = CommandHandler.Create<string, List<string>>(ReMuxCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(ReMuxCommand)
                 };
             remuxCommand.AddOption(filesOption);
             rootCommand.AddCommand(remuxCommand);
@@ -88,7 +96,7 @@ namespace PlexCleaner
                 new Command("reencode")
                 {
                     Description = "Re-Encode media files.",
-                    Handler = CommandHandler.Create<string, List<string>>(ReEncodeCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(ReEncodeCommand)
                 };
             reencodeCommand.AddOption(filesOption);
             rootCommand.AddCommand(reencodeCommand);
@@ -98,7 +106,7 @@ namespace PlexCleaner
                 new Command("writesidecar")
                 {
                     Description = "Write sidecar files for media files.",
-                    Handler = CommandHandler.Create<string, List<string>>(WriteSidecarCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(WriteSidecarCommand)
                 };
             writesidecarCommand.AddOption(filesOption);
             rootCommand.AddCommand(writesidecarCommand);
@@ -108,7 +116,7 @@ namespace PlexCleaner
                 new Command("createtagmap")
                 {
                     Description = "Create a tag-map from media files.",
-                    Handler = CommandHandler.Create<string, List<string>>(CreateTagMapCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(CreateTagMapCommand)
                 };
             createtagmapCommand.AddOption(filesOption);
             rootCommand.AddCommand(createtagmapCommand);
@@ -118,7 +126,7 @@ namespace PlexCleaner
                 new Command("monitor")
                 {
                     Description = "Monitor for changes in folders and process any changed files.",
-                    Handler = CommandHandler.Create<string, List<string>>(MonitorCommand)
+                    Handler = CommandHandler.Create<string, string, List<string>>(MonitorCommand)
                 };
             monitorCommand.AddOption(filesOption);
             rootCommand.AddCommand(monitorCommand);
@@ -126,7 +134,7 @@ namespace PlexCleaner
             return rootCommand;
         }
 
-        private static int WriteDefaultsCommand(string settings)
+        private static int WriteDefaultsCommand(string settings, string log)
         {
             ConsoleEx.WriteLine($"Writing default settings to \"{settings}\"");
 
@@ -137,18 +145,18 @@ namespace PlexCleaner
             return 0;
         }
 
-        private static int CheckForNewToolsCommand(string settings)
+        private static int CheckForNewToolsCommand(string settings, string log)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
             return Tools.CheckForNewTools() ? 0 : -1;
         }
 
-        private static int ProcessCommand(string settings, List<string> files)
+        private static int ProcessCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -159,9 +167,9 @@ namespace PlexCleaner
             return process.ProcessFiles(program.FileInfoList) && Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
 
-        private static int ReMuxCommand(string settings, List<string> files)
+        private static int ReMuxCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -172,9 +180,9 @@ namespace PlexCleaner
             return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int ReEncodeCommand(string settings, List<string> files)
+        private static int ReEncodeCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -185,9 +193,9 @@ namespace PlexCleaner
             return process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int WriteSidecarCommand(string settings, List<string> files)
+        private static int WriteSidecarCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -198,9 +206,9 @@ namespace PlexCleaner
             return process.WriteSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int CreateTagMapCommand(string settings, List<string> files)
+        private static int CreateTagMapCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -211,9 +219,9 @@ namespace PlexCleaner
             return process.CreateTagMapFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int MonitorCommand(string settings, List<string> files)
+        private static int MonitorCommand(string settings, string log, List<string> files)
         {
-            Program program = Create(settings);
+            Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
@@ -246,7 +254,7 @@ namespace PlexCleaner
             Console.CancelKeyPress -= CancelHandlerEx;
         }
 
-        private static Program Create(string settingsFile)
+        private static Program Create(string settingsFile, string logFile)
         {
             // Load config from JSON
             if (!File.Exists(settingsFile))
@@ -272,11 +280,25 @@ namespace PlexCleaner
             // Share the FileEx Cancel object
             Cancel = FileEx.Options.Cancel;
             
+            // Create log file
+            if (!string.IsNullOrEmpty(logFile))
+            {
+                LogFile.FileName = logFile;
+                if (!LogFile.Clear())
+                {
+                    ConsoleEx.WriteLineError($"Failed to create logfile : \"{logFile}\"");
+                    return null;
+                }
+                LogFile.Log(Environment.CommandLine);
+                ConsoleEx.WriteLine($"Logging output to  : \"{logFile}\"");
+            }
+
             // Make sure that the tools folder exists
             if (!Tools.VerifyTools())
                 return null;
-
             ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+
+            // Create program
             return new Program();
         }
 
@@ -341,6 +363,7 @@ namespace PlexCleaner
         }
 
         public static Signal Cancel { get; set; }
+        public static readonly LogFile LogFile = new LogFile();
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

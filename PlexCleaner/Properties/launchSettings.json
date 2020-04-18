@@ -10,11 +10,11 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
     },
     "Monitor": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" monitor --files \"D:\\Temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" monitor --files \"\\\\server-1\\media\\series\" \\\\server-1\\media\\movies\""
     },
     "Re-Mux": {
       "commandName": "Project",
