@@ -189,8 +189,10 @@ namespace PlexCleaner
 
         private void WriteLine(ConsoleColor color, string value)
         {
+            // Lock
             lock (LastWriteLineLock)
             {
+                // Compare with previous output
                 if (LastWriteLine.Equals(value, StringComparison.OrdinalIgnoreCase))
                     return;
 
@@ -208,9 +210,9 @@ namespace PlexCleaner
                 // Get the file details
                 FileInfo fileinfo = new FileInfo(pathname);
 
-                // Ignore our own *.xml and *.tmp files
+                // Ignore our own sidecar and *.tmp files being created
                 if (!fileinfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
-                    !fileinfo.Extension.Equals(".xml", StringComparison.OrdinalIgnoreCase))
+                    !Tools.IsSidecarFile(fileinfo))
                     foldername = fileinfo.DirectoryName;
             }
             // Or directory
@@ -222,6 +224,8 @@ namespace PlexCleaner
             // Did we get a folder
             if (string.IsNullOrEmpty(foldername))
                 return;
+
+            // Lock
             lock (WatchLock)
             {
                 // Add new folder or update existing timestamp
@@ -243,14 +247,6 @@ namespace PlexCleaner
         {
             // The path we get no longer exists, it may be a file, or it may be a folder
             // TODO : Figure out how to accurately test if deleted path was a file or folder
-            // If it is a file, we want to cleanup MKV and XML mappings, for deleted MKV files also delete the XML file
-            if (!Tools.IsMkvFile(pathname))
-                return;
-            
-            // Looks like MKV got deleted, create XML path, and delete XML file
-            string xmlpath = Path.ChangeExtension(pathname, ".xml");
-            WriteLine($"Deleting XML for deleted MKV : \"{xmlpath}\"");
-            FileEx.DeleteFile(xmlpath);
         }
 
 

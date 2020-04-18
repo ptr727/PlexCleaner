@@ -36,8 +36,7 @@ namespace PlexCleaner
                     TertiaryTool = sec2.Parser
                 };
 
-                if (tag.Primary == null)
-                    tag.Primary = "null";
+                tag.Primary ??= "null";
 
 
                 if (!Video.ContainsKey(tag.Primary))
@@ -55,8 +54,7 @@ namespace PlexCleaner
                     TertiaryTool = sec2.Parser
                 };
 
-                if (tag.Primary == null)
-                    tag.Primary = "null";
+                tag.Primary ??= "null";
 
                 if (!Audio.ContainsKey(tag.Primary))
                     Audio.Add(tag.Primary, tag);
@@ -73,8 +71,7 @@ namespace PlexCleaner
                     TertiaryTool = sec2.Parser
                 };
 
-                if (tag.Primary == null)
-                    tag.Primary = "null";
+                tag.Primary ??= "null";
 
                 if (!Subtitle.ContainsKey(tag.Primary))
                     Subtitle.Add(tag.Primary, tag);

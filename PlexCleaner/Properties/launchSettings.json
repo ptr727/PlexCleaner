@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
     },
     "Monitor": {
       "commandName": "Project",

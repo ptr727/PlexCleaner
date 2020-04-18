@@ -129,26 +129,31 @@ Commandline options:
 ```console
 C:\...\netcoreapp3.1>PlexCleaner.exe --help
 PlexCleaner:
-  Optimize media files for DirectPlay on Plex.
+  Utility to optimize media files for DirectPlay on Plex.
 
 Usage:
   PlexCleaner [options] [command]
 
 Options:
   --settings <settings> (REQUIRED)    Path to settings file.
-  --version                           Show version information.
-  -?, -h, --help                      Show help and usage information.
+  --log <log>                         Path to log file.
+  --version                           Show version information
+  -?, -h, --help                      Show help and usage information
 
 Commands:
   writedefaults       Write default values to settings file.
   checkfornewtools    Check for new tools and download if available.
   process             Process media files.
-  remux               Re-Multiplex media files.
+  remux               Re-Multiplex media files
   reencode            Re-Encode media files.
   writesidecar        Write sidecar files for media files.
   createtagmap        Create a tag-map from media files.
   monitor             Monitor for changes in folders and process any changed files.
 ```
+
+The `--settings` JSON settings file is required.  
+The `--log` output log file is optional.  
+One of the commands must be specified.
 
 ### Process Media Files
 
@@ -156,7 +161,7 @@ The `process` command will use the JSON configuration settings to conditionally 
 The `--files` option can point to a combination of files or folders.
 
 Example:  
-`PlexCleaner.exe --settings "PlexCleaner.json" process --files "C:\Foo\Test.mkv" "D:\Media"`
+`PlexCleaner.exe --settings "PlexCleaner.json" --log "PlexCleaner.log" process --files "C:\Foo\Test.mkv" "D:\Media"`
 
 ```console
 C:\...\netcoreapp3.1>PlexCleaner.exe process --help
