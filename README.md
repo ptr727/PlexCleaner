@@ -226,7 +226,7 @@ Tools, libraries, and utilities used in the project.
 ```console
 C:\...\PlexCleaner>dotnet list package
 Project 'PlexCleaner' has the following package references
-   [netcoreapp3.1]: 
+   [netcoreapp3.1]:
    Top-level Package                            Requested             Resolved
    > HtmlAgilityPack                            1.11.23               1.11.23
    > InsaneGenius.Utilities                     1.3.89                1.3.89
