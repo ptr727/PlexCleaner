@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
@@ -20,19 +20,19 @@ namespace PlexCleaner
 
         public static int SevenZip(string parameters)
         {
-            string path = Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary);
+            string path = Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
             ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
         public static string GetToolFolder()
         {
-            return Tools.CombineToolPath(Tools.Options.SevenZip);
+            return Tools.CombineToolPath(ToolsOptions.SevenZip);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Tools.Options.SevenZip, SevenZipBinary);
+            return Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -50,10 +50,10 @@ namespace PlexCleaner
 
                 // Extract the version number from the page source
                 // E.g. "Download 7-Zip 18.05 (2018-04-30) for Windows"
-                // https://regex101.com/
                 const string pattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)\ for\ Windows";
                 Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                 Match match = regex.Match(downloadpage);
+                Debug.Assert(match.Success);
                 toolinfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
 
                 // Create download URL and the output filename using the version number

@@ -1,7 +1,5 @@
 ﻿using InsaneGenius.Utilities;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -12,8 +10,10 @@ namespace PlexCleaner
     {
         public static ToolsOptions Options { get; set; } = new ToolsOptions();
 
-        public static bool VerifyTools()
+        public static bool VerifyTools(out ToolInfoJsonSchema toolInfo)
         {
+            toolInfo = null;
+
             // Make sure the tools root folder exists
             if (!Directory.Exists(GetToolsRoot()))
             {
@@ -58,11 +58,15 @@ namespace PlexCleaner
             }
 
             // Look for Tools.json
-            if (!File.Exists(GetToolsJsonPath()))
+            string toolsfile = GetToolsJsonPath();
+            if (!File.Exists(toolsfile))
             {
                 ConsoleEx.WriteLineError($"Tools.json not found, run the 'checkfornewtools' command : \"{GetToolsJsonPath()}\"");
                 return false;
             }
+
+            // Read the current tool versions from the JSON file
+            toolInfo = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsfile));
 
             return true;
         }
@@ -91,67 +95,6 @@ namespace PlexCleaner
             return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, filename));
         }
 
-        public static bool IsMkvFile(string filename)
-        {
-            return IsMkvExtension(Path.GetExtension(filename));
-        }
-
-        public static bool IsMkvFile(FileInfo fileinfo)
-        {
-            if (fileinfo == null)
-                throw new ArgumentNullException(nameof(fileinfo));
-
-            return IsMkvExtension(fileinfo.Extension);
-        }
-
-        public static bool IsMkvExtension(string extension)
-        {
-            if (extension == null)
-                throw new ArgumentNullException(nameof(extension));
-
-            return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public static bool IsSidecarFile(string filename)
-        {
-            return IsSidecarExtension(Path.GetExtension(filename));
-        }
-
-        public static bool IsSidecarFile(FileInfo fileinfo)
-        {
-            if (fileinfo == null)
-                throw new ArgumentNullException(nameof(fileinfo));
-
-            return IsSidecarExtension(fileinfo.Extension);
-        }
-
-        public static bool IsSidecarExtension(string extension)
-        {
-            if (extension == null)
-                throw new ArgumentNullException(nameof(extension));
-
-            // TODO: Consolidate the logic with the Process() constructor code
-            return extension.Equals(".FfProbe", StringComparison.OrdinalIgnoreCase) ||
-                   extension.Equals(".MkvMerge", StringComparison.OrdinalIgnoreCase) ||
-                   extension.Equals(".MediaInfo", StringComparison.OrdinalIgnoreCase);
-        }
-
-
-        /*
-                public static bool WildcardMatch(string match, string value)
-                {
-                    // https://stackoverflow.com/questions/30299671/matching-strings-with-wildcard
-                    // ? - any character (one and only one)
-                    // * - any characters (zero or more)
-
-                    // Convert "*" and "?" to regex
-                    string regex = "^" + Regex.Escape(match).Replace("\\?", ".").Replace("\\*", ".*") + "$";
-
-                    // Match
-                    return Regex.IsMatch(value, regex);
-                }
-        */
-
         public static string GetToolsJsonPath()
         {
             return CombineToolPath("Tools.json");
@@ -165,11 +108,11 @@ namespace PlexCleaner
             {
                 // Read the current tool versions from the JSON file
                 string toolsfile = GetToolsJsonPath();
-                ToolInfoSettings tools = null;
+                ToolInfoJsonSchema tools = null;
                 if (File.Exists(toolsfile))
-                    tools = ToolInfoSettings.FromJson(File.ReadAllText(toolsfile));
-                tools ??= new ToolInfoSettings {Tools = new List<ToolInfo>()};
-                tools.LastCheck = DateTime.UtcNow.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern, CultureInfo.InvariantCulture);
+                    tools = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsfile));
+                tools ??= new ToolInfoJsonSchema();
+                tools.LastCheck = DateTime.UtcNow;
 
                 // 7-Zip
                 ConsoleEx.WriteLine("Getting latest version of 7-Zip ...");
@@ -254,7 +197,7 @@ namespace PlexCleaner
                 // TODO : Convert handcoded tools to enum and enumerate
 
                 // Write json to file
-                string json = ToolInfoSettings.ToJson(tools);
+                string json = ToolInfoJsonSchema.ToJson(tools);
                 File.WriteAllText(toolsfile, json);
             }
             catch (Exception e)
@@ -271,11 +214,11 @@ namespace PlexCleaner
                 return false;
 
             toolinfo.Size = size;
-            toolinfo.ModifiedTime = modified.ToString(DateTimeFormatInfo.InvariantInfo.UniversalSortableDateTimePattern, CultureInfo.InvariantCulture);
+            toolinfo.ModifiedTime = modified;
             return true;
         }
 
-        private static bool UpdateTool(ToolInfoSettings tools, ToolInfo toolinfo)
+        private static bool UpdateTool(ToolInfoJsonSchema tools, ToolInfo toolinfo)
         {
             // Get the tool info
             bool download = false;
@@ -300,114 +243,104 @@ namespace PlexCleaner
             }
 
             // Download and extract new tools
-            if (download)
+            if (!download) 
+                return true;
+            
+            // Download the file
+            ConsoleEx.WriteLine($"Downloading \"{toolinfo.FileName}\" ...");
+            string filepath = CombineToolPath(toolinfo.FileName);
+            if (!Download.DownloadFile(new Uri(toolinfo.Url), filepath))
+                return false;
+
+            // Get the tool folder name
+            string toolpath = toolinfo.Tool switch
             {
-                // Download the file
-                ConsoleEx.WriteLine($"Downloading \"{toolinfo.FileName}\" ...");
-                string filepath = CombineToolPath(toolinfo.FileName);
-                if (!Download.DownloadFile(new Uri(toolinfo.Url), filepath))
-                    return false;
+                nameof(SevenZipTool) =>
+                // We need to keep the previous copy of 7zip so we can extract the new copy
+                // We need to extract to a temp location in the root tools folder, then rename to the destination folder
+                // Build the versioned folder from the downloaded filename
+                // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
+                CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName)),
+                nameof(FfMpegTool) =>
+                // FFmpeg archives have versioned folders in the zip
+                // The 7Zip -spe option does not work for zip files
+                // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
+                // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
+                GetToolsRoot(),
+                nameof(MkvTool) => MkvTool.GetToolFolder(),
+                nameof(MediaInfoTool) => MediaInfoTool.GetToolFolder(),
+                nameof(HandBrakeTool) => HandBrakeTool.GetToolFolder(),
+                _ => throw new NotImplementedException()
+            };
 
-                // Get the tool folder name
-                string toolpath;
-                switch (toolinfo.Tool)
-                {
-                    case nameof(SevenZipTool):
-                        // We need to keep the previous copy of 7zip so we can extract the new copy
-                        // We need to extract to a temp location in the root tools folder, then rename to the destination folder
-                        // Build the versioned folder from the downloaded filename
-                        // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        toolpath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
-                        break;
-                    case nameof(FfMpegTool):
-                        // FFMpeg archives have versioned folders in the zip
-                        // The 7Zip -spe option does not work for zip files
-                        // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
-                        // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
-                        toolpath = GetToolsRoot();
-                        break;
-                    case nameof(MkvTool):
-                        toolpath = MkvTool.GetToolFolder();
-                        break;
-                    case nameof(MediaInfoTool):
-                        toolpath = MediaInfoTool.GetToolFolder();
-                        break;
-                    case nameof(HandBrakeTool):
-                        toolpath = HandBrakeTool.GetToolFolder();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(toolinfo));
-                }
-
-                // Make sure the tool folder exists and is empty
-                // FfMpegTool will be in tools root, do not delete
-                switch (toolinfo.Tool)
-                {
-                    // case nameof(FfMpegTool):
-                    case nameof(SevenZipTool):
-                    case nameof(MkvTool):
-                    case nameof(MediaInfoTool):
-                    case nameof(HandBrakeTool):
-                        if (!FileEx.CreateDirectory(toolpath) ||
-                            !FileEx.DeleteInsideDirectory(toolpath))
-                            return false;
-                        break;
-                }
-
-                // Extract the tool
-                ConsoleEx.WriteLine($"Extracting \"{toolinfo.FileName}\" ...");
-                if (!SevenZipTool.UnZip(filepath, toolpath))
-                    return false;
-
-                // Process the extracted folder
-                switch (toolinfo.Tool)
-                {
-                    case nameof(SevenZipTool):
-                        // Get the path and and clean the destination directory
-                        toolpath = SevenZipTool.GetToolFolder();
-                        if (!FileEx.DeleteDirectory(toolpath, true))
-                            return false;
-
-                        // Build the versioned folder from the downloaded filename
-                        // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
-                        string sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
-
-                        // Rename the folder
-                        // E.g. 7z1805-extra to .\Tools\7Zip
-                        if (!FileEx.RenameFolder(sourcepath, toolpath))
-                            return false;
-                        break;
-                    case nameof(FfMpegTool):
-                        // Get the path and and clean the destination directory
-                        toolpath = FfMpegTool.GetToolFolder();
-                        if (!FileEx.DeleteDirectory(toolpath, true))
-                            return false;
-
-                        // Build the versioned out folder from the downloaded filename
-                        // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFMpeg\ffmpeg-3.4-win64-static
-                        sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
-
-                        // Rename the source folder to the tool folder
-                        // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
-                        if (!FileEx.RenameFolder(sourcepath, toolpath))
-                            return false;
-                        break;
-                    case nameof(MkvTool):
-                    case nameof(MediaInfoTool):
-                    case nameof(HandBrakeTool):
-                        // Nothing to do
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(toolinfo));
-                }
-
-                // Update the tool information
-                tool.FileName = toolinfo.FileName;
-                tool.ModifiedTime = toolinfo.ModifiedTime;
-                tool.Size = toolinfo.Size;
-                tool.Url = toolinfo.Url;
-                tool.Version = toolinfo.Version;
+            // Make sure the tool folder exists and is empty
+            // FfMpegTool will be in tools root, do not delete
+            switch (toolinfo.Tool)
+            {
+                // case nameof(FfMpegTool):
+                case nameof(SevenZipTool):
+                case nameof(MkvTool):
+                case nameof(MediaInfoTool):
+                case nameof(HandBrakeTool):
+                    if (!FileEx.CreateDirectory(toolpath) ||
+                        !FileEx.DeleteInsideDirectory(toolpath))
+                        return false;
+                    break;
             }
+
+            // Extract the tool
+            ConsoleEx.WriteLine($"Extracting \"{toolinfo.FileName}\" ...");
+            if (!SevenZipTool.UnZip(filepath, toolpath))
+                return false;
+
+            // Process the extracted folder
+            switch (toolinfo.Tool)
+            {
+                case nameof(SevenZipTool):
+                    // Get the path and and clean the destination directory
+                    toolpath = SevenZipTool.GetToolFolder();
+                    if (!FileEx.DeleteDirectory(toolpath, true))
+                        return false;
+
+                    // Build the versioned folder from the downloaded filename
+                    // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
+                    string sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+
+                    // Rename the folder
+                    // E.g. 7z1805-extra to .\Tools\7Zip
+                    if (!FileEx.RenameFolder(sourcepath, toolpath))
+                        return false;
+                    break;
+                case nameof(FfMpegTool):
+                    // Get the path and and clean the destination directory
+                    toolpath = FfMpegTool.GetToolFolder();
+                    if (!FileEx.DeleteDirectory(toolpath, true))
+                        return false;
+
+                    // Build the versioned out folder from the downloaded filename
+                    // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
+                    sourcepath = CombineToolPath(Path.GetFileNameWithoutExtension(toolinfo.FileName));
+
+                    // Rename the source folder to the tool folder
+                    // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
+                    if (!FileEx.RenameFolder(sourcepath, toolpath))
+                        return false;
+                    break;
+                case nameof(MkvTool):
+                case nameof(MediaInfoTool):
+                case nameof(HandBrakeTool):
+                    // Nothing to do
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(toolinfo));
+            }
+
+            // Update the tool information
+            tool.FileName = toolinfo.FileName;
+            tool.ModifiedTime = toolinfo.ModifiedTime;
+            tool.Size = toolinfo.Size;
+            tool.Url = toolinfo.Url;
+            tool.Version = toolinfo.Version;
 
             return true;
         }

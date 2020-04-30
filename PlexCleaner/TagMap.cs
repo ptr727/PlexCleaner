@@ -8,5 +8,6 @@ namespace PlexCleaner
         public MediaInfo.ParserType SecondaryTool { get; set; }
         public string Tertiary { get; set; }
         public MediaInfo.ParserType TertiaryTool { get; set; }
+        public int Count { get; set; }
     }
 }

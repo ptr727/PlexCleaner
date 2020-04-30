@@ -3,19 +3,30 @@ namespace PlexCleaner
     public class SubtitleInfo : TrackInfo
     {
         public SubtitleInfo() { }
-        internal SubtitleInfo(MkvTool.TrackJson track) : base(track) { }
-        internal SubtitleInfo(FfMpegTool.StreamJson stream) : base(stream) { }
-
-        internal SubtitleInfo(MediaInfoTool.TrackXml track) : base(track)
+        internal SubtitleInfo(MkvToolJsonSchema.Track track) : base(track) 
+        { 
+            // Forced missing
+            // MuxingMode missing
+        }
+        internal SubtitleInfo(FfMpegToolJsonSchema.Stream stream) : base(stream) 
         {
-            MuxingMode = track.MuxingMode;
+            // MuxingMode missing
+
+            Forced = stream.Disposition.Forced;
         }
 
-        public string MuxingMode { get; set; }
+        internal SubtitleInfo(MediaInfoToolXmlSchema.Track track) : base(track)
+        {
+            MuxingMode = track.MuxingMode;
+            Forced = track.Forced;
+        }
+
+        public string MuxingMode { get; set; } = "";
+        public bool Forced { get; set; } = false;
 
         public override string ToString()
         {
-            return $"Subtitle : Format : {Format}, Codec : {Codec}, MuxingMode : {MuxingMode}, Language : {Language}, Id : {Id}, Number : {Number}";
+            return $"Subtitle : MuxingMode : {MuxingMode}, Forced : {Forced}, {base.ToString()}";
         }
     }
 }
