@@ -28,9 +28,8 @@ namespace PlexCleaner
 
         public bool Log(string value)
         {
-            // Skip blank lines or no filename set
-            if (string.IsNullOrEmpty(value) ||
-                string.IsNullOrEmpty(FileName))
+            // Skip if no filename set
+            if (string.IsNullOrEmpty(FileName))
                 return true;
 
             try
@@ -62,7 +61,10 @@ namespace PlexCleaner
         private static string GetLogLine(string value)
         {
             // Match ConsoleEx.WriteLine() formatting
-            return $"{DateTime.Now.ToString(CultureInfo.CurrentCulture)} : {value}" + Environment.NewLine;
+            if (string.IsNullOrEmpty(value))
+                return Environment.NewLine;
+            else
+                return $"{DateTime.Now.ToString(CultureInfo.CurrentCulture)} : {value}" + Environment.NewLine;
         }
 
         public string FileName { get; set; }

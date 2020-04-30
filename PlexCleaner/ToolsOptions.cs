@@ -4,12 +4,13 @@
     {
         public string RootPath { get; set; } = @".\Tools\";
         public bool RootRelative { get; set; } = true;
-        public string MkvToolNix { get; set; } = "MKVToolNix";
-        public string Handbrake { get; set; } = "Handbrake";
-        public string MediaInfo { get; set; } = "MediaInfo";
-        public string FfMpeg { get; set; } = "FFMpeg";
-        public string HandBrake { get; set; } = "HandBrake";
-        public string EchoArgs { get; set; } = "EchoArgs";
-        public string SevenZip { get; set; } = "7Zip";
+
+        // Tool subfolders        
+        public const string MkvToolNix = "MKVToolNix";
+        public const string HandBrake = "HandBrake";
+        public const string MediaInfo = "MediaInfo";
+        public const string FfMpeg = "FFmpeg";
+        public const string EchoArgs = "EchoArgs";
+        public const string SevenZip = "7Zip";
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using HtmlAgilityPack;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner
@@ -16,26 +17,18 @@ namespace PlexCleaner
             // TODO : Add cleanup for extra empty entry when string is empty
             // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
 
-            // Sidecar extension, use the enum names
-            SidecarExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                $".{MediaInfo.ParserType.MediaInfo.ToString()}",
-                $".{MediaInfo.ParserType.MkvMerge.ToString()}",
-                $".{MediaInfo.ParserType.FfProbe.ToString()}"
-            };
-
             // Wanted extensions, always keep .mkv and sidecar files
             List<string> stringlist = Options.KeepExtensions.Split(',').ToList();
             KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 ".mkv"
             };
-            foreach (string extension in SidecarExtensions)
+            foreach (string extension in SidecarFile.SidecarExtensions)
                 KeepExtensions.Add(extension);
 
             // Containers types that can be remuxed to MKV
             stringlist = Options.ReMuxExtensions.Split(',').ToList();
-            RemuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            ReMuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Languages are in short form using ISO 639-2 notation
             // https://www.loc.gov/standards/iso639-2/php/code_list.php
@@ -57,33 +50,38 @@ namespace PlexCleaner
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to h264
             List<string> codeclist = Options.ReEncodeVideoCodecs.Split(',').ToList();
+            List<string> formatlist = Options.ReEncodeVideoFormats.Split(',').ToList();
             List<string> profilelist = Options.ReEncodeVideoProfiles.Split(',').ToList();
-            ReencodeVideoCodecs = new List<VideoInfo>();
+            Debug.Assert(codeclist.Count == formatlist.Count && formatlist.Count == profilelist.Count);
+            ReEncodeVideoInfos = new List<VideoInfo>();
             for (int i = 0; i < codeclist.Count; i++)
             {
                 // We match against the format and profile
                 // Match the logic in VideoInfo.CompareVideo
                 VideoInfo videoinfo = new VideoInfo
                 {
-                    Codec = "*",
-                    Format = codeclist.ElementAt(i),
+                    Codec = codeclist.ElementAt(i),
+                    Format = formatlist.ElementAt(i),
                     Profile = profilelist.ElementAt(i)
                 };
-                ReencodeVideoCodecs.Add(videoinfo);
+                ReEncodeVideoInfos.Add(videoinfo);
             }
 
             // Re-encode any audio track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
-            stringlist = Options.ReEncodeAudioCodecs.Split(',').ToList();
-            ReencodeAudioCodecs = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+            stringlist = Options.ReEncodeAudioFormats.Split(',').ToList();
+            ReEncodeAudioFormats = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+
+            // Preferred audio codecs
+            PreferredAudioFormats = Options.PreferredAudioFormats.Split(',').ToList();
         }
 
         public bool ProcessFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("Processing files ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -115,12 +113,12 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
@@ -137,9 +135,9 @@ namespace PlexCleaner
             if (!Options.DeleteEmptyFolders)
                 return true;
 
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("Deleting empty folders ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Delete all empty folders
             int deleted = 0;
@@ -149,18 +147,18 @@ namespace PlexCleaner
                 FileEx.DeleteEmptyDirectories(folder, ref deleted);
             }
 
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Deleted folders : {deleted}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool ReMuxFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("ReMuxing files ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -176,8 +174,8 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files, and files in the remux extension list
-                if (!Tools.IsMkvFile(fileinfo) &&
-                    !RemuxExtensions.Contains(fileinfo.Extension))
+                if (!MkvTool.IsMkvFile(fileinfo) &&
+                    !ReMuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
                 // ReMux file
@@ -197,21 +195,21 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool ReEncodeFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("ReEncoding files ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -228,7 +226,7 @@ namespace PlexCleaner
 
                 // Handle only MKV files
                 // ReMux before re-encode, so the track attribute logic works as expected
-                if (!Tools.IsMkvFile(fileinfo))
+                if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Process the file
@@ -248,21 +246,71 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
+
+            return true;
+        }
+
+        public bool DeInterlaceFiles(List<FileInfo> fileList)
+        {
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole("DeInterlacing files ...");
+            Program.LogFile.LogConsole("");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int errorcount = 0;
+            int modifiedcount = 0;
+            foreach (FileInfo fileinfo in fileList)
+            {
+                // Cancel handler
+                if (Program.Cancel.State)
+                    return false;
+
+                // Handle only MKV files
+                if (!MkvTool.IsMkvFile(fileinfo))
+                    continue;
+
+                // Process the file
+                Program.LogFile.LogConsole($"DeInterlace : \"{fileinfo.FullName}\"");
+                if (!DeInterlaceFile(fileinfo, out bool modified))
+                {
+                    Program.LogFile.LogConsoleError($"Error DeInterlacing : \"{fileinfo.FullName}\"");
+                    errorcount ++;
+                }
+                else if (modified)
+                    modifiedcount ++;
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole($"Total files : {fileList.Count}");
+            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
+            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool CreateTagMapFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Creating tag map ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole("Creating tag map ...");
+            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -276,7 +324,6 @@ namespace PlexCleaner
 
             // Process all files
             int errorcount = 0;
-            int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
@@ -284,85 +331,56 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!Tools.IsMkvFile(fileinfo))
+                if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Write all the different sidecar file types
-                MediaInfo mi = null, mk = null, ff = null;
-                foreach (MediaInfo.ParserType parser in Enum.GetValues(typeof(MediaInfo.ParserType)))
+                // Get the media info
+                if (!GetMediaInfo(fileinfo, out MediaInfo ffprobe, out  MediaInfo mkvmerge, out MediaInfo mediainfo))
                 { 
-                    if (parser == MediaInfo.ParserType.None)
-                        continue;
-
-                    if (GetMediaInfoSidecar(fileinfo, false, parser, out bool modified, out MediaInfo info))
-                    {
-                        switch (parser)
-                        {
-                            case MediaInfo.ParserType.MediaInfo:
-                                mi = info;
-                                break;
-                            case MediaInfo.ParserType.MkvMerge:
-                                mk = info;
-                                break;
-                            case MediaInfo.ParserType.FfProbe:
-                                ff = info;
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException(nameof(fileList));
-                        }
-
-                        if (modified)
-                            // TODO: Can we really get a modified count?
-                            modifiedcount ++;
-                    }
-                    else
-                        // TODO: Log Error
-                        errorcount ++;
+                    // TODO: Log Error
+                    errorcount ++;
+                    // Next file
+                    continue;
                 }
 
-                // Compare to make sure we can map tracks between tools
-                if (!MediaInfo.MatchTracks(mi, mk, ff))
-                    continue;
-
                 // Add all the tags
-                fftags.Add(ff, mk, mi);
-                mktags.Add(mk, ff, mi);
-                mitags.Add(mi, ff, mk);
+                fftags.Add(ffprobe, mkvmerge, mediainfo);
+                mktags.Add(mkvmerge, ffprobe, mediainfo);
+                mitags.Add(mediainfo, ffprobe, mkvmerge);
 
                 // Next file
             }
 
             // Print the results
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole("FFProbe:");
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole("FFprobe:");
             fftags.WriteLine();
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("MKVMerge:");
             mktags.WriteLine();
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("MediaInfo:");
             mitags.WriteLine();
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Stop the timer
             timer.Stop();
 
             // Done
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool WriteSidecarFiles(List<FileInfo> fileList)
         {
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole("Writing sidecar files ...");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -370,7 +388,6 @@ namespace PlexCleaner
 
             // Process all files
             int errorcount = 0;
-            int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
@@ -378,21 +395,13 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!Tools.IsMkvFile(fileinfo))
+                if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Write all the different sidecar file types
-                foreach (MediaInfo.ParserType parser in Enum.GetValues(typeof(MediaInfo.ParserType)))
-                {
-                    if (parser == MediaInfo.ParserType.None) 
-                        continue;
-
-                    if (!GetMediaInfoSidecar(fileinfo, true, parser, out bool modified, out MediaInfo _))
-                        // TODO : Log error
-                        errorcount ++;
-                    else if (modified)
-                        modifiedcount ++;
-                }
+                // Write the sidecar files
+                if (!SidecarFile.CreateSidecarFiles(fileinfo))
+                    // TODO : Log error
+                    errorcount ++;
 
                 // Next file
             }
@@ -401,12 +410,66 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("");
+
+            return true;
+        }
+
+        public bool PrintInfo(List<FileInfo> fileList)
+        {
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole("Printing file information ...");
+            Program.LogFile.LogConsole("");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int errorcount = 0;
+            foreach (FileInfo fileinfo in fileList)
+            {
+                // Cancel handler
+                if (Program.Cancel.State)
+                    return false;
+
+                // Handle only MKV files
+                if (!MkvTool.IsMkvFile(fileinfo))
+                    continue;
+
+                // Get the media info
+                if (!GetMediaInfo(fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo))
+                {
+                    // TODO: Log Error
+                    errorcount ++;
+                    // Next file
+                    continue;
+                }
+
+                // Print info
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole(fileinfo.FullName);
+                ffprobe.WriteLine("FFprobe");
+                mkvmerge.WriteLine("MKVMerge");
+                mediainfo.WriteLine("MediaInfo");
+                Program.LogFile.LogConsole("");
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole($"Total files : {fileList.Count}");
+            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
+            Program.LogFile.LogConsole("");
 
             return true;
         }
@@ -416,180 +479,79 @@ namespace PlexCleaner
             // Init
             modified = false;
 
-            // Delete unwanted files, anything not in our extensions lists
-            if (Options.DeleteUnwantedExtensions &&
-                !KeepExtensions.Contains(fileinfo.Extension)  &&
-                !RemuxExtensions.Contains(fileinfo.Extension))
-            {
-                // Delete the file
-                Program.LogFile.LogConsole($"Deleting file with undesired extension : \"{fileinfo.Name}\"");
-                if (!FileEx.DeleteFile(fileinfo.FullName))
-                    return false;
+            // Create file processor to hold state
+            ProcessFile processFile = new ProcessFile(fileinfo);
 
-                // File deleted, do not continue processing
-                modified = true;
+            // Delete files not in our desired extensions lists
+            if (!processFile.DeleteUnwantedExtensions(KeepExtensions, ReMuxExtensions, ref modified))
+                return processFile.Result;
+
+            // Delete the sidecar file if matching MKV file not found
+            if (!processFile.DeleteMissingSidecarFiles(ref modified))
+                return processFile.Result;
+
+            // Nothing more to do for files in the keep extensions list
+            // Except if it is a MKV file or a file to be remuxed
+            if (!MkvTool.IsMkvFile(fileinfo) &&
+                !ReMuxExtensions.Contains(fileinfo.Extension) &&
+                KeepExtensions.Contains(fileinfo.Extension))
                 return true;
-            }
-
-            // Sidecar files must have a matching MKV media file
-            if (SidecarExtensions.Contains(fileinfo.Extension))
-            {
-                // Get the matching MKV file
-                string mediafile = Path.ChangeExtension(fileinfo.FullName, ".mkv");
-
-                // If the media file does not exists, delete the sidecar file
-                if (!File.Exists(mediafile))
-                {
-                    Program.LogFile.LogConsole($"Deleting sidecar file with no matching MKV file : \"{fileinfo.Name}\"");
-                    if (!FileEx.DeleteFile(fileinfo.FullName))
-                        return false;
-
-                    // File deleted, do not continue processing
-                    modified = true;
-                    return true;
-                }
-            }
 
             // ReMux undesirable containers matched by extension
-            if (Options.ReMux &&
-                RemuxExtensions.Contains(fileinfo.Extension))
-            {
-                // ReMux the file
-                Program.LogFile.LogConsole($"ReMux file matched by extension : \"{fileinfo.Name}\"");
-                if (!Convert.ReMuxToMkv(fileinfo.FullName, out string outputname))
-                    return false;
+            if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
+                return processFile.Result;
 
-                // Continue processing with the new file name
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-            }
+            // By now all the files we are processing should be MKV files
+            Debug.Assert(MkvTool.IsMkvFile(fileinfo));
 
-            // By now all the media files we are processing should be MKV files
-            if (!Tools.IsMkvFile(fileinfo))
-                // Skip non-MKV files
-                return true;
+            // Do we have any errors in the file
+            // TODO : Do more than just check, e.g. remove tags
+            processFile.CheckForErrors();
 
-            // Get the file media info
-            // Force a sidecar refresh only if the file had been modified, else read the existing sidecar values
-            if (!GetMediaInfo(fileinfo, modified, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo))
-                return false;
+            // Remove tags
+            // This may fix some of the FFprobe language tag errors
+            if (!processFile.RemoveTags(ref modified))
+                return processFile.Result;
 
             // Change all tracks with an unknown language to the default language
-            // Logic uses MKVMerge data
-            if (Options.SetUnknownLanguage &&
-                mkvmerge.FindUnknownLanguage(out MediaInfo known, out MediaInfo unknown))
-            {
-                Program.LogFile.LogConsole($"Found tracks with an unknown language, setting to \"{Options.DefaultLanguage}\" : \"{fileinfo.Name}\"");
-                known.WriteLine("Known");
-                unknown.WriteLine("Unknown");
+            if (!processFile.SetUnknownLanguage(ref modified))
+                return processFile.Result;
 
-                // Set the track language to the default language
-                // MKVPropEdit uses track numbers, not track id's
-                if (!Options.TestNoModify &&
-                    unknown.GetTrackList().Any(info => !MediaInfo.SetMkvTrackLanguage(fileinfo.FullName, info.Number, Options.DefaultLanguage)))
-                {
-                    return false;
-                }
+            // TODO : Merge all remux operations into a single call
 
-                // Continue processing with new media info
-                modified = true;
-                fileinfo.Refresh();
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
+            // Remove all the unwanted language tracks
+            if (!processFile.RemoveUnwantedLanguages(KeepLanguages, ref modified))
+                return processFile.Result;
 
-            // Filter out all the undesired tracks
-            if (Options.RemoveUnwantedTracks &&
-                mkvmerge.FindNeedRemove(KeepLanguages, out MediaInfo keep, out MediaInfo remove))
-            {
-                Program.LogFile.LogConsole($"Found tracks that need to be removed : \"{fileinfo.Name}\"");
-                keep.WriteLine("Keep");
-                remove.WriteLine("Remove");
+            // Remove all duplicate tracks
+            if (!processFile.RemoveDuplicateTracks(PreferredAudioFormats, ref modified))
+                return processFile.Result;
 
-                // ReMux and only keep the specified tracks
-                // MKVMerge uses track id's, not track numbers
-                if (!Convert.ReMuxToMkv(fileinfo.FullName, keep, out string outputname))
-                    return false;
+            // Remux if any tracks specifically need remuxing
+            if (!processFile.RemuxTracks(ref modified))
+                return processFile.Result;
 
-                // Continue processing with new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
-
-            // Do we need to remux any tracks
-            if (Options.ReMux &&
-                mediainfo.FindNeedReMux(out keep, out MediaInfo remux))
-            {
-                Program.LogFile.LogConsole($"Found tracks that need to be re-muxed : \"{fileinfo.Name}\"");
-                keep.WriteLine("Keep");
-                remux.WriteLine("ReMux");
-
-                // ReMux the file in-place, we ignore the track details
-                if (!Convert.ReMuxToMkv(fileinfo.FullName, out string outputname))
-                    return false;
-
-                // Continue processing with new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
-
-            // Re-Encode interlaced content
-            if (Options.DeInterlace &&
-                mediainfo.IsVideoInterlaced())
-            {
-                Program.LogFile.LogConsole($"Found interlaced video to be de-interlaced : \"{fileinfo.Name}\"");
-
-                // Convert using HandBrakeCLI, it produces the best de-interlacing results
-                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string outputname))
-                    return false;
-
-                // Continue processing with the new file name and new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
+            // De-interlace interlaced content
+            if (!processFile.DeInterlace(ref modified))
+                return processFile.Result;
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
-            // Logic uses FFProbe data
-            if (Options.ReEncode &&
-                ffprobe.FindNeedReEncode(ReencodeVideoCodecs, ReencodeAudioCodecs, out keep, out MediaInfo reencode))
-            {
-                Program.LogFile.LogConsole($"Found tracks that need to be re-encoded : \"{fileinfo.Name}\"");
-                keep.WriteLine("Passthrough");
-                reencode.WriteLine("ReEncode");
+            if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
+                return processFile.Result;
 
-                // Convert or passthrough tracks
-                if (!Convert.ConvertToMkv(fileinfo.FullName, keep, reencode, out string outputname))
-                    return false;
+            // FFmpeg and HandBrake can add tags or result in tracks witn no language set
+            // Remove tags and set unknown languages again
+            if (!processFile.RemoveTags(ref modified))
+                return processFile.Result;
+            if (!processFile.SetUnknownLanguage(ref modified))
+                return processFile.Result;
 
-                // Continue processing with the new file name and new media info
-                modified = true;
-                fileinfo = new FileInfo(outputname);
-                if (!GetMediaInfo(fileinfo, true, out ffprobe, out mkvmerge, out mediainfo))
-                    return false;
-            }
-
-            // TODO : Verify the integrity of the media file and the streams in the file
-
-            // Stream check, at least one video and audio track
-            // There can be multiple video tracks, where one track is a V_MJPEG embedded image
-            if (mediainfo.Video.Count == 0 || mediainfo.Audio.Count == 0)
-            {
-                // File is missing required streams
-                Program.LogFile.LogConsole($"File missing required tracks : \"{fileinfo.Name}\"");
-                Program.LogFile.LogConsole($"Video Count : {mediainfo.Video.Count} : Audio Count {mediainfo.Audio.Count} : Subtitle Count {mediainfo.Subtitle.Count}");
-
-                // Delete the file
-                if (Options.DeleteInvalidFiles)
-                    FileEx.DeleteFile(fileinfo.FullName);
-
-                return false;
-            }
+            // Verify media validity
+            // TODO : Verify the integrity of the streams
+            if (!processFile.VerifyTrackCount(ref modified))
+                return processFile.Result;
+            if (!processFile.VerifyDuration(ref modified))
+                return processFile.Result;
 
             // Done
             return true;
@@ -623,175 +585,54 @@ namespace PlexCleaner
             return true;
         }
 
-        private static bool GetMediaInfoSidecar(FileInfo fileinfo, bool update, MediaInfo.ParserType parser, out bool modified, out MediaInfo mediainfo)
+        private static bool DeInterlaceFile(FileInfo fileinfo, out bool modified)
         {
             // Init
             modified = false;
-            mediainfo = null;
 
-            // MKV tools only work on MKV files
-            if (parser == MediaInfo.ParserType.MkvMerge &&
-                !Tools.IsMkvFile(fileinfo))
+            // Get interlaced info from FFmpeg
+            if (!FfMpegTool.IsFileInterlaced(fileinfo.FullName, out bool framecount))
+                return false;
+
+            // Get interlaced info from MediaInfo
+            MediaInfo info;
+            if (!MediaInfo.GetMediaInfo(fileinfo, MediaInfo.ParserType.MediaInfo, out info))
+                return false;
+            bool scantype = info.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
+
+            Program.LogFile.LogConsole($"FFmpeg Idet filter reports : Interlaced : {framecount} : \"{fileinfo.Name}\"");
+            Program.LogFile.LogConsole($"MediaInfo ScanType reports : Interlaced : {scantype} : \"{fileinfo.Name}\"");
+
+            // Skip if neither report interlaced
+            if (!framecount && !scantype)
             {
+                Program.LogFile.LogConsole($"No need to DeInterlace, skipping file : \"{fileinfo.Name}\"");
+                Program.LogFile.LogConsole("");
                 return true;
             }
 
-            // TODO : Chance of race condition between reading media, external write to same media, and writing sidecar
-            // TODO : On non-NTFS filesystems the timestamp granularity is insufficient to use as a reliable method of change detection
+            // DeInterlace the file
+            if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string _))
+                return false;
+            Program.LogFile.LogConsole("");
 
-            // Create or read the sidecar file
-            bool createsidecar = false;
-            string sidecarfile = Path.ChangeExtension(fileinfo.FullName, $".{parser.ToString()}");
-            if (File.Exists(sidecarfile))
-            {
-                // We are explicitly setting the sidecar modified time to match the media modified time
-                // We look for changes to the media file by comparing the modified times
-                FileInfo sidecarinfo = new FileInfo(sidecarfile);
-                fileinfo = new FileInfo(fileinfo.FullName);
-                if (fileinfo.LastWriteTimeUtc != sidecarinfo.LastWriteTimeUtc)
-                    createsidecar = true;
-            }
-            else
-                // Create the file
-                createsidecar = true;
-
-            // If update is set we always create a fresh sidecar
-            if (update)
-                createsidecar = true;
-
-            // Create the sidecar
-            string sidecartext;
-            if (createsidecar)
-            {
-                // Use the specified stream parser tool
-                switch (parser)
-                {
-                    case MediaInfo.ParserType.MediaInfo:
-                        // Get the stream info from MediaInfo
-                        if (!MediaInfo.GetMediaInfoXml(fileinfo.FullName, out sidecartext) ||
-                            !MediaInfo.GetMediaInfoFromXml(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    case MediaInfo.ParserType.MkvMerge:
-                        // Get the stream info from MKVMerge
-                        if (!MediaInfo.GetMkvInfoJson(fileinfo.FullName, out sidecartext) ||
-                            !MediaInfo.GetMkvInfoFromJson(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    case MediaInfo.ParserType.FfProbe:
-                        // Get the stream info from FFProbe
-                        if (!MediaInfo.GetFfProbeInfoJson(fileinfo.FullName, out sidecartext) ||
-                            !MediaInfo.GetFfProbeInfoFromJson(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(parser), parser, null);
-                }
-
-                try
-                {
-                    // Write the text to the sidecar file
-                    ConsoleEx.WriteLine($"Writing stream info to sidecar file : \"{sidecarfile}\"");
-                    File.WriteAllText(sidecarfile, sidecartext);
-
-                    // Set the sidecar modified time to match the media modified time
-                    File.SetLastWriteTimeUtc(sidecarfile, fileinfo.LastWriteTimeUtc);
-                }
-                catch (Exception e)
-                {
-                    ConsoleEx.WriteLineError(e);
-                    return false;
-                }
-            }
-            else
-            {
-                // Read the sidecar file
-                try
-                {
-                    ConsoleEx.WriteLine($"Reading stream info from sidecar file : \"{sidecarfile}\"");
-                    sidecartext = File.ReadAllText(sidecarfile);
-                }
-                catch (Exception e)
-                {
-                    ConsoleEx.WriteLineError(e);
-                    return false;
-                }
-
-                // Use the specified stream parser tool to convert the text
-                switch (parser)
-                {
-                    case MediaInfo.ParserType.MediaInfo:
-                        // Convert the stream info using MediaInfo
-                        if (!MediaInfo.GetMediaInfoFromXml(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    case MediaInfo.ParserType.MkvMerge:
-                        // Convert the stream info using MKVMerge
-                        if (!MediaInfo.GetMkvInfoFromJson(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    case MediaInfo.ParserType.FfProbe:
-                        // Convert the stream info using FFProbe
-                        if (!MediaInfo.GetFfProbeInfoFromJson(sidecartext, out mediainfo))
-                            return false;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(parser), parser, null);
-                }
-            }
-
+            // Modified
+            modified = true;
             return true;
         }
 
-/*
-        bool GetMediaInfo(string filename, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
+        private static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
         {
-            FileInfo fileinfo = new FileInfo(filename);
-            return GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo);
-        }
-*/
-
-        private static bool GetMediaInfo(FileInfo fileinfo, bool update, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
-        {
-            ffprobe = null;
-            mkvmerge = null;
-            mediainfo = null;
-
-            return GetMediaInfo(fileinfo, update, MediaInfo.ParserType.FfProbe, out ffprobe) && 
-                   GetMediaInfo(fileinfo, update, MediaInfo.ParserType.MkvMerge, out mkvmerge) && 
-                   GetMediaInfo(fileinfo, update, MediaInfo.ParserType.MediaInfo, out mediainfo);
+            return Options.UseSidecarFiles ? 
+                SidecarFile.GetMediaInfo(fileinfo, false, out ffprobe, out mkvmerge, out mediainfo) : 
+                MediaInfo.GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo);
         }
 
-/*
-        bool GetMediaInfo(string filename, MediaInfo.ParserType parser, out MediaInfo mediainfo)
-        {
-            FileInfo fileinfo = new FileInfo(filename);
-            return GetMediaInfo(fileinfo, parser, out mediainfo);
-        }
-*/
-
-        private static bool GetMediaInfo(FileInfo fileinfo, bool update, MediaInfo.ParserType parser, out MediaInfo mediainfo)
-        {
-            // Read or create sidecar file
-            mediainfo = null;
-            if (Options.UseSidecarFiles)
-                return GetMediaInfoSidecar(fileinfo, update, parser, out bool _, out mediainfo);
-            
-            // Use the specified stream parser tool
-            return parser switch
-            {
-                MediaInfo.ParserType.MediaInfo => MediaInfo.GetMediaInfo(fileinfo.FullName, out mediainfo),
-                MediaInfo.ParserType.MkvMerge => MediaInfo.GetMkvInfo(fileinfo.FullName, out mediainfo),
-                MediaInfo.ParserType.FfProbe => MediaInfo.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
-                _ => throw new ArgumentOutOfRangeException(nameof(parser))
-            };
-        }
-
-        private readonly HashSet<string> SidecarExtensions;
         private readonly HashSet<string> KeepExtensions;
-        private readonly HashSet<string> RemuxExtensions;
-        private readonly HashSet<string> ReencodeAudioCodecs;
+        private readonly HashSet<string> ReMuxExtensions;
+        private readonly HashSet<string> ReEncodeAudioFormats;
         private readonly HashSet<string> KeepLanguages;
-        private readonly List<VideoInfo> ReencodeVideoCodecs;
+        private readonly List<string> PreferredAudioFormats;
+        private readonly List<VideoInfo> ReEncodeVideoInfos;
     }
 }

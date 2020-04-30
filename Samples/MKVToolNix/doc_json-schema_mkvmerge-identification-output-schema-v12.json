@@ -1,0 +1,451 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "https://mkvtoolnix.download/doc/mkvmerge-identification-output-schema-v12.json",
+  "title": "mkvmerge identification output",
+  "description": "The JSON output produced by mkvmerge's file identification mode",
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+    "attachments": {
+      "description": "an array describing the attachments found if any",
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "properties": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "uid": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "file_name",
+          "id",
+          "properties",
+          "size"
+        ]
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "num_entries": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "num_entries"
+        ]
+      }
+    },
+    "container": {
+      "additionalProperties": false,
+      "description": "information about the identified container",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "additionalProperties": false,
+          "description": "additional properties for the container varying by container format",
+          "type": "object",
+          "properties": {
+            "container_type": {
+              "description": "A unique number identifying the container type that's supposed to stay constant over all future releases of MKVToolNix",
+              "type": "integer",
+              "minLength": 1
+            },
+            "date_local": {
+              "description": "The muxing date in ISO 8601 format (in local time zone)",
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([+-][0-9]{2}:[0-9]{2}|Z)$"
+            },
+            "date_utc": {
+              "description": "The muxing date in ISO 8601 format (in UTC)",
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([+-][0-9]{2}:[0-9]{2}|Z)$"
+            },
+            "duration": {
+              "description": "The file's/segment's duration in nanoseconds",
+              "type": "integer",
+              "minimum": 0
+            },
+            "is_providing_timestamps": {
+              "description": "States whether or not the container has timestamps for the packets (e.g. Matroska, MP4) or not (e.g. SRT, MP3)",
+              "type": "boolean"
+            },
+            "muxing_application": {
+              "description": "A Unicode string containing the name and possibly version of the low-level library or application that created the file",
+              "type": "string"
+            },
+            "next_segment_uid": {
+              "description": "A hexadecimal string of the next segment's UID (only for Matroska files)",
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            "other_file": {
+              "description": "An array of names of additional files processed as well",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "playlist": {
+              "description": "States whether or not the identified file is a playlist (e.g. MPLS) referring to several other files",
+              "type": "boolean"
+            },
+            "playlist_chapters": {
+              "description": "The number of chapters in a playlist if it is a one",
+              "type": "integer",
+              "minimum": 0
+            },
+            "playlist_duration": {
+              "description": "The total duration in nanoseconds of all files referenced by the playlist if it is a one",
+              "type": "integer",
+              "minimum": 0
+            },
+            "playlist_file": {
+              "description": "An array of file names the playlist contains",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "playlist_size": {
+              "description": "The total size in bytes of all files referenced by the playlist if it is a one",
+              "type": "integer",
+              "minimum": 0
+            },
+            "previous_segment_uid": {
+              "description": "A hexadecimal string of the previous segment's UID (only for Matroska files)",
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            "programs": {
+              "description": "A container describing multiple programs multiplexed into the source file, e.g. multiple programs in one DVB transport stream",
+              "type": "array",
+              "items": {
+                "additionalProperties": false,
+                "description": "Properties describing a single program",
+                "type": "object",
+                "properties": {
+                  "program_number": {
+                    "description": "A unique number identifying a set of tracks that belong together; used e.g. in DVB for multiplexing multiple stations within a single transport stream",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "service_name": {
+                    "description": "The name of a service provided by this program, e.g. a TV channel name such as 'arte HD'",
+                    "type": "string"
+                  },
+                  "service_provider": {
+                    "description": "The name of the provider of the service provided by this program, e.g. a TV station name such as 'ARD'",
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "segment_uid": {
+              "description": "A hexadecimal string of the segment's UID (only for Matroska files)",
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 32
+            },
+            "title": {
+              "type": "string"
+            },
+            "writing_application": {
+              "description": "A Unicode string containing the name and possibly version of the high-level application that created the file",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "recognized": {
+          "description": "States whether or not mkvmerge knows about the format",
+          "type": "boolean"
+        },
+        "supported": {
+          "description": "States whether or not mkvmerge can read the format",
+          "type": "boolean"
+        },
+        "type": {
+          "description": "A human-readable description/name for the container format",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "recognized",
+        "supported"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "file_name": {
+      "description": "the identified file's name",
+      "type": "string",
+      "minLength": 1
+    },
+    "global_tags": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "num_entries": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "num_entries"
+        ]
+      }
+    },
+    "identification_format_version": {
+      "description": "The output format's version",
+      "type": "integer",
+      "minimum": 12,
+      "maximum": 12
+    },
+    "track_tags": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "num_entries": {
+            "type": "integer"
+          },
+          "track_id": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "num_entries",
+          "track_id"
+        ]
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "codec": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "integer",
+            "minLength": 0
+          },
+          "type": {
+            "type": "string"
+          },
+          "properties": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "aac_is_sbr": {
+                "type": "string",
+                "enum": [
+                  "true",
+                  "false",
+                  "unknown"
+                ]
+              },
+              "audio_bits_per_sample": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audio_channels": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audio_sampling_frequency": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "codec_delay": {
+                "type": "integer"
+              },
+              "codec_id": {
+                "type": "string"
+              },
+              "codec_name": {
+                "type": "string"
+              },
+              "codec_private_data": {
+                "type": "string"
+              },
+              "codec_private_length": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "content_encoding_algorithms": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default_duration": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "default_track": {
+                "type": "boolean"
+              },
+              "display_dimensions": {
+                "type": "string",
+                "pattern": "^[0-9]+x[0-9]+$"
+              },
+              "display_unit": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "enabled_track": {
+                "type": "boolean"
+              },
+              "encoding": {
+                "description": "The encoding/character set of a track containing text (e.g. subtitles) if it can be determined with confidence. For such tracks the encoding cannot be changed by the user.",
+                "type": "string"
+              },
+              "forced_track": {
+                "type": "boolean"
+              },
+              "language": {
+                "type": "string"
+              },
+              "minimum_timestamp": {
+                "description": "The minimum timestamp in nanoseconds of all the frames of this track found within the first couple of seconds of the file",
+                "type": "integer",
+                "minimum": 0
+              },
+              "multiplexed_tracks": {
+                "description": "An array of track IDs indicating which tracks were originally multiplexed within the same track in the source file",
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "number": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "packetizer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pixel_dimensions": {
+                "type": "string",
+                "pattern": "^[0-9]+x[0-9]+$"
+              },
+              "program_number": {
+                "description": "A unique number identifying a set of tracks that belong together; used e.g. in DVB for multiplexing multiple stations within a single transport stream",
+                "type": "integer",
+                "minimum": 0
+              },
+              "stereo_mode": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "stream_id": {
+                "description": "A format-specific ID identifying a track, possibly in combination with a 'sub_stream_id' (e.g. the program ID in an MPEG transport stream)",
+                "type": "integer",
+                "minimum": 0
+              },
+              "sub_stream_id": {
+                "description": "A format-specific ID identifying a track together with a 'stream_id'",
+                "type": "integer",
+                "minimum": 0
+              },
+              "tag_artist": {
+                "type": "string"
+              },
+              "tag_bitsps": {
+                "type": "string"
+              },
+              "tag_bps": {
+                "type": "string"
+              },
+              "tag_fps": {
+                "type": "string"
+              },
+              "tag_title": {
+                "type": "string"
+              },
+              "teletext_page": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text_subtitles": {
+                "type": "boolean"
+              },
+              "track_name": {
+                "type": "string"
+              },
+              "uid": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "codec",
+          "id",
+          "type"
+        ]
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

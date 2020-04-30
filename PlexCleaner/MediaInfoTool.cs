@@ -1,94 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Serialization;
 using InsaneGenius.Utilities;
-
-// We are using genrated code to read XML
-// http://xmltocsharp.azurewebsites.net/
 
 namespace PlexCleaner
 {
     public static class MediaInfoTool
     {
-        [XmlRoot(ElementName = "MediaInfo", Namespace = "https://mediaarea.net/mediainfo")]
-        public class MediaInfoXml
+        // Tool version, read from Tools.json
+        public static string Version { get; set; } = "";
+
+        public static int MediaInfoCli(string parameters, out string output)
         {
-            [XmlElement(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-            public MediaXml Media { get; set; }
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
 
-            public static MediaInfoXml FromXml(string xml)
-            {
-                XmlSerializer xmlserializer = new XmlSerializer(typeof(MediaInfoXml));
-                using TextReader textreader = new StringReader(xml);
-                using XmlReader xmlReader = XmlReader.Create(textreader);
-                return xmlserializer.Deserialize(xmlReader) as MediaInfoXml;
-            }
-        }
-
-        [XmlRoot(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-        public class MediaXml
-        {
-            [XmlElement(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
-            public List<TrackXml> Track { get; set; }
-        }
-
-
-        [XmlRoot(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
-        public class TrackXml
-        {
-            [XmlElement(ElementName = "Format", Namespace = "https://mediaarea.net/mediainfo")]
-            public string Format { get; set; }
-
-            [XmlElement(ElementName = "Format_Version", Namespace = "https://mediaarea.net/mediainfo")]
-            public string FormatVersion { get; set; }
-
-            [XmlAttribute(AttributeName = "type")]
-            public string Type { get; set; }
-
-            [XmlElement(ElementName = "StreamOrder", Namespace = "https://mediaarea.net/mediainfo")]
-            public string StreamOrder { get; set; }
-
-            [XmlElement(ElementName = "ID", Namespace = "https://mediaarea.net/mediainfo")]
-            public string Id { get; set; }
-
-            [XmlElement(ElementName = "Format_Profile", Namespace = "https://mediaarea.net/mediainfo")]
-            public string FormatProfile { get; set; }
-
-            [XmlElement(ElementName = "Format_Level", Namespace = "https://mediaarea.net/mediainfo")]
-            public string FormatLevel { get; set; }
-
-            [XmlElement(ElementName = "CodecID", Namespace = "https://mediaarea.net/mediainfo")]
-            public string CodecId { get; set; }
-
-            [XmlElement(ElementName = "Language", Namespace = "https://mediaarea.net/mediainfo")]
-            public string Language { get; set; }
-
-            [XmlElement(ElementName = "MuxingMode", Namespace = "https://mediaarea.net/mediainfo")]
-            public string MuxingMode { get; set; }
-            
-            [XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
-            public string ScanType { get; set; }
-        }
-
-        public static int MediaInfo(string parameters, out string output)
-        {
-            string path = Tools.CombineToolPath(Tools.Options.MediaInfo, MediaInfoBinary);
+            string path = Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
             ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
             return ProcessEx.Execute(path, parameters, out output);
         }
 
         public static string GetToolFolder()
         {
-            return Tools.CombineToolPath(Tools.Options.MediaInfo);
+            return Tools.CombineToolPath(ToolsOptions.MediaInfo);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Tools.Options.MediaInfo, MediaInfoBinary);
+            return Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -119,16 +62,16 @@ namespace PlexCleaner
                     if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
                         break;
                 }
-                if (string.IsNullOrEmpty(line)) throw new ArgumentException("Did not find version number field");
+                if (string.IsNullOrEmpty(line))
+                    throw new NotImplementedException();
 
                 // Extract the version number from the line
-                // // E.g. Version 17.10, 2017-11-02
-                // Version (.*?), 
-                // TODO : Figure out how to use a named group
-                string pattern = Regex.Escape(@"Version ") + @"(.*?)" + Regex.Escape(@",");
+                // E.g. Version 17.10, 2017-11-02
+                const string pattern = @"Version\ (?<version>.*?),";
                 Regex regex = new Regex(pattern);
                 Match match = regex.Match(line);
-                toolinfo.Version = match.Groups[1].Value;
+                Debug.Assert(match.Success);
+                toolinfo.Version = match.Groups["version"].Value;
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
@@ -140,6 +83,82 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
+            return true;
+        }
+
+        public static bool GetMediaInfo(string filename, out MediaInfo mediainfo)
+        {
+            mediainfo = null;
+            return GetMediaInfoXml(filename, out string xml) && 
+                   GetMediaInfoFromXml(xml, out mediainfo);
+        }
+
+        public static bool GetMediaInfoXml(string filename, out string xml)
+        {
+            // Create the MediaInfo commandline and execute
+            // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
+            string commandline = $"--Output=XML \"{filename}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = MediaInfoCli(commandline, out xml);
+            ConsoleEx.WriteLine("");
+
+            // TODO : No error is returned when the file does not exist
+            // https://sourceforge.net/p/mediainfo/bugs/1052/
+            // Empty XML files are around 86 bytes
+            // Match size check with ProcessSidecarFile()
+            return exitcode == 0 && xml.Length >= 100;
+        }
+
+        public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediainfo)
+        {
+            // Parser type is MediaInfo
+            mediainfo = new MediaInfo(MediaInfo.ParserType.MediaInfo);
+
+            // Populate the MediaInfo object from the XML string
+            try
+            {
+                MediaInfoToolXmlSchema.MediaInfo xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
+                MediaInfoToolXmlSchema.Media xmlmedia = xmlinfo.Media;
+                if (xmlmedia.Track.Count == 0)
+                {
+                    // No tracks
+                    return false;
+                }
+
+                foreach (MediaInfoToolXmlSchema.Track track in xmlmedia.Track)
+                {
+                    if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
+                    {
+                        VideoInfo info = new VideoInfo(track);
+                        mediainfo.Video.Add(info);
+                    }
+                    else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AudioInfo info = new AudioInfo(track);
+                        mediainfo.Audio.Add(info);
+                    }
+                    else if (track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase))
+                    {
+                        SubtitleInfo info = new SubtitleInfo(track);
+                        mediainfo.Subtitle.Add(info);
+                    }
+                }
+
+                // Errors
+                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || mediainfo.Audio.Any(item => item.HasErrors) || mediainfo.Subtitle.Any(item => item.HasErrors);
+
+                // Tags
+                // TODO : Maybe look in the Extra field, but not reliable
+                // Duration
+                // TODO : Duration, too many different formats to parse
+                // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
+            }
+
             return true;
         }
 

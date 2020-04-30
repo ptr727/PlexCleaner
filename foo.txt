@@ -11,12 +11,12 @@
     // Encoding audio codec
     "AudioEncodeCodec": "ac3",
     // Create short video clips, useful during testing
-    // Note the media files will be overwritten with short clips
+    // Note the media files are still overwritten with 1 minute clips
     "TestSnippets": false
   },
   "ProcessOptions": {
     // Do not make any modifications, useful during testing
-    "TestNoModify": false,
+    "TestNoModify": true,
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete invalid media files, e.g. no video or audio track
@@ -30,19 +30,18 @@
     // Remux files to MKV if the extension matches
     "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
     // Enable de-interlace
-    // Note de-interlace detection is not absolute
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
-    // Re-encode the video if the format, codec, and profile values match
-    // * will match anything, the number of filter entries must match
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // Re-encode the video if the format, codec, and and profile values match
+    // * will match anything, the number if entries per filter must match
+    // Use FFProbe attribute naming, and the "printinfo" command to get media info
     "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
     "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
     "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
     // Re-encode matching audio codecs
-    // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // If the video format is not H264 or HEVC, it will automatically be converted to H264 to avoid sync issues
+    // Use FFProbe attribute naming, and the "printinfo" command to get media info
     "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
@@ -54,13 +53,12 @@
     // Use ISO 639-2 3 letter short form
     "KeepLanguages": "eng,afr,chi,ind",
     // Enable removing of duplicate tracks of the same type and language
-    // Priority is given to tracks marked as Default
-    // Forced subtitle tracks are prioritized
+    // Priority is given to tracks marked as Default or Forced
     // Subtitle tracks containing "SDH" in the title are de-prioritized
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
-    // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printinfo` command to get media info
+    // If no default tracks are found, audio tracks are prioritized by codec type
+    // Use MKVMerge attribute naming, and the "printinfo" command to get media info
     "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
     // Enable removing of all tags from the media file
     // Track title information is not removed

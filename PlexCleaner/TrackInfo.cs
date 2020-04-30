@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using InsaneGenius.Utilities;
@@ -7,18 +8,26 @@ namespace PlexCleaner
 {
     public class TrackInfo
     {
-        public TrackInfo()
-        {
-            State = StateType.None;
-        }
+        public TrackInfo() {}
 
-        internal TrackInfo(MkvTool.TrackJson track)
+        internal TrackInfo(MkvToolJsonSchema.Track track)
         {
             if (track == null)
                 throw new ArgumentNullException(nameof(track));
 
             Format = track.Codec;
             Codec = track.Properties.CodecId;
+            Title = track.Properties.TrackName;
+            Default = track.Properties.DefaultTrack;
+
+            // If the "language" and "tag_language" fields are set we may encounter a FFprobe bug
+            // https://github.com/MediaArea/MediaAreaXml/issues/34
+            if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
+                !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                HasErrors = true;
+                Trace.WriteLine($"Possible FFprobe Bug : {track.Properties.Language} != {track.Properties.TagLanguage}");
+            }
 
             // Set language
             if (string.IsNullOrEmpty(track.Properties.Language))
@@ -36,27 +45,34 @@ namespace PlexCleaner
             Number = track.Properties.Number;
         }
 
-        internal TrackInfo(FfMpegTool.StreamJson stream)
+        internal TrackInfo(FfMpegToolJsonSchema.Stream stream)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            Format = !string.IsNullOrEmpty(stream.CodecName) ? stream.CodecName : "null";
-            Codec = !string.IsNullOrEmpty(stream.CodecLongName) ? stream.CodecLongName : "null";
-            Profile = !string.IsNullOrEmpty(stream.Profile) ? stream.Profile : "null";
+            Format = stream.CodecName;
+            Codec = stream.CodecLongName;
+            Title = stream.Tags.Title;
+            Default = stream.Disposition.Default;
 
-            // TODO : FFProbe interprets the language tag instead of tag_language
-            // Result is MediaInfo and MKVMerge say language is "eng", FFProbe says language is "und"
+            // TODO : FFprobe uses the tag language value instead of the track language
+            // Some files show MediaInfo and MKVMerge say language is "eng", FFprobe says language is "und"
             // https://github.com/MediaArea/MediaAreaXml/issues/34
 
             // Set language
             // TODO : Language is supposed to be 3 characters, but some sample files are "???" or "null", set to und
-            Language = stream.Tags?.Language;
-            if (string.IsNullOrEmpty(Language) || Language.Equals("???", StringComparison.OrdinalIgnoreCase) || Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+            Language = stream.Tags.Language;
+            if (string.IsNullOrEmpty(Language))
                 Language = "und";
+            else if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) || Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+            {
+                HasErrors = true;
+                Trace.WriteLine($"Invalid FFprobe Language : {Language}");
+                Language = "und";
+            }
             else
             {
-                // FFProbe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
+                // FFprobe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
                 Iso6393 lang = PlexCleaner.Language.GetIso6393(Language);
                 Language = lang != null ? lang.Part2B : "und";
             }
@@ -66,14 +82,15 @@ namespace PlexCleaner
             Number = stream.Index;
         }
 
-        internal TrackInfo(MediaInfoTool.TrackXml track)
+        internal TrackInfo(MediaInfoToolXmlSchema.Track track)
         {
             if (track == null)
                 throw new ArgumentNullException(nameof(track));
 
             Format = track.Format;
             Codec = track.CodecId;
-            Profile = !string.IsNullOrEmpty(track.FormatProfile) ? track.FormatProfile : "null";
+            Title = track.Title;
+            Default = track.Default;
 
             // Set language
             Language = track.Language;
@@ -87,7 +104,7 @@ namespace PlexCleaner
                 Language = lang != null ? lang.Part2B : "und";
             }
 
-            // FFProbe and Matroksa use chi not zho
+            // FFprobe and MKVToolNix use chi not zho
             // https://github.com/mbunkus/mkvtoolnix/issues/1149
             if (Language.Equals("zho", StringComparison.OrdinalIgnoreCase))
                 Language = "chi";
@@ -97,32 +114,31 @@ namespace PlexCleaner
             Id = int.Parse(track.Id.All(char.IsDigit) ? track.Id : track.Id.Substring(0, track.Id.IndexOf('-', StringComparison.OrdinalIgnoreCase)), CultureInfo.InvariantCulture);
 
             // Use streamorder for number
-            // StreamOrder is not always present
-            if (!string.IsNullOrEmpty(track.StreamOrder))
-                Number = int.Parse(track.StreamOrder, CultureInfo.InvariantCulture);
+            Number = track.StreamOrder;
         }
-        public string Format { get; set; }
-        public string Codec { get; set; }
-        public string Profile { get; set; }
-        public string Language { get; set; }
-        public int Id { get; set; }
-        public int Number { get; set; }
-        public string ScanType {  get; set; }
+
+        public string Format { get; set; } = "";
+        public string Codec { get; set; } = "";
+        public string Language { get; set; } = "";
+        public int Id { get; set; } = 0;
+        public int Number { get; set; } = 0;
         public enum StateType { None, Keep, Remove, ReMux, ReEncode }
-        public StateType State { get; set; }
+        public StateType State { get; set; } = StateType.None;
+        public string Title { get; set; } = "";
+        public bool Default { get; set; } = false;
+        public bool HasTags { get; set; } = false;
+        public bool HasErrors { get; set; } = false;
+
         public bool IsLanguageUnknown()
         {
             // Test for empty or "und" field values
             return string.IsNullOrEmpty(Language) ||
                    Language.Equals("und", StringComparison.OrdinalIgnoreCase);
         }
-        public bool IsInterlaced()
+
+        public override string ToString()
         {
-            // TODO : Find a better way to do this
-            // Test for MBAFF or not Progressive
-            if (string.IsNullOrEmpty(ScanType))
-                return false;
-            return string.Compare(ScanType, "Progressive", StringComparison.OrdinalIgnoreCase) != 0;
+            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}";
         }
     }
 }

@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\series\\\" \"\\\\server-1\\media\\movies\\\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -18,7 +18,7 @@
     },
     "Re-Mux": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"\\\\server-1\\media\\series\\The Magicians (2015)\\Season 5\\The Magicians (2015) - S05E08 - Garden Variety Homicide.mkv\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"D:\\Temp\""
     },
     "Re-Encode": {
       "commandName": "Project",
@@ -26,11 +26,11 @@
     },
     "Write Sidecar": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" writesidecar --files \"D:\\Temp\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" writesidecar --files \"\\\\server-1\\media\\series\" \"\\\\server-1\\media\\movies\""
     },
     "Create Tag Map": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" createtagmap --files \"\\\\server-1\\media\\series\" \"\\\\server-1\\media\\movies\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" createtagmap --files \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
     },
     "Version": {
       "commandName": "Project",
@@ -39,6 +39,14 @@
     "Help": {
       "commandName": "Project",
       "commandLineArgs": "--help"
+    },
+    "Print Info": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" printinfo --files \"D:\\Temp\""
+    },
+    "DeInterlace": {
+      "commandName": "Project",
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" deinterlace --files \"D:\\Temp\""
     }
   }
 }

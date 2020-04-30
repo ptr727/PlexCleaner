@@ -3,13 +3,13 @@ namespace PlexCleaner
     public class AudioInfo : TrackInfo
     {
         public AudioInfo() { }
-        internal AudioInfo(MkvTool.TrackJson track) : base(track) { }
-        internal AudioInfo(FfMpegTool.StreamJson stream) : base(stream) { }
-        internal AudioInfo(MediaInfoTool.TrackXml track) : base(track) { }
+        internal AudioInfo(MkvToolJsonSchema.Track track) : base(track) { }
+        internal AudioInfo(FfMpegToolJsonSchema.Stream stream) : base(stream) { }
+        internal AudioInfo(MediaInfoToolXmlSchema.Track track) : base(track) { }
 
         public override string ToString()
         {
-            return $"Audio : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}";
+            return $"Audio : {base.ToString()}";
         }
     }
 }

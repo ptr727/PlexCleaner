@@ -3,82 +3,73 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
 using InsaneGenius.Utilities;
+using System.Text;
+using System.Diagnostics;
+using System.Globalization;
 
-// We are using generated code to read the JSON
-// https://quicktype.io/
+// TODO : FFmpeg de-interlacing
+// https://www.reddit.com/r/ffmpeg/comments/d3cwxp/what_is_the_difference_between_bwdif_and_yadif1/
+// https://video.stackexchange.com/questions/14874/faster-deinterlacing-with-ffmpeg-and-yadif
+// https://askubuntu.com/questions/866186/how-to-get-good-quality-when-converting-digital-video
+// http://avisynth.nl/index.php/QTGMC
+// https://forum.videohelp.com/threads/392565-How-to-get-ffmpeg-deinterlace-to-work-like-handbrake-decomb
+// https://offset.skew.org/wiki/User:Mjb/FFmpeg#Basic_deinterlace
+
+// TODO : Hardware acceleration
+// https://trac.ffmpeg.org/wiki/HWAccelIntro
+
+// TODO : Add x265 support
+// https://trac.ffmpeg.org/wiki/Encode/H.265
 
 namespace PlexCleaner
 {
     public static class FfMpegTool
     {
-        public class FfProbeJson
+        // Tool version, read from Tools.json
+        public static string Version { get; set; } = "";
+
+        public static int FfMpegCli(string parameters)
         {
-            [JsonProperty("streams")]
-            public List<StreamJson> Streams { get; set; }
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
 
-            public static FfProbeJson FromJson(string json) => JsonConvert.DeserializeObject<FfProbeJson>(json, Settings);
-
-            private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-            {
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                DateParseHandling = DateParseHandling.None
-            };
-        }
-
-        public class StreamJson
-        {
-            [JsonProperty("index")]
-            public int Index { get; set; }
-            [JsonProperty("codec_long_name")]
-            public string CodecLongName { get; set; }
-            [JsonProperty("codec_name")]
-            public string CodecName { get; set; }
-            [JsonProperty("codec_tag")]
-            public string CodecTag { get; set; }
-            [JsonProperty("codec_tag_string")]
-            public string CodecTagString { get; set; }
-            [JsonProperty("codec_type")]
-            public string CodecType { get; set; }
-            [JsonProperty("level")]
-            public string Level { get; set; }
-            [JsonProperty("profile")]
-            public string Profile { get; set; }
-            [JsonProperty("tags")]
-            public TagsJson Tags { get; set; }
-        }
-
-        public class TagsJson
-        {
-            [JsonProperty("language")]
-            public string Language { get; set; }
-            [JsonProperty("mimetype")]
-            public string MimeType { get; set; }
-        }
-
-        public static int FfMpeg(string parameters)
-        {
-            string path = Tools.CombineToolPath(Tools.Options.FfMpeg, FfMpegBinary);
-            ConsoleEx.WriteLineTool($"FFMpeg : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+            ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
             return ProcessEx.Execute(path, parameters);
         }
 
-        public static int FfProbe(string parameters, out string output, out string error)
+        public static int FfMpegCli(string parameters, out string output, out string error)
         {
-            string path = Tools.CombineToolPath(Tools.Options.FfMpeg, FfProbeBinary);
-            ConsoleEx.WriteLineTool($"FFProbe : {parameters}");
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
+
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+            ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
+            return ProcessEx.Execute(path, parameters, out output, out error);
+        }
+
+        public static int FfProbeCli(string parameters, out string output, out string error)
+        {
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
+
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
+            ConsoleEx.WriteLineTool($"FFprobe : {parameters}");
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
         public static string GetToolFolder()
         {
-            return Tools.CombineToolPath(Tools.Options.FfMpeg);
+            return Tools.CombineToolPath(ToolsOptions.FfMpeg);
         }
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(Tools.Options.FfMpeg, FfMpegBinary);
+            return Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -108,12 +99,11 @@ namespace PlexCleaner
 
                 // Extract the version number from the URL
                 // E.g. https://ffmpeg.org/releases/ffmpeg-3.4.tar.bz2
-                // ffmpeg\.org\/releases\/ffmpeg-(.*?)\.tar\.bz2
-                // TODO : Figure out how to use a named group
-                string pattern = Regex.Escape(@"ffmpeg.org/releases/ffmpeg-") + @"(.*?)" + Regex.Escape(@".tar.bz2");
+                const string pattern = @"ffmpeg\.org\/releases\/ffmpeg-(?<version>.*?)\.tar\.bz2";
                 Regex regex = new Regex(pattern);
                 Match match = regex.Match(sourceurl);
-                toolinfo.Version = match.Groups[1].Value;
+                Debug.Assert(match.Success);
+                toolinfo.Version = match.Groups["version"].Value;
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.4-win64-static.zip
@@ -128,7 +118,323 @@ namespace PlexCleaner
             return true;
         }
 
+/*
+        public static bool VerifyMedia(string inputname)
+        {
+            // Create the FFmpeg commandline and execute
+            // https://ffmpeg.org/ffmpeg.html
+            string commandline = $"-v warning -i \"{inputname}\" -f null -";
+            Tools.WriteLine($"Verifying media : \"{inputname}\"");
+            int exitcode = FfMpegTool.FfMpeg(commandline, out string _, out string error);
+            if (exitcode != 0 || error.Length > 0)
+            {
+                Tools.WriteLineError($"Error verifying media : \"{inputname}\"");
+                return false;
+            }
+            return true;
+        }
+*/
+
+        public static bool GetFfProbeInfo(string filename, out MediaInfo mediainfo)
+        {
+            mediainfo = null;
+            return GetFfProbeInfoJson(filename, out string json) && 
+                   GetFfProbeInfoFromJson(json, out mediainfo);
+        }
+
+        public static bool GetFfProbeInfoJson(string filename, out string json)
+        {
+            // Create the FFprobe commandline and execute
+            // https://ffmpeg.org/ffprobe.html
+            string commandline = $"-v quiet -show_streams -print_format json \"{filename}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfProbeCli(commandline, out json, out string error);
+            ConsoleEx.WriteLine("");
+            // TODO : Verify that FFprobe returns an error when it fails
+            return exitcode == 0 && error.Length <= 0;
+        }
+
+        public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediainfo)
+        {
+            // Parser type is FfProbe
+            mediainfo = new MediaInfo(MediaInfo.ParserType.FfProbe);
+
+            // Populate the MediaInfo object from the JSON string
+            try
+            {
+                FfMpegToolJsonSchema.FfProbe ffprobe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
+                if (ffprobe.Streams.Count == 0)
+                {
+                    // No tracks
+                    return false;
+                }
+
+                foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
+                {
+                    if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // We need to exclude cover art
+                        if (stream.CodecName.Equals("mjpeg", StringComparison.OrdinalIgnoreCase) ||
+                            stream.CodecName.Equals("png", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        VideoInfo info = new VideoInfo(stream);
+                        mediainfo.Video.Add(info);
+                    }
+                    else if (stream.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AudioInfo info = new AudioInfo(stream);
+                        mediainfo.Audio.Add(info);
+                    }
+                    else if (stream.CodecType.Equals("subtitle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        SubtitleInfo info = new SubtitleInfo(stream);
+                        mediainfo.Subtitle.Add(info);
+                    }
+                }
+
+                // Errors
+                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || mediainfo.Audio.Any(item => item.HasErrors) || mediainfo.Subtitle.Any(item => item.HasErrors);
+
+                // TODO : Tags
+                // TODO : Duration
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool ReMuxToMkv(string inputname, MediaInfo keep, string outputname)
+        {
+            if (keep == null)
+                return ReMuxToMkv(inputname, outputname);
+
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create an input and output map
+            CreateFfMpegMap(keep, out string input, out string output);
+
+            // Create the FFmpeg commandline and execute
+            // https://ffmpeg.org/ffmpeg.html
+            // https://trac.ffmpeg.org/wiki/Map
+            // https://ffmpeg.org/ffmpeg.html#Stream-copy
+            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfMpegCli(commandline);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0;
+        }
+
+        public static bool ReMuxToMkv(string inputname, string outputname)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create the FFmpeg commandline and execute
+            // Copy all streams
+            // https://ffmpeg.org/ffmpeg.html
+            // https://trac.ffmpeg.org/wiki/Map
+            // https://ffmpeg.org/ffmpeg.html#Stream-copy
+            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfMpegCli(commandline);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0;
+        }
+
+        private static void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
+        {
+            MediaInfo reencode = new MediaInfo(MediaInfo.ParserType.FfProbe);
+            CreateFfMpegMap(0, "", keep, reencode, out input, out output);
+        }
+
+        private static void CreateFfMpegMap(int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
+        {
+            // Verify correct data type
+            Debug.Assert(keep.Parser == MediaInfo.ParserType.FfProbe);
+            Debug.Assert(reencode.Parser == MediaInfo.ParserType.FfProbe);
+
+
+            // Create an input and output map
+            // http://ffmpeg.org/ffmpeg.html#Advanced-options
+            // http://ffmpeg.org/ffmpeg.html#Stream-specifiers
+            // https://trac.ffmpeg.org/wiki/Map
+
+            // Order by video, audio, and subtitle
+            // Each ordered by id, to keep the original order
+            List<TrackInfo> videolist = new List<TrackInfo>();
+            videolist.AddRange(keep.Video);
+            videolist.AddRange(reencode.Video);
+            videolist = videolist.OrderBy(item => item.Id).ToList();
+            List<TrackInfo> audiolist = new List<TrackInfo>();
+            audiolist.AddRange(keep.Audio);
+            videolist.AddRange(reencode.Audio);
+            audiolist = audiolist.OrderBy(item => item.Id).ToList();
+            List<TrackInfo> subtitlelist = new List<TrackInfo>();
+            subtitlelist.AddRange(keep.Subtitle);
+            videolist.AddRange(reencode.Subtitle);
+            subtitlelist = subtitlelist.OrderBy(item => item.Id).ToList();
+
+            // Create a map list of all the input streams we want in the output
+            List<TrackInfo> tracklist = new List<TrackInfo>();
+            tracklist.AddRange(videolist);
+            tracklist.AddRange(audiolist);
+            tracklist.AddRange(subtitlelist);
+            StringBuilder sb = new StringBuilder();
+            foreach (TrackInfo info in tracklist)
+                sb.Append($"-map 0:{info.Id} ");
+            input = sb.ToString();
+            input = input.Trim();
+
+            // Set the output stream types for each input map item
+            // The order has to match the input order
+            sb.Clear();
+            int video = 0;
+            int audio = 0;
+            int subtitle = 0;
+            foreach (TrackInfo info in tracklist)
+            {
+                // Copy or encode
+                if (info.GetType() == typeof(VideoInfo))
+                    sb.Append(info.State == TrackInfo.StateType.Keep
+                        ? $"-c:v:{video++} copy "
+                        : $"-c:v:{video++} libx264 -crf {quality} -preset medium ");
+                else if (info.GetType() == typeof(AudioInfo))
+                    sb.Append(info.State == TrackInfo.StateType.Keep
+                        ? $"-c:a:{audio++} copy "
+                        : $"-c:a:{audio++} {audiocodec} ");
+                else if (info.GetType() == typeof(SubtitleInfo))
+                    // No re-encoding of subtitles, just copy
+                    sb.Append($"-c:s:{subtitle++} copy ");
+            }
+            output = sb.ToString();
+            output = output.Trim();
+        }
+
+        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, string outputname)
+        {
+            // Simple encoding of audio and video and pasthrough of otehr tracks
+            if (keep == null || reencode == null)
+                return ConvertToMkv(inputname, quality, audiocodec, outputname);
+
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create an input and output map
+            CreateFfMpegMap(quality, audiocodec, keep, reencode, out string input, out string output);
+
+            // TODO : Error with some PGS subtitles
+            // https://trac.ffmpeg.org/ticket/2622
+            //  [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
+            //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
+
+            // Create the FFmpeg commandline and execute
+            // https://trac.ffmpeg.org/wiki/Encode/H.264
+            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfMpegCli(commandline);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0;
+        }
+
+        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, string outputname)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create the FFmpeg commandline and execute
+            // Copy subtitle streams
+            // https://trac.ffmpeg.org/wiki/Encode/H.264
+            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfMpegCli(commandline);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0;
+        }
+
+        public static bool IsFileInterlaced(string inputname, out bool interlaced)
+        {
+            // Init
+            interlaced= false;
+
+            // Create the FFmpeg commandline and execute
+            // Use Idet to get statistics
+            // https://ffmpeg.org/ffmpeg-filters.html#idet
+            // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
+            // https://trac.ffmpeg.org/wiki/Null
+            string commandline = $"-i \"{inputname}\" -nostats -filter:v idet -frames:v {IdetFrameCount} -an -f rawvideo -y nul";
+            //string commandline = $"-i \"{inputname}\" -nostats -filter:v idet -an -f rawvideo -y nul";
+            ConsoleEx.WriteLine("");
+            // FFMpeg logs output to stderror
+            int exitcode = FfMpegCli(commandline, out string output, out string error);
+            ConsoleEx.WriteLine("");
+            if (exitcode != 0)
+                return false;
+
+            // Parse the output
+            try
+            {
+                // ...
+                // frame= 2048 fps=294 q=-0.0 Lsize= 6220800kB time=00:01:21.92 bitrate=622080.0kbits/s speed=11.8x
+                // video:6220800kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.000000%
+                // [Parsed_idet_0 @ 00000234e42d0440] Repeated Fields: Neither:  2049 Top:     0 Bottom:     0
+                // [Parsed_idet_0 @ 00000234e42d0440] Single frame detection: TFF:     0 BFF:     0 Progressive:  1745 Undetermined:   304
+                // [Parsed_idet_0 @ 00000234e42d0440] Multi frame detection: TFF:     0 BFF:     0 Progressive:  2021 Undetermined:    28
+                const string repeatedfields = @"\[Parsed_idet_0 \@ (.*?)\] Repeated Fields:(?<repeated>.*?)Neither: (?<repeated_neither>.*?)Top: (?<repeated_top>.*?)Bottom(?<repeated_bottom>.*?)$";
+                const string singleframe = @"\[Parsed_idet_0 \@ (.*?)\] Single frame detection: (?<single>.*?)TFF: (?<single_tff>.*?)BFF: (?<single_bff>.*?)Progressive: (?<single_prog>.*?)Undetermined: (?<single_und>.*?)$";
+                const string multiframe = @"\[Parsed_idet_0 \@ (.*?)\] Multi frame detection: (?<multi>.*?)TFF: (?<multi_tff>.*?)BFF: (?<multi_bff>.*?)Progressive: (?<multi_prog>.*?)Undetermined: (?<multi_und>.*?)$";
+                // We need to match in LF not CRLF mode else $ does not work as expected
+                string pattern = $"{repeatedfields}\n{singleframe}\n{multiframe}";
+                string errorlf = error.Replace("\r\n", "\n", StringComparison.Ordinal);
+                Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                Match match = regex.Match(errorlf);
+                Debug.Assert(match.Success);
+
+                // Get the frame counts
+                int singletff = int.Parse(match.Groups["single_tff"].Value.Trim(), CultureInfo.InvariantCulture);
+                int singlebff = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
+                int singleprog = int.Parse(match.Groups["single_prog"].Value.Trim(), CultureInfo.InvariantCulture);
+                int singleund = int.Parse(match.Groups["single_und"].Value.Trim(), CultureInfo.InvariantCulture);
+                int multitff = int.Parse(match.Groups["multi_tff"].Value.Trim(), CultureInfo.InvariantCulture);
+                int multibff = int.Parse(match.Groups["multi_bff"].Value.Trim(), CultureInfo.InvariantCulture);
+                int multiprog = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
+                int multiund = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
+
+                // Compare the interlaced vs. progressive frame counts
+                bool single = (singletff + singlebff) > singleprog;
+                bool multi = (multitff + multibff) > multiprog;
+                Trace.WriteLine($"FFmpeg Idet : single : {single}, multi : {multi}");
+                if (single || multi)
+                    interlaced = true;
+
+                // Calculate interlaced frame % of total frames
+                double singleper = System.Convert.ToDouble(singletff + singlebff) / System.Convert.ToDouble(singletff + singlebff + singleprog + singleund);
+                double multiper = System.Convert.ToDouble(multitff + multibff) / System.Convert.ToDouble(multitff + multibff + multiprog + multiund);
+                Trace.WriteLine($"FFmpeg Idet : singleper : {singleper:P}, multiper : {multiper:P}");
+                if (singleper > 50.0 || multiper > 50.0)
+                    interlaced = true;
+
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
+            }
+            return true;
+        }
+
         private const string FfMpegBinary = @"bin\ffmpeg.exe";
         private const string FfProbeBinary = @"bin\ffprobe.exe";
+        private const string FfmpegSnippet = "-ss 0 -t 60";
+        private const int IdetFrameCount = 1024;
     }
 }

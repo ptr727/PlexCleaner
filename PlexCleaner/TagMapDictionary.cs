@@ -1,20 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PlexCleaner
 {
     public class TagMapDictionary
     {
-        public TagMapDictionary()
-        {
-            Video = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
-            Audio = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
-            Subtitle = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
-        }
-        public Dictionary<string, TagMap> Video { get; set; }
-        public Dictionary<string, TagMap> Audio { get; set; }
-        public Dictionary<string, TagMap> Subtitle { get; set; }
+        public Dictionary<string, TagMap> Video { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TagMap> Audio { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TagMap> Subtitle { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
+
         public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
         {
             if (prime == null)
@@ -24,68 +20,99 @@ namespace PlexCleaner
             if (sec2 == null)
                 throw new ArgumentNullException(nameof(sec2));
 
-            for (int i = 0; i < prime.Video.Count; i++)
+            // Make sure we can do matching
+            Debug.Assert(DoTracksMatch(prime, sec1, sec2));
+
+            // Video
+            Add(MediaInfo.GetTrackList(prime.Video), prime.Parser,
+                MediaInfo.GetTrackList(sec1.Video), sec1.Parser,
+                MediaInfo.GetTrackList(sec2.Video), sec2.Parser, 
+                Video);
+
+            // Audio
+            Add(MediaInfo.GetTrackList(prime.Audio), prime.Parser,
+                MediaInfo.GetTrackList(sec1.Audio), sec1.Parser,
+                MediaInfo.GetTrackList(sec2.Audio), sec2.Parser,
+                Audio);
+
+            // Subtitle
+            Add(MediaInfo.GetTrackList(prime.Subtitle), prime.Parser,
+                MediaInfo.GetTrackList(sec1.Subtitle), sec1.Parser,
+                MediaInfo.GetTrackList(sec2.Subtitle), sec2.Parser,
+                Subtitle);
+        }
+
+        private static void Add(List<TrackInfo> prime, MediaInfo.ParserType primeType,
+                                List<TrackInfo> sec1, MediaInfo.ParserType sec1Type,
+                                List<TrackInfo> sec2, MediaInfo.ParserType sec2Type,
+                                Dictionary<string, TagMap> dictionary) 
+        {
+            for (int i = 0; i < prime.Count; i++)
             {
-                TagMap tag = new TagMap
+                // Look for an existing entry
+                string key = prime.ElementAt(i).Format;
+                if (dictionary.TryGetValue(key, out TagMap tagmap))
                 {
-                    Primary = prime.Video.ElementAt(i).Format,
-                    Secondary = sec1.Video.ElementAt(i).Format,
-                    Tertiary = sec2.Video.ElementAt(i).Format,
-                    PrimaryTool = prime.Parser,
-                    SecondaryTool = sec1.Parser,
-                    TertiaryTool = sec2.Parser
-                };
-
-                tag.Primary ??= "null";
-
-
-                if (!Video.ContainsKey(tag.Primary))
-                    Video.Add(tag.Primary, tag);
-            }
-            for (int i = 0; i < prime.Audio.Count; i++)
-            {
-                TagMap tag = new TagMap
+                    // Increment the usage count
+                    tagmap.Count++;
+                }
+                else
                 {
-                    Primary = prime.Audio.ElementAt(i).Format,
-                    Secondary = sec1.Audio.ElementAt(i).Format,
-                    Tertiary = sec2.Audio.ElementAt(i).Format,
-                    PrimaryTool = prime.Parser,
-                    SecondaryTool = sec1.Parser,
-                    TertiaryTool = sec2.Parser
-                };
-
-                tag.Primary ??= "null";
-
-                if (!Audio.ContainsKey(tag.Primary))
-                    Audio.Add(tag.Primary, tag);
+                    // Add the tagmap
+                    tagmap = new TagMap
+                    {
+                        Primary = key,
+                        PrimaryTool = primeType,
+                        Secondary = sec1.ElementAt(i).Format,
+                        SecondaryTool = sec1Type,
+                        Tertiary = sec2.ElementAt(i).Format,
+                        TertiaryTool = sec2Type,
+                        Count = 1
+                    };
+                    dictionary.Add(key, tagmap);
+                }
             }
-            for (int i = 0; i < prime.Subtitle.Count; i++)
-            {
-                TagMap tag = new TagMap
-                {
-                    Primary = prime.Subtitle.ElementAt(i).Format,
-                    Secondary = sec1.Subtitle.ElementAt(i).Format,
-                    Tertiary = sec2.Subtitle.ElementAt(i).Format,
-                    PrimaryTool = prime.Parser,
-                    SecondaryTool = sec1.Parser,
-                    TertiaryTool = sec2.Parser
-                };
+        }
 
-                tag.Primary ??= "null";
+        public static bool DoTracksMatch(MediaInfo mediainfo, MediaInfo mkvmerge, MediaInfo ffprobe)
+        {
+            if (mediainfo == null || mkvmerge == null || ffprobe == null)
+                return false;
 
-                if (!Subtitle.ContainsKey(tag.Primary))
-                    Subtitle.Add(tag.Primary, tag);
-            }
+            // Verify the track counts match
+            if (mediainfo.Video.Count != mkvmerge.Video.Count || mediainfo.Video.Count != ffprobe.Video.Count ||
+                mediainfo.Audio.Count != mkvmerge.Audio.Count || mediainfo.Audio.Count != ffprobe.Audio.Count ||
+                mediainfo.Subtitle.Count != mkvmerge.Subtitle.Count || mediainfo.Subtitle.Count != ffprobe.Subtitle.Count)
+                return false;
+
+            // Verify the track languages match
+            // FFprobe has bugs with language vs. tag_language, try removing the tags
+            if (ffprobe.Video.Where((t, i) =>
+                !t.Language.Equals(mediainfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvmerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+                return false;
+
+            if (ffprobe.Audio.Where((t, i) =>
+                !t.Language.Equals(mediainfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvmerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+                return false;
+
+            if (ffprobe.Subtitle.Where((t, i) =>
+                !t.Language.Equals(mediainfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvmerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+                return false;
+
+            return true;
         }
 
         public void WriteLine()
         {
             foreach ((_, TagMap value) in Video)
-                Console.WriteLine($"Video, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}");
+                Program.LogFile.LogConsole($"Video, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
             foreach ((_, TagMap value) in Audio)
-                Console.WriteLine($"Audio, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}");
+                Program.LogFile.LogConsole($"Audio, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
             foreach ((_, TagMap value) in Subtitle)
-                Console.WriteLine($"Subtitle, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}");
+                Program.LogFile.LogConsole($"Subtitle, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
         }
     }
 }

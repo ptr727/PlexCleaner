@@ -10,21 +10,13 @@ namespace PlexCleaner
 {
     internal class Program
     {
-        private static int Main(string[] _)
+        private static int Main()
         {
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
             RootCommand rootCommand = CreateCommandLineOptions();
             return rootCommand.Invoke(CommandLineEx.GetCommandlineArgs());
         }
-
-        /*
-        static async Task<int> Main(string[] args)
-        {
-            RootCommand rootCommand = CreateCommandLineOptions();
-            return await rootCommand.InvokeAsync(args).ConfigureAwait(true);
-        }
-        */
 
         private static RootCommand CreateCommandLineOptions()
         {
@@ -81,6 +73,16 @@ namespace PlexCleaner
             processCommand.AddOption(filesOption);
             rootCommand.AddCommand(processCommand);
 
+            // Monitor and process files
+            Command monitorCommand =
+                new Command("monitor")
+                {
+                    Description = "Monitor for changes in folders and process any changed files.",
+                    Handler = CommandHandler.Create<string, string, List<string>>(MonitorCommand)
+                };
+            monitorCommand.AddOption(filesOption);
+            rootCommand.AddCommand(monitorCommand);
+
             // Re-Mux files
             Command remuxCommand =
                 new Command("remux")
@@ -100,6 +102,16 @@ namespace PlexCleaner
                 };
             reencodeCommand.AddOption(filesOption);
             rootCommand.AddCommand(reencodeCommand);
+
+            // De-interlace files
+            Command deinterlaceCommand =
+                new Command("deinterlace")
+                {
+                    Description = "De-Interlace media files.",
+                    Handler = CommandHandler.Create<string, string, List<string>>(DeInterlaceCommand)
+                };
+            deinterlaceCommand.AddOption(filesOption);
+            rootCommand.AddCommand(deinterlaceCommand);
 
             // Write sidecar files
             Command writesidecarCommand =
@@ -121,15 +133,15 @@ namespace PlexCleaner
             createtagmapCommand.AddOption(filesOption);
             rootCommand.AddCommand(createtagmapCommand);
 
-            // Monitor and process files
-            Command monitorCommand =
-                new Command("monitor")
+            // Show media info
+            Command printinfoCommand =
+                new Command("printinfo")
                 {
-                    Description = "Monitor for changes in folders and process any changed files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(MonitorCommand)
+                    Description = "Print info for media files.",
+                    Handler = CommandHandler.Create<string, string, List<string>>(PrintInfoCommand)
                 };
-            monitorCommand.AddOption(filesOption);
-            rootCommand.AddCommand(monitorCommand);
+            printinfoCommand.AddOption(filesOption);
+            rootCommand.AddCommand(printinfoCommand);
 
             return rootCommand;
         }
@@ -167,6 +179,16 @@ namespace PlexCleaner
             return process.ProcessFiles(program.FileInfoList) && Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
 
+        private static int MonitorCommand(string settings, string log, List<string> files)
+        {
+            Program program = Create(settings, log);
+            if (program == null)
+                return -1;
+
+            Monitor monitor = new Monitor();
+            return monitor.MonitorFolders(files) ? 0 : -1;
+        }
+
         private static int ReMuxCommand(string settings, string log, List<string> files)
         {
             Program program = Create(settings, log);
@@ -191,6 +213,19 @@ namespace PlexCleaner
 
             Process process = new Process();
             return process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
+        }
+
+        private static int DeInterlaceCommand(string settings, string log, List<string> files)
+        {
+            Program program = Create(settings, log);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(files))
+                return -1;
+
+            Process process = new Process();
+            return process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
         }
 
         private static int WriteSidecarCommand(string settings, string log, List<string> files)
@@ -219,14 +254,17 @@ namespace PlexCleaner
             return process.CreateTagMapFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int MonitorCommand(string settings, string log, List<string> files)
+        private static int PrintInfoCommand(string settings, string log, List<string> files)
         {
             Program program = Create(settings, log);
             if (program == null)
                 return -1;
 
-            Monitor monitor = new Monitor();
-            return monitor.MonitorFolders(files) ? 0 : -1;
+            if (!program.CreateFileList(files))
+                return -1;
+
+            Process process = new Process();
+            return process.PrintInfo(program.FileInfoList) ? 0 : -1;
         }
 
         // Add a reference to this class in the event handler arguments
@@ -294,9 +332,14 @@ namespace PlexCleaner
             }
 
             // Make sure that the tools folder exists
-            if (!Tools.VerifyTools())
+            if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
                 return null;
             ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+
+            // Set tool version numbers
+            FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
+            MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
+            MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
 
             // Create program
             return new Program();
