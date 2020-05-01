@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace PlexCleaner
 {
@@ -463,14 +464,10 @@ namespace PlexCleaner
 
         private bool Refresh()
         {
-            // Refresh file attribute info
-            TargetFile.Refresh();
-
             // Get new media info
             Result = GetMediaInfo();
 
             // Call Refresh() at processing function exit
-
             return Result;
         }
 
@@ -479,6 +476,24 @@ namespace PlexCleaner
             return Process.Options.UseSidecarFiles ?
                 SidecarFile.GetMediaInfo(TargetFile, false, out FfProbeInfo, out MkvMergeInfo, out MediaInfoInfo) :
                 MediaInfo.GetMediaInfo(TargetFile, out FfProbeInfo, out MkvMergeInfo, out MediaInfoInfo);
+        }
+
+        public void MonitorFileTime(int seconds)
+        {
+            TargetFile.Refresh();
+            DateTime fileTime = TargetFile.LastWriteTimeUtc;
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole($"Warning : MonitorFileTime : {fileTime} : \"{TargetFile.Name}\"");
+            for (int i = 0; i < seconds; i ++)
+            {
+                if (Program.Cancel.WaitForSet(1000))
+                    break;
+                TargetFile.Refresh();
+                if (TargetFile.LastWriteTimeUtc != fileTime)
+                    Program.LogFile.LogConsole($"Warning : MonitorFileTime : {TargetFile.LastWriteTimeUtc} != {fileTime} : \"{TargetFile.Name}\"");
+                fileTime = TargetFile.LastWriteTimeUtc;
+            }
+            Program.LogFile.LogConsole("");
         }
 
         public bool Result { get; set; }

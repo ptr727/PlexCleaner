@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
+      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\Series\\Doctor Who (1963)\""
     },
     "Monitor": {
       "commandName": "Project",

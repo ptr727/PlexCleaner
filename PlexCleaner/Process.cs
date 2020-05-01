@@ -553,6 +553,10 @@ namespace PlexCleaner
             if (!processFile.VerifyDuration(ref modified))
                 return processFile.Result;
 
+            // TODO : Why does the file timestamp change after writing sidecar files?
+            if (modified)
+                processFile.MonitorFileTime(30);
+
             // Done
             return true;
         }

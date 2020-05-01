@@ -199,7 +199,7 @@ The following processing will be done:
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
 - De-interlace the video track if interlaced.
-- Re-encode video to H264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, `ReEncodeVideoProfiles` list.
+- Re-encode video to H264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media file integrity.
 
@@ -209,7 +209,8 @@ The `remux` command will re-multiplex the media files using `MKVMerge`.
 
 The `reencode` command will re-encode the media files using `FFMPeg` and H264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
-The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter. Interlace detection is not absolute, especially for mixed content. We use the `MediaInfo` `ScanType` field and the `FFmpeg` `idet` filter to determine if content is interlaced.
+The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.  
+Interlace detection is not absolute, especially for mixed content, the `MediaInfo` `ScanType` field and the `FFmpeg` `idet` filter is used to determine if content is interlaced.
 
 ### Monitor
 

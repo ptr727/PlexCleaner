@@ -55,7 +55,6 @@ namespace PlexCleaner
             mediainfo = null;
 
             // TODO : Chance of race condition between reading media, external write to same media, and writing sidecar
-            // TODO : On non-NTFS filesystems the timestamp granularity is insufficient to use as a reliable method of change detection
 
             // Create the sidecar file name
             string sidecarfile = Path.ChangeExtension(fileinfo.FullName, $".{parser}");
@@ -108,6 +107,7 @@ namespace PlexCleaner
                 }
 
                 // Compare the media modified time and file size
+                fileinfo.Refresh();
                 if (fileinfo.LastWriteTimeUtc != header.MediaLastWriteTimeUtc ||
                     fileinfo.Length != header.MediaLength)
                 {
@@ -148,6 +148,7 @@ namespace PlexCleaner
                 }
 
                 // Create the header
+                fileinfo.Refresh();
                 SidecarFileJsonSchema header = new SidecarFileJsonSchema
                 {
                     // Save the tool version
