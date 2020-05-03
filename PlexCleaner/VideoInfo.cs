@@ -17,16 +17,14 @@ namespace PlexCleaner
         internal VideoInfo(MkvToolJsonSchema.Track track) : base(track)
         {
             // Profile missing
-            // ScanType missing
+            // Interlaced missing
         }
 
         internal VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
         {
-            // ScanType missing
-
             // Re-assign Codec to the CodecTagString intead of the CodecLongName
             // We need the tag for sub-formats like DivX / DX50
-            // Ignore bad tags like [0][0][0][0]
+            // Ignore bad tags like 0x0000 / [0][0][0][0]
             if (!string.IsNullOrEmpty(stream.CodecTagString) &&
                 !stream.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
                 Codec = stream.CodecTagString;
@@ -36,6 +34,12 @@ namespace PlexCleaner
                 Profile = $"{stream.Profile}@{stream.Level}";
             else if (!string.IsNullOrEmpty(stream.Profile))
                 Profile = stream.Profile;
+
+            // Test for interlaced
+            // https://ffmpeg.org/ffprobe-all.html
+            // Progressive, tt, bb, tb, bt
+            Interlaced = !string.IsNullOrEmpty(stream.FieldOrder) &&
+                         !stream.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
         }
 
         internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
@@ -46,24 +50,18 @@ namespace PlexCleaner
             else if (!string.IsNullOrEmpty(track.FormatProfile))
                 Profile = track.FormatProfile;
 
-            // Used for interlaced detections
-            ScanType = track.ScanType;
+            // Test for interlaced
+            // TODO : Does not currently work for HEVC
+            // https://sourceforge.net/p/mediainfo/bugs/771/
+            // https://github.com/MediaArea/MediaInfoLib/issues/1092
+            // Test for Progressive, Interlaced, MBAFF, or empty
+            Interlaced = !string.IsNullOrEmpty(track.ScanType) &&
+                         !track.ScanType.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
         }
 
         public string Profile { get; set; } = "";
 
-        public string ScanType { get; set; } = "";
-
-        public bool IsInterlaced()
-        {
-            // TODO : Find a better way to do this
-            // This only works for MediaInfo
-            // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
-            // https://sourceforge.net/p/mediainfo/bugs/771/
-            // Test for Progressive, Interlaced, MBAFF
-            // Not reliable as some media does not have the ScanType field set
-            return !ScanType.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
-        }
+        public bool Interlaced { get; set; } = false;
 
         public bool CompareVideo(VideoInfo compare)
         {
@@ -84,7 +82,7 @@ namespace PlexCleaner
 
         public override string ToString()
         {
-            return $"Video : Profile : {Profile}, ScanType : {ScanType}, {base.ToString()}";
+            return $"Video : Profile : {Profile}, Interlaced : {Interlaced}, {base.ToString()}";
         }
     }
 }

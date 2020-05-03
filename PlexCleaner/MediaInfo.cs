@@ -70,6 +70,8 @@ namespace PlexCleaner
             return trackList;
         }
 
+        public int Count => Video.Count + Audio.Count + Subtitle.Count;
+
         public bool FindUnknownLanguage(out MediaInfo known, out MediaInfo unknown)
         {
             known = new MediaInfo(Parser);
@@ -97,7 +99,7 @@ namespace PlexCleaner
                     known.Subtitle.Add(subtitle);
 
             // Return true on any match
-            return unknown.Video.Count > 0 || unknown.Audio.Count > 0 || unknown.Subtitle.Count > 0;
+            return unknown.Count > 0;
         }
 
         public bool FindNeedReMux(out MediaInfo keep, out MediaInfo remux)
@@ -105,23 +107,25 @@ namespace PlexCleaner
             keep = new MediaInfo(Parser);
             remux = new MediaInfo(Parser);
 
-            // No filter for audio or video
-            keep.Video.Clear();
-            keep.Video.AddRange(Video);
-            keep.Audio.Clear();
-            keep.Audio.AddRange(Audio);
+            // TODO: Add more granular logic to determine a general error vs. a remux correctable error
 
-            // This logic only works with MediaInfo
-            Debug.Assert(Parser == ParserType.MediaInfo);
+            // Video
+            foreach (VideoInfo video in Video)
+                if (video.HasErrors)
+                    remux.Video.Add(video);
+                else
+                    keep.Video.Add(video);
 
-            // We need MuxingMode for VOBSUB else Plex on Nvidia Shield TV has problems
-            // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
-            // https://github.com/mbunkus/mkvtoolnix/issues/2131
-            // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2131
-            // TODO: Add rules to configuration file
+            // Audio
+            foreach (AudioInfo audio in Audio)
+                if (audio.HasErrors)
+                    remux.Audio.Add(audio);
+                else
+                    keep.Audio.Add(audio);
+
+            // Subtitle
             foreach (SubtitleInfo subtitle in Subtitle)
-                if (subtitle.Codec.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) && 
-                    string.IsNullOrEmpty(subtitle.MuxingMode))
+                if (subtitle.HasErrors)
                     remux.Subtitle.Add(subtitle);
                 else
                     keep.Subtitle.Add(subtitle);
@@ -131,7 +135,7 @@ namespace PlexCleaner
             keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
             // Return true on any match
-            return remux.Video.Count > 0 || remux.Audio.Count > 0 || remux.Subtitle.Count > 0;
+            return remux.Count > 0;
         }
 
         public bool FindNeedDeInterlace(out MediaInfo keep, out MediaInfo deinterlace)
@@ -145,11 +149,8 @@ namespace PlexCleaner
             keep.Audio.Clear();
             keep.Audio.AddRange(Audio);
 
-            // This logic only works with MediaInfo
-            Debug.Assert(Parser == ParserType.MediaInfo);
-
             foreach (VideoInfo video in Video)
-                if (video.IsInterlaced())
+                if (video.Interlaced)
                     deinterlace.Video.Add(video);
                 else
                     keep.Video.Add(video);
@@ -159,7 +160,7 @@ namespace PlexCleaner
             keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
             // Return true on any match
-            return deinterlace.Video.Count > 0 || deinterlace.Audio.Count > 0 || deinterlace.Subtitle.Count > 0;
+            return deinterlace.Count > 0;
         }
 
         public bool FindUnwantedLanguage(HashSet<string> languages, out MediaInfo keep, out MediaInfo remove)
@@ -210,7 +211,7 @@ namespace PlexCleaner
             keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
             // Return true on any match
-            return remove.Video.Count > 0 || remove.Audio.Count > 0 || remove.Subtitle.Count > 0;
+            return remove.Count > 0;
         }
 
         public bool FindNeedReEncode(List<VideoInfo> reencodevideo, HashSet<string> reencodeaudio, out MediaInfo keep, out MediaInfo reencode)
@@ -219,6 +220,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(reencodevideo));
             if (reencodeaudio == null)
                 throw new ArgumentNullException(nameof(reencodeaudio));
+
+            // Filter logic values are based FFprobe attributes
+            Debug.Assert(Parser == ParserType.FfProbe);
 
             keep = new MediaInfo(Parser);
             reencode = new MediaInfo(Parser);
@@ -243,7 +247,7 @@ namespace PlexCleaner
                     keep.Audio.Add(audio);
             }
 
-            // If we are encoding audio, the video track must be h264 else we get ffmpeg encoding errors
+            // If we are encoding audio, the video track must be h264 or h265 else we get ffmpeg encoding errors
             // [matroska @ 00000195b3585c80] Timestamps are unset in a packet for stream 0.
             // [matroska @ 00000195b3585c80] Can't write packet with unknown timestamp
             // av_interleaved_write_frame(): Invalid argument
@@ -253,7 +257,6 @@ namespace PlexCleaner
                     !item.Format.Equals("hevc", StringComparison.OrdinalIgnoreCase)))
             {
                 // Add video to the reencode list
-                Trace.WriteLine("Audio conversion requires forced video conversion");
                 reencode.Video.AddRange(keep.Video);
                 keep.Video.Clear();
             }
@@ -267,7 +270,7 @@ namespace PlexCleaner
             keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
             // Return true on any match
-            return reencode.Video.Count > 0 || reencode.Audio.Count > 0 || reencode.Subtitle.Count > 0;
+            return reencode.Count > 0;
         }
 
         public bool FindDuplicateTracks(List<string> codecs, out MediaInfo keep, out MediaInfo remove)
@@ -295,7 +298,7 @@ namespace PlexCleaner
             keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
             // Return true on any match
-            return remove.Video.Count > 0 || remove.Audio.Count > 0 || remove.Subtitle.Count > 0;
+            return remove.Count > 0;
         }
 
         private void FindDuplicateVideoTracks(MediaInfo keep, MediaInfo remove)
@@ -335,6 +338,7 @@ namespace PlexCleaner
                 // Keep it
                 keep.Video.Add(video);
             }
+            Debug.Assert(keep.Video.Count > 0);
 
             // Add all other items to the remove list
             remove.Video.AddRange(Video.Except(keep.Video));
@@ -363,39 +367,59 @@ namespace PlexCleaner
                 return;
             }
 
-            // Keep one instance of each language
+            // Keep one normal and one forced instance of each language 
+            // TODO : Add a SDH processing option
             foreach (string language in languages)
             {
-                // TODO : Add a SDH processing option
+                // Find non-forced track
 
-                // Use the first default non-SDH track
+                // Use the first default, non-SDH, non-forced track
                 SubtitleInfo subtitle = Subtitle.Find(item =>
                     item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
                     item.Default &&
-                    !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase));
+                    !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase) &&
+                    !(item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
 
-                // If nothing found, look for a non-SDH forced track
+                // If nothing found, first non-SDH, non-forced track
+                subtitle ??= Subtitle.Find(item =>
+                    item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
+                    !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase) &&
+                    !(item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
+
+                // If nothing found, non-forced track
+                subtitle ??= Subtitle.Find(item =>
+                    item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
+                    !(item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
+
+                // Add non-forced track
+                if (subtitle != null)
+                    keep.Subtitle.Add(subtitle);
+
+                // Find forced track
+
+                // Use the first default, non-SDH, forced track
+                subtitle = Subtitle.Find(item =>
+                    item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
+                    item.Default &&
+                    !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase) &&
+                    (item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
+
+                // If nothing found, first non-SDH, forced track
                 subtitle ??= Subtitle.Find(item =>
                     item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
                     !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase) &&
                     (item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
 
-                // If nothing found, use the first non-SDH track
+                // If nothing found, forced track
                 subtitle ??= Subtitle.Find(item =>
                     item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
-                    !item.Title.Contains("SDH", StringComparison.OrdinalIgnoreCase));
+                    (item.Forced || item.Title.Contains("Forced", StringComparison.OrdinalIgnoreCase)));
 
-                // If nothing found, use the default track ignoring SDH
-                subtitle ??= Subtitle.Find(item =>
-                    item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
-                    item.Default);
-
-                // If nothing found, use the first track
-                subtitle ??= Subtitle.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase));
-
-                // Keep it
-                keep.Subtitle.Add(subtitle);
+                // Add forced track
+                if (subtitle != null)
+                    keep.Subtitle.Add(subtitle);
             }
+            Debug.Assert(keep.Subtitle.Count > 0);
 
             // Add all other items to the remove list
             remove.Subtitle.AddRange(Subtitle.Except(keep.Subtitle));
@@ -455,6 +479,7 @@ namespace PlexCleaner
                 // Keep it
                 keep.Audio.Add(audio);
             }
+            Debug.Assert(keep.Audio.Count > 0);
 
             // Add all other items to the remove list
             remove.Audio.AddRange(Audio.Except(keep.Audio));
@@ -474,6 +499,34 @@ namespace PlexCleaner
                     break;
             }
             return audio;
+        }
+
+        public void RemoveTracks(MediaInfo removeTracks)
+        {
+            if (removeTracks == null)
+                throw new ArgumentNullException(nameof(removeTracks));
+
+            // Only between same types else value comparison logic does not work
+            Debug.Assert(Parser == removeTracks.Parser);
+
+            // Remove all matching items by value
+            Video.RemoveAll(item => removeTracks.Video.Contains(item));
+            Audio.RemoveAll(item => removeTracks.Audio.Contains(item));
+            Subtitle.RemoveAll(item => removeTracks.Subtitle.Contains(item));
+        }
+
+        public void AddTracks(MediaInfo addTracks)
+        {
+            if (addTracks == null)
+                throw new ArgumentNullException(nameof(addTracks));
+
+            // Only between same types else value comparison logic does not work
+            Debug.Assert(Parser == addTracks.Parser);
+
+            // Add all items that are not already in the collection by value
+            Video.AddRange(addTracks.Video.Where(item => !Video.Contains(item)));
+            Audio.AddRange(addTracks.Audio.Where(item => !Audio.Contains(item)));
+            Subtitle.AddRange(addTracks.Subtitle.Where(item => !Subtitle.Contains(item)));
         }
 
         public static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
