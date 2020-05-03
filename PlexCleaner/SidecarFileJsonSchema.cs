@@ -5,12 +5,24 @@ namespace PlexCleaner
 {
     public class SidecarFileJsonSchema
     {
-        public string ToolVersion { get; set; }
+        public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+        public const int CurrentSchemaVersion = 1;
+
         public DateTime MediaLastWriteTimeUtc { get; set; }
         public long MediaLength { get; set; }
 
-        public static string ToJson(SidecarFileJsonSchema header) =>
-            JsonConvert.SerializeObject(header, Settings);
+        public string FfMpegToolVersion { get; set; }
+        public string FfProbeInfoData { get; set; }
+        public string FfIdetInfoData { get; set; }
+
+        public string MkvToolVersion { get; set; }
+        public string MkvMergeInfoData { get; set; }
+
+        public string MediaInfoToolVersion { get; set; }
+        public string MediaInfoData { get; set; }
+
+        public static string ToJson(SidecarFileJsonSchema json) =>
+            JsonConvert.SerializeObject(json, Settings);
 
         public static SidecarFileJsonSchema FromJson(string json) =>
             JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
@@ -23,9 +35,7 @@ namespace PlexCleaner
 
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
-            // The JSON stream reader is greedy and does not allow us to read mixed content from the text reader
-            // Write the entire serialized string in a single line
-            Formatting = Formatting.None
+            Formatting = Formatting.Indented
         };
     }
 }

@@ -74,8 +74,8 @@ Create a default configuration file by running:
     "DeleteInvalidFiles": true,
     // Delete non-media files
     "DeleteUnwantedExtensions": true,
-    // Files to keep, e.g. .srt files
-    "KeepExtensions": "",
+    // Files to keep, e.g. subtitle or partial files
+    "KeepExtensions": ".partial~",
     // Enable re-mux
     "ReMux": true,
     // Remux files to MKV if the extension matches

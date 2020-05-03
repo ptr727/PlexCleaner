@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using HtmlAgilityPack;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner
@@ -18,13 +17,13 @@ namespace PlexCleaner
             // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
 
             // Wanted extensions, always keep .mkv and sidecar files
+            // TODO : Add support for ignoring FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
             List<string> stringlist = Options.KeepExtensions.Split(',').ToList();
             KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
-                ".mkv"
+                ".mkv",
+                SidecarFile.SidecarExtension
             };
-            foreach (string extension in SidecarFile.SidecarExtensions)
-                KeepExtensions.Add(extension);
 
             // Containers types that can be remuxed to MKV
             stringlist = Options.ReMuxExtensions.Split(',').ToList();
@@ -178,7 +177,7 @@ namespace PlexCleaner
                     !ReMuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
-                // ReMux file
+                // Process the file
                 Program.LogFile.LogConsole($"ReMuxing : \"{fileinfo.FullName}\"");
                 if (!ReMuxFile(fileinfo, out bool modified))
                 {
@@ -399,7 +398,7 @@ namespace PlexCleaner
                     continue;
 
                 // Write the sidecar files
-                if (!SidecarFile.CreateSidecarFiles(fileinfo))
+                if (!SidecarFile.CreateSidecarFile(fileinfo))
                     // TODO : Log error
                     errorcount ++;
 
@@ -441,22 +440,10 @@ namespace PlexCleaner
                 if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Get the media info
-                if (!GetMediaInfo(fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo))
-                {
+                // Process the file
+                if (!PrintFileInfo(fileinfo))
                     // TODO: Log Error
                     errorcount ++;
-                    // Next file
-                    continue;
-                }
-
-                // Print info
-                Program.LogFile.LogConsole("");
-                Program.LogFile.LogConsole(fileinfo.FullName);
-                ffprobe.WriteLine("FFprobe");
-                mkvmerge.WriteLine("MKVMerge");
-                mediainfo.WriteLine("MediaInfo");
-                Program.LogFile.LogConsole("");
 
                 // Next file
             }
@@ -504,6 +491,10 @@ namespace PlexCleaner
             // By now all the files we are processing should be MKV files
             Debug.Assert(MkvTool.IsMkvFile(fileinfo));
 
+            // Read the media info
+            if (!processFile.GetMediaInfo())
+                return processFile.Result;
+
             // Do we have any errors in the file
             // TODO : Do more than just check, e.g. remove tags
             processFile.CheckForErrors();
@@ -517,18 +508,11 @@ namespace PlexCleaner
             if (!processFile.SetUnknownLanguage(ref modified))
                 return processFile.Result;
 
-            // TODO : Merge all remux operations into a single call
-
+            // Merge all remux operations into a single call
             // Remove all the unwanted language tracks
-            if (!processFile.RemoveUnwantedLanguages(KeepLanguages, ref modified))
-                return processFile.Result;
-
             // Remove all duplicate tracks
-            if (!processFile.RemoveDuplicateTracks(PreferredAudioFormats, ref modified))
-                return processFile.Result;
-
             // Remux if any tracks specifically need remuxing
-            if (!processFile.RemuxTracks(ref modified))
+            if (!processFile.ReMuxMulti(KeepLanguages, PreferredAudioFormats, ref modified))
                 return processFile.Result;
 
             // De-interlace interlaced content
@@ -547,15 +531,19 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Verify media validity
-            // TODO : Verify the integrity of the streams
             if (!processFile.VerifyTrackCount(ref modified))
                 return processFile.Result;
             if (!processFile.VerifyDuration(ref modified))
                 return processFile.Result;
 
+            // TODO : Takes too long, store result in sidecar file
+            //if (!processFile.VerifyStreams(ref modified))
+            //    return processFile.Result;
+
             // TODO : Why does the file timestamp change after writing sidecar files?
-            if (modified)
-                processFile.MonitorFileTime(30);
+            // https://forums.unraid.net/topic/91800-file-modification-time-changes-after-last-write/
+            //if (modified)
+            //    processFile.MonitorFileTime(30);
 
             // Done
             return true;
@@ -594,42 +582,52 @@ namespace PlexCleaner
             // Init
             modified = false;
 
-            // Get interlaced info from FFmpeg
-            if (!FfMpegTool.IsFileInterlaced(fileinfo.FullName, out bool framecount))
+            // Use ProcessFile logic for de-interlacing
+            ProcessFile processFile = new ProcessFile(fileinfo);
+            if (!processFile.GetMediaInfo())
                 return false;
 
-            // Get interlaced info from MediaInfo
-            MediaInfo info;
-            if (!MediaInfo.GetMediaInfo(fileinfo, MediaInfo.ParserType.MediaInfo, out info))
+            // De-interlace
+            return processFile.DeInterlace(ref modified);
+        }
+
+        private static bool PrintFileInfo(FileInfo fileinfo)
+        {
+            // Use ProcessFile to get media info
+            ProcessFile processFile = new ProcessFile(fileinfo);
+            if (!processFile.GetMediaInfo())
                 return false;
-            bool scantype = info.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
 
-            Program.LogFile.LogConsole($"FFmpeg Idet filter reports : Interlaced : {framecount} : \"{fileinfo.Name}\"");
-            Program.LogFile.LogConsole($"MediaInfo ScanType reports : Interlaced : {scantype} : \"{fileinfo.Name}\"");
-
-            // Skip if neither report interlaced
-            if (!framecount && !scantype)
-            {
-                Program.LogFile.LogConsole($"No need to DeInterlace, skipping file : \"{fileinfo.Name}\"");
-                Program.LogFile.LogConsole("");
-                return true;
-            }
-
-            // DeInterlace the file
-            if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string _))
-                return false;
+            // Print info
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole(fileinfo.FullName);
+            processFile.FfProbeInfo.WriteLine("FFprobe");
+            processFile.MkvMergeInfo.WriteLine("MKVMerge");
+            processFile.MediaInfoInfo.WriteLine("MediaInfo");
+            Program.LogFile.LogConsole($"FFmpegIdet : SingleFrame : {processFile.FfMpegIdetInfo.SingleFrame.Percentage:P}, MultiFrame : {processFile.FfMpegIdetInfo.MultiFrame.Percentage:P}");
             Program.LogFile.LogConsole("");
 
-            // Modified
-            modified = true;
             return true;
         }
 
-        private static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
+        private static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobeInfo, out MediaInfo mkvmergeInfo, out MediaInfo mediainfoInfo)
         {
-            return Options.UseSidecarFiles ? 
-                SidecarFile.GetMediaInfo(fileinfo, false, out ffprobe, out mkvmerge, out mediainfo) : 
-                MediaInfo.GetMediaInfo(fileinfo, out ffprobe, out mkvmerge, out mediainfo);
+            // Init
+            ffprobeInfo = null;
+            mkvmergeInfo = null;
+            mediainfoInfo = null;
+
+            // Use ProcessFile to get media info
+            ProcessFile processFile = new ProcessFile(fileinfo);
+            if (!processFile.GetMediaInfo())
+                return false;
+
+            // Assign values
+            ffprobeInfo = processFile.FfProbeInfo;
+            mkvmergeInfo = processFile.MkvMergeInfo;
+            mediainfoInfo = processFile.MediaInfoInfo;
+
+            return true;
         }
 
         private readonly HashSet<string> KeepExtensions;

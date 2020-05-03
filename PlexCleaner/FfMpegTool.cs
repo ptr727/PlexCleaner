@@ -118,22 +118,20 @@ namespace PlexCleaner
             return true;
         }
 
-/*
-        public static bool VerifyMedia(string inputname)
+        public static bool VerifyMedia(string filename)
         {
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
-            string commandline = $"-v warning -i \"{inputname}\" -f null -";
-            Tools.WriteLine($"Verifying media : \"{inputname}\"");
-            int exitcode = FfMpegTool.FfMpeg(commandline, out string _, out string error);
-            if (exitcode != 0 || error.Length > 0)
-            {
-                Tools.WriteLineError($"Error verifying media : \"{inputname}\"");
-                return false;
-            }
-            return true;
+            string commandline;
+            if (VerifyFrameCount > 0)
+                commandline = $"-i \"{filename}\" -nostats -v error -xerror -frames:v {VerifyFrameCount} -f null -";
+            else
+                commandline = $"-i \"{filename}\" -nostats -v error -xerror -f null -";
+            ConsoleEx.WriteLine("");
+            int exitcode = FfMpegCli(commandline, out string _, out string error);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0 && error.Length == 0;
         }
-*/
 
         public static bool GetFfProbeInfo(string filename, out MediaInfo mediainfo)
         {
@@ -150,8 +148,7 @@ namespace PlexCleaner
             ConsoleEx.WriteLine("");
             int exitcode = FfProbeCli(commandline, out json, out string error);
             ConsoleEx.WriteLine("");
-            // TODO : Verify that FFprobe returns an error when it fails
-            return exitcode == 0 && error.Length <= 0;
+            return exitcode == 0 && error.Length == 0;
         }
 
         public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediainfo)
@@ -361,68 +358,78 @@ namespace PlexCleaner
             return exitcode == 0;
         }
 
-        public static bool IsFileInterlaced(string inputname, out bool interlaced)
+        public static bool GetIdetInfo(string filename, out FfMpegIdetInfo idetinfo)
         {
-            // Init
-            interlaced= false;
+            idetinfo = null;
+            return GetIdetInfoText(filename, out string text) &&
+                   GetIdetInfoFromText(text, out idetinfo);
+        }
 
+        public static bool GetIdetInfoText(string inputname, out string text)
+        {
             // Create the FFmpeg commandline and execute
             // Use Idet to get statistics
             // https://ffmpeg.org/ffmpeg-filters.html#idet
             // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
             // https://trac.ffmpeg.org/wiki/Null
-            string commandline = $"-i \"{inputname}\" -nostats -filter:v idet -frames:v {IdetFrameCount} -an -f rawvideo -y nul";
-            //string commandline = $"-i \"{inputname}\" -nostats -filter:v idet -an -f rawvideo -y nul";
+            string commandline;
+            if (IdetFrameCount > 0)
+                commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet -frames:v {IdetFrameCount} -an -f rawvideo -y nul";
+            else
+                commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet -an -f rawvideo -y nul";
             ConsoleEx.WriteLine("");
             // FFMpeg logs output to stderror
-            int exitcode = FfMpegCli(commandline, out string output, out string error);
+            int exitcode = FfMpegCli(commandline, out string _, out text);
             ConsoleEx.WriteLine("");
-            if (exitcode != 0)
-                return false;
+            return exitcode == 0;
+        }
 
-            // Parse the output
+        public static bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetinfo)
+        {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+            
+            // Init
+            idetinfo = new FfMpegIdetInfo();
+
+            // Parse the text
             try
             {
-                // ...
+                // Example:
                 // frame= 2048 fps=294 q=-0.0 Lsize= 6220800kB time=00:01:21.92 bitrate=622080.0kbits/s speed=11.8x
                 // video:6220800kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.000000%
                 // [Parsed_idet_0 @ 00000234e42d0440] Repeated Fields: Neither:  2049 Top:     0 Bottom:     0
                 // [Parsed_idet_0 @ 00000234e42d0440] Single frame detection: TFF:     0 BFF:     0 Progressive:  1745 Undetermined:   304
                 // [Parsed_idet_0 @ 00000234e42d0440] Multi frame detection: TFF:     0 BFF:     0 Progressive:  2021 Undetermined:    28
-                const string repeatedfields = @"\[Parsed_idet_0 \@ (.*?)\] Repeated Fields:(?<repeated>.*?)Neither: (?<repeated_neither>.*?)Top: (?<repeated_top>.*?)Bottom(?<repeated_bottom>.*?)$";
-                const string singleframe = @"\[Parsed_idet_0 \@ (.*?)\] Single frame detection: (?<single>.*?)TFF: (?<single_tff>.*?)BFF: (?<single_bff>.*?)Progressive: (?<single_prog>.*?)Undetermined: (?<single_und>.*?)$";
-                const string multiframe = @"\[Parsed_idet_0 \@ (.*?)\] Multi frame detection: (?<multi>.*?)TFF: (?<multi_tff>.*?)BFF: (?<multi_bff>.*?)Progressive: (?<multi_prog>.*?)Undetermined: (?<multi_und>.*?)$";
+                
+                // Pattern
+                const string repeatedfields = @"\[Parsed_idet_0 \@ (.*?)\] Repeated Fields: Neither: (?<repeated_neither>.*?)Top: (?<repeated_top>.*?)Bottom: (?<repeated_bottom>.*?)$";
+                const string singleframe = @"\[Parsed_idet_0 \@ (.*?)\] Single frame detection: TFF: (?<single_tff>.*?)BFF: (?<single_bff>.*?)Progressive: (?<single_prog>.*?)Undetermined: (?<single_und>.*?)$";
+                const string multiframe = @"\[Parsed_idet_0 \@ (.*?)\] Multi frame detection: TFF: (?<multi_tff>.*?)BFF: (?<multi_bff>.*?)Progressive: (?<multi_prog>.*?)Undetermined: (?<multi_und>.*?)$";
+
                 // We need to match in LF not CRLF mode else $ does not work as expected
                 string pattern = $"{repeatedfields}\n{singleframe}\n{multiframe}";
-                string errorlf = error.Replace("\r\n", "\n", StringComparison.Ordinal);
+                string textlf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
+
+                // Match
                 Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-                Match match = regex.Match(errorlf);
+                Match match = regex.Match(textlf);
                 Debug.Assert(match.Success);
 
                 // Get the frame counts
-                int singletff = int.Parse(match.Groups["single_tff"].Value.Trim(), CultureInfo.InvariantCulture);
-                int singlebff = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
-                int singleprog = int.Parse(match.Groups["single_prog"].Value.Trim(), CultureInfo.InvariantCulture);
-                int singleund = int.Parse(match.Groups["single_und"].Value.Trim(), CultureInfo.InvariantCulture);
-                int multitff = int.Parse(match.Groups["multi_tff"].Value.Trim(), CultureInfo.InvariantCulture);
-                int multibff = int.Parse(match.Groups["multi_bff"].Value.Trim(), CultureInfo.InvariantCulture);
-                int multiprog = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
-                int multiund = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.RepeatedFields.Neither = int.Parse(match.Groups["repeated_neither"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.RepeatedFields.Top = int.Parse(match.Groups["repeated_top"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.RepeatedFields.Bottom = int.Parse(match.Groups["repeated_bottom"].Value.Trim(), CultureInfo.InvariantCulture);
 
-                // Compare the interlaced vs. progressive frame counts
-                bool single = (singletff + singlebff) > singleprog;
-                bool multi = (multitff + multibff) > multiprog;
-                Trace.WriteLine($"FFmpeg Idet : single : {single}, multi : {multi}");
-                if (single || multi)
-                    interlaced = true;
+                idetinfo.SingleFrame.Tff = int.Parse(match.Groups["single_tff"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.SingleFrame.Bff  = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.SingleFrame.Progressive = int.Parse(match.Groups["single_prog"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.SingleFrame.Undetermined = int.Parse(match.Groups["single_und"].Value.Trim(), CultureInfo.InvariantCulture);
 
-                // Calculate interlaced frame % of total frames
-                double singleper = System.Convert.ToDouble(singletff + singlebff) / System.Convert.ToDouble(singletff + singlebff + singleprog + singleund);
-                double multiper = System.Convert.ToDouble(multitff + multibff) / System.Convert.ToDouble(multitff + multibff + multiprog + multiund);
-                Trace.WriteLine($"FFmpeg Idet : singleper : {singleper:P}, multiper : {multiper:P}");
-                if (singleper > 50.0 || multiper > 50.0)
-                    interlaced = true;
-
+                idetinfo.MultiFrame.Tff = int.Parse(match.Groups["multi_tff"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.MultiFrame.Bff = int.Parse(match.Groups["multi_bff"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.MultiFrame.Progressive = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
+                idetinfo.MultiFrame.Undetermined = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {
@@ -435,6 +442,7 @@ namespace PlexCleaner
         private const string FfMpegBinary = @"bin\ffmpeg.exe";
         private const string FfProbeBinary = @"bin\ffprobe.exe";
         private const string FfmpegSnippet = "-ss 0 -t 60";
-        private const int IdetFrameCount = 1024;
+        private const int IdetFrameCount = 1024; 
+        private const int VerifyFrameCount = 1024;
     }
 }

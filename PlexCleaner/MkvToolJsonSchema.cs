@@ -83,6 +83,9 @@ namespace PlexCleaner.MkvToolJsonSchema
         [JsonProperty("language")]
         public string Language { get; set; } = "";
 
+        [JsonProperty("forced_track")]
+        public bool Forced { get; set; } = false;
+
         [JsonProperty("tag_language")]
         public string TagLanguage { get; set; } = "";
 

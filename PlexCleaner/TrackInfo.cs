@@ -20,13 +20,12 @@ namespace PlexCleaner
             Title = track.Properties.TrackName;
             Default = track.Properties.DefaultTrack;
 
-            // If the "language" and "tag_language" fields are set we may encounter a FFprobe bug
+            // If the "language" and "tag_language" fields are set FFprobe uses the tag language instead of the track language
             // https://github.com/MediaArea/MediaAreaXml/issues/34
             if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
                 !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 HasErrors = true;
-                Trace.WriteLine($"Possible FFprobe Bug : {track.Properties.Language} != {track.Properties.TagLanguage}");
             }
 
             // Set language
@@ -126,7 +125,6 @@ namespace PlexCleaner
         public StateType State { get; set; } = StateType.None;
         public string Title { get; set; } = "";
         public bool Default { get; set; } = false;
-        public bool HasTags { get; set; } = false;
         public bool HasErrors { get; set; } = false;
 
         public bool IsLanguageUnknown()

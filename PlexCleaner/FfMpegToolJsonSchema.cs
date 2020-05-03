@@ -45,6 +45,9 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         [JsonProperty("level")]
         public string Level { get; set; } = "";
 
+        [JsonProperty("field_order")]
+        public string FieldOrder { get; set; } = "";
+
         [JsonProperty("tags")]
         public Tags Tags { get; } = new Tags();
 
