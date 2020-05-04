@@ -19,7 +19,12 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         public List<Stream> Streams { get; } = new List<Stream>();
 
         public static FfProbe FromJson(string json) => 
-            JsonConvert.DeserializeObject<FfProbe>(json, Converter.Settings);
+            JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+
+        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented
+        };
     }
 
     public class Stream
@@ -69,18 +74,5 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         public bool Default { get; set; } = false;
         [JsonProperty("forced")]
         public bool Forced { get; set; } = false;
-    }
-
-    internal static class Converter
-    {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            NullValueHandling = NullValueHandling.Ignore,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            }
-        };
     }
 }

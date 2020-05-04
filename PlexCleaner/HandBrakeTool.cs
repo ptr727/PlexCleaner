@@ -1,6 +1,5 @@
 ﻿using System;
 using InsaneGenius.Utilities;
-using System.Net;
 using Newtonsoft.Json.Linq;
 
 namespace PlexCleaner
@@ -29,25 +28,26 @@ namespace PlexCleaner
             if (toolinfo == null)
                 throw new ArgumentNullException(nameof(toolinfo));
 
+            toolinfo.Tool = nameof(HandBrakeTool);
+
             try
             {
                 // Get the latest release version number from github releases
                 // https://api.github.com/repos/handbrake/handbrake/releases/latest
-                // We need a user agent for GitHub else we get a 403 forbidden error
-                // https://developer.github.com/v3/#user-agent-required
-                using WebClient webClient = new WebClient();
-                webClient.Headers.Add("User-Agent", "PlexCleaner Utility");
-                string json = webClient.DownloadString(@"https://api.github.com/repos/handbrake/handbrake/releases/latest");
+                if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out string json))
+                    return false;
                 JObject releases = JObject.Parse(json);
                 // "tag_name": "1.2.2",
                 JToken versiontag = releases["tag_name"];
                 toolinfo.Version = versiontag.ToString();
 
                 // Create download URL and the output filename using the version number
+                // https://github.com/HandBrake/HandBrake/releases/download/1.3.2/HandBrakeCLI-1.3.2-win-x86_64.zip
                 // https://handbrake.fr/downloads2.php
-                // E.g. https://download.handbrake.fr/releases/1.3.1/HandBrakeCLI-1.3.1-win-x86_64.zip
+                // https://download.handbrake.fr/releases/1.3.1/HandBrakeCLI-1.3.1-win-x86_64.zip
                 toolinfo.FileName = $"HandBrakeCLI-{toolinfo.Version}-win-x86_64.zip";
-                toolinfo.Url = $"https://download.handbrake.fr/releases/{toolinfo.Version}/{toolinfo.FileName}";
+                //toolinfo.Url = $"https://download.handbrake.fr/releases/{toolinfo.Version}/{toolinfo.FileName}";
+                toolinfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{toolinfo.Version}/{toolinfo.FileName}";
             }
             catch (Exception e)
             {
@@ -65,7 +65,7 @@ namespace PlexCleaner
             // Create the HandBrakeCLI commandline and execute
             // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
             // https://handbrake.fr/docs/en/latest/cli/cli-options.html
-            string snippets = Convert.Options.TestSnippets ? HandBrakeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
             string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 {snippets}";
             ConsoleEx.WriteLine("");
             int exitcode = HandBrakeCli(commandline);

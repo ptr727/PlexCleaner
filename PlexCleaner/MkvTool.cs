@@ -57,13 +57,14 @@ namespace PlexCleaner
             if (toolinfo == null)
                 throw new ArgumentNullException(nameof(toolinfo));
 
+            toolinfo.Tool = nameof(MkvTool);
+
             try
             {
                 // Download latest release file
                 // https://mkvtoolnix.download/latest-release.xml.gz
                 using WebClient wc = new WebClient();
                 Stream wcstream = wc.OpenRead("https://mkvtoolnix.download/latest-release.xml.gz");
-                if (wcstream == null) throw new ArgumentNullException(nameof(toolinfo));
 
                 // Get XML from Gzip
                 using GZipStream gzstream = new GZipStream(wcstream, CompressionMode.Decompress);
@@ -236,7 +237,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = Convert.Options.TestSnippets ? MkvmergeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvMergeCli(commandline);
@@ -251,7 +252,7 @@ namespace PlexCleaner
 
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
-            string snippets = Convert.Options.TestSnippets ? MkvmergeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = MkvMergeCli(commandline);

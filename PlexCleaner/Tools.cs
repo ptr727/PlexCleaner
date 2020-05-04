@@ -116,7 +116,7 @@ namespace PlexCleaner
 
                 // 7-Zip
                 ConsoleEx.WriteLine("Getting latest version of 7-Zip ...");
-                ToolInfo toolinfo = new ToolInfo { Tool = nameof(SevenZipTool) };
+                ToolInfo toolinfo = new ToolInfo();
                 if (SevenZipTool.GetLatestVersion(toolinfo) &&
                     GetUrlDetails(toolinfo))
                 {
@@ -132,7 +132,7 @@ namespace PlexCleaner
 
                 // MKVToolNix
                 ConsoleEx.WriteLine("Getting latest version of MKVToolNix ...");
-                toolinfo.Tool = nameof(MkvTool);
+                toolinfo = new ToolInfo();
                 if (MkvTool.GetLatestVersion(toolinfo) &&
                     GetUrlDetails(toolinfo))
                 {
@@ -148,7 +148,7 @@ namespace PlexCleaner
 
                 // FFmpeg
                 ConsoleEx.WriteLine("Getting latest version of FFmpeg ...");
-                toolinfo.Tool = nameof(FfMpegTool);
+                toolinfo = new ToolInfo();
                 if (FfMpegTool.GetLatestVersion(toolinfo) &&
                     GetUrlDetails(toolinfo))
                 {
@@ -164,7 +164,7 @@ namespace PlexCleaner
 
                 // MediaInfo
                 ConsoleEx.WriteLine("Getting latest version of MediaInfo ...");
-                toolinfo.Tool = nameof(MediaInfoTool);
+                toolinfo = new ToolInfo();
                 if (MediaInfoTool.GetLatestVersion(toolinfo) &&
                     GetUrlDetails(toolinfo))
                 {
@@ -180,7 +180,7 @@ namespace PlexCleaner
 
                 // HandBrake
                 ConsoleEx.WriteLine("Getting latest version of HandBrake ...");
-                toolinfo.Tool = nameof(HandBrakeTool);
+                toolinfo = new ToolInfo();
                 if (HandBrakeTool.GetLatestVersion(toolinfo) &&
                     GetUrlDetails(toolinfo))
                 {
@@ -238,8 +238,7 @@ namespace PlexCleaner
                 // Tool found, compare the last filename
                 tool.WriteLine("Current Version");
                 toolinfo.WriteLine("Latest Version");
-                if (!toolinfo.FileName.Equals(tool.FileName, StringComparison.OrdinalIgnoreCase))
-                    download = true;
+                download = !toolinfo.Equals(tool);
             }
 
             // Download and extract new tools

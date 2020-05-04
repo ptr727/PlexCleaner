@@ -2,35 +2,35 @@
   "profiles": {
     "Check For New Tools": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" checkfornewtools"
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" checkfornewtools"
     },
     "Write Defaults": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" writedefaults"
+      "commandLineArgs": "--settingsfile \"PlexCleaner.Defaults.json\" defaultsettings"
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" process --files \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --appendtolog process --mediafiles \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
     },
     "Monitor": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" monitor --files \"\\\\server-1\\media\\series\" \\\\server-1\\media\\movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" monitor --mediafiles \"D:\\Temp\""
     },
     "Re-Mux": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" remux --files \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" remux --mediafiles \"D:\\Temp\\DivX.SharkTaleHD.mkv\""
     },
     "Re-Encode": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" reencode --files \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" reencode --mediafiles \"D:\\Temp\\DivX.SharkTaleHD.mkv\""
     },
     "Write Sidecar": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" writesidecar --files \"\\\\server-1\\media\\series\" \"\\\\server-1\\media\\movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" writesidecar --mediafiles \"D:\\Temp\""
     },
     "Create Tag Map": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" createtagmap --files \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" createtagmap --mediafiles \"D:\\Temp\""
     },
     "Version": {
       "commandName": "Project",
@@ -42,11 +42,11 @@
     },
     "Print Info": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" printinfo --files \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" printmediainfo --mediafiles \"D:\\Temp\""
     },
     "DeInterlace": {
       "commandName": "Project",
-      "commandLineArgs": "--settings \"PlexCleaner.json\" --log \"PlexCleaner.log\" deinterlace --files \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Temp\""
     }
   }
 }

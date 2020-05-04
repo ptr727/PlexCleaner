@@ -16,5 +16,13 @@ namespace PlexCleaner
         {
             ConsoleEx.WriteLine($"{prefix} : {Version}, {FileName}, {Size}, {ModifiedTime}");
         }
+
+        public bool Equals(ToolInfo tool)
+        {
+            return FileName.Equals(tool.FileName, StringComparison.OrdinalIgnoreCase) &&
+                   ModifiedTime == tool.ModifiedTime &&
+                   Size == tool.Size &&
+                   Version.Equals(tool.Version, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

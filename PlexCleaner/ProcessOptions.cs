@@ -2,11 +2,10 @@
 {
     public class ProcessOptions
     {
-        public bool TestNoModify { get; set; } = false;
         public bool DeleteEmptyFolders { get; set; } = true;
         public bool DeleteInvalidFiles { get; set; } = true;
         public bool DeleteUnwantedExtensions { get; set; } = true;
-        public string KeepExtensions { get; set; } = "";
+        public string KeepExtensions { get; set; } = ".partial~";
         public bool ReMux { get; set; } = true;
         public string ReMuxExtensions { get; set; } = ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv";
         public bool DeInterlace { get; set; } = true;

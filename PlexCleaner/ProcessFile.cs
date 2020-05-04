@@ -39,7 +39,7 @@ namespace PlexCleaner
             Program.LogFile.LogConsole($"Deleting file with undesired extension : \"{MediaFile.Name}\"");
 
             // Delete the file
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
             {
                 // Error
@@ -76,7 +76,7 @@ namespace PlexCleaner
             Program.LogFile.LogConsole($"Deleting sidecar file with no matching MKV file : \"{MediaFile.Name}\"");
 
             // Delete the file
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
             {
                 // Error
@@ -125,7 +125,7 @@ namespace PlexCleaner
             MediaFile = new FileInfo(outputname);
 
             // In test mode the file will not be remuxed to MKV so abort
-            if (Process.Options.TestNoModify)
+            if (Program.Options.TestNoModify)
                 return false;
 
             return Refresh();
@@ -160,7 +160,7 @@ namespace PlexCleaner
             Program.LogFile.LogConsole($"Clearing all tags from media file : \"{MediaFile.Name}\"");
 
             // Delete the tags
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !MkvTool.ClearMkvTags(MediaFile.FullName))
             {
                 // Error
@@ -193,7 +193,7 @@ namespace PlexCleaner
             unknown.WriteLine("Unknown");
 
             // Set the track language to the default language
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !MkvTool.SetMkvTrackLanguage(MediaFile.FullName, unknown, Process.Options.DefaultLanguage))
             {
                 // Error
@@ -414,7 +414,7 @@ namespace PlexCleaner
             MediaInfoInfo.WriteLine("Invalid");
 
             // Delete the file
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
             {
                 // Error
@@ -452,7 +452,7 @@ namespace PlexCleaner
             
             /*
             // Delete the file
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
             {
                 // Error
@@ -491,7 +491,7 @@ namespace PlexCleaner
             
             /*
             // Delete the file
-            if (!Process.Options.TestNoModify &&
+            if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
             {
                 // Error
@@ -550,6 +550,9 @@ namespace PlexCleaner
 
         public bool GetMediaInfo()
         {
+            // By now all the files we are processing should be MKV files
+            Debug.Assert(MkvTool.IsMkvFile(MediaFile));
+
             return Refresh();
         }
 

@@ -14,253 +14,129 @@ namespace PlexCleaner
         {
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
-            RootCommand rootCommand = CreateCommandLineOptions();
-            return rootCommand.Invoke(CommandLineEx.GetCommandlineArgs());
+            RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+            return rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
         }
 
-        private static RootCommand CreateCommandLineOptions()
+        internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
         {
-            // Root command and global options
-            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex.");
-
-            // Path to the settings file must always be specified
-            rootCommand.AddOption(
-                new Option<string>("--settings")
-                {
-                    Description = "Path to settings file.",
-                    Required = true
-                });
-
-            // Path to the log file is optional
-            rootCommand.AddOption(
-                new Option<string>("--log")
-                {
-                    Description = "Path to log file.",
-                    Required = false
-                });
-
-            // Write defaults to settings file
-            rootCommand.AddCommand(
-                new Command("writedefaults")
-                {
-                    Description = "Write default values to settings file.",
-                    Handler = CommandHandler.Create<string, string>(WriteDefaultsCommand)
-                });
-
-            // Check for new tools
-            rootCommand.AddCommand(
-                new Command("checkfornewtools")
-                {
-                    Description = "Check for new tools and download if available.",
-                    Handler = CommandHandler.Create<string, string>(CheckForNewToolsCommand)
-                });
-
-            // Files or folders option
-            Option filesOption =
-                new Option<List<string>>("--files")
-                {
-                    Description = "List of files or folders.",
-                    Required = true
-                };
-
-            // Process files
-            Command processCommand = 
-                new Command("process")
-                {
-                    Description = "Process media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(ProcessCommand)
-                };
-            processCommand.AddOption(filesOption);
-            rootCommand.AddCommand(processCommand);
-
-            // Monitor and process files
-            Command monitorCommand =
-                new Command("monitor")
-                {
-                    Description = "Monitor for changes in folders and process any changed files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(MonitorCommand)
-                };
-            monitorCommand.AddOption(filesOption);
-            rootCommand.AddCommand(monitorCommand);
-
-            // Re-Mux files
-            Command remuxCommand =
-                new Command("remux")
-                {
-                    Description = "Re-Multiplex media files",
-                    Handler = CommandHandler.Create<string, string, List<string>>(ReMuxCommand)
-                };
-            remuxCommand.AddOption(filesOption);
-            rootCommand.AddCommand(remuxCommand);
-
-            // Re-Encode files
-            Command reencodeCommand =
-                new Command("reencode")
-                {
-                    Description = "Re-Encode media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(ReEncodeCommand)
-                };
-            reencodeCommand.AddOption(filesOption);
-            rootCommand.AddCommand(reencodeCommand);
-
-            // De-interlace files
-            Command deinterlaceCommand =
-                new Command("deinterlace")
-                {
-                    Description = "De-Interlace media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(DeInterlaceCommand)
-                };
-            deinterlaceCommand.AddOption(filesOption);
-            rootCommand.AddCommand(deinterlaceCommand);
-
-            // Write sidecar files
-            Command writesidecarCommand =
-                new Command("writesidecar")
-                {
-                    Description = "Write sidecar files for media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(WriteSidecarCommand)
-                };
-            writesidecarCommand.AddOption(filesOption);
-            rootCommand.AddCommand(writesidecarCommand);
-
-            // Create tag-map
-            Command createtagmapCommand =
-                new Command("createtagmap")
-                {
-                    Description = "Create a tag-map from media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(CreateTagMapCommand)
-                };
-            createtagmapCommand.AddOption(filesOption);
-            rootCommand.AddCommand(createtagmapCommand);
-
-            // Show media info
-            Command printinfoCommand =
-                new Command("printinfo")
-                {
-                    Description = "Print info for media files.",
-                    Handler = CommandHandler.Create<string, string, List<string>>(PrintInfoCommand)
-                };
-            printinfoCommand.AddOption(filesOption);
-            rootCommand.AddCommand(printinfoCommand);
-
-            return rootCommand;
-        }
-
-        private static int WriteDefaultsCommand(string settings, string log)
-        {
-            ConsoleEx.WriteLine($"Writing default settings to \"{settings}\"");
+            ConsoleEx.WriteLine($"Writing default settings to \"{options.SettingsFile}\"");
 
             // Save default config
-            Config config = new Config();
-            Config.ToFile(settings, config);
+            ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
 
             return 0;
         }
 
-        private static int CheckForNewToolsCommand(string settings, string log)
+        internal static int CheckForNewToolsCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            // Do not verify tools
+            Program program = Create(options, false);
             if (program == null)
                 return -1;
 
-            return Tools.CheckForNewTools() ? 0 : -1;
+            // Update tools
+            // Make sure that the tools exist
+            return Tools.CheckForNewTools() && 
+                   Tools.VerifyTools(out ToolInfoJsonSchema _) ? 0 : -1;
         }
 
-        private static int ProcessCommand(string settings, string log, List<string> files)
+        internal static int ProcessCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
-            return process.ProcessFiles(program.FileInfoList) && Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
+            return process.ProcessFiles(program.FileInfoList) && 
+                   Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
 
-        private static int MonitorCommand(string settings, string log, List<string> files)
+        internal static int MonitorCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
             Monitor monitor = new Monitor();
-            return monitor.MonitorFolders(files) ? 0 : -1;
+            return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
         }
 
-        private static int ReMuxCommand(string settings, string log, List<string> files)
+        internal static int ReMuxCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
             return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int ReEncodeCommand(string settings, string log, List<string> files)
+        internal static int ReEncodeCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
             return process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int DeInterlaceCommand(string settings, string log, List<string> files)
+        internal static int DeInterlaceCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
             return process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int WriteSidecarCommand(string settings, string log, List<string> files)
+        internal static int WriteSidecarCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
             return process.WriteSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int CreateTagMapCommand(string settings, string log, List<string> files)
+        internal static int CreateTagMapCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
             return process.CreateTagMapFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        private static int PrintInfoCommand(string settings, string log, List<string> files)
+        internal static int PrintMediaInfoCommand(CommandLineOptions options)
         {
-            Program program = Create(settings, log);
+            Program program = Create(options, true);
             if (program == null)
                 return -1;
 
-            if (!program.CreateFileList(files))
+            if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
             Process process = new Process();
@@ -292,25 +168,26 @@ namespace PlexCleaner
             Console.CancelKeyPress -= CancelHandlerEx;
         }
 
-        private static Program Create(string settingsFile, string logFile)
+        private static Program Create(CommandLineOptions options, bool verifyTools)
         {
             // Load config from JSON
-            if (!File.Exists(settingsFile))
+            if (!File.Exists(options.SettingsFile))
             {
-                ConsoleEx.WriteLineError($"Settings file not found : \"{settingsFile}\"");
+                ConsoleEx.WriteLineError($"Settings file not found : \"{options.SettingsFile}\"");
                 return null;
             }
-            ConsoleEx.WriteLine($"Loading settings from : \"{settingsFile}\"");
-            Config config = Config.FromFile(settingsFile);
+            ConsoleEx.WriteLine($"Loading settings from : \"{options.SettingsFile}\"");
+            ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
             // Set the static options from the loded settings
+            Program.Options = options;
             Tools.Options = config.ToolsOptions;
             Process.Options = config.ProcessOptions;
             Monitor.Options = config.MonitorOptions;
             Convert.Options = config.ConvertOptions;
 
             // Set the FileEx options
-            FileEx.Options.TestNoModify = config.ProcessOptions.TestNoModify;
+            FileEx.Options.TestNoModify = Program.Options.TestNoModify;
             FileEx.Options.FileRetryCount = config.MonitorOptions.FileRetryCount;
             FileEx.Options.FileRetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
             FileEx.Options.TraceToConsole = true;
@@ -319,27 +196,34 @@ namespace PlexCleaner
             Cancel = FileEx.Options.Cancel;
             
             // Create log file
-            if (!string.IsNullOrEmpty(logFile))
+            if (!string.IsNullOrEmpty(options.LogFile))
             {
-                LogFile.FileName = logFile;
-                if (!LogFile.Clear())
+                // Set file name for internal re-use
+                LogFile.FileName = options.LogFile;
+
+                // Clear if not in append mode
+                if (!options.AppendToLog &&
+                    !LogFile.Clear())
                 {
-                    ConsoleEx.WriteLineError($"Failed to create logfile : \"{logFile}\"");
+                    ConsoleEx.WriteLineError($"Failed to create the logfile : \"{options.LogFile}\"");
                     return null;
                 }
                 LogFile.Log(Environment.CommandLine);
-                ConsoleEx.WriteLine($"Logging output to  : \"{logFile}\"");
+                ConsoleEx.WriteLine($"Logging output to : \"{options.LogFile}\"");
             }
 
-            // Make sure that the tools folder exists
-            if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
-                return null;
-            ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+            if (verifyTools)
+            { 
+                // Make sure that the tools folder exists
+                if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
+                    return null;
+                ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
 
-            // Set tool version numbers
-            FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
-            MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
-            MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
+                // Set tool version numbers
+                FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
+                MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
+                MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
+            }
 
             // Create program
             return new Program();
@@ -378,10 +262,12 @@ namespace PlexCleaner
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
-                    DirectoryInfoList.Add(new DirectoryInfo(fileorfolder));
+                    DirectoryInfo dirInfo = new DirectoryInfo(fileorfolder);
+                    DirectoryInfoList.Add(dirInfo);
                     FolderList.Add(fileorfolder);
 
                     // Create the file list from the directory
+                    ConsoleEx.WriteLine($"Getting files and folders from \"{dirInfo.FullName}\" ...");
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
                         ConsoleEx.WriteLineError($"Failed to enumerate directory \"{fileorfolder}\"");
@@ -407,6 +293,7 @@ namespace PlexCleaner
 
         public static Signal Cancel { get; set; }
         public static readonly LogFile LogFile = new LogFile();
+        public static CommandLineOptions Options { get; set; }
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

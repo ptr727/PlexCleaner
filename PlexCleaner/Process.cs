@@ -79,7 +79,7 @@ namespace PlexCleaner
         public bool ProcessFiles(List<FileInfo> fileList)
         {
             Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole("Processing files ...");
+            Program.LogFile.LogConsole($"Processing {fileList.Count} files ...");
             Program.LogFile.LogConsole("");
 
             // Start the stopwatch
@@ -87,14 +87,21 @@ namespace PlexCleaner
             timer.Start();
 
             // Process all files
+            int totalcount = fileList.Count;
+            int processedcount = 0;
             int errorcount = 0;
             int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
+                // Percentage
+                processedcount ++;
+                double done = System.Convert.ToDouble(processedcount) / System.Convert.ToDouble(totalcount);
+
                 // Process the file
-                ConsoleEx.WriteLine($"Processing \"{fileinfo.FullName}\"");
+                ConsoleEx.WriteLine($"Processing ({done:P}) : \"{fileinfo.FullName}\"");
                 if (!ProcessFile(fileinfo, out bool modified))
                 {
+                    Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error processing : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
@@ -181,6 +188,7 @@ namespace PlexCleaner
                 Program.LogFile.LogConsole($"ReMuxing : \"{fileinfo.FullName}\"");
                 if (!ReMuxFile(fileinfo, out bool modified))
                 {
+                    Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReMuxing : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
@@ -232,8 +240,9 @@ namespace PlexCleaner
                 Program.LogFile.LogConsole($"ReEncoding : \"{fileinfo.FullName}\"");
                 if (!ReEncodeFile(fileinfo, out bool modified))
                 {
+                    Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReEncoding : \"{fileinfo.FullName}\"");
-                    errorcount++;
+                    errorcount ++;
                 }
                 else if (modified)
                     modifiedcount ++;
@@ -282,6 +291,7 @@ namespace PlexCleaner
                 Program.LogFile.LogConsole($"DeInterlace : \"{fileinfo.FullName}\"");
                 if (!DeInterlaceFile(fileinfo, out bool modified))
                 {
+                    Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error DeInterlacing : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
@@ -335,9 +345,11 @@ namespace PlexCleaner
 
                 // Get the media info
                 if (!GetMediaInfo(fileinfo, out MediaInfo ffprobe, out  MediaInfo mkvmerge, out MediaInfo mediainfo))
-                { 
-                    // TODO: Log Error
+                {
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsoleError($"Error getting media info : \"{fileinfo.FullName}\"");
                     errorcount ++;
+
                     // Next file
                     continue;
                 }
@@ -399,8 +411,11 @@ namespace PlexCleaner
 
                 // Write the sidecar files
                 if (!SidecarFile.CreateSidecarFile(fileinfo))
-                    // TODO : Log error
+                {
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsoleError($"Error creating sidecar : \"{fileinfo.FullName}\"");
                     errorcount ++;
+                }
 
                 // Next file
             }
@@ -442,8 +457,11 @@ namespace PlexCleaner
 
                 // Process the file
                 if (!PrintFileInfo(fileinfo))
-                    // TODO: Log Error
+                {
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsoleError($"Error printing file information : \"{fileinfo.FullName}\"");
                     errorcount ++;
+                }
 
                 // Next file
             }
@@ -487,9 +505,6 @@ namespace PlexCleaner
             // ReMux undesirable containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
                 return processFile.Result;
-
-            // By now all the files we are processing should be MKV files
-            Debug.Assert(MkvTool.IsMkvFile(fileinfo));
 
             // Read the media info
             if (!processFile.GetMediaInfo())
@@ -535,6 +550,9 @@ namespace PlexCleaner
                 return processFile.Result;
             if (!processFile.VerifyDuration(ref modified))
                 return processFile.Result;
+
+            // TODO : Verify bitrate to not exceed network speed
+            // https://www.reddit.com/r/PleX/comments/eoa03e/psa_100_mbps_is_not_enough_to_direct_play_4k/
 
             // TODO : Takes too long, store result in sidecar file
             //if (!processFile.VerifyStreams(ref modified))
