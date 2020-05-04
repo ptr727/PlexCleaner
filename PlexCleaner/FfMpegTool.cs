@@ -77,6 +77,8 @@ namespace PlexCleaner
             if (toolinfo == null)
                 throw new ArgumentNullException(nameof(toolinfo));
 
+            toolinfo.Tool = nameof(FfMpegTool);
+
             try
             {
                 // Load the download page
@@ -220,7 +222,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
@@ -238,7 +240,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
@@ -334,7 +336,7 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
@@ -350,7 +352,7 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // Copy subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Convert.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);

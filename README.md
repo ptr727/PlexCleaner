@@ -46,7 +46,7 @@ Below are a few examples of issues I've experienced over the many years of using
 ### Configuration File
 
 Create a default configuration file by running:  
-`PlexCleaner.exe --settings PlexCleaner.json writedefaults`
+`PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
 
 ```jsonc
 {
@@ -60,14 +60,9 @@ Create a default configuration file by running:
     // Encoding video quality
     "VideoEncodeQuality": 20,
     // Encoding audio codec
-    "AudioEncodeCodec": "ac3",
-    // Create short video clips, useful during testing
-    // Note the media files will be overwritten with short clips
-    "TestSnippets": false
+    "AudioEncodeCodec": "ac3"
   },
   "ProcessOptions": {
-    // Do not make any modifications, useful during testing
-    "TestNoModify": false,
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete invalid media files, e.g. no video or audio track
@@ -139,7 +134,7 @@ Create a default configuration file by running:
 - Extract the contents of the archive to the `Tools\7Zip` folder.
 - The 7-Zip commandline tool should be in `Tools\7Zip\x64\7za.exe`
 - Update all the required tools to the latest version by running:
-  - `PlexCleaner.exe --settings PlexCleaner.json checkfornewtools`
+  - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
   - The tool version information will be stored in `Tools\Tools.json`
 - Keep the tools updated by periodically running the `checkfornewtools` command.
 
@@ -151,7 +146,7 @@ Commandline options:
 `Plexcleaner.exe --help`
 
 ```console
-C:\...\netcoreapp3.1>PlexCleaner.exe --help
+PS C:\..\netcoreapp3.1> .\PlexCleaner.exe --help
 PlexCleaner:
   Utility to optimize media files for DirectPlay on Plex.
 
@@ -159,13 +154,14 @@ Usage:
   PlexCleaner [options] [command]
 
 Options:
-  --settings <settings> (REQUIRED)    Path to settings file.
-  --log <log>                         Path to log file.
-  --version                           Show version information
-  -?, -h, --help                      Show help and usage information
+  --settingsfile <settingsfile> (REQUIRED)    Path to settings file.
+  --logfile <logfile>                         Path to log file.
+  --appendtolog                               Append to the log file vs. default overwrite.
+  --version                                   Show version information
+  -?, -h, --help                              Show help and usage information
 
 Commands:
-  writedefaults       Write default values to settings file.
+  defaultsettings     Write default values to settings file.
   checkfornewtools    Check for new tools and download if available.
   process             Process media files.
   monitor             Monitor for changes in folders and process any changed files.
@@ -174,20 +170,35 @@ Commands:
   deinterlace         De-Interlace media files.
   writesidecar        Write sidecar files for media files.
   createtagmap        Create a tag-map from media files.
-  printinfo           Print info for media files.
+  printmediainfo      Print info for media files.
 ```
 
-The `--settings` JSON settings file is required.  
-The `--log` output log file is optional, the file will be overwritten.  
+The `--settingsfile` JSON settings file is required.  
+The `--logfile` output log file is optional, the file will be overwritten unless `--appendtolog` is set.  
 One of the commands must be specified.
 
 ### Process Media Files
 
+```console
+PS C:\...\netcoreapp3.1> .\PlexCleaner.exe process --help
+process:
+  Process media files.
+
+Usage:
+  PlexCleaner process [options]
+
+Options:
+  --mediafiles <mediafiles> (REQUIRED)    List of media files or folders.
+  --testsnippets                          Create short video clips, useful during testing.
+  --testnomodify                          Do not make any modifications, useful during testing.
+  -?, -h, --help                          Show help and usage information
+```
+
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
-The `--files` option can point to a combination of files or folders.
+The `--mediafiles` option can point to a combination of files or folders.  
 
 Example:  
-`PlexCleaner.exe --settings "PlexCleaner.json" --log "PlexCleaner.log" process --files "C:\Foo\Test.mkv" "D:\Media"`
+`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" "D:\Media"`
 
 The following processing will be done:
 
@@ -210,7 +221,6 @@ The `remux` command will re-multiplex the media files using `MKVMerge`.
 The `reencode` command will re-encode the media files using `FFMPeg` and H264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.  
-Interlace detection is not absolute, especially for mixed content, the `MediaInfo` `ScanType` field and the `FFmpeg` `idet` filter is used to determine if content is interlaced.
 
 ### Monitor
 
@@ -225,17 +235,17 @@ Tools, libraries, and utilities used in the project.
 ### NuGet Component Dependencies
 
 ```console
-C:\...\PlexCleaner>dotnet list package
+PS C:\..\PlexCleaner> dotnet list package
 Project 'PlexCleaner' has the following package references
    [netcoreapp3.1]:
    Top-level Package                            Requested             Resolved
    > HtmlAgilityPack                            1.11.23               1.11.23
-   > InsaneGenius.Utilities                     1.3.89                1.3.89
+   > InsaneGenius.Utilities                     1.3.91                1.3.91
    > Microsoft.CodeAnalysis.FxCopAnalyzers      3.0.0                 3.0.0
-   > Microsoft.SourceLink.GitLab                1.0.0                 1.0.0
+   > Microsoft.SourceLink.GitHub                1.0.0                 1.0.0
    > Newtonsoft.Json                            12.0.3                12.0.3
    > System.CommandLine                         2.0.0-beta1.20214.1   2.0.0-beta1.20214.1
-```
+ ```
 
 ### 3rd Party Tools
 

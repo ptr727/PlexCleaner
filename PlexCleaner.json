@@ -9,14 +9,9 @@
     // Encoding video quality
     "VideoEncodeQuality": 20,
     // Encoding audio codec
-    "AudioEncodeCodec": "ac3",
-    // Create short video clips, useful during testing
-    // Note the media files will be overwritten with short clips
-    "TestSnippets": false
+    "AudioEncodeCodec": "ac3"
   },
   "ProcessOptions": {
-    // Do not make any modifications, useful during testing
-    "TestNoModify": false,
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete invalid media files, e.g. no video or audio track

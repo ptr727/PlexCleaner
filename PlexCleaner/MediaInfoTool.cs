@@ -39,6 +39,8 @@ namespace PlexCleaner
             if (toolinfo == null)
                 throw new ArgumentNullException(nameof(toolinfo));
 
+            toolinfo.Tool = nameof(MediaInfoTool);
+
             try
             {
                 // Load the download page

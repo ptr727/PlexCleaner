@@ -60,8 +60,9 @@ namespace PlexCleaner
                     if (WatchFolders.Any())
                     {
                         // Remove root folders from the watchlist
-                        foreach (string folder in folders)
-                            WatchFolders.Remove(folder);
+                        // TODO : Maybe we need a way to not process sub-directories?
+                        //foreach (string folder in folders)
+                        //    WatchFolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
                         DateTime settletime = DateTime.UtcNow.AddSeconds(-Options.MonitorWaitTime);
@@ -232,12 +233,13 @@ namespace PlexCleaner
                 if (WatchFolders.ContainsKey(foldername))
                 {
                     // Update the modified time
+                    WriteLine($"Updating folder for processing by {DateTime.Now.AddSeconds(Options.MonitorWaitTime)} : \"{foldername}\"");
                     WatchFolders[foldername] = DateTime.UtcNow;
                 }
                 else
                 {
                     // Add the folder
-                    WriteLine($"Adding folder for processing : \"{foldername}\"");
+                    WriteLine($"Adding folder for processing by {DateTime.Now.AddSeconds(Options.MonitorWaitTime)} : \"{foldername}\"");
                     WatchFolders.Add(foldername, DateTime.UtcNow);
                 }
             }

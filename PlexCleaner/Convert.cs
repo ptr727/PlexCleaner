@@ -22,7 +22,7 @@ namespace PlexCleaner
             // Match the logic in ReMuxToMKV()
 
             // Test
-            if (Process.Options.TestNoModify)
+            if (Program.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -62,7 +62,7 @@ namespace PlexCleaner
             // Match the logic in ConvertToMKV()
 
             // Test
-            if (Process.Options.TestNoModify)
+            if (Program.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;
@@ -116,7 +116,7 @@ namespace PlexCleaner
             // Match the logic in ConvertToMKV()
 
             // Test
-            if (Process.Options.TestNoModify)
+            if (Program.Options.TestNoModify)
             {
                 outputname = inputname;
                 return true;

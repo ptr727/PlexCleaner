@@ -40,6 +40,8 @@ namespace PlexCleaner
             if (toolinfo == null)
                 throw new ArgumentNullException(nameof(toolinfo));
 
+            toolinfo.Tool = nameof(SevenZipTool);
+
             try
             {
                 // Load the download page

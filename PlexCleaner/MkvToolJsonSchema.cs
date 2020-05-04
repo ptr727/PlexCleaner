@@ -27,7 +27,12 @@ namespace PlexCleaner.MkvToolJsonSchema
         public List<Track> Tracks { get; } = new List<Track>();
 
         public static MkvMerge FromJson(string json) => 
-            JsonConvert.DeserializeObject<MkvMerge>(json, Converter.Settings);
+            JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+
+        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented
+        };
     }
 
     public class Container
@@ -97,18 +102,5 @@ namespace PlexCleaner.MkvToolJsonSchema
 
         [JsonProperty("default_track")]
         public bool DefaultTrack { get; set; } = false;
-    }
-
-    internal static class Converter
-    {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            NullValueHandling = NullValueHandling.Ignore,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            }
-        };
     }
 }
