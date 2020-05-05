@@ -8,8 +8,6 @@ namespace PlexCleaner
 {
     internal class Monitor
     {
-        public static MonitorOptions Options { get; set; }  = new MonitorOptions();
-
         public Monitor()
         {
             Watcher = new List<FileSystemWatcher>();
@@ -65,7 +63,7 @@ namespace PlexCleaner
                         //    WatchFolders.Remove(folder);
 
                         // Find folders that have settled down, i.e. not modified in last wait time
-                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Options.MonitorWaitTime);
+                        DateTime settletime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
                         foreach ((string key, DateTime value) in WatchFolders)
                         // If not recently modified and all files in the folder are readable
                             if (value < settletime)
@@ -233,13 +231,13 @@ namespace PlexCleaner
                 if (WatchFolders.ContainsKey(foldername))
                 {
                     // Update the modified time
-                    WriteLine($"Updating folder for processing by {DateTime.Now.AddSeconds(Options.MonitorWaitTime)} : \"{foldername}\"");
+                    WriteLine($"Updating folder for processing by {DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime)} : \"{foldername}\"");
                     WatchFolders[foldername] = DateTime.UtcNow;
                 }
                 else
                 {
                     // Add the folder
-                    WriteLine($"Adding folder for processing by {DateTime.Now.AddSeconds(Options.MonitorWaitTime)} : \"{foldername}\"");
+                    WriteLine($"Adding folder for processing by {DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime)} : \"{foldername}\"");
                     WatchFolders.Add(foldername, DateTime.UtcNow);
                 }
             }
@@ -250,7 +248,6 @@ namespace PlexCleaner
             // The path we get no longer exists, it may be a file, or it may be a folder
             // TODO : Figure out how to accurately test if deleted path was a file or folder
         }
-
 
         private readonly List<FileSystemWatcher> Watcher;
         private readonly Dictionary<string, DateTime> WatchFolders;

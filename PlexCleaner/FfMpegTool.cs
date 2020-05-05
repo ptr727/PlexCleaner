@@ -120,17 +120,14 @@ namespace PlexCleaner
             return true;
         }
 
-        public static bool VerifyMedia(string filename)
+        public static bool VerifyMedia(string filename, out string error)
         {
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
-            string commandline;
-            if (VerifyFrameCount > 0)
-                commandline = $"-i \"{filename}\" -nostats -v error -xerror -frames:v {VerifyFrameCount} -f null -";
-            else
-                commandline = $"-i \"{filename}\" -nostats -v error -xerror -f null -";
+            string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
+            string commandline = $"-i \"{filename}\" -nostats -v error -xerror {snippet} -f null -";
             ConsoleEx.WriteLine("");
-            int exitcode = FfMpegCli(commandline, out string _, out string error);
+            int exitcode = FfMpegCli(commandline, out string _, out error);
             ConsoleEx.WriteLine("");
             return exitcode == 0 && error.Length == 0;
         }
@@ -222,8 +219,8 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
+            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
             ConsoleEx.WriteLine("");
@@ -240,8 +237,8 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
-            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippets} -map 0 -codec copy -f matroska \"{outputname}\"";
+            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippet} -map 0 -codec copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
             ConsoleEx.WriteLine("");
@@ -336,8 +333,8 @@ namespace PlexCleaner
 
             // Create the FFmpeg commandline and execute
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippets} {input} {output} -f matroska \"{outputname}\"";
+            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
             ConsoleEx.WriteLine("");
@@ -352,8 +349,8 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // Copy subtitle streams
             // https://trac.ffmpeg.org/wiki/Encode/H.264
-            string snippets = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippets} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
+            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputname}\" {snippet} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
             ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
             ConsoleEx.WriteLine("");
@@ -374,11 +371,8 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg-filters.html#idet
             // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
             // https://trac.ffmpeg.org/wiki/Null
-            string commandline;
-            if (IdetFrameCount > 0)
-                commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet -frames:v {IdetFrameCount} -an -f rawvideo -y nul";
-            else
-                commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet -an -f rawvideo -y nul";
+            string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
+            string commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
             ConsoleEx.WriteLine("");
             // FFMpeg logs output to stderror
             int exitcode = FfMpegCli(commandline, out string _, out text);
@@ -444,7 +438,5 @@ namespace PlexCleaner
         private const string FfMpegBinary = @"bin\ffmpeg.exe";
         private const string FfProbeBinary = @"bin\ffprobe.exe";
         private const string FfmpegSnippet = "-ss 0 -t 60";
-        private const int IdetFrameCount = 1024; 
-        private const int VerifyFrameCount = 1024;
     }
 }

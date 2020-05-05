@@ -8,8 +8,6 @@ namespace PlexCleaner
 {
     public static class Tools
     {
-        public static ToolsOptions Options { get; set; } = new ToolsOptions();
-
         public static bool VerifyTools(out ToolInfoJsonSchema toolInfo)
         {
             toolInfo = null;
@@ -74,15 +72,15 @@ namespace PlexCleaner
         public static string GetToolsRoot()
         {
             // Process relative or absolute tools path
-            if (!Options.RootRelative)
+            if (!Program.Config.ToolsOptions.RootRelative)
                 // Return the absolute path
-                return Options.RootPath;
+                return Program.Config.ToolsOptions.RootPath;
             
             // Get the assembly directory
             string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
             // Create the root from the relative directory
-            return Path.GetFullPath(Path.Combine(toolsroot, Options.RootPath));
+            return Path.GetFullPath(Path.Combine(toolsroot, Program.Config.ToolsOptions.RootPath));
         }
 
         public static string CombineToolPath(string filename)

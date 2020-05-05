@@ -14,8 +14,6 @@
   "ProcessOptions": {
     // Delete empty folders
     "DeleteEmptyFolders": true,
-    // Delete invalid media files, e.g. no video or audio track
-    "DeleteInvalidFiles": true,
     // Delete non-media files
     "DeleteUnwantedExtensions": true,
     // Files to keep, e.g. subtitle or partial files
@@ -60,9 +58,11 @@
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
-    // Speedup processing by saving media info in sidecar files
+    // Speedup media metadata processing by saving media info in sidecar files
     // Sidecar files will automatically be recreated when the tool version or media file changes
-    "UseSidecarFiles": true
+    "UseSidecarFiles": true,
+    // Enable verify
+    "Verify": true
   },
   "MonitorOptions": {
     // Time to wait after detecting a file change
@@ -71,5 +71,15 @@
     "FileRetryWaitTime": 5,
     // Number of times to retry a file operation
     "FileRetryCount": 2
+  },
+  "VerifyOptions": {
+    // Delete media files that fail verification
+    "DeleteInvalidFiles": true,
+    // Minimum required playback duration in seconds
+    "MinimumDuration": 300,
+    // Time in seconds to verify media streams, 0 is no limit
+    "VerifyDuration": 60,
+    // Time in seconds to count interlaced frames, 0 is no limit
+    "IdetDuration": 60
   }
 }

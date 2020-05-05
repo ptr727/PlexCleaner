@@ -25,7 +25,7 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.DeleteUnwantedExtensions)
+            if (!Program.Config.ProcessOptions.DeleteUnwantedExtensions)
                 return true;
 
             // Is the file extension in our keep list
@@ -99,7 +99,7 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.ReMux)
+            if (!Program.Config.ProcessOptions.ReMux)
                 return true;
 
             // Does the extension match
@@ -131,13 +131,13 @@ namespace PlexCleaner
             return Refresh();
         }
 
-        public void CheckForErrors()
+        public void MediaInfoErrors()
         {
             // Do we have any errors
             if (FfProbeInfo.HasErrors || MkvMergeInfo.HasErrors || MediaInfoInfo.HasErrors)
             {
                 Program.LogFile.LogConsole("");
-                Program.LogFile.LogConsole($"Media file has possible errors : \"{MediaFile.Name}\"");
+                Program.LogFile.LogConsole($"Warning : Media file has metadata errors : \"{MediaFile.Name}\"");
             }
         }
 
@@ -147,7 +147,7 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.RemoveTags)
+            if (!Program.Config.ProcessOptions.RemoveTags)
                 return true;
 
             // Does the file have tags
@@ -179,7 +179,7 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.SetUnknownLanguage)
+            if (!Program.Config.ProcessOptions.SetUnknownLanguage)
                 return true;
 
             // Find unknown languages
@@ -188,13 +188,13 @@ namespace PlexCleaner
                 return true;
 
             Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole($"Setting unknown language tracks to \"{Process.Options.DefaultLanguage}\" : \"{MediaFile.Name}\"");
+            Program.LogFile.LogConsole($"Setting unknown language tracks to \"{Program.Config.ProcessOptions.DefaultLanguage}\" : \"{MediaFile.Name}\"");
             known.WriteLine("Known");
             unknown.WriteLine("Unknown");
 
             // Set the track language to the default language
             if (!Program.Options.TestNoModify &&
-                !MkvTool.SetMkvTrackLanguage(MediaFile.FullName, unknown, Process.Options.DefaultLanguage))
+                !MkvTool.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
             {
                 // Error
                 Result = false;
@@ -206,7 +206,7 @@ namespace PlexCleaner
             return Refresh();
         }
 
-        public bool ReMuxMulti(HashSet<string> keepLanguages, List<string> preferredAudioFormats, ref bool modified)
+        public bool ReMux(HashSet<string> keepLanguages, List<string> preferredAudioFormats, ref bool modified)
         {
             // Init
             Result = true;
@@ -219,7 +219,7 @@ namespace PlexCleaner
 
             // Get all unwanted language tracks
             // Use MKVMerge logic
-            if (Process.Options.RemoveUnwantedLanguageTracks &&
+            if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
                 MkvMergeInfo.FindUnwantedLanguage(keepLanguages, out MediaInfo keep, out MediaInfo remove))
             {
                 Program.LogFile.LogConsole("");
@@ -236,7 +236,7 @@ namespace PlexCleaner
 
             // Get all duplicate tracks  
             // Use MKVMerge logic
-            if (Process.Options.RemoveDuplicateTracks &&
+            if (Program.Config.ProcessOptions.RemoveDuplicateTracks &&
                 MkvMergeInfo.FindDuplicateTracks(preferredAudioFormats, out keep, out remove))
             {
                 Program.LogFile.LogConsole("");
@@ -253,7 +253,7 @@ namespace PlexCleaner
 
             // Do any tracks need remuxing
             // Use MediaInfo logic
-            if (Process.Options.ReMux &&
+            if (Program.Config.ProcessOptions.ReMux &&
                 MediaInfoInfo.FindNeedReMux(out keep, out remove))
             {
                 Program.LogFile.LogConsole("");
@@ -298,34 +298,10 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.DeInterlace)
+            if (!Program.Config.ProcessOptions.DeInterlace)
                 return true;
 
-            // TODO : Figure out what method is the most reliable
-            // FFprobe may be more reliable compared to MediaInfo for some files
-            // There are media files with mixed content measured using idet frame counts, even if the stream flags say otherwise
-            {
-                // MkvMergeInfo does not implement interlace detection
-                int count = 0;
-                bool mediainfo = MediaInfoInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
-                if (mediainfo)
-                    count ++;
-                bool ffprobe = FfProbeInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
-                if (ffprobe)
-                    count ++;
-                bool idet = FfMpegIdetInfo.IsInterlaced(out double single, out double multi);
-                if (idet)
-                    count ++;
-                // Log any disagreement
-                if (count != 0 && count != 3)
-                { 
-                    Trace.WriteLine($"MediaInfoInfo.FindNeedDeInterlace() : {mediainfo} : \"{MediaFile.Name}\"");
-                    Trace.WriteLine($"FfProbeInfo.FindNeedDeInterlace() : {ffprobe} : \"{MediaFile.Name}\"");
-                    Trace.WriteLine($"FfMpegIdetInfo.IsInterlaced({single:P}/{multi:P}) : {idet} : \"{MediaFile.Name}\"");
-                }
-            }
-
-            // Use FFprobe
+            // Use FFprobe for de-interlace detection
             if (!FfProbeInfo.FindNeedDeInterlace(out MediaInfo keepTracks, out MediaInfo deinterlaceTracks))
                 return true;
 
@@ -335,7 +311,7 @@ namespace PlexCleaner
             deinterlaceTracks.WriteLine("DeInterlace");
 
             // TODO : Add support for H265 encoding
-            if (MediaInfoInfo.Video.First().Format.Equals("HEVC", StringComparison.OrdinalIgnoreCase))
+            if (FfProbeInfo.Video.First().Format.Equals("HEVC", StringComparison.OrdinalIgnoreCase))
             {
                 Program.LogFile.LogConsole($"Warning : De-interlacing H265 to H264 not supported, skipping de-interlace : \"{MediaFile.Name}\"");
                 Program.LogFile.LogConsole("");
@@ -365,7 +341,7 @@ namespace PlexCleaner
             Result = true;
 
             // Optional
-            if (!Process.Options.ReEncode)
+            if (!Program.Config.ProcessOptions.ReEncode)
                 return true;
 
             // Find all tracks that need re-encoding
@@ -378,6 +354,14 @@ namespace PlexCleaner
             Program.LogFile.LogConsole($"Re-encoding required tracks : \"{MediaFile.Name}\"");
             keep.WriteLine("Passthrough");
             reencode.WriteLine("ReEncode");
+
+            // TODO : Add support for H265 encoding
+            if (FfProbeInfo.Video.First().Format.Equals("HEVC", StringComparison.OrdinalIgnoreCase))
+            {
+                Program.LogFile.LogConsole($"Warning : De-interlacing H265 to H264 not supported, skipping re-encode : \"{MediaFile.Name}\"");
+                Program.LogFile.LogConsole("");
+                return true;
+            }
 
             // Reencode selected tracks
             // Convert will test for Options.TestNoModify
@@ -394,66 +378,109 @@ namespace PlexCleaner
             return Refresh();
         }
 
-        public bool VerifyTrackCount(ref bool modified)
+        public bool Verify(ref bool modified)
         {
             // Init
             Result = true;
 
             // Optional
-            if (!Process.Options.DeleteInvalidFiles)
+            if (!Program.Config.ProcessOptions.Verify)
+                return true;
+
+            // If we are using a sidecar file we can use the last result
+            if (Program.Config.ProcessOptions.UseSidecarFiles &&
+                SidecarFile.Verified)
+                // Done
                 return true;
 
             // Need at least one video and audio track
-            if (MediaInfoInfo.Video.Count >= 1 && MediaInfoInfo.Audio.Count >= 1)
-                // Ok
-                return true;
-
-            // File is missing required streams
-            Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole($"File missing required tracks : \"{MediaFile.Name}\"");
-            MediaInfoInfo.WriteLine("Invalid");
-
-            // Delete the file
-            if (!Program.Options.TestNoModify &&
-                !FileEx.DeleteFile(MediaFile.FullName))
+            bool delete = false;
+            if (MediaInfoInfo.Video.Count == 0 || MediaInfoInfo.Audio.Count == 0)
             {
-                // Error
-                Result = false;
-                return false;
+                // File is missing required streams
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole($"Error : File missing required tracks : \"{MediaFile.Name}\"");
+                MediaInfoInfo.WriteLine("Invalid");
+                Program.LogFile.LogConsole("");
+                delete = true;
             }
 
-            // File deleted, do not continue processing
-            modified = true;
-            Result = true;
-            return false;
-        }
-
-        public bool VerifyStreams(ref bool modified)
-        {
-            // Init
-            Result = true;
-
-            // Optional
-            if (!Process.Options.DeleteInvalidFiles)
-                return true;
+            // Test duration
+            if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration))
+            {
+                // File is too short
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole($"Error : File play duration is too short ({MkvMergeInfo.Duration}) : \"{MediaFile.Name}\"");
+                MkvMergeInfo.WriteLine("Short");
+                Program.LogFile.LogConsole("");
+                delete = true;
+            }
 
             // Verify media streams
-            if (FfMpegTool.VerifyMedia(MediaFile.FullName))
-                // Ok
+            if (!FfMpegTool.VerifyMedia(MediaFile.FullName, out string error))
+            { 
+                // Failed streaming validation
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole($"Error : Media stream validation failed : \"{MediaFile.Name}\"");
+                Program.LogFile.LogConsole(error);
+                FfProbeInfo.WriteLine("Failed");
+                Program.LogFile.LogConsole("");
+                delete = true;
+            }
+
+            {
+                // From sampling GetIdetInfo is not a reliable way of detecting interlacing
+                // MkvMergeInfo does not implement interlace detection
+
+                // Get interlaced flags
+                bool mediainfo = MediaInfoInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
+                bool ffprobe = FfProbeInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
+                if (mediainfo != ffprobe)
+                {
+
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsole($"Warning : Interlaced flags do not match : \"{MediaFile.Name}\"");
+                    Program.LogFile.LogConsole($"MediaInfoInfo.FindNeedDeInterlace() : {mediainfo}");
+                    Program.LogFile.LogConsole($"FfProbeInfo.FindNeedDeInterlace() : {ffprobe}");
+                    if (FfMpegTool.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
+                    {
+                        bool idet = idetinfo.IsInterlaced(out double single, out double multi);
+                        Program.LogFile.LogConsole($"FfMpegIdetInfo.IsInterlaced ({single:P} / {multi:P}) : {idet}");
+                    }
+                    Program.LogFile.LogConsole("");
+                }
+
+                // Nothing to do
+            }
+
+            // TODO : Verify bitrate to not exceed network speed
+            // https://www.reddit.com/r/PleX/comments/eoa03e/psa_100_mbps_is_not_enough_to_direct_play_4k/
+            // https://github.com/slhck/ffmpeg-bitrate-stats
+
+            // All ok
+            if (delete == false)
+            {
+                // Save the verified status in the sidecar file
+                SidecarFile.Verified = true;
+                if (Program.Config.ProcessOptions.UseSidecarFiles &&
+                    !SidecarFile.WriteSidecar(MediaFile))
+                {
+                    // Error
+                    Result = false;
+                    return false;
+                }
+
+                // Done
                 return true;
+            }
 
-            // Failed streaming validation
             Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole($"Media stream validation failed : \"{MediaFile.Name}\"");
-            FfProbeInfo.WriteLine("Failed");
+            Program.LogFile.LogConsole($"Deleting media file due to failed validation : \"{MediaFile.Name}\"");
 
-            // TODO : Complete testing before activating
-            return true;
-            
-            /*
-            // Delete the file
+            // Delete the media file and the sidecar file
             if (!Program.Options.TestNoModify &&
-                !FileEx.DeleteFile(MediaFile.FullName))
+                Program.Config.VerifyOptions.DeleteInvalidFiles &&
+                (!FileEx.DeleteFile(MediaFile.FullName) || !FileEx.DeleteFile(SidecarFile.GetSidecarName(MediaFile))))
             {
                 // Error
                 Result = false;
@@ -464,67 +491,26 @@ namespace PlexCleaner
             modified = true;
             Result = true;
             return false;
-            */
-        }
-
-        public bool VerifyDuration(ref bool modified)
-        {
-            // Init
-            Result = true;
-
-            // Optional
-            if (!Process.Options.DeleteInvalidFiles)
-                return true;
-
-            // The duration needs to be longer than 5 minutes
-            if (MkvMergeInfo.Duration >= TimeSpan.FromMinutes(5))
-                // Ok
-                return true;
-
-            // File is too short
-            Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole($"Warning : File play duration is only {MkvMergeInfo.Duration} : \"{MediaFile.Name}\"");
-            MkvMergeInfo.WriteLine("Short");
-
-            // TODO : Complete testing before activating
-            return true;
-            
-            /*
-            // Delete the file
-            if (!Program.Options.TestNoModify &&
-                !FileEx.DeleteFile(MediaFile.FullName))
-            {
-                // Error
-                Result = false;
-                return false;
-            }
-
-            // File deleted, do not continue processing
-            modified = true;
-            Result = true;
-            return false;
-            */
         }
 
         private bool Refresh()
         {
             // Call Refresh() at each processing function exit
 
-            if (Process.Options.UseSidecarFiles)
+            if (Program.Config.ProcessOptions.UseSidecarFiles)
             {
                 // Get info from sidecar file
-                SidecarFile sidecarFile = new SidecarFile();
-                if (!sidecarFile.GetMediaInfo(MediaFile))
+                // If the sidecar does not exist it will be created
+                if (!SidecarFile.GetMediaInfo(MediaFile))
                 {
                     Result = false;
                     return false;
                 }
 
                 // Assign results
-                FfProbeInfo = sidecarFile.FfProbeInfo;
-                MkvMergeInfo = sidecarFile.MkvMergeInfo;
-                MediaInfoInfo = sidecarFile.MediaInfoInfo;
-                FfMpegIdetInfo = sidecarFile.FfMpegIdetInfo;
+                FfProbeInfo = SidecarFile.FfProbeInfo;
+                MkvMergeInfo = SidecarFile.MkvMergeInfo;
+                MediaInfoInfo = SidecarFile.MediaInfoInfo;
 
                 Result = true;
                 return true;
@@ -534,18 +520,19 @@ namespace PlexCleaner
             MediaInfo ffprobeInfo = null;
             MediaInfo mkvmergeInfo = null;
             MediaInfo mediainfoInfo = null;
-            FfMpegIdetInfo ffmpegidetInfo = null;
-            if (!MediaInfo.GetMediaInfo(MediaFile, out ffprobeInfo, out mkvmergeInfo, out mediainfoInfo) ||
-                !FfMpegIdetInfo.GetIdetInfo(MediaFile, out ffmpegidetInfo))
+            if (!MediaInfo.GetMediaInfo(MediaFile, out ffprobeInfo, out mkvmergeInfo, out mediainfoInfo))
+            {
                 Result = false;
+                return false;
+            }
 
             // Assign results
             FfProbeInfo = ffprobeInfo;
             MkvMergeInfo = mkvmergeInfo;
             MediaInfoInfo = mediainfoInfo;
-            FfMpegIdetInfo = ffmpegidetInfo;
 
-            return Result;
+            Result = true;
+            return true;
         }
 
         public bool GetMediaInfo()
@@ -578,8 +565,8 @@ namespace PlexCleaner
         public  MediaInfo FfProbeInfo { get; set; }
         public MediaInfo MkvMergeInfo { get; set; }
         public MediaInfo MediaInfoInfo { get; set; }
-        public FfMpegIdetInfo FfMpegIdetInfo { get; set; }
 
         private FileInfo MediaFile;
+        private SidecarFile SidecarFile = new SidecarFile();
     }
 }

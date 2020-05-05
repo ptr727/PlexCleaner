@@ -6,8 +6,6 @@ namespace PlexCleaner
 {
     public static class Convert
     {
-        public static ConvertOptions Options { get; set; } = new ConvertOptions();
-
         public static bool ConvertToMkv(string inputname, out string outputname)
         {
             // Convert all tracks
@@ -33,7 +31,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Convert using ffmpeg
-            if (!FfMpegTool.ConvertToMkv(inputname, Options.VideoEncodeQuality, Options.AudioEncodeCodec, keep, reencode, tempname))
+            if (!FfMpegTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, keep, reencode, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -127,7 +125,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // HandBrake produces the best de-interlacing results
-            if (!HandBrakeTool.ConvertToMkv(inputname, Options.VideoEncodeQuality, tempname))
+            if (!HandBrakeTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;

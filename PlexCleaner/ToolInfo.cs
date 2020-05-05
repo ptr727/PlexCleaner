@@ -19,6 +19,9 @@ namespace PlexCleaner
 
         public bool Equals(ToolInfo tool)
         {
+            if (tool == null)
+                throw new ArgumentNullException(nameof(tool));
+
             return FileName.Equals(tool.FileName, StringComparison.OrdinalIgnoreCase) &&
                    ModifiedTime == tool.ModifiedTime &&
                    Size == tool.Size &&

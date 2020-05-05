@@ -10,7 +10,7 @@ namespace PlexCleaner
         public string SettingsFile { get; set; }
         public List<string> MediaFiles { get; set; }
         public string LogFile { get; set; }
-        public bool AppendToLog { get; set; }
+        public bool LogAppend { get; set; }
         public bool TestSnippets { get; set; }
         public bool TestNoModify { get; set; }
 
@@ -40,6 +40,9 @@ namespace PlexCleaner
 
             // De-interlace files
             rootCommand.AddCommand(CreateDeInterlaceCommand());
+
+            // Verify files
+            rootCommand.AddCommand(CreateVerifyCommand());
 
             // Write sidecar files
             rootCommand.AddCommand(CreateWriteSidecarCommand());
@@ -76,7 +79,7 @@ namespace PlexCleaner
 
             // Append to log vs. overwrite, optional
             rootCommand.AddOption(
-                new Option<bool>("--appendtolog")
+                new Option<bool>("--logappend")
                 {
                     Description = "Append to the log file vs. default overwrite.",
                     Required = false
@@ -239,6 +242,22 @@ namespace PlexCleaner
                 {
                     Description = "Print info for media files.",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.PrintMediaInfoCommand)
+                };
+
+            // Media files or folders option
+            printmediainfoCommand.AddOption(CreateMediaFilesOption());
+
+            return printmediainfoCommand;
+        }
+
+        private static Command CreateVerifyCommand()
+        {
+            // Print media info
+            Command printmediainfoCommand =
+                new Command("verify")
+                {
+                    Description = "Verify media files.",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
                 };
 
             // Media files or folders option
