@@ -3,7 +3,6 @@
     public class ProcessOptions
     {
         public bool DeleteEmptyFolders { get; set; } = true;
-        public bool DeleteInvalidFiles { get; set; } = true;
         public bool DeleteUnwantedExtensions { get; set; } = true;
         public string KeepExtensions { get; set; } = ".partial~";
         public bool ReMux { get; set; } = true;
@@ -22,5 +21,6 @@
         public string PreferredAudioFormats { get; set; } = "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3";
         public bool RemoveTags { get; set; } = true;
         public bool UseSidecarFiles { get; set; } = true;
+        public bool Verify { get; set; } = true;
     }
 }

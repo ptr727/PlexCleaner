@@ -9,6 +9,7 @@ namespace PlexCleaner
         public ConvertOptions ConvertOptions { get; set; } = new ConvertOptions();
         public ProcessOptions ProcessOptions { get; set; } = new ProcessOptions();
         public MonitorOptions MonitorOptions { get; set; } = new MonitorOptions();
+        public VerifyOptions VerifyOptions { get; set; } = new VerifyOptions();
 
         public static void WriteDefaultsToFile(string path)
         {

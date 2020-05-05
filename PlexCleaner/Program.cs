@@ -104,6 +104,19 @@ namespace PlexCleaner
             return process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int VerifyCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            Process process = new Process();
+            return process.VerifyFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         internal static int WriteSidecarCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
@@ -181,10 +194,7 @@ namespace PlexCleaner
 
             // Set the static options from the loded settings
             Program.Options = options;
-            Tools.Options = config.ToolsOptions;
-            Process.Options = config.ProcessOptions;
-            Monitor.Options = config.MonitorOptions;
-            Convert.Options = config.ConvertOptions;
+            Program.Config = config;
 
             // Set the FileEx options
             FileEx.Options.TestNoModify = Program.Options.TestNoModify;
@@ -202,7 +212,7 @@ namespace PlexCleaner
                 LogFile.FileName = options.LogFile;
 
                 // Clear if not in append mode
-                if (!options.AppendToLog &&
+                if (!options.LogAppend &&
                     !LogFile.Clear())
                 {
                     ConsoleEx.WriteLineError($"Failed to create the logfile : \"{options.LogFile}\"");
@@ -294,6 +304,7 @@ namespace PlexCleaner
         public static Signal Cancel { get; set; }
         public static readonly LogFile LogFile = new LogFile();
         public static CommandLineOptions Options { get; set; }
+        public static ConfigFileJsonSchema Config { get; set; }
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

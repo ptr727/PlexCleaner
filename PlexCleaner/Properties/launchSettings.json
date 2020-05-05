@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --appendtolog process --mediafiles \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\media\\Series\" \"\\\\server-1\\media\\Movies\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -47,6 +47,10 @@
     "DeInterlace": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Temp\""
+    },
+    "Verify": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"D:\\Temp\""
     }
   }
 }

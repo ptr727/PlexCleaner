@@ -36,6 +36,7 @@ Below are a few examples of issues I've experienced over the many years of using
 - Some subtitle tracks like VOBsub cause hangs when the MuxingMode attribute is not set, re-multiplex the file.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
+- Corrupt files cause playback issues, verify stream integrity and delete bad files.
 
 ### Installation
 
@@ -57,7 +58,7 @@ Create a default configuration file by running:
     "RootRelative": true
   },
   "ConvertOptions": {
-    // Encoding video quality
+    // Encoding video constant quality
     "VideoEncodeQuality": 20,
     // Encoding audio codec
     "AudioEncodeCodec": "ac3"
@@ -65,8 +66,6 @@ Create a default configuration file by running:
   "ProcessOptions": {
     // Delete empty folders
     "DeleteEmptyFolders": true,
-    // Delete invalid media files, e.g. no video or audio track
-    "DeleteInvalidFiles": true,
     // Delete non-media files
     "DeleteUnwantedExtensions": true,
     // Files to keep, e.g. subtitle or partial files
@@ -111,9 +110,11 @@ Create a default configuration file by running:
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
-    // Speedup processing by saving media info in sidecar files
+    // Speedup media metadata processing by saving media info in sidecar files
     // Sidecar files will automatically be recreated when the tool version or media file changes
-    "UseSidecarFiles": true
+    "UseSidecarFiles": true,
+    // Enable verify
+    "Verify": true
   },
   "MonitorOptions": {
     // Time to wait after detecting a file change
@@ -122,6 +123,16 @@ Create a default configuration file by running:
     "FileRetryWaitTime": 5,
     // Number of times to retry a file operation
     "FileRetryCount": 2
+  },
+  "VerifyOptions": {
+    // Delete media files that fail verification
+    "DeleteInvalidFiles": true,
+    // Time in seconds to verify media streams, 0 is no limit
+    // Partial processing is faster but incomplete
+    "VerifyDuration": 60,
+    // Time in seconds to count interlaced frames, 0 is no limit
+    // Partial processing is faster but incomplete
+    "IdetDuration": 60
   }
 }
 ```
@@ -156,7 +167,7 @@ Usage:
 Options:
   --settingsfile <settingsfile> (REQUIRED)    Path to settings file.
   --logfile <logfile>                         Path to log file.
-  --appendtolog                               Append to the log file vs. default overwrite.
+  --logappend                                 Append to the log file vs. default overwrite.
   --version                                   Show version information
   -?, -h, --help                              Show help and usage information
 
@@ -168,13 +179,15 @@ Commands:
   remux               Re-Multiplex media files
   reencode            Re-Encode media files.
   deinterlace         De-Interlace media files.
+  verify              Verify media files.
   writesidecar        Write sidecar files for media files.
   createtagmap        Create a tag-map from media files.
   printmediainfo      Print info for media files.
 ```
 
 The `--settingsfile` JSON settings file is required.  
-The `--logfile` output log file is optional, the file will be overwritten unless `--appendtolog` is set.  
+The `--logfile` output log file is optional, the file will be overwritten unless `--logappend` is set.
+
 One of the commands must be specified.
 
 ### Process Media Files
@@ -212,7 +225,7 @@ The following processing will be done:
 - De-interlace the video track if interlaced.
 - Re-encode video to H264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media file integrity.
+- Verify the media container and stream integrity, and conditionally delete files that fail validation.
 
 ### Re-Multiplex, Re-Encode, and De-Interlace
 
@@ -220,13 +233,20 @@ The `remux` command will re-multiplex the media files using `MKVMerge`.
 
 The `reencode` command will re-encode the media files using `FFMPeg` and H264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
-The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.  
+The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.
+
+Unlike the `process` command, no conditional logic will be appied, the file will be always be modified.
 
 ### Monitor
 
-The `monitor` command will watch the specified folders for changes, and process the directories with changes.  
+The `monitor` command will watch the specified folders for changes, and process the directories with changes.
+
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?view=netcore-3.1) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
+
+### Verify
+
+The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
 
 ## Tools and Utilitites
 

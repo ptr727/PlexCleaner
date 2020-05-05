@@ -31,7 +31,7 @@ namespace PlexCleaner
         public static bool CreateSidecarFile(FileInfo mediaFile)
         {
             SidecarFile sidecarfile = new SidecarFile();
-            return sidecarfile.WriteSidecar(mediaFile);
+            return sidecarfile.CreateSidecar(mediaFile);
         }
 
         public static bool DoesSidecarExist(FileInfo mediaFile)
@@ -70,7 +70,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(mediaFile));
 
             // Does the sidecar file exist
-            string sidecarName = Path.ChangeExtension(mediaFile.FullName, SidecarExtension);
+            string sidecarName = GetSidecarName(mediaFile);
             if (!File.Exists(sidecarName))
                 return false;
             FileInfo sidecarInfo = new FileInfo(sidecarName);
@@ -79,7 +79,7 @@ namespace PlexCleaner
             FfProbeInfo = null;
             MkvMergeInfo = null;
             MediaInfoInfo = null;
-            FfMpegIdetInfo = null;
+            Verified = false;
 
             try
             { 
@@ -90,7 +90,7 @@ namespace PlexCleaner
                 // Compare the schema version
                 if (sidecarJson.SchemaVersion != SidecarFileJsonSchema.CurrentSchemaVersion)
                 {
-                    ConsoleEx.WriteLine($"Sidecar version mismatch : {sidecarJson.SchemaVersion} != {SidecarFileJsonSchema.CurrentSchemaVersion} : \"{sidecarInfo.Name}\"");
+                    ConsoleEx.WriteLine($"Sidecar version mismatch : \"{sidecarInfo.Name}\"");
                     return false;
                 }
 
@@ -99,30 +99,24 @@ namespace PlexCleaner
                 if (mediaFile.LastWriteTimeUtc != sidecarJson.MediaLastWriteTimeUtc ||
                     mediaFile.Length != sidecarJson.MediaLength)
                 {
-                    ConsoleEx.WriteLine($"Sidecar out of sync with media file : {mediaFile.LastWriteTimeUtc} != {sidecarJson.MediaLastWriteTimeUtc}, {mediaFile.Length} != {sidecarJson.MediaLength}, \"{sidecarInfo.Name}\"");
+                    ConsoleEx.WriteLine($"Sidecar out of sync with media file : \"{sidecarInfo.Name}\"");
                     return false;
                 }
 
                 // Compare the tool versions
-                if (sidecarJson.FfMpegToolVersion != FfMpegTool.Version)
+                if (sidecarJson.FfMpegToolVersion != FfMpegTool.Version ||
+                    sidecarJson.MkvToolVersion != MkvTool.Version ||
+                    sidecarJson.MediaInfoToolVersion != MediaInfoTool.Version)
                 {
-                    ConsoleEx.WriteLine($"Sidecar FFmpeg tool version out of date : {sidecarJson.FfMpegToolVersion} != {FfMpegTool.Version}, \"{sidecarInfo.Name}\"");
-                    return false;
-                }
-                if (sidecarJson.MkvToolVersion != MkvTool.Version)
-                {
-                    ConsoleEx.WriteLine($"Sidecar MKVMerge tool version out of date : {sidecarJson.MkvToolVersion} != {MkvTool.Version}, \"{sidecarInfo.Name}\"");
-                    return false;
-                }
-                if (sidecarJson.MediaInfoToolVersion != MediaInfoTool.Version)
-                {
-                    ConsoleEx.WriteLine($"Sidecar MediaInfo tool version out of date : {sidecarJson.MediaInfoToolVersion} != {MediaInfoTool.Version}, \"{sidecarInfo.Name}\"");
+                    ConsoleEx.WriteLine($"Sidecar tool version out of date : \"{sidecarInfo.Name}\"");
                     return false;
                 }
 
+                // Verified
+                Verified = sidecarJson.Verified;
+
                 // Decompress the tool data
                 string ffProbeInfoJson = StringCompression.Decompress(sidecarJson.FfProbeInfoData);
-                string ffIdetInfoText = StringCompression.Decompress(sidecarJson.FfIdetInfoData);
                 string mkvMergeInfoJson = StringCompression.Decompress(sidecarJson.MkvMergeInfoData);
                 string mediaInfoXml = StringCompression.Decompress(sidecarJson.MediaInfoData);
 
@@ -130,21 +124,18 @@ namespace PlexCleaner
                 MediaInfo mediaInfoInfo = null;
                 MediaInfo mkvMergeInfo = null;
                 MediaInfo ffProbeInfo = null;
-                FfMpegIdetInfo ffMpegIdetInfo = null;
                 if (!MediaInfoTool.GetMediaInfoFromXml(mediaInfoXml, out mediaInfoInfo) ||
                     !MkvTool.GetMkvInfoFromJson(mkvMergeInfoJson, out mkvMergeInfo) ||
-                    !FfMpegTool.GetFfProbeInfoFromJson(ffProbeInfoJson, out ffProbeInfo) ||
-                    !FfMpegTool.GetIdetInfoFromText(ffIdetInfoText, out ffMpegIdetInfo))
+                    !FfMpegTool.GetFfProbeInfoFromJson(ffProbeInfoJson, out ffProbeInfo))
                 {
                     ConsoleEx.WriteLineError($"Failed to de-serialize tool data : \"{sidecarInfo.Name}\"");
                     return false;
                 }
 
-                // Assign the data
+                // Assign mediainfo data
                 FfProbeInfo = ffProbeInfo;
                 MkvMergeInfo = mkvMergeInfo;
                 MediaInfoInfo = mediaInfoInfo;
-                FfMpegIdetInfo = ffMpegIdetInfo;
             }
             catch (Exception e)
             {
@@ -152,6 +143,50 @@ namespace PlexCleaner
                 return false;
             }
             return true;
+        }
+
+        public bool CreateSidecar(FileInfo mediaFile)
+        {
+            if (mediaFile == null)
+                throw new ArgumentNullException(nameof(mediaFile));
+
+            try
+            {
+                // Read the tool data text
+                ConsoleEx.WriteLine($"Reading media info : \"{mediaFile.Name}\"");
+                if (!MediaInfoTool.GetMediaInfoXml(mediaFile.FullName, out MediaInfoXml) ||
+                    !MkvTool.GetMkvInfoJson(mediaFile.FullName, out MkvMergeInfoJson) ||
+                    !FfMpegTool.GetFfProbeInfoJson(mediaFile.FullName, out FfProbeInfoJson))
+                {
+                    ConsoleEx.WriteLineError($"Failed to read media info : \"{mediaFile.Name}\"");
+                    return false;
+                }
+
+                // Deserialize the tool data
+                MediaInfo mediaInfoInfo = null;
+                MediaInfo mkvMergeInfo = null;
+                MediaInfo ffProbeInfo = null;
+                if (!MediaInfoTool.GetMediaInfoFromXml(MediaInfoXml, out mediaInfoInfo) ||
+                    !MkvTool.GetMkvInfoFromJson(MkvMergeInfoJson, out mkvMergeInfo) ||
+                    !FfMpegTool.GetFfProbeInfoFromJson(FfProbeInfoJson, out ffProbeInfo))
+                {
+                    ConsoleEx.WriteLineError($"Failed to de-serialize tool data : \"{mediaFile.Name}\"");
+                    return false;
+                }
+
+                // Assign the mediainfo data
+                FfProbeInfo = ffProbeInfo;
+                MkvMergeInfo = mkvMergeInfo;
+                MediaInfoInfo = mediaInfoInfo;
+
+                // Verify is externally assigned
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLineError(e);
+                return false;
+            }
+            return WriteSidecar(mediaFile);
         }
 
         public bool WriteSidecar(FileInfo mediaFile)
@@ -162,21 +197,10 @@ namespace PlexCleaner
             try
             {
                 // Delete the sidecar if it exists
-                string sidecarName = Path.ChangeExtension(mediaFile.FullName, SidecarExtension);
+                string sidecarName = GetSidecarName(mediaFile);
                 if (File.Exists(sidecarName))
                     File.Delete(sidecarName);
                 FileInfo sidecarInfo = new FileInfo(sidecarName);
-
-                // Serialize the tool data
-                ConsoleEx.WriteLine($"Reading media info : \"{mediaFile.Name}\"");
-                if (!MediaInfoTool.GetMediaInfoXml(mediaFile.FullName, out string mediaInfoXml) ||
-                    !MkvTool.GetMkvInfoJson(mediaFile.FullName, out string mkvMergeInfoJson) ||
-                    !FfMpegTool.GetFfProbeInfoJson(mediaFile.FullName, out string ffProbeInfoJson) ||
-                    !FfMpegTool.GetIdetInfoText(mediaFile.FullName, out string ffIdetInfoText))
-                {
-                    ConsoleEx.WriteLineError($"Failed to read media info : \"{mediaFile.Name}\"");
-                    return false;
-                }
 
                 // Create sidecar JSON
                 SidecarFileJsonSchema sidecarJson = new SidecarFileJsonSchema();
@@ -193,10 +217,12 @@ namespace PlexCleaner
                 sidecarJson.MediaInfoToolVersion = MediaInfoTool.Version;
 
                 // Compress the tool data
-                sidecarJson.FfProbeInfoData = StringCompression.Compress(ffProbeInfoJson);
-                sidecarJson.FfIdetInfoData = StringCompression.Compress(ffIdetInfoText);
-                sidecarJson.MkvMergeInfoData = StringCompression.Compress(mkvMergeInfoJson);
-                sidecarJson.MediaInfoData = StringCompression.Compress(mediaInfoXml);
+                sidecarJson.FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson);
+                sidecarJson.MkvMergeInfoData = StringCompression.Compress(MkvMergeInfoJson);
+                sidecarJson.MediaInfoData = StringCompression.Compress(MediaInfoXml);
+
+                // Verify flag
+                sidecarJson.Verified = Verified;
 
                 // Convert the JSON to text
                 string json = SidecarFileJsonSchema.ToJson(sidecarJson);
@@ -204,26 +230,6 @@ namespace PlexCleaner
                 // Write the json text to the sidecar file
                 ConsoleEx.WriteLine($"Writing media info to sidecar file : \"{sidecarInfo.Name}\"");
                 File.WriteAllText(sidecarName, json);
-
-                // Deserialize the tool data
-                MediaInfo mediaInfoInfo = null;
-                MediaInfo mkvMergeInfo = null;
-                MediaInfo ffProbeInfo = null;
-                FfMpegIdetInfo ffMpegIdetInfo = null;
-                if (!MediaInfoTool.GetMediaInfoFromXml(mediaInfoXml, out mediaInfoInfo) ||
-                    !MkvTool.GetMkvInfoFromJson(mkvMergeInfoJson, out mkvMergeInfo) ||
-                    !FfMpegTool.GetFfProbeInfoFromJson(ffProbeInfoJson, out ffProbeInfo) ||
-                    !FfMpegTool.GetIdetInfoFromText(ffIdetInfoText, out ffMpegIdetInfo))
-                {
-                    ConsoleEx.WriteLineError($"Failed to de-serialize tool data : \"{sidecarInfo.Name}\"");
-                    return false;
-                }
-
-                // Assign the data
-                FfProbeInfo = ffProbeInfo;
-                MkvMergeInfo = mkvMergeInfo;
-                MediaInfoInfo = mediaInfoInfo;
-                FfMpegIdetInfo = ffMpegIdetInfo;
             }
             catch (Exception e)
             {
@@ -238,7 +244,7 @@ namespace PlexCleaner
             // Try to read the sidecar file
             // Else try to write a new sidecar
             return ReadSidecar(mediaFile) || 
-                   WriteSidecar(mediaFile);
+                   CreateSidecar(mediaFile);
         }
 
         public MediaInfo GetMediaInfo(MediaInfo.ParserType parser)
@@ -258,14 +264,25 @@ namespace PlexCleaner
         {
             return FfProbeInfo != null &&
                    MkvMergeInfo != null &&
-                   MediaInfoInfo != null &&
-                   FfMpegIdetInfo != null;
+                   MediaInfoInfo != null;
+        }
+
+        public static string GetSidecarName(FileInfo mediaFile)
+        {
+            if (mediaFile == null)
+                throw new ArgumentNullException(nameof(mediaFile));
+
+            return Path.ChangeExtension(mediaFile.FullName, SidecarExtension);
         }
 
         public MediaInfo FfProbeInfo { get; set; }
         public MediaInfo MkvMergeInfo { get; set; }
         public MediaInfo MediaInfoInfo { get; set; }
-        public FfMpegIdetInfo FfMpegIdetInfo { get; set; }
+        public bool Verified { get; set; }
+
+        private string MediaInfoXml;
+        private string MkvMergeInfoJson;
+        private string FfProbeInfoJson;
 
         public const string SidecarExtension = @".PlexCleaner";
     }

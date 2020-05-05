@@ -9,8 +9,6 @@ namespace PlexCleaner
 {
     internal class Process
     {
-        public static ProcessOptions Options { get; set; } = new ProcessOptions();
-
         public Process()
         {
             // TODO : Add cleanup for extra empty entry when string is empty
@@ -18,7 +16,7 @@ namespace PlexCleaner
 
             // Wanted extensions, always keep .mkv and sidecar files
             // TODO : Add support for ignoring FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
-            List<string> stringlist = Options.KeepExtensions.Split(',').ToList();
+            List<string> stringlist = Program.Config.ProcessOptions.KeepExtensions.Split(',').ToList();
             KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 ".mkv",
@@ -26,31 +24,31 @@ namespace PlexCleaner
             };
 
             // Containers types that can be remuxed to MKV
-            stringlist = Options.ReMuxExtensions.Split(',').ToList();
+            stringlist = Program.Config.ProcessOptions.ReMuxExtensions.Split(',').ToList();
             ReMuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Languages are in short form using ISO 639-2 notation
             // https://www.loc.gov/standards/iso639-2/php/code_list.php
             // zxx = no linguistic content, und = undetermined
             // Default language
-            if (string.IsNullOrEmpty(Options.DefaultLanguage))
-                Options.DefaultLanguage = "eng";
+            if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
+                Program.Config.ProcessOptions.DefaultLanguage = "eng";
 
             // Languages to keep, always keep no linguistic content and the default language
             // The languages must be in ISO 639-2 form
-            stringlist = Options.KeepLanguages.Split(',').ToList();
+            stringlist = Program.Config.ProcessOptions.KeepLanguages.Split(',').ToList();
             KeepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
             {
                 "zxx",
-                Options.DefaultLanguage
+                Program.Config.ProcessOptions.DefaultLanguage
             };
 
             // Re-encode any video track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to h264
-            List<string> codeclist = Options.ReEncodeVideoCodecs.Split(',').ToList();
-            List<string> formatlist = Options.ReEncodeVideoFormats.Split(',').ToList();
-            List<string> profilelist = Options.ReEncodeVideoProfiles.Split(',').ToList();
+            List<string> codeclist = Program.Config.ProcessOptions.ReEncodeVideoCodecs.Split(',').ToList();
+            List<string> formatlist = Program.Config.ProcessOptions.ReEncodeVideoFormats.Split(',').ToList();
+            List<string> profilelist = Program.Config.ProcessOptions.ReEncodeVideoProfiles.Split(',').ToList();
             Debug.Assert(codeclist.Count == formatlist.Count && formatlist.Count == profilelist.Count);
             ReEncodeVideoInfos = new List<VideoInfo>();
             for (int i = 0; i < codeclist.Count; i++)
@@ -69,11 +67,11 @@ namespace PlexCleaner
             // Re-encode any audio track that match the list
             // We use ffmpeg to re-encode, so we use ffprobe formats
             // All other formats will be encoded to the default codec, e.g. ac3
-            stringlist = Options.ReEncodeAudioFormats.Split(',').ToList();
+            stringlist = Program.Config.ProcessOptions.ReEncodeAudioFormats.Split(',').ToList();
             ReEncodeAudioFormats = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Preferred audio codecs
-            PreferredAudioFormats = Options.PreferredAudioFormats.Split(',').ToList();
+            PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats.Split(',').ToList();
         }
 
         public bool ProcessFiles(List<FileInfo> fileList)
@@ -138,7 +136,7 @@ namespace PlexCleaner
 
         public static bool DeleteEmptyFolders(List<string> folderList)
         {
-            if (!Options.DeleteEmptyFolders)
+            if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
                 return true;
 
             Program.LogFile.LogConsole("");
@@ -172,7 +170,6 @@ namespace PlexCleaner
 
             // Process all files
             int errorcount = 0;
-            int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
@@ -184,16 +181,14 @@ namespace PlexCleaner
                     !ReMuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
-                // Process the file
+                // ReMux the file
                 Program.LogFile.LogConsole($"ReMuxing : \"{fileinfo.FullName}\"");
-                if (!ReMuxFile(fileinfo, out bool modified))
+                if (!Convert.ReMuxToMkv(fileinfo.FullName, out string _))
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReMuxing : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
-                else if (modified)
-                    modifiedcount ++;
 
                 // Next file
             }
@@ -204,7 +199,54 @@ namespace PlexCleaner
             // Done
             Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
+            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
+            Program.LogFile.LogConsole("");
+
+            return true;
+        }
+
+        public bool VerifyFiles(List<FileInfo> fileList)
+        {
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole("Verifying files ...");
+            Program.LogFile.LogConsole("");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int errorcount = 0;
+            foreach (FileInfo fileinfo in fileList)
+            {
+                // Cancel handler
+                if (Program.Cancel.State)
+                    return false;
+
+                // Handle only MKV files
+                if (!MkvTool.IsMkvFile(fileinfo))
+                    continue;
+
+                // Process the file
+                Program.LogFile.LogConsole($"Verifying : \"{fileinfo.FullName}\"");
+                if (!FfMpegTool.VerifyMedia(fileinfo.FullName, out string error))
+                {
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsoleError($"Error Verifying : \"{fileinfo.FullName}\"");
+                    Program.LogFile.LogConsole(error);
+                    errorcount ++;
+                }
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            Program.LogFile.LogConsole("");
+            Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
             Program.LogFile.LogConsole("");
@@ -224,7 +266,6 @@ namespace PlexCleaner
 
             // Process all files
             int errorcount = 0;
-            int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
@@ -236,16 +277,14 @@ namespace PlexCleaner
                 if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Process the file
+                // ReEncode the file
                 Program.LogFile.LogConsole($"ReEncoding : \"{fileinfo.FullName}\"");
-                if (!ReEncodeFile(fileinfo, out bool modified))
+                if (!Convert.ConvertToMkv(fileinfo.FullName, out string _))
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReEncoding : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
-                else if (modified)
-                    modifiedcount ++;
 
                 // Next file
             }
@@ -256,7 +295,6 @@ namespace PlexCleaner
             // Done
             Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
             Program.LogFile.LogConsole("");
@@ -276,7 +314,6 @@ namespace PlexCleaner
 
             // Process all files
             int errorcount = 0;
-            int modifiedcount = 0;
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
@@ -287,16 +324,14 @@ namespace PlexCleaner
                 if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Process the file
-                Program.LogFile.LogConsole($"DeInterlace : \"{fileinfo.FullName}\"");
-                if (!DeInterlaceFile(fileinfo, out bool modified))
+                // De-interlace the file
+                Program.LogFile.LogConsole($"DeInterlacing : \"{fileinfo.FullName}\"");
+                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string _))
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error DeInterlacing : \"{fileinfo.FullName}\"");
                     errorcount ++;
                 }
-                else if (modified)
-                    modifiedcount ++;
 
                 // Next file
             }
@@ -307,7 +342,6 @@ namespace PlexCleaner
             // Done
             Program.LogFile.LogConsole("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
             Program.LogFile.LogConsole("");
@@ -343,8 +377,10 @@ namespace PlexCleaner
                 if (!MkvTool.IsMkvFile(fileinfo))
                     continue;
 
-                // Get the media info
-                if (!GetMediaInfo(fileinfo, out MediaInfo ffprobe, out  MediaInfo mkvmerge, out MediaInfo mediainfo))
+                // Use ProcessFile to get media info
+                ProcessFile processFile = new ProcessFile(fileinfo);
+                Program.LogFile.LogConsoleError($"Getting media info : \"{fileinfo.FullName}\"");
+                if (!processFile.GetMediaInfo())
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error getting media info : \"{fileinfo.FullName}\"");
@@ -355,9 +391,9 @@ namespace PlexCleaner
                 }
 
                 // Add all the tags
-                fftags.Add(ffprobe, mkvmerge, mediainfo);
-                mktags.Add(mkvmerge, ffprobe, mediainfo);
-                mitags.Add(mediainfo, ffprobe, mkvmerge);
+                fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
+                mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
+                mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
 
                 // Next file
             }
@@ -410,6 +446,7 @@ namespace PlexCleaner
                     continue;
 
                 // Write the sidecar files
+                Program.LogFile.LogConsoleError($"Creating sidecar : \"{fileinfo.FullName}\"");
                 if (!SidecarFile.CreateSidecarFile(fileinfo))
                 {
                     Program.LogFile.LogConsole("");
@@ -456,11 +493,22 @@ namespace PlexCleaner
                     continue;
 
                 // Process the file
-                if (!PrintFileInfo(fileinfo))
+                ProcessFile processFile = new ProcessFile(fileinfo);
+                Program.LogFile.LogConsoleError($"Getting media info : \"{fileinfo.FullName}\"");
+                if (!processFile.GetMediaInfo())
                 {
                     Program.LogFile.LogConsole("");
-                    Program.LogFile.LogConsoleError($"Error printing file information : \"{fileinfo.FullName}\"");
+                    Program.LogFile.LogConsoleError($"Error getting media information : \"{fileinfo.FullName}\"");
                     errorcount ++;
+                }
+                else
+                {
+                    Program.LogFile.LogConsole("");
+                    Program.LogFile.LogConsole(fileinfo.FullName);
+                    processFile.FfProbeInfo.WriteLine("FFprobe");
+                    processFile.MkvMergeInfo.WriteLine("MKVMerge");
+                    processFile.MediaInfoInfo.WriteLine("MediaInfo");
+                    Program.LogFile.LogConsole("");
                 }
 
                 // Next file
@@ -483,6 +531,11 @@ namespace PlexCleaner
         {
             // Init
             modified = false;
+
+            // Does the file still exist?
+            if (!File.Exists(fileinfo.FullName))
+                // Nothing to do
+                return true;
 
             // Create file processor to hold state
             ProcessFile processFile = new ProcessFile(fileinfo);
@@ -510,9 +563,8 @@ namespace PlexCleaner
             if (!processFile.GetMediaInfo())
                 return processFile.Result;
 
-            // Do we have any errors in the file
-            // TODO : Do more than just check, e.g. remove tags
-            processFile.CheckForErrors();
+            // Do we have any errors in the metadata
+            processFile.MediaInfoErrors();
 
             // Remove tags
             // This may fix some of the FFprobe language tag errors
@@ -527,7 +579,7 @@ namespace PlexCleaner
             // Remove all the unwanted language tracks
             // Remove all duplicate tracks
             // Remux if any tracks specifically need remuxing
-            if (!processFile.ReMuxMulti(KeepLanguages, PreferredAudioFormats, ref modified))
+            if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
                 return processFile.Result;
 
             // De-interlace interlaced content
@@ -545,18 +597,9 @@ namespace PlexCleaner
             if (!processFile.SetUnknownLanguage(ref modified))
                 return processFile.Result;
 
-            // Verify media validity
-            if (!processFile.VerifyTrackCount(ref modified))
+            // Verify media
+            if (!processFile.Verify(ref modified))
                 return processFile.Result;
-            if (!processFile.VerifyDuration(ref modified))
-                return processFile.Result;
-
-            // TODO : Verify bitrate to not exceed network speed
-            // https://www.reddit.com/r/PleX/comments/eoa03e/psa_100_mbps_is_not_enough_to_direct_play_4k/
-
-            // TODO : Takes too long, store result in sidecar file
-            //if (!processFile.VerifyStreams(ref modified))
-            //    return processFile.Result;
 
             // TODO : Why does the file timestamp change after writing sidecar files?
             // https://forums.unraid.net/topic/91800-file-modification-time-changes-after-last-write/
@@ -564,87 +607,6 @@ namespace PlexCleaner
             //    processFile.MonitorFileTime(30);
 
             // Done
-            return true;
-        }
-
-        private static bool ReMuxFile(FileInfo fileinfo, out bool modified)
-        {
-            // Init
-            modified = false;
-
-            // ReMux the file
-            if (!Convert.ReMuxToMkv(fileinfo.FullName, out string _))
-                return false;
-
-            // Modified
-            modified = true;
-            return true;
-        }
-
-        private static bool ReEncodeFile(FileInfo fileinfo, out bool modified)
-        {
-            // Init
-            modified = false;
-
-            // ReEncode the file
-            if (!Convert.ConvertToMkv(fileinfo.FullName, out string _))
-                return false;
-
-            // Modified
-            modified = true;
-            return true;
-        }
-
-        private static bool DeInterlaceFile(FileInfo fileinfo, out bool modified)
-        {
-            // Init
-            modified = false;
-
-            // Use ProcessFile logic for de-interlacing
-            ProcessFile processFile = new ProcessFile(fileinfo);
-            if (!processFile.GetMediaInfo())
-                return false;
-
-            // De-interlace
-            return processFile.DeInterlace(ref modified);
-        }
-
-        private static bool PrintFileInfo(FileInfo fileinfo)
-        {
-            // Use ProcessFile to get media info
-            ProcessFile processFile = new ProcessFile(fileinfo);
-            if (!processFile.GetMediaInfo())
-                return false;
-
-            // Print info
-            Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole(fileinfo.FullName);
-            processFile.FfProbeInfo.WriteLine("FFprobe");
-            processFile.MkvMergeInfo.WriteLine("MKVMerge");
-            processFile.MediaInfoInfo.WriteLine("MediaInfo");
-            Program.LogFile.LogConsole($"FFmpegIdet : SingleFrame : {processFile.FfMpegIdetInfo.SingleFrame.Percentage:P}, MultiFrame : {processFile.FfMpegIdetInfo.MultiFrame.Percentage:P}");
-            Program.LogFile.LogConsole("");
-
-            return true;
-        }
-
-        private static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobeInfo, out MediaInfo mkvmergeInfo, out MediaInfo mediainfoInfo)
-        {
-            // Init
-            ffprobeInfo = null;
-            mkvmergeInfo = null;
-            mediainfoInfo = null;
-
-            // Use ProcessFile to get media info
-            ProcessFile processFile = new ProcessFile(fileinfo);
-            if (!processFile.GetMediaInfo())
-                return false;
-
-            // Assign values
-            ffprobeInfo = processFile.FfProbeInfo;
-            mkvmergeInfo = processFile.MkvMergeInfo;
-            mediainfoInfo = processFile.MediaInfoInfo;
-
             return true;
         }
 
