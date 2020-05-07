@@ -425,7 +425,55 @@ namespace PlexCleaner
                 Program.LogFile.LogConsole(error);
                 FfProbeInfo.WriteLine("Failed");
                 Program.LogFile.LogConsole("");
-                delete = true;
+
+                // Try to repair the file
+                if (!Program.Options.TestNoModify &&
+                    Program.Config.VerifyOptions.AutoRepair)
+                {
+                    // TODO : Analyze the error output and conditionally repair only the audio or video track
+                    // [aac @ 000001d3c5652440] noise_facs_q 32 is invalid
+                    // [ac3 @ 000002167861a840] error decoding the audio block
+                    // [h264 @ 00000270a07f6ac0] Missing reference picture, default is 65514
+                    // [h264 @ 000001979ebaa7c0] mmco: unref short failure
+                    // [h264 @ 00000152da828940] number of reference frames (0+5) exceeds max (4; probably corrupt input), discarding one
+                    // [NULL @ 000002a2115acac0] Invalid NAL unit size (-1148261185 > 8772).
+                    // [h264 @ 000002a21166bd00] Invalid NAL unit size (-1148261185 > 8772).
+                    // [matroska,webm @ 0000029a256d9280] Length 7 indicated by an EBML number's first byte 0x02 at pos 1601277 (0x186efd) exceeds max length 4.
+
+                    // Some files cannot be decoded by ffmpeg so we use Handbrake to repair
+                    // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
+
+                    // Some content 
+                    Program.LogFile.LogConsole($"Attempting media repair : \"{MediaFile.Name}\"");
+                    if (!Convert.ConvertToMkvHandBrake(MediaFile.FullName, out string outputname) ||
+                        !FfMpegTool.VerifyMedia(MediaFile.FullName, out error))
+                    {
+                        Program.LogFile.LogConsole($"Repair failed : \"{MediaFile.Name}\"");
+                        Program.LogFile.LogConsole(error);
+                        Program.LogFile.LogConsole("");
+                        
+                        // Failed repair
+                        delete = true;
+                    }
+                    else
+                    {
+                        Program.LogFile.LogConsole($"Repair succeeded : \"{MediaFile.Name}\"");
+                        Program.LogFile.LogConsole("");
+
+                        // Refresh
+                        modified = true;
+                        MediaFile = new FileInfo(outputname);
+                        if (!Refresh())
+                        {
+                            // Error
+                            Result = false;
+                            return false;
+                        }
+                    }
+                }
+                else
+                    // Don't repair
+                    delete = true;
             }
 
             {
@@ -488,8 +536,9 @@ namespace PlexCleaner
             }
 
             // File deleted, do not continue processing
+            // Failed verify reported as an error
             modified = true;
-            Result = true;
+            Result = false;
             return false;
         }
 

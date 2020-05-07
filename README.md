@@ -36,7 +36,7 @@ Below are a few examples of issues I've experienced over the many years of using
 - Some subtitle tracks like VOBsub cause hangs when the MuxingMode attribute is not set, re-multiplex the file.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
-- Corrupt files cause playback issues, verify stream integrity and delete bad files.
+- Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
 
 ### Installation
 
@@ -125,13 +125,15 @@ Create a default configuration file by running:
     "FileRetryCount": 2
   },
   "VerifyOptions": {
-    // Delete media files that fail verification
+    // Attempt to repair media files that fail verification
+    "AutoRepair": true,
+    // Delete media files that fail verification and fail repair
     "DeleteInvalidFiles": true,
+    // Minimum required playback duration in seconds
+    "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 is no limit
-    // Partial processing is faster but incomplete
     "VerifyDuration": 60,
     // Time in seconds to count interlaced frames, 0 is no limit
-    // Partial processing is faster but incomplete
     "IdetDuration": 60
   }
 }
@@ -216,8 +218,8 @@ Example:
 The following processing will be done:
 
 - Delete files with extensions not in the `KeepExtensions` list.
-- Re-multiplex containers in the `ReMuxExtensions` list to MKV format.
-- Remove tags from the media file.
+- Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
+- Remove all tags from the media file.
 - Set the language to `DefaultLanguage` for any track with an undefined language.
 - Remove tracks with languages not in the `KeepLanguages` list.
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
@@ -225,7 +227,7 @@ The following processing will be done:
 - De-interlace the video track if interlaced.
 - Re-encode video to H264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, and conditionally delete files that fail validation.
+- Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
 
 ### Re-Multiplex, Re-Encode, and De-Interlace
 
@@ -235,7 +237,7 @@ The `reencode` command will re-encode the media files using `FFMPeg` and H264 at
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.
 
-Unlike the `process` command, no conditional logic will be appied, the file will be always be modified.
+Unlike the `process` command, no conditional logic will be applied, the file will be always be modified.
 
 ### Monitor
 
@@ -248,7 +250,9 @@ Also note that changes made directly to the underlying filesystem will not trigg
 
 The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
 
-## Tools and Utilitites
+Unlike the `process` command, no conditional logic will be applied, the file will not be modified and will not be repaired.
+
+## Tools and Utilities
 
 Tools, libraries, and utilities used in the project.
 

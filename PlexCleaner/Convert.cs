@@ -14,6 +14,17 @@ namespace PlexCleaner
 
         public static bool ConvertToMkv(string inputname, MediaInfo keep, MediaInfo reencode, out string outputname)
         {
+            return ConvertToMkvFfMpeg(inputname, keep, reencode, out outputname);
+        }
+
+        public static bool ConvertToMkvFfMpeg(string inputname, out string outputname)
+        {
+            // Convert all tracks
+            return ConvertToMkvFfMpeg(inputname, null, null, out outputname);
+        }
+
+        public static bool ConvertToMkvFfMpeg(string inputname, MediaInfo keep, MediaInfo reencode, out string outputname)
+        {
             if (inputname == null)
                 throw new ArgumentNullException(nameof(inputname));
 
@@ -108,6 +119,12 @@ namespace PlexCleaner
 
         public static bool DeInterlaceToMkv(string inputname, out string outputname)
         {
+            // HandBrake produces the best de-interlacing results
+            return DeInterlaceToMkvHandbrake(inputname, out outputname);
+        }
+
+        public static bool DeInterlaceToMkvHandbrake(string inputname, out string outputname)
+        {
             if (inputname == null)
                 throw new ArgumentNullException(nameof(inputname));
 
@@ -124,8 +141,8 @@ namespace PlexCleaner
             outputname = Path.ChangeExtension(inputname, ".mkv");
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
-            // HandBrake produces the best de-interlacing results
-            if (!HandBrakeTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, tempname))
+            // De-interlace using handbrake
+            if (!HandBrakeTool.DeInterlaceToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -137,6 +154,40 @@ namespace PlexCleaner
 
             // If the input and output names are not the same, delete the input
             return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || 
+                   FileEx.DeleteFile(inputname);
+        }
+
+        public static bool ConvertToMkvHandBrake(string inputname, out string outputname)
+        {
+            if (inputname == null)
+                throw new ArgumentNullException(nameof(inputname));
+
+            // Match the logic in ConvertToMKV()
+
+            // Test
+            if (Program.Options.TestNoModify)
+            {
+                outputname = inputname;
+                return true;
+            }
+
+            // Create a temp filename based on the input name
+            outputname = Path.ChangeExtension(inputname, ".mkv");
+            string tempname = Path.ChangeExtension(inputname, ".tmp");
+
+            // De-interlace using handbrake
+            if (!HandBrakeTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, tempname))
+            {
+                FileEx.DeleteFile(tempname);
+                return false;
+            }
+
+            // Rename the temp file to the output file
+            if (!FileEx.RenameFile(tempname, outputname))
+                return false;
+
+            // If the input and output names are not the same, delete the input
+            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
                    FileEx.DeleteFile(inputname);
         }
     }
