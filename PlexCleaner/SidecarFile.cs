@@ -75,10 +75,7 @@ namespace PlexCleaner
                 return false;
             FileInfo sidecarInfo = new FileInfo(sidecarName);
 
-            // Init
-            FfProbeInfo = null;
-            MkvMergeInfo = null;
-            MediaInfoInfo = null;
+            // Verified will revert to false whenever the media file changed
             Verified = false;
 
             try
@@ -116,17 +113,17 @@ namespace PlexCleaner
                 Verified = sidecarJson.Verified;
 
                 // Decompress the tool data
-                string ffProbeInfoJson = StringCompression.Decompress(sidecarJson.FfProbeInfoData);
-                string mkvMergeInfoJson = StringCompression.Decompress(sidecarJson.MkvMergeInfoData);
-                string mediaInfoXml = StringCompression.Decompress(sidecarJson.MediaInfoData);
+                FfProbeInfoJson = StringCompression.Decompress(sidecarJson.FfProbeInfoData);
+                MkvMergeInfoJson = StringCompression.Decompress(sidecarJson.MkvMergeInfoData);
+                MediaInfoXml = StringCompression.Decompress(sidecarJson.MediaInfoData);
 
                 // Deserialize the tool data
                 MediaInfo mediaInfoInfo = null;
                 MediaInfo mkvMergeInfo = null;
                 MediaInfo ffProbeInfo = null;
-                if (!MediaInfoTool.GetMediaInfoFromXml(mediaInfoXml, out mediaInfoInfo) ||
-                    !MkvTool.GetMkvInfoFromJson(mkvMergeInfoJson, out mkvMergeInfo) ||
-                    !FfMpegTool.GetFfProbeInfoFromJson(ffProbeInfoJson, out ffProbeInfo))
+                if (!MediaInfoTool.GetMediaInfoFromXml(MediaInfoXml, out mediaInfoInfo) ||
+                    !MkvTool.GetMkvInfoFromJson(MkvMergeInfoJson, out mkvMergeInfo) ||
+                    !FfMpegTool.GetFfProbeInfoFromJson(FfProbeInfoJson, out ffProbeInfo))
                 {
                     ConsoleEx.WriteLineError($"Failed to de-serialize tool data : \"{sidecarInfo.Name}\"");
                     return false;
@@ -200,7 +197,6 @@ namespace PlexCleaner
                 string sidecarName = GetSidecarName(mediaFile);
                 if (File.Exists(sidecarName))
                     File.Delete(sidecarName);
-                FileInfo sidecarInfo = new FileInfo(sidecarName);
 
                 // Create sidecar JSON
                 SidecarFileJsonSchema sidecarJson = new SidecarFileJsonSchema();
@@ -228,7 +224,7 @@ namespace PlexCleaner
                 string json = SidecarFileJsonSchema.ToJson(sidecarJson);
 
                 // Write the json text to the sidecar file
-                ConsoleEx.WriteLine($"Writing media info to sidecar file : \"{sidecarInfo.Name}\"");
+                ConsoleEx.WriteLine($"Writing media info to sidecar file : \"{sidecarName}\"");
                 File.WriteAllText(sidecarName, json);
             }
             catch (Exception e)

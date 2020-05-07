@@ -57,7 +57,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public static bool ConvertToMkv(string inputname, int quality, string outputname)
+        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, string outputname)
         {
             // Delete output file
             FileEx.DeleteFile(outputname);
@@ -66,7 +66,23 @@ namespace PlexCleaner
             // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
             // https://handbrake.fr/docs/en/latest/cli/cli-options.html
             string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
-            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --subtitle 1,2,3,4 --audio 1,2,3,4 --aencoder copy --audio-fallback ac3 {snippets}";
+            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --all-subtitles --all-audio --aencoder {audiocodec} {snippets}";
+            ConsoleEx.WriteLine("");
+            int exitcode = HandBrakeCli(commandline);
+            ConsoleEx.WriteLine("");
+            return exitcode == 0;
+        }
+
+        public static bool DeInterlaceToMkv(string inputname, int quality, string audiocodec, string outputname)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputname);
+
+            // Create the HandBrakeCLI commandline and execute
+            // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
+            // https://handbrake.fr/docs/en/latest/cli/cli-options.html
+            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
+            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy --audio-fallback {audiocodec} {snippets}";
             ConsoleEx.WriteLine("");
             int exitcode = HandBrakeCli(commandline);
             ConsoleEx.WriteLine("");

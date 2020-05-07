@@ -101,6 +101,7 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error processing : \"{fileinfo.FullName}\"");
+                    Program.LogFile.LogConsole("");
                     errorcount ++;
                 }
                 else if (modified)
@@ -187,6 +188,7 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReMuxing : \"{fileinfo.FullName}\"");
+                    Program.LogFile.LogConsole("");
                     errorcount ++;
                 }
 
@@ -235,7 +237,8 @@ namespace PlexCleaner
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error Verifying : \"{fileinfo.FullName}\"");
                     Program.LogFile.LogConsole(error);
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
                 }
 
                 // Next file
@@ -283,7 +286,8 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error ReEncoding : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
                 }
 
                 // Next file
@@ -330,7 +334,8 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error DeInterlacing : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
                 }
 
                 // Next file
@@ -384,7 +389,8 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error getting media info : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
 
                     // Next file
                     continue;
@@ -451,7 +457,8 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error creating sidecar : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
                 }
 
                 // Next file
@@ -499,7 +506,8 @@ namespace PlexCleaner
                 {
                     Program.LogFile.LogConsole("");
                     Program.LogFile.LogConsoleError($"Error getting media information : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsole("");
+                    errorcount++;
                 }
                 else
                 {
@@ -532,10 +540,23 @@ namespace PlexCleaner
             // Init
             modified = false;
 
-            // Does the file still exist?
+            // Does the file still exist
             if (!File.Exists(fileinfo.FullName))
-                // Nothing to do
-                return true;
+            {
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole($"Error : File not found \"{fileinfo.Name}\"");
+                Program.LogFile.LogConsole("");
+                return false;
+            }
+
+            // Is the file read-only
+            if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+            {
+                Program.LogFile.LogConsole("");
+                Program.LogFile.LogConsole($"Error : File is read only \"{fileinfo.Name}\"");
+                Program.LogFile.LogConsole("");
+                return false;
+            }
 
             // Create file processor to hold state
             ProcessFile processFile = new ProcessFile(fileinfo);
@@ -590,6 +611,10 @@ namespace PlexCleaner
             if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
                 return processFile.Result;
 
+            // Verify media
+            if (!processFile.Verify(ref modified))
+                return processFile.Result;
+
             // FFmpeg and HandBrake can add tags or result in tracks witn no language set
             // Remove tags and set unknown languages again
             if (!processFile.RemoveTags(ref modified))
@@ -597,7 +622,8 @@ namespace PlexCleaner
             if (!processFile.SetUnknownLanguage(ref modified))
                 return processFile.Result;
 
-            // Verify media
+            // Removing the tags and setting the unknown languages will invalidate verified
+            // Re-verify media to remember verified flag
             if (!processFile.Verify(ref modified))
                 return processFile.Result;
 

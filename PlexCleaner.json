@@ -73,7 +73,9 @@
     "FileRetryCount": 2
   },
   "VerifyOptions": {
-    // Delete media files that fail verification
+    // Attempt to repair media files that fail verification
+    "AutoRepair": true,
+    // Delete media files that fail verification and fail repair
     "DeleteInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
