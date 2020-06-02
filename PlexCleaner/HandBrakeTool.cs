@@ -8,8 +8,9 @@ namespace PlexCleaner
     {
         public static int HandBrakeCli(string parameters)
         {
-            string path = Tools.CombineToolPath(ToolsOptions.HandBrake, HandBrakeBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"HandBrake : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.HandBrake, HandBrakeBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -67,9 +68,7 @@ namespace PlexCleaner
             // https://handbrake.fr/docs/en/latest/cli/cli-options.html
             string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
             string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --all-subtitles --all-audio --aencoder {audiocodec} {snippets}";
-            ConsoleEx.WriteLine("");
             int exitcode = HandBrakeCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -83,9 +82,7 @@ namespace PlexCleaner
             // https://handbrake.fr/docs/en/latest/cli/cli-options.html
             string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
             string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy --audio-fallback {audiocodec} {snippets}";
-            ConsoleEx.WriteLine("");
             int exitcode = HandBrakeCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 

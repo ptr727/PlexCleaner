@@ -76,9 +76,8 @@ namespace PlexCleaner
 
         public bool ProcessFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Processing {fileList.Count} files ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -96,12 +95,12 @@ namespace PlexCleaner
                 double done = System.Convert.ToDouble(processedcount) / System.Convert.ToDouble(totalcount);
 
                 // Process the file
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Processing ({done:P}) : \"{fileinfo.FullName}\"");
                 if (!ProcessFile(fileinfo, out bool modified))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error processing : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount ++;
                 }
                 else if (modified)
@@ -118,12 +117,11 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
@@ -140,30 +138,28 @@ namespace PlexCleaner
             if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
                 return true;
 
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Deleting empty folders ...");
-            Program.LogFile.LogConsole("");
 
             // Delete all empty folders
             int deleted = 0;
             foreach (string folder in folderList)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Looking for empty folders in \"{folder}\"");
                 FileEx.DeleteEmptyDirectories(folder, ref deleted);
             }
 
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Deleted folders : {deleted}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool ReMuxFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("ReMuxing files ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -183,12 +179,12 @@ namespace PlexCleaner
                     continue;
 
                 // ReMux the file
+                ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"ReMuxing : \"{fileinfo.FullName}\"");
                 if (!Convert.ReMuxToMkv(fileinfo.FullName, out string _))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error ReMuxing : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount ++;
                 }
 
@@ -199,20 +195,18 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool VerifyFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Verifying files ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -231,13 +225,14 @@ namespace PlexCleaner
                     continue;
 
                 // Process the file
+                // TODO : Consolidate the logic with ProcessFile.Verify()
+                ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"Verifying : \"{fileinfo.FullName}\"");
                 if (!FfMpegTool.VerifyMedia(fileinfo.FullName, out string error))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error Verifying : \"{fileinfo.FullName}\"");
                     Program.LogFile.LogConsole(error);
-                    Program.LogFile.LogConsole("");
                     errorcount++;
                 }
 
@@ -248,20 +243,18 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool ReEncodeFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("ReEncoding files ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -281,12 +274,12 @@ namespace PlexCleaner
                     continue;
 
                 // ReEncode the file
+                ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"ReEncoding : \"{fileinfo.FullName}\"");
                 if (!Convert.ConvertToMkv(fileinfo.FullName, out string _))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error ReEncoding : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount++;
                 }
 
@@ -297,20 +290,18 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
         public bool DeInterlaceFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("DeInterlacing files ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -329,12 +320,12 @@ namespace PlexCleaner
                     continue;
 
                 // De-interlace the file
+                ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"DeInterlacing : \"{fileinfo.FullName}\"");
                 if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string _))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error DeInterlacing : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount++;
                 }
 
@@ -345,20 +336,18 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
-        public bool CreateTagMapFiles(List<FileInfo> fileList)
+        public bool GetTagMapFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Creating tag map ...");
-            Program.LogFile.LogConsole("");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -383,13 +372,13 @@ namespace PlexCleaner
                     continue;
 
                 // Use ProcessFile to get media info
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Getting media info : \"{fileinfo.FullName}\"");
                 ProcessFile processFile = new ProcessFile(fileinfo);
-                Program.LogFile.LogConsoleError($"Getting media info : \"{fileinfo.FullName}\"");
                 if (!processFile.GetMediaInfo())
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error getting media info : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount++;
 
                     // Next file
@@ -405,35 +394,32 @@ namespace PlexCleaner
             }
 
             // Print the results
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("FFprobe:");
             fftags.WriteLine();
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("MKVMerge:");
             mktags.WriteLine();
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("MediaInfo:");
             mitags.WriteLine();
-            Program.LogFile.LogConsole("");
 
             // Stop the timer
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
-        public bool WriteSidecarFiles(List<FileInfo> fileList)
+        public bool CreateSidecarFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole("Writing sidecar files ...");
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("Creating sidecar files ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -452,12 +438,12 @@ namespace PlexCleaner
                     continue;
 
                 // Write the sidecar files
-                Program.LogFile.LogConsoleError($"Creating sidecar : \"{fileinfo.FullName}\"");
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Creating sidecar : \"{fileinfo.FullName}\"");
                 if (!SidecarFile.CreateSidecarFile(fileinfo))
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error creating sidecar : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount++;
                 }
 
@@ -468,20 +454,70 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
 
             return true;
         }
 
-        public bool PrintInfo(List<FileInfo> fileList)
+        public bool GetSidecarFiles(List<FileInfo> fileList)
         {
-            Program.LogFile.LogConsole("");
-            Program.LogFile.LogConsole("Printing file information ...");
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("Reading sidecar files ...");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int errorcount = 0;
+            foreach (FileInfo fileinfo in fileList)
+            {
+                // Cancel handler
+                if (Program.Cancel.State)
+                    return false;
+
+                // Handle only sidecar files
+                if (!SidecarFile.IsSidecarFile(fileinfo))
+                    continue;
+
+                // Read the sidecar files
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Reading sidecar : \"{fileinfo.FullName}\"");
+                SidecarFile sidecarfile = new SidecarFile();
+                if (!sidecarfile.ReadSidecarJson(fileinfo))
+                {
+                    ConsoleEx.WriteLine("");
+                    Program.LogFile.LogConsoleError($"Error reading sidecar : \"{fileinfo.FullName}\"");
+                    errorcount++;
+                }
+                else 
+                {
+                    ConsoleEx.WriteLine("");
+                    ConsoleEx.WriteLine(sidecarfile.ToString());
+                }
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole($"Total files : {fileList.Count}");
+            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
+
+            return true;
+        }
+
+        public bool GetMediaInfoFiles(List<FileInfo> fileList)
+        {
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("Getting media information ...");
 
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
@@ -500,23 +536,22 @@ namespace PlexCleaner
                     continue;
 
                 // Process the file
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Getting media information : \"{fileinfo.FullName}\"");
                 ProcessFile processFile = new ProcessFile(fileinfo);
-                Program.LogFile.LogConsoleError($"Getting media info : \"{fileinfo.FullName}\"");
                 if (!processFile.GetMediaInfo())
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error getting media information : \"{fileinfo.FullName}\"");
-                    Program.LogFile.LogConsole("");
                     errorcount++;
                 }
                 else
                 {
-                    Program.LogFile.LogConsole("");
+                    ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsole(fileinfo.FullName);
                     processFile.FfProbeInfo.WriteLine("FFprobe");
                     processFile.MkvMergeInfo.WriteLine("MKVMerge");
                     processFile.MediaInfoInfo.WriteLine("MediaInfo");
-                    Program.LogFile.LogConsole("");
                 }
 
                 // Next file
@@ -526,11 +561,63 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Program.LogFile.LogConsole("");
+            ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
             Program.LogFile.LogConsole($"Error files : {errorcount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
-            Program.LogFile.LogConsole("");
+
+            return true;
+        }
+
+        public bool GetBitrateFiles(List<FileInfo> fileList)
+        {
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole("Getting bitrate information ...");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int errorcount = 0;
+            foreach (FileInfo fileinfo in fileList)
+            {
+                // Cancel handler
+                if (Program.Cancel.State)
+                    return false;
+
+                // Handle only MKV files
+                if (!MkvTool.IsMkvFile(fileinfo))
+                    continue;
+
+                // Process the file
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Getting bitrate information : \"{fileinfo.FullName}\"");
+                ProcessFile processFile = new ProcessFile(fileinfo);
+                if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
+                {
+                    ConsoleEx.WriteLine("");
+                    Program.LogFile.LogConsoleError($"Error getting bitrate information : \"{fileinfo.FullName}\"");
+                    errorcount++;
+                }
+                else
+                {
+                    ConsoleEx.WriteLine("");
+                    Program.LogFile.LogConsole(fileinfo.FullName);
+                    Program.LogFile.LogConsole(bitrateInfo.ToString());
+                }
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole($"Total files : {fileList.Count}");
+            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
 
             return true;
         }
@@ -543,31 +630,41 @@ namespace PlexCleaner
             // Does the file still exist
             if (!File.Exists(fileinfo.FullName))
             {
-                Program.LogFile.LogConsole("");
-                Program.LogFile.LogConsole($"Error : File not found \"{fileinfo.Name}\"");
-                Program.LogFile.LogConsole("");
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Error : File not found : \"{fileinfo.Name}\"");
                 return false;
             }
 
             // Is the file read-only
             if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
-                Program.LogFile.LogConsole("");
-                Program.LogFile.LogConsole($"Error : File is read only \"{fileinfo.Name}\"");
-                Program.LogFile.LogConsole("");
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Error : File is read only : \"{fileinfo.Name}\"");
                 return false;
             }
 
             // Create file processor to hold state
             ProcessFile processFile = new ProcessFile(fileinfo);
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Delete files not in our desired extensions lists
             if (!processFile.DeleteUnwantedExtensions(KeepExtensions, ReMuxExtensions, ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Delete the sidecar file if matching MKV file not found
             if (!processFile.DeleteMissingSidecarFiles(ref modified))
                 return processFile.Result;
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // Nothing more to do for files in the keep extensions list
             // Except if it is a MKV file or a file to be remuxed
@@ -576,25 +673,49 @@ namespace PlexCleaner
                 KeepExtensions.Contains(fileinfo.Extension))
                 return true;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // ReMux undesirable containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
                 return processFile.Result;
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // Read the media info
             if (!processFile.GetMediaInfo())
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Do we have any errors in the metadata
             processFile.MediaInfoErrors();
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // Remove tags
             // This may fix some of the FFprobe language tag errors
             if (!processFile.RemoveTags(ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Change all tracks with an unknown language to the default language
             if (!processFile.SetUnknownLanguage(ref modified))
                 return processFile.Result;
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // Merge all remux operations into a single call
             // Remove all the unwanted language tracks
@@ -603,29 +724,55 @@ namespace PlexCleaner
             if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // De-interlace interlaced content
             if (!processFile.DeInterlace(ref modified))
                 return processFile.Result;
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
             if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Verify media
             if (!processFile.Verify(ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // FFmpeg and HandBrake can add tags or result in tracks witn no language set
             // Remove tags and set unknown languages again
+            // TODO: Can we avoid double processing?
             if (!processFile.RemoveTags(ref modified))
                 return processFile.Result;
             if (!processFile.SetUnknownLanguage(ref modified))
                 return processFile.Result;
 
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
+
             // Removing the tags and setting the unknown languages will invalidate verified
             // Re-verify media to remember verified flag
+            // TODO: Can we avoid double processing?
             if (!processFile.Verify(ref modified))
                 return processFile.Result;
+
+            // Cancel handler
+            if (Program.Cancel.State)
+                return false;
 
             // TODO : Why does the file timestamp change after writing sidecar files?
             // https://forums.unraid.net/topic/91800-file-modification-time-changes-after-last-write/

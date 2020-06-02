@@ -20,6 +20,7 @@ namespace PlexCleaner
 
         internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
         {
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine($"Writing default settings to \"{options.SettingsFile}\"");
 
             // Save default config
@@ -117,7 +118,7 @@ namespace PlexCleaner
             return process.VerifyFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        internal static int WriteSidecarCommand(CommandLineOptions options)
+        internal static int CreateSidecarCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
             if (program == null)
@@ -127,10 +128,10 @@ namespace PlexCleaner
                 return -1;
 
             Process process = new Process();
-            return process.WriteSidecarFiles(program.FileInfoList) ? 0 : -1;
+            return process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        internal static int CreateTagMapCommand(CommandLineOptions options)
+        internal static int GetSidecarCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
             if (program == null)
@@ -140,10 +141,10 @@ namespace PlexCleaner
                 return -1;
 
             Process process = new Process();
-            return process.CreateTagMapFiles(program.FileInfoList) ? 0 : -1;
+            return process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        internal static int PrintMediaInfoCommand(CommandLineOptions options)
+        internal static int GetTagMapCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
             if (program == null)
@@ -153,7 +154,33 @@ namespace PlexCleaner
                 return -1;
 
             Process process = new Process();
-            return process.PrintInfo(program.FileInfoList) ? 0 : -1;
+            return process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
+        }
+
+        internal static int GetMediaInfoCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            Process process = new Process();
+            return process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
+        }
+
+        internal static int GetBitrateInfoCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            Process process = new Process();
+            return process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
         }
 
         // Add a reference to this class in the event handler arguments
@@ -161,6 +188,7 @@ namespace PlexCleaner
 
         private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
         {
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineError("Cancel key pressed");
             e.Cancel = true;
 
@@ -186,9 +214,11 @@ namespace PlexCleaner
             // Load config from JSON
             if (!File.Exists(options.SettingsFile))
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError($"Settings file not found : \"{options.SettingsFile}\"");
                 return null;
             }
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine($"Loading settings from : \"{options.SettingsFile}\"");
             ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
@@ -215,10 +245,13 @@ namespace PlexCleaner
                 if (!options.LogAppend &&
                     !LogFile.Clear())
                 {
+                    ConsoleEx.WriteLine("");
                     ConsoleEx.WriteLineError($"Failed to create the logfile : \"{options.LogFile}\"");
                     return null;
                 }
+                LogFile.Log("");
                 LogFile.Log(Environment.CommandLine);
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Logging output to : \"{options.LogFile}\"");
             }
 
@@ -227,6 +260,7 @@ namespace PlexCleaner
                 // Make sure that the tools folder exists
                 if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
                     return null;
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
 
                 // Set tool version numbers
@@ -277,9 +311,11 @@ namespace PlexCleaner
                     FolderList.Add(fileorfolder);
 
                     // Create the file list from the directory
+                    ConsoleEx.WriteLine("");
                     ConsoleEx.WriteLine($"Getting files and folders from \"{dirInfo.FullName}\" ...");
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
+                        ConsoleEx.WriteLine("");
                         ConsoleEx.WriteLineError($"Failed to enumerate directory \"{fileorfolder}\"");
                         return false;
                     }
@@ -295,8 +331,8 @@ namespace PlexCleaner
             }
 
             // Report
-            ConsoleEx.WriteLine($"Discovered {DirectoryInfoList.Count} directories and {FileInfoList.Count} files");
             ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLine($"Discovered {DirectoryInfoList.Count} directories and {FileInfoList.Count} files");
 
             return true;
         }

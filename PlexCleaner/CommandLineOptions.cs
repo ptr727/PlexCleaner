@@ -17,7 +17,7 @@ namespace PlexCleaner
         public static RootCommand CreateRootCommand()
         {
             // Root command and global options
-            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex.");
+            RootCommand rootCommand = new RootCommand("Utility to optimize media files for DirectPlay on Plex");
             AddGlobalOptions(rootCommand);
 
             // Create default settings
@@ -45,13 +45,19 @@ namespace PlexCleaner
             rootCommand.AddCommand(CreateVerifyCommand());
 
             // Write sidecar files
-            rootCommand.AddCommand(CreateWriteSidecarCommand());
+            rootCommand.AddCommand(CreateCreateSidecarCommand());
+
+            // Read sidecar files
+            rootCommand.AddCommand(CreateGetSidecarCommand());
 
             // Create tag-map
-            rootCommand.AddCommand(CreateCreateTagMapCommand());
+            rootCommand.AddCommand(CreateGetTagMapCommand());
 
             // Print media info
-            rootCommand.AddCommand(CreatePrintMediaInfoCommand());
+            rootCommand.AddCommand(CreateGetMediaInfoCommand());
+
+            // Calculate bitrate info
+            rootCommand.AddCommand(CreateGetBitrateInfoCommand());
 
             return rootCommand;
         }
@@ -65,7 +71,7 @@ namespace PlexCleaner
             rootCommand.AddOption(
                 new Option<string>("--settingsfile")
                 {
-                    Description = "Path to settings file.",
+                    Description = "Path to settings file",
                     Required = true
                 });
 
@@ -73,7 +79,7 @@ namespace PlexCleaner
             rootCommand.AddOption(
                 new Option<string>("--logfile")
                 {
-                    Description = "Path to log file.",
+                    Description = "Path to log file",
                     Required = false
                 });
 
@@ -81,7 +87,7 @@ namespace PlexCleaner
             rootCommand.AddOption(
                 new Option<bool>("--logappend")
                 {
-                    Description = "Append to the log file vs. default overwrite.",
+                    Description = "Append to the log file vs. default overwrite",
                     Required = false
                 });
         }
@@ -91,7 +97,7 @@ namespace PlexCleaner
             // Create default settings file
             return new Command("defaultsettings")
             {
-                Description = "Write default values to settings file.",
+                Description = "Write default values to settings file",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteDefaultSettingsCommand)
             };
         }
@@ -101,7 +107,7 @@ namespace PlexCleaner
             // Check for new tools
             return new Command("checkfornewtools")
                 {
-                    Description = "Check for new tools and download if available.",
+                    Description = "Check for and download new tools",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.CheckForNewToolsCommand)
                 };
         }
@@ -112,7 +118,7 @@ namespace PlexCleaner
             Command processCommand =
                 new Command("process")
                 {
-                    Description = "Process media files.",
+                    Description = "Process media files",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.ProcessCommand)
                 };
 
@@ -123,7 +129,7 @@ namespace PlexCleaner
             processCommand.AddOption(
                 new Option<bool>("--testsnippets")
                 {
-                    Description = "Create short video clips, useful during testing.",
+                    Description = "Create short video clips, useful during testing",
                     Required = false
                 });
 
@@ -131,7 +137,7 @@ namespace PlexCleaner
             processCommand.AddOption(
                 new Option<bool>("--testnomodify")
                 {
-                    Description = "Do not make any modifications, useful during testing.",
+                    Description = "Do not make any modifications, useful during testing",
                     Required = false
                 });
 
@@ -144,7 +150,7 @@ namespace PlexCleaner
             Command monitorCommand =
                 new Command("monitor")
                 {
-                    Description = "Monitor for changes in folders and process any changed files.",
+                    Description = "Monitor and process media file changes in folders",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.MonitorCommand)
                 };
 
@@ -176,7 +182,7 @@ namespace PlexCleaner
             Command reencodeCommand =
                 new Command("reencode")
                 {
-                    Description = "Re-Encode media files.",
+                    Description = "Re-Encode media files",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.ReEncodeCommand)
                 };
 
@@ -192,7 +198,7 @@ namespace PlexCleaner
             Command deinterlaceCommand =
                 new Command("deinterlace")
                 {
-                    Description = "De-Interlace media files.",
+                    Description = "De-Interlace media files",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.DeInterlaceCommand)
                 };
 
@@ -202,52 +208,84 @@ namespace PlexCleaner
             return deinterlaceCommand;
         }
 
-        private static Command CreateWriteSidecarCommand()
+        private static Command CreateCreateSidecarCommand()
         {
-            // Write sidecar files
-            Command writesidecarCommand =
-                new Command("writesidecar")
+            // Create sidecar files
+            Command createsidecarCommand =
+                new Command("createsidecar")
                 {
-                    Description = "Write sidecar files for media files.",
-                    Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteSidecarCommand)
+                    Description = "Create sidecar files",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateSidecarCommand)
                 };
 
             // Media files or folders option
-            writesidecarCommand.AddOption(CreateMediaFilesOption());
+            createsidecarCommand.AddOption(CreateMediaFilesOption());
 
-            return writesidecarCommand;
+            return createsidecarCommand;
         }
 
-        private static Command CreateCreateTagMapCommand()
+        private static Command CreateGetSidecarCommand()
+        {
+            // Read sidecar files
+            Command getsidecarCommand =
+                new Command("getsidecar")
+                {
+                    Description = "Print sidecar file attribute information",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarCommand)
+                };
+
+            // Media files or folders option
+            getsidecarCommand.AddOption(CreateMediaFilesOption());
+
+            return getsidecarCommand;
+        }
+
+        private static Command CreateGetTagMapCommand()
         {
             // Create tag-map
-            Command createtagmapCommand =
-                new Command("createtagmap")
+            Command gettagmapCommand =
+                new Command("gettagmap")
                 {
-                    Description = "Create a tag-map from media files.",
-                    Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateTagMapCommand)
+                    Description = "Print attribute tag-map created from media files",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.GetTagMapCommand)
                 };
 
             // Media files or folders option
-            createtagmapCommand.AddOption(CreateMediaFilesOption());
+            gettagmapCommand.AddOption(CreateMediaFilesOption());
 
-            return createtagmapCommand;
+            return gettagmapCommand;
         }
 
-        private static Command CreatePrintMediaInfoCommand()
+        private static Command CreateGetMediaInfoCommand()
         {
             // Print media info
-            Command printmediainfoCommand =
-                new Command("printmediainfo")
+            Command getmediainfoCommand =
+                new Command("getmediainfo")
                 {
-                    Description = "Print info for media files.",
-                    Handler = CommandHandler.Create<CommandLineOptions>(Program.PrintMediaInfoCommand)
+                    Description = "Print media file attribute information",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.GetMediaInfoCommand)
                 };
 
             // Media files or folders option
-            printmediainfoCommand.AddOption(CreateMediaFilesOption());
+            getmediainfoCommand.AddOption(CreateMediaFilesOption());
 
-            return printmediainfoCommand;
+            return getmediainfoCommand;
+        }
+
+        private static Command CreateGetBitrateInfoCommand()
+        {
+            // Print media info
+            Command bitrateinfoCommand =
+                new Command("getbitrateinfo")
+                {
+                    Description = "Print media file bitrate information",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.GetBitrateInfoCommand)
+                };
+
+            // Media files or folders option
+            bitrateinfoCommand.AddOption(CreateMediaFilesOption());
+
+            return bitrateinfoCommand;
         }
 
         private static Command CreateVerifyCommand()
@@ -256,7 +294,7 @@ namespace PlexCleaner
             Command printmediainfoCommand =
                 new Command("verify")
                 {
-                    Description = "Verify media files.",
+                    Description = "Verify media files",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
                 };
 
@@ -271,7 +309,7 @@ namespace PlexCleaner
             // Media files or folders option
             return new Option<List<string>>("--mediafiles")
                 {
-                    Description = "List of media files or folders.",
+                    Description = "List of media files or folders",
                     Required = true
                 };
         }

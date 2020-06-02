@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\media\\series\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\media\\movies\" \"\\\\server-1\\media\\series\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -51,6 +51,14 @@
     "Verify": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"D:\\Temp\""
+    },
+    "Get Bitrate Info": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getbitrateinfo --mediafiles \"\\\\server-1\\media\\Series\\ALF\\Season 1\""
+    },
+    "Read Sidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" readsidecar --mediafiles \"\\\\server-1\\media\\movies\\The Bourne Identity (2002)\""
     }
   }
 }

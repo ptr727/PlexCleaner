@@ -20,8 +20,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -31,8 +32,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -42,8 +44,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvPropEditBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVPropEdit : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvPropEditBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -103,9 +106,7 @@ namespace PlexCleaner
             // https://mkvtoolnix.download/doc/mkvpropedit.html
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string commandline = $"--identify \"{filename}\" --identification-format json";
-            ConsoleEx.WriteLine("");
             int exitcode = MkvMergeCli(commandline, out json);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -180,9 +181,7 @@ namespace PlexCleaner
             // The track number is reported by MKVMerge --identify using the track.properties.number value
             // https://mkvtoolnix.download/doc/mkvpropedit.html
             string commandline = $"\"{filename}\" --edit track:@{track} --set language={language}";
-            ConsoleEx.WriteLine("");
             int exitcode = MkvPropEditCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -191,9 +190,7 @@ namespace PlexCleaner
             // Create the MKVPropEdit commandline and execute
             // https://mkvtoolnix.download/doc/mkvpropedit.html
             string commandline = $"\"{filename}\" --tags all:";
-            ConsoleEx.WriteLine("");
             int exitcode = MkvPropEditCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -239,9 +236,7 @@ namespace PlexCleaner
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = MkvMergeCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0 || exitcode == 1;
         }
 
@@ -254,9 +249,7 @@ namespace PlexCleaner
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
             string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = MkvMergeCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0 || exitcode == 1;
         }
 

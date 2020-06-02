@@ -12,16 +12,15 @@ namespace PlexCleaner
         {
             // 7z.exe x archive.zip -o"C:\Doc"
             string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = SevenZip(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
         public static int SevenZip(string parameters)
         {
-            string path = Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
             return ProcessEx.Execute(path, parameters);
         }
 

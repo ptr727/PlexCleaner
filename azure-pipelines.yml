@@ -24,7 +24,7 @@ steps:
     packageType: sdk
     version: 3.1.x
 
-# Run GitVersion Tool
+# Calculate the GitFlow version numbers
 # https://gitversion.net/docs/build-server-support/build-server/azure-devops
 - task: GitVersion@5
   displayName: 'Run GitVersion Tool'
@@ -32,7 +32,7 @@ steps:
     runtime: core
     configFilePath: gitversion.yml
 
-# Set Manifest Version Information
+# Set the manifest version information
 # Modify the csproj file directly and use values calculated by the GitVersion tool
 # https://github.com/BMuuN/vsts-assemblyinfo-task/wiki/Attributes
 - task: Assembly-Info-NetCore@2
@@ -45,6 +45,7 @@ steps:
     PackageVersion: $(GitVersion.InformationalVersion)
 
 # DotNetCore Publish
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops
 - task: DotNetCoreCLI@2
   displayName: 'DotNetCore Publish'
   inputs:
@@ -72,7 +73,7 @@ steps:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/github-release?view=azure-devops
 - task: GitHubRelease@1
   displayName: 'Release to GitHub'
-  # Do not tag any pre-release builds else GitVersion will fail
+  # TODO : Do not tag any pre-release builds else GitVersion will fail with duplicate tags
   # https://github.com/GitTools/GitVersion/issues/2211
   #condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master', 'refs/heads/develop'))
   condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))

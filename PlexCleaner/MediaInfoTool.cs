@@ -19,8 +19,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -100,9 +101,7 @@ namespace PlexCleaner
             // Create the MediaInfo commandline and execute
             // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
             string commandline = $"--Output=XML \"{filename}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = MediaInfoCli(commandline, out xml);
-            ConsoleEx.WriteLine("");
 
             // TODO : No error is returned when the file does not exist
             // https://sourceforge.net/p/mediainfo/bugs/1052/
