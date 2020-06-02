@@ -29,13 +29,13 @@
     "ReEncode": true,
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
     "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
     "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
@@ -53,14 +53,15 @@
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printinfo` command to get media info
+    // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
     // Speedup media metadata processing by saving media info in sidecar files
-    // Sidecar files will automatically be recreated when the tool version or media file changes
     "UseSidecarFiles": true,
+    // Invalidate sidecar files when tool versions change
+    "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true
   },
@@ -79,9 +80,13 @@
     "DeleteInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
-    // Time in seconds to verify media streams, 0 is no limit
-    "VerifyDuration": 60,
-    // Time in seconds to count interlaced frames, 0 is no limit
-    "IdetDuration": 60
+    // Time in seconds to verify media streams, 0 will verify entire file
+    "VerifyDuration": 0,
+    // Time in seconds to count interlaced frames, 0 will count entire file
+    "IdetDuration": 0,
+    // Maximum bitrate in bits per second, 0 will skip computation
+    "MaximumBitrate": 100000000,
+    // Skip files older than the minimum file age in days, 0 will process all files
+    "MinimumFileAge": 0
   }
 }

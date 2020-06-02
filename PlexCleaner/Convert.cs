@@ -175,7 +175,7 @@ namespace PlexCleaner
             outputname = Path.ChangeExtension(inputname, ".mkv");
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
-            // De-interlace using handbrake
+            // Re-encode using handbrake
             if (!HandBrakeTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, tempname))
             {
                 FileEx.DeleteFile(tempname);

@@ -75,4 +75,31 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         [JsonProperty("forced")]
         public bool Forced { get; set; } = false;
     }
+
+    public class PacketInfo
+    {
+        [JsonProperty("packets")]
+        public List<Packet> Packets { get; } = new List<Packet>();
+    }
+
+    public class Packet
+    {
+        [JsonProperty("codec_type")]
+        public string CodecType { get; set; } = "";
+
+        [JsonProperty("stream_index")]
+        public long StreamIndex { get; set; } = -1;
+
+        [JsonProperty("pts_time")]
+        public double PtsTime { get; set; } = double.NaN;
+
+        [JsonProperty("dts_time")]
+        public double DtsTime { get; set; } = double.NaN;
+
+        [JsonProperty("duration_time")]
+        public double DurationTime { get; set; } = double.NaN;
+
+        [JsonProperty("size")]
+        public long Size { get; set; } = -1;
+    }
 }

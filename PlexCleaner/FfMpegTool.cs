@@ -7,6 +7,10 @@ using InsaneGenius.Utilities;
 using System.Text;
 using System.Diagnostics;
 using System.Globalization;
+using PlexCleaner.FfMpegToolJsonSchema;
+using System.IO;
+using Newtonsoft.Json;
+using System.IO.Compression;
 
 // TODO : FFmpeg de-interlacing
 // https://www.reddit.com/r/ffmpeg/comments/d3cwxp/what_is_the_difference_between_bwdif_and_yadif1/
@@ -35,8 +39,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -46,8 +51,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
@@ -57,8 +63,9 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
+            ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFprobe : {parameters}");
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
@@ -114,6 +121,7 @@ namespace PlexCleaner
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
@@ -125,10 +133,8 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
-            string commandline = $"-i \"{filename}\" -nostats -v error -xerror {snippet} -f null -";
-            ConsoleEx.WriteLine("");
+            string commandline = $"-i \"{filename}\" -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
-            ConsoleEx.WriteLine("");
             return exitcode == 0 && error.Length == 0;
         }
 
@@ -143,10 +149,8 @@ namespace PlexCleaner
         {
             // Create the FFprobe commandline and execute
             // https://ffmpeg.org/ffprobe.html
-            string commandline = $"-v quiet -show_streams -print_format json \"{filename}\"";
-            ConsoleEx.WriteLine("");
+            string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
             int exitcode = FfProbeCli(commandline, out json, out string error);
-            ConsoleEx.WriteLine("");
             return exitcode == 0 && error.Length == 0;
         }
 
@@ -197,6 +201,7 @@ namespace PlexCleaner
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
@@ -221,9 +226,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -239,9 +242,7 @@ namespace PlexCleaner
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippet} -map 0 -codec copy -f matroska \"{outputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -335,9 +336,7 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Encode/H.264
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -351,9 +350,7 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Encode/H.264
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
             string commandline = $"-i \"{inputname}\" {snippet} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
-            ConsoleEx.WriteLine("");
             int exitcode = FfMpegCli(commandline);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -373,10 +370,8 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Null
             string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
             string commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
-            ConsoleEx.WriteLine("");
             // FFMpeg logs output to stderror
             int exitcode = FfMpegCli(commandline, out string _, out text);
-            ConsoleEx.WriteLine("");
             return exitcode == 0;
         }
 
@@ -429,11 +424,54 @@ namespace PlexCleaner
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
         }
+
+        public static bool GetPacketInfo(string filename, out List<Packet> packets)
+        {
+            // Init
+            packets = null;
+
+            // Create the FFprobe commandline
+            // https://ffmpeg.org/ffprobe.html
+            string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
+            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
+
+            // Write JSON text output to compressed memory stream
+            // TODO : Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
+            // Make sure that the various stream processors leave the memory stream open for the duration of operations
+            using MemoryStream memoryStream = new MemoryStream();
+            using GZipStream compressStream = new GZipStream(memoryStream, CompressionMode.Compress, true);
+            using ProcessEx process = new ProcessEx()
+            {
+                RedirectOutput = true,
+                OutputStream = new StreamWriter(compressStream)
+            };
+
+            // Execute
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLineTool($"FFprobe : {commandline}");
+            int exitcode = process.ExecuteEx(path, commandline);
+            if (exitcode != 0)
+                return false;
+
+            // Read JSON from stream
+            process.OutputStream.Flush();
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            using GZipStream decompressStream = new GZipStream(memoryStream, CompressionMode.Decompress, true);
+            using StreamReader streamReader = new StreamReader(decompressStream);
+            using JsonTextReader jsonReader = new JsonTextReader(streamReader);
+            JsonSerializer serializer = new JsonSerializer();
+            PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+            packets = packetInfo.Packets;
+
+            return true;
+        }
+
 
         private const string FfMpegBinary = @"bin\ffmpeg.exe";
         private const string FfProbeBinary = @"bin\ffprobe.exe";

@@ -37,6 +37,7 @@ Below are a few examples of issues I've experienced over the many years of using
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
+- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, verify content bitrate does not exceed the network bitrate.
 
 ### Installation
 
@@ -81,13 +82,13 @@ Create a default configuration file by running:
     "ReEncode": true,
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
     "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
     "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
-    // Use FFProbe attribute naming, and the `printinfo` command to get media info
+    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
@@ -105,14 +106,15 @@ Create a default configuration file by running:
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printinfo` command to get media info
+    // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
     // Speedup media metadata processing by saving media info in sidecar files
-    // Sidecar files will automatically be recreated when the tool version or media file changes
     "UseSidecarFiles": true,
+    // Invalidate sidecar files when tool versions change
+    "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true
   },
@@ -131,10 +133,12 @@ Create a default configuration file by running:
     "DeleteInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
-    // Time in seconds to verify media streams, 0 is no limit
-    "VerifyDuration": 60,
-    // Time in seconds to count interlaced frames, 0 is no limit
-    "IdetDuration": 60
+    // Time in seconds to verify media streams, 0 will verify entire file
+    "VerifyDuration": 0,
+    // Time in seconds to count interlaced frames, 0 will count entire file
+    "IdetDuration": 0,
+    // Maximum bitrate in bits per second, 0 will skip computation
+    "MaximumBitrate": 100000000
   }
 }
 ```
@@ -156,35 +160,37 @@ Create a default configuration file by running:
 ### Commandline
 
 Commandline options:  
-`Plexcleaner.exe --help`
+`PlexCleaner.exe --help`
 
 ```console
 PS C:\..\netcoreapp3.1> .\PlexCleaner.exe --help
 PlexCleaner:
-  Utility to optimize media files for DirectPlay on Plex.
+  Utility to optimize media files for DirectPlay on Plex
 
 Usage:
   PlexCleaner [options] [command]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)    Path to settings file.
-  --logfile <logfile>                         Path to log file.
-  --logappend                                 Append to the log file vs. default overwrite.
+  --settingsfile <settingsfile> (REQUIRED)    Path to settings file
+  --logfile <logfile>                         Path to log file
+  --logappend                                 Append to the log file vs. default overwrite
   --version                                   Show version information
   -?, -h, --help                              Show help and usage information
 
 Commands:
-  defaultsettings     Write default values to settings file.
-  checkfornewtools    Check for new tools and download if available.
-  process             Process media files.
-  monitor             Monitor for changes in folders and process any changed files.
+  defaultsettings     Write default values to settings file
+  checkfornewtools    Check for and download new tools
+  process             Process media files
+  monitor             Monitor and process media file changes in folders
   remux               Re-Multiplex media files
-  reencode            Re-Encode media files.
-  deinterlace         De-Interlace media files.
-  verify              Verify media files.
-  writesidecar        Write sidecar files for media files.
-  createtagmap        Create a tag-map from media files.
-  printmediainfo      Print info for media files.
+  reencode            Re-Encode media files
+  deinterlace         De-Interlace media files
+  verify              Verify media files
+  createsidecar       Create sidecar files
+  getsidecar          Print sidecar file attribute information
+  gettagmap           Print attribute tag-map created from media files
+  getmediainfo        Print media file attribute information
+  getbitrateinfo      Print media file bitrate information
 ```
 
 The `--settingsfile` JSON settings file is required.  
@@ -229,15 +235,17 @@ The following processing will be done:
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
 
-### Re-Multiplex, Re-Encode, and De-Interlace
+### Re-Multiplex, Re-Encode, De-Interlace, Verify
 
 The `remux` command will re-multiplex the media files using `MKVMerge`.
 
 The `reencode` command will re-encode the media files using `FFMPeg` and H264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
-The `deinterlace` command will de-interlace interlaced media files using `HandBrake` with the `--comb-detect --decomb` filter.
+The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
-Unlike the `process` command, no conditional logic will be applied, the file will be always be modified.
+The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
+
+Unlike the `process` command, no conditional logic will be applied, the file will always be modified.
 
 ### Monitor
 
@@ -246,11 +254,17 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?view=netcore-3.1) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### Verify
+### CreateSidecar, GetSidecar, GetTagMap, GetMediaInfo, GetBitrateInfo
 
-The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
+The `createsidecar` command will create sidecar files.
 
-Unlike the `process` command, no conditional logic will be applied, the file will not be modified and will not be repaired.
+The `getsidecar` command will print sidecar file attributes.
+
+The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
+
+The `getmediainfo` command will print media attribute information.
+
+The `getbitrateinfo` command will calculate and print media bitrate information.
 
 ## Tools and Utilities
 
@@ -263,13 +277,13 @@ PS C:\..\PlexCleaner> dotnet list package
 Project 'PlexCleaner' has the following package references
    [netcoreapp3.1]:
    Top-level Package                            Requested             Resolved
-   > HtmlAgilityPack                            1.11.23               1.11.23
-   > InsaneGenius.Utilities                     1.3.91                1.3.91
+   > HtmlAgilityPack                            1.11.24               1.11.24
+   > InsaneGenius.Utilities                     1.3.95                1.3.95
    > Microsoft.CodeAnalysis.FxCopAnalyzers      3.0.0                 3.0.0
-   > Microsoft.SourceLink.GitHub                1.0.0                 1.0.0
+   > Microsoft.SourceLink.GitHub                1.1.0-beta-20204-02   1.1.0-beta-20204-02
    > Newtonsoft.Json                            12.0.3                12.0.3
-   > System.CommandLine                         2.0.0-beta1.20214.1   2.0.0-beta1.20214.1
- ```
+   > System.CommandLine                         2.0.0-beta1.20253.1   2.0.0-beta1.20253.1
+```
 
 ### 3rd Party Tools
 

@@ -30,6 +30,7 @@ namespace PlexCleaner
             foreach (string folder in folders)
             {
                 // Create a file system watcher for the folder
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Monitoring : \"{folder}\".");
                 FileSystemWatcher watch = new FileSystemWatcher();
                 Watcher.Add(watch);
@@ -83,6 +84,7 @@ namespace PlexCleaner
                     continue;
 
                 // Process changes in the watched folders
+                ConsoleEx.WriteLine("");
                 foreach (string folder in watchlist)
                     ConsoleEx.WriteLine($"Monitored changes in : \"{folder}\"");
                 Process process = new Process();

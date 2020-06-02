@@ -21,6 +21,7 @@
         public string PreferredAudioFormats { get; set; } = "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3";
         public bool RemoveTags { get; set; } = true;
         public bool UseSidecarFiles { get; set; } = true;
+        public bool SidecarUpdateOnToolChange { get; set; } = false;
         public bool Verify { get; set; } = true;
     }
 }
