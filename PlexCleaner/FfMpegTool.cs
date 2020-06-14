@@ -130,10 +130,13 @@ namespace PlexCleaner
 
         public static bool VerifyMedia(string filename, out string error)
         {
+            // https://trac.ffmpeg.org/ticket/6375
+            // Too many packets buffered for output stream 0:1
+
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
-            string commandline = $"-i \"{filename}\" -nostats -loglevel error -xerror {snippet} -f null -";
+            string commandline = $"-i \"{filename}\" -max_muxing_queue_size 512 -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
             return exitcode == 0 && error.Length == 0;
         }
