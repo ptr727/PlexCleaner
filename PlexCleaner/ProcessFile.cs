@@ -435,6 +435,12 @@ namespace PlexCleaner
                     if (Program.Cancel.State)
                         return false;
 
+                    // TODO: Why do we sometimes get an invalid argument error?
+                    // FFmpeg: -i "\\server-1\media\movies\I, Robot (2004)\I, Robot (2004).mkv" - nostats - loglevel error - xerror - f null -
+                    // Error: Media stream validation failed : "I, Robot (2004).mkv"
+                    // \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument
+                    Debug.Assert(!error.Contains("invalid argument", StringComparison.OrdinalIgnoreCase));
+
                     // Failed stream validation
                     ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsole($"Error : Media stream validation failed : \"{MediaFile.Name}\"");

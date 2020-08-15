@@ -88,29 +88,38 @@ namespace PlexCleaner
 
             try
             {
-                // Load the download page
-                // TODO : Find a more reliable way of getting the last released version number
+                // TODO : Find a reliable way of getting the latest released version number
                 // https://www.ffmpeg.org/download.html
                 // https://ffmpeg.zeranoe.com/builds/
+                // https://ffmpeg.zeranoe.com/builds/win32/static/
+                // https://www.videohelp.com/software/ffmpeg
+
+                // Load all releases from Zeranoe
                 HtmlWeb web = new HtmlWeb();
-                HtmlDocument doc = web.Load(new Uri(@"https://www.ffmpeg.org/download.html"));
+                HtmlDocument doc = web.Load(new Uri(@"https://ffmpeg.zeranoe.com/builds/win32/static/"));
 
-                // Get the download element and the download button
-                HtmlNode download = doc.GetElementbyId("download");
-                HtmlNodeCollection divs = download.SelectNodes("//div[contains(@class, 'btn-download-wrapper')]");
-                if (divs.Count != 1) throw new ArgumentException($"Expecting only one node : {divs.Count}");
+                // Get all the anchor links
+                string sourceUrl = string.Empty;
+                HtmlNodeCollection hrefNodes = doc.DocumentNode.SelectNodes("//a[@href]");
+                Debug.Assert(hrefNodes.Count > 3);
 
-                // Get the current version URL from the first href
-                HtmlNodeCollection anchors = divs.First().SelectNodes("a");
-                if (anchors.Count != 2) throw new ArgumentException($"Expecting two nodes : {anchors.Count}");
-                HtmlAttribute attr = anchors.First().Attributes["href"];
-                string sourceurl = attr.Value;
+                // The latest release will be the second-last link
+                // E.g.
+                // <a href="ffmpeg-4.3-win32-static-lgpl.zip">ffmpeg-4.3-win32-static-lgpl.zip</a>                   29-Jun-2020 05:40     55M
+                // <a href="ffmpeg-4.3-win32-static.zip">ffmpeg-4.3-win32-static.zip</a>                        29-Jun-2020 04:09     62M
+                // <a href="ffmpeg-4.3.1-win32-static-lgpl.zip">ffmpeg-4.3.1-win32-static-lgpl.zip</a>                 04-Aug-2020 17:53     57M
+                // <a href="ffmpeg-4.3.1-win32-static.zip">ffmpeg-4.3.1-win32-static.zip</a>                      04-Aug-2020 16:39     64M
+                // <a href="ffmpeg-latest-win32-static.zip">ffmpeg-latest-win32-static.zip</a>
+                HtmlNode hrefNode = hrefNodes.ElementAt(hrefNodes.Count - 2);
+
+                // Get the value of the HREF attribute
+                sourceUrl = hrefNode.GetAttributeValue("href", string.Empty);
 
                 // Extract the version number from the URL
-                // E.g. https://ffmpeg.org/releases/ffmpeg-3.4.tar.bz2
-                const string pattern = @"ffmpeg\.org\/releases\/ffmpeg-(?<version>.*?)\.tar\.bz2";
+                // E.g. ffmpeg-4.3.1-win32-static.zip
+                const string pattern = @"ffmpeg-(?<version>.*?)-win32-static\.zip";
                 Regex regex = new Regex(pattern);
-                Match match = regex.Match(sourceurl);
+                Match match = regex.Match(sourceUrl);
                 Debug.Assert(match.Success);
                 toolinfo.Version = match.Groups["version"].Value;
 
@@ -130,10 +139,13 @@ namespace PlexCleaner
 
         public static bool VerifyMedia(string filename, out string error)
         {
+            // https://trac.ffmpeg.org/ticket/6375
+            // Too many packets buffered for output stream 0:1
+
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
-            string commandline = $"-i \"{filename}\" -nostats -loglevel error -xerror {snippet} -f null -";
+            string commandline = $"-i \"{filename}\" -max_muxing_queue_size 512 -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
             return exitcode == 0 && error.Length == 0;
         }
