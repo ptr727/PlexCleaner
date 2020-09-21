@@ -72,7 +72,7 @@ namespace PlexCleaner
                 new Option<string>("--settingsfile")
                 {
                     Description = "Path to settings file",
-                    Required = true
+                    IsRequired = true
                 });
 
             // Path to the log file, optional
@@ -80,7 +80,7 @@ namespace PlexCleaner
                 new Option<string>("--logfile")
                 {
                     Description = "Path to log file",
-                    Required = false
+                    IsRequired = false
                 });
 
             // Append to log vs. overwrite, optional
@@ -88,7 +88,7 @@ namespace PlexCleaner
                 new Option<bool>("--logappend")
                 {
                     Description = "Append to the log file vs. default overwrite",
-                    Required = false
+                    IsRequired = false
                 });
         }
 
@@ -130,7 +130,7 @@ namespace PlexCleaner
                 new Option<bool>("--testsnippets")
                 {
                     Description = "Create short video clips, useful during testing",
-                    Required = false
+                    IsRequired = false
                 });
 
             //  Do not make any modifications, optional
@@ -138,7 +138,7 @@ namespace PlexCleaner
                 new Option<bool>("--testnomodify")
                 {
                     Description = "Do not make any modifications, useful during testing",
-                    Required = false
+                    IsRequired = false
                 });
 
             return processCommand;
@@ -310,7 +310,7 @@ namespace PlexCleaner
             return new Option<List<string>>("--mediafiles")
                 {
                     Description = "List of media files or folders",
-                    Required = true
+                    IsRequired = true
                 };
         }
     }

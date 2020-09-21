@@ -1,4 +1,6 @@
-﻿namespace PlexCleaner
+﻿using System.Collections.Generic;
+
+namespace PlexCleaner
 {
     public class ProcessOptions
     {
@@ -23,5 +25,6 @@
         public bool UseSidecarFiles { get; set; } = true;
         public bool SidecarUpdateOnToolChange { get; set; } = false;
         public bool Verify { get; set; } = true;
+        public List<string> FileIgnoreList { get; } = new List<string>();
     }
 }

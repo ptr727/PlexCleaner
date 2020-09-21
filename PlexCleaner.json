@@ -63,7 +63,12 @@
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
     // Enable verify
-    "Verify": true
+    "Verify": true,
+    // List of media files to ignore, e.g. repeat processing failures, but media still plays
+    "FileIgnoreList": [
+      "\\\\server\\share1\\path1\\file1.mkv",
+      "\\\\server\\share2\\path2\\file2.mkv"
+    ]
   },
   "MonitorOptions": {
     // Time to wait after detecting a file change
