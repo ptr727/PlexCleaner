@@ -734,8 +734,10 @@ namespace PlexCleaner
                 return false;
 
             // Compute bitrate
-            bitrateInfo = new BitrateInfo();
-            bitrateInfo.Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8;
+            bitrateInfo = new BitrateInfo 
+            {
+                Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8
+            };
             bitrateInfo.Calculate(packetList);
 
             return true;

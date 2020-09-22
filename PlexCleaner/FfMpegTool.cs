@@ -122,7 +122,7 @@ namespace PlexCleaner
                 Debug.Assert(match.Success);
                 toolinfo.Version = match.Groups["version"].Value;
 
-                // TODO: If the latest release is always last, we can just use the URL as is.
+                // The latest release is always last, we can just use the URL as is, but we still need to extract the filename.
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.1-full_build.zip
@@ -152,15 +152,17 @@ namespace PlexCleaner
 
             // TODO: We sometimes get an invalid argument error, but there is nothing wrong with the commandline
             // Repeating the exact same operation and it works?
-            // E.g. \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument
+            // E.g. \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument\r\n
             if ((exitcode != 0 || error.Length != 0) &&
-                error.EndsWith("invalid argument", StringComparison.OrdinalIgnoreCase))
+                error.EndsWith(": invalid argument\r\n", StringComparison.OrdinalIgnoreCase))
             {
+                // Try one more time, after waiting a bit, assuming it is a synschronization or file access issue
+                // E.g. observed to happen when system resumes from sleep while processing
+                const int sleepTime = 5;
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(error);
-
-                // Try one more time, after waiting a bit, assuming it is a synschronization or access issue
-                Thread.Sleep(1000);
+                ConsoleEx.WriteLine($"Retrying after sleeping {sleepTime}s");
+                Thread.Sleep(sleepTime * 1000);
                 exitcode = FfMpegCli(commandline, out string _, out error);
             }
 
@@ -191,7 +193,7 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             try
             {
-                FfMpegToolJsonSchema.FfProbe ffprobe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
+                FfProbe ffprobe = FfProbe.FromJson(json);
                 if (ffprobe.Streams.Count == 0)
                 {
                     // No tracks

@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.IO;
 using System.Linq;
 
@@ -222,12 +221,12 @@ namespace PlexCleaner
             ConsoleEx.WriteLine($"Loading settings from : \"{options.SettingsFile}\"");
             ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
-            // Set the static options from the loded settings
-            Program.Options = options;
-            Program.Config = config;
+            // Set the static options from the loaded settings
+            Options = options;
+            Config = config;
 
             // Set the FileEx options
-            FileEx.Options.TestNoModify = Program.Options.TestNoModify;
+            FileEx.Options.TestNoModify = Options.TestNoModify;
             FileEx.Options.FileRetryCount = config.MonitorOptions.FileRetryCount;
             FileEx.Options.FileRetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
             FileEx.Options.TraceToConsole = true;

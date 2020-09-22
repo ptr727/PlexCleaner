@@ -223,23 +223,25 @@ namespace PlexCleaner
 
             // Set the media modified time and file size
             mediaFile.Refresh();
-            SidecarJson = new SidecarFileJsonSchema();
-            SidecarJson.MediaLastWriteTimeUtc = mediaFile.LastWriteTimeUtc;
-            SidecarJson.MediaLength = mediaFile.Length;
+            SidecarJson = new SidecarFileJsonSchema
+            {
+                MediaLastWriteTimeUtc = mediaFile.LastWriteTimeUtc,
+                MediaLength = mediaFile.Length,
+                SchemaVersion = SidecarFileJsonSchema.CurrentSchemaVersion,
+                FfMpegToolVersion = FfMpegTool.Version,
+                MkvToolVersion = MkvTool.Version,
+                MediaInfoToolVersion = MediaInfoTool.Version,
+                FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson),
+                MkvMergeInfoData = StringCompression.Compress(MkvMergeInfoJson),
+                MediaInfoData = StringCompression.Compress(MediaInfoXml),
+                Verified = Verified
+            };
 
             // Set the tool versions
-            SidecarJson.SchemaVersion = SidecarFileJsonSchema.CurrentSchemaVersion;
-            SidecarJson.FfMpegToolVersion = FfMpegTool.Version;
-            SidecarJson.MkvToolVersion = MkvTool.Version;
-            SidecarJson.MediaInfoToolVersion = MediaInfoTool.Version;
 
             // Compress the tool data
-            SidecarJson.FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson);
-            SidecarJson.MkvMergeInfoData = StringCompression.Compress(MkvMergeInfoJson);
-            SidecarJson.MediaInfoData = StringCompression.Compress(MediaInfoXml);
 
             // Verify flag
-            SidecarJson.Verified = Verified;
 
             try
             {
@@ -269,7 +271,7 @@ namespace PlexCleaner
                 return CreateSidecar(mediaFile);
 
             // Try to read the sidecar, else create a new sidecar
-            return ReadSidecar(mediaFile) ? true : CreateSidecar(mediaFile);
+            return ReadSidecar(mediaFile) || CreateSidecar(mediaFile);
         }
 
         public MediaInfo GetMediaInfo(MediaInfo.ParserType parser)
@@ -281,7 +283,7 @@ namespace PlexCleaner
                 MediaInfo.ParserType.MediaInfo => MediaInfoInfo,
                 MediaInfo.ParserType.MkvMerge => MkvMergeInfo,
                 MediaInfo.ParserType.FfProbe => MediaInfoInfo,
-                _ => throw new NotImplementedException(),
+                _ => throw new NotImplementedException()
             };
         }
 
