@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Globalization;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // Use ffproble example output

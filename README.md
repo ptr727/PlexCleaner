@@ -116,7 +116,12 @@ Create a default configuration file by running:
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
     // Enable verify
-    "Verify": true
+    "Verify": true,
+    // List of media files to ignore, e.g. repeat processing failures, but media still plays
+    "FileIgnoreList": [
+      "\\\\server\\share1\\path1\\file1.mkv",
+      "\\\\server\\share2\\path2\\file2.mkv"
+    ]
   },
   "MonitorOptions": {
     // Time to wait after detecting a file change
@@ -279,10 +284,10 @@ Project 'PlexCleaner' has the following package references
    Top-level Package                            Requested             Resolved
    > HtmlAgilityPack                            1.11.24               1.11.24
    > InsaneGenius.Utilities                     1.3.95                1.3.95
-   > Microsoft.CodeAnalysis.FxCopAnalyzers      3.0.0                 3.0.0
+   > Microsoft.CodeAnalysis.FxCopAnalyzers      3.3.0                 3.3.0
    > Microsoft.SourceLink.GitHub                1.1.0-beta-20204-02   1.1.0-beta-20204-02
    > Newtonsoft.Json                            12.0.3                12.0.3
-   > System.CommandLine                         2.0.0-beta1.20253.1   2.0.0-beta1.20253.1
+   > System.CommandLine                         2.0.0-beta1.20371.2   2.0.0-beta1.20371.2
 ```
 
 ### 3rd Party Tools

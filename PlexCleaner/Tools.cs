@@ -192,7 +192,7 @@ namespace PlexCleaner
                     return false;
                 }
 
-                // TODO : Convert handcoded tools to enum and enumerate
+                // TODO : Convert hardcoded tools to enum and enumerate
 
                 // Write json to file
                 string json = ToolInfoJsonSchema.ToJson(tools);

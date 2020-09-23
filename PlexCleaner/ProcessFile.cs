@@ -435,12 +435,6 @@ namespace PlexCleaner
                     if (Program.Cancel.State)
                         return false;
 
-                    // TODO: Why do we sometimes get an invalid argument error?
-                    // FFmpeg: -i "\\server-1\media\movies\I, Robot (2004)\I, Robot (2004).mkv" - nostats - loglevel error - xerror - f null -
-                    // Error: Media stream validation failed : "I, Robot (2004).mkv"
-                    // \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument
-                    Debug.Assert(!error.Contains("invalid argument", StringComparison.OrdinalIgnoreCase));
-
                     // Failed stream validation
                     ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsole($"Error : Media stream validation failed : \"{MediaFile.Name}\"");
@@ -477,6 +471,10 @@ namespace PlexCleaner
                         // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 16 >= 16
                         // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 20 >= 20
                         // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 348 >= 348
+
+                        // TODO: Handbrake sometimes fails with what looks like a remux error
+                        // ERROR: avformatMux: track 1, av_interleaved_write_frame failed with error 'Invalid argument'
+                        // M[15:35:43] libhb: work result = 4
 
                         // FFmpeg fails to decode some files, so we use Handbrake to re-encode the video and audio
                         // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
@@ -631,7 +629,7 @@ namespace PlexCleaner
                 return true;
             }
 
-            // Don't delete if not enabled
+            // Don't delete if delete not enabled
             // Don't delete in test mode
             if (Program.Options.TestNoModify ||
                 !Program.Config.VerifyOptions.DeleteInvalidFiles)
@@ -643,7 +641,7 @@ namespace PlexCleaner
 
             // Delete file
             ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Deleting media file due to failed validation : \"{MediaFile.Name}\"");
+            Program.LogFile.LogConsole($"Deleting media file due to failed validation : \"{MediaFile.FullName}\"");
             if (!FileEx.DeleteFile(MediaFile.FullName) || 
                 !FileEx.DeleteFile(SidecarFile.GetSidecarName(MediaFile)))
             {
@@ -736,8 +734,10 @@ namespace PlexCleaner
                 return false;
 
             // Compute bitrate
-            bitrateInfo = new BitrateInfo();
-            bitrateInfo.Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8;
+            bitrateInfo = new BitrateInfo 
+            {
+                Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8
+            };
             bitrateInfo.Calculate(packetList);
 
             return true;

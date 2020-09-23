@@ -364,6 +364,7 @@ MigrationBackup/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/**/codestyles
 
 # Generated files
 .idea/**/contentModel.xml

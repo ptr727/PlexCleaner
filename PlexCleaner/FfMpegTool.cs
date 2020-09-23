@@ -11,6 +11,7 @@ using PlexCleaner.FfMpegToolJsonSchema;
 using System.IO;
 using Newtonsoft.Json;
 using System.IO.Compression;
+using System.Threading;
 
 // TODO : FFmpeg de-interlacing
 // https://www.reddit.com/r/ffmpeg/comments/d3cwxp/what_is_the_difference_between_bwdif_and_yadif1/
@@ -90,43 +91,43 @@ namespace PlexCleaner
             {
                 // TODO : Find a reliable way of getting the latest released version number
                 // https://www.ffmpeg.org/download.html
-                // https://ffmpeg.zeranoe.com/builds/
-                // https://ffmpeg.zeranoe.com/builds/win32/static/
+                // https://ffmpeg.zeranoe.com/builds/win64/static/
                 // https://www.videohelp.com/software/ffmpeg
+                // https://www.gyan.dev/ffmpeg/builds/packages/
 
-                // Load all releases from Zeranoe
+                // Load all releases
                 HtmlWeb web = new HtmlWeb();
-                HtmlDocument doc = web.Load(new Uri(@"https://ffmpeg.zeranoe.com/builds/win32/static/"));
+                HtmlDocument doc = web.Load(new Uri(@"https://www.gyan.dev/ffmpeg/builds/packages/"));
 
                 // Get all the anchor links
                 string sourceUrl = string.Empty;
                 HtmlNodeCollection hrefNodes = doc.DocumentNode.SelectNodes("//a[@href]");
-                Debug.Assert(hrefNodes.Count > 3);
+                Debug.Assert(hrefNodes.Count > 2);
 
-                // The latest release will be the second-last link
+                // The latest release will be last in the list
                 // E.g.
-                // <a href="ffmpeg-4.3-win32-static-lgpl.zip">ffmpeg-4.3-win32-static-lgpl.zip</a>                   29-Jun-2020 05:40     55M
-                // <a href="ffmpeg-4.3-win32-static.zip">ffmpeg-4.3-win32-static.zip</a>                        29-Jun-2020 04:09     62M
-                // <a href="ffmpeg-4.3.1-win32-static-lgpl.zip">ffmpeg-4.3.1-win32-static-lgpl.zip</a>                 04-Aug-2020 17:53     57M
-                // <a href="ffmpeg-4.3.1-win32-static.zip">ffmpeg-4.3.1-win32-static.zip</a>                      04-Aug-2020 16:39     64M
-                // <a href="ffmpeg-latest-win32-static.zip">ffmpeg-latest-win32-static.zip</a>
-                HtmlNode hrefNode = hrefNodes.ElementAt(hrefNodes.Count - 2);
+                // <a href="ffmpeg-2020-09-20-git-ef29e5bf42-full_build.zip">ffmpeg-2020-09-20-git-ef29e5bf42-full_build.zip</a>
+                // <a href="ffmpeg-4.3.1-essentials_build.zip">ffmpeg-4.3.1-essentials_build.zip</a>
+                // <a href="ffmpeg-4.3.1-full_build.zip">ffmpeg-4.3.1-full_build.zip</a>
+                HtmlNode hrefNode = hrefNodes.ElementAt(hrefNodes.Count - 1);
 
                 // Get the value of the HREF attribute
                 sourceUrl = hrefNode.GetAttributeValue("href", string.Empty);
 
                 // Extract the version number from the URL
-                // E.g. ffmpeg-4.3.1-win32-static.zip
-                const string pattern = @"ffmpeg-(?<version>.*?)-win32-static\.zip";
+                // E.g. ffmpeg-4.3.1-full_build.zip
+                const string pattern = @"ffmpeg-(?<version>.*?)-full_build\.zip";
                 Regex regex = new Regex(pattern);
                 Match match = regex.Match(sourceUrl);
                 Debug.Assert(match.Success);
                 toolinfo.Version = match.Groups["version"].Value;
 
+                // The latest release is always last, we can just use the URL as is, but we still need to extract the filename.
+
                 // Create download URL and the output filename using the version number
-                // E.g. https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-3.4-win64-static.zip
-                toolinfo.FileName = $"ffmpeg-{toolinfo.Version}-win64-static.zip";
-                toolinfo.Url = $"https://ffmpeg.zeranoe.com/builds/win64/static/{toolinfo.FileName}";
+                // E.g. https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.1-full_build.zip
+                toolinfo.FileName = $"ffmpeg-{toolinfo.Version}-full_build.zip";
+                toolinfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{toolinfo.FileName}";
             }
             catch (Exception e)
             {
@@ -141,12 +142,30 @@ namespace PlexCleaner
         {
             // https://trac.ffmpeg.org/ticket/6375
             // Too many packets buffered for output stream 0:1
+            // Set max_muxing_queue_size
 
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
             string commandline = $"-i \"{filename}\" -max_muxing_queue_size 512 -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
+
+            // TODO: We sometimes get an invalid argument error, but there is nothing wrong with the commandline
+            // Repeating the exact same operation and it works?
+            // E.g. \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument\r\n
+            if ((exitcode != 0 || error.Length != 0) &&
+                error.EndsWith(": invalid argument\r\n", StringComparison.OrdinalIgnoreCase))
+            {
+                // Try one more time, after waiting a bit, assuming it is a synschronization or file access issue
+                // E.g. observed to happen when system resumes from sleep while processing
+                const int sleepTime = 5;
+                ConsoleEx.WriteLine("");
+                ConsoleEx.WriteLineError(error);
+                ConsoleEx.WriteLine($"Retrying after sleeping {sleepTime}s");
+                Thread.Sleep(sleepTime * 1000);
+                exitcode = FfMpegCli(commandline, out string _, out error);
+            }
+
             return exitcode == 0 && error.Length == 0;
         }
 
@@ -174,7 +193,7 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             try
             {
-                FfMpegToolJsonSchema.FfProbe ffprobe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
+                FfProbe ffprobe = FfProbe.FromJson(json);
                 if (ffprobe.Streams.Count == 0)
                 {
                     // No tracks

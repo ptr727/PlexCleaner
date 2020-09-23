@@ -10,7 +10,7 @@ namespace PlexCleaner
             public int Neither { get; set; }
             public int Top { get; set; }
             public int Bottom { get; set; }
-            public int Total { get => Neither + Top + Bottom; }
+            public int Total => Neither + Top + Bottom;
         }
         public Repeated RepeatedFields { get; } = new Repeated();
 

@@ -627,11 +627,20 @@ namespace PlexCleaner
             // Init
             modified = false;
 
+            // Skip the file if it is in the ignore list
+            // TODO: Convert list to hash set (hash set did not support JSON serialization)
+            if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileinfo.FullName, StringComparer.OrdinalIgnoreCase))
+            {
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Skipping ignored file : \"{fileinfo.FullName}\"");
+                return true;
+            }
+
             // Does the file still exist
             if (!File.Exists(fileinfo.FullName))
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Error : File not found : \"{fileinfo.Name}\"");
+                Program.LogFile.LogConsole($"Skipping missing file : \"{fileinfo.FullName}\"");
                 return false;
             }
 
@@ -639,7 +648,7 @@ namespace PlexCleaner
             if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Error : File is read only : \"{fileinfo.Name}\"");
+                Program.LogFile.LogConsole($"Skipping read-only file : \"{fileinfo.FullName}\"");
                 return false;
             }
 
