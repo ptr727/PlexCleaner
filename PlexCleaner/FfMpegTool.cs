@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using HtmlAgilityPack;
 using InsaneGenius.Utilities;
 using System.Text;
 using System.Diagnostics;
@@ -12,6 +11,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.IO.Compression;
 using System.Threading;
+using System.Net;
 
 // TODO : FFmpeg de-interlacing
 // https://www.reddit.com/r/ffmpeg/comments/d3cwxp/what_is_the_difference_between_bwdif_and_yadif1/
@@ -89,44 +89,17 @@ namespace PlexCleaner
 
             try
             {
-                // TODO : Find a reliable way of getting the latest released version number
                 // https://www.ffmpeg.org/download.html
-                // https://ffmpeg.zeranoe.com/builds/win64/static/
                 // https://www.videohelp.com/software/ffmpeg
                 // https://www.gyan.dev/ffmpeg/builds/packages/
 
-                // Load all releases
-                HtmlWeb web = new HtmlWeb();
-                HtmlDocument doc = web.Load(new Uri(@"https://www.gyan.dev/ffmpeg/builds/packages/"));
-
-                // Get all the anchor links
-                string sourceUrl = string.Empty;
-                HtmlNodeCollection hrefNodes = doc.DocumentNode.SelectNodes("//a[@href]");
-                Debug.Assert(hrefNodes.Count > 2);
-
-                // The latest release will be last in the list
-                // E.g.
-                // <a href="ffmpeg-2020-09-20-git-ef29e5bf42-full_build.zip">ffmpeg-2020-09-20-git-ef29e5bf42-full_build.zip</a>
-                // <a href="ffmpeg-4.3.1-essentials_build.zip">ffmpeg-4.3.1-essentials_build.zip</a>
-                // <a href="ffmpeg-4.3.1-full_build.zip">ffmpeg-4.3.1-full_build.zip</a>
-                HtmlNode hrefNode = hrefNodes.ElementAt(hrefNodes.Count - 1);
-
-                // Get the value of the HREF attribute
-                sourceUrl = hrefNode.GetAttributeValue("href", string.Empty);
-
-                // Extract the version number from the URL
-                // E.g. ffmpeg-4.3.1-full_build.zip
-                const string pattern = @"ffmpeg-(?<version>.*?)-full_build\.zip";
-                Regex regex = new Regex(pattern);
-                Match match = regex.Match(sourceUrl);
-                Debug.Assert(match.Success);
-                toolinfo.Version = match.Groups["version"].Value;
-
-                // The latest release is always last, we can just use the URL as is, but we still need to extract the filename.
+                // Load the release version page
+                // https://www.gyan.dev/ffmpeg/builds/release-version
+                using WebClient wc = new WebClient();
+                toolinfo.Version = wc.DownloadString("https://www.gyan.dev/ffmpeg/builds/release-version");
 
                 // Create download URL and the output filename using the version number
-                // E.g. https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.1-full_build.zip
-                toolinfo.FileName = $"ffmpeg-{toolinfo.Version}-full_build.zip";
+                toolinfo.FileName = $"ffmpeg-{toolinfo.Version}-full_build.7z";
                 toolinfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{toolinfo.FileName}";
             }
             catch (Exception e)

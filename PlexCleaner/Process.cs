@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner
@@ -72,6 +73,9 @@ namespace PlexCleaner
 
             // Preferred audio codecs
             PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats.Split(',').ToList();
+
+            // File ignore list
+            IgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
         }
 
         public bool ProcessFiles(List<FileInfo> fileList)
@@ -79,32 +83,41 @@ namespace PlexCleaner
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Processing {fileList.Count} files ...");
 
+            // Keep a List of failed and modified files to print when done
+            // This makes followup easier vs. looking the logs
+            List<string> modifiedFiles = new List<string>();
+            List<string> errorFiles = new List<string>();
+
             // Start the stopwatch
             Stopwatch timer = new Stopwatch();
             timer.Start();
 
             // Process all files
-            int totalcount = fileList.Count;
-            int processedcount = 0;
-            int errorcount = 0;
-            int modifiedcount = 0;
-            foreach (FileInfo fileinfo in fileList)
+            int totalCount = fileList.Count;
+            int processedCount = 0;
+            int errorCount = 0;
+            int modifiedCount = 0;
+            foreach (FileInfo fileInfo in fileList)
             {
                 // Percentage
-                processedcount ++;
-                double done = System.Convert.ToDouble(processedcount) / System.Convert.ToDouble(totalcount);
+                processedCount ++;
+                double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
 
                 // Process the file
                 ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Processing ({done:P}) : \"{fileinfo.FullName}\"");
-                if (!ProcessFile(fileinfo, out bool modified))
+                ConsoleEx.WriteLine($"Processing ({done:P}) : \"{fileInfo.FullName}\"");
+                if (!ProcessFile(fileInfo, out bool modified))
                 {
                     ConsoleEx.WriteLine("");
-                    Program.LogFile.LogConsoleError($"Error processing : \"{fileinfo.FullName}\"");
-                    errorcount ++;
+                    Program.LogFile.LogConsoleError($"Error processing : \"{fileInfo.FullName}\"");
+                    errorFiles.Add(fileInfo.FullName);
+                    errorCount ++;
                 }
                 else if (modified)
-                    modifiedcount ++;
+                {
+                    modifiedFiles.Add(fileInfo.FullName);
+                    modifiedCount ++;
+                }
 
                 // Cancel handler
                 if (Program.Cancel.State)
@@ -119,10 +132,30 @@ namespace PlexCleaner
             // Done
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Total files : {fileList.Count}");
-            Program.LogFile.LogConsole($"Modified files : {modifiedcount}");
-            Program.LogFile.LogConsole($"Error files : {errorcount}");
+            Program.LogFile.LogConsole($"Modified files : {modifiedCount}");
+            Program.LogFile.LogConsole($"Error files : {errorCount}");
             Program.LogFile.LogConsole($"Processing time : {timer.Elapsed}");
 
+            // Print summary of failed and modified files
+            if (modifiedFiles.Count > 0)
+            {
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole("Modified files :");
+                foreach (string file in modifiedFiles)
+                {
+                    Program.LogFile.LogConsole(file);
+                }
+            }
+            if (errorFiles.Count > 0)
+            { 
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole("Error files :");
+                foreach (string file in errorFiles)
+                { 
+                    Program.LogFile.LogConsole(file);
+                }
+            }
+            
             return true;
         }
 
@@ -628,11 +661,10 @@ namespace PlexCleaner
             modified = false;
 
             // Skip the file if it is in the ignore list
-            // TODO: Convert list to hash set (hash set did not support JSON serialization)
-            if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileinfo.FullName, StringComparer.OrdinalIgnoreCase))
+            if (IgnoreList.Contains(fileinfo.FullName))
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Skipping ignored file : \"{fileinfo.FullName}\"");
+                Program.LogFile.LogConsole($"Warning : Skipping ignored file : \"{fileinfo.FullName}\"");
                 return true;
             }
 
@@ -640,7 +672,7 @@ namespace PlexCleaner
             if (!File.Exists(fileinfo.FullName))
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Skipping missing file : \"{fileinfo.FullName}\"");
+                Program.LogFile.LogConsole($"Warning : Skipping missing file : \"{fileinfo.FullName}\"");
                 return false;
             }
 
@@ -648,7 +680,7 @@ namespace PlexCleaner
             if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Skipping read-only file : \"{fileinfo.FullName}\"");
+                Program.LogFile.LogConsole($"Warning : Skipping read-only file : \"{fileinfo.FullName}\"");
                 return false;
             }
 
@@ -703,6 +735,7 @@ namespace PlexCleaner
                 return false;
 
             // Do we have any errors in the metadata
+            // This will only print warnings
             processFile.MediaInfoErrors();
 
             // Cancel handler
@@ -784,14 +817,31 @@ namespace PlexCleaner
                 return false;
 
             // TODO : Why does the file timestamp change after writing sidecar files?
-            // https://forums.unraid.net/topic/91800-file-modification-time-changes-after-last-write/
-            //if (modified)
-            //    processFile.MonitorFileTime(30);
+            // Speculating there is caching between Windows and Samba and ZFS?
+            // https://docs.microsoft.com/en-us/dotnet/api/system.io.filesysteminfo.lastwritetimeutc
+            // 10/4/2020 12:03:28 PM : Information : MonitorFileTime : 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
+            // 10/4/2020 12:10:44 PM : Warning : MonitorFileTime : 10/4/2020 7:03:24 PM != 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
+            // 10/4/2020 12:12:04 PM : Warning : MonitorFileTime : 10/4/2020 7:03:35 PM != 10/4/2020 7:03:24 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
+            /*
+            if (modified)
+            {
+                // Sleep for a few seconds
+                const int sleepTime = 5;
+                Thread.Sleep(sleepTime * 1000);
+
+                // Force another sidecar refresh
+                processFile.GetMediaInfo();
+
+                // Test for timestamp changes
+                Debug.Assert(!processFile.MonitorFileTime(60));
+            }
+            */
 
             // Done
             return true;
         }
 
+        private readonly HashSet<string> IgnoreList;
         private readonly HashSet<string> KeepExtensions;
         private readonly HashSet<string> ReMuxExtensions;
         private readonly HashSet<string> ReEncodeAudioFormats;
