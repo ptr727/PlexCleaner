@@ -103,7 +103,6 @@ namespace PlexCleaner
             }
 
             // Compare the media modified time and file size
-            // TODO : Occasionally Unraid does not refresh the media file modified date even if refreshing
             mediaFile.Refresh();
             if (mediaFile.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc ||
                 mediaFile.Length != SidecarJson.MediaLength)
@@ -221,27 +220,32 @@ namespace PlexCleaner
             if (File.Exists(sidecarFullName))
                 File.Delete(sidecarFullName);
 
-            // Set the media modified time and file size
+            // Refresh the media file info
             mediaFile.Refresh();
+
+            // Create the sidecar json object
             SidecarJson = new SidecarFileJsonSchema
             {
+                // Schema version
+                SchemaVersion = SidecarFileJsonSchema.CurrentSchemaVersion,
+
+                // Media file info
                 MediaLastWriteTimeUtc = mediaFile.LastWriteTimeUtc,
                 MediaLength = mediaFile.Length,
-                SchemaVersion = SidecarFileJsonSchema.CurrentSchemaVersion,
+
+                // Tool version info
                 FfMpegToolVersion = FfMpegTool.Version,
                 MkvToolVersion = MkvTool.Version,
                 MediaInfoToolVersion = MediaInfoTool.Version,
+
+                // Compressed tool info
                 FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson),
                 MkvMergeInfoData = StringCompression.Compress(MkvMergeInfoJson),
                 MediaInfoData = StringCompression.Compress(MediaInfoXml),
+
+                // Verified flag
                 Verified = Verified
             };
-
-            // Set the tool versions
-
-            // Compress the tool data
-
-            // Verify flag
 
             try
             {

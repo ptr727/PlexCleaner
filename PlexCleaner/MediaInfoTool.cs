@@ -44,9 +44,8 @@ namespace PlexCleaner
 
             try
             {
-                // Load the download page
+                // Load the release history page
                 // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
-                // https://mediaarea.net/en/MediaInfo/Download/Windows
                 using WebClient wc = new WebClient();
                 string history = wc.DownloadString("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt");
 

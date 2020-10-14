@@ -708,21 +708,27 @@ namespace PlexCleaner
             return Refresh(false);
         }
 
-        public void MonitorFileTime(int seconds)
+        public bool MonitorFileTime(int seconds)
         {
+            bool timestampChanged = false;
             MediaFile.Refresh();
             DateTime fileTime = MediaFile.LastWriteTimeUtc;
             ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Warning : MonitorFileTime : {fileTime} : \"{MediaFile.Name}\"");
+            Program.LogFile.LogConsole($"Information : MonitorFileTime : {fileTime} : \"{MediaFile.Name}\"");
             for (int i = 0; i < seconds; i ++)
             {
                 if (Program.Cancel.WaitForSet(1000))
                     break;
                 MediaFile.Refresh();
                 if (MediaFile.LastWriteTimeUtc != fileTime)
+                {
+                    timestampChanged = true;
                     Program.LogFile.LogConsole($"Warning : MonitorFileTime : {MediaFile.LastWriteTimeUtc} != {fileTime} : \"{MediaFile.Name}\"");
+                }
                 fileTime = MediaFile.LastWriteTimeUtc;
             }
+
+            return timestampChanged;
         }
 
         public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
