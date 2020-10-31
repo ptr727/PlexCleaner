@@ -24,6 +24,7 @@ namespace PlexCleaner
         public bool HasTags { get; set; }
         public bool HasErrors { get; set; }
         public TimeSpan Duration { get; set; }
+        public string Container { get; set; }
 
         public void WriteLine(string prefix)
         {

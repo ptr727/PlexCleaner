@@ -166,13 +166,14 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             try
             {
+                // Deserialize
                 FfProbe ffprobe = FfProbe.FromJson(json);
-                if (ffprobe.Streams.Count == 0)
-                {
-                    // No tracks
-                    return false;
-                }
 
+                // No tracks
+                if (ffprobe.Streams.Count == 0)
+                    return false;
+
+                // Tracks
                 foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
                 {
                     if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
@@ -198,10 +199,13 @@ namespace PlexCleaner
                 }
 
                 // Errors
-                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || mediainfo.Audio.Any(item => item.HasErrors) || mediainfo.Subtitle.Any(item => item.HasErrors);
+                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || 
+                                      mediainfo.Audio.Any(item => item.HasErrors) || 
+                                      mediainfo.Subtitle.Any(item => item.HasErrors);
 
                 // TODO : Tags
                 // TODO : Duration
+                // TODO : ContainerType
             }
             catch (Exception e)
             {

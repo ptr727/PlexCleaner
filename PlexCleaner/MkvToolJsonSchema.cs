@@ -37,6 +37,9 @@ namespace PlexCleaner.MkvToolJsonSchema
     {
         [JsonProperty("properties")]
         public ContainerProperties Properties { get; } = new ContainerProperties();
+
+        [JsonProperty("type")]
+        public string Type { get; set; } = "";
     }
 
     public class ContainerProperties

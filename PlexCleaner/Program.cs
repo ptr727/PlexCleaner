@@ -11,10 +11,18 @@ namespace PlexCleaner
     {
         private static int Main()
         {
+            // Prevent sleep
+            KeepAwake.PreventSleep();
+
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
             RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-            return rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
+            int ret = rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
+
+            // Allow sleep
+            KeepAwake.AllowSleep();
+
+            return ret;
         }
 
         internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
