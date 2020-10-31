@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner
@@ -99,6 +98,9 @@ namespace PlexCleaner
             int modifiedCount = 0;
             foreach (FileInfo fileInfo in fileList)
             {
+                // Prevent sleep
+                KeepAwake.PreventSleep();
+
                 // Percentage
                 processedCount ++;
                 double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
@@ -730,6 +732,10 @@ namespace PlexCleaner
             if (!processFile.GetMediaInfo())
                 return processFile.Result;
 
+            // ReMux MP4 containers using MKV filenames
+            if (!processFile.RemuxNonMkvContainer(ref modified))
+                return processFile.Result;
+
             // Cancel handler
             if (Program.Cancel.State)
                 return false;
@@ -817,8 +823,10 @@ namespace PlexCleaner
                 return false;
 
             // TODO : Why does the file timestamp change after writing sidecar files?
-            // Speculating there is caching between Windows and Samba and ZFS?
+            // Speculating there is caching between Windows and Samba and ZFS and timestamps are not synced?
             // https://docs.microsoft.com/en-us/dotnet/api/system.io.filesysteminfo.lastwritetimeutc
+            // Adding --flush-on-close to MKV CLI tools to see if it makes a difference
+            // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2469
             // 10/4/2020 12:03:28 PM : Information : MonitorFileTime : 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
             // 10/4/2020 12:10:44 PM : Warning : MonitorFileTime : 10/4/2020 7:03:24 PM != 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
             // 10/4/2020 12:12:04 PM : Warning : MonitorFileTime : 10/4/2020 7:03:35 PM != 10/4/2020 7:03:24 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"

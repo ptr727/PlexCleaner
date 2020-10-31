@@ -118,12 +118,12 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the JSON string
             try
             {
+                // Deserialize
                 MkvToolJsonSchema.MkvMerge mkvmerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
+
+                // No tracks
                 if (mkvmerge.Tracks.Count == 0)
-                {
-                    // No tracks
                     return false;
-                }
 
                 // Tracks
                 foreach (MkvToolJsonSchema.Track track in mkvmerge.Tracks)
@@ -145,8 +145,17 @@ namespace PlexCleaner
                     }
                 }
 
-                // Errors
-                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || mediainfo.Audio.Any(item => item.HasErrors) || mediainfo.Subtitle.Any(item => item.HasErrors);
+                // Container type
+                mediainfo.Container = mkvmerge.Container.Type;
+
+                // Track errors
+                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || 
+                                      mediainfo.Audio.Any(item => item.HasErrors) || 
+                                      mediainfo.Subtitle.Any(item => item.HasErrors);
+
+                // Must be Matroska type
+                if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+                    mediainfo.HasErrors = true;
 
                 // Tags
                 mediainfo.HasTags = mkvmerge.GlobalTags.Count > 0 || mkvmerge.TrackTags.Count > 0;
@@ -180,7 +189,7 @@ namespace PlexCleaner
             // Create the MKVPropEdit commandline and execute
             // The track number is reported by MKVMerge --identify using the track.properties.number value
             // https://mkvtoolnix.download/doc/mkvpropedit.html
-            string commandline = $"\"{filename}\" --edit track:@{track} --set language={language}";
+            string commandline = $"\"{filename}\" --edit track:@{track} --set language={language} --flush-on-close";
             int exitcode = MkvPropEditCli(commandline);
             return exitcode == 0;
         }
@@ -189,7 +198,7 @@ namespace PlexCleaner
         {
             // Create the MKVPropEdit commandline and execute
             // https://mkvtoolnix.download/doc/mkvpropedit.html
-            string commandline = $"\"{filename}\" --tags all:";
+            string commandline = $"\"{filename}\" --tags all: --flush-on-close";
             int exitcode = MkvPropEditCli(commandline);
             return exitcode == 0;
         }
@@ -235,7 +244,7 @@ namespace PlexCleaner
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
+            string commandline = $"{snippets} --flush-on-close --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             int exitcode = MkvMergeCli(commandline);
             return exitcode == 0 || exitcode == 1;
         }
@@ -248,7 +257,7 @@ namespace PlexCleaner
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
+            string commandline = $"{snippets} --flush-on-close --output \"{outputname}\" \"{inputname}\"";
             int exitcode = MkvMergeCli(commandline);
             return exitcode == 0 || exitcode == 1;
         }

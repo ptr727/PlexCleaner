@@ -132,6 +132,44 @@ namespace PlexCleaner
             return Refresh(true);
         }
 
+        public bool RemuxNonMkvContainer(ref bool modified)
+        {
+            // Init
+            Result = true;
+
+            // Optional
+            if (!Program.Config.ProcessOptions.ReMux)
+                return true;
+
+            // Make sure that MKV named files are Matroska containers
+            if (MkvMergeInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+                // Nothing to do
+                return true;
+
+            // ReMux the file
+            ConsoleEx.WriteLine("");
+            Program.LogFile.LogConsole($"ReMux \"{MkvMergeInfo.Container}\" container : \"{MediaFile.Name}\"");
+
+            // Remux the file, use the new filename
+            // Convert will test for Options.TestNoModify
+            if (!Convert.ReMuxToMkv(MediaFile.FullName, out string outputname))
+            {
+                // Error
+                Result = false;
+                return false;
+            }
+
+            // Refresh
+            modified = true;
+            MediaFile = new FileInfo(outputname);
+
+            // In test mode the file will not be remuxed to MKV so abort
+            if (Program.Options.TestNoModify)
+                return false;
+
+            return Refresh(true);
+        }
+
         public void MediaInfoErrors()
         {
             // Do we have any errors

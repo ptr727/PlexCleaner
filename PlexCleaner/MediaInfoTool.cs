@@ -117,14 +117,15 @@ namespace PlexCleaner
             // Populate the MediaInfo object from the XML string
             try
             {
+                // Deserialize
                 MediaInfoToolXmlSchema.MediaInfo xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
                 MediaInfoToolXmlSchema.Media xmlmedia = xmlinfo.Media;
-                if (xmlmedia.Track.Count == 0)
-                {
-                    // No tracks
-                    return false;
-                }
 
+                // No tracks
+                if (xmlmedia.Track.Count == 0)
+                    return false;
+
+                // Tracks
                 foreach (MediaInfoToolXmlSchema.Track track in xmlmedia.Track)
                 {
                     if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
@@ -145,13 +146,14 @@ namespace PlexCleaner
                 }
 
                 // Errors
-                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || mediainfo.Audio.Any(item => item.HasErrors) || mediainfo.Subtitle.Any(item => item.HasErrors);
+                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || 
+                                      mediainfo.Audio.Any(item => item.HasErrors) || 
+                                      mediainfo.Subtitle.Any(item => item.HasErrors);
 
-                // Tags
-                // TODO : Maybe look in the Extra field, but not reliable
-                // Duration
+                // TODO : Tags, maybe look in the Extra field, but not reliable
                 // TODO : Duration, too many different formats to parse
                 // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
+                // TODO : ContainerType
             }
             catch (Exception e)
             {
