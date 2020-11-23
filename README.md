@@ -4,19 +4,15 @@ Utility to optimize media files for DirectPlay on Plex.
 
 ## License
 
-[![GitHub](https://img.shields.io/github/license/ptr727/plexcleaner)](./LICENSE)  
-Licensed under the [MIT License](./LICENSE)
-
-## Project
-
-![GitHub last commit](https://img.shields.io/github/last-commit/ptr727/plexcleaner?logo=github)  
-Code is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-CI is on [Azure DevOps](https://dev.azure.com/pieterv/PlexCleaner).
+Licensed under the [MIT License](./LICENSE)  
+![GitHub](https://img.shields.io/github/license/ptr727/PlexCleaner)
 
 ## Build Status
 
-[![Build Status](https://dev.azure.com/pieterv/PlexCleaner/_apis/build/status/PlexCleaner-Master-CI?branchName=master)](https://dev.azure.com/pieterv/PlexCleaner/_build/latest?definitionId=32&branchName=master)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ptr727/plexcleaner?logo=github&sort=semver)
+Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner)  
+![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)  
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ptr727/PlexCleaner/Build%20and%20Publish%20Pipeline?logo=github)  
+![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)
 
 ## Getting Started
 
@@ -41,9 +37,9 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Installation
 
-- Install the [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download).
-- Note that .NET Core is cross platform, but the tools and usage of the tools will only work on Windows x64.
+- Install the [.NET 5 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
+- Note that .NET 5 is cross platform, but the tools and usage of the tools will only work on Windows x64.
 
 ### Configuration File
 
@@ -278,13 +274,13 @@ Tools, libraries, and utilities used in the project.
 ### NuGet Component Dependencies
 
 ```console
-PS C:\..\PlexCleaner> dotnet list package
+PS C:\Users\piete\source\repos\PlexCleaner> dotnet list package
 Project 'PlexCleaner' has the following package references
-   [netcoreapp3.1]:
+   [net5.0]:
    Top-level Package                            Requested             Resolved
-   > HtmlAgilityPack                            1.11.24               1.11.24
-   > InsaneGenius.Utilities                     1.3.95                1.3.95
-   > Microsoft.CodeAnalysis.FxCopAnalyzers      3.3.0                 3.3.0
+   > HtmlAgilityPack                            1.11.28               1.11.28
+   > InsaneGenius.Utilities                     1.6.1                 1.6.1
+   > Microsoft.CodeAnalysis.FxCopAnalyzers      3.3.1                 3.3.1
    > Microsoft.SourceLink.GitHub                1.1.0-beta-20204-02   1.1.0-beta-20204-02
    > Newtonsoft.Json                            12.0.3                12.0.3
    > System.CommandLine                         2.0.0-beta1.20371.2   2.0.0-beta1.20371.2
