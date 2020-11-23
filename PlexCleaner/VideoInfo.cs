@@ -61,7 +61,7 @@ namespace PlexCleaner
 
         public string Profile { get; set; } = "";
 
-        public bool Interlaced { get; set; } = false;
+        public bool Interlaced { get; set; }
 
         public bool CompareVideo(VideoInfo compare)
         {

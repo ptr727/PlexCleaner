@@ -119,7 +119,7 @@ namespace PlexCleaner
             {
                 // Deserialize
                 MediaInfoToolXmlSchema.MediaInfo xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
-                MediaInfoToolXmlSchema.Media xmlmedia = xmlinfo.Media;
+                MediaInfoToolXmlSchema.MediaElement xmlmedia = xmlinfo.Media;
 
                 // No tracks
                 if (xmlmedia.Track.Count == 0)

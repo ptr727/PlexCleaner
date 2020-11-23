@@ -95,8 +95,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
+            return Process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int DeInterlaceCommand(CommandLineOptions options)
@@ -108,8 +107,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
+            return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int VerifyCommand(CommandLineOptions options)
@@ -121,8 +119,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.VerifyFiles(program.FileInfoList) ? 0 : -1;
+            return Process.VerifyFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int CreateSidecarCommand(CommandLineOptions options)
@@ -134,8 +131,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
+            return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int GetSidecarCommand(CommandLineOptions options)
@@ -147,8 +143,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int GetTagMapCommand(CommandLineOptions options)
@@ -160,8 +155,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int GetMediaInfoCommand(CommandLineOptions options)
@@ -173,8 +167,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int GetBitrateInfoCommand(CommandLineOptions options)
@@ -186,8 +179,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
-            return process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
         }
 
         // Add a reference to this class in the event handler arguments

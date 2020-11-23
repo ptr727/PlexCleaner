@@ -189,7 +189,7 @@ namespace PlexCleaner
             // Create the MKVPropEdit commandline and execute
             // The track number is reported by MKVMerge --identify using the track.properties.number value
             // https://mkvtoolnix.download/doc/mkvpropedit.html
-            string commandline = $"\"{filename}\" --edit track:@{track} --set language={language} --flush-on-close";
+            string commandline = $"\"{filename}\" --edit track:@{track} --set language={language}";
             int exitcode = MkvPropEditCli(commandline);
             return exitcode == 0;
         }
@@ -198,7 +198,7 @@ namespace PlexCleaner
         {
             // Create the MKVPropEdit commandline and execute
             // https://mkvtoolnix.download/doc/mkvpropedit.html
-            string commandline = $"\"{filename}\" --tags all: --flush-on-close";
+            string commandline = $"\"{filename}\" --tags all:";
             int exitcode = MkvPropEditCli(commandline);
             return exitcode == 0;
         }
@@ -244,7 +244,7 @@ namespace PlexCleaner
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --flush-on-close --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
+            string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             int exitcode = MkvMergeCli(commandline);
             return exitcode == 0 || exitcode == 1;
         }
@@ -257,7 +257,7 @@ namespace PlexCleaner
             // Create the MKVMerge commandline and execute
             // https://mkvtoolnix.download/doc/mkvmerge.html
             string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --flush-on-close --output \"{outputname}\" \"{inputname}\"";
+            string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
             int exitcode = MkvMergeCli(commandline);
             return exitcode == 0 || exitcode == 1;
         }
