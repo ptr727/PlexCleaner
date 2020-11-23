@@ -65,32 +65,18 @@ jobs:
         run: 7z.exe a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
 
       # Create GitHub release
-      # https://github.com/marketplace/actions/create-a-release
+      # https://github.com/marketplace/actions/automatic-releases
       - name: 'Create GitHub Release'
         # Do not push on pull requests
         if: ${{ github.event_name != 'pull_request' }}
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#create-a-release  
+        uses: marvinpinto/action-automatic-releases@latest
         with:
-          tag_name: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
           # Only main branch is not a pre-release
           prerelease: ${{ !contains(github.ref, 'origin/main') }}
-
-      # Upload the release assets
-      # https://github.com/marketplace/actions/upload-a-release-asset
-      - name: 'Upload gitHub Release Asset'
-        # Do not push on pull requests
-        if: ${{ github.event_name != 'pull_request' }}
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#upload-a-release-asset
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./PlexCleaner.7z
-          asset_name: PlexCleaner.7z
-          asset_content_type: application/x-7z-compressed
+          files: |
+            LICENSE.txt
+            README.md
+            ./PlexCleaner.7z
+      
