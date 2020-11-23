@@ -37,9 +37,9 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Installation
 
-- Install the [.NET 5.0 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5.0 SDK](https://dotnet.microsoft.com/download).
-- Note that .NET 5. is cross platform, but the tools and usage of the tools will only work on Windows x64.
+- Install the [.NET 5 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
+- Note that .NET 5 is cross platform, but the tools and usage of the tools will only work on Windows x64.
 
 ### Configuration File
 
