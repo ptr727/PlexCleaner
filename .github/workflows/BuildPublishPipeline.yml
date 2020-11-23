@@ -61,11 +61,8 @@ jobs:
         run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
 
       # Zip the output
-      # https://github.com/marketplace/actions/action-7z
       - name: 'Zip Output'
-        uses: edgarrc/action-7z@v1.0.4
-        with:
-          args: 7z a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
+        run: 7z.exe a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
 
       # Create GitHub release
       # https://github.com/marketplace/actions/create-a-release
