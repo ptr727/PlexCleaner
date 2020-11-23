@@ -70,13 +70,13 @@ jobs:
         # Do not push on pull requests
         # GitVersion tool fails when github contains pre-releases
         # https://github.com/GitTools/actions/issues/271
-        if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'origin/main')}}
+        if: ${{ (github.event_name != 'pull_request') && endsWith(github.ref, 'refs/heads/main') }}
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           automatic_release_tag: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
           # Only main branch is not a pre-release
-          prerelease: ${{ !contains(github.ref, 'origin/main') }}
+          prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
             LICENSE.txt
             README.md
