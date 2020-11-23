@@ -130,8 +130,8 @@ namespace PlexCleaner
             return packet.StreamIndex == 0;
         }
 
-        private long[] VideoBitrate = null;
-        private long[] AudioBitrate = null;
-        private long[] CombinedBitrate = null;
+        private long[] VideoBitrate;
+        private long[] AudioBitrate;
+        private long[] CombinedBitrate;
     }
 }

@@ -119,13 +119,13 @@ namespace PlexCleaner
         public string Format { get; set; } = "";
         public string Codec { get; set; } = "";
         public string Language { get; set; } = "";
-        public int Id { get; set; } = 0;
-        public int Number { get; set; } = 0;
+        public int Id { get; set; }
+        public int Number { get; set; }
         public enum StateType { None, Keep, Remove, ReMux, ReEncode }
         public StateType State { get; set; } = StateType.None;
         public string Title { get; set; } = "";
-        public bool Default { get; set; } = false;
-        public bool HasErrors { get; set; } = false;
+        public bool Default { get; set; }
+        public bool HasErrors { get; set; }
 
         public bool IsLanguageUnknown()
         {

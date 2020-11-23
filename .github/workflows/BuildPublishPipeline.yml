@@ -1,0 +1,99 @@
+name: 'Build and Publish Pipeline'
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore: [ 'README.md' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: 'Build and Publish Pipeline'
+    runs-on: windows-latest
+
+    steps:
+
+      # Checkout code
+      - name: 'Checkout Code'
+        uses: actions/checkout@v2
+        with:
+          # Get all history for version calculation using GitVersion
+          fetch-depth: 0
+
+      # Install .NET SDK
+      # https://github.com/marketplace/actions/setup-net-core-sdk
+      - name: 'Setup .NET Core SDK 3.1'
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+      - name: 'Setup .NET SDK 5.0'
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+      
+      # Install GitVersion
+      # Requires .NET Core 3.1, does not support .NET 5.0
+      # https://github.com/marketplace/actions/gittools
+      - name: 'Install GitVersion'
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          # 5.5.1 does not work as expected, use 5.3.7
+          # https://github.com/GitTools/GitVersion/issues/2461
+          versionSpec: '5.3.x'
+
+      # Run GitVersion
+      # https://github.com/marketplace/actions/gittools
+      - name: 'Run GitVersion Tool'
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+        with:
+          additionalArguments: '/diag'
+        env: 
+          # https://github.com/GitTools/actions/issues/255
+          # https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+      # Build and publish project to folder
+      # Replace version information with GitVersion attributes
+      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
+      - name: 'Build Project'
+        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+
+      # Zip the output
+      # https://github.com/marketplace/actions/action-7z
+      - name: 'Zip Output'
+        uses: edgarrc/action-7z@v1
+        with:
+          args: 7z a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
+
+      # Create GitHub release
+      # https://github.com/marketplace/actions/create-a-release
+      - name: 'Create GitHub Release'
+        # Do not push on pull requests
+        if: ${{ github.event_name != 'pull_request' }}
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#create-a-release  
+        with:
+          tag_name: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
+          # Only main branch is not a pre-release
+          prerelease: ${{ !contains(github.ref, 'origin/main') }}
+
+      # Upload the release assets
+      # https://github.com/marketplace/actions/upload-a-release-asset
+      - name: 'Upload gitHub Release Asset'
+        # Do not push on pull requests
+        if: ${{ github.event_name != 'pull_request' }}
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#upload-a-release-asset
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./PlexCleaner.7z
+          asset_name: PlexCleaner.7z
+          asset_content_type: application/x-7z-compressed

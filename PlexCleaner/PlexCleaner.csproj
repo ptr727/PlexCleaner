@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon>Mario.ico</ApplicationIcon>
     <StartupObject>PlexCleaner.Program</StartupObject>
     <AssemblyName>PlexCleaner</AssemblyName>
@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.26" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.28" />
     <PackageReference Include="InsaneGenius.Utilities" Version="1.3.95" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" />

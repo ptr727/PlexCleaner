@@ -59,7 +59,7 @@ namespace PlexCleaner.MediaInfoToolXmlSchema
 	}
 
 	[XmlRoot(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-	public class Media
+	public class MediaElement
 	{
 		[XmlElement(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
 		public List<Track> Track { get; } = new List<Track>();
@@ -69,7 +69,7 @@ namespace PlexCleaner.MediaInfoToolXmlSchema
 	public class MediaInfo
 	{
 		[XmlElement(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-		public Media Media { get; set; } = new Media();
+		public MediaElement Media { get; set; } = new MediaElement();
 
 		public static MediaInfo FromXml(string xml)
 		{

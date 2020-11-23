@@ -27,7 +27,7 @@ namespace PlexCleaner
                 HasErrors = true;
         }
 
-        public bool Forced { get; set; } = false;
+        public bool Forced { get; set; }
 
         public override string ToString()
         {

@@ -238,7 +238,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool VerifyFiles(List<FileInfo> fileList)
+        public static bool VerifyFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Verifying files ...");
@@ -286,7 +286,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool ReEncodeFiles(List<FileInfo> fileList)
+        public static bool ReEncodeFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("ReEncoding files ...");
@@ -333,7 +333,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool DeInterlaceFiles(List<FileInfo> fileList)
+        public static bool DeInterlaceFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("DeInterlacing files ...");
@@ -379,7 +379,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool GetTagMapFiles(List<FileInfo> fileList)
+        public static bool GetTagMapFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Creating tag map ...");
@@ -451,7 +451,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool CreateSidecarFiles(List<FileInfo> fileList)
+        public static bool CreateSidecarFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Creating sidecar files ...");
@@ -497,7 +497,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool GetSidecarFiles(List<FileInfo> fileList)
+        public static bool GetSidecarFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Reading sidecar files ...");
@@ -549,7 +549,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool GetMediaInfoFiles(List<FileInfo> fileList)
+        public static bool GetMediaInfoFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Getting media information ...");
@@ -604,7 +604,7 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool GetBitrateFiles(List<FileInfo> fileList)
+        public static bool GetBitrateFiles(List<FileInfo> fileList)
         {
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole("Getting bitrate information ...");
@@ -822,11 +822,9 @@ namespace PlexCleaner
             if (Program.Cancel.State)
                 return false;
 
-            // TODO : Why does the file timestamp change after writing sidecar files?
+            // TODO : Why does the media file timestamp change after processing?
             // Speculating there is caching between Windows and Samba and ZFS and timestamps are not synced?
             // https://docs.microsoft.com/en-us/dotnet/api/system.io.filesysteminfo.lastwritetimeutc
-            // Adding --flush-on-close to MKV CLI tools to see if it makes a difference
-            // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2469
             // 10/4/2020 12:03:28 PM : Information : MonitorFileTime : 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
             // 10/4/2020 12:10:44 PM : Warning : MonitorFileTime : 10/4/2020 7:03:24 PM != 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
             // 10/4/2020 12:12:04 PM : Warning : MonitorFileTime : 10/4/2020 7:03:35 PM != 10/4/2020 7:03:24 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
