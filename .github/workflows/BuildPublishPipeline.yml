@@ -58,12 +58,7 @@ jobs:
       # Replace version information with GitVersion attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project'
-        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts \
-               -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} \
-               -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} \
-               -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} \
-               -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} \
-               -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
 
       # Zip the output
       - name: 'Zip Output'
