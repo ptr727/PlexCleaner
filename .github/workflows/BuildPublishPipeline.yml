@@ -63,7 +63,7 @@ jobs:
       # Zip the output
       # https://github.com/marketplace/actions/action-7z
       - name: 'Zip Output'
-        uses: edgarrc/action-7z@v1
+        uses: edgarrc/action-7z@v1.0.4
         with:
           args: 7z a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
 
