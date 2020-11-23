@@ -58,7 +58,12 @@ jobs:
       # Replace version information with GitVersion attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project'
-        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts \
+               -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} \
+               -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} \
+               -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} \
+               -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} \
+               -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
 
       # Zip the output
       - name: 'Zip Output'
@@ -70,13 +75,13 @@ jobs:
         # Do not push on pull requests
         # GitVersion tool fails when github contains pre-releases
         # https://github.com/GitTools/actions/issues/271
-        if: ${{ (github.event_name != 'pull_request') && contains(github.ref, 'origin/main')}}
+        if: ${{ (github.event_name != 'pull_request') && endsWith(github.ref, 'refs/heads/main') }}
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           automatic_release_tag: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
           # Only main branch is not a pre-release
-          prerelease: ${{ !contains(github.ref, 'origin/main') }}
+          prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
             LICENSE.txt
             README.md
