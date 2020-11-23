@@ -62,7 +62,7 @@ jobs:
 
       # Zip the output
       - name: 'Zip Output'
-        run: 7z.exe a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/
+        run: 7z.exe a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/*
 
       # Create GitHub release
       # https://github.com/marketplace/actions/automatic-releases
@@ -78,7 +78,7 @@ jobs:
           # Only main branch is not a pre-release
           prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
-            LICENSE.txt
+            LICENSE
             README.md
             ./PlexCleaner.7z
       
