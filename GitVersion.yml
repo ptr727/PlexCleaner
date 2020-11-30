@@ -1,0 +1,4 @@
+# https://chocolatey.org/packages/GitVersion.Portable
+# https://gitversion.readthedocs.io/en/latest/input/docs/reference/versioning-modes/mainline-development/
+
+mode: Mainline
