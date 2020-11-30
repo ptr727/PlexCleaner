@@ -38,21 +38,13 @@ jobs:
       - name: 'Install GitVersion'
         uses: gittools/actions/gitversion/setup@v0.9.7
         with:
-          # 5.5.1 does not work as expected, use 5.3.7
-          # https://github.com/GitTools/GitVersion/issues/2461
-          versionSpec: '5.3.x'
+          versionSpec: '5.x'
 
       # Run GitVersion
       # https://github.com/marketplace/actions/gittools
       - name: 'Run GitVersion Tool'
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
-        #with:
-        #  additionalArguments: '/diag'
-        env: 
-          # https://github.com/GitTools/actions/issues/255
-          # https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       # Build and publish project to folder
       # Replace version information with GitVersion attributes
@@ -79,6 +71,5 @@ jobs:
           prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
             LICENSE
-            README.md
             ./PlexCleaner.7z
-      
+   
