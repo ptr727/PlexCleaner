@@ -103,42 +103,6 @@ namespace PlexCleaner
             return unknown.Count > 0;
         }
 
-        public bool FindNeedReMux(out MediaInfo keep, out MediaInfo remux)
-        {
-            keep = new MediaInfo(Parser);
-            remux = new MediaInfo(Parser);
-
-            // TODO: Add more granular logic to determine a general error vs. a remux correctable error
-
-            // Video
-            foreach (VideoInfo video in Video)
-                if (video.HasErrors)
-                    remux.Video.Add(video);
-                else
-                    keep.Video.Add(video);
-
-            // Audio
-            foreach (AudioInfo audio in Audio)
-                if (audio.HasErrors)
-                    remux.Audio.Add(audio);
-                else
-                    keep.Audio.Add(audio);
-
-            // Subtitle
-            foreach (SubtitleInfo subtitle in Subtitle)
-                if (subtitle.HasErrors)
-                    remux.Subtitle.Add(subtitle);
-                else
-                    keep.Subtitle.Add(subtitle);
-
-            // Set the correct state on all the objects
-            remux.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
-            keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
-
-            // Return true on any match
-            return remux.Count > 0;
-        }
-
         public bool FindNeedDeInterlace(out MediaInfo keep, out MediaInfo deinterlace)
         {
             keep = new MediaInfo(Parser);
@@ -559,9 +523,12 @@ namespace PlexCleaner
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (VideoInfo info in Video) sb.AppendLine(info.ToString());
-            foreach (AudioInfo info in Audio) sb.AppendLine(info.ToString());
-            foreach (SubtitleInfo info in Subtitle) sb.AppendLine(info.ToString());
+            foreach (VideoInfo info in Video) 
+                sb.AppendLine(info.ToString());
+            foreach (AudioInfo info in Audio) 
+                sb.AppendLine(info.ToString());
+            foreach (SubtitleInfo info in Subtitle) 
+                sb.AppendLine(info.ToString());
             return sb.ToString();
         }
     }

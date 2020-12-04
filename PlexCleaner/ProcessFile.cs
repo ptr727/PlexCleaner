@@ -288,20 +288,6 @@ namespace PlexCleaner
                 remux = true;
             }
 
-            // Do any tracks need remuxing
-            // Use MediaInfo logic
-            if (Program.Config.ProcessOptions.ReMux &&
-                MediaInfoInfo.FindNeedReMux(out keep, out remove))
-            {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Re-muxing problematic tracks : \"{MediaFile.Name}\"");
-                keep.WriteLine("Keep");
-                remove.WriteLine("ReMux");
-
-                // We can't remux per track, we need to remux entire file
-                remux = true;
-            }
-
             // Any remuxing to do
             if (!remux)
                 // Done

@@ -63,8 +63,7 @@ namespace PlexCleaner
             // Match ConsoleEx.WriteLine() formatting
             if (string.IsNullOrEmpty(value))
                 return Environment.NewLine;
-            else
-                return $"{DateTime.Now.ToString(CultureInfo.CurrentCulture)} : {value}" + Environment.NewLine;
+            return $"{DateTime.Now.ToString(CultureInfo.CurrentCulture)} : {value}" + Environment.NewLine;
         }
 
         public string FileName { get; set; }

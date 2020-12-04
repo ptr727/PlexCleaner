@@ -120,16 +120,14 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
-            string commandline = $"-i \"{filename}\" -max_muxing_queue_size 512 -nostats -loglevel error -xerror {snippet} -f null -";
+            string commandline = $"-i \"{filename}\" -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
 
             // TODO: We sometimes get an invalid argument error, but there is nothing wrong with the commandline
-            // Repeating the exact same operation and it works?
-            // E.g. \\server - 1\media\movies\I, Robot(2004)\I, Robot(2004).mkv: Invalid argument\r\n
             if ((exitcode != 0 || error.Length != 0) &&
                 error.EndsWith(": invalid argument\r\n", StringComparison.OrdinalIgnoreCase))
             {
-                // Try one more time, after waiting a bit, assuming it is a synschronization or file access issue
+                // Try one more time, after waiting a bit, assuming it is a synchronization or file access issue
                 // E.g. observed to happen when system resumes from sleep while processing
                 const int sleepTime = 5;
                 ConsoleEx.WriteLine("");

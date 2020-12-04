@@ -710,7 +710,7 @@ namespace PlexCleaner
                 return false;
 
             // Nothing more to do for files in the keep extensions list
-            // Except if it is a MKV file or a file to be remuxed
+            // Except if it is a MKV file or a file to be remuxed to MKV
             if (!MkvTool.IsMkvFile(fileinfo) &&
                 !ReMuxExtensions.Contains(fileinfo.Extension) &&
                 KeepExtensions.Contains(fileinfo.Extension))
@@ -720,7 +720,7 @@ namespace PlexCleaner
             if (Program.Cancel.State)
                 return false;
 
-            // ReMux undesirable containers matched by extension
+            // ReMux non-MKV containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
                 return processFile.Result;
 
@@ -732,7 +732,7 @@ namespace PlexCleaner
             if (!processFile.GetMediaInfo())
                 return processFile.Result;
 
-            // ReMux MP4 containers using MKV filenames
+            // ReMux non-MKV containers using MKV filenames
             if (!processFile.RemuxNonMkvContainer(ref modified))
                 return processFile.Result;
 
@@ -768,7 +768,7 @@ namespace PlexCleaner
             // Merge all remux operations into a single call
             // Remove all the unwanted language tracks
             // Remove all duplicate tracks
-            // Remux if any tracks specifically need remuxing
+            // TODO: Remux if any tracks specifically need remuxing
             if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
                 return processFile.Result;
 
@@ -822,7 +822,7 @@ namespace PlexCleaner
             if (Program.Cancel.State)
                 return false;
 
-            // TODO : Why does the media file timestamp change after processing?
+            // TODO: Why does the media file timestamp change after processing?
             // Speculating there is caching between Windows and Samba and ZFS and timestamps are not synced?
             // https://docs.microsoft.com/en-us/dotnet/api/system.io.filesysteminfo.lastwritetimeutc
             // 10/4/2020 12:03:28 PM : Information : MonitorFileTime : 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"

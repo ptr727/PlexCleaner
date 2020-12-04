@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using InsaneGenius.Utilities;
 
@@ -59,12 +60,6 @@ namespace PlexCleaner
 
         public static bool ReMuxToMkv(string inputname, out string outputname)
         {
-            // Remux all tracks
-            return ReMuxToMkv(inputname, null, out outputname);
-        }
-
-        public static bool ReMuxToMkv(string inputname, MediaInfo keep, out string outputname)
-        {
             if (inputname == null)
                 throw new ArgumentNullException(nameof(inputname));
 
@@ -89,20 +84,60 @@ namespace PlexCleaner
             if (MkvTool.IsMkvFile(inputname))
             {
                 // MKV files always try MKVMerge first
-                result = MkvTool.ReMuxToMkv(inputname, keep, tempname);
+                result = MkvTool.ReMuxToMkv(inputname, tempname);
                 if (!result && !Program.Cancel.State)
                     // Retry using FFmpeg
-                    result = FfMpegTool.ReMuxToMkv(inputname, keep, tempname);
+                    result = FfMpegTool.ReMuxToMkv(inputname, tempname);
             }
             else
             {
                 // Non-MKV files always try FFmpeg first
-                result = FfMpegTool.ReMuxToMkv(inputname, keep, tempname);
+                result = FfMpegTool.ReMuxToMkv(inputname, tempname);
                 if (!result && !Program.Cancel.State)
                     // Retry using MKVMerge
-                    result = MkvTool.ReMuxToMkv(inputname, keep, tempname);
+                    result = MkvTool.ReMuxToMkv(inputname, tempname);
             }
             if (!result)
+            {
+                FileEx.DeleteFile(tempname);
+                return false;
+            }
+
+            // Rename the temp file to the output file
+            if (!FileEx.RenameFile(tempname, outputname))
+                return false;
+
+            // If the input and output names are not the same, delete the input
+            return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
+                   FileEx.DeleteFile(inputname);
+        }
+
+        public static bool ReMuxToMkv(string inputname, MediaInfo keep, out string outputname)
+        {
+            if (inputname == null)
+                throw new ArgumentNullException(nameof(inputname));
+            if (keep == null)
+                throw new ArgumentNullException(nameof(keep));
+
+            // This only works on MKV files and MkvMerge MediaInfo types
+            Debug.Assert(keep.Parser == MediaInfo.ParserType.MkvMerge);
+            Debug.Assert(MkvTool.IsMkvFile(inputname));
+
+            // Match the logic in ConvertToMKV()
+
+            // Test
+            if (Program.Options.TestNoModify)
+            {
+                outputname = inputname;
+                return true;
+            }
+
+            // Create a temp filename based on the input name
+            outputname = Path.ChangeExtension(inputname, ".mkv");
+            string tempname = Path.ChangeExtension(inputname, ".tmp");
+
+            // Remux keeping specific tracks
+            if (!MkvTool.ReMuxToMkv(inputname, keep, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;

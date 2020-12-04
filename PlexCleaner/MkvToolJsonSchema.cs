@@ -45,22 +45,22 @@ namespace PlexCleaner.MkvToolJsonSchema
     public class ContainerProperties
     {
         [JsonProperty("duration")]
-        public long Duration { get; set; } = 0;
+        public long Duration { get; set; }
     }
 
     public class GlobalTag
     {
         [JsonProperty("num_entries")]
-        public int NumEntries { get; set; } = 0;
+        public int NumEntries { get; set; }
     }
 
     public class TrackTag
     {
         [JsonProperty("num_entries")]
-        public int NumEntries { get; set; } = 0;
+        public int NumEntries { get; set; }
 
         [JsonProperty("track_id")]
-        public int TrackId { get; set; } = 0;
+        public int TrackId { get; set; }
     }
 
     public class Track
@@ -69,7 +69,7 @@ namespace PlexCleaner.MkvToolJsonSchema
         public string Codec { get; set; } = "";
 
         [JsonProperty("id")]
-        public int Id { get; set; } = 0;
+        public int Id { get; set; }
 
         [JsonProperty("properties")]
         public TrackProperties Properties { get; } = new TrackProperties();
@@ -90,18 +90,18 @@ namespace PlexCleaner.MkvToolJsonSchema
         public string Language { get; set; } = "";
 
         [JsonProperty("forced_track")]
-        public bool Forced { get; set; } = false;
+        public bool Forced { get; set; }
 
         [JsonProperty("tag_language")]
         public string TagLanguage { get; set; } = "";
 
         [JsonProperty("number")]
-        public int Number { get; set; } = 0;
+        public int Number { get; set; }
 
         [JsonProperty("track_name")]
         public string TrackName { get; set; } = "";
 
         [JsonProperty("default_track")]
-        public bool DefaultTrack { get; set; } = false;
+        public bool DefaultTrack { get; set; }
     }
 }

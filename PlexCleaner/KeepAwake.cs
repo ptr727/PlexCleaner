@@ -21,7 +21,7 @@ namespace PlexCleaner
         [FlagsAttribute]
         private enum ExecutionState : uint
         {
-            EsAwaymodeRequired = 0x00000040,
+            EsAwayModeRequired = 0x00000040,
             EsContinuous = 0x80000000,
             EsDisplayRequired = 0x00000002,
             EsSystemRequired = 0x00000001

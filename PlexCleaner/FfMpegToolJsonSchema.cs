@@ -28,7 +28,7 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class Stream
     {
         [JsonProperty("index")]
-        public int Index { get; set; } = 0;
+        public int Index { get; set; }
 
         [JsonProperty("codec_name")]
         public string CodecName { get; set; } = "";
@@ -69,9 +69,9 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class Disposition
     {
         [JsonProperty("default")]
-        public bool Default { get; set; } = false;
+        public bool Default { get; set; }
         [JsonProperty("forced")]
-        public bool Forced { get; set; } = false;
+        public bool Forced { get; set; }
     }
 
     public class PacketInfo
