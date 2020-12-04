@@ -219,7 +219,7 @@ namespace PlexCleaner
         private static bool UpdateTool(ToolInfoJsonSchema tools, ToolInfo toolinfo)
         {
             // Get the tool info
-            bool download = false;
+            bool download;
             ToolInfo tool = tools.Tools.FirstOrDefault(t => t.Tool.Equals(toolinfo.Tool, StringComparison.OrdinalIgnoreCase));
             if (tool == null)
             {

@@ -14,7 +14,7 @@ namespace PlexCleaner
         public static void WriteDefaultsToFile(string path)
         {
             ConfigFileJsonSchema config = new ConfigFileJsonSchema();
-            ConfigFileJsonSchema.ToFile(path, config);
+            ToFile(path, config);
         }
 
         public static ConfigFileJsonSchema FromFile(string path)

@@ -10,7 +10,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\" \"\\\\server-1\\Media\\Movies\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\" \"\\\\server-1\\Media\\Movies\" \"\\\\server-1\\Media\\Movies-4K\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -59,6 +59,10 @@
     "Read Sidecar": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" readsidecar --mediafiles \"\\\\server-1\\media\\movies\\The Bourne Identity (2002)\""
+    },
+    "Process Snippets": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"D:\\Troublesome\""
     }
   }
 }
