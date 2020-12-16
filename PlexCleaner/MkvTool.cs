@@ -157,8 +157,10 @@ namespace PlexCleaner
                 if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
                     mediainfo.HasErrors = true;
 
-                // Tags
-                mediainfo.HasTags = mkvmerge.GlobalTags.Count > 0 || mkvmerge.TrackTags.Count > 0;
+                // Tags or Title
+                mediainfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
+                                    mkvmerge.TrackTags.Count > 0 ||
+                                    !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title);
 
                 // Duration (JSON uses nanoseconds)
                 mediainfo.Duration = TimeSpan.FromSeconds(mkvmerge.Container.Properties.Duration / 1000000.0);
@@ -198,7 +200,7 @@ namespace PlexCleaner
         {
             // Create the MKVPropEdit commandline and execute
             // https://mkvtoolnix.download/doc/mkvpropedit.html
-            string commandline = $"\"{filename}\" --tags all:";
+            string commandline = $"\"{filename}\" --tags all: --delete title";
             int exitcode = MkvPropEditCli(commandline);
             return exitcode == 0;
         }

@@ -19,15 +19,16 @@ Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner)
 ### Use Cases
 
 The objective of the tool is to modify media content such that it will [Direct Play](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/) in Plex.  
-Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes. Sometimes Plex may eventually fix the issue, other times the only solution is modification of the media file.
+Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes.  
+Occasionally Plex would fix the issue, other times the only solution is modification of the media file.
 
 Below are a few examples of issues I've experienced over the many years of using Plex on Roku, NVidia Shield, and Apple TV:
 
 - Container file formats other than MKV and MP4 are not supported by the client platform, re-multiplex to MKV.
-- MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H264.
-- Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H264.
-- Some H264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H264 "High@40".
-- Interlaced video cause playback issues, re-encode to H264 using HandBrake and de-interlace using `--comb-detect --decomb` options.
+- MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H.264.
+- Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H.264.
+- Some H.264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H.264 "High@40".
+- Interlaced video cause playback issues, re-encode to H.264 using HandBrake and de-interlace using `--comb-detect --decomb` options.
 - Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
 - Some subtitle tracks like VOBsub cause hangs when the MuxingMode attribute is not set, re-multiplex the file.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
@@ -39,7 +40,7 @@ Below are a few examples of issues I've experienced over the many years of using
 
 - Install the [.NET 5 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
-- Note that .NET 5 is cross platform, but the tools and usage of the tools will only work on Windows x64.
+- Note that .NET 5 is cross platform, but the tools and usage of the tools will currently only work on Windows x64.
 
 ### Configuration File
 
@@ -55,9 +56,11 @@ Create a default configuration file by running:
     "RootRelative": true
   },
   "ConvertOptions": {
-    // Encoding video constant quality
+    // Enable H.265 encoding, else use H.264
+    "EnableH265Encoder": true,
+    // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
-    // Encoding audio codec
+    // Audio encoding codec
     "AudioEncodeCodec": "ac3"
   },
   "ProcessOptions": {
@@ -110,7 +113,7 @@ Create a default configuration file by running:
     // Speedup media metadata processing by saving media info in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
-    "SidecarUpdateOnToolChange": false,
+    "SidecarUpdateOnToolChange": true,
     // Enable verify
     "Verify": true,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
@@ -139,7 +142,9 @@ Create a default configuration file by running:
     // Time in seconds to count interlaced frames, 0 will count entire file
     "IdetDuration": 0,
     // Maximum bitrate in bits per second, 0 will skip computation
-    "MaximumBitrate": 100000000
+    "MaximumBitrate": 100000000,
+    // Skip files older than the minimum file age in days, 0 will process all files
+    "MinimumFileAge": 0
   }
 }
 ```
@@ -232,7 +237,7 @@ The following processing will be done:
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
 - De-interlace the video track if interlaced.
-- Re-encode video to H264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
+- Re-encode video to H.264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
 
@@ -240,7 +245,7 @@ The following processing will be done:
 
 The `remux` command will re-multiplex the media files using `MKVMerge`.
 
-The `reencode` command will re-encode the media files using `FFMPeg` and H264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
+The `reencode` command will re-encode the media files using `FFMPeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
@@ -252,7 +257,7 @@ Unlike the `process` command, no conditional logic will be applied, the file wil
 
 The `monitor` command will watch the specified folders for changes, and process the directories with changes.
 
-Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher?view=netcore-3.1) is not always reliable on Linux or NAS Samba shares.  
+Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
 ### CreateSidecar, GetSidecar, GetTagMap, GetMediaInfo, GetBitrateInfo
@@ -277,13 +282,12 @@ Tools, libraries, and utilities used in the project.
 PS C:\Users\piete\source\repos\PlexCleaner> dotnet list package
 Project 'PlexCleaner' has the following package references
    [net5.0]:
-   Top-level Package                            Requested             Resolved
-   > HtmlAgilityPack                            1.11.28               1.11.28
-   > InsaneGenius.Utilities                     1.6.1                 1.6.1
-   > Microsoft.CodeAnalysis.FxCopAnalyzers      3.3.1                 3.3.1
-   > Microsoft.SourceLink.GitHub                1.1.0-beta-20204-02   1.1.0-beta-20204-02
-   > Newtonsoft.Json                            12.0.3                12.0.3
-   > System.CommandLine                         2.0.0-beta1.20371.2   2.0.0-beta1.20371.2
+   Top-level Package                  Requested             Resolved
+   > HtmlAgilityPack                  1.11.28               1.11.28
+   > InsaneGenius.Utilities           2.0.1                 2.0.1
+   > Microsoft.SourceLink.GitHub      1.1.0-beta-20204-02   1.1.0-beta-20204-02
+   > Newtonsoft.Json                  12.0.3                12.0.3
+   > System.CommandLine               2.0.0-beta1.20574.7   2.0.0-beta1.20574.7
 ```
 
 ### 3rd Party Tools

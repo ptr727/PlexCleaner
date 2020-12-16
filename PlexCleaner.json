@@ -6,9 +6,11 @@
     "RootRelative": true
   },
   "ConvertOptions": {
-    // Encoding video quality
+    // Enable H.265 encoding, else use H.264
+    "EnableH265Encoder": true,
+    // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
-    // Encoding audio codec
+    // Audio encoding codec
     "AudioEncodeCodec": "ac3"
   },
   "ProcessOptions": {
@@ -82,7 +84,7 @@
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
     // Delete media files that fail verification and fail repair
-    "DeleteInvalidFiles": true,
+    "DeleteInvalidFiles": false,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file

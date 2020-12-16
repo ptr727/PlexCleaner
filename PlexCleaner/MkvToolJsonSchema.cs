@@ -46,6 +46,8 @@ namespace PlexCleaner.MkvToolJsonSchema
     {
         [JsonProperty("duration")]
         public long Duration { get; set; }
+        [JsonProperty("title")]
+        public string Title { get; set; } = "";
     }
 
     public class GlobalTag

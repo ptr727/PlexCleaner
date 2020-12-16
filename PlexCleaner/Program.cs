@@ -232,7 +232,7 @@ namespace PlexCleaner
             FileEx.Options.TraceToConsole = true;
 
             // Share the FileEx Cancel object
-            Cancel = FileEx.Options.Cancel;
+            CancelSignal = FileEx.Options.Cancel;
             
             // Create log file
             if (!string.IsNullOrEmpty(options.LogFile))
@@ -275,7 +275,7 @@ namespace PlexCleaner
         private void Break()
         {
             // Signal the cancel event
-            Cancel.State = true;
+            Cancel();
         }
 
         private bool CreateFileList(List<string> files)
@@ -336,10 +336,33 @@ namespace PlexCleaner
             return true;
         }
 
-        public static Signal Cancel { get; set; }
+        public static bool IsCancelledError()
+        {
+            // There is a race condition between tools exiting on Ctrl-C and reporting an error, and our app's Ctrl-C handler being called
+            // In case of a suspected Ctrl-C, yield some time for this handler to be called before testing the state
+            return IsCancelled(100);
+        }
+
+        public static bool IsCancelled()
+        {
+            return CancelSignal.WaitForSet(0);
+        }
+
+        public static bool IsCancelled(int milliseconds)
+        {
+            return CancelSignal.WaitForSet(milliseconds);
+        }
+
+        public static void Cancel()
+        {
+            CancelSignal.State = true;
+        }
+
         public static readonly LogFile LogFile = new LogFile();
         public static CommandLineOptions Options { get; set; }
         public static ConfigFileJsonSchema Config { get; set; }
+
+        private static Signal CancelSignal;
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

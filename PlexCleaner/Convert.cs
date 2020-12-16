@@ -43,7 +43,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Convert using ffmpeg
-            if (!FfMpegTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, keep, reencode, tempname))
+            if (!FfMpegTool.ConvertToMkv(inputname, keep, reencode, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -72,35 +72,33 @@ namespace PlexCleaner
                 return true;
             }
 
-            // Create a temp filename based on the input name
+            // Create a MKV and temp filename based on the input name
             outputname = Path.ChangeExtension(inputname, ".mkv");
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // MKVToolNix and FFmpeg both have problems dealing with some AVI files, so we will try both
-            // MKVToolNix does not support WMV or ASF files, or maybe just the WMAPro codec
             // E.g. https://github.com/FFmpeg/FFmpeg/commit/8de1ee9f725aa3c550f425bd3120bcd95d5b2ea8
             // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
-            bool result;
-            if (MkvTool.IsMkvFile(inputname))
+            
+            // Try MKV first
+            if (!MkvTool.ReMuxToMkv(inputname, tempname))
             {
-                // MKV files always try MKVMerge first
-                result = MkvTool.ReMuxToMkv(inputname, tempname);
-                if (!result && !Program.Cancel.State)
-                    // Retry using FFmpeg
-                    result = FfMpegTool.ReMuxToMkv(inputname, tempname);
-            }
-            else
-            {
-                // Non-MKV files always try FFmpeg first
-                result = FfMpegTool.ReMuxToMkv(inputname, tempname);
-                if (!result && !Program.Cancel.State)
-                    // Retry using MKVMerge
-                    result = MkvTool.ReMuxToMkv(inputname, tempname);
-            }
-            if (!result)
-            {
+                // Failed, delete temp file
                 FileEx.DeleteFile(tempname);
-                return false;
+
+                // Cancel requested
+                if (Program.IsCancelledError())
+                    return false;
+
+                // Retry using FFmpeg
+                if (!FfMpegTool.ReMuxToMkv(inputname, tempname))
+                {
+                    // Failed, delete temp file
+                    FileEx.DeleteFile(tempname);
+
+                    // Error
+                    return false;
+                }
             }
 
             // Rename the temp file to the output file
@@ -176,8 +174,8 @@ namespace PlexCleaner
             outputname = Path.ChangeExtension(inputname, ".mkv");
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
-            // De-interlace using handbrake
-            if (!HandBrakeTool.DeInterlaceToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, tempname))
+            // De-interlace video using handbrake
+            if (!HandBrakeTool.DeInterlaceToMkv(inputname, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -210,8 +208,8 @@ namespace PlexCleaner
             outputname = Path.ChangeExtension(inputname, ".mkv");
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
-            // Re-encode using handbrake
-            if (!HandBrakeTool.ConvertToMkv(inputname, Program.Config.ConvertOptions.VideoEncodeQuality, Program.Config.ConvertOptions.AudioEncodeCodec, tempname))
+            // Re-encode audio and video using handbrake
+            if (!HandBrakeTool.ConvertToMkv(inputname, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;

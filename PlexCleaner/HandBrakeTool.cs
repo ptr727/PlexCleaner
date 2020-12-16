@@ -44,10 +44,7 @@ namespace PlexCleaner
 
                 // Create download URL and the output filename using the version number
                 // https://github.com/HandBrake/HandBrake/releases/download/1.3.2/HandBrakeCLI-1.3.2-win-x86_64.zip
-                // https://handbrake.fr/downloads2.php
-                // https://download.handbrake.fr/releases/1.3.1/HandBrakeCLI-1.3.1-win-x86_64.zip
                 toolinfo.FileName = $"HandBrakeCLI-{toolinfo.Version}-win-x86_64.zip";
-                //toolinfo.Url = $"https://download.handbrake.fr/releases/{toolinfo.Version}/{toolinfo.FileName}";
                 toolinfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{toolinfo.Version}/{toolinfo.FileName}";
             }
             catch (Exception e)
@@ -58,33 +55,69 @@ namespace PlexCleaner
             return true;
         }
 
-        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, string outputname)
+        public static bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, string outputName)
         {
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create the HandBrakeCLI commandline and execute
             // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
-            // https://handbrake.fr/docs/en/latest/cli/cli-options.html
+            // Encode audio and video, copy subtitles
             string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
-            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --all-subtitles --all-audio --aencoder {audiocodec} {snippets}";
+            string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec} {snippets}";
             int exitcode = HandBrakeCli(commandline);
             return exitcode == 0;
         }
 
-        public static bool DeInterlaceToMkv(string inputname, int quality, string audiocodec, string outputname)
+        public static bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
         {
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create the HandBrakeCLI commandline and execute
             // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
-            // https://handbrake.fr/docs/en/latest/cli/cli-options.html
+            // Encode video, copy audio and subtitles
             string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
-            string commandline = $"--input \"{inputname}\" --output \"{outputname}\" --format av_mkv --encoder x264 --encoder-preset medium --quality {quality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy --audio-fallback {audiocodec} {snippets}";
+            string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy {snippets}";
             int exitcode = HandBrakeCli(commandline);
             return exitcode == 0;
         }
+
+        public static bool ConvertToMkv(string inputName, string outputName)
+        {
+            // Use defaults
+            return ConvertToMkv(inputName,
+                                Program.Config.ConvertOptions.EnableH265Encoder ? HandBrakeTool.H265Codec : HandBrakeTool.H264Codec,
+                                Program.Config.ConvertOptions.VideoEncodeQuality,
+                                Program.Config.ConvertOptions.AudioEncodeCodec,
+                                outputName);
+        }
+
+        public static bool DeInterlaceToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputName);
+
+            // Create the HandBrakeCLI commandline and execute
+            // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
+            // Encode and decomb video, copy audio and subtitles
+            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
+            string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy {snippets}";
+            int exitcode = HandBrakeCli(commandline);
+            return exitcode == 0;
+        }
+
+        public static bool DeInterlaceToMkv(string inputName, string outputName)
+        {
+            // Use defaults
+            return DeInterlaceToMkv(inputName,
+                                    Program.Config.ConvertOptions.EnableH265Encoder ? HandBrakeTool.H265Codec : HandBrakeTool.H264Codec,
+                                    Program.Config.ConvertOptions.VideoEncodeQuality,
+                                    outputName);
+        }
+
+        public const string H264Codec = "x264";
+        public const string H265Codec = "x265";
 
         private const string HandBrakeBinary = @"HandBrakeCLI.exe";
         private const string HandBrakeSnippet = "--start-at duration:00 --stop-at duration:60";

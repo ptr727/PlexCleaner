@@ -122,7 +122,7 @@ namespace PlexCleaner
                 }
 
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Next file
@@ -205,7 +205,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files, and files in the remux extension list
@@ -252,7 +252,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -300,7 +300,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -347,7 +347,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -399,7 +399,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -465,7 +465,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -511,7 +511,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only sidecar files
@@ -563,7 +563,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -618,7 +618,7 @@ namespace PlexCleaner
             foreach (FileInfo fileinfo in fileList)
             {
                 // Cancel handler
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Handle only MKV files
@@ -690,7 +690,7 @@ namespace PlexCleaner
             ProcessFile processFile = new ProcessFile(fileinfo);
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Delete files not in our desired extensions lists
@@ -698,7 +698,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Delete the sidecar file if matching MKV file not found
@@ -706,7 +706,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Nothing more to do for files in the keep extensions list
@@ -717,7 +717,7 @@ namespace PlexCleaner
                 return true;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // ReMux non-MKV containers matched by extension
@@ -725,7 +725,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Read the media info
@@ -737,7 +737,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Do we have any errors in the metadata
@@ -745,7 +745,7 @@ namespace PlexCleaner
             processFile.MediaInfoErrors();
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Remove tags
@@ -754,7 +754,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Change all tracks with an unknown language to the default language
@@ -762,7 +762,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Merge all remux operations into a single call
@@ -773,7 +773,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // De-interlace interlaced content
@@ -781,7 +781,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
@@ -789,7 +789,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Verify media
@@ -797,7 +797,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // FFmpeg and HandBrake can add tags or result in tracks witn no language set
@@ -809,7 +809,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // Removing the tags and setting the unknown languages will invalidate verified
@@ -819,7 +819,7 @@ namespace PlexCleaner
                 return processFile.Result;
 
             // Cancel handler
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // TODO: Why does the media file timestamp change after processing?

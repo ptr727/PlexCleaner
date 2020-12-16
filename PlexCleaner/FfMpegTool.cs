@@ -13,20 +13,6 @@ using System.IO.Compression;
 using System.Threading;
 using System.Net;
 
-// TODO : FFmpeg de-interlacing
-// https://www.reddit.com/r/ffmpeg/comments/d3cwxp/what_is_the_difference_between_bwdif_and_yadif1/
-// https://video.stackexchange.com/questions/14874/faster-deinterlacing-with-ffmpeg-and-yadif
-// https://askubuntu.com/questions/866186/how-to-get-good-quality-when-converting-digital-video
-// http://avisynth.nl/index.php/QTGMC
-// https://forum.videohelp.com/threads/392565-How-to-get-ffmpeg-deinterlace-to-work-like-handbrake-decomb
-// https://offset.skew.org/wiki/User:Mjb/FFmpeg#Basic_deinterlace
-
-// TODO : Hardware acceleration
-// https://trac.ffmpeg.org/wiki/HWAccelIntro
-
-// TODO : Add x265 support
-// https://trac.ffmpeg.org/wiki/Encode/H.265
-
 namespace PlexCleaner
 {
     public static class FfMpegTool
@@ -115,20 +101,19 @@ namespace PlexCleaner
         {
             // https://trac.ffmpeg.org/ticket/6375
             // Too many packets buffered for output stream 0:1
-            // Set max_muxing_queue_size
+            // Set max_muxing_queue_size to large value to work around issue
 
             // Create the FFmpeg commandline and execute
             // https://ffmpeg.org/ffmpeg.html
-            string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.VerifyDuration}";
+            string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
             string commandline = $"-i \"{filename}\" -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
             int exitcode = FfMpegCli(commandline, out string _, out error);
 
-            // TODO: We sometimes get an invalid argument error, but there is nothing wrong with the commandline
+            // Wake from sleep during verify operation results in an invalid argument error
             if ((exitcode != 0 || error.Length != 0) &&
                 error.EndsWith(": invalid argument\r\n", StringComparison.OrdinalIgnoreCase))
             {
-                // Try one more time, after waiting a bit, assuming it is a synchronization or file access issue
-                // E.g. observed to happen when system resumes from sleep while processing
+                // Retry
                 const int sleepTime = 5;
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(error);
@@ -215,13 +200,13 @@ namespace PlexCleaner
             return true;
         }
 
-        public static bool ReMuxToMkv(string inputname, MediaInfo keep, string outputname)
+        public static bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
         {
             if (keep == null)
-                return ReMuxToMkv(inputname, outputname);
+                return ReMuxToMkv(inputName, outputName);
 
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create an input and output map
             CreateFfMpegMap(keep, out string input, out string output);
@@ -231,15 +216,15 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputName}\" {snippet} {input} {output} -f matroska \"{outputName}\"";
             int exitcode = FfMpegCli(commandline);
             return exitcode == 0;
         }
 
-        public static bool ReMuxToMkv(string inputname, string outputname)
+        public static bool ReMuxToMkv(string inputName, string outputName)
         {
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create the FFmpeg commandline and execute
             // Copy all streams
@@ -247,23 +232,23 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Map
             // https://ffmpeg.org/ffmpeg.html#Stream-copy
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippet} -map 0 -codec copy -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputName}\" {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
             int exitcode = FfMpegCli(commandline);
             return exitcode == 0;
         }
 
         private static void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
         {
+            // Remux only
             MediaInfo reencode = new MediaInfo(MediaInfo.ParserType.FfProbe);
-            CreateFfMpegMap(0, "", keep, reencode, out input, out output);
+            CreateFfMpegMap("", 0, "", keep, reencode, out input, out output);
         }
 
-        private static void CreateFfMpegMap(int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
+        private static void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
         {
             // Verify correct data type
             Debug.Assert(keep.Parser == MediaInfo.ParserType.FfProbe);
             Debug.Assert(reencode.Parser == MediaInfo.ParserType.FfProbe);
-
 
             // Create an input and output map
             // http://ffmpeg.org/ffmpeg.html#Advanced-options
@@ -272,26 +257,28 @@ namespace PlexCleaner
 
             // Order by video, audio, and subtitle
             // Each ordered by id, to keep the original order
-            List<TrackInfo> videolist = new List<TrackInfo>();
-            videolist.AddRange(keep.Video);
-            videolist.AddRange(reencode.Video);
-            videolist = videolist.OrderBy(item => item.Id).ToList();
-            List<TrackInfo> audiolist = new List<TrackInfo>();
-            audiolist.AddRange(keep.Audio);
-            videolist.AddRange(reencode.Audio);
-            audiolist = audiolist.OrderBy(item => item.Id).ToList();
-            List<TrackInfo> subtitlelist = new List<TrackInfo>();
-            subtitlelist.AddRange(keep.Subtitle);
-            videolist.AddRange(reencode.Subtitle);
-            subtitlelist = subtitlelist.OrderBy(item => item.Id).ToList();
+            List<TrackInfo> videoList = new List<TrackInfo>();
+            videoList.AddRange(keep.Video);
+            videoList.AddRange(reencode.Video);
+            videoList = videoList.OrderBy(item => item.Id).ToList();
+            
+            List<TrackInfo> audioList = new List<TrackInfo>();
+            audioList.AddRange(keep.Audio);
+            videoList.AddRange(reencode.Audio);
+            audioList = audioList.OrderBy(item => item.Id).ToList();
+            
+            List<TrackInfo> subtitleList = new List<TrackInfo>();
+            subtitleList.AddRange(keep.Subtitle);
+            videoList.AddRange(reencode.Subtitle);
+            subtitleList = subtitleList.OrderBy(item => item.Id).ToList();
 
             // Create a map list of all the input streams we want in the output
-            List<TrackInfo> tracklist = new List<TrackInfo>();
-            tracklist.AddRange(videolist);
-            tracklist.AddRange(audiolist);
-            tracklist.AddRange(subtitlelist);
+            List<TrackInfo> trackList = new List<TrackInfo>();
+            trackList.AddRange(videoList);
+            trackList.AddRange(audioList);
+            trackList.AddRange(subtitleList);
             StringBuilder sb = new StringBuilder();
-            foreach (TrackInfo info in tracklist)
+            foreach (TrackInfo info in trackList)
                 sb.Append($"-map 0:{info.Id} ");
             input = sb.ToString();
             input = input.Trim();
@@ -299,39 +286,39 @@ namespace PlexCleaner
             // Set the output stream types for each input map item
             // The order has to match the input order
             sb.Clear();
-            int video = 0;
-            int audio = 0;
-            int subtitle = 0;
-            foreach (TrackInfo info in tracklist)
+            int videoIndex = 0;
+            int audioIndex = 0;
+            int subtitleIndex = 0;
+            foreach (TrackInfo info in trackList)
             {
                 // Copy or encode
                 if (info.GetType() == typeof(VideoInfo))
                     sb.Append(info.State == TrackInfo.StateType.Keep
-                        ? $"-c:v:{video++} copy "
-                        : $"-c:v:{video++} libx264 -crf {quality} -preset medium ");
+                        ? $"-c:v:{videoIndex ++} copy "
+                        : $"-c:v:{videoIndex ++} {videoCodec} -crf {videoQuality} -preset medium ");
                 else if (info.GetType() == typeof(AudioInfo))
                     sb.Append(info.State == TrackInfo.StateType.Keep
-                        ? $"-c:a:{audio++} copy "
-                        : $"-c:a:{audio++} {audiocodec} ");
+                        ? $"-c:a:{audioIndex ++} copy "
+                        : $"-c:a:{audioIndex ++} {audioCodec} ");
                 else if (info.GetType() == typeof(SubtitleInfo))
                     // No re-encoding of subtitles, just copy
-                    sb.Append($"-c:s:{subtitle++} copy ");
+                    sb.Append($"-c:s:{subtitleIndex ++} copy ");
             }
             output = sb.ToString();
             output = output.Trim();
         }
 
-        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, MediaInfo keep, MediaInfo reencode, string outputname)
+        public static bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, string outputName)
         {
-            // Simple encoding of audio and video and pasthrough of otehr tracks
+            // Simple encoding of audio and video and pasthrough of other tracks
             if (keep == null || reencode == null)
-                return ConvertToMkv(inputname, quality, audiocodec, outputname);
+                return ConvertToMkv(inputName, videoCodec, videoQuality, audioCodec, outputName);
 
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create an input and output map
-            CreateFfMpegMap(quality, audiocodec, keep, reencode, out string input, out string output);
+            CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reencode, out string input, out string output);
 
             // TODO : Error with some PGS subtitles
             // https://trac.ffmpeg.org/ticket/2622
@@ -339,25 +326,59 @@ namespace PlexCleaner
             //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
 
             // Create the FFmpeg commandline and execute
-            // https://trac.ffmpeg.org/wiki/Encode/H.264
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippet} {input} {output} -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputName}\" {snippet} {input} {output} -f matroska \"{outputName}\"";
+            int exitcode = FfMpegCli(commandline);
+            return exitcode == 0;
+        }
+        public static bool ConvertToMkv(string inputName, MediaInfo keep, MediaInfo reencode, string outputName)
+        {
+            // Use defaults
+            return ConvertToMkv(inputName,
+                                Program.Config.ConvertOptions.EnableH265Encoder ? FfMpegTool.H265Codec : FfMpegTool.H264Codec,
+                                Program.Config.ConvertOptions.VideoEncodeQuality,
+                                Program.Config.ConvertOptions.AudioEncodeCodec,
+                                keep, 
+                                reencode, 
+                                outputName);
+        }
+
+        public static bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, string outputName)
+        {
+            // Delete output file
+            FileEx.DeleteFile(outputName);
+
+            // Create the FFmpeg commandline and execute
+            // Encode video and audio, copy subtitle streams
+            // https://trac.ffmpeg.org/wiki/Encode/H.264
+            // https://trac.ffmpeg.org/wiki/Encode/H.265
+            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string commandline = $"-i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
             int exitcode = FfMpegCli(commandline);
             return exitcode == 0;
         }
 
-        public static bool ConvertToMkv(string inputname, int quality, string audiocodec, string outputname)
+        public static bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
         {
             // Delete output file
-            FileEx.DeleteFile(outputname);
+            FileEx.DeleteFile(outputName);
 
             // Create the FFmpeg commandline and execute
-            // Copy subtitle streams
-            // https://trac.ffmpeg.org/wiki/Encode/H.264
+            // Encode video, copy audio and subtitle streams
             string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputname}\" {snippet} -map 0 -c:v libx264 -crf {quality} -preset medium -c:a {audiocodec} -c:s copy -f matroska \"{outputname}\"";
+            string commandline = $"-i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
             int exitcode = FfMpegCli(commandline);
             return exitcode == 0;
+        }
+
+        public static bool ConvertToMkv(string inputName, string outputName)
+        {
+            // Use defaults
+            return ConvertToMkv(inputName,
+                                Program.Config.ConvertOptions.EnableH265Encoder ? FfMpegTool.H265Codec : FfMpegTool.H264Codec,
+                                Program.Config.ConvertOptions.VideoEncodeQuality,
+                                Program.Config.ConvertOptions.AudioEncodeCodec,
+                                outputName);
         }
 
         public static bool GetIdetInfo(string filename, out FfMpegIdetInfo idetinfo)
@@ -367,7 +388,7 @@ namespace PlexCleaner
                    GetIdetInfoFromText(text, out idetinfo);
         }
 
-        public static bool GetIdetInfoText(string inputname, out string text)
+        public static bool GetIdetInfoText(string inputName, out string text)
         {
             // Create the FFmpeg commandline and execute
             // Use Idet to get statistics
@@ -375,7 +396,7 @@ namespace PlexCleaner
             // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
             // https://trac.ffmpeg.org/wiki/Null
             string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
-            string commandline = $"-i \"{inputname}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
+            string commandline = $"-i \"{inputName}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
             // FFMpeg logs output to stderror
             int exitcode = FfMpegCli(commandline, out string _, out text);
             return exitcode == 0;
@@ -452,7 +473,7 @@ namespace PlexCleaner
             // Make sure that the various stream processors leave the memory stream open for the duration of operations
             using MemoryStream memoryStream = new MemoryStream();
             using GZipStream compressStream = new GZipStream(memoryStream, CompressionMode.Compress, true);
-            using ProcessEx process = new ProcessEx()
+            using ProcessEx process = new ProcessEx
             {
                 RedirectOutput = true,
                 OutputStream = new StreamWriter(compressStream)
@@ -478,6 +499,8 @@ namespace PlexCleaner
             return true;
         }
 
+        public const string H264Codec = "libx264";
+        public const string H265Codec = "libx265";
 
         private const string FfMpegBinary = @"bin\ffmpeg.exe";
         private const string FfProbeBinary = @"bin\ffprobe.exe";
