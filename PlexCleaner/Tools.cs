@@ -3,12 +3,53 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
     public static class Tools
     {
         public static bool VerifyTools(out ToolInfoJsonSchema toolInfo)
+        {
+            toolInfo = null;
+             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return VerifyToolsWindows(out toolInfo);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return VerifyToolsLinux(out toolInfo);
+            else
+                return false;
+        }
+
+        public static bool VerifyToolsLinux(out ToolInfoJsonSchema toolInfo)
+        {
+            // Create JSON object and populate version information
+            // Use the system installed tools to query version information
+            toolInfo = new ToolInfoJsonSchema();
+
+            ToolInfo ffMpegTool = new ToolInfo();
+            if (!FfMpegTool.GetToolVersion(ffMpegTool))
+                return false;
+            toolInfo.Tools.Add(ffMpegTool);
+
+            ToolInfo mediaInfoTool = new ToolInfo();
+            if (!MediaInfoTool.GetToolVersion(mediaInfoTool))
+                return false;
+            toolInfo.Tools.Add(mediaInfoTool);
+
+            ToolInfo mkvTool = new ToolInfo();
+            if (!MkvTool.GetToolVersion(mkvTool))
+                return false;
+            toolInfo.Tools.Add(mkvTool);
+
+            ToolInfo handBrakeTool = new ToolInfo();
+            if (!HandBrakeTool.GetToolVersion(handBrakeTool))
+                return false;
+            toolInfo.Tools.Add(handBrakeTool);
+
+            return true;
+        }
+
+        public static bool VerifyToolsWindows(out ToolInfoJsonSchema toolInfo)
         {
             toolInfo = null;
 
@@ -71,6 +112,10 @@ namespace PlexCleaner
 
         public static string GetToolsRoot()
         {
+            // System tools on Linux
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return "System";
+
             // Process relative or absolute tools path
             if (!Program.Config.ToolsOptions.RootRelative)
                 // Return the absolute path

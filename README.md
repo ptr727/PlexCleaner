@@ -38,9 +38,57 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Installation
 
-- Install the [.NET 5 Runtime](https://dotnet.microsoft.com/download) and [download](https://github.com/ptr727/PlexCleaner/releases/latest) pre-compiled binaries.
+#### Windows
+
+- Install [.NET 5 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
+- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
-- Note that .NET 5 is cross platform, but the tools and usage of the tools will currently only work on Windows x64.
+- Install the required 3rd Party tools:
+  - The 3rd party tools are downloaded in the `Tools` folder.
+  - Make sure the folder exists, the default location is in the same folder as the binary.
+  - [Download](https://www.7-zip.org/download.html) the 7-Zip commandline tool, e.g. [7z1805-extra.7z](https://www.7-zip.org/a/7z1805-extra.7z)
+  - Extract the contents of the archive to the `Tools\7Zip` folder.
+  - The 7-Zip commandline tool should be in `Tools\7Zip\x64\7za.exe`
+  - With 7-Zip ready, the other 3rd party tools can automatically be downloaded and extracted by running:
+    - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
+    - The tool version information will be stored in `Tools\Tools.json`
+  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command.
+
+#### Linux
+
+- Install [.NET 5 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux) (listed steps are for Ubuntu):
+  - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
+  - `sudo dpkg -i packages-microsoft-prod.deb`
+  - `sudo apt update`
+  - `sudo apt install git apt-transport-https dotnet-sdk-5.0 -y`
+  - `dotnet --version`
+- Install the required 3rd Party tools (listed steps are for Ubuntu):
+  - Install [FfMpeg](https://ffmpeg.org/download.html#build-linux):
+    - `sudo apt update`
+    - `sudo apt install ffmpeg -y`
+    - `ffmpeg -version`
+  - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu):
+    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb`
+    - `sudo dpkg -i repo-mediaarea_1.0-13_all.deb`
+    - `sudo apt update`
+    - `sudo apt install mediainfo -y`
+    - `mediainfo --version`
+  - Install [HandBrake](https://handbrake.fr/docs/en/latest/get-handbrake/download-and-install.html):
+    - `sudo add-apt-repository ppa:stebbins/handbrake-releases -y`
+    - `sudo apt update`
+    - `sudo apt install handbrake-cli -y`
+    - `HandBrakeCLI --version`
+  - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html):
+    - `wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | sudo apt-key add -`
+    - `sudo sh -c 'echo "deb https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/bunkus.org.list'`
+    - `sudo apt update`
+    - `sudo apt install mkvtoolnix -y`
+    - `mkvmerge --version`
+  - Keep the 3rd party tools updated by periodically running `sudo apt update`.
+- Clone the [repo](https://github.com/ptr727/PlexCleaner.git) and compile the code:
+  - `git clone https://github.com/ptr727/PlexCleaner.git`
+  - `cd PlexCleaner`
+  - `dotnet build`
 
 ### Configuration File
 
@@ -148,18 +196,6 @@ Create a default configuration file by running:
   }
 }
 ```
-
-### Update Tools
-
-- The 3rd party tools used by this project are not included, they must be downloaded by the end-user.
-- Make sure the `Tools` folder exists, the default folder is in the same folder as the binary.
-- [Download](https://www.7-zip.org/download.html) the 7-Zip commandline tool, e.g. [7z1805-extra.7z](https://www.7-zip.org/a/7z1805-extra.7z)
-- Extract the contents of the archive to the `Tools\7Zip` folder.
-- The 7-Zip commandline tool should be in `Tools\7Zip\x64\7za.exe`
-- Update all the required tools to the latest version by running:
-  - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - The tool version information will be stored in `Tools\Tools.json`
-- Keep the tools updated by periodically running the `checkfornewtools` command.
 
 ## Usage
 
@@ -301,6 +337,9 @@ Project 'PlexCleaner' has the following package references
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
+- [HtmlAgilityPack](https://html-agility-pack.net/)
+- [Newtonsoft.Json](https://www.newtonsoft.com/json)
+- [System.CommandLine](https://github.com/dotnet/command-line-api)
 
 ### Sample Media Files
 

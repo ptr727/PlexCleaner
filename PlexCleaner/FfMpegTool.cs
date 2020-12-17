@@ -12,12 +12,13 @@ using Newtonsoft.Json;
 using System.IO.Compression;
 using System.Threading;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
     public static class FfMpegTool
     {
-        // Tool version, read from Tools.json
+        // Tool version
         public static string Version { get; set; } = "";
 
         public static int FfMpegCli(string parameters)
@@ -28,7 +29,8 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -40,7 +42,8 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFmpeg : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
@@ -52,7 +55,12 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"FFprobe : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
+
+            // Windows or Linux path
+            string path = FfProbeBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinaryWindows);
+
             return ProcessEx.Execute(path, parameters, out output, out error);
         }
 
@@ -63,7 +71,10 @@ namespace PlexCleaner
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinary);
+            string path = FfMpegBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfMpegBinaryWindows);
+            return path;
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -94,6 +105,31 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
+            return true;
+        }
+
+        public static bool GetToolVersion(ToolInfo toolinfo)
+        {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
+            // Type of tool
+            toolinfo.Tool = nameof(FfMpegTool);
+
+            // Create the FFmpeg commandline and execute
+            // https://ffmpeg.org/ffmpeg.html
+            string commandline = $"-version";
+            int exitcode = FfMpegCli(commandline, out string output, out string error);
+            if (exitcode != 0 || error.Length > 0)
+                return false;
+
+            // First line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolinfo.Version = lines[0];
+
+            // Get tool filename
+            toolinfo.FileName = GetToolPath();
+
             return true;
         }
 
@@ -466,7 +502,11 @@ namespace PlexCleaner
             // Create the FFprobe commandline
             // https://ffmpeg.org/ffprobe.html
             string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
-            string path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinary);
+
+            // Windows or Linux path
+            string path = FfProbeBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.FfMpeg, FfProbeBinaryWindows);
 
             // Write JSON text output to compressed memory stream
             // TODO : Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
@@ -502,8 +542,10 @@ namespace PlexCleaner
         public const string H264Codec = "libx264";
         public const string H265Codec = "libx265";
 
-        private const string FfMpegBinary = @"bin\ffmpeg.exe";
-        private const string FfProbeBinary = @"bin\ffprobe.exe";
+        private const string FfMpegBinaryWindows = @"bin\ffmpeg.exe";
+        private const string FfProbeBinaryWindows = @"bin\ffprobe.exe";
+        private const string FfMpegBinaryLinux = @"ffmpeg";
+        private const string FfProbeBinaryLinux = @"ffprobe";
         private const string FfmpegSnippet = "-ss 0 -t 60";
     }
 }

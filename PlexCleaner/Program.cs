@@ -266,6 +266,7 @@ namespace PlexCleaner
                 FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
                 MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
                 MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
+                HandBrakeTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(HandBrakeTool), StringComparison.OrdinalIgnoreCase)).Version;
             }
 
             // Create program

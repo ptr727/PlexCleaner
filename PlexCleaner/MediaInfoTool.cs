@@ -5,12 +5,13 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
     public static class MediaInfoTool
     {
-        // Tool version, read from Tools.json
+        // Tool version
         public static string Version { get; set; } = "";
 
         public static int MediaInfoCli(string parameters, out string output)
@@ -21,7 +22,8 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -32,7 +34,10 @@ namespace PlexCleaner
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(ToolsOptions.MediaInfo, MediaInfoBinary);
+            string path = MediaInfoBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.FfMpeg, MediaInfoBinaryWindows);
+            return path;
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -85,6 +90,31 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
+            return true;
+        }
+
+        public static bool GetToolVersion(ToolInfo toolinfo)
+        {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
+            // Type of tool
+            toolinfo.Tool = nameof(MediaInfoTool);
+
+            // Create the MediaInfo commandline and execute
+            // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
+            string commandline = $"--version";
+            int exitcode = MediaInfoCli(commandline, out string output);
+            if (exitcode != 0)
+                return false;
+
+            // Second line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolinfo.Version = lines[1];
+
+            // Get tool filename
+            toolinfo.FileName = GetToolPath();
+
             return true;
         }
 
@@ -164,6 +194,7 @@ namespace PlexCleaner
             return true;
         }
 
-        private const string MediaInfoBinary = @"mediainfo.exe";
+        private const string MediaInfoBinaryWindows = @"mediainfo.exe";
+        private const string MediaInfoBinaryLinux = @"mediainfo";
     }
 }

@@ -1,17 +1,39 @@
 ﻿using System;
 using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
-    internal static class HandBrakeTool
+    public static class HandBrakeTool
     {
+        // Tool version
+        public static string Version { get; set; } = "";
+
         public static int HandBrakeCli(string parameters)
         {
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
+
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"HandBrake : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.HandBrake, HandBrakeBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters);
+        }
+
+        public static int HandBrakeCli(string parameters, out string output)
+        {
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            parameters = parameters.Trim();
+
+            ConsoleEx.WriteLine("");
+            ConsoleEx.WriteLineTool($"HandBrake : {parameters}");
+
+            string path = GetToolPath();
+            return ProcessEx.Execute(path, parameters, out output);
         }
 
         public static string GetToolFolder()
@@ -21,7 +43,10 @@ namespace PlexCleaner
 
         public static string GetToolPath()
         {
-            return Tools.CombineToolPath(ToolsOptions.HandBrake, HandBrakeBinary);
+            string path = HandBrakeBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.HandBrake, HandBrakeBinaryWindows);
+            return path;
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -52,6 +77,31 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
+            return true;
+        }
+
+        public static bool GetToolVersion(ToolInfo toolinfo)
+        {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
+            // Type of tool
+            toolinfo.Tool = nameof(HandBrakeTool);
+
+            // Create the HandBrakeCLI commandline and execute
+            // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
+            string commandline = $"--version";
+            int exitcode = HandBrakeCli(commandline, out string output);
+            if (exitcode != 0)
+                return false;
+
+            // First line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolinfo.Version = lines[0];
+
+            // Get tool filename
+            toolinfo.FileName = GetToolPath();
+
             return true;
         }
 
@@ -119,7 +169,8 @@ namespace PlexCleaner
         public const string H264Codec = "x264";
         public const string H265Codec = "x265";
 
-        private const string HandBrakeBinary = @"HandBrakeCLI.exe";
+        private const string HandBrakeBinaryWindows = @"HandBrakeCLI.exe";
+        private const string HandBrakeBinaryLinux = @"HandBrakeCLI";
         private const string HandBrakeSnippet = "--start-at duration:00 --stop-at duration:60";
     }
 }

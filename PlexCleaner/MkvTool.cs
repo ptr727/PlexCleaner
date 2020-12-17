@@ -6,12 +6,13 @@ using InsaneGenius.Utilities;
 using System.Linq;
 using System.Globalization;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
     public static class MkvTool
     {
-        // Tool version, read from Tools.json
+        // Tool version
         public static string Version { get; set; } = "";
 
         public static int MkvMergeCli(string parameters)
@@ -22,7 +23,8 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters);
         }
 
@@ -34,7 +36,8 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVMerge : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinary);
+
+            string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output);
         }
 
@@ -46,13 +49,26 @@ namespace PlexCleaner
 
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLineTool($"MKVPropEdit : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvPropEditBinary);
+
+            // Windows or Linux path
+            string path = MkvPropEditBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvPropEditBinaryWindows);
+
             return ProcessEx.Execute(path, parameters);
         }
 
         public static string GetToolFolder()
         {
             return Tools.CombineToolPath(ToolsOptions.MkvToolNix);
+        }
+
+        public static string GetToolPath()
+        {
+            string path = MkvMergeBinaryLinux;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                path = Tools.CombineToolPath(ToolsOptions.MkvToolNix, MkvMergeBinaryWindows);
+            return path;
         }
 
         public static bool GetLatestVersion(ToolInfo toolinfo)
@@ -88,6 +104,31 @@ namespace PlexCleaner
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
+            return true;
+        }
+
+        public static bool GetToolVersion(ToolInfo toolinfo)
+        {
+            if (toolinfo == null)
+                throw new ArgumentNullException(nameof(toolinfo));
+
+            // Type of tool
+            toolinfo.Tool = nameof(MkvTool);
+
+            // Create the MKVMerge commandline and execute
+            // https://mkvtoolnix.download/doc/mkvmerge.html
+            string commandline = $"--version";
+            int exitcode = MkvMergeCli(commandline, out string output);
+            if (exitcode != 0)
+                return false;
+
+            // First line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolinfo.Version = lines[0];
+
+            // Get tool filename
+            toolinfo.FileName = GetToolPath();
+
             return true;
         }
 
@@ -264,8 +305,10 @@ namespace PlexCleaner
             return exitcode == 0 || exitcode == 1;
         }
 
-        private const string MkvMergeBinary = @"mkvmerge.exe";
-        private const string MkvPropEditBinary = @"mkvpropedit.exe";
+        private const string MkvMergeBinaryWindows = @"mkvmerge.exe";
+        private const string MkvMergeBinaryLinux = @"mkvmerge";
+        private const string MkvPropEditBinaryWindows = @"mkvpropedit.exe";
+        private const string MkvPropEditBinaryLinux = @"mkvpropedit";
         private const string MkvmergeSnippet = "--split parts:00:00:00-00:01:00";
     }
 }
