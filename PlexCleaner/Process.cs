@@ -209,7 +209,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files, and files in the remux extension list
-                if (!MkvTool.IsMkvFile(fileinfo) &&
+                if (!MkvMergeTool.IsMkvFile(fileinfo) &&
                     !ReMuxExtensions.Contains(fileinfo.Extension))
                     continue;
 
@@ -256,14 +256,14 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Process the file
                 // TODO : Consolidate the logic with ProcessFile.Verify()
                 ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"Verifying : \"{fileinfo.FullName}\"");
-                if (!FfMpegTool.VerifyMedia(fileinfo.FullName, out string error))
+                if (!Tools.FfMpeg.VerifyMedia(fileinfo.FullName, out string error))
                 {
                     ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error Verifying : \"{fileinfo.FullName}\"");
@@ -305,7 +305,7 @@ namespace PlexCleaner
 
                 // Handle only MKV files
                 // ReMux before re-encode, so the track attribute logic works as expected
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // ReEncode the file
@@ -351,7 +351,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // De-interlace the file
@@ -403,7 +403,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Use ProcessFile to get media info
@@ -469,7 +469,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Write the sidecar files
@@ -567,7 +567,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Process the file
@@ -622,7 +622,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only MKV files
-                if (!MkvTool.IsMkvFile(fileinfo))
+                if (!MkvMergeTool.IsMkvFile(fileinfo))
                     continue;
 
                 // Process the file
@@ -711,7 +711,7 @@ namespace PlexCleaner
 
             // Nothing more to do for files in the keep extensions list
             // Except if it is a MKV file or a file to be remuxed to MKV
-            if (!MkvTool.IsMkvFile(fileinfo) &&
+            if (!MkvMergeTool.IsMkvFile(fileinfo) &&
                 !ReMuxExtensions.Contains(fileinfo.Extension) &&
                 KeepExtensions.Contains(fileinfo.Extension))
                 return true;

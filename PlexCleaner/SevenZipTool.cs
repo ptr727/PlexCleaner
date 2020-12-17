@@ -3,44 +3,72 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
-    public static class SevenZipTool
+    public class SevenZipTool : MediaTool
     {
-        public static bool UnZip(string archive, string folder)
+        public override ToolFamily GetToolFamily()
         {
-            // 7z.exe x archive.zip -o"C:\Doc"
-            string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
-            int exitcode = SevenZip(commandline);
-            return exitcode == 0;
+            return ToolFamily.SevenZip;
         }
 
-        public static int SevenZip(string parameters)
+        public override ToolType GetToolType()
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
-            return ProcessEx.Execute(path, parameters);
+            return ToolType.SevenZip;
         }
 
-        public static string GetToolFolder()
+        protected override string GetToolNameWindows()
         {
-            return Tools.CombineToolPath(ToolsOptions.SevenZip);
+            return "7za.exe";
         }
 
-        public static string GetToolPath()
+        protected override string GetToolNameLinux()
         {
-            return Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
+            return "7z";
         }
 
-        public static bool GetLatestVersion(ToolInfo toolinfo)
+        public override bool GetInstalledVersion(out ToolInfo toolInfo)
         {
-            if (toolinfo == null)
-                throw new ArgumentNullException(nameof(toolinfo));
+            // Initialize            
+            toolInfo = new ToolInfo
+            {
+                Tool = GetToolType().ToString()
+            };
 
-            toolinfo.Tool = nameof(SevenZipTool);
+            // No version command, run with no arguments
+            string commandline = "";
+            int exitcode = Command(commandline, out string output);
+            if (exitcode != 0)
+                return false;
 
+            // First line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolInfo.Version = lines[0];
+
+            // Get tool filename
+            toolInfo.FileName = GetToolPath();
+
+            return true;
+        }
+
+        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        {
+            // Initialize            
+            toolInfo = new ToolInfo
+            {
+                Tool = GetToolType().ToString()
+            };
+
+            // Windows or Linux
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return GetLatestVersionWindows(toolInfo);
+            return GetLatestVersionLinux(toolInfo);
+        }
+
+        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
+        {
             try
             {
                 // Load the download page
@@ -55,21 +83,34 @@ namespace PlexCleaner
                 Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                 Match match = regex.Match(downloadpage);
                 Debug.Assert(match.Success);
-                toolinfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
+                toolInfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://www.7-zip.org/a/7z1805-extra.7z
-                toolinfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
-                toolinfo.Url = $"https://www.7-zip.org/a/{toolinfo.FileName}";
+                toolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
+                toolInfo.Url = $"https://www.7-zip.org/a/{toolInfo.FileName}";
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
         }
 
-        private const string SevenZipBinary = @"x64\7za.exe";
+        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
+        {
+            // TODO
+            return false;
+        }
+
+        public bool UnZip(string archive, string folder)
+        {
+            // 7z.exe x archive.zip -o"C:\Doc"
+            string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
+            int exitcode = Command(commandline);
+            return exitcode == 0;
+        }
     }
 }

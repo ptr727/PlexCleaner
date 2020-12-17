@@ -7,46 +7,72 @@ using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using System.Runtime.InteropServices;
 
+// http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
+
 namespace PlexCleaner
 {
-    public static class MediaInfoTool
+    public class MediaInfoTool : MediaTool
     {
-        // Tool version
-        public static string Version { get; set; } = "";
-
-        public static int MediaInfoCli(string parameters, out string output)
+        public override ToolFamily GetToolFamily()
         {
-            if (parameters == null)
-                throw new ArgumentNullException(nameof(parameters));
-            parameters = parameters.Trim();
-
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"MediaInfo : {parameters}");
-
-            string path = GetToolPath();
-            return ProcessEx.Execute(path, parameters, out output);
+            return ToolFamily.MediaInfo;
         }
 
-        public static string GetToolFolder()
+        public override ToolType GetToolType()
         {
-            return Tools.CombineToolPath(ToolsOptions.MediaInfo);
+            return ToolType.MediaInfo;
         }
 
-        public static string GetToolPath()
+        protected override string GetToolNameWindows()
         {
-            string path = MediaInfoBinaryLinux;
+            return "mediainfo.exe";
+        }
+
+        protected override string GetToolNameLinux()
+        {
+            return "mediainfo";
+        }
+
+        public override bool GetInstalledVersion(out ToolInfo toolInfo)
+        {
+            // Initialize            
+            toolInfo = new ToolInfo
+            {
+                Tool = GetToolType().ToString()
+            };
+
+            // Get version
+            string commandline = "--version";
+            int exitcode = Command(commandline, out string output);
+            if (exitcode != 0)
+                return false;
+
+            // Second line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            toolInfo.Version = lines[1];
+
+            // Get tool filename
+            toolInfo.FileName = GetToolPath();
+
+            return true;
+        }
+
+        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        {
+            // Initialize            
+            toolInfo = new ToolInfo
+            {
+                Tool = GetToolType().ToString()
+            };
+
+            // Windows or Linux
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                path = Tools.CombineToolPath(ToolsOptions.FfMpeg, MediaInfoBinaryWindows);
-            return path;
+                return GetLatestVersionWindows(toolInfo);
+            return GetLatestVersionLinux(toolInfo);
         }
 
-        public static bool GetLatestVersion(ToolInfo toolinfo)
+        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
         {
-            if (toolinfo == null)
-                throw new ArgumentNullException(nameof(toolinfo));
-
-            toolinfo.Tool = nameof(MediaInfoTool);
-
             try
             {
                 // Load the release history page
@@ -78,59 +104,40 @@ namespace PlexCleaner
                 Regex regex = new Regex(pattern);
                 Match match = regex.Match(line);
                 Debug.Assert(match.Success);
-                toolinfo.Version = match.Groups["version"].Value;
+                toolInfo.Version = match.Groups["version"].Value;
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
-                toolinfo.FileName = $"MediaInfo_CLI_{toolinfo.Version}_Windows_x64.zip";
-                toolinfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{toolinfo.Version}/{toolinfo.FileName}";
+                toolInfo.FileName = $"MediaInfo_CLI_{toolInfo.Version}_Windows_x64.zip";
+                toolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{toolInfo.Version}/{toolInfo.FileName}";
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
         }
 
-        public static bool GetToolVersion(ToolInfo toolinfo)
+        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
         {
-            if (toolinfo == null)
-                throw new ArgumentNullException(nameof(toolinfo));
-
-            // Type of tool
-            toolinfo.Tool = nameof(MediaInfoTool);
-
-            // Create the MediaInfo commandline and execute
-            // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
-            string commandline = $"--version";
-            int exitcode = MediaInfoCli(commandline, out string output);
-            if (exitcode != 0)
-                return false;
-
-            // Second line as version
-            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            toolinfo.Version = lines[1];
-
-            // Get tool filename
-            toolinfo.FileName = GetToolPath();
-
-            return true;
+            // TODO
+            return false;
         }
 
-        public static bool GetMediaInfo(string filename, out MediaInfo mediainfo)
+        public bool GetMediaInfo(string filename, out MediaInfo mediaInfo)
         {
-            mediainfo = null;
+            mediaInfo = null;
             return GetMediaInfoXml(filename, out string xml) && 
-                   GetMediaInfoFromXml(xml, out mediainfo);
+                   GetMediaInfoFromXml(xml, out mediaInfo);
         }
 
-        public static bool GetMediaInfoXml(string filename, out string xml)
+        public bool GetMediaInfoXml(string filename, out string xml)
         {
-            // Create the MediaInfo commandline and execute
-            // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
+            // Get media info as XML
             string commandline = $"--Output=XML \"{filename}\"";
-            int exitcode = MediaInfoCli(commandline, out xml);
+            int exitcode = Command(commandline, out xml);
 
             // TODO : No error is returned when the file does not exist
             // https://sourceforge.net/p/mediainfo/bugs/1052/
@@ -139,10 +146,10 @@ namespace PlexCleaner
             return exitcode == 0 && xml.Length >= 100;
         }
 
-        public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediainfo)
+        public bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
         {
             // Parser type is MediaInfo
-            mediainfo = new MediaInfo(MediaInfo.ParserType.MediaInfo);
+            mediaInfo = new MediaInfo(MediaTool.ToolType.MediaInfo);
 
             // Populate the MediaInfo object from the XML string
             try
@@ -161,24 +168,24 @@ namespace PlexCleaner
                     if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                     {
                         VideoInfo info = new VideoInfo(track);
-                        mediainfo.Video.Add(info);
+                        mediaInfo.Video.Add(info);
                     }
                     else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
                     {
                         AudioInfo info = new AudioInfo(track);
-                        mediainfo.Audio.Add(info);
+                        mediaInfo.Audio.Add(info);
                     }
                     else if (track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase))
                     {
                         SubtitleInfo info = new SubtitleInfo(track);
-                        mediainfo.Subtitle.Add(info);
+                        mediaInfo.Subtitle.Add(info);
                     }
                 }
 
                 // Errors
-                mediainfo.HasErrors = mediainfo.Video.Any(item => item.HasErrors) || 
-                                      mediainfo.Audio.Any(item => item.HasErrors) || 
-                                      mediainfo.Subtitle.Any(item => item.HasErrors);
+                mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) || 
+                                      mediaInfo.Audio.Any(item => item.HasErrors) || 
+                                      mediaInfo.Subtitle.Any(item => item.HasErrors);
 
                 // TODO : Tags, maybe look in the Extra field, but not reliable
                 // TODO : Duration, too many different formats to parse
@@ -187,14 +194,11 @@ namespace PlexCleaner
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
-
             return true;
         }
-
-        private const string MediaInfoBinaryWindows = @"mediainfo.exe";
-        private const string MediaInfoBinaryLinux = @"mediainfo";
     }
 }

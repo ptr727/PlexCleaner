@@ -1,5 +1,7 @@
 {
   "ToolsOptions": {
+    // Use system installed tools
+    "UseSystem": false,
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location

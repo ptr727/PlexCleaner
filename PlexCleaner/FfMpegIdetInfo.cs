@@ -47,7 +47,7 @@ namespace PlexCleaner
             if (mediaFile == null)
                 throw new ArgumentNullException(nameof(mediaFile));
             
-            return FfMpegTool.GetIdetInfo(mediaFile.FullName, out idetInfo);
+            return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
         }
     }
 }
