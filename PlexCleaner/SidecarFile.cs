@@ -113,9 +113,9 @@ namespace PlexCleaner
             }
 
             // Compare the tool versions
-            if (SidecarJson.FfMpegToolVersion != FfMpegTool.Version ||
-                SidecarJson.MkvToolVersion != MkvMergeTool.Version ||
-                SidecarJson.MediaInfoToolVersion != MediaInfoTool.Version)
+            if (SidecarJson.FfProbeToolVersion != Tools.FfProbe.Info.Version ||
+                SidecarJson.MkvMergeToolVersion != Tools.MkvMerge.Info.Version ||
+                SidecarJson.MediaInfoToolVersion != Tools.MediaInfo.Info.Version)
             {
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Warning : Sidecar tool versions out of date : \"{sidecarFile.Name}\"");
@@ -240,9 +240,9 @@ namespace PlexCleaner
                 MediaLength = mediaFile.Length,
 
                 // Tool version info
-                FfMpegToolVersion = FfMpegTool.Version,
-                MkvToolVersion = MkvMergeTool.Version,
-                MediaInfoToolVersion = MediaInfoTool.Version,
+                FfProbeToolVersion = Tools.FfProbe.Info.Version,
+                MkvMergeToolVersion = Tools.MkvMerge.Info.Version,
+                MediaInfoToolVersion = Tools.MediaInfo.Info.Version,
 
                 // Compressed tool info
                 FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson),
@@ -317,8 +317,8 @@ namespace PlexCleaner
             stringBuilder.AppendLine($"MediaLastWriteTimeUtc : {SidecarJson.MediaLastWriteTimeUtc}");
             stringBuilder.AppendLine($"MediaLength : {SidecarJson.MediaLength}");
             stringBuilder.AppendLine($"MediaInfoToolVersion : {SidecarJson.MediaInfoToolVersion}");
-            stringBuilder.AppendLine($"MkvToolVersion : {SidecarJson.MkvToolVersion}");
-            stringBuilder.AppendLine($"FfMpegToolVersion : {SidecarJson.FfMpegToolVersion}");
+            stringBuilder.AppendLine($"MkvMergeToolVersion : {SidecarJson.MkvMergeToolVersion}");
+            stringBuilder.AppendLine($"FfProbeToolVersion : {SidecarJson.FfProbeToolVersion}");
 
             return stringBuilder.ToString();
         }

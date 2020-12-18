@@ -1,7 +1,7 @@
 ﻿using System;
 using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices;
+using System.IO;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -29,13 +29,10 @@ namespace PlexCleaner
             return "HandBrakeCLI";
         }
 
-        public override bool GetInstalledVersion(out ToolInfo toolInfo)
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
             string commandline = $"--version";
@@ -45,45 +42,43 @@ namespace PlexCleaner
 
             // First line as version
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            toolInfo.Version = lines[0];
+            mediaToolInfo.Version = lines[0];
 
             // Get tool filename
-            toolInfo.FileName = GetToolPath();
+            mediaToolInfo.FileName = GetToolPath();
+
+            // Get other attributes if we can read the file
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
 
             return true;
         }
 
-        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
-            // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetLatestVersionWindows(toolInfo);
-            return GetLatestVersionLinux(toolInfo);
-        }
-
-        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
-        {
             try
             {
                 // Get the latest release version number from github releases
                 // https://api.github.com/repos/handbrake/handbrake/releases/latest
                 if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out string json))
                     return false;
+
                 JObject releases = JObject.Parse(json);
                 // "tag_name": "1.2.2",
                 JToken versiontag = releases["tag_name"];
-                toolInfo.Version = versiontag.ToString();
+                mediaToolInfo.Version = versiontag.ToString();
 
                 // Create download URL and the output filename using the version number
                 // https://github.com/HandBrake/HandBrake/releases/download/1.3.2/HandBrakeCLI-1.3.2-win-x86_64.zip
-                toolInfo.FileName = $"HandBrakeCLI-{toolInfo.Version}-win-x86_64.zip";
-                toolInfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{toolInfo.Version}/{toolInfo.FileName}";
+                mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
+                mediaToolInfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
             catch (Exception e)
             {
@@ -94,8 +89,11 @@ namespace PlexCleaner
             return true;
         }
 
-        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
+        public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
         {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
+
             // TODO
             return false;
         }

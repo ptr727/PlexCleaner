@@ -1,29 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
-using System.Text;
-using System.Diagnostics;
-using System.Globalization;
-using PlexCleaner.FfMpegToolJsonSchema;
-using System.IO;
-using Newtonsoft.Json;
-using System.IO.Compression;
-using System.Threading;
-using System.Net;
 using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
     public abstract class MediaTool
     {
-        // Parser tool versions are set during tool verification
-        // Version are used in sidecar tool version update logic
-        static public string Version = "";
-
         public enum ToolFamily
         {
+            None,
             FfMpeg,
             HandBrake,
             MediaInfo,
@@ -32,6 +17,7 @@ namespace PlexCleaner
         }
         public enum ToolType
         {
+            None,
             FfMpeg,
             FfProbe,
             HandBrake,
@@ -42,10 +28,43 @@ namespace PlexCleaner
         }
         public abstract ToolFamily GetToolFamily();
         public abstract ToolType GetToolType();
+        // Tool binary name
         protected abstract string GetToolNameWindows();
         protected abstract string GetToolNameLinux();
-        public abstract bool GetInstalledVersion(out ToolInfo toolInfo);
-        public abstract bool GetLatestVersion(out ToolInfo toolInfo);
+        // Installed version information retrieved from the tool commandline
+        public abstract bool GetInstalledVersion(out MediaToolInfo mediaToolInfo);
+        // Latest downloadable version
+        public abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
+        public abstract bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo);
+
+        // Tools can override the default behavior as needed
+        public virtual bool Update(string updateFile)
+        {
+            // Make sure the tool folder exists and is empty
+            string toolPath = GetToolFolder();
+            if (!FileEx.CreateDirectory(toolPath) ||
+                !FileEx.DeleteInsideDirectory(toolPath))
+                return false;
+
+            // Extract the update file
+            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            if (!Tools.SevenZip.UnZip(updateFile, toolPath))
+                return false;
+
+            // Done
+            return true;
+        }
+
+        // Tool subfolder, e.g. /x64, /bin
+        // Used in GetToolPath()
+        public virtual string GetSubFolder()
+        {
+            return "";
+        }
+
+        // The tool info must be set during initialization
+        // Version information is used in the sidecar tool logic
+        public MediaToolInfo Info { get; set; }
 
         public string GetToolName()
         {
@@ -60,14 +79,31 @@ namespace PlexCleaner
         public string GetToolPath()
         {
             // Tool binary name
-            string tool = GetToolName();
+            string toolName = GetToolName();
 
             // System use just tool name
             if (Program.Config.ToolsOptions.UseSystem)
-                return tool;
+                return toolName;
             
+            // Append to tools folder using tool family type and sub folder as folder name
+            return Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
+        }
+
+        public string GetToolFolder()
+        {
             // Append to tools folder using tool family type as folder name
-            return Tools.CombineToolPath(GetToolFamily().ToString(), tool);
+            // Sub folders are not included in the tool folder
+            return Tools.CombineToolPath(GetToolFamily().ToString());
+        }
+
+        public bool GetLatestVersion(out MediaToolInfo mediaToolInfo)
+        {
+            // Windows or Linux
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return GetLatestVersionWindows(out mediaToolInfo);
+
+            // TODO: Mac may work the same as Linux, but untested
+            return GetLatestVersionLinux(out mediaToolInfo);
         }
 
         public int Command(string parameters)
@@ -77,7 +113,7 @@ namespace PlexCleaner
             parameters = parameters.Trim();
 
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType().ToString()} : {parameters}");
+            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters);
@@ -90,7 +126,7 @@ namespace PlexCleaner
             parameters = parameters.Trim();
 
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType().ToString()} : {parameters}");
+            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output);
@@ -103,7 +139,7 @@ namespace PlexCleaner
             parameters = parameters.Trim();
 
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType().ToString()} : {parameters}");
+            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output, out error);

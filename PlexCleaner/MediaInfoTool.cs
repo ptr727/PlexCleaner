@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
-using System.Runtime.InteropServices;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 
@@ -33,13 +32,10 @@ namespace PlexCleaner
             return "mediainfo";
         }
 
-        public override bool GetInstalledVersion(out ToolInfo toolInfo)
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
             string commandline = "--version";
@@ -49,30 +45,27 @@ namespace PlexCleaner
 
             // Second line as version
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            toolInfo.Version = lines[1];
+            mediaToolInfo.Version = lines[1];
 
             // Get tool filename
-            toolInfo.FileName = GetToolPath();
+            mediaToolInfo.FileName = GetToolPath();
+
+            // Get other attributes if we can read the file
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
 
             return true;
         }
 
-        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
-            // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetLatestVersionWindows(toolInfo);
-            return GetLatestVersionLinux(toolInfo);
-        }
-
-        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
-        {
             try
             {
                 // Load the release history page
@@ -104,12 +97,12 @@ namespace PlexCleaner
                 Regex regex = new Regex(pattern);
                 Match match = regex.Match(line);
                 Debug.Assert(match.Success);
-                toolInfo.Version = match.Groups["version"].Value;
+                mediaToolInfo.Version = match.Groups["version"].Value;
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
-                toolInfo.FileName = $"MediaInfo_CLI_{toolInfo.Version}_Windows_x64.zip";
-                toolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{toolInfo.Version}/{toolInfo.FileName}";
+                mediaToolInfo.FileName = $"MediaInfo_CLI_{mediaToolInfo.Version}_Windows_x64.zip";
+                mediaToolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
             catch (Exception e)
             {
@@ -120,8 +113,11 @@ namespace PlexCleaner
             return true;
         }
 
-        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
+        public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
         {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
+
             // TODO
             return false;
         }
@@ -149,7 +145,7 @@ namespace PlexCleaner
         public bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
         {
             // Parser type is MediaInfo
-            mediaInfo = new MediaInfo(MediaTool.ToolType.MediaInfo);
+            mediaInfo = new MediaInfo(ToolType.MediaInfo);
 
             // Populate the MediaInfo object from the XML string
             try

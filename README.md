@@ -47,11 +47,11 @@ Below are a few examples of issues I've experienced over the many years of using
   - The 3rd party tools are downloaded in the `Tools` folder.
   - Make sure the folder exists, the default location is in the same folder as the binary.
   - [Download](https://www.7-zip.org/download.html) the 7-Zip commandline tool, e.g. [7z1805-extra.7z](https://www.7-zip.org/a/7z1805-extra.7z)
-  - Extract the contents of the archive to the `Tools\7Zip` folder.
-  - The 7-Zip commandline tool should be in `Tools\7Zip\x64\7za.exe`
+  - Extract the contents of the archive to the `Tools\SevenZip` folder.
+  - The 7-Zip commandline tool should be in `Tools\SevenZip\x64\7za.exe`
   - With 7-Zip ready, the other 3rd party tools can automatically be downloaded and extracted by running:
     - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-    - The tool version information will be stored in `Tools\Tools.json`
+  - The tool version information will be stored in `Tools\Tools.json`
   - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command.
 
 #### Linux
@@ -63,6 +63,11 @@ Below are a few examples of issues I've experienced over the many years of using
   - `sudo apt install git apt-transport-https dotnet-sdk-5.0 -y`
   - `dotnet --version`
 - Install the required 3rd Party tools (listed steps are for Ubuntu):
+  - Set `ToolsOptions:UseSystem` to `true` in the JSON configuration options.
+  - Install [7-Zip](https://packages.debian.org/sid/p7zip-full):
+    - `sudo apt update`
+    - `sudo apt install p7zip-full -y`
+    - `7z`
   - Install [FfMpeg](https://ffmpeg.org/download.html#build-linux):
     - `sudo apt update`
     - `sudo apt install ffmpeg -y`
@@ -98,6 +103,8 @@ Create a default configuration file by running:
 ```jsonc
 {
   "ToolsOptions": {
+    // Use system installed tools
+    "UseSystem": false,
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location

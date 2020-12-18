@@ -1,18 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
-using System.Text;
-using System.Diagnostics;
-using System.Globalization;
 using PlexCleaner.FfMpegToolJsonSchema;
 using System.IO;
 using Newtonsoft.Json;
 using System.IO.Compression;
-using System.Threading;
-using System.Net;
-using System.Runtime.InteropServices;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -90,7 +83,7 @@ namespace PlexCleaner
         public bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
         {
             // Parser type is FfProbe
-            mediaInfo = new MediaInfo(MediaTool.ToolType.FfProbe);
+            mediaInfo = new MediaInfo(ToolType.FfProbe);
 
             // Populate the MediaInfo object from the JSON string
             try

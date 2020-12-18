@@ -6,7 +6,6 @@ using InsaneGenius.Utilities;
 using System.Linq;
 using System.Globalization;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -34,46 +33,40 @@ namespace PlexCleaner
             return "mkvmerge";
         }
 
-        public override bool GetInstalledVersion(out ToolInfo toolInfo)
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
-            string commandline = $"--version";
+            string commandline = "--version";
             int exitcode = Command(commandline, out string output);
             if (exitcode != 0)
                 return false;
 
             // First line as version
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            toolInfo.Version = lines[0];
+            mediaToolInfo.Version = lines[0];
 
             // Get tool filename
-            toolInfo.FileName = GetToolPath();
+            mediaToolInfo.FileName = GetToolPath();
+
+            // Get other attributes if we can read the file
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
 
             return true;
         }
 
-        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
-            // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetLatestVersionWindows(toolInfo);
-            return GetLatestVersionLinux(toolInfo);
-        }
-
-        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
-        {
             try
             {
                 // Download latest release file
@@ -88,12 +81,12 @@ namespace PlexCleaner
 
                 // Get the version number from XML
                 MkvToolXmlSchema.MkvToolnixReleases mkvtools = MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
-                toolInfo.Version = mkvtools.LatestSource.Version;
+                mediaToolInfo.Version = mkvtools.LatestSource.Version;
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://mkvtoolnix.download/windows/releases/18.0.0/mkvtoolnix-64-bit-18.0.0.7z
-                toolInfo.FileName = $"mkvtoolnix-64-bit-{toolInfo.Version}.7z";
-                toolInfo.Url = $"https://mkvtoolnix.download/windows/releases/{toolInfo.Version}/{toolInfo.FileName}";
+                mediaToolInfo.FileName = $"mkvtoolnix-64-bit-{mediaToolInfo.Version}.7z";
+                mediaToolInfo.Url = $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
             catch (Exception e)
             {
@@ -104,8 +97,11 @@ namespace PlexCleaner
             return true;
         }
 
-        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
+        public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
         {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
+
             // TODO
             return false;
         }
@@ -128,7 +124,7 @@ namespace PlexCleaner
         public bool GetMkvInfoFromJson(string json, out MediaInfo mediaInfo)
         {
             // Parser type is MkvMerge
-            mediaInfo = new MediaInfo(MediaTool.ToolType.MkvMerge);
+            mediaInfo = new MediaInfo(ToolType.MkvMerge);
 
             // Populate the MediaInfo object from the JSON string
             try
@@ -216,7 +212,7 @@ namespace PlexCleaner
                 return ReMuxToMkv(inputname, outputname);
 
             // Verify correct data type
-            Debug.Assert(keep.Parser == MediaTool.ToolType.MkvMerge);
+            Debug.Assert(keep.Parser == ToolType.MkvMerge);
 
             // Delete output file
             FileEx.DeleteFile(outputname);

@@ -6,13 +6,9 @@ using InsaneGenius.Utilities;
 using System.Text;
 using System.Diagnostics;
 using System.Globalization;
-using PlexCleaner.FfMpegToolJsonSchema;
 using System.IO;
-using Newtonsoft.Json;
-using System.IO.Compression;
 using System.Threading;
 using System.Net;
-using System.Runtime.InteropServices;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -43,13 +39,10 @@ namespace PlexCleaner
             return "ffmpeg";
         }
 
-        public override bool GetInstalledVersion(out ToolInfo toolInfo)
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
             string commandline = "-version";
@@ -59,30 +52,27 @@ namespace PlexCleaner
 
             // First line as version
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            toolInfo.Version = lines[0];
+            mediaToolInfo.Version = lines[0];
 
             // Get tool filename
-            toolInfo.FileName = GetToolPath();
+            mediaToolInfo.FileName = GetToolPath();
+
+            // Get other attributes if we can read the file
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
 
             return true;
         }
 
-        public override bool GetLatestVersion(out ToolInfo toolInfo)
+        public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
         {
             // Initialize            
-            toolInfo = new ToolInfo
-            {
-                Tool = GetToolType().ToString()
-            };
+            mediaToolInfo = new MediaToolInfo(this);
 
-            // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetLatestVersionWindows(toolInfo);
-            return GetLatestVersionLinux(toolInfo);
-        }
-
-        protected bool GetLatestVersionWindows(ToolInfo toolInfo)
-        {
             try
             {
                 // https://www.ffmpeg.org/download.html
@@ -92,11 +82,11 @@ namespace PlexCleaner
                 // Load the release version page
                 // https://www.gyan.dev/ffmpeg/builds/release-version
                 using WebClient wc = new WebClient();
-                toolInfo.Version = wc.DownloadString("https://www.gyan.dev/ffmpeg/builds/release-version");
+                mediaToolInfo.Version = wc.DownloadString("https://www.gyan.dev/ffmpeg/builds/release-version");
 
                 // Create download URL and the output filename using the version number
-                toolInfo.FileName = $"ffmpeg-{toolInfo.Version}-full_build.7z";
-                toolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{toolInfo.FileName}";
+                mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
+                mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
             }
             catch (Exception e)
             {
@@ -107,10 +97,49 @@ namespace PlexCleaner
             return true;
         }
 
-        protected bool GetLatestVersionLinux(ToolInfo toolInfo)
+        public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
         {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
+
             // TODO
             return false;
+        }
+
+        public override bool Update(string updateFile)
+        {
+            // FFmpeg archives have versioned folders in the zip file
+            // The 7Zip -spe option does not work for zip files
+            // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
+            // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
+            string extractPath = Tools.GetToolsRoot();
+
+            // Extract the update file
+            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            if (!Tools.SevenZip.UnZip(updateFile, extractPath))
+                return false;
+
+            // Delete the tool destination directory
+            string toolPath = GetToolFolder();
+            if (!FileEx.DeleteDirectory(toolPath, true))
+                return false;
+
+            // Build the versioned out folder from the downloaded filename
+            // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
+            extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
+
+            // Rename the extract folder to the tool folder
+            // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
+            if (!FileEx.RenameFolder(extractPath, toolPath))
+                return false;
+
+            // Done
+            return true;
+        }
+
+        public override string GetSubFolder()
+        {
+            return "bin";
         }
 
         public bool VerifyMedia(string filename, out string error)
@@ -173,15 +202,15 @@ namespace PlexCleaner
         private void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
         {
             // Remux only
-            MediaInfo reencode = new MediaInfo(MediaTool.ToolType.FfProbe);
+            MediaInfo reencode = new MediaInfo(ToolType.FfProbe);
             CreateFfMpegMap("", 0, "", keep, reencode, out input, out output);
         }
 
         private void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
         {
             // Verify correct data type
-            Debug.Assert(keep.Parser == MediaTool.ToolType.FfProbe);
-            Debug.Assert(reencode.Parser == MediaTool.ToolType.FfProbe);
+            Debug.Assert(keep.Parser == ToolType.FfProbe);
+            Debug.Assert(reencode.Parser == ToolType.FfProbe);
 
             // Create an input and output map
             // Order by video, audio, and subtitle

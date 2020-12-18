@@ -1,12 +1,6 @@
 using System;
-using System.IO;
-using System.Net;
-using System.IO.Compression;
-using InsaneGenius.Utilities;
 using System.Linq;
-using System.Globalization;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -36,7 +30,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(unknown));
 
             // Verify correct data type
-            Debug.Assert(unknown.Parser == MediaTool.ToolType.MkvMerge);
+            Debug.Assert(unknown.Parser == ToolType.MkvMerge);
 
             // Mark all unknown  tracks
             return unknown.GetTrackList().All(track => SetMkvTrackLanguage(filename, track.Number, language));

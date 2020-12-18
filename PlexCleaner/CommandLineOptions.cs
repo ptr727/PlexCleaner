@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
@@ -25,9 +24,7 @@ namespace PlexCleaner
             rootCommand.AddCommand(CreateDefaultSettingsCommand());
 
             // Check for new tools
-            // Windows only
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                rootCommand.AddCommand(CreateCheckForNewToolsCommand());
+            rootCommand.AddCommand(CreateCheckForNewToolsCommand());
 
             // Process files
             rootCommand.AddCommand(CreateProcessCommand());
