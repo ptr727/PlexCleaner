@@ -15,20 +15,23 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     NUGET_XMLDOC_MODE=skip
 
 # Prevent EULA and confirmation prompts in installers
-ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
-# UTF-8 Locale
-ENV LANG en_US.UTF-8 \
-    LANGUAGE en_US:en \
-    LC_ALL en_US.UTF-8
+# Avoid apt-key output should not be parsed warning
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y wget apt-transport-https lsb-release software-properties-common p7zip-full locales \
-    && locale-gen --no-purge en_US.UTF-8
+    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all \
+    && locale-gen --no-purge en_US en_US.UTF-8 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Set locale to UTF-8 after running locale-gen
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 # Install .NET 5
 # TODO: Installing the runtime vs. the SDK fails?
