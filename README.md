@@ -9,10 +9,12 @@ Licensed under the [MIT License](./LICENSE)
 
 ## Build Status
 
-Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner)  
+Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
+Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).  
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)  
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ptr727/PlexCleaner/Build%20and%20Publish%20Pipeline?logo=github)  
-![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)
+![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)  
+![Docker Image Version](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)
 
 ## Getting Started
 
