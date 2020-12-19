@@ -2,6 +2,7 @@ name: 'Build and Publish Docker Images'
 
 env:
   # Push main branch only, else just build
+  # TODO: Restore when stable
   DOCKER_PUSH: true #${{ github.ref == 'refs/heads/main' }}
 
 on:
