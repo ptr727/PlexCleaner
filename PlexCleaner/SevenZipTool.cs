@@ -3,43 +3,66 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
+using System.Runtime.InteropServices;
+using System.IO;
 
 namespace PlexCleaner
 {
-    public static class SevenZipTool
+    public class SevenZipTool : MediaTool
     {
-        public static bool UnZip(string archive, string folder)
+        public override ToolFamily GetToolFamily()
         {
-            // 7z.exe x archive.zip -o"C:\Doc"
-            string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
-            int exitcode = SevenZip(commandline);
-            return exitcode == 0;
+            return ToolFamily.SevenZip;
         }
 
-        public static int SevenZip(string parameters)
+        public override ToolType GetToolType()
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"7-Zip : {parameters}");
-            string path = Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
-            return ProcessEx.Execute(path, parameters);
+            return ToolType.SevenZip;
         }
 
-        public static string GetToolFolder()
+        protected override string GetToolNameWindows()
         {
-            return Tools.CombineToolPath(ToolsOptions.SevenZip);
+            return "7za.exe";
         }
 
-        public static string GetToolPath()
+        protected override string GetToolNameLinux()
         {
-            return Tools.CombineToolPath(ToolsOptions.SevenZip, SevenZipBinary);
+            return "7z";
         }
 
-        public static bool GetLatestVersion(ToolInfo toolinfo)
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
-            if (toolinfo == null)
-                throw new ArgumentNullException(nameof(toolinfo));
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
 
-            toolinfo.Tool = nameof(SevenZipTool);
+            // No version command, run with no arguments
+            string commandline = "";
+            int exitcode = Command(commandline, out string output);
+            if (exitcode != 0)
+                return false;
+
+            // First line as version
+            string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            mediaToolInfo.Version = lines[0];
+
+            // Get tool filename
+            mediaToolInfo.FileName = GetToolPath();
+
+            // Get other attributes if we can read the file
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
+
+            return true;
+        }
+
+        public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+        {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
 
             try
             {
@@ -55,21 +78,71 @@ namespace PlexCleaner
                 Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                 Match match = regex.Match(downloadpage);
                 Debug.Assert(match.Success);
-                toolinfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
+                mediaToolInfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
 
                 // Create download URL and the output filename using the version number
                 // E.g. https://www.7-zip.org/a/7z1805-extra.7z
-                toolinfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
-                toolinfo.Url = $"https://www.7-zip.org/a/{toolinfo.FileName}";
+                mediaToolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
+                mediaToolInfo.Url = $"https://www.7-zip.org/a/{mediaToolInfo.FileName}";
             }
             catch (Exception e)
             {
+                ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
         }
 
-        private const string SevenZipBinary = @"x64\7za.exe";
+        public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+        {
+            // Initialize            
+            mediaToolInfo = new MediaToolInfo(this);
+
+            // TODO
+            return false;
+        }
+
+        public override string GetSubFolder()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return "x64";
+            return "";
+        }
+
+        public override bool Update(string updateFile)
+        {
+            // We need to keep the previous copy of 7zip so we can extract the new copy
+            // We need to extract to a temp location in the root tools folder, then rename to the destination folder
+            // Build the versioned folder from the downloaded filename
+            // E.g. 7z1805-extra.7z to .\Tools\7z1805-extra
+            string extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
+
+            // Extract the update file
+            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            if (!Tools.SevenZip.UnZip(updateFile, extractPath))
+                return false;
+
+            // Delete the tool destination directory
+            string toolPath = GetToolFolder();
+            if (!FileEx.DeleteDirectory(toolPath, true))
+                return false;
+
+            // Rename the folder
+            // E.g. 7z1805-extra to .\Tools\7Zip
+            if (!FileEx.RenameFolder(extractPath, toolPath))
+                return false;
+
+            // Done
+            return true;
+        }
+
+        public bool UnZip(string archive, string folder)
+        {
+            // 7z.exe x archive.zip -o"C:\Doc"
+            string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
+            int exitcode = Command(commandline);
+            return exitcode == 0;
+        }
     }
 }

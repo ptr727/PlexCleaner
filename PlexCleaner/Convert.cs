@@ -43,7 +43,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Convert using ffmpeg
-            if (!FfMpegTool.ConvertToMkv(inputname, keep, reencode, tempname))
+            if (!Tools.FfMpeg.ConvertToMkv(inputname, keep, reencode, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -81,7 +81,7 @@ namespace PlexCleaner
             // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
             
             // Try MKV first
-            if (!MkvTool.ReMuxToMkv(inputname, tempname))
+            if (!Tools.MkvMerge.ReMuxToMkv(inputname, tempname))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempname);
@@ -91,7 +91,7 @@ namespace PlexCleaner
                     return false;
 
                 // Retry using FFmpeg
-                if (!FfMpegTool.ReMuxToMkv(inputname, tempname))
+                if (!Tools.FfMpeg.ReMuxToMkv(inputname, tempname))
                 {
                     // Failed, delete temp file
                     FileEx.DeleteFile(tempname);
@@ -118,8 +118,8 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(keep));
 
             // This only works on MKV files and MkvMerge MediaInfo types
-            Debug.Assert(keep.Parser == MediaInfo.ParserType.MkvMerge);
-            Debug.Assert(MkvTool.IsMkvFile(inputname));
+            Debug.Assert(keep.Parser == MediaTool.ToolType.MkvMerge);
+            Debug.Assert(MkvMergeTool.IsMkvFile(inputname));
 
             // Match the logic in ConvertToMKV()
 
@@ -135,7 +135,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Remux keeping specific tracks
-            if (!MkvTool.ReMuxToMkv(inputname, keep, tempname))
+            if (!Tools.MkvMerge.ReMuxToMkv(inputname, keep, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -175,7 +175,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // De-interlace video using handbrake
-            if (!HandBrakeTool.DeInterlaceToMkv(inputname, tempname))
+            if (!Tools.HandBrake.DeInterlaceToMkv(inputname, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;
@@ -209,7 +209,7 @@ namespace PlexCleaner
             string tempname = Path.ChangeExtension(inputname, ".tmp");
 
             // Re-encode audio and video using handbrake
-            if (!HandBrakeTool.ConvertToMkv(inputname, tempname))
+            if (!Tools.HandBrake.ConvertToMkv(inputname, tempname))
             {
                 FileEx.DeleteFile(tempname);
                 return false;

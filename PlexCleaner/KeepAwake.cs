@@ -7,12 +7,16 @@ namespace PlexCleaner
     {
         public static void PreventSleep()
         {
-            SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+            // Windows only
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
         }
 
         public static void AllowSleep()
         {
-            SetThreadExecutionState(ExecutionState.EsContinuous);
+            // Windows only
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                SetThreadExecutionState(ExecutionState.EsContinuous);
         }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]

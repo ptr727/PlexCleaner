@@ -202,7 +202,7 @@ namespace PlexCleaner
 
             // Delete the tags
             if (!Program.Options.TestNoModify &&
-                !MkvTool.ClearMkvTags(MediaFile.FullName))
+                !Tools.MkvPropEdit.ClearMkvTags(MediaFile.FullName))
             {
                 // Error
                 Result = false;
@@ -235,7 +235,7 @@ namespace PlexCleaner
 
             // Set the track language to the default language
             if (!Program.Options.TestNoModify &&
-                !MkvTool.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
+                !Tools.MkvPropEdit.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
             {
                 // Error
                 Result = false;
@@ -256,7 +256,7 @@ namespace PlexCleaner
             // Start out with keeping all the tracks
             // TODO : Deep vs. shallow vs. value compare
             MediaInfo keepTracks = MkvMergeInfo;
-            MediaInfo removeTracks = new MediaInfo(MediaInfo.ParserType.MkvMerge);
+            MediaInfo removeTracks = new MediaInfo(MediaTool.ToolType.MkvMerge);
 
             // Get all unwanted language tracks
             // Use MKVMerge logic
@@ -461,7 +461,7 @@ namespace PlexCleaner
                 // Verify media streams
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Verifying media streams : \"{MediaFile.Name}\"");
-                if (!FfMpegTool.VerifyMedia(MediaFile.FullName, out string error))
+                if (!Tools.FfMpeg.VerifyMedia(MediaFile.FullName, out string error))
                 {
                     // Cancel requested
                     if (Program.IsCancelledError())
@@ -498,7 +498,7 @@ namespace PlexCleaner
                         Program.LogFile.LogConsole($"MediaInfoInfo.FindNeedDeInterlace() : {mediainfoInterlaced}");
                         Program.LogFile.LogConsole($"FfProbeInfo.FindNeedDeInterlace() : {ffprobeInterlaced}");
                         ConsoleEx.WriteLine($"Calculating idet info : \"{MediaFile.Name}\"");
-                        if (FfMpegTool.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
+                        if (Tools.FfMpeg.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
                         {
                             bool idet = idetinfo.IsInterlaced(out double single, out double multi);
                             Program.LogFile.LogConsole($"FfMpegIdetInfo.IsInterlaced ({single:P} / {multi:P}) : {idet}");
@@ -647,7 +647,7 @@ namespace PlexCleaner
             // Convert using ffmpeg
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Attempting media repair by re-encoding using FfMpeg : \"{MediaFile.Name}\"");
-            if (!FfMpegTool.ConvertToMkv(MediaFile.FullName, tempname))
+            if (!Tools.FfMpeg.ConvertToMkv(MediaFile.FullName, tempname))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempname);
@@ -659,7 +659,7 @@ namespace PlexCleaner
                 // Try again using handbrake
                 ConsoleEx.WriteLine("");
                 Program.LogFile.LogConsole($"Attempting media repair by re-encoding using HandBrake : \"{MediaFile.Name}\"");
-                if (!HandBrakeTool.ConvertToMkv(MediaFile.FullName, tempname))
+                if (!Tools.HandBrake.ConvertToMkv(MediaFile.FullName, tempname))
                 {
                     // Failed, delete temp file
                     FileEx.DeleteFile(tempname);
@@ -678,7 +678,7 @@ namespace PlexCleaner
             // Re-encoding succeeded, re-verify the temp file
             ConsoleEx.WriteLine("");
             ConsoleEx.WriteLine($"Re-verifying media streams : \"{MediaFile.Name}\"");
-            if (!FfMpegTool.VerifyMedia(tempname, out string error))
+            if (!Tools.FfMpeg.VerifyMedia(tempname, out string error))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempname);
@@ -753,7 +753,7 @@ namespace PlexCleaner
         public bool GetMediaInfo()
         {
             // By now all the files we are processing should be MKV files
-            Debug.Assert(MkvTool.IsMkvFile(MediaFile));
+            Debug.Assert(MkvMergeTool.IsMkvFile(MediaFile));
 
             return Refresh(false);
         }
@@ -785,7 +785,7 @@ namespace PlexCleaner
         {
             bitrateInfo = null;
 
-            if (!FfMpegTool.GetPacketInfo(MediaFile.FullName, out List<Packet> packetList))
+            if (!Tools.FfProbe.GetPacketInfo(MediaFile.FullName, out List<Packet> packetList))
                 return false;
 
             // Compute bitrate

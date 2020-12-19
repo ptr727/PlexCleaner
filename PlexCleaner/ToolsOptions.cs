@@ -2,6 +2,7 @@
 {
     public class ToolsOptions
     {
+        public bool UseSystem { get; set; }
         public string RootPath { get; set; } = @".\Tools\";
         public bool RootRelative { get; set; } = true;
 

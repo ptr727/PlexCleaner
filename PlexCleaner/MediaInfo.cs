@@ -9,13 +9,13 @@ namespace PlexCleaner
 {
     public class MediaInfo
     {
-        public MediaInfo(ParserType parser)
+        public MediaInfo(MediaTool.ToolType parser)
         {
             Parser = parser;
         }
 
-        public enum ParserType { MediaInfo, MkvMerge, FfProbe }
-        public ParserType Parser { get; }
+        // MkvMerge, FfProbe, MediaInfo
+        public MediaTool.ToolType Parser { get; }
 
         public List<VideoInfo> Video { get; } = new List<VideoInfo>();
         public List<AudioInfo> Audio { get; } = new List<AudioInfo>();
@@ -187,7 +187,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(reencodeaudio));
 
             // Filter logic values are based FFprobe attributes
-            Debug.Assert(Parser == ParserType.FfProbe);
+            Debug.Assert(Parser == MediaTool.ToolType.FfProbe);
 
             keep = new MediaInfo(Parser);
             reencode = new MediaInfo(Parser);
@@ -500,12 +500,12 @@ namespace PlexCleaner
             mkvmerge = null;
             mediainfo = null;
 
-            return GetMediaInfo(fileinfo, ParserType.FfProbe, out ffprobe) &&
-                   GetMediaInfo(fileinfo, ParserType.MkvMerge, out mkvmerge) &&
-                   GetMediaInfo(fileinfo, ParserType.MediaInfo, out mediainfo);
+            return GetMediaInfo(fileinfo, MediaTool.ToolType.FfProbe, out ffprobe) &&
+                   GetMediaInfo(fileinfo, MediaTool.ToolType.MkvMerge, out mkvmerge) &&
+                   GetMediaInfo(fileinfo, MediaTool.ToolType.MediaInfo, out mediainfo);
         }
 
-        public static bool GetMediaInfo(FileInfo fileinfo, ParserType parser, out MediaInfo mediainfo)
+        public static bool GetMediaInfo(FileInfo fileinfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
         {
             if (fileinfo == null)
                 throw new ArgumentNullException(nameof(fileinfo));
@@ -513,9 +513,9 @@ namespace PlexCleaner
             // Use the specified stream parser tool
             return parser switch
             {
-                ParserType.MediaInfo => MediaInfoTool.GetMediaInfo(fileinfo.FullName, out mediainfo),
-                ParserType.MkvMerge => MkvTool.GetMkvInfo(fileinfo.FullName, out mediainfo),
-                ParserType.FfProbe => FfMpegTool.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
+                MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileinfo.FullName, out mediainfo),
+                MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileinfo.FullName, out mediainfo),
+                MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
                 _ => throw new NotImplementedException()
             };
         }

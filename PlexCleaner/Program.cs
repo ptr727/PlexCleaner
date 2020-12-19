@@ -45,8 +45,7 @@ namespace PlexCleaner
 
             // Update tools
             // Make sure that the tools exist
-            return Tools.CheckForNewTools() && 
-                   Tools.VerifyTools(out ToolInfoJsonSchema _) ? 0 : -1;
+            return Tools.CheckForNewTools() && Tools.VerifyTools() ? 0 : -1;
         }
 
         internal static int ProcessCommand(CommandLineOptions options)
@@ -214,7 +213,7 @@ namespace PlexCleaner
             if (!File.Exists(options.SettingsFile))
             {
                 ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError($"Settings file not found : \"{options.SettingsFile}\"");
+                ConsoleEx.WriteLineError($"Error : Settings file not found : \"{options.SettingsFile}\"");
                 return null;
             }
             ConsoleEx.WriteLine("");
@@ -245,7 +244,7 @@ namespace PlexCleaner
                     !LogFile.Clear())
                 {
                     ConsoleEx.WriteLine("");
-                    ConsoleEx.WriteLineError($"Failed to create the logfile : \"{options.LogFile}\"");
+                    ConsoleEx.WriteLineError($"Error : Failed to create the logfile : \"{options.LogFile}\"");
                     return null;
                 }
                 LogFile.Log("");
@@ -254,21 +253,12 @@ namespace PlexCleaner
                 ConsoleEx.WriteLine($"Logging output to : \"{options.LogFile}\"");
             }
 
-            if (verifyTools)
-            { 
-                // Make sure that the tools folder exists
-                if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
-                    return null;
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+            // Verify tools
+            if (verifyTools &&
+                !Tools.VerifyTools())
+                return null;
 
-                // Set tool version numbers
-                FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
-                MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
-                MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
-            }
-
-            // Create program
+            // Create program instance
             return new Program();
         }
 
