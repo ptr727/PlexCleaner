@@ -58,46 +58,70 @@ Below are a few examples of issues I've experienced over the many years of using
 
 - Precompiled Linux builds are not currently available.
 - Downloading Linux 3rd party tools are not currently supported.
-  - Set `ToolsOptions:UseSystem` to `true` in the JSON configuration options.
-- Listed steps are for Ubuntu.
+- Listed steps are for Ubuntu, adjust as appropriate for your distribution.
 - Install prerequisites:
   - `sudo apt update`
-  - `sudo apt install wget git apt-transport-https lsb-release software-properties-common p7zip-full -y`
+  - `sudo apt install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full`
 - Install [.NET 5 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
   - TODO: How to convert distribution to lowercase using $(lsb_release -si) to create a generic download URL, e.g. `debian` instead of `Debian`?
   - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
   - `sudo dpkg -i packages-microsoft-prod.deb`
   - `sudo apt update`
-  - `sudo apt install dotnet-sdk-5.0 -y`
+  - `sudo apt install -y dotnet-sdk-5.0`
   - `dotnet --version`
 - Install the required 3rd Party tools:
   - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4):
-    - `sudo add-apt-repository ppa:savoury1/ffmpeg4 -y`
+    - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
     - `sudo apt update`
-    - `sudo apt install ffmpeg -y`
+    - `sudo apt install -y ffmpeg`
     - `ffmpeg -version`
   - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu):
     - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb`
     - `sudo dpkg -i repo-mediaarea_1.0-13_all.deb`
     - `sudo apt update`
-    - `sudo apt install mediainfo -y`
+    - `sudo apt install -y mediainfo`
     - `mediainfo --version`
   - Install [HandBrake](https://handbrake.fr/docs/en/latest/get-handbrake/download-and-install.html):
-    - `sudo add-apt-repository ppa:stebbins/handbrake-releases -y`
+    - `sudo add-apt-repository -y ppa:stebbins/handbrake-releases`
     - `sudo apt update`
-    - `sudo apt install handbrake-cli -y`
+    - `sudo apt install -y handbrake-cli`
     - `HandBrakeCLI --version`
   - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html):
     - `wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | sudo apt-key add -`
     - `sudo sh -c 'echo "deb https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/bunkus.org.list'`
     - `sudo apt update`
-    - `sudo apt install mkvtoolnix -y`
+    - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
   - Keep the 3rd party tools updated by periodically running `sudo apt upgrade`.
 - Clone the [repo](https://github.com/ptr727/PlexCleaner.git) and compile the code:
   - `git clone https://github.com/ptr727/PlexCleaner.git`
   - `cd PlexCleaner`
   - `dotnet build`
+
+#### Docker
+
+Build and run shell from source:
+
+```
+cd Docker
+docker build -t plexcleaner .  
+docker image ls
+docker run -it plexcleaner /bin/bash
+cd /PlexCleaner/PlexCleaner/bin/Debug/net5.0
+./PlexCleaner --help
+exit
+```
+
+Run PlexCleaner from the published container:
+
+```
+docker run \
+  -it \
+  ptr727/plexcleaner \
+  --volume /mnt/media:/media:rw \
+  --volume /mnt/config/plexcleaner:/config:r \
+  /PlexCleaner/PlexCleaner/bin/Debug/net5.0/PlexCleaner --settingsfile /config/PlexCleaner.json process --mediafiles /media
+```
 
 ### Configuration File
 
