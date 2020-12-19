@@ -102,27 +102,33 @@ Below are a few examples of issues I've experienced over the many years of using
 
 #### Docker
 
-Build and run shell from source:
+Run an interactive shell:
 
-```console
-cd Docker
-docker build -t plexcleaner .  
-docker image ls
-docker run -it plexcleaner /bin/bash
-cd /PlexCleaner/PlexCleaner/bin/Debug/net5.0
-./PlexCleaner --help
-exit
+```
+docker run \
+  -it \
+  --user nobody:users \
+  --volume /data/media:/media:rw \
+  ptr727/plexcleaner \
+  /bin/bash
+cd /PlexCleaner/PlexCleaner/bin/Debug/net5.0/
+./PlexCleaner --version
 ```
 
-Run PlexCleaner from the published container:
+Run a PlexCleaner command:
 
 ```console
 docker run \
   -it \
+  --user nobody:users \
+  --volume /data/media:/media:rw \
   ptr727/plexcleaner \
-  --volume /mnt/media:/media:rw \
-  --volume /mnt/config/plexcleaner:/config:r \
-  /PlexCleaner/PlexCleaner/bin/Debug/net5.0/PlexCleaner --settingsfile /config/PlexCleaner.json process --mediafiles /media
+  /PlexCleaner/PlexCleaner/bin/Debug/net5.0/PlexCleaner \
+    --settingsfile /media/PlexCleaner/PlexCleaner.json \
+    --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
+    process \
+    --testsnippets \
+    --mediafiles /media/TestPlex
 ```
 
 ### Configuration File

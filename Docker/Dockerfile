@@ -1,4 +1,4 @@
-# Build from teh latest LTS Ubuntu base image
+# Build from latest LTS Ubuntu base image
 FROM ubuntu:latest
 
 # Update the version at build time
@@ -20,7 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full \
+    && apt-get install -y wget apt-transport-https lsb-release software-properties-common p7zip-full \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,7 +28,7 @@ RUN apt-get update \
 RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
-    && apt-get install -y dotnet-sdk-5.0 \
+    && apt-get install -y dotnet-5.0 \
     && dotnet --version \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -67,7 +67,5 @@ RUN wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key 
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build code
-RUN git clone -b develop https://github.com/ptr727/PlexCleaner.git \
-    && cd PlexCleaner \
-    && dotnet build
+# Copy PlexCleaner
+COPY PlexCleaner /PlexCleaner

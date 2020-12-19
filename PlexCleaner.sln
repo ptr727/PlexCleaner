@@ -21,6 +21,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F5
 		Docker\Dockerfile = Docker\Dockerfile
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\BuildDockerPipeline.yml = .github\workflows\BuildDockerPipeline.yml
+		.github\workflows\BuildPublishPipeline.yml = .github\workflows\BuildPublishPipeline.yml
+		.github\workflows\UpdateDockerHubDescription.yml = .github\workflows\UpdateDockerHubDescription.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +44,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C560F57F-962E-4C71-8F27-939D06813302} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
+		{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A127C929-B096-4BFD-8BAD-56A3860AEB94}
