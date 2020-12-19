@@ -1,0 +1,67 @@
+name: 'Build and Publish Docker Images'
+
+env:
+  # Push main branch only, else just build
+  DOCKER_PUSH: true #${{ github.ref == 'refs/heads/main' }}
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore: [ 'README.md' ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Rebuild 2am every Monday
+    - cron: '0 2 * * MON'
+
+jobs:
+  build:
+    name: 'Build and Publish Docker Images'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Install GitVersion
+      - name: 'Setup .NET Core SDK 3.1'
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+      - name: 'Install GitVersion'
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        with:
+          versionSpec: '5.x'
+
+      # Checkout code
+      - name: 'Checkout Code'
+        uses: actions/checkout@v2
+        with:
+          # Get all history for version calculation using GitVersion
+          fetch-depth: 0
+
+      # Run GitVersion
+      - name: 'Run GitVersion Tool'
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+
+      - name: 'Setup QEMU'
+        uses: docker/setup-qemu-action@v1
+
+      - name: 'Setup Docker Buildx'
+        uses: docker/setup-buildx-action@v1
+
+      - name: 'Login to Docker Hub'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: 'Build and Push PlexCleaner'
+        uses: docker/build-push-action@v2
+        with:
+          context: ./Docker
+          file: ./Docker/Dockerfile
+          platforms: linux/amd64
+          push: ${{ env.DOCKER_PUSH }}
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.gitversion.outputs.nuGetVersionV2 }}

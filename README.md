@@ -102,7 +102,7 @@ Below are a few examples of issues I've experienced over the many years of using
 
 Build and run shell from source:
 
-```
+```console
 cd Docker
 docker build -t plexcleaner .  
 docker image ls
@@ -114,7 +114,7 @@ exit
 
 Run PlexCleaner from the published container:
 
-```
+```console
 docker run \
   -it \
   ptr727/plexcleaner \
