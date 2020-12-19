@@ -105,14 +105,14 @@ Below are a few examples of issues I've experienced over the many years of using
 Run an interactive shell:
 
 ```
+docker pull ptr727/plexcleaner
 docker run \
   -it \
   --user nobody:users \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
   /bin/bash
-cd /PlexCleaner/PlexCleaner/bin/Debug/net5.0/
-./PlexCleaner --version
+/PlexCleaner/PlexCleaner --version
 ```
 
 Run a PlexCleaner command:
@@ -123,7 +123,7 @@ docker run \
   --user nobody:users \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
-  /PlexCleaner/PlexCleaner/bin/Debug/net5.0/PlexCleaner \
+  /PlexCleaner/PlexCleaner \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
     process \
