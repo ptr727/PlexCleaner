@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner
 {
@@ -51,8 +52,16 @@ namespace PlexCleaner
 
         public static bool VerifyTools()
         {
+            // TODO: Folder tools are not currently supported on Linux
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+                !Program.Config.ToolsOptions.UseSystem)
+            {
+                ConsoleEx.WriteLineError($"Warning : Forcing 'ToolsOptions:UseSystem` to 'true' on Linux");
+                Program.Config.ToolsOptions.UseSystem = true;
+            }
+
             // Verify System tools or Tool folder tools
-             if (Program.Config.ToolsOptions.UseSystem)
+            if (Program.Config.ToolsOptions.UseSystem)
                 return VerifySystemTools();
             return VerifyFolderTools();
         }

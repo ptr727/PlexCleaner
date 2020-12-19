@@ -76,7 +76,6 @@ namespace PlexCleaner
             try
             {
                 // https://www.ffmpeg.org/download.html
-                // https://www.videohelp.com/software/ffmpeg
                 // https://www.gyan.dev/ffmpeg/builds/packages/
 
                 // Load the release version page
@@ -102,12 +101,61 @@ namespace PlexCleaner
             // Initialize            
             mediaToolInfo = new MediaToolInfo(this);
 
-            // TODO
-            return false;
+            try
+            {
+                // https://www.ffmpeg.org/download.html
+                // https://johnvansickle.com/ffmpeg/
+
+                // Load the release version page
+                // https://johnvansickle.com/ffmpeg/release-readme.txt
+                using WebClient wc = new WebClient();
+                string readme = wc.DownloadString("https://johnvansickle.com/ffmpeg/release-readme.txt");
+
+                // Read each line until we find the first version line
+                // version: 4.3.1
+                using StringReader sr = new StringReader(readme);
+                string line;
+                while (true)
+                {
+                    // Read the line
+                    line = sr.ReadLine();
+                    if (line == null)
+                        break;
+
+                    // See if the line starts with "Version:"
+                    line.Trim();
+                    if (line.IndexOf("Version:", StringComparison.Ordinal) == 0)
+                        break;
+                }
+                if (string.IsNullOrEmpty(line))
+                    throw new NotImplementedException();
+
+                // Extract the version number from the line
+                // E.g. version: 4.3.1
+                const string pattern = @"Version:\ (?<version>.*?)";
+                Regex regex = new Regex(pattern);
+                Match match = regex.Match(line);
+                Debug.Assert(match.Success);
+                mediaToolInfo.Version = match.Groups["version"].Value;
+
+                // Create download URL and the output filename using the version number
+                // E.g. ffmpeg-4.3.1-amd64-static.tar.xz
+                mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-amd-static.tar.xz";
+                mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
+            }
+            catch (Exception e)
+            {
+                ConsoleEx.WriteLine("");
+                ConsoleEx.WriteLineError(e);
+                return false;
+            }
+            return true;
         }
 
         public override bool Update(string updateFile)
         {
+            // TODO: This only works for Windows
+
             // FFmpeg archives have versioned folders in the zip file
             // The 7Zip -spe option does not work for zip files
             // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
