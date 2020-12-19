@@ -58,7 +58,6 @@ Below are a few examples of issues I've experienced over the many years of using
 
 #### Linux
 
-- Precompiled Linux builds are not currently available.
 - Downloading Linux 3rd party tools are not currently supported.
 - Listed steps are for Ubuntu, adjust as appropriate for your distribution.
 - Install prerequisites:
@@ -95,7 +94,8 @@ Below are a few examples of issues I've experienced over the many years of using
     - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
   - Keep the 3rd party tools updated by periodically running `sudo apt upgrade`.
-- Clone the [repo](https://github.com/ptr727/PlexCleaner.git) and compile the code:
+- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Or compile from code:
   - `git clone https://github.com/ptr727/PlexCleaner.git`
   - `cd PlexCleaner`
   - `dotnet build`
@@ -104,7 +104,7 @@ Below are a few examples of issues I've experienced over the many years of using
 
 Run an interactive shell:
 
-```
+```console
 docker pull ptr727/plexcleaner
 docker run \
   -it \
