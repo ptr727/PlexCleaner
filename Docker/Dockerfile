@@ -9,13 +9,16 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for DirectPlay on Plex" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# See: https://github.com/dotnet/dotnet-docker/blob/master/3.0/sdk/bionic/amd64/Dockerfile
+# https://github.com/dotnet/dotnet-docker/blob/master/src/sdk/5.0/focal/amd64/Dockerfile
 ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
 
 # Prevent EULA and confirmation prompts in installers
 ENV DEBIAN_FRONTEND=noninteractive
+
+# TODO: Combine all RUN commands
+# Prerequisites, register all repositories, update, upgrade, install, clean
 
 # Install prerequisites
 RUN apt-get update \
@@ -25,6 +28,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install .NET 5
+# TODO: Installing the runtime vs. the SDK fails?
 RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
