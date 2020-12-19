@@ -17,13 +17,16 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 # Prevent EULA and confirmation prompts in installers
 ENV DEBIAN_FRONTEND=noninteractive
 
-# TODO: Combine all RUN commands
-# Prerequisites, register all repositories, update, upgrade, install, clean
+# UTF-8 Locale
+ENV LANG en_US.UTF-8 \
+    LANGUAGE en_US:en \
+    LC_ALL en_US.UTF-8
 
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y wget apt-transport-https lsb-release software-properties-common p7zip-full \
+    && apt-get install -y wget apt-transport-https lsb-release software-properties-common p7zip-full locales \
+    && locale-gen --no-purge en_US.UTF-8
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

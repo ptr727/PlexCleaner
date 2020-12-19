@@ -682,7 +682,7 @@ namespace PlexCleaner
             if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
                 ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Warning : Skipping read-only file : \"{fileinfo.FullName}\"");
+                Program.LogFile.LogConsole($"Warning : Skipping read-only file : \"{fileinfo.FullName}\" : {fileinfo.Attributes}");
                 return false;
             }
 

@@ -69,6 +69,7 @@
     // Enable verify
     "Verify": true,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
+    // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
