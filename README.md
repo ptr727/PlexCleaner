@@ -10,7 +10,8 @@ Licensed under the [MIT License](./LICENSE)
 ## Build Status
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).  
+Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).
+
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)  
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ptr727/PlexCleaner/Build%20and%20Publish%20Pipeline?logo=github)  
 ![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)  
@@ -58,7 +59,7 @@ Below are a few examples of issues I've experienced over the many years of using
 
 #### Linux
 
-- Downloading Linux 3rd party tools are not currently supported.
+- Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](https://hub.docker.com/u/ptr727/plexcleaner) build instead.
 - Listed steps are for Ubuntu, adjust as appropriate for your distribution.
 - Install prerequisites:
   - `sudo apt update`
@@ -93,7 +94,7 @@ Below are a few examples of issues I've experienced over the many years of using
     - `sudo apt update`
     - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
-  - Keep the 3rd party tools updated by periodically running `sudo apt upgrade`.
+  - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
 - [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
 - Or compile from code:
   - `git clone https://github.com/ptr727/PlexCleaner.git`
@@ -102,22 +103,31 @@ Below are a few examples of issues I've experienced over the many years of using
 
 #### Docker
 
-Run an interactive shell:
+- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).
+- The container has all the prerequisite 3rd party tools installed.
+- Map your host volumes, and make sure the user has permissions to access and modify files.
+- The container is intented to be used in interactive mode.
+
+Example, run an interactive shell:
 
 ```console
 docker pull ptr727/plexcleaner
+
 docker run \
   -it \
   --user nobody:users \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
   /bin/bash
+
 /PlexCleaner/PlexCleaner --version
 ```
 
-Run a PlexCleaner command:
+Example, run a command:
 
 ```console
+docker pull ptr727/plexcleaner
+
 docker run \
   -it \
   --user nobody:users \
@@ -362,7 +372,7 @@ PS C:\Users\piete\source\repos\PlexCleaner> dotnet list package
 Project 'PlexCleaner' has the following package references
    [net5.0]:
    Top-level Package                  Requested             Resolved
-   > HtmlAgilityPack                  1.11.28               1.11.28
+   > HtmlAgilityPack                  1.11.29               1.11.29
    > InsaneGenius.Utilities           2.0.1                 2.0.1
    > Microsoft.SourceLink.GitHub      1.1.0-beta-20204-02   1.1.0-beta-20204-02
    > Newtonsoft.Json                  12.0.3                12.0.3

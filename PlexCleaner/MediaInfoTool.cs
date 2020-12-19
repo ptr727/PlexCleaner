@@ -85,7 +85,7 @@ namespace PlexCleaner
                         break;
 
                     // See if the line starts with "Version"
-                    line.Trim();
+                    line = line.Trim();
                     if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
                         break;
                 }
