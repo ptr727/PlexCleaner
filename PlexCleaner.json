@@ -86,8 +86,10 @@
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
-    // Delete media files that fail verification and fail repair
+    // Delete media files that fail repair
     "DeleteInvalidFiles": false,
+    // Add media files that fail repair to the FileIgnoreList setting
+    "RegisterInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file

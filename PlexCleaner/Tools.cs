@@ -56,11 +56,12 @@ namespace PlexCleaner
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
                 !Program.Config.ToolsOptions.UseSystem)
             {
-                ConsoleEx.WriteLineError($"Warning : Forcing 'ToolsOptions:UseSystem` to 'true' on Linux");
+                ConsoleEx.WriteLineError("Warning : Forcing 'ToolsOptions:UseSystem` to 'true' on Linux");
                 Program.Config.ToolsOptions.UseSystem = true;
             }
 
             // Verify System tools or Tool folder tools
+            ConsoleEx.WriteLine("");
             if (Program.Config.ToolsOptions.UseSystem)
                 return VerifySystemTools();
             return VerifyFolderTools();
@@ -72,7 +73,7 @@ namespace PlexCleaner
             List<MediaTool> toolList = GetToolList();
             foreach (MediaTool mediaTool in toolList)
             {
-                // Query the installed version information from each tool
+                // Query the installed version information
                 if (!mediaTool.GetInstalledVersion(out MediaToolInfo mediaToolInfo))
                 {
                     ConsoleEx.WriteLineError($"Error : {mediaTool.GetToolType()} not found : \"{mediaTool.GetToolPath()}\"");
@@ -112,7 +113,7 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Use the tool version numbers from the JSON file
+            // Verify each tool
             List<MediaTool> toolList = GetToolList();
             foreach (MediaTool mediaTool in toolList)
             {
@@ -131,7 +132,13 @@ namespace PlexCleaner
                     return false;
                 }
 
-                ConsoleEx.WriteLine($"{mediaTool.GetToolType()} : Version: \"{mediaToolInfo.Version}\", Path: \"{mediaTool.GetToolPath()}\"");
+                // Query the installed version information
+                if (!mediaTool.GetInstalledVersion(out mediaToolInfo))
+                {
+                    ConsoleEx.WriteLineError($"Error : {mediaTool.GetToolType()} not found : \"{mediaTool.GetToolPath()}\"");
+                    return false;
+                }
+                ConsoleEx.WriteLine($"{mediaTool.GetToolType()} : Version: \"{mediaToolInfo.Version}\", Path: \"{mediaToolInfo.FileName}\"");
 
                 // Assign the tool info
                 mediaTool.Info = mediaToolInfo;

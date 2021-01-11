@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
+using System.Timers;
 
 namespace PlexCleaner
 {
@@ -11,18 +12,27 @@ namespace PlexCleaner
     {
         private static int Main()
         {
-            // Prevent sleep
-            KeepAwake.PreventSleep();
+            // Create a timer to keep the system from going to sleep
+            using Timer preventSleepTimer = new Timer(30000);
+            preventSleepTimer.Elapsed += OnTimedEvent;
+            preventSleepTimer.AutoReset = true;
+            preventSleepTimer.Start();
 
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
             RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
             int ret = rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
 
-            // Allow sleep
-            KeepAwake.AllowSleep();
+            // Stop the timer
+            preventSleepTimer.Stop();
+            preventSleepTimer.Dispose();
 
             return ret;
+        }
+
+        private static void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+            KeepAwake.PreventSleep();
         }
 
         internal static int WriteDefaultSettingsCommand(CommandLineOptions options)

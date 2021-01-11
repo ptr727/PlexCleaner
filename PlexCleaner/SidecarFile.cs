@@ -113,9 +113,9 @@ namespace PlexCleaner
             }
 
             // Compare the tool versions
-            if (SidecarJson.FfProbeToolVersion != Tools.FfProbe.Info.Version ||
-                SidecarJson.MkvMergeToolVersion != Tools.MkvMerge.Info.Version ||
-                SidecarJson.MediaInfoToolVersion != Tools.MediaInfo.Info.Version)
+            if (!SidecarJson.FfProbeToolVersion.Equals(Tools.FfProbe.Info.Version, StringComparison.OrdinalIgnoreCase) ||
+                !SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase) ||
+                !SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
             {
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Warning : Sidecar tool versions out of date : \"{sidecarFile.Name}\"");

@@ -42,8 +42,16 @@ namespace PlexCleaner
                 return false;
 
             // First line as version
+            // E.g. Windows : "7-Zip (a) 19.00 (x64) : Copyright (c) 1999-2018 Igor Pavlov : 2019-02-21"
+            // E.g. Linux : "7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21"
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            mediaToolInfo.Version = lines[0];
+
+            // Extract the short version number
+            const string pattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
+            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Match match = regex.Match(lines[0]);
+            Debug.Assert(match.Success);
+            mediaToolInfo.Version = match.Groups["version"].Value;
 
             // Get tool filename
             mediaToolInfo.FileName = GetToolPath();

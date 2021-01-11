@@ -44,8 +44,16 @@ namespace PlexCleaner
                 return false;
 
             // Second line as version
+            // E.g. Windows : "MediaInfoLib - v20.09"
+            // E.g. Linux : "MediaInfoLib - v20.09"
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            mediaToolInfo.Version = lines[1];
+
+            // Extract the short version number
+            const string pattern = @"MediaInfoLib\ -\ v(?<version>.*)";
+            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Match match = regex.Match(lines[1]);
+            Debug.Assert(match.Success);
+            mediaToolInfo.Version = match.Groups["version"].Value;
 
             // Get tool filename
             mediaToolInfo.FileName = GetToolPath();

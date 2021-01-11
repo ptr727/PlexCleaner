@@ -2,6 +2,8 @@
 using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -35,14 +37,22 @@ namespace PlexCleaner
             mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
-            string commandline = $"--version";
+            string commandline = "--version";
             int exitcode = Command(commandline, out string output);
             if (exitcode != 0)
                 return false;
 
             // First line as version
+            // E.g. Windows : "HandBrake 1.3.3"
+            // E.g. Linux : "HandBrake 1.3.3"
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            mediaToolInfo.Version = lines[0];
+
+            // Extract the short version number
+            const string pattern = @"HandBrake\ (?<version>.*)";
+            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Match match = regex.Match(lines[0]);
+            Debug.Assert(match.Success);
+            mediaToolInfo.Version = match.Groups["version"].Value;
 
             // Get tool filename
             mediaToolInfo.FileName = GetToolPath();
@@ -104,7 +114,7 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Encode audio and video, copy subtitles
-            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec} {snippets}";
             int exitcode = Command(commandline);
             return exitcode == 0;
@@ -116,7 +126,7 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Encode video, copy audio and subtitles
-            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy {snippets}";
             int exitcode = Command(commandline);
             return exitcode == 0;
@@ -138,7 +148,7 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Encode and decomb video, copy audio and subtitles
-            string snippets = Program.Options.TestSnippets ? HandBrakeSnippet : "";
+            string snippets = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy {snippets}";
             int exitcode = Command(commandline);
             return exitcode == 0;
@@ -155,6 +165,6 @@ namespace PlexCleaner
 
         public const string H264Codec = "x264";
         public const string H265Codec = "x265";
-        private const string HandBrakeSnippet = "--start-at duration:00 --stop-at duration:60";
+        private const string Snippet = "--start-at duration:00 --stop-at duration:60";
     }
 }

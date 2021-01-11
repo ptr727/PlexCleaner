@@ -98,9 +98,6 @@ namespace PlexCleaner
             int modifiedCount = 0;
             foreach (FileInfo fileInfo in fileList)
             {
-                // Prevent sleep
-                KeepAwake.PreventSleep();
-
                 // Percentage
                 processedCount ++;
                 double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
@@ -157,7 +154,18 @@ namespace PlexCleaner
                     Program.LogFile.LogConsole(file);
                 }
             }
-            
+
+            // Write the updated ignore file list
+            // Compare the item counts to know if modifications were made
+            if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
+                Program.Config.ProcessOptions.FileIgnoreList.Count != IgnoreList.Count)
+            {
+                ConsoleEx.WriteLine("");
+                Program.LogFile.LogConsole($"Updating settings file : \"{Program.Options.SettingsFile}\"");
+                Program.Config.ProcessOptions.FileIgnoreList.Sort();
+                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+            }
+
             return true;
         }
 

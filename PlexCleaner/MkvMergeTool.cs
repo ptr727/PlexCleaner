@@ -6,6 +6,7 @@ using InsaneGenius.Utilities;
 using System.Linq;
 using System.Globalization;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -45,8 +46,17 @@ namespace PlexCleaner
                 return false;
 
             // First line as version
+            // E.g. Windows : "mkvmerge v51.0.0 ('I Wish') 64-bit"
+            // E.g. Linux : "mkvmerge v51.0.0 ('I Wish') 64-bit"
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            mediaToolInfo.Version = lines[0];
+
+            // Extract the short version number
+            // Match word for mkvmerge or mkvpropedit
+            const string pattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
+            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Match match = regex.Match(lines[0]);
+            Debug.Assert(match.Success);
+            mediaToolInfo.Version = match.Groups["version"].Value;
 
             // Get tool filename
             mediaToolInfo.FileName = GetToolPath();
@@ -224,8 +234,8 @@ namespace PlexCleaner
             string subtitletracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keep.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
 
             // Remux tracks
-            string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
+            string snippets = Program.Options.TestSnippets ? Snippet : "";
+            string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             int exitcode = Command(commandline);
             return exitcode == 0 || exitcode == 1;
         }
@@ -236,12 +246,13 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputname);
 
             // Remux all
-            string snippets = Program.Options.TestSnippets ? MkvmergeSnippet : "";
-            string commandline = $"{snippets} --output \"{outputname}\" \"{inputname}\"";
+            string snippets = Program.Options.TestSnippets ? Snippet : "";
+            string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" \"{inputname}\"";
             int exitcode = Command(commandline);
             return exitcode == 0 || exitcode == 1;
         }
 
-        private const string MkvmergeSnippet = "--split parts:00:00:00-00:01:00";
+        private const string Snippet = "--split parts:00:00:00-00:01:00";
+        private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags";
     }
 }

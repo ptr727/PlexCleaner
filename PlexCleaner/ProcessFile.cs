@@ -531,11 +531,12 @@ namespace PlexCleaner
                         // https://4kmedia.org/real-or-fake-4k/
                         // https://en.wikipedia.org/wiki/YIFY
 
+                        ConsoleEx.WriteLine("");
+                        ConsoleEx.WriteLine(bitrateInfo.ToString());
                         if (bitrateInfo.ThresholdExceeded > 0)
-                        { 
+                        {
                             ConsoleEx.WriteLine("");
                             Program.LogFile.LogConsole($"Warning : Maximum bitrate exceeded : {Format.BytesToKilo(bitrateInfo.Maximum * 8, "bps")} > {Format.BytesToKilo(bitrateInfo.Threshold * 8, "bps")} : \"{MediaFile.Name}\"");
-                            Program.LogFile.LogConsole(bitrateInfo.ToString());
                         }
                     }
                     else 
@@ -575,6 +576,14 @@ namespace PlexCleaner
                 return true;
             }
 
+            // Add the failed file to the ignore list
+            // Don't add if delete not enabled
+            // Don't add in test mode
+            if (!Program.Options.TestNoModify &&
+                !Program.Config.VerifyOptions.DeleteInvalidFiles &&
+                Program.Config.VerifyOptions.RegisterInvalidFiles)
+                Program.Config.ProcessOptions.FileIgnoreList.Add(MediaFile.FullName);
+
             // Don't delete if delete not enabled
             // Don't delete in test mode
             if (Program.Options.TestNoModify ||
@@ -585,7 +594,7 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Delete file
+            // Delete the media file
             ConsoleEx.WriteLine("");
             Program.LogFile.LogConsole($"Deleting media file due to failed validation : \"{MediaFile.FullName}\"");
             if (!FileEx.DeleteFile(MediaFile.FullName) || 
@@ -637,9 +646,16 @@ namespace PlexCleaner
             // ERROR: avformatMux: track 1, av_interleaved_write_frame failed with error 'Invalid argument'
             // M[15:35:43] libhb: work result = 4
 
-            // TODO: FFmpeg fails to decode some files
+            // TODO: FfMpeg fails to decode some files
             // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
             // https://trac.ffmpeg.org/search?q=%22non+monotonically+increasing+dts+to+muxer%22&noquickjump=1&milestone=on&ticket=on&wiki=on
+
+            // TODO: FfMpeg x265 requires input resolution to be multiple of chroma subsampling
+            // https://stackoverflow.com/questions/50371919/ffmpeg-cannot-open-libx265-encoder-error-initializing-output-stream-00-err
+            // http://www.ffmpeg-archive.org/scaling-failed-height-must-be-an-integer-td4671624.html
+            // E.g. 1280 x 718 will fail, 1280 x 720 will work
+            // https://ffmpeg.org/ffmpeg-filters.html#crop
+            // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
             // Create a temp filename based on the input name
             string tempname = Path.ChangeExtension(MediaFile.FullName, ".tmp");

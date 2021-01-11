@@ -51,8 +51,17 @@ namespace PlexCleaner
                 return false;
 
             // First line as version
+            // E.g. Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
+            // E.g. Linux : "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
             string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-            mediaToolInfo.Version = lines[0];
+
+            // Extract the short version number
+            // Match word for ffmpeg or ffprobe
+            const string pattern = @"([^\s]+)\ version\ (?<version>.*?)-";
+            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Match match = regex.Match(lines[0]);
+            Debug.Assert(match.Success);
+            mediaToolInfo.Version = match.Groups["version"].Value;
 
             // Get tool filename
             mediaToolInfo.FileName = GetToolPath();
@@ -229,7 +238,7 @@ namespace PlexCleaner
             CreateFfMpegMap(keep, out string input, out string output);
 
             // Remux using map
-            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippet = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"-i \"{inputName}\" {snippet} {input} {output} -f matroska \"{outputName}\"";
             int exitcode = Command(commandline);
             return exitcode == 0;
@@ -241,7 +250,7 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Remux and copy all streams
-            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
+            string snippet = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"-i \"{inputName}\" {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
             int exitcode = Command(commandline);
             return exitcode == 0;
@@ -332,8 +341,8 @@ namespace PlexCleaner
             //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
 
             // Convert using map
-            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputName}\" {snippet} {input} {output} -f matroska \"{outputName}\"";
+            string snippet = Program.Options.TestSnippets ? Snippet : "";
+            string commandline = $"{ConvertOptions} -i \"{inputName}\" {snippet} {input} {output} -f matroska \"{outputName}\"";
             int exitcode = Command(commandline);
             return exitcode == 0;
         }
@@ -355,8 +364,8 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Encode video and audio, copy subtitle streams
-            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
+            string snippet = Program.Options.TestSnippets ? Snippet : "";
+            string commandline = $"{ConvertOptions} -i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
             int exitcode = Command(commandline);
             return exitcode == 0;
         }
@@ -367,8 +376,8 @@ namespace PlexCleaner
             FileEx.DeleteFile(outputName);
 
             // Encode video, copy audio and subtitle streams
-            string snippet = Program.Options.TestSnippets ? FfmpegSnippet : "";
-            string commandline = $"-i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
+            string snippet = Program.Options.TestSnippets ? Snippet : "";
+            string commandline = $"{ConvertOptions} -i \"{inputName}\" {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
             int exitcode = Command(commandline);
             return exitcode == 0;
         }
@@ -461,6 +470,7 @@ namespace PlexCleaner
 
         public const string H264Codec = "libx264";
         public const string H265Codec = "libx265";
-        private const string FfmpegSnippet = "-ss 0 -t 60";
+        private const string Snippet = "-ss 0 -t 60";
+        private const string ConvertOptions = "-analyzeduration 2147483647 -probesize 2147483647";
     }
 }
