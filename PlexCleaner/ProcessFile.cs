@@ -521,23 +521,18 @@ namespace PlexCleaner
                     return false;
 
                 // Compute the bitrate
+                // TODO : Verify that bitrate is acceptable for the resolution of the content, i.e. no YIFY, no fake 4K
+                // https://4kmedia.org/real-or-fake-4k/
+                // https://en.wikipedia.org/wiki/YIFY
                 if (Program.Config.VerifyOptions.MaximumBitrate > 0)
                 {
                     ConsoleEx.WriteLine("");
                     ConsoleEx.WriteLine($"Calculating bitrate info : \"{MediaFile.Name}\"");
                     if (GetBitrateInfo(out BitrateInfo bitrateInfo))
                     {
-                        // TODO : Verify that bitrate is acceptable for the resolution of the content, i.e. no YIFY, no fake 4K
-                        // https://4kmedia.org/real-or-fake-4k/
-                        // https://en.wikipedia.org/wiki/YIFY
-
-                        ConsoleEx.WriteLine("");
                         ConsoleEx.WriteLine(bitrateInfo.ToString());
                         if (bitrateInfo.ThresholdExceeded > 0)
-                        {
-                            ConsoleEx.WriteLine("");
                             Program.LogFile.LogConsole($"Warning : Maximum bitrate exceeded : {Format.BytesToKilo(bitrateInfo.Maximum * 8, "bps")} > {Format.BytesToKilo(bitrateInfo.Threshold * 8, "bps")} : \"{MediaFile.Name}\"");
-                        }
                     }
                     else 
                     {

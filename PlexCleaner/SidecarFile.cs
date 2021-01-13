@@ -109,6 +109,8 @@ namespace PlexCleaner
             {
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Warning : Sidecar out of sync with media file : \"{sidecarFile.Name}\"");
+                ConsoleEx.WriteLine($"LastWriteTimeUtc : File : {mediaFile.LastWriteTimeUtc}, Sidecar : {SidecarJson.MediaLastWriteTimeUtc}");
+                ConsoleEx.WriteLine($"Length : File : {mediaFile.Length}, Sidecar : {SidecarJson.MediaLength}");
                 return false;
             }
 
@@ -119,6 +121,9 @@ namespace PlexCleaner
             {
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Warning : Sidecar tool versions out of date : \"{sidecarFile.Name}\"");
+                ConsoleEx.WriteLine($"FfProbe : Tools : {Tools.FfProbe.Info.Version}, Sidecar : {SidecarJson.FfProbeToolVersion}");
+                ConsoleEx.WriteLine($"MkvMerge : Tools : {Tools.MkvMerge.Info.Version}, Sidecar : {SidecarJson.MkvMergeToolVersion}");
+                ConsoleEx.WriteLine($"MediaInfo : Tools : {Tools.MediaInfo.Info.Version}, Sidecar : {SidecarJson.MediaInfoToolVersion}");
                 if (Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
                     return false;
             }
@@ -180,7 +185,7 @@ namespace PlexCleaner
 
             // Read the tool data text
             ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Reading media info : \"{mediaFile.Name}\"");
+            ConsoleEx.WriteLine($"Reading media info from tools : \"{mediaFile.Name}\"");
             if (!Tools.MediaInfo.GetMediaInfoXml(mediaFile.FullName, out MediaInfoXml) ||
                 !Tools.MkvMerge.GetMkvInfoJson(mediaFile.FullName, out MkvMergeInfoJson) ||
                 !Tools.FfProbe.GetFfProbeInfoJson(mediaFile.FullName, out FfProbeInfoJson))
