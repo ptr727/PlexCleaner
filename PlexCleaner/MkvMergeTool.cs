@@ -178,10 +178,13 @@ namespace PlexCleaner
                 if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
                     mediaInfo.HasErrors = true;
 
-                // Tags or Title
+                // Tags or title or track name
                 mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
                                     mkvmerge.TrackTags.Count > 0 ||
-                                    !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title);
+                                    !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title) ||
+                                    mediaInfo.Video.Any(item => !string.IsNullOrEmpty(item.Title)) ||
+                                    mediaInfo.Audio.Any(item => !string.IsNullOrEmpty(item.Title)) ||
+                                    mediaInfo.Subtitle.Any(item => !string.IsNullOrEmpty(item.Title));
 
                 // Duration (JSON uses nanoseconds)
                 mediaInfo.Duration = TimeSpan.FromSeconds(mkvmerge.Container.Properties.Duration / 1000000.0);

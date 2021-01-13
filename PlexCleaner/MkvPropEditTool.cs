@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -32,8 +34,17 @@ namespace PlexCleaner
             // Verify correct data type
             Debug.Assert(unknown.Parser == ToolType.MkvMerge);
 
-            // Mark all unknown  tracks
-            return unknown.GetTrackList().All(track => SetMkvTrackLanguage(filename, track.Number, language));
+            // Set language on all unknown tracks
+            //return unknown.GetTrackList().All(track => SetMkvTrackLanguage(filename, track.Number, language));
+            StringBuilder commandline = new StringBuilder();
+            commandline.Append($"\"{filename}\" ");
+            foreach (TrackInfo track in unknown.GetTrackList())
+            {
+                commandline.Append($"--edit track:@{track.Number} --set language={language} ");
+            }
+
+            int exitcode = Command(commandline.ToString());
+            return exitcode == 0;
         }
 
         public bool SetMkvTrackLanguage(string filename, int track, string language)
@@ -49,6 +60,28 @@ namespace PlexCleaner
             // Clear all tags
             string commandline = $"\"{filename}\" --tags all: --delete title";
             int exitcode = Command(commandline);
+            return exitcode == 0;
+        }
+
+        public bool ClearMkvTags(string filename, MediaInfo info)
+        {
+            if (info == null)
+                throw new ArgumentNullException(nameof(info));
+
+            // Verify correct data type
+            Debug.Assert(info.Parser == ToolType.MkvMerge);
+
+            // Clear all tags on all tracks
+            StringBuilder commandline = new StringBuilder();
+            commandline.Append($"\"{filename}\" --tags all: --delete title ");
+            foreach (TrackInfo track in info.GetTrackList())
+            {
+                // Add all tracks with a name / title
+                if (!string.IsNullOrEmpty(track.Title))
+                    commandline.Append($"--edit track:@{track.Number} --delete name ");
+            }
+
+            int exitcode = Command(commandline.ToString());
             return exitcode == 0;
         }
     }

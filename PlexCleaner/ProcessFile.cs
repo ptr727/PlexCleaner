@@ -202,7 +202,7 @@ namespace PlexCleaner
 
             // Delete the tags
             if (!Program.Options.TestNoModify &&
-                !Tools.MkvPropEdit.ClearMkvTags(MediaFile.FullName))
+                !Tools.MkvPropEdit.ClearMkvTags(MediaFile.FullName, MkvMergeInfo))
             {
                 // Error
                 Result = false;

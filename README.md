@@ -103,10 +103,10 @@ Below are a few examples of issues I've experienced over the many years of using
 
 #### Docker
 
-- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).
-- The container has all the prerequisite 3rd party tools installed.
-- Map your host volumes, and make sure the user has permissions to access and modify files.
-- The container is intented to be used in interactive mode.
+- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner), and updated weekly.
+- The container has all the prerequisite 3rd party tools pre-installed.
+- Map your host volumes, and make sure the user has permission to access and modify media files.
+- The container is intented to be used in interactive mode, for long running operations run in a `screen` session.
 
 Example, run an interactive shell:
 
@@ -128,6 +128,8 @@ Example, run a command:
 ```console
 docker pull ptr727/plexcleaner
 
+screen
+
 docker run \
   -it \
   --user nobody:users \
@@ -137,8 +139,7 @@ docker run \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
     process \
-    --testsnippets \
-    --mediafiles /media/TestPlex
+    --mediafiles /media/Movies /media/Series
 ```
 
 ### Configuration File
@@ -214,10 +215,11 @@ Create a default configuration file by running:
     // Speedup media metadata processing by saving media info in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
-    "SidecarUpdateOnToolChange": true,
+    "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
+    // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
@@ -234,8 +236,10 @@ Create a default configuration file by running:
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
-    // Delete media files that fail verification and fail repair
-    "DeleteInvalidFiles": true,
+    // Delete media files that fail repair
+    "DeleteInvalidFiles": false,
+    // Add media files that fail repair to the FileIgnoreList setting
+    "RegisterInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file

@@ -67,6 +67,6 @@ namespace PlexCleaner
             Size = toolInfo.Size;
             Url = toolInfo.Url;
             Version = toolInfo.Version;
-    }
+        }
     }
 }
