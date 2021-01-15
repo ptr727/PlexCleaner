@@ -105,7 +105,8 @@ namespace PlexCleaner
                 // Process the file
                 ConsoleEx.WriteLine("");
                 ConsoleEx.WriteLine($"Processing ({done:P}) : \"{fileInfo.FullName}\"");
-                if (!ProcessFile(fileInfo, out bool modified))
+                if (!ProcessFile(fileInfo, out bool modified) &&
+                    !Program.IsCancelled())
                 {
                     ConsoleEx.WriteLine("");
                     Program.LogFile.LogConsoleError($"Error processing : \"{fileInfo.FullName}\"");
@@ -120,7 +121,8 @@ namespace PlexCleaner
 
                 // Cancel handler
                 if (Program.IsCancelled())
-                    return false;
+                    // Break, don't return, complete the cleanup logic
+                    break;
 
                 // Next file
             }
@@ -166,7 +168,7 @@ namespace PlexCleaner
                 ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
             }
 
-            return true;
+            return !Program.IsCancelled();
         }
 
         public bool ProcessFolders(List<string> folderList)
