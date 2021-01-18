@@ -63,6 +63,10 @@
     "Process Snippets": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"\\\\server-1\\Media\\TestPlex\\Troublesome\""
+    },
+    "Test": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Movies\\Street Kings (2008)\""
     }
   }
 }

@@ -530,9 +530,16 @@ namespace PlexCleaner
                     ConsoleEx.WriteLine($"Calculating bitrate info : \"{MediaFile.Name}\"");
                     if (GetBitrateInfo(out BitrateInfo bitrateInfo))
                     {
-                        ConsoleEx.WriteLine(bitrateInfo.ToString());
-                        if (bitrateInfo.ThresholdExceeded > 0)
-                            Program.LogFile.LogConsole($"Warning : Maximum bitrate exceeded : {Format.BytesToKilo(bitrateInfo.Maximum * 8, "bps")} > {Format.BytesToKilo(bitrateInfo.Threshold * 8, "bps")} : \"{MediaFile.Name}\"");
+                        // Print combined audio and video bitrate
+                        ConsoleEx.WriteLine(bitrateInfo.CombinedBitrate.ToString());
+
+                        // Combined bitrate exceeded threshold
+                        if (bitrateInfo.CombinedBitrate.Exceeded > 0)
+                            Program.LogFile.LogConsole($"Warning : Maximum bitrate exceeded : {Format.BytesToKilo(bitrateInfo.CombinedBitrate.Maximum * 8, "bps")} > {Format.BytesToKilo(Program.Config.VerifyOptions.MaximumBitrate, "bps")} : \"{MediaFile.Name}\"");
+
+                        // Audio bitrate exceeds video bitrate, may indicate an error with the video track
+                        if (bitrateInfo.AudioBitrate.Average > bitrateInfo.VideoBitrate.Average)
+                            Program.LogFile.LogConsole($"Warning : Audio bitrate exceeds Video bitrate : {Format.BytesToKilo(bitrateInfo.AudioBitrate.Average * 8, "bps")} > {Format.BytesToKilo(bitrateInfo.VideoBitrate.Average, "bps")} : \"{MediaFile.Name}\"");
                     }
                     else 
                     {
@@ -796,15 +803,15 @@ namespace PlexCleaner
         {
             bitrateInfo = null;
 
+            // Get packet info
             if (!Tools.FfProbe.GetPacketInfo(MediaFile.FullName, out List<Packet> packetList))
                 return false;
 
-            // Compute bitrate
-            bitrateInfo = new BitrateInfo 
-            {
-                Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8
-            };
-            bitrateInfo.Calculate(packetList);
+            // Compute bitrate from packets
+            // Use the first video and audio track for calculation
+            // TODO: Use default tracks
+            bitrateInfo = new BitrateInfo();
+            bitrateInfo.Calculate(packetList, FfProbeInfo.Video.First().Id, FfProbeInfo.Audio.First().Id, Program.Config.VerifyOptions.MaximumBitrate / 8);
 
             return true;
         }

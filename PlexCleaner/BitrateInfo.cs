@@ -1,5 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using PlexCleaner.FfMpegToolJsonSchema;
+﻿using PlexCleaner.FfMpegToolJsonSchema;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +7,7 @@ namespace PlexCleaner
 {
     public class BitrateInfo
     {
-        public void Calculate(List<Packet> packetList)
+        public void Calculate(List<Packet> packetList, int videoStream, int audioStream, int threshold)
         {
             if (packetList == null)
                 throw new ArgumentNullException(nameof(packetList));
@@ -17,7 +16,7 @@ namespace PlexCleaner
             Duration = 0;
             foreach (Packet packet in packetList)
             {
-                if (!ShouldCompute(packet))
+                if (!ShouldCompute(packet, videoStream, audioStream))
                     continue;
 
                 // Use DTS if PTS not set
@@ -42,96 +41,70 @@ namespace PlexCleaner
             // Add 1 for index offset
             Duration ++;
 
-            // Set the array size to the duration in seconds
-            VideoBitrate = new long[Duration];
-            AudioBitrate = new long[Duration];
-            CombinedBitrate = new long[Duration];
+            // Set the bitrate array size to the duration in seconds
+            VideoBitrate = new Bitrate(Duration);
+            AudioBitrate = new Bitrate(Duration);
+            CombinedBitrate = new Bitrate(Duration);
 
             // Iterate through all the packets
             foreach (Packet packet in packetList)
             {
-                if (!ShouldCompute(packet))
+                if (!ShouldCompute(packet, videoStream, audioStream))
                     continue;
 
                 // Round down when calculating index
                 int index = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
 
                 // Calculate values
-                if (packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
+                if (packet.StreamIndex == videoStream)
                 {
-                    VideoBitrate[index] += packet.Size;
-                    CombinedBitrate[index] += packet.Size;
+                    VideoBitrate.Rate[index] += packet.Size;
+                    CombinedBitrate.Rate[index] += packet.Size;
                 }
-                if (packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase))
+                if (packet.StreamIndex == audioStream)
                 {
-                    AudioBitrate[index] += packet.Size;
-                    CombinedBitrate[index] += packet.Size;
+                    AudioBitrate.Rate[index] += packet.Size;
+                    CombinedBitrate.Rate[index] += packet.Size;
                 }
             }
 
-            // Calculate the averages
-            Minimum = 0;
-            Maximum = 0;
-            Average = 0;
-            ThresholdExceeded = 0;
-            ThresholdExceededDuration = 0;
-            int threshold = 0;
-            foreach (long bitrate in CombinedBitrate)
-            {
-                // Min, max, average
-                if (bitrate > Maximum)
-                    Maximum = bitrate;
-                if (bitrate < Minimum ||
-                    Minimum == 0)
-                    Minimum = bitrate;
-                Average += bitrate;
-
-                // Threshold
-                if (Threshold > 0 &&
-                    bitrate > Threshold)
-                { 
-                    ThresholdExceeded ++;
-                    threshold ++;
-                    if (threshold > ThresholdExceededDuration)
-                        ThresholdExceededDuration = threshold;
-                }
-                else
-                    threshold = 0;
-            }
-            Average /= Duration;
+            // Calculate the bitrates
+            VideoBitrate.Calculate(threshold);
+            AudioBitrate.Calculate(threshold);
+            CombinedBitrate.Calculate(threshold);
         }
 
-        public override string ToString()
-        {
-            return $"Bitrate : Duration : {TimeSpan.FromSeconds(Duration)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}, Threshold : {Format.BytesToKilo(Threshold * 8, "bps")}, ThresholdExceeded : {ThresholdExceeded}, ThresholdExceededDuration : {TimeSpan.FromSeconds(ThresholdExceededDuration)}";
-        }
-
-        // Bytes per second
-        public long Threshold { get; set; } = 100 * Format.MB / 8;
-        // Number of times exceeded
-        public int ThresholdExceeded { get; set; }
-        // Number of consecutive times exceeded
-        public int ThresholdExceededDuration { get; set; }
-
-        public long Minimum { get; set; }
-        public long Maximum { get; set; }
-        public long Average { get; set; }
+        public Bitrate VideoBitrate { get; set; }
+        public Bitrate AudioBitrate { get; set; }
+        public Bitrate CombinedBitrate { get; set; }
 
         public int Duration { get; set; }
 
-        private static bool ShouldCompute(Packet packet)
+        private static bool ShouldCompute(Packet packet, int videoStream, int audioStream)
         {
-            // Must be audio or video tracks
-            if (!packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) && 
-                !packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase))
+            // Must match a stream index
+            if (packet.StreamIndex != videoStream &&
+                packet.StreamIndex != audioStream)
                 return false;
 
-            // Must be index 0
-            return packet.StreamIndex == 0;
-        }
+            // Must have PTS or DTS
+            if (double.IsNaN(packet.PtsTime) &&
+                double.IsNaN(packet.PtsTime))
+                return false;
 
-        private long[] VideoBitrate;
-        private long[] AudioBitrate;
-        private long[] CombinedBitrate;
+            // Must have duration
+            if (double.IsNaN(packet.DurationTime))
+                return false;
+
+            // Must have size
+            if (packet.Size <= 0)
+                return false;
+
+            // Verify streams match expected type
+            Debug.Assert((packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase)) ||
+                         (packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase)));
+
+            return true;
+        }
     }
 }

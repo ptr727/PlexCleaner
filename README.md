@@ -115,6 +115,7 @@ docker pull ptr727/plexcleaner
 
 docker run \
   -it \
+  --rm \
   --user nobody:users \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
@@ -132,6 +133,7 @@ screen
 
 docker run \
   -it \
+  --rm \
   --user nobody:users \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
@@ -404,3 +406,25 @@ Project 'PlexCleaner' has the following package references
 - [JellyFish](http://jell.yfish.us/)
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
 - [MPlayer](https://samples.mplayerhq.hu/)
+
+## Notes
+
+- Version 2.0 is a major release with new features and breaking changes.
+  - Linux and Docker are now supported platforms.
+    - Automatic downloading of tools on Linux is not suported, tools need to be installed on the system.
+    - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
+  - H.265 encoding support added.
+  - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
+  - Windows systems will kept awake during processing.
+  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
+    - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
+    - Tools JSON will be invalid and `checkfortools` should be used to update tools.
+  - Tool version numbers are now using the short version number.
+    - This allows for the same tool version number to be generated and used in Sidecar files on Windows and Linux.
+  - Processing of the same media can be mixed between Windows, Linux, and Docker.
+   - Note however that the paths in the `FileIgnoreList` setting are platform specific.
+  - Several new options were added to the JSON config file.
+    - Compare your JSON configuration with the default `PlexCleaner.json` config file.
+    - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
+    - `ToolsOptions:UseSystem`: Use tools from the system vs. from the Tools folder, this is the default on Linux.
+    - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
