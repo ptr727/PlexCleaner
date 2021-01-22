@@ -99,7 +99,7 @@ namespace PlexCleaner
             // Compare the schema version
             if (SidecarJson.SchemaVersion != SidecarFileJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Warning("Sidecar schema version mismatch : {Name}", sidecarFile.Name);
+                Log.Logger.Error("Sidecar JSON schema mismatch : {SidecarJsonSchemaVersion} != {SidecarFileJsonSchemaCurrentSchemaVersion}, {Name}", SidecarJson.SchemaVersion, SidecarFileJsonSchema.CurrentSchemaVersion, sidecarFile.Name);
                 return false;
             }
 

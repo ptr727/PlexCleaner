@@ -21,7 +21,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.0 is a major release with fixes, new features, and some breaking changes.
   - Linux and Docker are now supported platforms.
-    - Automatic downloading of tools on Linux is not suported, tools need to be manually installed on the system.
+    - Automatic downloading of tools on Linux is not currently suported, tools need to be manually installed on the system.
     - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
   - Support for H.265 encoding added.
   - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
@@ -36,7 +36,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.
     - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
     - `ProcessOptions:ReEncodeAudioFormats` : `opus` codec added to default list.
-  - File logging and console output is now done using Serilog.
+  - File logging and console output is now done using structured Serilog logging.
+    - Basic logging options are used, configuration from JSON is not currently supported.
 
 ## Use Cases
 

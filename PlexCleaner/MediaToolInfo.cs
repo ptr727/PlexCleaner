@@ -1,6 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
-using Serilog;
+﻿using Serilog;
 using System;
 
 namespace PlexCleaner

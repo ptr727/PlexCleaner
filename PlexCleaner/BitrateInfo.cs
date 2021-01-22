@@ -101,8 +101,8 @@ namespace PlexCleaner
                 return false;
 
             // Verify streams match expected type
-            Debug.Assert((packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase)) ||
-                         (packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase)));
+            Debug.Assert(packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) ||
+                         packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase));
 
             return true;
         }

@@ -47,7 +47,7 @@ namespace PlexCleaner
             mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
-            string commandline = "-version";
+            const string commandline = "-version";
             int exitcode = Command(commandline, out string output, out string error);
             if (exitcode != 0 || error.Length > 0)
                 return false;
@@ -463,8 +463,8 @@ namespace PlexCleaner
             return true;
         }
 
-        public const string H264Codec = "libx264";
-        public const string H265Codec = "libx265";
+        private const string H264Codec = "libx264";
+        private const string H265Codec = "libx265";
         private const string Snippet = "-ss 0 -t 60";
         private const string ConvertOptions = "-analyzeduration 2147483647 -probesize 2147483647";
     }

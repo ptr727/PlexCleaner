@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using InsaneGenius.Utilities;
 using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
@@ -40,7 +39,7 @@ namespace PlexCleaner
             mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
-            string commandline = "--version";
+            const string commandline = "--version";
             int exitcode = Command(commandline, out string output);
             if (exitcode != 0)
                 return false;

@@ -109,7 +109,7 @@ namespace PlexCleaner
             ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsfile));
             if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Error("Tool schema mismatch : {ToolInfoJsonSchemaVersion} != {ToolInfoJsonSchemaCurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
+                Log.Logger.Error("Tool JSON schema mismatch : {ToolInfoJsonSchemaVersion} != {ToolInfoJsonSchemaCurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
                 return false;
             }
 
@@ -207,7 +207,7 @@ namespace PlexCleaner
                     toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsFile));
                     if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
                     {
-                        Log.Logger.Warning("Tool schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
+                        Log.Logger.Error("Tool JSON schema mismatch : {ToolInfoJsonSchemaVersion} != {ToolInfoJsonSchemaCurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
                         toolInfoJson = null;
                     }
                 }
