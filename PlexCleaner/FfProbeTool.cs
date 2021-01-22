@@ -6,6 +6,8 @@ using PlexCleaner.FfMpegToolJsonSchema;
 using System.IO;
 using Newtonsoft.Json;
 using System.IO.Compression;
+using System.Reflection;
+using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -129,10 +131,8 @@ namespace PlexCleaner
                 // TODO : Duration
                 // TODO : ContainerType
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;

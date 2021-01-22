@@ -7,6 +7,8 @@ using System.Linq;
 using System.Globalization;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Serilog;
+using System.Reflection;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -98,10 +100,8 @@ namespace PlexCleaner
                 mediaToolInfo.FileName = $"mkvtoolnix-64-bit-{mediaToolInfo.Version}.7z";
                 mediaToolInfo.Url = $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
@@ -189,10 +189,8 @@ namespace PlexCleaner
                 // Duration (JSON uses nanoseconds)
                 mediaInfo.Duration = TimeSpan.FromSeconds(mkvmerge.Container.Properties.Duration / 1000000.0);
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;

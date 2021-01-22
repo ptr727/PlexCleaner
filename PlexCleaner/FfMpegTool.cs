@@ -9,6 +9,8 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Net;
+using Serilog;
+using System.Reflection;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -96,10 +98,8 @@ namespace PlexCleaner
                 mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
                 mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
@@ -152,10 +152,8 @@ namespace PlexCleaner
                 mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-amd-static.tar.xz";
                 mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
@@ -172,7 +170,7 @@ namespace PlexCleaner
             string extractPath = Tools.GetToolsRoot();
 
             // Extract the update file
-            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
             if (!Tools.SevenZip.UnZip(updateFile, extractPath))
                 return false;
 
@@ -216,9 +214,8 @@ namespace PlexCleaner
             {
                 // Retry
                 const int sleepTime = 5;
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(error);
-                ConsoleEx.WriteLine($"Retrying after sleeping {sleepTime}s");
+                Log.Logger.Error(error);
+                Log.Logger.Information("Retrying after sleeping {SleepTime}s", sleepTime);
                 Thread.Sleep(sleepTime * 1000);
                 exitcode = Command(commandline, out string _, out error);
             }
@@ -459,10 +456,8 @@ namespace PlexCleaner
                 idetInfo.MultiFrame.Progressive = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
                 idetInfo.MultiFrame.Undetermined = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;

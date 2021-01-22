@@ -17,9 +17,28 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)  
 ![Docker Image Version](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)
 
-## Getting Started
+## Release Notes
 
-### Use Cases
+- Version 2.0 is a major release with fixes, new features, and some breaking changes.
+  - Linux and Docker are now supported platforms.
+    - Automatic downloading of tools on Linux is not suported, tools need to be manually installed on the system.
+    - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
+  - Support for H.265 encoding added.
+  - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
+  - Windows systems will be kept awake during processing.
+  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
+    - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
+    - Tools JSON will be invalid and `checkfortools` should be used to update tools.
+  - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.
+  - Processing of the same media can be mixed between Windows, Linux, and Docker, note that the paths in the `FileIgnoreList` setting are platform specific.
+  - New options were added to the JSON config file.
+    - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
+    - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.
+    - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
+    - `ProcessOptions:ReEncodeAudioFormats` : `opus` codec added to default list.
+  - File logging and console output is now done using Serilog.
+
+## Use Cases
 
 The objective of the tool is to modify media content such that it will [Direct Play](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/) in Plex.  
 Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes.  
@@ -39,9 +58,9 @@ Below are a few examples of issues I've experienced over the many years of using
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
 - Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, verify content bitrate does not exceed the network bitrate.
 
-### Installation
+## Installation
 
-#### Windows
+### Windows
 
 - Install [.NET 5 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
 - [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
@@ -57,7 +76,7 @@ Below are a few examples of issues I've experienced over the many years of using
   - The tool version information will be stored in `Tools\Tools.json`
   - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command.
 
-#### Linux
+### Linux
 
 - Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](https://hub.docker.com/u/ptr727/plexcleaner) build instead.
 - Listed steps are for Ubuntu, adjust as appropriate for your distribution.
@@ -101,7 +120,7 @@ Below are a few examples of issues I've experienced over the many years of using
   - `cd PlexCleaner`
   - `dotnet build`
 
-#### Docker
+### Docker
 
 - Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner), and updated weekly.
 - The container has all the prerequisite 3rd party tools pre-installed.
@@ -144,7 +163,7 @@ docker run \
     --mediafiles /media/Movies /media/Series
 ```
 
-### Configuration File
+## Configuration
 
 Create a default configuration file by running:  
 `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
@@ -258,8 +277,6 @@ Create a default configuration file by running:
 
 ## Usage
 
-### Commandline
-
 Commandline options:  
 `PlexCleaner.exe --help`
 
@@ -367,25 +384,7 @@ The `getmediainfo` command will print media attribute information.
 
 The `getbitrateinfo` command will calculate and print media bitrate information.
 
-## Tools and Utilities
-
-Tools, libraries, and utilities used in the project.
-
-### NuGet Component Dependencies
-
-```console
-PS C:\Users\piete\source\repos\PlexCleaner> dotnet list package
-Project 'PlexCleaner' has the following package references
-   [net5.0]:
-   Top-level Package                  Requested             Resolved
-   > HtmlAgilityPack                  1.11.29               1.11.29
-   > InsaneGenius.Utilities           2.0.1                 2.0.1
-   > Microsoft.SourceLink.GitHub      1.1.0-beta-20204-02   1.1.0-beta-20204-02
-   > Newtonsoft.Json                  12.0.3                12.0.3
-   > System.CommandLine               2.0.0-beta1.20574.7   2.0.0-beta1.20574.7
-```
-
-### 3rd Party Tools
+## 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
 - [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
@@ -399,32 +398,11 @@ Project 'PlexCleaner' has the following package references
 - [HtmlAgilityPack](https://html-agility-pack.net/)
 - [Newtonsoft.Json](https://www.newtonsoft.com/json)
 - [System.CommandLine](https://github.com/dotnet/command-line-api)
+- [Serilog](https://serilog.net/)
 
-### Sample Media Files
+## Sample Media Files
 
 - [Kodi](https://kodi.wiki/view/Samples)
 - [JellyFish](http://jell.yfish.us/)
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
 - [MPlayer](https://samples.mplayerhq.hu/)
-
-## Notes
-
-- Version 2.0 is a major release with new features and breaking changes.
-  - Linux and Docker are now supported platforms.
-    - Automatic downloading of tools on Linux is not suported, tools need to be installed on the system.
-    - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
-  - H.265 encoding support added.
-  - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
-  - Windows systems will kept awake during processing.
-  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
-    - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
-    - Tools JSON will be invalid and `checkfortools` should be used to update tools.
-  - Tool version numbers are now using the short version number.
-    - This allows for the same tool version number to be generated and used in Sidecar files on Windows and Linux.
-  - Processing of the same media can be mixed between Windows, Linux, and Docker.
-   - Note however that the paths in the `FileIgnoreList` setting are platform specific.
-  - Several new options were added to the JSON config file.
-    - Compare your JSON configuration with the default `PlexCleaner.json` config file.
-    - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
-    - `ToolsOptions:UseSystem`: Use tools from the system vs. from the Tools folder, this is the default on Linux.
-    - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.

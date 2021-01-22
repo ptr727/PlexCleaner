@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using System.Runtime.InteropServices;
 using System.IO;
+using Serilog;
+using System.Reflection;
 
 namespace PlexCleaner
 {
@@ -93,10 +95,8 @@ namespace PlexCleaner
                 mediaToolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
                 mediaToolInfo.Url = $"https://www.7-zip.org/a/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError(e);
                 return false;
             }
             return true;
@@ -127,7 +127,7 @@ namespace PlexCleaner
             string extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
 
             // Extract the update file
-            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
             if (!Tools.SevenZip.UnZip(updateFile, extractPath))
                 return false;
 

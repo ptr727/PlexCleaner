@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,11 +30,11 @@ namespace PlexCleaner
         public void WriteLine(string prefix)
         {
             foreach (VideoInfo info in Video)
-                Program.LogFile.LogConsole($"{prefix} : {info}");
+                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
             foreach (AudioInfo info in Audio)
-                Program.LogFile.LogConsole($"{prefix} : {info}");
+                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
             foreach (SubtitleInfo info in Subtitle)
-                Program.LogFile.LogConsole($"{prefix} : {info}");
+                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
         }
 
         public List<TrackInfo> GetTrackList()

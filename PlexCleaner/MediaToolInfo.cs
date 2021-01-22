@@ -1,4 +1,6 @@
 ﻿using InsaneGenius.Utilities;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 
 namespace PlexCleaner
@@ -25,7 +27,7 @@ namespace PlexCleaner
 
         public void WriteLine(string prefix)
         {
-            ConsoleEx.WriteLine($"{prefix} : {ToolType}, {Version}, \"{FileName}\", {Size}, {ModifiedTime}, \"{Url}\"");
+            Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}", prefix, ToolType, Version, FileName, Size, ModifiedTime, Url);
         }
 
         public int CompareTo(object obj)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner
 {
@@ -13,14 +14,11 @@ namespace PlexCleaner
             Watcher = new List<FileSystemWatcher>();
             WatchFolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
             WatchLock = new object();
-            LastWriteLine = string.Empty;
-            LastWriteLineLock = new object();
         }
 
         public bool MonitorFolders(List<string> folders)
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine("Monitoring folders ...");
+            Log.Logger.Information("Monitoring folders ...");
 
             void Changehandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
             void Renamehandler(object s, RenamedEventArgs e) => OnRenamed(e, this);
@@ -30,8 +28,7 @@ namespace PlexCleaner
             foreach (string folder in folders)
             {
                 // Create a file system watcher for the folder
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Monitoring : \"{folder}\".");
+                Log.Logger.Information("Monitoring : {Folder}", folder);
                 FileSystemWatcher watch = new FileSystemWatcher();
                 Watcher.Add(watch);
                 watch.Path = folder;
@@ -69,7 +66,7 @@ namespace PlexCleaner
                         // If not recently modified and all files in the folder are readable
                             if (value < settletime)
                                 if (!FileEx.AreFilesInDirectoryReadable(key))
-                                    WriteLine($"Folder not readable : \"{key}\"");
+                                    Log.Logger.Information("Folder not readable : {Folder}", key);
                                 else
                                     watchlist.Add(key);
 
@@ -84,9 +81,8 @@ namespace PlexCleaner
                     continue;
 
                 // Process changes in the watched folders
-                ConsoleEx.WriteLine("");
                 foreach (string folder in watchlist)
-                    ConsoleEx.WriteLine($"Monitored changes in : \"{folder}\"");
+                    Log.Logger.Information("Monitored changes in : {Folder}", folder);
                 Process process = new Process();
                 process.ProcessFolders(watchlist);
                 Process.DeleteEmptyFolders(watchlist);
@@ -108,7 +104,7 @@ namespace PlexCleaner
 
         private void OnChangedEx(FileSystemEventArgs e)
         {
-            WriteLineEvent($"OnChanged : {e.ChangeType} : \"{e.FullPath}\"");
+            Log.Logger.Information("OnChanged : {ChangeType} : {FullPath}", e.ChangeType, e.FullPath);
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Changed:
@@ -137,7 +133,7 @@ namespace PlexCleaner
 
         private void OnRenamedEx(RenamedEventArgs e)
         {
-            WriteLineEvent($"OnRenamed : {e.ChangeType} : \"{e.OldFullPath}\" to \"{e.FullPath}\"");
+            Log.Logger.Information("OnRenamed : {ChangeType} : {OldFullPath} to {FullPath}", e.ChangeType, e.OldFullPath, e.FullPath);
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Renamed:
@@ -168,38 +164,8 @@ namespace PlexCleaner
         private void OnErrorEx(ErrorEventArgs e)
         {
             // Cancel in case of error
-            WriteLineError($"OnError : {e.GetException()}");
+            Log.Logger.Error(e.GetException(), "OnErrorEx()");
             Program.Cancel();
-        }
-
-        // Write to the console, but only write if the output is different to the previous output
-        private void WriteLine(string value)
-        {
-            WriteLine(ConsoleEx.OutputColor, value);
-        }
-
-        private void WriteLineEvent(string value)
-        {
-            WriteLine(ConsoleEx.EventColor, value);
-        }
-
-        private void WriteLineError(string value)
-        {
-            WriteLine(ConsoleEx.ErrorColor, value);
-        }
-
-        private void WriteLine(ConsoleColor color, string value)
-        {
-            // Lock
-            lock (LastWriteLineLock)
-            {
-                // Compare with previous output
-                if (LastWriteLine.Equals(value, StringComparison.OrdinalIgnoreCase))
-                    return;
-
-                ConsoleEx.WriteLineColor(color, value);
-                LastWriteLine = value;
-            }
         }
 
         private void OnChanged(string pathname)
@@ -233,13 +199,13 @@ namespace PlexCleaner
                 if (WatchFolders.ContainsKey(foldername))
                 {
                     // Update the modified time
-                    WriteLine($"Updating folder for processing by {DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime)} : \"{foldername}\"");
+                    Log.Logger.Information("Updating folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), foldername);
                     WatchFolders[foldername] = DateTime.UtcNow;
                 }
                 else
                 {
                     // Add the folder
-                    WriteLine($"Adding folder for processing by {DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime)} : \"{foldername}\"");
+                    Log.Logger.Information("Adding folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), foldername);
                     WatchFolders.Add(foldername, DateTime.UtcNow);
                 }
             }
@@ -254,7 +220,5 @@ namespace PlexCleaner
         private readonly List<FileSystemWatcher> Watcher;
         private readonly Dictionary<string, DateTime> WatchFolders;
         private readonly object WatchLock;
-        private string LastWriteLine;
-        private readonly object LastWriteLineLock;
     }
 }

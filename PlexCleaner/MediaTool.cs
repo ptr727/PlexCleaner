@@ -1,6 +1,8 @@
 using System;
 using InsaneGenius.Utilities;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace PlexCleaner
 {
@@ -47,7 +49,7 @@ namespace PlexCleaner
                 return false;
 
             // Extract the update file
-            ConsoleEx.WriteLine($"Extracting \"{updateFile}\" ...");
+            LogOptions.Logger.LogInformation("Extracting {UpdateFile} ...", updateFile);
             if (!Tools.SevenZip.UnZip(updateFile, toolPath))
                 return false;
 
@@ -112,8 +114,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
+            Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters);
@@ -125,8 +126,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
+            Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output);
@@ -138,8 +138,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(parameters));
             parameters = parameters.Trim();
 
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineTool($"{GetToolType()} : {parameters}");
+            Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
             return ProcessEx.Execute(path, parameters, out output, out error);
