@@ -126,7 +126,7 @@ Below are a few examples of issues I've experienced over the many years of using
 - Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner), and updated weekly.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
-- The container is intented to be used in interactive mode, for long running operations run in a `screen` session.
+- The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
 
 Example, run an interactive shell:
 

@@ -137,7 +137,7 @@ namespace PlexCleaner
 
         public override string ToString()
         {
-            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}";
+            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}, HasErrors : {HasErrors}";
         }
     }
 }
