@@ -39,7 +39,7 @@ namespace PlexCleaner
 
             // Are any frames interlaced frames
             // TODO : Figure out what reliable numbers would look like, e.g. at > 0 then decomb the result is still > 0?
-            return (singleFrame > 0.0 || multiFrame > 0.0);
+            return singleFrame > 0.0 || multiFrame > 0.0;
         }
 
         public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
@@ -47,7 +47,7 @@ namespace PlexCleaner
             if (mediaFile == null)
                 throw new ArgumentNullException(nameof(mediaFile));
             
-            return FfMpegTool.GetIdetInfo(mediaFile.FullName, out idetInfo);
+            return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
         }
     }
 }

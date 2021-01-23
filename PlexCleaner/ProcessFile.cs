@@ -1,5 +1,6 @@
 ﻿using InsaneGenius.Utilities;
 using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,8 +37,7 @@ namespace PlexCleaner
                 return true;
 
             // Delete the file
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Deleting file with undesired extension : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Deleting file with undesired extension : {Name}", MediaFile.Name);
 
             // Delete the file
             if (!Program.Options.TestNoModify &&
@@ -73,8 +73,7 @@ namespace PlexCleaner
                 return true;
 
             // Media file does not exists, delete this sidecar file
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Deleting sidecar file with no matching MKV file : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Deleting sidecar file with no matching MKV file : {Name}", MediaFile.Name);
 
             // Delete the file
             if (!Program.Options.TestNoModify &&
@@ -109,8 +108,7 @@ namespace PlexCleaner
                 return true;
 
             // ReMux the file
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"ReMux file matched by extension : \"{MediaFile.Name}\"");
+            Log.Logger.Information("ReMux file matched by extension : {Name}", MediaFile.Name);
 
             // Remux the file, use the new filename
             // Convert will test for Options.TestNoModify
@@ -121,14 +119,15 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Refresh
-            modified = true;
-            MediaFile = new FileInfo(outputname);
-
             // In test mode the file will not be remuxed to MKV so abort
             if (Program.Options.TestNoModify)
                 return false;
 
+            // Extension may have changed
+            MediaFile = new FileInfo(outputname);
+
+            // Refresh
+            modified = true;
             return Refresh(true);
         }
 
@@ -147,8 +146,7 @@ namespace PlexCleaner
                 return true;
 
             // ReMux the file
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"ReMux \"{MkvMergeInfo.Container}\" container : \"{MediaFile.Name}\"");
+            Log.Logger.Information("ReMux {Container} container : {Name}", MkvMergeInfo.Container, MediaFile.Name);
 
             // Remux the file, use the new filename
             // Convert will test for Options.TestNoModify
@@ -159,14 +157,15 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Refresh
-            modified = true;
-            MediaFile = new FileInfo(outputname);
-
             // In test mode the file will not be remuxed to MKV so abort
             if (Program.Options.TestNoModify)
                 return false;
 
+            // Extension may have changed
+            MediaFile = new FileInfo(outputname);
+
+            // Refresh
+            modified = true;
             return Refresh(true);
         }
 
@@ -175,8 +174,7 @@ namespace PlexCleaner
             // Do we have any errors
             if (FfProbeInfo.HasErrors || MkvMergeInfo.HasErrors || MediaInfoInfo.HasErrors)
             {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Warning : Media file has metadata errors : \"{MediaFile.Name}\"");
+                Log.Logger.Warning("Media file has metadata errors : {Name}", MediaFile.Name);
             }
         }
 
@@ -195,12 +193,11 @@ namespace PlexCleaner
                 return true;
 
             // Remove tags
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Clearing all tags from media file : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Clearing all tags from media file : {Name}", MediaFile.Name);
 
             // Delete the tags
             if (!Program.Options.TestNoModify &&
-                !MkvTool.ClearMkvTags(MediaFile.FullName))
+                !Tools.MkvPropEdit.ClearMkvTags(MediaFile.FullName, MkvMergeInfo))
             {
                 // Error
                 Result = false;
@@ -226,14 +223,13 @@ namespace PlexCleaner
                 // Nothing to do
                 return true;
 
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Setting unknown language tracks to \"{Program.Config.ProcessOptions.DefaultLanguage}\" : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Setting unknown language tracks to {DefaultLanguage} : {Name}", Program.Config.ProcessOptions.DefaultLanguage, MediaFile.Name);
             known.WriteLine("Known");
             unknown.WriteLine("Unknown");
 
             // Set the track language to the default language
             if (!Program.Options.TestNoModify &&
-                !MkvTool.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
+                !Tools.MkvPropEdit.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
             {
                 // Error
                 Result = false;
@@ -254,15 +250,14 @@ namespace PlexCleaner
             // Start out with keeping all the tracks
             // TODO : Deep vs. shallow vs. value compare
             MediaInfo keepTracks = MkvMergeInfo;
-            MediaInfo removeTracks = new MediaInfo(MediaInfo.ParserType.MkvMerge);
+            MediaInfo removeTracks = new MediaInfo(MediaTool.ToolType.MkvMerge);
 
             // Get all unwanted language tracks
             // Use MKVMerge logic
             if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
                 MkvMergeInfo.FindUnwantedLanguage(keepLanguages, out MediaInfo keep, out MediaInfo remove))
             {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Removing unwanted language tracks : \"{MediaFile.Name}\"");
+                Log.Logger.Information("Removing unwanted language tracks : {Name}", MediaFile.Name);
                 keep.WriteLine("Keep");
                 remove.WriteLine("Remove");
 
@@ -277,8 +272,7 @@ namespace PlexCleaner
             if (Program.Config.ProcessOptions.RemoveDuplicateTracks &&
                 MkvMergeInfo.FindDuplicateTracks(preferredAudioFormats, out keep, out remove))
             {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Removing duplicate tracks : \"{MediaFile.Name}\"");
+                Log.Logger.Information("Removing duplicate tracks : {Name}", MediaFile.Name);
                 keep.WriteLine("Keep");
                 remove.WriteLine("Remove");
 
@@ -293,8 +287,7 @@ namespace PlexCleaner
                 // Done
                 return true;
 
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Re-muxing union of tracks : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Re-muxing union of tracks : {Name}", MediaFile.Name);
             keepTracks.WriteLine("Keep");
             removeTracks.WriteLine("Remove");
 
@@ -307,9 +300,11 @@ namespace PlexCleaner
                 return false;
             }
 
+            // Extension may have changed
+            MediaFile = new FileInfo(outputname);
+
             // Refresh
             modified = true;
-            MediaFile = new FileInfo(outputname);
             return Refresh(true);
         }
 
@@ -326,18 +321,9 @@ namespace PlexCleaner
             if (!FfProbeInfo.FindNeedDeInterlace(out MediaInfo keepTracks, out MediaInfo deinterlaceTracks))
                 return true;
 
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"De-interlacing interlaced video : \"{MediaFile.Name}\"");
+            Log.Logger.Information("De-interlacing interlaced video : {Name}", MediaFile.Name);
             keepTracks.WriteLine("Keep");
             deinterlaceTracks.WriteLine("DeInterlace");
-
-            // TODO : Add support for H265 encoding
-            if (FfProbeInfo.Video.First().Format.Equals("HEVC", StringComparison.OrdinalIgnoreCase))
-            {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Warning : De-interlacing H265 to H264 not supported, skipping de-interlace : \"{MediaFile.Name}\"");
-                return true;
-            }
 
             // TODO : De-interlacing before re-encoding may be undesired if the media also requires re-encoding
 
@@ -350,9 +336,11 @@ namespace PlexCleaner
                 return false;
             }
 
+            // Extension may have changed
+            MediaFile = new FileInfo(outputname);
+
             // Refresh
             modified = true;
-            MediaFile = new FileInfo(outputname);
             return Refresh(true);
         }
 
@@ -371,18 +359,9 @@ namespace PlexCleaner
                 // Nothing to do
                 return true;
 
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Re-encoding required tracks : \"{MediaFile.Name}\"");
+            Log.Logger.Information("Re-encoding required tracks : {Name}", MediaFile.Name);
             keep.WriteLine("Passthrough");
             reencode.WriteLine("ReEncode");
-
-            // TODO : Add support for H265 encoding
-            if (FfProbeInfo.Video.First().Format.Equals("HEVC", StringComparison.OrdinalIgnoreCase))
-            {
-                ConsoleEx.WriteLine("");
-                Program.LogFile.LogConsole($"Warning : De-interlacing H265 to H264 not supported, skipping re-encode : \"{MediaFile.Name}\"");
-                return true;
-            }
 
             // Reencode selected tracks
             // Convert will test for Options.TestNoModify
@@ -393,9 +372,11 @@ namespace PlexCleaner
                 return false;
             }
 
+            // Extension may have changed
+            MediaFile = new FileInfo(outputname);
+
             // Refresh
             modified = true;
-            MediaFile = new FileInfo(outputname);
             return Refresh(true);
         }
 
@@ -416,7 +397,7 @@ namespace PlexCleaner
 
             // Skip files that are older than the minimum age
             if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
-                (DateTime.UtcNow - MediaFile.LastWriteTimeUtc) > TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge))
+                DateTime.UtcNow - MediaFile.LastWriteTimeUtc > TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge))
                 // Done
                 return true;
 
@@ -428,8 +409,7 @@ namespace PlexCleaner
                 if (MediaInfoInfo.Video.Count == 0 || MediaInfoInfo.Audio.Count == 0)
                 {
                     // File is missing required streams
-                    ConsoleEx.WriteLine("");
-                    Program.LogFile.LogConsole($"Error : File missing required tracks : \"{MediaFile.Name}\"");
+                    Log.Logger.Error("File missing required tracks : {Name}", MediaFile.Name);
                     MediaInfoInfo.WriteLine("Invalid");
                     
                     // Done
@@ -437,12 +417,11 @@ namespace PlexCleaner
                     break;
                 }
 
-                // Test duration
+                // Test playback duration
                 if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration))
                 {
-                    // File is too short
-                    ConsoleEx.WriteLine("");
-                    Program.LogFile.LogConsole($"Error : File play duration is too short ({MkvMergeInfo.Duration}) : \"{MediaFile.Name}\"");
+                    // Playback duration is too short
+                    Log.Logger.Error("File play duration is too short ({Duration}) : {Name}", MkvMergeInfo.Duration, MediaFile.Name);
                     MkvMergeInfo.WriteLine("Short");
                     
                     // Done
@@ -451,179 +430,89 @@ namespace PlexCleaner
                 }
 
                 // Verify media streams
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Verifying media streams : \"{MediaFile.Name}\"");
-                if (!FfMpegTool.VerifyMedia(MediaFile.FullName, out string error))
+                Log.Logger.Information("Verifying media streams : {Name}", MediaFile.Name);
+                if (!Tools.FfMpeg.VerifyMedia(MediaFile.FullName, out string error))
                 {
                     // Cancel requested
-                    if (Program.Cancel.State)
+                    if (Program.IsCancelledError())
                         return false;
 
                     // Failed stream validation
-                    ConsoleEx.WriteLine("");
-                    Program.LogFile.LogConsole($"Error : Media stream validation failed : \"{MediaFile.Name}\"");
-                    Program.LogFile.LogConsole(error);
+                    Log.Logger.Error("Media stream validation failed : {Name}", MediaFile.Name);
+                    Log.Logger.Error(error);
 
-                    // Don't repair in test mode
-                    // Don't modify if repair not enabled
-                    if (Program.Options.TestNoModify ||
-                        !Program.Config.VerifyOptions.AutoRepair)
+                    // Attempt file repair
+                    if (!Repair(ref modified))
                     {
+                        // Cancel requested
+                        if (Program.IsCancelledError())
+                            return false;
+
                         // Done
                         failed = true;
                         break;
                     }
-
-                    // Try to repair the file
-                    for (;;)
-                    {
-                        // TODO : Analyze the error output and conditionally repair only the audio or video track
-                        // [aac @ 000001d3c5652440] noise_facs_q 32 is invalid
-                        // [ac3 @ 000002167861a840] error decoding the audio block
-                        // [h264 @ 00000270a07f6ac0] Missing reference picture, default is 65514
-                        // [h264 @ 000001979ebaa7c0] mmco: unref short failure
-                        // [h264 @ 00000152da828940] number of reference frames (0+5) exceeds max (4; probably corrupt input), discarding one
-                        // [NULL @ 000002a2115acac0] Invalid NAL unit size (-1148261185 > 8772).
-                        // [h264 @ 000002a21166bd00] Invalid NAL unit size (-1148261185 > 8772).
-                        // [matroska,webm @ 0000029a256d9280] Length 7 indicated by an EBML number's first byte 0x02 at pos 1601277 (0x186efd) exceeds max length 4.
-
-                        // TODO: Can we ignore the monotonically increasing display time stamp issue?
-                        // Lots of similar reports, can't find a CLI option to disable or ignore this as an error
-                        // Also see FFmpeg AVFMT_TS_NONSTRICT option
-                        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 8 >= 8
-                        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 12 >= 12
-                        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 16 >= 16
-                        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 20 >= 20
-                        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 348 >= 348
-
-                        // TODO: Handbrake sometimes fails with what looks like a remux error
-                        // ERROR: avformatMux: track 1, av_interleaved_write_frame failed with error 'Invalid argument'
-                        // M[15:35:43] libhb: work result = 4
-
-                        // FFmpeg fails to decode some files, so we use Handbrake to re-encode the video and audio
-                        // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
-                        // https://trac.ffmpeg.org/search?q=%22non+monotonically+increasing+dts+to+muxer%22&noquickjump=1&milestone=on&ticket=on&wiki=on
-
-                        // Re-encode audio and video
-                        ConsoleEx.WriteLine("");
-                        Program.LogFile.LogConsole($"Attempting media repair by re-encoding : \"{MediaFile.Name}\"");
-                        if (!Convert.ConvertToMkvHandBrake(MediaFile.FullName, out string outputname))
-                        {
-                            // Cancel requested
-                            if (Program.Cancel.State)
-                                return false;
-
-                            ConsoleEx.WriteLine("");
-                            Program.LogFile.LogConsole($"Error : Re-encoding failed : \"{MediaFile.Name}\"");
-
-                            // Failed repair
-                            failed = true;
-                            break;
-                        }
-
-                        // Re-verify after repair
-                        ConsoleEx.WriteLine("");
-                        ConsoleEx.WriteLine($"Re-verifying media streams : \"{MediaFile.Name}\"");
-                        if (!FfMpegTool.VerifyMedia(MediaFile.FullName, out error))
-                        {
-                            // Cancel requested
-                            if (Program.Cancel.State)
-                                return false;
-
-                            // Failed stream validation
-                            ConsoleEx.WriteLine("");
-                            Program.LogFile.LogConsole($"Error : Media stream validation failed after repair attempt : \"{MediaFile.Name}\"");
-                            Program.LogFile.LogConsole(error);
-
-                            // Failed repair
-                            failed = true;
-                            break;
-                        }
-
-                        // Repair succeeded
-                        ConsoleEx.WriteLine("");
-                        Program.LogFile.LogConsole($"Repair succeeded : \"{MediaFile.Name}\"");
-
-                        // Refresh
-                        modified = true;
-                        MediaFile = new FileInfo(outputname);
-                        if (!Refresh(true))
-                        {
-                            // Error
-                            Result = false;
-                            return false;
-                        }
-
-                        // Done
-                        break;
-                    }
-
-                    // Done
-                    if (failed)
-                        break;
                 }
 
+                // Get and compare interlaced flags
                 {
                     // TODO: From sampling files GetIdetInfo is not a reliable way of detecting interlacing
-                    // Get interlaced flags
-                    bool mediainfo = MediaInfoInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
-                    bool ffprobe = FfProbeInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
+                    bool mediainfoInterlaced = MediaInfoInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
+                    bool ffprobeInterlaced = FfProbeInfo.FindNeedDeInterlace(out MediaInfo _, out MediaInfo _);
                     // MkvMergeInfo does not implement interlace detection
-                    if (mediainfo != ffprobe)
+                    if (mediainfoInterlaced != ffprobeInterlaced)
                     {
-                        ConsoleEx.WriteLine("");
-                        Program.LogFile.LogConsole($"Warning : Interlaced flags do not match : \"{MediaFile.Name}\"");
-                        Program.LogFile.LogConsole($"MediaInfoInfo.FindNeedDeInterlace() : {mediainfo}");
-                        Program.LogFile.LogConsole($"FfProbeInfo.FindNeedDeInterlace() : {ffprobe}");
-                        ConsoleEx.WriteLine($"Calculating idet info : \"{MediaFile.Name}\"");
-                        if (FfMpegTool.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
+                        Log.Logger.Warning("Interlaced flags do not match : {Name}", MediaFile.Name);
+                        Log.Logger.Warning("MediaInfoInfo.FindNeedDeInterlace() : {MediainfoInterlaced}, FfProbeInfo.FindNeedDeInterlace() : {FfprobeInterlaced}", mediainfoInterlaced, ffprobeInterlaced);
+                        Log.Logger.Information("Calculating idet info : {Name}", MediaFile.Name);
+                        if (Tools.FfMpeg.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
                         {
                             bool idet = idetinfo.IsInterlaced(out double single, out double multi);
-                            Program.LogFile.LogConsole($"FfMpegIdetInfo.IsInterlaced ({single:P} / {multi:P}) : {idet}");
+                            Log.Logger.Information("FfMpegIdetInfo.IsInterlaced ({Single:P} / {Multi:P}) : {Idet}", single, multi, idet);
                         }
                         else 
                         {
                             // Cancel requested
-                            if (Program.Cancel.State)
+                            if (Program.IsCancelledError())
                                 return false;
 
-                            ConsoleEx.WriteLine("");
-                            Program.LogFile.LogConsole($"Error : Failed to calculate idet info : \"{MediaFile.Name}\"");
+                            Log.Logger.Error("Failed to calculate idet info : {Name}", MediaFile.Name);
                             // Ignore error
                         }
                     }
                 }
 
                 // Cancel requested
-                if (Program.Cancel.State)
+                if (Program.IsCancelled())
                     return false;
 
                 // Compute the bitrate
+                // TODO : Verify that bitrate is acceptable for the resolution of the content, i.e. no YIFY, no fake 4K
+                // https://4kmedia.org/real-or-fake-4k/
+                // https://en.wikipedia.org/wiki/YIFY
                 if (Program.Config.VerifyOptions.MaximumBitrate > 0)
                 {
-                    ConsoleEx.WriteLine("");
-                    ConsoleEx.WriteLine($"Calculating bitrate info : \"{MediaFile.Name}\"");
+                    Log.Logger.Information("Calculating bitrate info : {Name}", MediaFile.Name);
                     if (GetBitrateInfo(out BitrateInfo bitrateInfo))
                     {
-                        // TODO : Verify that bitrate is acceptable for the resolution of the content, i.e. no YIFY, no fake 4K
-                        // https://4kmedia.org/real-or-fake-4k/
-                        // https://en.wikipedia.org/wiki/YIFY
+                        // Print combined audio and video bitrate
+                        Log.Logger.Information(bitrateInfo.CombinedBitrate.ToString());
 
-                        if (bitrateInfo.ThresholdExceeded > 0)
-                        { 
-                            ConsoleEx.WriteLine("");
-                            Program.LogFile.LogConsole($"Warning : Maximum bitrate exceeded : {Format.BytesToKilo(bitrateInfo.Maximum * 8, "bps")} > {Format.BytesToKilo(bitrateInfo.Threshold * 8, "bps")} : \"{MediaFile.Name}\"");
-                            Program.LogFile.LogConsole(bitrateInfo.ToString());
-                        }
+                        // Combined bitrate exceeded threshold
+                        if (bitrateInfo.CombinedBitrate.Exceeded > 0)
+                            Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate} : {Name}", Format.BytesToKilo(bitrateInfo.CombinedBitrate.Maximum * 8), Format.BytesToKilo(Program.Config.VerifyOptions.MaximumBitrate, MediaFile.Name));
+
+                        // Audio bitrate exceeds video bitrate, may indicate an error with the video track
+                        if (bitrateInfo.AudioBitrate.Average > bitrateInfo.VideoBitrate.Average)
+                            Log.Logger.Warning("Audio bitrate exceeds Video bitrate : {AudioBitrate} > {VideoBitrate} : {Name}", Format.BytesToKilo(bitrateInfo.AudioBitrate.Average * 8, "bps"), Format.BytesToKilo(bitrateInfo.VideoBitrate.Average, "bps"), MediaFile.Name);
                     }
                     else 
                     {
                         // Cancel requested
-                        if (Program.Cancel.State)
+                        if (Program.IsCancelledError())
                             return false;
 
-                        ConsoleEx.WriteLine("");
-                        Program.LogFile.LogConsole($"Error : Failed to calculate bitrate info : \"{MediaFile.Name}\"");
+                        Log.Logger.Error("Failed to calculate bitrate info : {Name}", MediaFile.Name);
                         // Ignore error
                     }
                 }
@@ -633,7 +522,7 @@ namespace PlexCleaner
             }
 
             // Cancel requested
-            if (Program.Cancel.State)
+            if (Program.IsCancelled())
                 return false;
 
             // All ok
@@ -653,6 +542,14 @@ namespace PlexCleaner
                 return true;
             }
 
+            // Add the failed file to the ignore list
+            // Don't add if delete not enabled
+            // Don't add in test mode
+            if (!Program.Options.TestNoModify &&
+                !Program.Config.VerifyOptions.DeleteInvalidFiles &&
+                Program.Config.VerifyOptions.RegisterInvalidFiles)
+                Program.Config.ProcessOptions.FileIgnoreList.Add(MediaFile.FullName);
+
             // Don't delete if delete not enabled
             // Don't delete in test mode
             if (Program.Options.TestNoModify ||
@@ -663,9 +560,8 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Delete file
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Deleting media file due to failed validation : \"{MediaFile.FullName}\"");
+            // Delete the media file
+            Log.Logger.Information("Deleting media file due to failed validation : {Name}", MediaFile.FullName);
             if (!FileEx.DeleteFile(MediaFile.FullName) || 
                 !FileEx.DeleteFile(SidecarFile.GetSidecarName(MediaFile)))
             {
@@ -681,10 +577,118 @@ namespace PlexCleaner
             return false;
         }
 
+        public bool Repair(ref bool modified)
+        {
+            // Don't repair in test mode
+            // Don't modify if repair not enabled
+            if (Program.Options.TestNoModify ||
+                !Program.Config.VerifyOptions.AutoRepair)
+            {
+                // Done
+                return false;
+            }
+
+            // TODO : Analyze the error output and conditionally repair only the audio or video track
+            // [aac @ 000001d3c5652440] noise_facs_q 32 is invalid
+            // [ac3 @ 000002167861a840] error decoding the audio block
+            // [h264 @ 00000270a07f6ac0] Missing reference picture, default is 65514
+            // [h264 @ 000001979ebaa7c0] mmco: unref short failure
+            // [h264 @ 00000152da828940] number of reference frames (0+5) exceeds max (4; probably corrupt input), discarding one
+            // [NULL @ 000002a2115acac0] Invalid NAL unit size (-1148261185 > 8772).
+            // [h264 @ 000002a21166bd00] Invalid NAL unit size (-1148261185 > 8772).
+            // [matroska,webm @ 0000029a256d9280] Length 7 indicated by an EBML number's first byte 0x02 at pos 1601277 (0x186efd) exceeds max length 4.
+
+            // TODO: Can we ignore the monotonically increasing display time stamp issue?
+            // Lots of similar reports, can't find a CLI option to disable or ignore this as an error
+            // Also see FFmpeg AVFMT_TS_NONSTRICT option
+            // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 8 >= 8
+            // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 12 >= 12
+            // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 16 >= 16
+            // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 20 >= 20
+            // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 348 >= 348
+
+            // TODO: Handbrake sometimes fails with what looks like a remux error
+            // ERROR: avformatMux: track 1, av_interleaved_write_frame failed with error 'Invalid argument'
+            // M[15:35:43] libhb: work result = 4
+
+            // TODO: FfMpeg fails to decode some files
+            // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
+            // https://trac.ffmpeg.org/search?q=%22non+monotonically+increasing+dts+to+muxer%22&noquickjump=1&milestone=on&ticket=on&wiki=on
+
+            // TODO: FfMpeg x265 requires input resolution to be multiple of chroma subsampling
+            // https://stackoverflow.com/questions/50371919/ffmpeg-cannot-open-libx265-encoder-error-initializing-output-stream-00-err
+            // http://www.ffmpeg-archive.org/scaling-failed-height-must-be-an-integer-td4671624.html
+            // E.g. 1280 x 718 will fail, 1280 x 720 will work
+            // https://ffmpeg.org/ffmpeg-filters.html#crop
+            // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
+
+            // Create a temp filename based on the input name
+            string tempname = Path.ChangeExtension(MediaFile.FullName, ".tmp");
+
+            // Convert using ffmpeg
+            Log.Logger.Information("Attempting media repair by re-encoding using FfMpeg : {Name}", MediaFile.Name);
+            if (!Tools.FfMpeg.ConvertToMkv(MediaFile.FullName, tempname))
+            {
+                // Failed, delete temp file
+                FileEx.DeleteFile(tempname);
+
+                // Cancel requested
+                if (Program.IsCancelledError())
+                    return false;
+
+                // Try again using handbrake
+                Log.Logger.Information("Attempting media repair by re-encoding using HandBrake : {Name}", MediaFile.Name);
+                if (!Tools.HandBrake.ConvertToMkv(MediaFile.FullName, tempname))
+                {
+                    // Failed, delete temp file
+                    FileEx.DeleteFile(tempname);
+
+                    // Cancel requested
+                    if (Program.IsCancelledError())
+                        return false;
+
+                    // Failed again
+                    Log.Logger.Error("Re-encoding failed : {Name}", MediaFile.Name);
+                    return false;
+                }
+            }
+
+            // Re-encoding succeeded, re-verify the temp file
+            Log.Logger.Information("Re-verifying media streams : {Name}", MediaFile.Name);
+            if (!Tools.FfMpeg.VerifyMedia(tempname, out string error))
+            {
+                // Failed, delete temp file
+                FileEx.DeleteFile(tempname);
+
+                // Cancel requested
+                if (Program.IsCancelledError())
+                    return false;
+
+                // Failed stream validation
+                Log.Logger.Error("Media stream validation failed after repair attempt : {Name}", MediaFile.Name);
+                Log.Logger.Error(error);
+                return false;
+            }
+
+            // Rename the temp file to the original file
+            if (!FileEx.RenameFile(tempname, MediaFile.FullName))
+                return false;
+
+            // Repair succeeded
+            Log.Logger.Information("Repair succeeded : {Name}", MediaFile.Name);
+
+            // Refresh
+            modified = true;
+            return Refresh(true);
+        }
+
         private bool Refresh(bool refresh)
         {
             // Call Refresh() at each processing function exit
             // The refresh hint will force a reload, else the media file will be compared with the sidecar and conditionally updated
+
+            if (refresh)
+                MediaFile = new FileInfo(MediaFile.FullName);
 
             if (Program.Config.ProcessOptions.UseSidecarFiles)
             {
@@ -706,10 +710,7 @@ namespace PlexCleaner
             }
 
             // Get info directly
-            MediaInfo ffprobeInfo = null;
-            MediaInfo mkvmergeInfo = null;
-            MediaInfo mediainfoInfo = null;
-            if (!MediaInfo.GetMediaInfo(MediaFile, out ffprobeInfo, out mkvmergeInfo, out mediainfoInfo))
+            if (!MediaInfo.GetMediaInfo(MediaFile, out MediaInfo ffprobeInfo, out MediaInfo mkvmergeInfo, out MediaInfo mediainfoInfo))
             {
                 Result = false;
                 return false;
@@ -727,7 +728,7 @@ namespace PlexCleaner
         public bool GetMediaInfo()
         {
             // By now all the files we are processing should be MKV files
-            Debug.Assert(MkvTool.IsMkvFile(MediaFile));
+            Debug.Assert(MkvMergeTool.IsMkvFile(MediaFile));
 
             return Refresh(false);
         }
@@ -737,17 +738,16 @@ namespace PlexCleaner
             bool timestampChanged = false;
             MediaFile.Refresh();
             DateTime fileTime = MediaFile.LastWriteTimeUtc;
-            ConsoleEx.WriteLine("");
-            Program.LogFile.LogConsole($"Information : MonitorFileTime : {fileTime} : \"{MediaFile.Name}\"");
+            Log.Logger.Information("MonitorFileTime : {FileTime} : {Name}\"", fileTime, MediaFile.Name);
             for (int i = 0; i < seconds; i ++)
             {
-                if (Program.Cancel.WaitForSet(1000))
+                if (Program.IsCancelled(1000))
                     break;
                 MediaFile.Refresh();
                 if (MediaFile.LastWriteTimeUtc != fileTime)
                 {
                     timestampChanged = true;
-                    Program.LogFile.LogConsole($"Warning : MonitorFileTime : {MediaFile.LastWriteTimeUtc} != {fileTime} : \"{MediaFile.Name}\"");
+                    Log.Logger.Warning("MonitorFileTime : {LastWriteTimeUtc} != {FileTime} : {Name}", MediaFile.LastWriteTimeUtc, fileTime, MediaFile.Name);
                 }
                 fileTime = MediaFile.LastWriteTimeUtc;
             }
@@ -759,16 +759,15 @@ namespace PlexCleaner
         {
             bitrateInfo = null;
 
-            List<Packet> packetList = null;
-            if (!FfMpegTool.GetPacketInfo(MediaFile.FullName, out packetList))
+            // Get packet info
+            if (!Tools.FfProbe.GetPacketInfo(MediaFile.FullName, out List<Packet> packetList))
                 return false;
 
-            // Compute bitrate
-            bitrateInfo = new BitrateInfo 
-            {
-                Threshold = Program.Config.VerifyOptions.MaximumBitrate / 8
-            };
-            bitrateInfo.Calculate(packetList);
+            // Compute bitrate from packets
+            // Use the first video and audio track for calculation
+            // TODO: Use default tracks
+            bitrateInfo = new BitrateInfo();
+            bitrateInfo.Calculate(packetList, FfProbeInfo.Video.First().Id, FfProbeInfo.Audio.First().Id, Program.Config.VerifyOptions.MaximumBitrate / 8);
 
             return true;
         }
@@ -779,6 +778,6 @@ namespace PlexCleaner
         public MediaInfo MediaInfoInfo { get; set; }
 
         private FileInfo MediaFile;
-        private SidecarFile SidecarFile = new SidecarFile();
+        private readonly SidecarFile SidecarFile = new SidecarFile();
     }
 }

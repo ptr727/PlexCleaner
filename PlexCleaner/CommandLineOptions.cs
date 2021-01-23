@@ -68,6 +68,8 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(rootCommand));
 
             // Path to the settings file, required
+            // IsRequired flag is ignored on global options
+            // https://github.com/dotnet/command-line-api/issues/1138
             rootCommand.AddOption(
                 new Option<string>("--settingsfile")
                 {
@@ -96,10 +98,10 @@ namespace PlexCleaner
         {
             // Create default settings file
             return new Command("defaultsettings")
-            {
-                Description = "Write default values to settings file",
-                Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteDefaultSettingsCommand)
-            };
+                {
+                    Description = "Write default values to settings file",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteDefaultSettingsCommand)
+                };
         }
 
         private static Command CreateCheckForNewToolsCommand()

@@ -1,14 +1,18 @@
 {
   "ToolsOptions": {
+    // Use system installed tools
+    "UseSystem": false,
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
     "RootRelative": true
   },
   "ConvertOptions": {
-    // Encoding video quality
+    // Enable H.265 encoding, else use H.264
+    "EnableH265Encoder": true,
+    // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
-    // Encoding audio codec
+    // Audio encoding codec
     "AudioEncodeCodec": "ac3"
   },
   "ProcessOptions": {
@@ -36,7 +40,7 @@
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -65,6 +69,7 @@
     // Enable verify
     "Verify": true,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
+    // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
@@ -81,8 +86,10 @@
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
-    // Delete media files that fail verification and fail repair
-    "DeleteInvalidFiles": true,
+    // Delete media files that fail repair
+    "DeleteInvalidFiles": false,
+    // Add media files that fail repair to the FileIgnoreList setting
+    "RegisterInvalidFiles": true,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file

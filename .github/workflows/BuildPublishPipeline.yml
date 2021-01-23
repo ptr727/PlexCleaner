@@ -14,19 +14,10 @@ jobs:
 
     steps:
 
-      # Checkout code
-      - name: 'Checkout Code'
-        uses: actions/checkout@v2
-        with:
-          # Get all history for version calculation using GitVersion
-          fetch-depth: 0
-
+      # TODO: Build and push docker using same build used for release
+      
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: 'Setup .NET Core SDK 3.1'
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.x'
       - name: 'Setup .NET SDK 5.0'
         uses: actions/setup-dotnet@v1
         with:
@@ -35,26 +26,40 @@ jobs:
       # Install GitVersion
       # Requires .NET Core 3.1, does not support .NET 5.0
       # https://github.com/marketplace/actions/gittools
+      - name: 'Setup .NET Core SDK 3.1'
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
       - name: 'Install GitVersion'
-        uses: gittools/actions/gitversion/setup@v0.9.7
+        uses: gittools/actions/gitversion/setup@v0
         with:
           versionSpec: '5.x'
+
+      # Checkout code
+      # https://github.com/marketplace/actions/checkout
+      - name: 'Checkout Code'
+        uses: actions/checkout@v2
+        with:
+          # Get all history for version calculation using GitVersion
+          fetch-depth: 0
 
       # Run GitVersion
       # https://github.com/marketplace/actions/gittools
       - name: 'Run GitVersion Tool'
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v0.9.7
+        uses: gittools/actions/gitversion/execute@v0
 
-      # Build and publish project to folder
+      # Build and publish project to ./Publish
       # Replace version information with GitVersion attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
-      - name: 'Build Project'
-        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --output ./PlexCleaner/Artifacts -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+      - name: 'Build Project win-x64'
+        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime win-x64 --self-contained false --output ./Publish/win-x64 -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+      - name: 'Build Project linux-x64'
+        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Publish/linux-x64 -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
 
       # Zip the output
       - name: 'Zip Output'
-        run: 7z.exe a -t7z ./PlexCleaner.7z ./PlexCleaner/Artifacts/*
+        run: 7z a -t7z ./Publish/PlexCleaner.7z ./Publish/*
 
       # Create GitHub release
       # https://github.com/marketplace/actions/automatic-releases
@@ -71,5 +76,5 @@ jobs:
           prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
             LICENSE
-            ./PlexCleaner.7z
+            ./Publish/PlexCleaner.7z
    

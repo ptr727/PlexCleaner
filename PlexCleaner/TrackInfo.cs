@@ -26,6 +26,7 @@ namespace PlexCleaner
                 !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 HasErrors = true;
+                Serilog.Log.Logger.Warning("Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
             }
 
             // Set language
@@ -66,8 +67,8 @@ namespace PlexCleaner
             else if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) || Language.Equals("null", StringComparison.OrdinalIgnoreCase))
             {
                 HasErrors = true;
-                Trace.WriteLine($"Invalid FFprobe Language : {Language}");
                 Language = "und";
+                Serilog.Log.Logger.Warning("Invalid Language : {Language}", Language);
             }
             else
             {
@@ -136,7 +137,7 @@ namespace PlexCleaner
 
         public override string ToString()
         {
-            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}";
+            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}, HasErrors : {HasErrors}";
         }
     }
 }

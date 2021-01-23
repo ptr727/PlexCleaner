@@ -1,9 +1,16 @@
 ﻿using InsaneGenius.Utilities;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Debugging;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Timers;
 
 namespace PlexCleaner
 {
@@ -11,24 +18,61 @@ namespace PlexCleaner
     {
         private static int Main()
         {
-            // Prevent sleep
-            KeepAwake.PreventSleep();
+            // Create default logger
+            CreateLogger(null);
+
+            // Create a 30s timer to keep the system from going to sleep
+            using System.Timers.Timer preventSleepTimer = new System.Timers.Timer(30000);
+            preventSleepTimer.Elapsed += OnTimedEvent;
+            preventSleepTimer.AutoReset = true;
+            preventSleepTimer.Start();
 
             // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
             // https://github.com/gsscoder/commandline/issues/473
             RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
             int ret = rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
 
-            // Allow sleep
-            KeepAwake.AllowSleep();
+            // Stop the timer
+            preventSleepTimer.Stop();
+            preventSleepTimer.Dispose();
 
             return ret;
         }
 
+        private static void CreateLogger(string logfile)
+        {
+            // Enable Serilog debug output to the console
+            SelfLog.Enable(Console.Error);
+
+            // Log to console
+            // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+            // Remove lj to quote strings
+            LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
+            loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}");
+
+            // Log to file
+            // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+            // Remove lj to quote strings
+            if (!string.IsNullOrEmpty(logfile))
+                loggerConfiguration.WriteTo.File(path: logfile, buffered: true, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}");
+            
+            // Create static Serilog logger
+            Log.Logger = loggerConfiguration.CreateLogger();
+
+            // Set library logger to Serilog logger
+            LoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddSerilog(Log.Logger);
+            LogOptions.CreateLogger(loggerFactory);
+        }
+
+        private static void OnTimedEvent(object sender, ElapsedEventArgs e)
+        {
+            KeepAwake.PreventSleep();
+        }
+
         internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Writing default settings to \"{options.SettingsFile}\"");
+            Log.Logger.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
 
             // Save default config
             ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
@@ -45,8 +89,7 @@ namespace PlexCleaner
 
             // Update tools
             // Make sure that the tools exist
-            return Tools.CheckForNewTools() && 
-                   Tools.VerifyTools(out ToolInfoJsonSchema _) ? 0 : -1;
+            return Tools.CheckForNewTools() && Tools.VerifyTools() ? 0 : -1;
         }
 
         internal static int ProcessCommand(CommandLineOptions options)
@@ -187,8 +230,7 @@ namespace PlexCleaner
 
         private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLineError("Cancel key pressed");
+            Log.Logger.Warning("Cancel key pressed");
             e.Cancel = true;
 
             // Signal the cancel event
@@ -213,12 +255,10 @@ namespace PlexCleaner
             // Load config from JSON
             if (!File.Exists(options.SettingsFile))
             {
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLineError($"Settings file not found : \"{options.SettingsFile}\"");
+                Log.Logger.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
                 return null;
             }
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Loading settings from : \"{options.SettingsFile}\"");
+            Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
             ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
             // Set the static options from the loaded settings
@@ -227,61 +267,46 @@ namespace PlexCleaner
 
             // Set the FileEx options
             FileEx.Options.TestNoModify = Options.TestNoModify;
-            FileEx.Options.FileRetryCount = config.MonitorOptions.FileRetryCount;
-            FileEx.Options.FileRetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
-            FileEx.Options.TraceToConsole = true;
+            FileEx.Options.RetryCount = config.MonitorOptions.FileRetryCount;
+            FileEx.Options.RetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
 
-            // Share the FileEx Cancel object
-            Cancel = FileEx.Options.Cancel;
+            // Set the FileEx Cancel object
+            FileEx.Options.Cancel = CancelSource.Token;
             
-            // Create log file
+            // Use log file
             if (!string.IsNullOrEmpty(options.LogFile))
             {
-                // Set file name for internal re-use
-                LogFile.FileName = options.LogFile;
-
-                // Clear if not in append mode
+                // Delete if not in append mode
                 if (!options.LogAppend &&
-                    !LogFile.Clear())
+                    !FileEx.DeleteFile(options.LogFile))
                 {
-                    ConsoleEx.WriteLine("");
-                    ConsoleEx.WriteLineError($"Failed to create the logfile : \"{options.LogFile}\"");
+                    Log.Logger.Error("Failed to clear the logfile : {LogFile}", options.LogFile);
                     return null;
                 }
-                LogFile.Log("");
-                LogFile.Log(Environment.CommandLine);
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Logging output to : \"{options.LogFile}\"");
+
+                // Recreate the clooger with a file
+                CreateLogger(options.LogFile);
+                Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
             }
 
-            if (verifyTools)
-            { 
-                // Make sure that the tools folder exists
-                if (!Tools.VerifyTools(out ToolInfoJsonSchema toolInfo))
-                    return null;
-                ConsoleEx.WriteLine("");
-                ConsoleEx.WriteLine($"Using Tools from : \"{Tools.GetToolsRoot()}\"");
+            // Verify tools
+            if (verifyTools &&
+                !Tools.VerifyTools())
+                return null;
 
-                // Set tool version numbers
-                FfMpegTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(FfMpegTool), StringComparison.OrdinalIgnoreCase)).Version;
-                MediaInfoTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MediaInfoTool), StringComparison.OrdinalIgnoreCase)).Version;
-                MkvTool.Version = toolInfo.Tools.Find(t => t.Tool.Equals(nameof(MkvTool), StringComparison.OrdinalIgnoreCase)).Version;
-            }
-
-            // Create program
+            // Create program instance
             return new Program();
         }
 
         private void Break()
         {
             // Signal the cancel event
-            Cancel.State = true;
+            Cancel();
         }
 
         private bool CreateFileList(List<string> files)
         {
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine("Creating file and folder list ...");
+            Log.Logger.Information("Creating file and folder list ...");
 
             // Trim quotes from input paths
             files = files.Select(file => file.Trim('"')).ToList();
@@ -295,10 +320,8 @@ namespace PlexCleaner
                 {
                     fileAttributes = File.GetAttributes(fileorfolder);
                 }
-                catch (Exception e)
+                catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
                 {
-                    ConsoleEx.WriteLineError(e);
-                    ConsoleEx.WriteLineError($"Failed to get file attributes \"{fileorfolder}\"");
                     return false;
                 }
 
@@ -310,12 +333,10 @@ namespace PlexCleaner
                     FolderList.Add(fileorfolder);
 
                     // Create the file list from the directory
-                    ConsoleEx.WriteLine("");
-                    ConsoleEx.WriteLine($"Getting files and folders from \"{dirInfo.FullName}\" ...");
+                    Log.Logger.Information("Getting files and folders from {Name} ...", dirInfo.FullName);
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
-                        ConsoleEx.WriteLine("");
-                        ConsoleEx.WriteLineError($"Failed to enumerate directory \"{fileorfolder}\"");
+                        Log.Logger.Error("Failed to enumerate directory {Name}", fileorfolder);
                         return false;
                     }
                     FileInfoList.AddRange(fileInfoList);
@@ -330,16 +351,38 @@ namespace PlexCleaner
             }
 
             // Report
-            ConsoleEx.WriteLine("");
-            ConsoleEx.WriteLine($"Discovered {DirectoryInfoList.Count} directories and {FileInfoList.Count} files");
+            Log.Logger.Information("Discovered {DirectoryInfoListCount} directories and {FileInfoListCount} files", DirectoryInfoList.Count, FileInfoList.Count);
 
             return true;
         }
 
-        public static Signal Cancel { get; set; }
-        public static readonly LogFile LogFile = new LogFile();
+        public static bool IsCancelledError()
+        {
+            // There is a race condition between tools exiting on Ctrl-C and reporting an error, and our app's Ctrl-C handler being called
+            // In case of a suspected Ctrl-C, yield some time for this handler to be called before testing the state
+            return IsCancelled(100);
+        }
+
+        public static bool IsCancelled()
+        {
+            return IsCancelled(0);
+        }
+
+        public static bool IsCancelled(int milliseconds)
+        {
+            return CancelSource.Token.WaitHandle.WaitOne(milliseconds);
+        }
+
+        public static void Cancel()
+        {
+            // Signal cancel
+            CancelSource.Cancel();
+        }
+
         public static CommandLineOptions Options { get; set; }
         public static ConfigFileJsonSchema Config { get; set; }
+
+        private static CancellationTokenSource CancelSource = new CancellationTokenSource();
 
         private readonly List<string> FolderList = new List<string>();
         private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();

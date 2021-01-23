@@ -35,7 +35,8 @@ namespace PlexCleaner
 
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
-            Formatting = Formatting.Indented
+            Formatting = Formatting.Indented,
+            StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
         };
     }
 }

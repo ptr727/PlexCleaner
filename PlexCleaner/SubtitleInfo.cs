@@ -24,7 +24,10 @@ namespace PlexCleaner
             // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2131
             if (track.CodecId.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) &&
                 string.IsNullOrEmpty(track.MuxingMode))
+            { 
                 HasErrors = true;
+                Serilog.Log.Logger.Warning("MuxingMode not specified for S_VOBSUB Codec");
+            }
         }
 
         public bool Forced { get; set; }

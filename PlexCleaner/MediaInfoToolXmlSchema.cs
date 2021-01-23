@@ -49,7 +49,7 @@ namespace PlexCleaner.MediaInfoToolXmlSchema
 		public string MuxingMode { get; set; } = "";
 
 		[XmlElement(ElementName = "StreamOrder", Namespace = "https://mediaarea.net/mediainfo")]
-		public int StreamOrder { get; set; } = 0;
+		public int StreamOrder { get; set; }
 
 		[XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
 		public string ScanType { get; set; } = "";

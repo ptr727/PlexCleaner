@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -42,9 +43,9 @@ namespace PlexCleaner
                 Subtitle);
         }
 
-        private static void Add(List<TrackInfo> prime, MediaInfo.ParserType primeType,
-                                List<TrackInfo> sec1, MediaInfo.ParserType sec1Type,
-                                List<TrackInfo> sec2, MediaInfo.ParserType sec2Type,
+        private static void Add(List<TrackInfo> prime, MediaTool.ToolType primeType,
+                                List<TrackInfo> sec1, MediaTool.ToolType sec1Type,
+                                List<TrackInfo> sec2, MediaTool.ToolType sec2Type,
                                 Dictionary<string, TagMap> dictionary) 
         {
             for (int i = 0; i < prime.Count; i++)
@@ -108,11 +109,11 @@ namespace PlexCleaner
         public void WriteLine()
         {
             foreach ((_, TagMap value) in Video)
-                Program.LogFile.LogConsole($"Video, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
+                Log.Logger.Information("Video, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
             foreach ((_, TagMap value) in Audio)
-                Program.LogFile.LogConsole($"Audio, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
+                Log.Logger.Information("Audio, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
             foreach ((_, TagMap value) in Subtitle)
-                Program.LogFile.LogConsole($"Subtitle, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}");
+                Log.Logger.Information("Subtitle, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
         }
     }
 }
