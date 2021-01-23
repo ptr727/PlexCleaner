@@ -73,16 +73,35 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       # Docker build and push
+      # TODO : Figure out how to conditionally tag as latest or develop
       # https://github.com/marketplace/actions/build-and-push-docker-images
-      - name: 'Build and Push'
+      - name: 'Build and Push Latest'
         uses: docker/build-push-action@v2
+        # Enable for main branch only
+        if: ${{ endsWith(github.ref, 'refs/heads/main') }}
         with:
           context: ./Docker
           file: ./Docker/Dockerfile
           platforms: linux/amd64
-          push: true # ${{ github.ref == 'refs/heads/main' }}
+          # Do not push pull requests
+          push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
             LABEL_VERSION:${{ steps.gitversion.outputs.nuGetVersionV2 }}
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.gitversion.outputs.nuGetVersionV2 }}
+      - name: 'Build and Push Develop'
+        uses: docker/build-push-action@v2
+        # Enable for develop branch only
+        if: ${{ endsWith(github.ref, 'refs/heads/develop') }}
+        with:
+          context: ./Docker
+          file: ./Docker/Dockerfile
+          platforms: linux/amd64
+          # Do not push pull requests
+          push: ${{ (github.event_name != 'pull_request') }}
+          build-args: |
+            LABEL_VERSION:${{ steps.gitversion.outputs.nuGetVersionV2 }}
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:develop
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.gitversion.outputs.nuGetVersionV2 }}

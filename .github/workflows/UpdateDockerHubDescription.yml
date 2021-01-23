@@ -2,7 +2,8 @@ name: 'Update Docker Hub Description'
 
 on:
   push:
-    branches: [ develop, main ] # TODO: Remove develop when stable
+    # Only update main branch
+    branches: [ main ]
     paths:
       - README.md
       - .github/workflows/UpdateDockerHubDescription.yml
