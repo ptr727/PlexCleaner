@@ -176,10 +176,13 @@ namespace PlexCleaner
 
                 // Must be Matroska type
                 if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+                { 
                     mediaInfo.HasErrors = true;
+                    Log.Logger.Warning("MKV Container Type Not Matroska : {Type}", mkvmerge.Container.Type);
+                }
 
                 // Tags or title or track name
-                mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
+                    mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
                                     mkvmerge.TrackTags.Count > 0 ||
                                     !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title) ||
                                     mediaInfo.Video.Any(item => !string.IsNullOrEmpty(item.Title)) ||
