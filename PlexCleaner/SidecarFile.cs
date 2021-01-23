@@ -105,27 +105,38 @@ namespace PlexCleaner
 
             // Compare the media modified time and file size
             mediaFile.Refresh();
-            if (mediaFile.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc ||
-                mediaFile.Length != SidecarJson.MediaLength)
+            bool mismatch = false;
+            if (mediaFile.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc)
             {
-                Log.Logger.Warning("Sidecar out of sync with media file : {Name}", sidecarFile.Name);
-                Log.Logger.Warning("LastWriteTimeUtc : File : {LastWriteTimeUtc}, Sidecar : {MediaLastWriteTimeUtc}", mediaFile.LastWriteTimeUtc, SidecarJson.MediaLastWriteTimeUtc);
-                Log.Logger.Warning("Length : File : {MediaFileLength}, Sidecar : {SidecarJsonMediaLength}", mediaFile.Length, SidecarJson.MediaLength);
-                return false;
+                mismatch = true;
+                Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc}, {Name}", SidecarJson.MediaLastWriteTimeUtc, mediaFile.LastWriteTimeUtc, sidecarFile.Name);
             }
+            if (mediaFile.Length != SidecarJson.MediaLength)
+            {
+                mismatch = true;
+                Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength}, {Name}", SidecarJson.MediaLength, mediaFile.Length, sidecarFile.Name);
+            }
+            if (mismatch)
+                return false;
 
             // Compare the tool versions
-            if (!SidecarJson.FfProbeToolVersion.Equals(Tools.FfProbe.Info.Version, StringComparison.OrdinalIgnoreCase) ||
-                !SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase) ||
-                !SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
+            if (!SidecarJson.FfProbeToolVersion.Equals(Tools.FfProbe.Info.Version, StringComparison.OrdinalIgnoreCase))
             {
-                Log.Logger.Warning("Sidecar tool versions out of date : {Name}", sidecarFile.Name);
-                Log.Logger.Warning("FfProbe : Tools : {ToolsFfProbeVersion}, Sidecar : {SidecarJsonFfProbeToolVersion}", Tools.FfProbe.Info.Version, SidecarJson.FfProbeToolVersion);
-                Log.Logger.Warning("MkvMerge : Tools : {ToolsMkvMergeVersion}, Sidecar : {SidecarJsonMkvMergeToolVersion}", Tools.MkvMerge.Info.Version, SidecarJson.MkvMergeToolVersion);
-                Log.Logger.Warning("MediaInfo : Tools : {ToolsMediaInfoVersion}, Sidecar : {SidecarJsonMediaInfoToolVersion}", Tools.MediaInfo.Info.Version, SidecarJson.MediaInfoToolVersion);
-                if (Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
-                    return false;
+                mismatch = true;
+                Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion}, {Name}", SidecarJson.FfProbeToolVersion, Tools.FfProbe.Info.Version, sidecarFile.Name);
             }
+            if (!SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase))
+            {
+                mismatch = true;
+                Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion}, {Name}", SidecarJson.MkvMergeToolVersion, Tools.MkvMerge.Info.Version, sidecarFile.Name);
+            }
+            if (!SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
+            {
+                mismatch = true;
+                Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion}, {Name}", SidecarJson.MediaInfoToolVersion, Tools.MediaInfo.Info.Version, sidecarFile.Name);
+            }
+            if (mismatch && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+                return false;
 
             // Deserialize the tool data
             MediaInfo mediaInfoInfo = null;
