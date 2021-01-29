@@ -502,7 +502,7 @@ namespace PlexCleaner
                         if (bitrateInfo.CombinedBitrate.Exceeded > 0)
                             Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate} : {Name}", 
                                                Bitrate.ToBitsPerSecond(bitrateInfo.CombinedBitrate.Maximum), 
-                                               Bitrate.ToBitsPerSecond(Program.Config.VerifyOptions.MaximumBitrate), 
+                                               Bitrate.ToBitsPerSecond(Program.Config.VerifyOptions.MaximumBitrate / 8), 
                                                MediaFile.Name);
 
                         // Audio bitrate exceeds video bitrate, may indicate an error with the video track

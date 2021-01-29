@@ -26,9 +26,8 @@ namespace PlexCleaner
                 }
                 Debug.Assert(!double.IsNaN(packet.PtsTime));
 
-                // Packet duration can't be longer than the sample interval
-                Debug.Assert(!double.IsNaN(packet.DurationTime));
-                Debug.Assert(packet.DurationTime <= 1.0);
+                // Packet duration can't be longer than the 1s sample interval
+                Debug.Assert(double.IsNaN(packet.DurationTime) || packet.DurationTime <= 1.0);
 
                 // Size must be valid
                 Debug.Assert(packet.Size > 0);
@@ -47,6 +46,8 @@ namespace PlexCleaner
             CombinedBitrate = new Bitrate(Duration);
 
             // Iterate through all the packets
+            int videoPackets = 0;
+            int audioPackets = 0;
             foreach (Packet packet in packetList)
             {
                 if (!ShouldCompute(packet, videoStream, audioStream))
@@ -58,15 +59,19 @@ namespace PlexCleaner
                 // Calculate values
                 if (packet.StreamIndex == videoStream)
                 {
+                    videoPackets ++;
                     VideoBitrate.Rate[index] += packet.Size;
                     CombinedBitrate.Rate[index] += packet.Size;
                 }
                 if (packet.StreamIndex == audioStream)
                 {
+                    audioPackets ++;
                     AudioBitrate.Rate[index] += packet.Size;
                     CombinedBitrate.Rate[index] += packet.Size;
                 }
             }
+            Debug.Assert(videoPackets > 0);
+            Debug.Assert(audioPackets > 0);
 
             // Calculate the bitrates
             VideoBitrate.Calculate(threshold);
@@ -89,18 +94,19 @@ namespace PlexCleaner
 
         private static bool ShouldCompute(Packet packet, int videoStream, int audioStream)
         {
-            // Must match a stream index
+            // Must match the audio or video stream index
             if (packet.StreamIndex != videoStream &&
                 packet.StreamIndex != audioStream)
                 return false;
 
             // Must have PTS or DTS
             if (double.IsNaN(packet.PtsTime) &&
-                double.IsNaN(packet.PtsTime))
+                double.IsNaN(packet.DtsTime))
                 return false;
 
-            // Must have duration
-            if (double.IsNaN(packet.DurationTime))
+            // If duration is set it must be less than 1.0
+            if (!double.IsNaN(packet.DurationTime) &&
+                packet.DurationTime > 1.0)
                 return false;
 
             // Must have size
