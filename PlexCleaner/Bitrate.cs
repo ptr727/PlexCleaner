@@ -23,7 +23,7 @@ namespace PlexCleaner
             Maximum = 0;
             Average = 0;
             Exceeded = 0;
-            ExceededDuration = 0;
+            Duration = 0;
             int exceeded = 0;
             foreach (long bitrate in Rate)
             {
@@ -45,8 +45,8 @@ namespace PlexCleaner
                         exceeded ++;
 
                         // Maximum exceeded duration
-                        if (exceeded > ExceededDuration)
-                            ExceededDuration = exceeded;
+                        if (exceeded > Duration)
+                            Duration = exceeded;
                     }
                     else
                         // Reset
@@ -58,7 +58,10 @@ namespace PlexCleaner
 
         public override string ToString()
         {
-            return $"Bitrate : Duration : {TimeSpan.FromSeconds(Rate.Length)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}";
+            if (Exceeded > 0)
+                return $"Bitrate : Duration : {TimeSpan.FromSeconds(Rate.Length)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}, Exceeded : {Exceeded}, Duration : {Duration}";
+            else
+                return $"Bitrate : Duration : {TimeSpan.FromSeconds(Rate.Length)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}";
         }
 
         // Array of bytes per second
@@ -69,6 +72,6 @@ namespace PlexCleaner
         public long Average { get; set; }
         // Threshold exceeded instance count and duration in seconds
         public int Exceeded { get; set; }
-        public int ExceededDuration { get; set; }
+        public int Duration { get; set; }
     }
 }

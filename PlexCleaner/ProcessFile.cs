@@ -500,7 +500,7 @@ namespace PlexCleaner
 
                         // Combined bitrate exceeded threshold
                         if (bitrateInfo.CombinedBitrate.Exceeded > 0)
-                            Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate} : {Name}", Format.BytesToKilo(bitrateInfo.CombinedBitrate.Maximum * 8), Format.BytesToKilo(Program.Config.VerifyOptions.MaximumBitrate, MediaFile.Name));
+                            Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate}, {Exceeded} for {Duration}s : {Name}", Format.BytesToKilo(bitrateInfo.CombinedBitrate.Maximum * 8, "bps"), Format.BytesToKilo(Program.Config.VerifyOptions.MaximumBitrate, "bps"), bitrateInfo.CombinedBitrate.Exceeded, bitrateInfo.CombinedBitrate.Duration, MediaFile.Name);
 
                         // Audio bitrate exceeds video bitrate, may indicate an error with the video track
                         if (bitrateInfo.AudioBitrate.Average > bitrateInfo.VideoBitrate.Average)
