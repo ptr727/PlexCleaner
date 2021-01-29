@@ -99,7 +99,10 @@ namespace PlexCleaner
             // Compare the schema version
             if (SidecarJson.SchemaVersion != SidecarFileJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Error("Sidecar JSON schema mismatch : {SidecarJsonSchemaVersion} != {SidecarFileJsonSchemaCurrentSchemaVersion}, {Name}", SidecarJson.SchemaVersion, SidecarFileJsonSchema.CurrentSchemaVersion, sidecarFile.Name);
+                Log.Logger.Error("Sidecar JSON schema mismatch : {SidecarJsonSchemaVersion} != {SidecarFileJsonSchemaCurrentSchemaVersion}, {Name}",
+                                 SidecarJson.SchemaVersion, 
+                                 SidecarFileJsonSchema.CurrentSchemaVersion, 
+                                 sidecarFile.Name);
                 return false;
             }
 
@@ -109,12 +112,18 @@ namespace PlexCleaner
             if (mediaFile.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc)
             {
                 mismatch = true;
-                Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc}, {Name}", SidecarJson.MediaLastWriteTimeUtc, mediaFile.LastWriteTimeUtc, sidecarFile.Name);
+                Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {Name}", 
+                                   SidecarJson.MediaLastWriteTimeUtc, 
+                                   mediaFile.LastWriteTimeUtc, 
+                                   sidecarFile.Name);
             }
             if (mediaFile.Length != SidecarJson.MediaLength)
             {
                 mismatch = true;
-                Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength}, {Name}", SidecarJson.MediaLength, mediaFile.Length, sidecarFile.Name);
+                Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {Name}", 
+                                   SidecarJson.MediaLength, 
+                                   mediaFile.Length, 
+                                   sidecarFile.Name);
             }
             if (mismatch)
                 return false;
@@ -123,17 +132,26 @@ namespace PlexCleaner
             if (!SidecarJson.FfProbeToolVersion.Equals(Tools.FfProbe.Info.Version, StringComparison.OrdinalIgnoreCase))
             {
                 mismatch = true;
-                Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion}, {Name}", SidecarJson.FfProbeToolVersion, Tools.FfProbe.Info.Version, sidecarFile.Name);
+                Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {Name}", 
+                                   SidecarJson.FfProbeToolVersion, 
+                                   Tools.FfProbe.Info.Version, 
+                                   sidecarFile.Name);
             }
             if (!SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase))
             {
                 mismatch = true;
-                Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion}, {Name}", SidecarJson.MkvMergeToolVersion, Tools.MkvMerge.Info.Version, sidecarFile.Name);
+                Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {Name}", 
+                                   SidecarJson.MkvMergeToolVersion, 
+                                   Tools.MkvMerge.Info.Version, 
+                                   sidecarFile.Name);
             }
             if (!SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
             {
                 mismatch = true;
-                Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion}, {Name}", SidecarJson.MediaInfoToolVersion, Tools.MediaInfo.Info.Version, sidecarFile.Name);
+                Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {Name}", 
+                                   SidecarJson.MediaInfoToolVersion, 
+                                   Tools.MediaInfo.Info.Version, 
+                                   sidecarFile.Name);
             }
             if (mismatch && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
                 return false;
@@ -309,23 +327,17 @@ namespace PlexCleaner
                    MediaInfoInfo != null;
         }
 
-        public override string ToString()
+        public void WriteLine()
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine("MediaInfoXml :");
-            stringBuilder.AppendLine(MediaInfoXml);
-            stringBuilder.AppendLine("MkvMergeInfoJson :");
-            stringBuilder.AppendLine(MkvMergeInfoJson);
-            stringBuilder.AppendLine("FfProbeInfoJson :");
-            stringBuilder.AppendLine(FfProbeInfoJson);
-            stringBuilder.AppendLine($"Verified : {SidecarJson.Verified}");
-            stringBuilder.AppendLine($"MediaLastWriteTimeUtc : {SidecarJson.MediaLastWriteTimeUtc}");
-            stringBuilder.AppendLine($"MediaLength : {SidecarJson.MediaLength}");
-            stringBuilder.AppendLine($"MediaInfoToolVersion : {SidecarJson.MediaInfoToolVersion}");
-            stringBuilder.AppendLine($"MkvMergeToolVersion : {SidecarJson.MkvMergeToolVersion}");
-            stringBuilder.AppendLine($"FfProbeToolVersion : {SidecarJson.FfProbeToolVersion}");
-
-            return stringBuilder.ToString();
+            Log.Logger.Information("MediaInfoXml: {MediaInfoXml}", MediaInfoXml);
+            Log.Logger.Information("MkvMergeInfoJson: {MkvMergeInfoJson}", MkvMergeInfoJson);
+            Log.Logger.Information("FfProbeInfoJson: {FfProbeInfoJson}", FfProbeInfoJson);
+            Log.Logger.Information("Verified: {Verified}", SidecarJson.Verified);
+            Log.Logger.Information("MediaLastWriteTimeUtc: {MediaLastWriteTimeUtc}", SidecarJson.MediaLastWriteTimeUtc);
+            Log.Logger.Information("MediaLength: {MediaLength}", SidecarJson.MediaLength);
+            Log.Logger.Information("MediaInfoToolVersion: {MediaInfoToolVersion}", SidecarJson.MediaInfoToolVersion);
+            Log.Logger.Information("MkvMergeToolVersion: {MkvMergeToolVersion}", SidecarJson.MkvMergeToolVersion);
+            Log.Logger.Information("FfProbeToolVersion: {FfProbeToolVersion}", SidecarJson.FfProbeToolVersion);
         }
 
         public MediaInfo FfProbeInfo { get; set; }

@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 
 namespace PlexCleaner
@@ -32,9 +33,22 @@ namespace PlexCleaner
 
         public bool Forced { get; set; }
 
-        public override string ToString()
+        public override void WriteLine(string prefix)
         {
-            return $"Subtitle : Forced : {Forced}, {base.ToString()}";
+            // Add Forced
+            Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}, Forced: {Forced}",
+                                   prefix,
+                                   GetType().Name,
+                                   Format,
+                                   Codec,
+                                   Language,
+                                   Id,
+                                   Number,
+                                   State,
+                                   Title,
+                                   Default,
+                                   HasErrors,
+                                   Forced);
         }
     }
 }

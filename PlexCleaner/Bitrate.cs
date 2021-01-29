@@ -1,4 +1,5 @@
 ﻿using InsaneGenius.Utilities;
+using Serilog;
 using System;
 
 namespace PlexCleaner
@@ -56,12 +57,21 @@ namespace PlexCleaner
             Average /= Rate.Length;
         }
 
-        public override string ToString()
+        public void WriteLine(string prefix)
         {
-            if (Exceeded > 0)
-                return $"Bitrate : Duration : {TimeSpan.FromSeconds(Rate.Length)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}, Exceeded : {Exceeded}, Duration : {Duration}";
-            else
-                return $"Bitrate : Duration : {TimeSpan.FromSeconds(Rate.Length)}, Minimum : {Format.BytesToKilo(Minimum * 8, "bps")}, Maximum : {Format.BytesToKilo(Maximum * 8, "bps")}, Average : {Format.BytesToKilo(Average * 8, "bps")}";
+            Log.Logger.Information("{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}", 
+                                   prefix,                    
+                                   TimeSpan.FromSeconds(Rate.Length), 
+                                   ToBitsPerSecond(Minimum), 
+                                   ToBitsPerSecond(Maximum), 
+                                   ToBitsPerSecond(Average), 
+                                   Exceeded, 
+                                   TimeSpan.FromSeconds(Duration));
+        }
+
+        public static string ToBitsPerSecond(long byterate)
+        {
+            return Format.BytesToKilo(byterate * 8, "bps");
         }
 
         // Array of bytes per second

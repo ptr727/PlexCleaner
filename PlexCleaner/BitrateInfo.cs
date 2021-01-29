@@ -74,6 +74,13 @@ namespace PlexCleaner
             CombinedBitrate.Calculate(threshold);
         }
 
+        public void WriteLine()
+        {
+            VideoBitrate.WriteLine("Video");
+            AudioBitrate.WriteLine("Audio");
+            CombinedBitrate.WriteLine("Combined");
+        }
+
         public Bitrate VideoBitrate { get; set; }
         public Bitrate AudioBitrate { get; set; }
         public Bitrate CombinedBitrate { get; set; }

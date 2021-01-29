@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 
 // TODO : Find a better way to create profile levels
@@ -80,9 +81,23 @@ namespace PlexCleaner
             return formatMatch && codecMatch && profileMatch;
         }
 
-        public override string ToString()
+        public override void WriteLine(string prefix)
         {
-            return $"Video : Profile : {Profile}, Interlaced : {Interlaced}, {base.ToString()}";
+            // Add Profile and Interlaced
+            Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}, Profile: {Profile}, Interlaced: {Interlaced}",
+                                   prefix,
+                                   GetType().Name,
+                                   Format,
+                                   Codec,
+                                   Language,
+                                   Id,
+                                   Number,
+                                   State,
+                                   Title,
+                                   Default,
+                                   HasErrors,
+                                   Profile,
+                                   Interlaced);
         }
     }
 }

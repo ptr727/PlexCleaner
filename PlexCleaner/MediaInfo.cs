@@ -26,15 +26,18 @@ namespace PlexCleaner
         public bool HasErrors { get; set; }
         public TimeSpan Duration { get; set; }
         public string Container { get; set; }
+        public int Attachments { get; set; }
+        public int Chapters { get; set; }
+
 
         public void WriteLine(string prefix)
         {
             foreach (VideoInfo info in Video)
-                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
+                info.WriteLine(prefix);
             foreach (AudioInfo info in Audio)
-                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
+                info.WriteLine(prefix);
             foreach (SubtitleInfo info in Subtitle)
-                Log.Logger.Information("{Prefix} : {Info}", prefix, info);
+                info.WriteLine(prefix);
         }
 
         public List<TrackInfo> GetTrackList()
@@ -519,18 +522,6 @@ namespace PlexCleaner
                 MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
                 _ => throw new NotImplementedException()
             };
-        }
-
-        public override string ToString()
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (VideoInfo info in Video) 
-                sb.AppendLine(info.ToString());
-            foreach (AudioInfo info in Audio) 
-                sb.AppendLine(info.ToString());
-            foreach (SubtitleInfo info in Subtitle) 
-                sb.AppendLine(info.ToString());
-            return sb.ToString();
         }
     }
 }
