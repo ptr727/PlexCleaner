@@ -50,6 +50,7 @@ namespace PlexCleaner
             // Get packet info
             string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
             string path = GetToolPath();
+            Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
             int exitcode = process.ExecuteEx(path, commandline);
             if (exitcode != 0)
                 return false;
