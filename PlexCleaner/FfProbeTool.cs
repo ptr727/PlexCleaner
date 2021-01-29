@@ -130,6 +130,8 @@ namespace PlexCleaner
                 // TODO : Tags
                 // TODO : Duration
                 // TODO : ContainerType
+                // TODO : Chapters
+                // TODO : Attachments
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {

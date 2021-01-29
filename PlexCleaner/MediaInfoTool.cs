@@ -195,6 +195,8 @@ namespace PlexCleaner
                 // TODO : Duration, too many different formats to parse
                 // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
                 // TODO : ContainerType
+                // TODO : Chapters
+                // TODO : Attachments
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {

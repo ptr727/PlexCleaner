@@ -497,7 +497,7 @@ namespace PlexCleaner
                 }
                 else 
                 {
-                    Log.Logger.Information(sidecarfile.ToString());
+                    sidecarfile.WriteLine();
                 }
 
                 // Next file
@@ -590,11 +590,11 @@ namespace PlexCleaner
                 if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
                 {
                     Log.Logger.Error("Error getting bitrate information : {Name}", fileinfo.FullName);
-                    errorcount++;
+                    errorcount ++;
                 }
                 else
                 {
-                    Log.Logger.Information(bitrateInfo.ToString());
+                    bitrateInfo.WriteLine();
                 }
 
                 // Next file
@@ -633,7 +633,7 @@ namespace PlexCleaner
             // Is the file read-only
             if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
-                Log.Logger.Warning("Skipping read-only file : {Name} : {Attributes}", fileinfo.FullName, fileinfo.Attributes);
+                Log.Logger.Warning("Skipping read-only file : {Name}", fileinfo.FullName);
                 return false;
             }
 

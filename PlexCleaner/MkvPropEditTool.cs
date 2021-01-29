@@ -69,15 +69,21 @@ namespace PlexCleaner
             // Verify correct data type
             Debug.Assert(info.Parser == ToolType.MkvMerge);
 
-            // Clear all tags on all tracks
+            // Clear all tags
             StringBuilder commandline = new StringBuilder();
             commandline.Append($"\"{filename}\" --tags all: --delete title ");
+
+            // Delete all track titles
             foreach (TrackInfo track in info.GetTrackList())
             {
                 // Add all tracks with a name / title
                 if (!string.IsNullOrEmpty(track.Title))
                     commandline.Append($"--edit track:@{track.Number} --delete name ");
             }
+
+            // Delete all attachments
+            for (int id = 0; id < info.Attachments; id ++)
+                commandline.Append($"--delete-attachment {id + 1} ");
 
             int exitcode = Command(commandline.ToString());
             return exitcode == 0;

@@ -462,13 +462,13 @@ namespace PlexCleaner
                     // MkvMergeInfo does not implement interlace detection
                     if (mediainfoInterlaced != ffprobeInterlaced)
                     {
-                        Log.Logger.Warning("Interlaced flags do not match : {Name}", MediaFile.Name);
-                        Log.Logger.Warning("MediaInfoInfo.FindNeedDeInterlace() : {MediainfoInterlaced}, FfProbeInfo.FindNeedDeInterlace() : {FfprobeInterlaced}", mediainfoInterlaced, ffprobeInterlaced);
+                        // TODO: Cleanup logging
+                        Log.Logger.Warning("Interlaced flags do not match : {MediainfoInterlaced} != {FfprobeInterlaced} : {Name}", mediainfoInterlaced, ffprobeInterlaced, MediaFile.Name);
                         Log.Logger.Information("Calculating idet info : {Name}", MediaFile.Name);
                         if (Tools.FfMpeg.GetIdetInfo(MediaFile.FullName, out FfMpegIdetInfo idetinfo))
                         {
                             bool idet = idetinfo.IsInterlaced(out double single, out double multi);
-                            Log.Logger.Information("FfMpegIdetInfo.IsInterlaced ({Single:P} / {Multi:P}) : {Idet}", single, multi, idet);
+                            Log.Logger.Information("FfMpegIdetInfo.IsInterlaced() : {Single:P}, {Multi:P}), {Idet} : {Name}", single, multi, idet, MediaFile.Name);
                         }
                         else 
                         {
@@ -495,16 +495,22 @@ namespace PlexCleaner
                     Log.Logger.Information("Calculating bitrate info : {Name}", MediaFile.Name);
                     if (GetBitrateInfo(out BitrateInfo bitrateInfo))
                     {
-                        // Print combined audio and video bitrate
-                        Log.Logger.Information(bitrateInfo.CombinedBitrate.ToString());
+                        // Print bitrate
+                        bitrateInfo.WriteLine();
 
                         // Combined bitrate exceeded threshold
                         if (bitrateInfo.CombinedBitrate.Exceeded > 0)
-                            Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate}, {Exceeded} for {Duration}s : {Name}", Format.BytesToKilo(bitrateInfo.CombinedBitrate.Maximum * 8, "bps"), Format.BytesToKilo(Program.Config.VerifyOptions.MaximumBitrate, "bps"), bitrateInfo.CombinedBitrate.Exceeded, bitrateInfo.CombinedBitrate.Duration, MediaFile.Name);
+                            Log.Logger.Warning("Maximum bitrate exceeded : {CombinedBitrate} > {MaximumBitrate} : {Name}", 
+                                               Bitrate.ToBitsPerSecond(bitrateInfo.CombinedBitrate.Maximum), 
+                                               Bitrate.ToBitsPerSecond(Program.Config.VerifyOptions.MaximumBitrate), 
+                                               MediaFile.Name);
 
                         // Audio bitrate exceeds video bitrate, may indicate an error with the video track
                         if (bitrateInfo.AudioBitrate.Average > bitrateInfo.VideoBitrate.Average)
-                            Log.Logger.Warning("Audio bitrate exceeds Video bitrate : {AudioBitrate} > {VideoBitrate} : {Name}", Format.BytesToKilo(bitrateInfo.AudioBitrate.Average * 8, "bps"), Format.BytesToKilo(bitrateInfo.VideoBitrate.Average, "bps"), MediaFile.Name);
+                            Log.Logger.Warning("Audio bitrate exceeds Video bitrate : {AudioBitrate} > {VideoBitrate} : {Name}",
+                                               Bitrate.ToBitsPerSecond(bitrateInfo.AudioBitrate.Average),
+                                               Bitrate.ToBitsPerSecond(bitrateInfo.VideoBitrate.Average), 
+                                               MediaFile.Name);
                     }
                     else 
                     {

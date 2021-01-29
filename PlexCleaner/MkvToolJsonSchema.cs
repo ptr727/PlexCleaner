@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// https://gitlab.com/mbunkus/mkvtoolnix/-/blob/master/doc/json-schema/mkvmerge-identification-output-schema-v12.json
+// https://gitlab.com/mbunkus/mkvtoolnix/-/raw/main/doc/json-schema/mkvmerge-identification-output-schema-v13.json
 
 // Convert array[] to List<>
 // Change uid long to UInt64
@@ -23,6 +23,12 @@ namespace PlexCleaner.MkvToolJsonSchema
 
         [JsonProperty("tracks")]
         public List<Track> Tracks { get; } = new List<Track>();
+
+        [JsonProperty("attachments")]
+        public List<Attachment> Attachments { get; } = new List<Attachment>();
+
+        [JsonProperty("chapters")]
+        public List<Chapter> Chapters { get; } = new List<Chapter>();
 
         public static MkvMerge FromJson(string json) => 
             JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
@@ -105,5 +111,20 @@ namespace PlexCleaner.MkvToolJsonSchema
 
         [JsonProperty("default_track")]
         public bool DefaultTrack { get; set; }
+    }
+
+    public class Attachment
+    {
+        [JsonProperty("content_type")]
+        public string ContentType { get; set; } = "";
+
+        [JsonProperty("id")]
+        public int Id { get; set; }
+    }
+
+    public class Chapter
+    {
+        [JsonProperty("type")]
+        public string Type { get; set; } = "";
     }
 }

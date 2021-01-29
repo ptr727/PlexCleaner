@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner
 {
@@ -135,9 +136,20 @@ namespace PlexCleaner
                    Language.Equals("und", StringComparison.OrdinalIgnoreCase);
         }
 
-        public override string ToString()
+        public virtual void WriteLine(string prefix)
         {
-            return $"Track : Format : {Format}, Codec : {Codec}, Language : {Language}, Id : {Id}, Number : {Number}, State : {State}, Title : {Title}, Default : {Default}, HasErrors : {HasErrors}";
+            Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}",
+                                   prefix,
+                                   GetType().Name,
+                                   Format,
+                                   Codec,
+                                   Language,
+                                   Id,
+                                   Number,
+                                   State,
+                                   Title,
+                                   Default,
+                                   HasErrors);
         }
     }
 }
