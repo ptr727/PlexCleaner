@@ -630,16 +630,15 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Is the file read-only
-            if (fileinfo.Attributes.HasFlag(FileAttributes.ReadOnly) ||
-                !FileEx.IsFileReadWriteable(fileinfo))
+            // Create file processor to hold state
+            ProcessFile processFile = new ProcessFile(fileinfo);
+
+            // Is the file writeable
+            if (!processFile.IsWriteable())
             {
                 Log.Logger.Error("Skipping read-only file : {Name}", fileinfo.FullName);
                 return false;
             }
-
-            // Create file processor to hold state
-            ProcessFile processFile = new ProcessFile(fileinfo);
 
             // Cancel handler
             if (Program.IsCancelled())

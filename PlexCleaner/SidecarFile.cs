@@ -244,6 +244,17 @@ namespace PlexCleaner
             return SidecarJson != null;
         }
 
+        public bool IsWriteable()
+        {
+            // File must exist and be writeable
+            return SidecarFileInfo.Exists && FileEx.IsFileReadWriteable(SidecarFileInfo);
+        }
+
+        public bool Exists()
+        {
+            return SidecarFileInfo.Exists;
+        }
+
         private bool GetInfoFromJson()
         {
             Log.Logger.Information("Reading media info from sidecar : {Name}", SidecarFileInfo.Name);

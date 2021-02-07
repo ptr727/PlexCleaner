@@ -92,17 +92,18 @@ namespace PlexCleaner
             return false;
         }
 
+        public bool IsWriteable()
+        {
+            // Media file must exist and be writeable
+            return MediaFile.Exists && FileEx.IsFileReadWriteable(MediaFile);
+        }
+
         public bool IsSidecarWriteable()
         {
-            // Get the sidecar name from media name
-            FileInfo sidecarInfo = new FileInfo(SidecarFile.GetSidecarName(MediaFile));
-
-            // If not exist return true
-            if (!sidecarInfo.Exists)
-                return true;
-
-            // Test for readonly
-            return !sidecarInfo.Attributes.HasFlag(FileAttributes.ReadOnly) && FileEx.IsFileReadWriteable(sidecarInfo);
+            // If the sidecar file exists it must be writeable
+            if (SidecarFile.Exists())
+                return SidecarFile.IsWriteable();
+            return true;
         }
 
         public bool RemuxByExtensions(HashSet<string> remuxExtensions, ref bool modified)
