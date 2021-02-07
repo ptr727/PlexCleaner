@@ -5,6 +5,7 @@ using System.Xml;
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
 // https://mkvtoolnix.download/latest-release.xml.gz
 
+// ReSharper disable once CheckNamespace
 namespace PlexCleaner.MkvToolXmlSchema
 {
     [XmlRoot(ElementName = "latest-source")]

@@ -11,6 +11,7 @@ using System.Xml;
 // Replace the namespace with Namespace="https://mediaarea.net/mediainfo"
 // Add FromXml() method
 
+// ReSharper disable once CheckNamespace
 namespace PlexCleaner.MediaInfoToolXmlSchema
 {
 	[XmlRoot(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]

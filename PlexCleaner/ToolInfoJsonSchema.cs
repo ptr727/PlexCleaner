@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 
 namespace PlexCleaner
@@ -29,6 +31,16 @@ namespace PlexCleaner
             return Tools.FirstOrDefault(t => t.ToolFamily == mediaToolInfo.ToolFamily);
         }
 
+        public static ToolInfoJsonSchema FromFile(string path)
+        {
+            return FromJson(File.ReadAllText(path));
+        }
+
+        public static void ToFile(string path, ToolInfoJsonSchema json)
+        {
+            File.WriteAllText(path, ToJson(json));
+        }
+
         public static string ToJson(ToolInfoJsonSchema tools) =>
             JsonConvert.SerializeObject(tools, Settings);
 
@@ -39,5 +51,19 @@ namespace PlexCleaner
         {
             Formatting = Formatting.Indented
         };
+
+        public static bool Upgrade(ToolInfoJsonSchema json)
+        {
+            // Current version
+            if (json.SchemaVersion == CurrentSchemaVersion)
+                return true;
+
+            // Unspecified / v0 to v2 was the first set version
+            // Tools changed from List<ToolInfo> to List<MediaToolInfo>
+            // Not worth the trouble to migrate, just get new tools
+            Log.Logger.Error("Schema version {SchemaVersion} not suported, run the 'checkfornewtools' command", json.SchemaVersion);
+
+            return false;
+        }
     }
 }

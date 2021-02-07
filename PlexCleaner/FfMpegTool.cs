@@ -7,7 +7,6 @@ using System.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Threading;
 using System.Net;
 using Serilog;
 using System.Reflection;
@@ -16,6 +15,12 @@ using System.Reflection;
 // https://trac.ffmpeg.org/wiki/Map
 // https://trac.ffmpeg.org/wiki/Encode/H.264
 // https://trac.ffmpeg.org/wiki/Encode/H.265
+
+// FfMpeg logs to stderr, not stdout
+// "By default the program logs to stderr. If coloring is supported by the terminal, colors are used to mark errors and warnings."
+// Power events, e.g. sleep, can result in an invalid argument error
+// TODO : Figure out how to get ffmpeg more resilient to power events
+// TODO : Figure out how to capture logs while still allowing ffmpeg to print in color
 
 namespace PlexCleaner
 {
@@ -48,7 +53,7 @@ namespace PlexCleaner
 
             // Get version
             const string commandline = "-version";
-            int exitcode = Command(commandline, out string output, out string error);
+            int exitcode = Command(commandline, false, out string output, out string error);
             if (exitcode != 0 || error.Length > 0)
                 return false;
 
@@ -206,20 +211,9 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
             string commandline = $"-i \"{filename}\" -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
-            int exitcode = Command(commandline, out string _, out error);
+            int exitcode = Command(commandline, true, out string _, out error);
 
-            // Wake from sleep during verify operation results in an invalid argument error
-            if ((exitcode != 0 || error.Length != 0) &&
-                error.EndsWith(": invalid argument\r\n", StringComparison.OrdinalIgnoreCase))
-            {
-                // Retry
-                const int sleepTime = 5;
-                Log.Logger.Error(error);
-                Log.Logger.Information("Retrying after sleeping {SleepTime}s", sleepTime);
-                Thread.Sleep(sleepTime * 1000);
-                exitcode = Command(commandline, out string _, out error);
-            }
-
+            // Test exitcode and stderr errors
             return exitcode == 0 && error.Length == 0;
         }
 
@@ -404,8 +398,7 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Null
             string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
             string commandline = $"-i \"{inputName}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
-            // FFMpeg logs output to stderror
-            int exitcode = Command(commandline, out string _, out text);
+            int exitcode = Command(commandline, false, out string _, out text);
             return exitcode == 0;
         }
 

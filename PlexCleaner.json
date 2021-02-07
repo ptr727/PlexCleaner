@@ -1,12 +1,18 @@
 {
+  // JSON Schema version
+  "SchemaVersion": 1,
+  // Tools options
   "ToolsOptions": {
     // Use system installed tools
     "UseSystem": false,
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
-    "RootRelative": true
+    "RootRelative": true,
+    // Automatically check for new tools
+    "AutoUpdate":  false
   },
+  // Convert options
   "ConvertOptions": {
     // Enable H.265 encoding, else use H.264
     "EnableH265Encoder": true,
@@ -15,6 +21,7 @@
     // Audio encoding codec
     "AudioEncodeCodec": "ac3"
   },
+  // Process options
   "ProcessOptions": {
     // Delete empty folders
     "DeleteEmptyFolders": true,
@@ -75,6 +82,7 @@
       "\\\\server\\share2\\path2\\file2.mkv"
     ]
   },
+  // Monitor options
   "MonitorOptions": {
     // Time to wait after detecting a file change
     "MonitorWaitTime": 60,
@@ -83,6 +91,7 @@
     // Number of times to retry a file operation
     "FileRetryCount": 2
   },
+  // Verify options
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,

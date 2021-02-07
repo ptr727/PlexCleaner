@@ -27,7 +27,7 @@ namespace PlexCleaner
                 string.IsNullOrEmpty(track.MuxingMode))
             { 
                 HasErrors = true;
-                Serilog.Log.Logger.Warning("MuxingMode not specified for S_VOBSUB Codec");
+                Log.Logger.Warning("MuxingMode not specified for S_VOBSUB Codec");
             }
         }
 

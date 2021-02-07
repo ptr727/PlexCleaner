@@ -66,7 +66,11 @@
     },
     "Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Movies-4K\\Mission Impossible II (2000)\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\\Doctor Who (1963)\\Season 5\""
+    },
+    "UpgradeSidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"\\\\server-1\\Media\\Series\" \"\\\\server-1\\Media\\Movies\" \"\\\\server-1\\Media\\Movies-4K\""
     }
   }
 }

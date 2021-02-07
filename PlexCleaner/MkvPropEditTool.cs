@@ -33,9 +33,8 @@ namespace PlexCleaner
             Debug.Assert(unknown.Parser == ToolType.MkvMerge);
 
             // Set language on all unknown tracks
-            //return unknown.GetTrackList().All(track => SetMkvTrackLanguage(filename, track.Number, language));
             StringBuilder commandline = new StringBuilder();
-            commandline.Append($"\"{filename}\" ");
+            commandline.Append($"\"{filename}\" {Options} ");
             foreach (TrackInfo track in unknown.GetTrackList())
             {
                 commandline.Append($"--edit track:@{track.Number} --set language={language} ");
@@ -48,7 +47,7 @@ namespace PlexCleaner
         public bool SetMkvTrackLanguage(string filename, int track, string language)
         {
             // Set track language
-            string commandline = $"\"{filename}\" --edit track:@{track} --set language={language}";
+            string commandline = $"\"{filename}\" {Options} --edit track:@{track} --set language={language}";
             int exitcode = Command(commandline);
             return exitcode == 0;
         }
@@ -56,7 +55,7 @@ namespace PlexCleaner
         public bool ClearMkvTags(string filename)
         {
             // Clear all tags
-            string commandline = $"\"{filename}\" --tags all: --delete title";
+            string commandline = $"\"{filename}\" {Options} --tags all: --delete title";
             int exitcode = Command(commandline);
             return exitcode == 0;
         }
@@ -71,7 +70,7 @@ namespace PlexCleaner
 
             // Clear all tags
             StringBuilder commandline = new StringBuilder();
-            commandline.Append($"\"{filename}\" --tags all: --delete title ");
+            commandline.Append($"\"{filename}\" {Options} --tags all: --delete title ");
 
             // Delete all track titles
             foreach (TrackInfo track in info.GetTrackList())
@@ -88,5 +87,7 @@ namespace PlexCleaner
             int exitcode = Command(commandline.ToString());
             return exitcode == 0;
         }
+
+        private const string Options = "--flush-on-close";
     }
 }

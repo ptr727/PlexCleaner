@@ -109,11 +109,11 @@ namespace PlexCleaner
         public void WriteLine()
         {
             foreach ((_, TagMap value) in Video)
-                Log.Logger.Information("Video, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+                Log.Logger.Information("Video, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
             foreach ((_, TagMap value) in Audio)
-                Log.Logger.Information("Audio, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+                Log.Logger.Information("Audio, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
             foreach ((_, TagMap value) in Subtitle)
-                Log.Logger.Information("Subtitle, {value.PrimaryTool}, {value.Primary}, {value.SecondaryTool}, {value.Secondary}, {value.TertiaryTool}, {value.Tertiary}, {value.Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+                Log.Logger.Information("Subtitle, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
         }
     }
 }

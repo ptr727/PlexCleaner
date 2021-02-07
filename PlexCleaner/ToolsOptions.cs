@@ -5,6 +5,7 @@
         public bool UseSystem { get; set; }
         public string RootPath { get; set; } = @".\Tools\";
         public bool RootRelative { get; set; } = true;
+        public bool AutoUpdate { get; set; }
 
         // Tool subfolders        
         public const string MkvToolNix = "MKVToolNix";

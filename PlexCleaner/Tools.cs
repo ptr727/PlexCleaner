@@ -57,7 +57,8 @@ namespace PlexCleaner
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
                 !Program.Config.ToolsOptions.UseSystem)
             {
-                Log.Logger.Warning("Forcing 'ToolsOptions:UseSystem` to 'true' on Linux");
+                Log.Logger.Warning("Folder tools are not suported on Linux");
+                Log.Logger.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
                 Program.Config.ToolsOptions.UseSystem = true;
             }
 
@@ -109,8 +110,13 @@ namespace PlexCleaner
             ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsfile));
             if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Error("Tool JSON schema mismatch : {ToolInfoJsonSchemaVersion} != {ToolInfoJsonSchemaCurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
-                return false;
+                Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}", 
+                                 toolInfoJson.SchemaVersion, 
+                                 ToolInfoJsonSchema.CurrentSchemaVersion,
+                                 toolsfile);
+                // Upgrade schema
+                if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+                    return false;
             }
 
             // Verify each tool
@@ -121,24 +127,22 @@ namespace PlexCleaner
                 MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
                 if (mediaToolInfo == null)
                 {
-                    Log.Logger.Error("{Tool} not found in Tools.json, run the 'checkfornewtools' command", mediaTool.GetToolFamily());
+                    Log.Logger.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
                     return false;
                 }
 
                 // Make sure the tool exists
-                if (!File.Exists(mediaTool.GetToolPath()))
-                {
-                    Log.Logger.Error("{Tool} not found : {Name}", mediaTool.GetToolType(), mediaTool.GetToolPath());
-                    return false;
-                }
-
                 // Query the installed version information
-                if (!mediaTool.GetInstalledVersion(out mediaToolInfo))
+                if (!File.Exists(mediaTool.GetToolPath()) ||
+                    !mediaTool.GetInstalledVersion(out mediaToolInfo))
                 {
-                    Log.Logger.Error("{Tool} not found : {Name}", mediaTool.GetToolType(), mediaTool.GetToolPath());
+                    Log.Logger.Error("{Tool} not found in path {Name}", mediaTool.GetToolType(), mediaTool.GetToolPath());
                     return false;
                 }
-                Log.Logger.Information("{Tool} : Version: {Version}, Path: {Name}", mediaTool.GetToolType(), mediaToolInfo.Version, mediaToolInfo.FileName);
+                Log.Logger.Information("{Tool} : Version: {Version}, Path: {Name}", 
+                                       mediaTool.GetToolType(), 
+                                       mediaToolInfo.Version, 
+                                       mediaToolInfo.FileName);
 
                 // Assign the tool info
                 mediaTool.Info = mediaToolInfo;
@@ -187,6 +191,20 @@ namespace PlexCleaner
 
         public static bool CheckForNewTools()
         {
+            // TODO: Checking for new tools are not currently supported on Linux
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Log.Logger.Warning("Checking for new tools are not supported on Linux");
+                if (Program.Config.ToolsOptions.AutoUpdate)
+                { 
+                    Log.Logger.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on Linux");
+                    Program.Config.ToolsOptions.AutoUpdate = false; 
+                }
+
+                // Nothing to do
+                return true;
+            }
+
             // 7-Zip must be installed
             if (!File.Exists(SevenZip.GetToolPath()))
             {
@@ -204,11 +222,16 @@ namespace PlexCleaner
                 if (File.Exists(toolsFile))
                 {
                     // Deserialize and compare the schema version
-                    toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsFile));
+                    toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
                     if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
                     {
-                        Log.Logger.Error("Tool JSON schema mismatch : {ToolInfoJsonSchemaVersion} != {ToolInfoJsonSchemaCurrentSchemaVersion}", toolInfoJson.SchemaVersion, ToolInfoJsonSchema.CurrentSchemaVersion);
-                        toolInfoJson = null;
+                        Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}", 
+                                         toolInfoJson.SchemaVersion, 
+                                         ToolInfoJsonSchema.CurrentSchemaVersion);
+
+                        // Upgrade Schema
+                        if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+                            toolInfoJson = null;
                     }
                 }
                 toolInfoJson ??= new ToolInfoJsonSchema();
@@ -280,8 +303,7 @@ namespace PlexCleaner
                 }
 
                 // Write updated JSON to file
-                string json = ToolInfoJsonSchema.ToJson(toolInfoJson);
-                File.WriteAllText(toolsFile, json);
+                ToolInfoJsonSchema.ToFile(toolsFile, toolInfoJson);
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
             {

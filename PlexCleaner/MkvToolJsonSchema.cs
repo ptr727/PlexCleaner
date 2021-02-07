@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 // Change uid long to UInt64
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
+// ReSharper disable once CheckNamespace
 namespace PlexCleaner.MkvToolJsonSchema
 {
     public class MkvMerge

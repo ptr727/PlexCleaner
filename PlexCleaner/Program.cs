@@ -98,9 +98,11 @@ namespace PlexCleaner
             if (program == null)
                 return -1;
 
+            // Get file list
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
+            // Process all files
             Process process = new Process();
             return process.ProcessFiles(program.FileInfoList) && 
                    Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
@@ -225,6 +227,18 @@ namespace PlexCleaner
             return Process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int UpgradeSidecarCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         // Add a reference to this class in the event handler arguments
         private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
 
@@ -261,6 +275,19 @@ namespace PlexCleaner
             Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
             ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
+            // Compare the schema version
+            if (config.SchemaVersion != ConfigFileJsonSchema.CurrentSchemaVersion)
+            {
+                Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}",
+                                   config.SchemaVersion,
+                                   ConfigFileJsonSchema.CurrentSchemaVersion,
+                                   options.SettingsFile);
+
+                // Upgrade schema
+                if (!ConfigFileJsonSchema.Upgrade(config))
+                    return null;
+            }
+
             // Set the static options from the loaded settings
             Options = options;
             Config = config;
@@ -290,9 +317,17 @@ namespace PlexCleaner
             }
 
             // Verify tools
-            if (verifyTools &&
-                !Tools.VerifyTools())
-                return null;
+            if (verifyTools)
+            {
+                // Upgrade tools if auto update is enabled
+                if (Config.ToolsOptions.AutoUpdate &&
+                    !Tools.CheckForNewTools())
+                    return null;
+
+                // Verify tools
+                if (!Tools.VerifyTools())
+                    return null;
+            }
 
             // Create program instance
             return new Program();

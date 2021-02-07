@@ -42,8 +42,8 @@ namespace PlexCleaner
             mediaToolInfo = new MediaToolInfo(this);
 
             // Get version
-            string commandline = "--version";
-            int exitcode = Command(commandline, out string output);
+            const string commandline = "--version";
+            int exitcode = Command(commandline, false, out string output);
             if (exitcode != 0)
                 return false;
 
@@ -127,7 +127,7 @@ namespace PlexCleaner
         {
             // Get media info as JSON
             string commandline = $"--identify \"{filename}\" --identification-format json";
-            int exitcode = Command(commandline, out json);
+            int exitcode = Command(commandline, false, out json);
             return exitcode == 0;
         }
 
@@ -264,6 +264,6 @@ namespace PlexCleaner
         }
 
         private const string Snippet = "--split parts:00:00:00-00:01:00";
-        private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags";
+        private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --flush-on-close";
     }
 }

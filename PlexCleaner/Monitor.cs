@@ -179,7 +179,7 @@ namespace PlexCleaner
 
                 // Ignore our own sidecar and *.tmp files being created
                 if (!fileinfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
-                    !SidecarFile.IsSidecarFile(fileinfo))
+                    !SidecarFile.IsSidecarFileName(fileinfo))
                     foldername = fileinfo.DirectoryName;
             }
             // Or directory

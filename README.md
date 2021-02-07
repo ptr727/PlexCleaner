@@ -19,9 +19,19 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.0 is a major release with fixes, new features, and some breaking changes.
+- Version 2.1:
+  - Added backwards compatibility for some older JSON schemas.
+  - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
+  - Sidecar JSON schema changes:
+    - Replaced the unreliable file modified timestamp state tracking with a SHA256 hash of parts of the MKV file.
+    - Replaced the `Verified` boolean with `State` flags to track more granular file state and modification changes.
+    - Run the `upgradesidecar` command to migrate sidecar files to the current schema version.
+  - Repairing metadata inconsistencies, e.g. MuxingMode not specified for S_VOBSUB subtitle codecs, by remuxing the MKV file.
+  - Added a `ToolsOptions:AutoUpdate` configuration option to automatically update the tools before each run.
+
+- Version 2.0:
   - Linux and Docker are now supported platforms.
-    - Automatic downloading of tools on Linux is not currently suported, tools need to be manually installed on the system.
+    - Automatic downloading of tools on Linux is not currently supported, tools need to be manually installed on the system.
     - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
   - Support for H.265 encoding added.
   - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
@@ -37,7 +47,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
     - `ProcessOptions:ReEncodeAudioFormats` : `opus` codec added to default list.
   - File logging and console output is now done using structured Serilog logging.
-    - Basic logging options are used, configuration from JSON is not currently supported.
+    - Basic console and file logging options are used, configuration from JSON is not currently supported.
 
 ## Use Cases
 
@@ -185,7 +195,9 @@ Create a default configuration file by running:
     // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
     // Audio encoding codec
-    "AudioEncodeCodec": "ac3"
+    "AudioEncodeCodec": "ac3",
+    // Automatically check for new tools
+    "AutoUpdate":  false
   },
   "ProcessOptions": {
     // Delete empty folders
@@ -282,7 +294,7 @@ Commandline options:
 `PlexCleaner.exe --help`
 
 ```console
-PS C:\..\netcoreapp3.1> .\PlexCleaner.exe --help
+> ./PlexCleaner --help
 PlexCleaner:
   Utility to optimize media files for DirectPlay on Plex
 
@@ -310,6 +322,7 @@ Commands:
   gettagmap           Print attribute tag-map created from media files
   getmediainfo        Print media file attribute information
   getbitrateinfo      Print media file bitrate information
+  upgradesidecar      Upgrade sidecar file schemas
 ```
 
 The `--settingsfile` JSON settings file is required.  
@@ -320,7 +333,7 @@ One of the commands must be specified.
 ### Process Media Files
 
 ```console
-PS C:\...\netcoreapp3.1> .\PlexCleaner.exe process --help
+> .\PlexCleaner.exe process --help
 process:
   Process media files.
 
@@ -344,13 +357,13 @@ The following processing will be done:
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
-- Remove all tags from the media file.
+- Remove all tags, titles, and attachments from the media file.
 - Set the language to `DefaultLanguage` for any track with an undefined language.
 - Remove tracks with languages not in the `KeepLanguages` list.
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
 - De-interlace the video track if interlaced.
-- Re-encode video to H.264 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
+- Re-encode video to H.264 or H.265 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
 
@@ -373,11 +386,16 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### CreateSidecar, GetSidecar, GetTagMap, GetMediaInfo, GetBitrateInfo
+### CreateSidecar, GetSidecar, UpgradeSidecar
 
 The `createsidecar` command will create sidecar files.
 
 The `getsidecar` command will print sidecar file attributes.
+
+The `upgradesidecar` command will upgrade the sidecar schemas to the current version.  
+When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
+
+### GetTagMap, GetMediaInfo, GetBitrateInfo
 
 The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
 
