@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using InsaneGenius.Utilities;
@@ -27,7 +26,7 @@ namespace PlexCleaner
                 !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 HasErrors = true;
-                Serilog.Log.Logger.Warning("Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
+                Log.Logger.Warning("Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
             }
 
             // Set language
@@ -69,7 +68,7 @@ namespace PlexCleaner
             {
                 HasErrors = true;
                 Language = "und";
-                Serilog.Log.Logger.Warning("Invalid Language : {Language}", Language);
+                Log.Logger.Warning("Invalid Language : {Language}", Language);
             }
             else
             {

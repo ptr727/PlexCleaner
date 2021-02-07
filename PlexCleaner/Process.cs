@@ -139,13 +139,13 @@ namespace PlexCleaner
             {
                 Log.Logger.Information("Modified files :");
                 foreach (string file in modifiedFiles)
-                    Log.Logger.Information(file);
+                    Log.Logger.Information("{Name}", file);
             }
             if (errorFiles.Count > 0)
             {
                 Log.Logger.Information("Error files :");
                 foreach (string file in errorFiles)
-                    Log.Logger.Information(file);
+                    Log.Logger.Information("{Name}", file);
             }
 
             // Write the updated ignore file list
@@ -257,7 +257,7 @@ namespace PlexCleaner
                 if (!Tools.FfMpeg.VerifyMedia(fileinfo.FullName, out string error))
                 {
                     Log.Logger.Error("Error Verifying : {Name}", fileinfo.FullName);
-                    Log.Logger.Error(error);
+                    Log.Logger.Error("{Error}", error);
                     errorcount ++;
                 }
 
@@ -484,15 +484,15 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only sidecar files
-                if (!SidecarFile.IsSidecarFile(fileinfo))
+                if (!SidecarFile.IsSidecarFileName(fileinfo))
                     continue;
 
                 // Read the sidecar files
-                Log.Logger.Information("Reading sidecar : {Name}", fileinfo.FullName);
-                SidecarFile sidecarfile = new SidecarFile();
-                if (!sidecarfile.ReadSidecarJson(fileinfo))
+                Log.Logger.Information("Reading sidecar file : {Name}", fileinfo.FullName);
+                SidecarFile sidecarfile = new SidecarFile(fileinfo);
+                if (!sidecarfile.Read())
                 {
-                    Log.Logger.Error("Error reading sidecar : {Name}", fileinfo.FullName);
+                    Log.Logger.Error("Error reading sidecar file : {Name}", fileinfo.FullName);
                     errorcount ++;
                 }
                 else 
@@ -544,7 +544,7 @@ namespace PlexCleaner
                 }
                 else
                 {
-                    Log.Logger.Information(fileinfo.FullName);
+                    Log.Logger.Information("{Name}", fileinfo.FullName);
                     processFile.FfProbeInfo.WriteLine("FFprobe");
                     processFile.MkvMergeInfo.WriteLine("MKVMerge");
                     processFile.MediaInfoInfo.WriteLine("MediaInfo");
@@ -630,15 +630,15 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Is the file read-only
-            if ((fileinfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-            {
-                Log.Logger.Warning("Skipping read-only file : {Name}", fileinfo.FullName);
-                return false;
-            }
-
             // Create file processor to hold state
             ProcessFile processFile = new ProcessFile(fileinfo);
+
+            // Is the file writeable
+            if (!processFile.IsWriteable())
+            {
+                Log.Logger.Error("Skipping read-only file : {Name}", fileinfo.FullName);
+                return false;
+            }
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -675,9 +675,18 @@ namespace PlexCleaner
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
                 return processFile.Result;
 
+            // All files past this point are MKV files
+
             // Cancel handler
             if (Program.IsCancelled())
                 return false;
+
+            // If a sidecar file exists for this MKV file it must be writable
+            if (!processFile.IsSidecarWriteable())
+            {
+                Log.Logger.Error("Skipping media file due to read-only sidecar file : {Name}", fileinfo.FullName);
+                return false;
+            }
 
             // Read the media info
             if (!processFile.GetMediaInfo())
@@ -691,16 +700,15 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
-            // Do we have any errors in the metadata
-            // This will only print warnings
-            processFile.MediaInfoErrors();
+            // Try to ReMux metadata errors away
+            if (!processFile.ReMuxMediaInfoErrors(ref modified))
+                return processFile.Result;
 
             // Cancel handler
             if (Program.IsCancelled())
                 return false;
 
-            // Remove tags
-            // This may fix some of the FFprobe language tag errors
+            // Remove tags and unwanted metadata
             if (!processFile.RemoveTags(ref modified))
                 return processFile.Result;
 
@@ -795,6 +803,55 @@ namespace PlexCleaner
             */
 
             // Done
+            return true;
+        }
+
+        public static bool UpgradeSidecarFiles(List<FileInfo> fileList)
+        {
+            Log.Logger.Information("Upgrading sidecar files ...");
+
+            // Start the stopwatch
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            // Process all files
+            int totalCount = fileList.Count;
+            int processedCount = 0;
+            int errorCount = 0;
+            foreach (FileInfo fileInfo in fileList)
+            {
+                // Percentage
+                processedCount ++;
+                double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
+
+                // Cancel handler
+                if (Program.IsCancelled())
+                    return false;
+
+                // Handle only MKV files
+                if (!SidecarFile.IsMediaFileName(fileInfo))
+                    continue;
+
+                // Upgrade the sidecar files
+                Log.Logger.Information("Upgrading sidecar file ({Done:P}) : {Name}", done, fileInfo.FullName);
+                SidecarFile sidecarfile = new SidecarFile(fileInfo);
+                if (!sidecarfile.Upgrade())
+                {
+                    Log.Logger.Error("Error upgrading sidecar file : {Name}", fileInfo.FullName);
+                    errorCount ++;
+                }
+
+                // Next file
+            }
+
+            // Stop the timer
+            timer.Stop();
+
+            // Done
+            Log.Logger.Information("Total files : {Count}", fileList.Count);
+            Log.Logger.Information("Error files : {Count}", errorCount);
+            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
+
             return true;
         }
 

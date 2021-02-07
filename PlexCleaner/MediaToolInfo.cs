@@ -25,7 +25,13 @@ namespace PlexCleaner
 
         public void WriteLine(string prefix)
         {
-            Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}", prefix, ToolType, Version, FileName, Size, ModifiedTime, Url);
+            Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}", 
+                                   prefix, 
+                                   ToolType, 
+                                   Version, 
+                                   FileName, 
+                                   Size, 
+                                   ModifiedTime, Url);
         }
 
         public int CompareTo(object obj)
@@ -38,7 +44,7 @@ namespace PlexCleaner
             if (toolInfo == null)
                 throw new ArgumentNullException(nameof(toolInfo));
 
-            int result = FileName.CompareTo(toolInfo.FileName);
+            int result = string.Compare(FileName, toolInfo.FileName, StringComparison.OrdinalIgnoreCase);
             if (result != 0)
                 return result;
 
@@ -50,7 +56,7 @@ namespace PlexCleaner
             if (result != 0)
                 return result;
 
-            return Version.CompareTo(toolInfo.Version);
+            return string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
         }
 
         public void Copy(MediaToolInfo toolInfo)

@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
+// ReSharper disable once CheckNamespace
 namespace PlexCleaner.FfMpegToolJsonSchema
 {
     public class FfProbe

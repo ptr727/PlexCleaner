@@ -1,10 +1,16 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
+using System.ComponentModel;
 
 namespace PlexCleaner
 {
     public class ConfigFileJsonSchema
     {
+        [DefaultValue(0)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+        public const int CurrentSchemaVersion = 1;
+
         public ToolsOptions ToolsOptions { get; set; } = new ToolsOptions();
         public ConvertOptions ConvertOptions { get; set; } = new ConvertOptions();
         public ProcessOptions ProcessOptions { get; set; } = new ProcessOptions();
@@ -22,9 +28,9 @@ namespace PlexCleaner
             return FromJson(File.ReadAllText(path));
         }
 
-        public static void ToFile(string path, ConfigFileJsonSchema settings)
+        public static void ToFile(string path, ConfigFileJsonSchema json)
         {
-            File.WriteAllText(path, ToJson(settings));
+            File.WriteAllText(path, ToJson(json));
         }
 
         public static string ToJson(ConfigFileJsonSchema settings) =>
@@ -38,5 +44,16 @@ namespace PlexCleaner
             Formatting = Formatting.Indented,
             StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
         };
+
+        public static bool Upgrade(ConfigFileJsonSchema json)
+        {
+            // Current version
+            if (json.SchemaVersion == CurrentSchemaVersion)
+                return true;
+
+            // Schema version was added in v1, and remains backwards compatible
+
+            return true;
+        }
     }
 }

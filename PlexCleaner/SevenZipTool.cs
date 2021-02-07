@@ -38,8 +38,8 @@ namespace PlexCleaner
             mediaToolInfo = new MediaToolInfo(this);
 
             // No version command, run with no arguments
-            string commandline = "";
-            int exitcode = Command(commandline, out string output);
+            const string commandline = "";
+            int exitcode = Command(commandline, false, out string output);
             if (exitcode != 0)
                 return false;
 
@@ -113,9 +113,7 @@ namespace PlexCleaner
 
         public override string GetSubFolder()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return "x64";
-            return "";
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
         }
 
         public override bool Update(string updateFile)

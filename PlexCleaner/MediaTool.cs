@@ -117,10 +117,13 @@ namespace PlexCleaner
             Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
-            return ProcessEx.Execute(path, parameters);
+            int exitcode = ProcessEx.Execute(path, parameters);
+            if (exitcode != 0)
+                Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
+            return exitcode;
         }
 
-        public int Command(string parameters, out string output)
+        public int Command(string parameters, bool console, out string output)
         {
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
@@ -129,10 +132,13 @@ namespace PlexCleaner
             Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
-            return ProcessEx.Execute(path, parameters, out output);
+            int exitcode = ProcessEx.Execute(path, parameters, console, out output);
+            if (exitcode != 0)
+                Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
+            return exitcode;
         }
 
-        public int Command(string parameters, out string output, out string error)
+        public int Command(string parameters, bool console, out string output, out string error)
         {
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
@@ -141,7 +147,10 @@ namespace PlexCleaner
             Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
-            return ProcessEx.Execute(path, parameters, out output, out error);
+            int exitcode = ProcessEx.Execute(path, parameters, console, out output, out error);
+            if (exitcode != 0)
+                Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
+            return exitcode;
         }
     }
 }

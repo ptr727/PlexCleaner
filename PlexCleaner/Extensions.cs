@@ -5,15 +5,15 @@ namespace PlexCleaner
 {
     public static class Extensions
     {
-        public static bool LogAndPropagate(this ILogger logger, Exception exception, string message, params object[] args)
+        public static bool LogAndPropagate(this ILogger logger, Exception exception, string function)
         {
-            logger.Error(exception, message, args);
+            logger.Error(exception, "{Function}", function);
             return false;
         }
 
-        public static bool LogAndHandle(this ILogger logger, Exception exception, string message, params object[] args)
+        public static bool LogAndHandle(this ILogger logger, Exception exception, string function)
         {
-            logger.Error(exception, message, args);
+            logger.Error(exception, "{Function}", function);
             return true;
         }
     }

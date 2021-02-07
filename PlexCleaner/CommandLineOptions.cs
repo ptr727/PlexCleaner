@@ -59,6 +59,9 @@ namespace PlexCleaner
             // Calculate bitrate info
             rootCommand.AddCommand(CreateGetBitrateInfoCommand());
 
+            // Upgrade sidecar JSON schemas
+            rootCommand.AddCommand(CreateUpgradeSidecarCommand());
+
             return rootCommand;
         }
 
@@ -298,6 +301,22 @@ namespace PlexCleaner
                 {
                     Description = "Verify media files",
                     Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
+                };
+
+            // Media files or folders option
+            printmediainfoCommand.AddOption(CreateMediaFilesOption());
+
+            return printmediainfoCommand;
+        }
+
+        private static Command CreateUpgradeSidecarCommand()
+        {
+            // Print media info
+            Command printmediainfoCommand =
+                new Command("upgradesidecar")
+                {
+                    Description = "Upgrade sidecar file schemas",
+                    Handler = CommandHandler.Create<CommandLineOptions>(Program.UpgradeSidecarCommand)
                 };
 
             // Media files or folders option

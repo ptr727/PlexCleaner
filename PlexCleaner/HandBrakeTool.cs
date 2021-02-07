@@ -40,7 +40,7 @@ namespace PlexCleaner
 
             // Get version
             const string commandline = "--version";
-            int exitcode = Command(commandline, out string output);
+            int exitcode = Command(commandline, false, out string output);
             if (exitcode != 0)
                 return false;
 
