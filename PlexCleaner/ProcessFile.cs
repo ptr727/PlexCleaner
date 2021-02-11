@@ -25,9 +25,6 @@ namespace PlexCleaner
             if (remuxExtensions == null)
                 throw new ArgumentNullException(nameof(remuxExtensions));
 
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.DeleteUnwantedExtensions)
                 return true;
@@ -44,23 +41,16 @@ namespace PlexCleaner
             // Delete the file
             if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // File deleted, do not continue processing
             modified = true;
-            Result = true;
             return false;
         }
 
         public bool DeleteMissingSidecarFiles(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Is this a sidecar file
             if (!SidecarFile.IsSidecarFileName(MediaFile))
                 // Nothing to do
@@ -80,15 +70,11 @@ namespace PlexCleaner
             // Delete the file
             if (!Program.Options.TestNoModify &&
                 !FileEx.DeleteFile(MediaFile.FullName))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // File deleted, do not continue processing
             modified = true;
-            Result = true;
             return false;
         }
 
@@ -111,9 +97,6 @@ namespace PlexCleaner
             if (remuxExtensions == null)
                 throw new ArgumentNullException(nameof(remuxExtensions));
 
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.ReMux)
                 return true;
@@ -129,11 +112,8 @@ namespace PlexCleaner
             // Remux the file, use the new filename
             // Convert will test for Options.TestNoModify
             if (!Convert.ReMuxToMkv(MediaFile.FullName, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // In test mode the file will not be remuxed to MKV so abort
             if (Program.Options.TestNoModify)
@@ -150,9 +130,6 @@ namespace PlexCleaner
 
         public bool RemuxNonMkvContainer(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.ReMux)
                 return true;
@@ -168,11 +145,8 @@ namespace PlexCleaner
             // Remux the file, use the new filename
             // Convert will test for Options.TestNoModify
             if (!Convert.ReMuxToMkv(MediaFile.FullName, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // In test mode the file will not be remuxed to MKV so abort
             if (Program.Options.TestNoModify)
@@ -189,9 +163,6 @@ namespace PlexCleaner
 
         public bool ReMuxMediaInfoErrors(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Do we have any errors
             if (!FfProbeInfo.HasErrors &&
                 !MkvMergeInfo.HasErrors &&
@@ -211,11 +182,8 @@ namespace PlexCleaner
 
             // Remux the file, use the new filename
             if (!Convert.ReMuxToMkv(MediaFile.FullName, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // In test mode the file will not be remuxed to MKV so abort
             if (Program.Options.TestNoModify)
@@ -243,9 +211,6 @@ namespace PlexCleaner
 
         public bool RemoveTags(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.RemoveTags)
                 return true;
@@ -261,11 +226,8 @@ namespace PlexCleaner
             // Delete the tags
             if (!Program.Options.TestNoModify &&
                 !Tools.MkvPropEdit.ClearMkvTags(MediaFile.FullName, MkvMergeInfo))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // Set modified state
             SidecarFile.State |= SidecarFile.States.Modified;
@@ -277,9 +239,6 @@ namespace PlexCleaner
 
         public bool SetUnknownLanguage(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.SetUnknownLanguage)
                 return true;
@@ -298,11 +257,8 @@ namespace PlexCleaner
             // Set the track language to the default language
             if (!Program.Options.TestNoModify &&
                 !Tools.MkvPropEdit.SetMkvTrackLanguage(MediaFile.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // Set modified state
             SidecarFile.State |= SidecarFile.States.Modified;
@@ -314,16 +270,13 @@ namespace PlexCleaner
 
         public bool ReMux(HashSet<string> keepLanguages, List<string> preferredAudioFormats, ref bool modified)
         {
-            // Init
-            Result = true;
-            bool remux = false;
-
             // Start out with keeping all the tracks
             MediaInfo keepTracks = MkvMergeInfo;
             MediaInfo removeTracks = new MediaInfo(MediaTool.ToolType.MkvMerge);
 
             // Get all unwanted language tracks
             // Use MKVMerge logic
+            bool remux = false;
             if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
                 MkvMergeInfo.FindUnwantedLanguage(keepLanguages, out MediaInfo keep, out MediaInfo remove))
             {
@@ -364,11 +317,8 @@ namespace PlexCleaner
             // ReMux and only keep the specified tracks
             // Convert will test for Options.TestNoModify
             if (!Convert.ReMuxToMkv(MediaFile.FullName, keepTracks, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // Update state
             SidecarFile.State |= SidecarFile.States.ReMuxed;
@@ -381,9 +331,6 @@ namespace PlexCleaner
 
         public bool DeInterlace(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.DeInterlace)
                 return true;
@@ -401,11 +348,8 @@ namespace PlexCleaner
             // Convert using HandBrakeCLI, it produces the best de-interlacing results
             // Convert will test for Options.TestNoModify
             if (!Convert.DeInterlaceToMkv(MediaFile.FullName, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // Update state
             SidecarFile.State |= SidecarFile.States.DeInterlaced;
@@ -418,9 +362,6 @@ namespace PlexCleaner
 
         public bool ReEncode(List<VideoInfo> reencodeVideoInfos, HashSet<string> reencodeAudioFormats, ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Optional
             if (!Program.Config.ProcessOptions.ReEncode)
                 return true;
@@ -438,11 +379,8 @@ namespace PlexCleaner
             // Reencode selected tracks
             // Convert will test for Options.TestNoModify
             if (!Convert.ConvertToMkv(MediaFile.FullName, keep, reencode, out string outputname))
-            {
                 // Error
-                Result = false;
                 return false;
-            }
 
             // Update state
             SidecarFile.State |= SidecarFile.States.ReEncoded;
@@ -455,9 +393,6 @@ namespace PlexCleaner
 
         public bool Verify(ref bool modified)
         {
-            // Init
-            Result = true;
-
             // Verify if enabled
             if (!Program.Config.ProcessOptions.Verify)
                 return true;
@@ -518,9 +453,13 @@ namespace PlexCleaner
                     Log.Logger.Error("Media stream validation failed : {Name}", MediaFile.Name);
                     Log.Logger.Error("{Error}", error);
 
+                    // Should we attempt file repair
+                    if (!Program.Config.VerifyOptions.AutoRepair)
+                        // Done
+                        break;
+
                     // Attempt file repair
-                    if (Program.Config.VerifyOptions.AutoRepair &&
-                        !VerifyRepair(ref modified))
+                    if (!VerifyRepair(ref modified))
                     {
                         // Cancel requested
                         if (Program.IsCancelledError())
@@ -565,9 +504,6 @@ namespace PlexCleaner
             // If failed
             if (!verified)
             {
-                // Failed
-                Result = false;
-
                 // If testing we are done
                 if (Program.Options.TestNoModify)
                     return false;
@@ -592,7 +528,10 @@ namespace PlexCleaner
                 // Update state
                 SidecarFile.State |= SidecarFile.States.VerifyFailed;
                 SidecarFile.State &= ~SidecarFile.States.Verified;
-                return Refresh(false);
+                Refresh(false);
+
+                // Failed
+                return false;
             }
 
             // All ok
@@ -754,6 +693,7 @@ namespace PlexCleaner
                     Log.Logger.Error("Repair by re-encoding failed : {Name}", MediaFile.Name);
 
                     // Update state
+                    // Caller will Refresh()
                     SidecarFile.State |= SidecarFile.States.RepairFailed;
 
                     return false;
@@ -776,6 +716,7 @@ namespace PlexCleaner
                 Log.Logger.Error("{Error}", error);
 
                 // Update state
+                // Caller will Refresh()
                 SidecarFile.State |= SidecarFile.States.RepairFailed;
 
                 return false;
@@ -792,7 +733,7 @@ namespace PlexCleaner
             SidecarFile.State |= SidecarFile.States.Repaired;
             SidecarFile.State &= ~SidecarFile.States.RepairFailed;
 
-            // Refresh
+            // Caller will Refresh()
             modified = true;
             return true;
         }
@@ -827,18 +768,14 @@ namespace PlexCleaner
             {
                 // Open will read, create, update
                 if (!SidecarFile.Open(modified))
-                {
                     // Failed to read or create sidecar
-                    Result = false;
                     return false;
-                }
 
                 // Assign results
                 FfProbeInfo = SidecarFile.FfProbeInfo;
                 MkvMergeInfo = SidecarFile.MkvMergeInfo;
                 MediaInfoInfo = SidecarFile.MediaInfoInfo;
 
-                Result = true;
                 return true;
             }
 
@@ -847,17 +784,13 @@ namespace PlexCleaner
                                         out MediaInfo ffprobeInfo, 
                                         out MediaInfo mkvmergeInfo, 
                                         out MediaInfo mediainfoInfo))
-            {
-                Result = false;
                 return false;
-            }
 
             // Assign results
             FfProbeInfo = ffprobeInfo;
             MkvMergeInfo = mkvmergeInfo;
             MediaInfoInfo = mediainfoInfo;
 
-            Result = true;
             return true;
         }
 
@@ -915,7 +848,6 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool Result { get; set; }
         public bool Modified { get; set; }
         public MediaInfo FfProbeInfo { get; set; }
         public MediaInfo MkvMergeInfo { get; set; }

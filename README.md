@@ -187,7 +187,9 @@ Create a default configuration file by running:
     // Tools folder
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
-    "RootRelative": true
+    "RootRelative": true,
+    // Automatically check for new tools
+    "AutoUpdate":  false
   },
   "ConvertOptions": {
     // Enable H.265 encoding, else use H.264

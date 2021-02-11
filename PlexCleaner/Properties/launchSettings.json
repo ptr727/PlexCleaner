@@ -66,7 +66,7 @@
     },
     "Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\\Doctor Who (1963)\\Season 5\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\\90 Day Fiancé\""
     },
     "UpgradeSidecar": {
       "commandName": "Project",
