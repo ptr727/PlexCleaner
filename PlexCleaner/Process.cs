@@ -646,7 +646,7 @@ namespace PlexCleaner
 
             // Delete files not in our desired extensions lists
             if (!processFile.DeleteUnwantedExtensions(KeepExtensions, ReMuxExtensions, ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -654,7 +654,7 @@ namespace PlexCleaner
 
             // Delete the sidecar file if matching MKV file not found
             if (!processFile.DeleteMissingSidecarFiles(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -673,7 +673,7 @@ namespace PlexCleaner
 
             // ReMux non-MKV containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
-                return processFile.Result;
+                return false;
 
             // All files past this point are MKV files
 
@@ -690,11 +690,11 @@ namespace PlexCleaner
 
             // Read the media info
             if (!processFile.GetMediaInfo())
-                return processFile.Result;
+                return false;
 
             // ReMux non-MKV containers using MKV filenames
             if (!processFile.RemuxNonMkvContainer(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -702,7 +702,7 @@ namespace PlexCleaner
 
             // Try to ReMux metadata errors away
             if (!processFile.ReMuxMediaInfoErrors(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -710,7 +710,7 @@ namespace PlexCleaner
 
             // Remove tags and unwanted metadata
             if (!processFile.RemoveTags(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -718,7 +718,7 @@ namespace PlexCleaner
 
             // Change all tracks with an unknown language to the default language
             if (!processFile.SetUnknownLanguage(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -729,7 +729,7 @@ namespace PlexCleaner
             // Remove all duplicate tracks
             // TODO: Remux if any tracks specifically need remuxing
             if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -737,7 +737,7 @@ namespace PlexCleaner
 
             // De-interlace interlaced content
             if (!processFile.DeInterlace(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -745,7 +745,7 @@ namespace PlexCleaner
 
             // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
             if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -753,7 +753,7 @@ namespace PlexCleaner
 
             // Verify media
             if (!processFile.Verify(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -762,10 +762,9 @@ namespace PlexCleaner
             // FFmpeg and HandBrake can add tags or result in tracks witn no language set
             // Remove tags and set unknown languages again
             // TODO: Can we avoid double processing?
-            if (!processFile.RemoveTags(ref modified))
-                return processFile.Result;
-            if (!processFile.SetUnknownLanguage(ref modified))
-                return processFile.Result;
+            if (!processFile.RemoveTags(ref modified) ||
+                !processFile.SetUnknownLanguage(ref modified))
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
@@ -775,32 +774,11 @@ namespace PlexCleaner
             // Re-verify media to remember verified flag
             // TODO: Can we avoid double processing?
             if (!processFile.Verify(ref modified))
-                return processFile.Result;
+                return false;
 
             // Cancel handler
             if (Program.IsCancelled())
                 return false;
-
-            // TODO: Why does the media file timestamp change after processing?
-            // Speculating there is caching between Windows and Samba and ZFS and timestamps are not synced?
-            // https://docs.microsoft.com/en-us/dotnet/api/system.io.filesysteminfo.lastwritetimeutc
-            // 10/4/2020 12:03:28 PM : Information : MonitorFileTime : 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
-            // 10/4/2020 12:10:44 PM : Warning : MonitorFileTime : 10/4/2020 7:03:24 PM != 10/4/2020 7:02:55 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
-            // 10/4/2020 12:12:04 PM : Warning : MonitorFileTime : 10/4/2020 7:03:35 PM != 10/4/2020 7:03:24 PM : "Grand Designs Australia - S07E10 - Daylesford Long House, VIC.mkv"
-            /*
-            if (modified)
-            {
-                // Sleep for a few seconds
-                const int sleepTime = 5;
-                Thread.Sleep(sleepTime * 1000);
-
-                // Force another sidecar refresh
-                processFile.GetMediaInfo();
-
-                // Test for timestamp changes
-                Debug.Assert(!processFile.MonitorFileTime(60));
-            }
-            */
 
             // Done
             return true;
