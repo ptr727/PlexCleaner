@@ -23,7 +23,7 @@ ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all \
+    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all tzdata \
     && locale-gen --no-purge en_US en_US.UTF-8 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
