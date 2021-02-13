@@ -53,7 +53,7 @@ namespace PlexCleaner
 
             // Get version
             const string commandline = "-version";
-            int exitcode = Command(commandline, false, out string output, out string error);
+            int exitcode = Command(commandline, false, false, out string output, out string error);
             if (exitcode != 0 || error.Length > 0)
                 return false;
 
@@ -211,7 +211,7 @@ namespace PlexCleaner
             // Create the FFmpeg commandline and execute
             string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
             string commandline = $"-i \"{filename}\" -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
-            int exitcode = Command(commandline, true, out string _, out error);
+            int exitcode = Command(commandline, true, true, out string _, out error);
 
             // Test exitcode and stderr errors
             return exitcode == 0 && error.Length == 0;
@@ -398,7 +398,7 @@ namespace PlexCleaner
             // https://trac.ffmpeg.org/wiki/Null
             string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
             string commandline = $"-i \"{inputName}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
-            int exitcode = Command(commandline, false, out string _, out text);
+            int exitcode = Command(commandline, false, false, out string _, out text);
             return exitcode == 0;
         }
 

@@ -79,7 +79,7 @@ namespace PlexCleaner
         {
             // Get media info as JSON
             string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
-            int exitcode = Command(commandline, false, out json, out string error);
+            int exitcode = Command(commandline, false, false, out json, out string error);
             return exitcode == 0 && error.Length == 0;
         }
 
