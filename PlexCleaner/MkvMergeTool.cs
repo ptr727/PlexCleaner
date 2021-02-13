@@ -43,7 +43,7 @@ namespace PlexCleaner
 
             // Get version
             const string commandline = "--version";
-            int exitcode = Command(commandline, false, out string output);
+            int exitcode = Command(commandline, false, false, out string output);
             if (exitcode != 0)
                 return false;
 
@@ -127,7 +127,7 @@ namespace PlexCleaner
         {
             // Get media info as JSON
             string commandline = $"--identify \"{filename}\" --identification-format json";
-            int exitcode = Command(commandline, false, out json);
+            int exitcode = Command(commandline, false, false, out json);
             return exitcode == 0;
         }
 

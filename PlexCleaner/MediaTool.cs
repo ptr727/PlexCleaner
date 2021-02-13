@@ -123,7 +123,7 @@ namespace PlexCleaner
             return exitcode;
         }
 
-        public int Command(string parameters, bool console, out string output)
+        public int Command(string parameters, bool console, bool limit, out string output)
         {
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
@@ -132,13 +132,16 @@ namespace PlexCleaner
             Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
-            int exitcode = ProcessEx.Execute(path, parameters, console, out output);
+            int exitcode = ProcessEx.Execute(path, 
+                                             parameters, 
+                                             console, limit ? MaxConsoleLines : 0, 
+                                             out output);
             if (exitcode != 0)
                 Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
             return exitcode;
         }
 
-        public int Command(string parameters, bool console, out string output, out string error)
+        public int Command(string parameters, bool console, bool limit, out string output, out string error)
         {
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
@@ -147,10 +150,17 @@ namespace PlexCleaner
             Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
             string path = GetToolPath();
-            int exitcode = ProcessEx.Execute(path, parameters, console, out output, out error);
+            int exitcode = ProcessEx.Execute(path, 
+                                             parameters, 
+                                             console, 
+                                             limit ? MaxConsoleLines : 0, 
+                                             out output, 
+                                             out error);
             if (exitcode != 0)
                 Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
             return exitcode;
         }
+
+        private const int MaxConsoleLines = 5;
     }
 }

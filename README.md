@@ -165,6 +165,7 @@ docker run \
   -it \
   --rm \
   --user nobody:users \
+  --env TZ=Americas/Los_Angeles \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \

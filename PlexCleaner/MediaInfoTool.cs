@@ -40,7 +40,7 @@ namespace PlexCleaner
 
             // Get version
             const string commandline = "--version";
-            int exitcode = Command(commandline, false, out string output);
+            int exitcode = Command(commandline, false, false, out string output);
             if (exitcode != 0)
                 return false;
 
@@ -141,7 +141,7 @@ namespace PlexCleaner
         {
             // Get media info as XML
             string commandline = $"--Output=XML \"{filename}\"";
-            int exitcode = Command(commandline, false, out xml);
+            int exitcode = Command(commandline, false, false, out xml);
 
             // TODO : No error is returned when the file does not exist
             // https://sourceforge.net/p/mediainfo/bugs/1052/
