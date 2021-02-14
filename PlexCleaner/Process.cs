@@ -671,6 +671,14 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
+            // Make sure the file extension is lowercase
+            if (!processFile.MakeExtensionLowercase(ref modified))
+                return false;
+
+            // Cancel handler
+            if (Program.IsCancelled())
+                return false;
+
             // ReMux non-MKV containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
                 return false;

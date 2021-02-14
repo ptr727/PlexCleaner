@@ -224,6 +224,7 @@ namespace PlexCleaner
             if (extension == null)
                 throw new ArgumentNullException(nameof(extension));
 
+            // Case insensitive match, .mkv or .MKV
             return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
         }
 

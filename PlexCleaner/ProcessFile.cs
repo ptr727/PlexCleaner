@@ -60,6 +60,7 @@ namespace PlexCleaner
             string mediafile = Path.ChangeExtension(MediaFile.FullName, ".mkv");
 
             // Does the media file exist
+            // Case sensitive on Linux, i.e. .MKV != .mkv
             if (File.Exists(mediafile))
                 // File exists, nothing more to do
                 return true;
@@ -76,6 +77,29 @@ namespace PlexCleaner
             // File deleted, do not continue processing
             modified = true;
             return false;
+        }
+
+        public bool MakeExtensionLowercase(ref bool modified)
+        {
+            // Is the extension lowercase
+            string lowerExtension = MediaFile.Extension.ToLower();
+            if (MediaFile.Extension.Equals(lowerExtension))
+                return true;
+
+            // Make the extension lowercase
+            Log.Logger.Information("Making file extension lowercase : {Name}", MediaFile.Name);
+
+            // Rename the file
+            // Windows is case insensisitve, so we need to rename in two steps
+            string tempName = Path.ChangeExtension(MediaFile.FullName, ".tmp");
+            string lowerName = Path.ChangeExtension(MediaFile.FullName, lowerExtension);
+            if (!FileEx.RenameFile(MediaFile.FullName, tempName) ||
+                !FileEx.RenameFile(tempName, lowerName))
+                return false;
+
+            // Modified filename
+            modified = true;
+            return Refresh(lowerName);
         }
 
         public bool IsWriteable()
@@ -741,7 +765,8 @@ namespace PlexCleaner
         private bool Refresh(string filename)
         {
             // Media filename changed
-            if (!MediaFile.FullName.Equals(filename, StringComparison.OrdinalIgnoreCase))
+            // Compare case sensitive for Linux suppport
+            if (!MediaFile.FullName.Equals(filename, StringComparison.Ordinal))
             { 
                 MediaFile = new FileInfo(filename);
                 SidecarFile.States oldState = SidecarFile.State;
