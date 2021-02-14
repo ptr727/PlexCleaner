@@ -16,7 +16,6 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 
 # Default timezone is UTC
 ENV TZ=Etc/UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Prevent EULA and confirmation prompts in installers
 ARG DEBIAN_FRONTEND=noninteractive
