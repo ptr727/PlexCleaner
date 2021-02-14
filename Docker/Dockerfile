@@ -14,6 +14,10 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
 
+# Default timezone is UTC
+ENV TZ=Etc/UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Prevent EULA and confirmation prompts in installers
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -23,7 +27,7 @@ ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all tzdata \
+    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all \
     && locale-gen --no-purge en_US en_US.UTF-8 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
