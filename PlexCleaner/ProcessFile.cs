@@ -302,7 +302,7 @@ namespace PlexCleaner
             // Use MKVMerge logic
             bool remux = false;
             if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
-                MkvMergeInfo.FindUnwantedLanguage(keepLanguages, out MediaInfo keep, out MediaInfo remove))
+                MkvMergeInfo.FindUnwantedLanguage(keepLanguages, preferredAudioFormats, out MediaInfo keep, out MediaInfo remove))
             {
                 Log.Logger.Information("Removing unwanted language tracks : {Name}", MediaFile.Name);
                 keep.WriteLine("Keep");

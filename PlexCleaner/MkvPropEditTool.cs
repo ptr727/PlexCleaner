@@ -75,8 +75,9 @@ namespace PlexCleaner
             // Delete all track titles
             foreach (TrackInfo track in info.GetTrackList())
             {
-                // Add all tracks with a name / title
-                if (!string.IsNullOrEmpty(track.Title))
+                // Add all tracks with a title that is not used in processing
+                if (!string.IsNullOrEmpty(track.Title) &&
+                    !MediaInfo.IsUsefulTrackTitle(track.Title))
                     commandline.Append($"--edit track:@{track.Number} --delete name ");
             }
 

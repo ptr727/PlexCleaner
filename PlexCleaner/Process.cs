@@ -716,15 +716,8 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
-            // Remove tags and unwanted metadata
-            if (!processFile.RemoveTags(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
             // Change all tracks with an unknown language to the default language
+            // Merge operation uses language tags, make sure they are set
             if (!processFile.SetUnknownLanguage(ref modified))
                 return false;
 
@@ -735,7 +728,6 @@ namespace PlexCleaner
             // Merge all remux operations into a single call
             // Remove all the unwanted language tracks
             // Remove all duplicate tracks
-            // TODO: Remux if any tracks specifically need remuxing
             if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
                 return false;
 
@@ -751,7 +743,7 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
-            // Re-Encode formats that cannot be direct-played, e.g. MPEG2, WMAPro
+            // Re-Encode formats that cannot be direct-played
             if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
                 return false;
 
@@ -759,7 +751,8 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
-            // Verify media
+            // Verify media streams
+            // Repair if possible
             if (!processFile.Verify(ref modified))
                 return false;
 
@@ -767,22 +760,11 @@ namespace PlexCleaner
             if (Program.IsCancelled())
                 return false;
 
-            // FFmpeg and HandBrake can add tags or result in tracks witn no language set
-            // Remove tags and set unknown languages again
-            // TODO: Can we avoid double processing?
-            if (!processFile.RemoveTags(ref modified) ||
-                !processFile.SetUnknownLanguage(ref modified))
+            // Remove tags and titles
+            if (!processFile.RemoveTags(ref modified))
                 return false;
 
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
-            // Removing the tags and setting the unknown languages will invalidate verified
-            // Re-verify media to remember verified flag
-            // TODO: Can we avoid double processing?
-            if (!processFile.Verify(ref modified))
-                return false;
+            // TODO: Fix processing so we do not need to double clear tags or set track languages
 
             // Cancel handler
             if (Program.IsCancelled())
