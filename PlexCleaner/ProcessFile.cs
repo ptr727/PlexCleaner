@@ -254,7 +254,7 @@ namespace PlexCleaner
                 return false;
 
             // Set modified state
-            SidecarFile.State |= SidecarFile.States.Modified;
+            SidecarFile.State |= SidecarFile.States.ClearedTags;
 
             // Refresh
             modified = true;
@@ -285,7 +285,7 @@ namespace PlexCleaner
                 return false;
 
             // Set modified state
-            SidecarFile.State |= SidecarFile.States.Modified;
+            SidecarFile.State |= SidecarFile.States.SetLanguage;
 
             // Refresh
             modified = true;

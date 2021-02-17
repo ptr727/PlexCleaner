@@ -141,14 +141,14 @@ namespace PlexCleaner
 
             // Note, foreign films may not have any matching language tracks
 
-            // Keep all the tracks that match a language
+            // Keep all video tracks that match a language
             foreach (VideoInfo video in Video)
                 if (languages.Contains(video.Language))
                     keep.Video.Add(video);
                 else
                     remove.Video.Add(video);
 
-            // No matching tracks
+            // No language matching video tracks
             if (keep.Video.Count == 0 && Video.Count > 0)
             {
                 // Use the first track
@@ -159,17 +159,18 @@ namespace PlexCleaner
                 remove.Video.Remove(info);
             }
 
-            // Keep all the tracks that match a language
+            // Keep all audio tracks that match a language
             foreach (AudioInfo audio in Audio)
                 if (languages.Contains(audio.Language))
                     keep.Audio.Add(audio);
                 else
                     remove.Audio.Add(audio);
 
-            // No matching language audio tracks
+            // No language matching audio tracks
+            bool audioMatch = false;
             if (keep.Audio.Count == 0 && Audio.Count > 0)
             {
-                // Use the preferred codec track
+                // Use the preferred audio codec track
                 AudioInfo info = FindPreferredAudio(preferredAudioFormats);
                 if (info == null)
                     // Else use the first track
@@ -179,13 +180,29 @@ namespace PlexCleaner
                 keep.Audio.Add(info);
                 remove.Audio.Remove(info);
             }
+            else
+                // One or more audio tracks matched
+                audioMatch = true;
 
-            // Keep only the subtitle tracks that match our language
+            // Keep all subtitle tracks that match a language
             foreach (SubtitleInfo subtitle in Subtitle)
                 if (languages.Contains(subtitle.Language))
                     keep.Subtitle.Add(subtitle);
                 else
                     remove.Subtitle.Add(subtitle);
+
+            // No language matching subtitle tracks
+            if (keep.Subtitle.Count == 0 && Subtitle.Count > 0)
+            {
+                Log.Logger.Warning("No subtitle track matching requested language : {Languages}", languages);
+            }
+
+            // No audio match and no subtitle match, foreign film with no matching subtitles
+            if (keep.Subtitle.Count == 0 && !audioMatch)
+            {
+                Log.Logger.Warning("No audio or subtitle track matching requested language : {Languages}", languages);
+            }
+
 
             // Set the correct state on all the objects
             remove.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Remove);

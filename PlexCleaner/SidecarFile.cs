@@ -14,7 +14,7 @@ namespace PlexCleaner
         public enum States
         { 
             None = 0, 
-            Modified = 1, 
+            SetLanguage = 1, 
             ReMuxed = 1 << 1, 
             ReEncoded = 1 << 2, 
             DeInterlaced = 1 << 3, 
@@ -22,7 +22,8 @@ namespace PlexCleaner
             RepairFailed = 1 << 5,
             Verified = 1 << 6,
             VerifyFailed = 1 << 7,
-            BitrateExceeded = 1 << 8
+            BitrateExceeded = 1 << 8,
+            ClearedTags = 1 << 9
         }
 
         public SidecarFile(FileInfo mediaFileInfo)
