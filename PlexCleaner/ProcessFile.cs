@@ -111,9 +111,7 @@ namespace PlexCleaner
         public bool IsSidecarWriteable()
         {
             // If the sidecar file exists it must be writeable
-            if (SidecarFile.Exists())
-                return SidecarFile.IsWriteable();
-            return true;
+            return !SidecarFile.Exists() || SidecarFile.IsWriteable();
         }
 
         public bool RemuxByExtensions(HashSet<string> remuxExtensions, ref bool modified)
@@ -432,7 +430,7 @@ namespace PlexCleaner
             if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
                 fileAge > testAge)
             {
-                Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, SidecarFile.State, MediaFile.Name);
+                Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, MediaFile.Name);
                 return true;
             }
 

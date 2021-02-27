@@ -65,7 +65,7 @@ namespace PlexCleaner
         public static bool Upgrade(SidecarFileJsonSchema json)
         {
             // Current version
-            if (json.SchemaVersion == SidecarFileJsonSchema.CurrentSchemaVersion)
+            if (json.SchemaVersion == CurrentSchemaVersion)
                 return true;
 
 #pragma warning disable CS0612

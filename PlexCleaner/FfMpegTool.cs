@@ -190,11 +190,7 @@ namespace PlexCleaner
 
             // Rename the extract folder to the tool folder
             // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
-            if (!FileEx.RenameFolder(extractPath, toolPath))
-                return false;
-
-            // Done
-            return true;
+            return FileEx.RenameFolder(extractPath, toolPath);
         }
 
         public override string GetSubFolder()

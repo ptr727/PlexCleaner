@@ -767,11 +767,7 @@ namespace PlexCleaner
             // TODO: Fix processing so we do not need to double clear tags or set track languages
 
             // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
-            // Done
-            return true;
+            return !Program.IsCancelled();
         }
 
         public static bool UpgradeSidecarFiles(List<FileInfo> fileList)

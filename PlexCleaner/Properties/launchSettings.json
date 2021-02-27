@@ -46,7 +46,7 @@
     },
     "DeInterlace": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"\\\\server-1\\Media\\Series\\Top Gear\\Season 29\""
     },
     "Verify": {
       "commandName": "Project",
@@ -66,7 +66,7 @@
     },
     "Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend remux --mediafiles \"\\\\server-1\\Media\\Series\\Top Gear\\Season 29\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Movies-4K\\Quantum of Solace (2008)\""
     },
     "UpgradeSidecar": {
       "commandName": "Project",

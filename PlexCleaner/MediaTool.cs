@@ -50,11 +50,7 @@ namespace PlexCleaner
 
             // Extract the update file
             LogOptions.Logger.LogInformation("Extracting {UpdateFile} ...", updateFile);
-            if (!Tools.SevenZip.UnZip(updateFile, toolPath))
-                return false;
-
-            // Done
-            return true;
+            return Tools.SevenZip.UnZip(updateFile, toolPath);
         }
 
         // Tool subfolder, e.g. /x64, /bin
@@ -71,11 +67,8 @@ namespace PlexCleaner
         public string GetToolName()
         {
             // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetToolNameWindows();
-
             // TODO: Mac may work the same as Linux, but untested
-            return GetToolNameLinux();
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
         }
 
         public string GetToolPath()
@@ -84,11 +77,8 @@ namespace PlexCleaner
             string toolName = GetToolName();
 
             // System use just tool name
-            if (Program.Config.ToolsOptions.UseSystem)
-                return toolName;
-            
             // Append to tools folder using tool family type and sub folder as folder name
-            return Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
+            return Program.Config.ToolsOptions.UseSystem ? toolName : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
         }
 
         public string GetToolFolder()
@@ -101,11 +91,8 @@ namespace PlexCleaner
         public bool GetLatestVersion(out MediaToolInfo mediaToolInfo)
         {
             // Windows or Linux
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return GetLatestVersionWindows(out mediaToolInfo);
-
             // TODO: Mac may work the same as Linux, but untested
-            return GetLatestVersionLinux(out mediaToolInfo);
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
         }
 
         public int Command(string parameters)

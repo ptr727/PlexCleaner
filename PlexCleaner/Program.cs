@@ -57,7 +57,7 @@ namespace PlexCleaner
             // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
             // Remove lj to quote strings
             if (!string.IsNullOrEmpty(logfile))
-                loggerConfiguration.WriteTo.Async(action => action.File(path: logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
+                loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
 
             // Create static Serilog logger
             Log.Logger = loggerConfiguration.CreateLogger();

@@ -170,11 +170,8 @@ namespace PlexCleaner
             bool audioMatch = false;
             if (keep.Audio.Count == 0 && Audio.Count > 0)
             {
-                // Use the preferred audio codec track
-                AudioInfo info = FindPreferredAudio(preferredAudioFormats);
-                if (info == null)
-                    // Else use the first track
-                    info = Audio.First();
+                // Use the preferred audio codec track or the first track
+                AudioInfo info = FindPreferredAudio(preferredAudioFormats) ?? Audio.First();
 
                 Log.Logger.Warning("No audio track matching requested language : {Language} != {Languages}", info.Language, languages);
                 keep.Audio.Add(info);
@@ -574,6 +571,16 @@ namespace PlexCleaner
             return title.Equals("SDH", StringComparison.OrdinalIgnoreCase) ||
                    title.Equals("Commentary", StringComparison.OrdinalIgnoreCase) ||
                    title.Equals("Forced", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsTagTitle(string title)
+        {
+            // Empty is not a tag
+            if (string.IsNullOrEmpty(title))
+                return false;
+
+            // Useful is not a tag
+            return !IsUsefulTrackTitle(title);
         }
     }
 }

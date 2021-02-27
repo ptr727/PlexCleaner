@@ -182,7 +182,7 @@ namespace PlexCleaner
                 !GetInfoFromJson())
                 return false;
 
-            // Check one by one to print all the mismatches
+            // Check one by one to log all the mismatches
             bool update = false;
             if (!IsSchemaCurrent())
                 update = true;
@@ -217,9 +217,7 @@ namespace PlexCleaner
         private bool IsMediaAndToolsCurrent(bool log)
         {
             // Verify the media file matches the json info
-            bool mismatch = false;
-            if (!IsMediaCurrent(log))
-                mismatch = true;
+            bool mismatch = false || !IsMediaCurrent(log);
 
             // Verify the tools matches the json info
             // Ignore changes if SidecarUpdateOnToolChange is not set
