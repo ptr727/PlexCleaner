@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -130,7 +131,7 @@ namespace PlexCleaner
             return deinterlace.Count > 0;
         }
 
-        public bool FindUnwantedLanguage(HashSet<string> languages, out MediaInfo keep, out MediaInfo remove)
+        public bool FindUnwantedLanguage(HashSet<string> languages, List<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
         {
             if (languages == null)
                 throw new ArgumentNullException(nameof(languages));
@@ -138,40 +139,67 @@ namespace PlexCleaner
             keep = new MediaInfo(Parser);
             remove = new MediaInfo(Parser);
 
-            // We keep all the video tracks that match our language
+            // Note, foreign films may not have any matching language tracks
+
+            // Keep all video tracks that match a language
             foreach (VideoInfo video in Video)
                 if (languages.Contains(video.Language))
                     keep.Video.Add(video);
                 else
                     remove.Video.Add(video);
 
-            // If we have no video tracks matching our language, e.g. a foreign film, we keep the first video track
+            // No language matching video tracks
             if (keep.Video.Count == 0 && Video.Count > 0)
             {
-                keep.Video.Add(Video.First());
-                remove.Video.Remove(Video.First());
+                // Use the first track
+                VideoInfo info = Video.First();
+
+                Log.Logger.Warning("No video track matching requested language : {Language} != {Languages}", info.Language, languages);
+                keep.Video.Add(info);
+                remove.Video.Remove(info);
             }
 
-            // We keep all the audio tracks that match our language
+            // Keep all audio tracks that match a language
             foreach (AudioInfo audio in Audio)
                 if (languages.Contains(audio.Language))
                     keep.Audio.Add(audio);
                 else
                     remove.Audio.Add(audio);
 
-            // If we have no audio tracks matching our language, e.g. a foreign film, we keep the first audio track
+            // No language matching audio tracks
+            bool audioMatch = false;
             if (keep.Audio.Count == 0 && Audio.Count > 0)
             {
-                keep.Audio.Add(Audio.First());
-                remove.Audio.Remove(Audio.First());
-            }
+                // Use the preferred audio codec track or the first track
+                AudioInfo info = FindPreferredAudio(preferredAudioFormats) ?? Audio.First();
 
-            // We keep all the subtitle tracks that match our language
+                Log.Logger.Warning("No audio track matching requested language : {Language} != {Languages}", info.Language, languages);
+                keep.Audio.Add(info);
+                remove.Audio.Remove(info);
+            }
+            else
+                // One or more audio tracks matched
+                audioMatch = true;
+
+            // Keep all subtitle tracks that match a language
             foreach (SubtitleInfo subtitle in Subtitle)
                 if (languages.Contains(subtitle.Language))
                     keep.Subtitle.Add(subtitle);
                 else
                     remove.Subtitle.Add(subtitle);
+
+            // No language matching subtitle tracks
+            if (keep.Subtitle.Count == 0 && Subtitle.Count > 0)
+            {
+                Log.Logger.Warning("No subtitle track matching requested language : {Languages}", languages);
+            }
+
+            // No audio match and no subtitle match, foreign film with no matching subtitles
+            if (keep.Subtitle.Count == 0 && !audioMatch)
+            {
+                Log.Logger.Warning("No audio or subtitle track matching requested language : {Languages}", languages);
+            }
+
 
             // Set the correct state on all the objects
             remove.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Remove);
@@ -468,6 +496,20 @@ namespace PlexCleaner
             return audio;
         }
 
+        private AudioInfo FindPreferredAudio(List<string> codecs)
+        {
+            // Iterate through the codecs in order of preference
+            AudioInfo audio = null;
+            foreach (string codec in codecs)
+            {
+                // Match by format
+                audio = Audio.Find(item => item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
+                if (audio != null)
+                    break;
+            }
+            return audio;
+        }
+
         public void RemoveTracks(MediaInfo removeTracks)
         {
             if (removeTracks == null)
@@ -520,6 +562,25 @@ namespace PlexCleaner
                 MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
                 _ => throw new NotImplementedException()
             };
+        }
+
+        public static bool IsUsefulTrackTitle(string title)
+        {
+            // Does the track have a useful title
+            // TODO: Keep the logic updated as new title logic is added
+            return title.Equals("SDH", StringComparison.OrdinalIgnoreCase) ||
+                   title.Equals("Commentary", StringComparison.OrdinalIgnoreCase) ||
+                   title.Equals("Forced", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsTagTitle(string title)
+        {
+            // Empty is not a tag
+            if (string.IsNullOrEmpty(title))
+                return false;
+
+            // Useful is not a tag
+            return !IsUsefulTrackTitle(title);
         }
     }
 }

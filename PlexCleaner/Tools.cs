@@ -63,9 +63,7 @@ namespace PlexCleaner
             }
 
             // Verify System tools or Tool folder tools
-            if (Program.Config.ToolsOptions.UseSystem)
-                return VerifySystemTools();
-            return VerifyFolderTools();
+            return Program.Config.ToolsOptions.UseSystem ? VerifySystemTools() : VerifyFolderTools();
         }
 
         public static bool VerifySystemTools()

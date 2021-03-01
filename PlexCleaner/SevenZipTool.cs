@@ -136,11 +136,7 @@ namespace PlexCleaner
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            if (!FileEx.RenameFolder(extractPath, toolPath))
-                return false;
-
-            // Done
-            return true;
+            return FileEx.RenameFolder(extractPath, toolPath);
         }
 
         public bool UnZip(string archive, string folder)

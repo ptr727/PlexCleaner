@@ -60,6 +60,7 @@ namespace PlexCleaner
             string mediafile = Path.ChangeExtension(MediaFile.FullName, ".mkv");
 
             // Does the media file exist
+            // Case sensitive on Linux, i.e. .MKV != .mkv
             if (File.Exists(mediafile))
                 // File exists, nothing more to do
                 return true;
@@ -78,6 +79,29 @@ namespace PlexCleaner
             return false;
         }
 
+        public bool MakeExtensionLowercase(ref bool modified)
+        {
+            // Is the extension lowercase
+            string lowerExtension = MediaFile.Extension.ToLower();
+            if (MediaFile.Extension.Equals(lowerExtension))
+                return true;
+
+            // Make the extension lowercase
+            Log.Logger.Information("Making file extension lowercase : {Name}", MediaFile.Name);
+
+            // Rename the file
+            // Windows is case insensisitve, so we need to rename in two steps
+            string tempName = Path.ChangeExtension(MediaFile.FullName, ".tmp");
+            string lowerName = Path.ChangeExtension(MediaFile.FullName, lowerExtension);
+            if (!FileEx.RenameFile(MediaFile.FullName, tempName) ||
+                !FileEx.RenameFile(tempName, lowerName))
+                return false;
+
+            // Modified filename
+            modified = true;
+            return Refresh(lowerName);
+        }
+
         public bool IsWriteable()
         {
             // Media file must exist and be writeable
@@ -87,9 +111,7 @@ namespace PlexCleaner
         public bool IsSidecarWriteable()
         {
             // If the sidecar file exists it must be writeable
-            if (SidecarFile.Exists())
-                return SidecarFile.IsWriteable();
-            return true;
+            return !SidecarFile.Exists() || SidecarFile.IsWriteable();
         }
 
         public bool RemuxByExtensions(HashSet<string> remuxExtensions, ref bool modified)
@@ -230,7 +252,7 @@ namespace PlexCleaner
                 return false;
 
             // Set modified state
-            SidecarFile.State |= SidecarFile.States.Modified;
+            SidecarFile.State |= SidecarFile.States.ClearedTags;
 
             // Refresh
             modified = true;
@@ -261,7 +283,7 @@ namespace PlexCleaner
                 return false;
 
             // Set modified state
-            SidecarFile.State |= SidecarFile.States.Modified;
+            SidecarFile.State |= SidecarFile.States.SetLanguage;
 
             // Refresh
             modified = true;
@@ -278,7 +300,7 @@ namespace PlexCleaner
             // Use MKVMerge logic
             bool remux = false;
             if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
-                MkvMergeInfo.FindUnwantedLanguage(keepLanguages, out MediaInfo keep, out MediaInfo remove))
+                MkvMergeInfo.FindUnwantedLanguage(keepLanguages, preferredAudioFormats, out MediaInfo keep, out MediaInfo remove))
             {
                 Log.Logger.Information("Removing unwanted language tracks : {Name}", MediaFile.Name);
                 keep.WriteLine("Keep");
@@ -408,7 +430,7 @@ namespace PlexCleaner
             if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
                 fileAge > testAge)
             {
-                Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, SidecarFile.State, MediaFile.Name);
+                Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, MediaFile.Name);
                 return true;
             }
 
@@ -741,7 +763,8 @@ namespace PlexCleaner
         private bool Refresh(string filename)
         {
             // Media filename changed
-            if (!MediaFile.FullName.Equals(filename, StringComparison.OrdinalIgnoreCase))
+            // Compare case sensitive for Linux suppport
+            if (!MediaFile.FullName.Equals(filename, StringComparison.Ordinal))
             { 
                 MediaFile = new FileInfo(filename);
                 SidecarFile.States oldState = SidecarFile.State;

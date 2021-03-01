@@ -188,12 +188,13 @@ namespace PlexCleaner
                 mediaInfo.Chapters = mkvmerge.Chapters.Count;
 
                 // Tags or title or track name or attachments
+                // Only if track title is present but is not useful
                 mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
                                     mkvmerge.TrackTags.Count > 0 ||
                                     !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title) ||
-                                    mediaInfo.Video.Any(item => !string.IsNullOrEmpty(item.Title)) ||
-                                    mediaInfo.Audio.Any(item => !string.IsNullOrEmpty(item.Title)) ||
-                                    mediaInfo.Subtitle.Any(item => !string.IsNullOrEmpty(item.Title)) ||
+                                    mediaInfo.Video.Any(item => MediaInfo.IsTagTitle(item.Title)) ||
+                                    mediaInfo.Audio.Any(item => MediaInfo.IsTagTitle(item.Title)) ||
+                                    mediaInfo.Subtitle.Any(item => MediaInfo.IsTagTitle(item.Title)) ||
                                     mediaInfo.Attachments > 0;
 
                 // Duration (JSON uses nanoseconds)
@@ -224,6 +225,7 @@ namespace PlexCleaner
             if (extension == null)
                 throw new ArgumentNullException(nameof(extension));
 
+            // Case insensitive match, .mkv or .MKV
             return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
         }
 

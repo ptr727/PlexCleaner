@@ -14,7 +14,7 @@ namespace PlexCleaner
         public enum States
         { 
             None = 0, 
-            Modified = 1, 
+            SetLanguage = 1, 
             ReMuxed = 1 << 1, 
             ReEncoded = 1 << 2, 
             DeInterlaced = 1 << 3, 
@@ -22,7 +22,8 @@ namespace PlexCleaner
             RepairFailed = 1 << 5,
             Verified = 1 << 6,
             VerifyFailed = 1 << 7,
-            BitrateExceeded = 1 << 8
+            BitrateExceeded = 1 << 8,
+            ClearedTags = 1 << 9
         }
 
         public SidecarFile(FileInfo mediaFileInfo)
@@ -181,7 +182,7 @@ namespace PlexCleaner
                 !GetInfoFromJson())
                 return false;
 
-            // Check one by one to print all the mismatches
+            // Check one by one to log all the mismatches
             bool update = false;
             if (!IsSchemaCurrent())
                 update = true;
@@ -216,9 +217,7 @@ namespace PlexCleaner
         private bool IsMediaAndToolsCurrent(bool log)
         {
             // Verify the media file matches the json info
-            bool mismatch = false;
-            if (!IsMediaCurrent(log))
-                mismatch = true;
+            bool mismatch = false || !IsMediaCurrent(log);
 
             // Verify the tools matches the json info
             // Ignore changes if SidecarUpdateOnToolChange is not set
