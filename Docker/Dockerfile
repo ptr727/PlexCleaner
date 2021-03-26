@@ -93,3 +93,4 @@ RUN wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key 
 
 # Copy PlexCleaner
 COPY PlexCleaner /PlexCleaner
+RUN /PlexCleaner/PlexCleaner --version
