@@ -217,12 +217,11 @@ namespace PlexCleaner
         private bool IsMediaAndToolsCurrent(bool log)
         {
             // Verify the media file matches the json info
-            bool mismatch = false || !IsMediaCurrent(log);
+            bool mismatch = !IsMediaCurrent(log);
 
             // Verify the tools matches the json info
             // Ignore changes if SidecarUpdateOnToolChange is not set
-            if (!IsToolsCurrent(log) &&
-                Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+            if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
                 mismatch = true;
 
             return !mismatch;

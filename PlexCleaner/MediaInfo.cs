@@ -142,11 +142,18 @@ namespace PlexCleaner
             // Note, foreign films may not have any matching language tracks
 
             // Keep all video tracks that match a language
+            HashSet<string> videoLanguages = new HashSet<string>();
             foreach (VideoInfo video in Video)
+            {
+                // Available languages
+                videoLanguages.Add(video.Language);
+
+                // Keep or remove
                 if (languages.Contains(video.Language))
                     keep.Video.Add(video);
                 else
                     remove.Video.Add(video);
+            }
 
             // No language matching video tracks
             if (keep.Video.Count == 0 && Video.Count > 0)
@@ -154,17 +161,24 @@ namespace PlexCleaner
                 // Use the first track
                 VideoInfo info = Video.First();
 
-                Log.Logger.Warning("No video track matching requested language : {Language} != {Languages}", info.Language, languages);
+                Log.Logger.Warning("No video track matching requested language : {Available} != {Languages}, {Selected}", videoLanguages, languages, info.Language);
                 keep.Video.Add(info);
                 remove.Video.Remove(info);
             }
 
             // Keep all audio tracks that match a language
+            HashSet<string> audioLanguages = new HashSet<string>();
             foreach (AudioInfo audio in Audio)
+            {
+                // Available languages
+                audioLanguages.Add(audio.Language);
+
+                // Keep or remove
                 if (languages.Contains(audio.Language))
                     keep.Audio.Add(audio);
                 else
                     remove.Audio.Add(audio);
+            }
 
             // No language matching audio tracks
             bool audioMatch = false;
@@ -173,7 +187,7 @@ namespace PlexCleaner
                 // Use the preferred audio codec track or the first track
                 AudioInfo info = FindPreferredAudio(preferredAudioFormats) ?? Audio.First();
 
-                Log.Logger.Warning("No audio track matching requested language : {Language} != {Languages}", info.Language, languages);
+                Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, {Selected}", audioLanguages, languages, info.Language);
                 keep.Audio.Add(info);
                 remove.Audio.Remove(info);
             }
@@ -182,24 +196,26 @@ namespace PlexCleaner
                 audioMatch = true;
 
             // Keep all subtitle tracks that match a language
+            HashSet<string> subtitleLanguages = new HashSet<string>();
             foreach (SubtitleInfo subtitle in Subtitle)
+            {
+                // Available languages
+                subtitleLanguages.Add(subtitle.Language);
+
+                // Keep or remove
                 if (languages.Contains(subtitle.Language))
                     keep.Subtitle.Add(subtitle);
                 else
                     remove.Subtitle.Add(subtitle);
+            }
 
             // No language matching subtitle tracks
             if (keep.Subtitle.Count == 0 && Subtitle.Count > 0)
-            {
-                Log.Logger.Warning("No subtitle track matching requested language : {Languages}", languages);
-            }
+                Log.Logger.Warning("No subtitle track matching requested language : {Available} != {Languages}", subtitleLanguages, languages);
 
             // No audio match and no subtitle match, foreign film with no matching subtitles
             if (keep.Subtitle.Count == 0 && !audioMatch)
-            {
-                Log.Logger.Warning("No audio or subtitle track matching requested language : {Languages}", languages);
-            }
-
+                Log.Logger.Warning("No audio or subtitle track matching requested language : {Available} != {Languages}", audioLanguages, languages);
 
             // Set the correct state on all the objects
             remove.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Remove);
