@@ -1,3 +1,7 @@
+# Test locally:
+# dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
+# docker build ./Docker
+
 # Build from latest LTS Ubuntu base image
 FROM ubuntu:latest
 

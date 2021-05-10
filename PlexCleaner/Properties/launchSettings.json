@@ -71,6 +71,9 @@
     "UpgradeSidecar": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"\\\\server-1\\Media\\Series\" \"\\\\server-1\\Media\\Movies\" \"\\\\server-1\\Media\\Movies-4K\""
+    },
+    "Docker": {
+      "commandName": "Docker"
     }
   }
 }
