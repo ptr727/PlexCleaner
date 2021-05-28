@@ -7,9 +7,9 @@ using System.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net;
 using Serilog;
 using System.Reflection;
+using System.Net.Http;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -65,7 +65,7 @@ namespace PlexCleaner
             // Extract the short version number
             // Match word for ffmpeg or ffprobe
             const string pattern = @"([^\s]+)\ version\ (?<version>.*?)-";
-            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             Match match = regex.Match(lines[0]);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
@@ -76,7 +76,7 @@ namespace PlexCleaner
             // Get other attributes if we can read the file
             if (File.Exists(mediaToolInfo.FileName))
             {
-                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
                 mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
                 mediaToolInfo.Size = fileInfo.Length;
             }
@@ -96,8 +96,8 @@ namespace PlexCleaner
 
                 // Load the release version page
                 // https://www.gyan.dev/ffmpeg/builds/release-version
-                using WebClient wc = new WebClient();
-                mediaToolInfo.Version = wc.DownloadString("https://www.gyan.dev/ffmpeg/builds/release-version");
+                using HttpClient httpClient = new();
+                mediaToolInfo.Version = httpClient.GetStringAsync("https://www.gyan.dev/ffmpeg/builds/release-version").Result;
 
                 // Create download URL and the output filename using the version number
                 mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
@@ -122,12 +122,12 @@ namespace PlexCleaner
 
                 // Load the release version page
                 // https://johnvansickle.com/ffmpeg/release-readme.txt
-                using WebClient wc = new WebClient();
-                string readme = wc.DownloadString("https://johnvansickle.com/ffmpeg/release-readme.txt");
+                using HttpClient httpClient = new();
+                string readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
 
                 // Read each line until we find the first version line
                 // version: 4.3.1
-                using StringReader sr = new StringReader(readme);
+                using StringReader sr = new(readmePage);
                 string line;
                 while (true)
                 {
@@ -147,7 +147,7 @@ namespace PlexCleaner
                 // Extract the version number from the line
                 // E.g. version: 4.3.1
                 const string pattern = @"Version:\ (?<version>.*?)";
-                Regex regex = new Regex(pattern);
+                Regex regex = new(pattern);
                 Match match = regex.Match(line);
                 Debug.Assert(match.Success);
                 mediaToolInfo.Version = match.Groups["version"].Value;
@@ -246,7 +246,7 @@ namespace PlexCleaner
         private void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
         {
             // Remux only
-            MediaInfo reencode = new MediaInfo(ToolType.FfProbe);
+            MediaInfo reencode = new(ToolType.FfProbe);
             CreateFfMpegMap("", 0, "", keep, reencode, out input, out output);
         }
 
@@ -259,27 +259,27 @@ namespace PlexCleaner
             // Create an input and output map
             // Order by video, audio, and subtitle
             // Each ordered by id, to keep the original order
-            List<TrackInfo> videoList = new List<TrackInfo>();
+            List<TrackInfo> videoList = new();
             videoList.AddRange(keep.Video);
             videoList.AddRange(reencode.Video);
             videoList = videoList.OrderBy(item => item.Id).ToList();
             
-            List<TrackInfo> audioList = new List<TrackInfo>();
+            List<TrackInfo> audioList = new();
             audioList.AddRange(keep.Audio);
             videoList.AddRange(reencode.Audio);
             audioList = audioList.OrderBy(item => item.Id).ToList();
             
-            List<TrackInfo> subtitleList = new List<TrackInfo>();
+            List<TrackInfo> subtitleList = new();
             subtitleList.AddRange(keep.Subtitle);
             videoList.AddRange(reencode.Subtitle);
             subtitleList = subtitleList.OrderBy(item => item.Id).ToList();
 
             // Create a map list of all the input streams we want in the output
-            List<TrackInfo> trackList = new List<TrackInfo>();
+            List<TrackInfo> trackList = new();
             trackList.AddRange(videoList);
             trackList.AddRange(audioList);
             trackList.AddRange(subtitleList);
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (TrackInfo info in trackList)
                 sb.Append($"-map 0:{info.Id} ");
             input = sb.ToString();
@@ -312,7 +312,7 @@ namespace PlexCleaner
 
         public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, string outputName)
         {
-            // Simple encoding of audio and video and pasthrough of other tracks
+            // Simple encoding of audio and video and passthrough of other tracks
             if (keep == null || reencode == null)
                 return ConvertToMkv(inputName, videoCodec, videoQuality, audioCodec, outputName);
 
@@ -426,7 +426,7 @@ namespace PlexCleaner
                 string textlf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
 
                 // Match
-                Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
                 Match match = regex.Match(textlf);
                 Debug.Assert(match.Success);
 

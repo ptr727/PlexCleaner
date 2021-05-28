@@ -23,7 +23,7 @@ namespace PlexCleaner.MkvToolXmlSchema
 
 		public static MkvToolnixReleases FromXml(string xml)
 		{
-			XmlSerializer xmlSerializer = new XmlSerializer(typeof(MkvToolnixReleases));
+			XmlSerializer xmlSerializer = new(typeof(MkvToolnixReleases));
 			using TextReader textReader = new StringReader(xml);
 			using XmlReader xmlReader = XmlReader.Create(textReader);
 			return xmlSerializer.Deserialize(xmlReader) as MkvToolnixReleases;

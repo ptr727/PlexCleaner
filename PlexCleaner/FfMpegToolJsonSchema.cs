@@ -15,12 +15,12 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class FfProbe
     {
         [JsonProperty("streams")]
-        public List<Stream> Streams { get; } = new List<Stream>();
+        public List<Stream> Streams { get; } = new();
 
         public static FfProbe FromJson(string json) => 
             JsonConvert.DeserializeObject<FfProbe>(json, Settings);
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Formatting = Formatting.Indented
         };
@@ -53,10 +53,10 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         public string FieldOrder { get; set; } = "";
 
         [JsonProperty("tags")]
-        public Tags Tags { get; } = new Tags();
+        public Tags Tags { get; } = new();
 
         [JsonProperty("disposition")]
-        public Disposition Disposition { get; } = new Disposition();
+        public Disposition Disposition { get; } = new();
     }
 
     public class Tags
@@ -78,7 +78,7 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class PacketInfo
     {
         [JsonProperty("packets")]
-        public List<Packet> Packets { get; } = new List<Packet>();
+        public List<Packet> Packets { get; } = new();
     }
 
     public class Packet

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Serilog;
@@ -51,7 +51,7 @@ namespace PlexCleaner
 
             // Extract the short version number
             const string pattern = @"MediaInfoLib\ -\ v(?<version>.*)";
-            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             Match match = regex.Match(lines[1]);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
@@ -62,7 +62,7 @@ namespace PlexCleaner
             // Get other attributes if we can read the file
             if (File.Exists(mediaToolInfo.FileName))
             {
-                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
                 mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
                 mediaToolInfo.Size = fileInfo.Length;
             }
@@ -79,12 +79,12 @@ namespace PlexCleaner
             {
                 // Load the release history page
                 // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
-                using WebClient wc = new WebClient();
-                string history = wc.DownloadString("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt");
+                using HttpClient httpClient = new();
+                string historyPage = httpClient.GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
 
                 // Read each line until we find the first version line
                 // E.g. Version 17.10, 2017-11-02
-                using StringReader sr = new StringReader(history);
+                using StringReader sr = new(historyPage);
                 string line;
                 while (true)
                 {
@@ -104,7 +104,7 @@ namespace PlexCleaner
                 // Extract the version number from the line
                 // E.g. Version 17.10, 2017-11-02
                 const string pattern = @"Version\ (?<version>.*?),";
-                Regex regex = new Regex(pattern);
+                Regex regex = new(pattern);
                 Match match = regex.Match(line);
                 Debug.Assert(match.Success);
                 mediaToolInfo.Version = match.Groups["version"].Value;
@@ -171,17 +171,17 @@ namespace PlexCleaner
                 {
                     if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                     {
-                        VideoInfo info = new VideoInfo(track);
+                        VideoInfo info = new(track);
                         mediaInfo.Video.Add(info);
                     }
                     else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
                     {
-                        AudioInfo info = new AudioInfo(track);
+                        AudioInfo info = new(track);
                         mediaInfo.Audio.Add(info);
                     }
                     else if (track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase))
                     {
-                        SubtitleInfo info = new SubtitleInfo(track);
+                        SubtitleInfo info = new(track);
                         mediaInfo.Subtitle.Add(info);
                     }
                 }

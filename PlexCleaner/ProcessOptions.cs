@@ -25,6 +25,6 @@ namespace PlexCleaner
         public bool UseSidecarFiles { get; set; } = true;
         public bool SidecarUpdateOnToolChange { get; set; }
         public bool Verify { get; set; } = true;
-        public List<string> FileIgnoreList { get; } = new List<string>();
+        public List<string> FileIgnoreList { get; } = new();
     }
 }

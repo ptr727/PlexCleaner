@@ -11,15 +11,15 @@ namespace PlexCleaner
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
         public const int CurrentSchemaVersion = 1;
 
-        public ToolsOptions ToolsOptions { get; set; } = new ToolsOptions();
-        public ConvertOptions ConvertOptions { get; set; } = new ConvertOptions();
-        public ProcessOptions ProcessOptions { get; set; } = new ProcessOptions();
-        public MonitorOptions MonitorOptions { get; set; } = new MonitorOptions();
-        public VerifyOptions VerifyOptions { get; set; } = new VerifyOptions();
+        public ToolsOptions ToolsOptions { get; set; } = new();
+        public ConvertOptions ConvertOptions { get; set; } = new();
+        public ProcessOptions ProcessOptions { get; set; } = new();
+        public MonitorOptions MonitorOptions { get; set; } = new();
+        public VerifyOptions VerifyOptions { get; set; } = new();
 
         public static void WriteDefaultsToFile(string path)
         {
-            ConfigFileJsonSchema config = new ConfigFileJsonSchema();
+            ConfigFileJsonSchema config = new();
             ToFile(path, config);
         }
 
@@ -39,7 +39,7 @@ namespace PlexCleaner
         public static ConfigFileJsonSchema FromJson(string json) =>
             JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Formatting = Formatting.Indented,
             StringEscapeHandling = StringEscapeHandling.EscapeNonAscii

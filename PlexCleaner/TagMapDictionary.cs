@@ -8,9 +8,9 @@ namespace PlexCleaner
 {
     public class TagMapDictionary
     {
-        public Dictionary<string, TagMap> Video { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
-        public Dictionary<string, TagMap> Audio { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
-        public Dictionary<string, TagMap> Subtitle { get; } = new Dictionary<string, TagMap>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TagMap> Video { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TagMap> Audio { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, TagMap> Subtitle { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
         {

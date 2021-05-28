@@ -51,7 +51,7 @@ namespace PlexCleaner
 
             // Extract the short version number
             const string pattern = @"HandBrake\ (?<version>.*)";
-            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             Match match = regex.Match(lines[0]);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
@@ -62,7 +62,7 @@ namespace PlexCleaner
             // Get other attributes if we can read the file
             if (File.Exists(mediaToolInfo.FileName))
             {
-                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
                 mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
                 mediaToolInfo.Size = fileInfo.Length;
             }

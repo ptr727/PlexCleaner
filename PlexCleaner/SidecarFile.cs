@@ -122,7 +122,7 @@ namespace PlexCleaner
                 if (SidecarFileInfo.Exists)
                     SidecarFileInfo.Delete();
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -376,7 +376,7 @@ namespace PlexCleaner
                 // Create object from text
                 SidecarJson = SidecarFileJsonSchema.FromJson(json);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -410,7 +410,7 @@ namespace PlexCleaner
                 streamWriter.Flush();
                 streamWriter.Close();
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -512,7 +512,7 @@ namespace PlexCleaner
                     return null;
                 }
 
-                // Clsoe stream
+                // Close stream
                 fileStream.Close();
 
                 // Calculate the hash 
@@ -521,7 +521,7 @@ namespace PlexCleaner
                 // Convert to string
                 return System.Convert.ToBase64String(hash);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return null;
             }
@@ -568,7 +568,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(mediaFileInfo));
 
             // Create new sidecar for media file
-            SidecarFile sidecarfile = new SidecarFile(mediaFileInfo);
+            SidecarFile sidecarfile = new(mediaFileInfo);
             return sidecarfile.Create();
         }
 

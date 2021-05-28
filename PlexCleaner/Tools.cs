@@ -11,18 +11,18 @@ namespace PlexCleaner
     public static class Tools
     {
         // All the tools
-        public static FfMpegTool FfMpeg = new FfMpegTool();
-        public static FfProbeTool FfProbe = new FfProbeTool();
-        public static MkvMergeTool MkvMerge = new MkvMergeTool();
-        public static MkvPropEditTool MkvPropEdit = new MkvPropEditTool();
-        public static MediaInfoTool MediaInfo = new MediaInfoTool();
-        public static HandBrakeTool HandBrake = new HandBrakeTool();
-        public static SevenZipTool SevenZip = new SevenZipTool();
+        public static FfMpegTool FfMpeg = new();
+        public static FfProbeTool FfProbe = new();
+        public static MkvMergeTool MkvMerge = new();
+        public static MkvPropEditTool MkvPropEdit = new();
+        public static MediaInfoTool MediaInfo = new();
+        public static HandBrakeTool HandBrake = new();
+        public static SevenZipTool SevenZip = new();
 
         public static List<MediaTool> GetToolList()
         {
             // Add all tools to a list
-            List<MediaTool> toolList = new List<MediaTool>
+            List<MediaTool> toolList = new()
             {
                 FfMpeg,
                 FfProbe,
@@ -39,7 +39,7 @@ namespace PlexCleaner
         public static List<MediaTool> GetToolFamilyList()
         {
             // Add all tools families to a list
-            List<MediaTool> toolList = new List<MediaTool>
+            List<MediaTool> toolList = new()
             {
                 FfMpeg,
                 MkvMerge,
@@ -57,7 +57,7 @@ namespace PlexCleaner
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
                 !Program.Config.ToolsOptions.UseSystem)
             {
-                Log.Logger.Warning("Folder tools are not suported on Linux");
+                Log.Logger.Warning("Folder tools are not supported on Linux");
                 Log.Logger.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
                 Program.Config.ToolsOptions.UseSystem = true;
             }

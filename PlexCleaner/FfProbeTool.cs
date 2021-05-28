@@ -39,9 +39,9 @@ namespace PlexCleaner
             // Write JSON text output to compressed memory stream to save memory
             // TODO : Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
             // Make sure that the various stream processors leave the memory stream open for the duration of operations
-            using MemoryStream memoryStream = new MemoryStream();
-            using GZipStream compressStream = new GZipStream(memoryStream, CompressionMode.Compress, true);
-            using ProcessEx process = new ProcessEx
+            using MemoryStream memoryStream = new();
+            using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
+            using ProcessEx process = new()
             {
                 RedirectOutput = true,
                 OutputStream = new StreamWriter(compressStream)
@@ -58,10 +58,10 @@ namespace PlexCleaner
             // Read JSON from stream
             process.OutputStream.Flush();
             memoryStream.Seek(0, SeekOrigin.Begin);
-            using GZipStream decompressStream = new GZipStream(memoryStream, CompressionMode.Decompress, true);
-            using StreamReader streamReader = new StreamReader(decompressStream);
-            using JsonTextReader jsonReader = new JsonTextReader(streamReader);
-            JsonSerializer serializer = new JsonSerializer();
+            using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
+            using StreamReader streamReader = new(decompressStream);
+            using JsonTextReader jsonReader = new(streamReader);
+            JsonSerializer serializer = new();
             PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
             packets = packetInfo.Packets;
 
@@ -108,17 +108,17 @@ namespace PlexCleaner
                             stream.CodecName.Equals("png", StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        VideoInfo info = new VideoInfo(stream);
+                        VideoInfo info = new(stream);
                         mediaInfo.Video.Add(info);
                     }
                     else if (stream.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase))
                     {
-                        AudioInfo info = new AudioInfo(stream);
+                        AudioInfo info = new(stream);
                         mediaInfo.Audio.Add(info);
                     }
                     else if (stream.CodecType.Equals("subtitle", StringComparison.OrdinalIgnoreCase))
                     {
-                        SubtitleInfo info = new SubtitleInfo(stream);
+                        SubtitleInfo info = new(stream);
                         mediaInfo.Subtitle.Add(info);
                     }
                 }

@@ -17,7 +17,7 @@ namespace PlexCleaner
 
         public DateTime LastCheck { get; set; }
 
-        public List<MediaToolInfo> Tools { get; } = new List<MediaToolInfo>();
+        public List<MediaToolInfo> Tools { get; } = new();
 
         public MediaToolInfo GetToolInfo(MediaTool mediaTool)
         {
@@ -47,7 +47,7 @@ namespace PlexCleaner
         public static ToolInfoJsonSchema FromJson(string json) =>
             JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, Settings);
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Formatting = Formatting.Indented
         };
@@ -61,7 +61,7 @@ namespace PlexCleaner
             // Unspecified / v0 to v2 was the first set version
             // Tools changed from List<ToolInfo> to List<MediaToolInfo>
             // Not worth the trouble to migrate, just get new tools
-            Log.Logger.Error("Schema version {SchemaVersion} not suported, run the 'checkfornewtools' command", json.SchemaVersion);
+            Log.Logger.Error("Schema version {SchemaVersion} not supported, run the 'checkfornewtools' command", json.SchemaVersion);
 
             return false;
         }

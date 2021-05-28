@@ -22,7 +22,7 @@ namespace PlexCleaner
             CreateLogger(null);
 
             // Create a 30s timer to keep the system from going to sleep
-            using System.Timers.Timer preventSleepTimer = new System.Timers.Timer(30000);
+            using System.Timers.Timer preventSleepTimer = new(30000);
             preventSleepTimer.Elapsed += OnTimedEvent;
             preventSleepTimer.AutoReset = true;
             preventSleepTimer.Start();
@@ -50,7 +50,7 @@ namespace PlexCleaner
             // Log to console
             // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
             // Remove lj to quote strings
-            LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
+            LoggerConfiguration loggerConfiguration = new();
             loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}");
 
             // Log to file
@@ -63,7 +63,7 @@ namespace PlexCleaner
             Log.Logger = loggerConfiguration.CreateLogger();
 
             // Set library logger to Serilog logger
-            LoggerFactory loggerFactory = new LoggerFactory();
+            LoggerFactory loggerFactory = new();
             loggerFactory.AddSerilog(Log.Logger);
             LogOptions.CreateLogger(loggerFactory);
         }
@@ -106,7 +106,7 @@ namespace PlexCleaner
                 return -1;
 
             // Process all files
-            Process process = new Process();
+            Process process = new();
             return process.ProcessFiles(program.FileInfoList) && 
                    Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
@@ -117,7 +117,7 @@ namespace PlexCleaner
             if (program == null)
                 return -1;
 
-            Monitor monitor = new Monitor();
+            Monitor monitor = new();
             return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
         }
 
@@ -130,7 +130,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
+            Process process = new();
             return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
         }
 
@@ -314,7 +314,7 @@ namespace PlexCleaner
                     return null;
                 }
 
-                // Recreate the clooger with a file
+                // Recreate the logger with a file
                 CreateLogger(options.LogFile);
                 Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
             }
@@ -366,7 +366,7 @@ namespace PlexCleaner
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
-                    DirectoryInfo dirInfo = new DirectoryInfo(fileorfolder);
+                    DirectoryInfo dirInfo = new(fileorfolder);
                     DirectoryInfoList.Add(dirInfo);
                     FolderList.Add(fileorfolder);
 
@@ -420,11 +420,11 @@ namespace PlexCleaner
         public static CommandLineOptions Options { get; set; }
         public static ConfigFileJsonSchema Config { get; set; }
 
-        private static CancellationTokenSource CancelSource = new CancellationTokenSource();
+        private static CancellationTokenSource CancelSource = new();
 
-        private readonly List<string> FolderList = new List<string>();
-        private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();
-        private readonly List<string> FileList = new List<string>();
-        private readonly List<FileInfo> FileInfoList = new List<FileInfo>();
+        private readonly List<string> FolderList = new();
+        private readonly List<DirectoryInfo> DirectoryInfoList = new();
+        private readonly List<string> FileList = new();
+        private readonly List<FileInfo> FileInfoList = new();
     }
 }

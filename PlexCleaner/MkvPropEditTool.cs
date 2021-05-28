@@ -33,7 +33,7 @@ namespace PlexCleaner
             Debug.Assert(unknown.Parser == ToolType.MkvMerge);
 
             // Set language on all unknown tracks
-            StringBuilder commandline = new StringBuilder();
+            StringBuilder commandline = new();
             commandline.Append($"\"{filename}\" {Options} ");
             foreach (TrackInfo track in unknown.GetTrackList())
             {
@@ -69,7 +69,7 @@ namespace PlexCleaner
             Debug.Assert(info.Parser == ToolType.MkvMerge);
 
             // Clear all tags
-            StringBuilder commandline = new StringBuilder();
+            StringBuilder commandline = new();
             commandline.Append($"\"{filename}\" {Options} --tags all: --delete title ");
 
             // Delete all track titles

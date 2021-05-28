@@ -56,7 +56,7 @@ namespace PlexCleaner
             {
                 // We match against the format and profile
                 // Match the logic in VideoInfo.CompareVideo
-                VideoInfo videoinfo = new VideoInfo
+                VideoInfo videoinfo = new()
                 {
                     Codec = codeclist.ElementAt(i),
                     Format = formatlist.ElementAt(i),
@@ -84,11 +84,11 @@ namespace PlexCleaner
 
             // Keep a List of failed and modified files to print when done
             // This makes followup easier vs. looking the logs
-            List<string> modifiedFiles = new List<string>();
-            List<string> errorFiles = new List<string>();
+            List<(string fileName, SidecarFile.States state)> modifiedInfo = new();
+            List<string> errorFiles = new();
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -104,7 +104,7 @@ namespace PlexCleaner
 
                 // Process the file
                 Log.Logger.Information("Processing ({Done:P}) : {Name}", done, fileInfo.FullName);
-                if (!ProcessFile(fileInfo, out bool modified) &&
+                if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state) &&
                     !Program.IsCancelled())
                 {
                     Log.Logger.Error("Error processing : {Name}", fileInfo.FullName);
@@ -113,7 +113,7 @@ namespace PlexCleaner
                 }
                 else if (modified)
                 {
-                    modifiedFiles.Add(fileInfo.FullName);
+                    modifiedInfo.Add(new (fileInfo.FullName, state));
                     modifiedCount ++;
                 }
 
@@ -135,11 +135,11 @@ namespace PlexCleaner
             Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
 
             // Print summary of failed and modified files
-            if (modifiedFiles.Count > 0)
+            if (modifiedInfo.Count > 0)
             {
                 Log.Logger.Information("Modified files :");
-                foreach (string file in modifiedFiles)
-                    Log.Logger.Information("{Name}", file);
+                foreach (var (fileName, state) in modifiedInfo)
+                    Log.Logger.Information("{State} : {Name}", state, fileName);
             }
             if (errorFiles.Count > 0)
             {
@@ -193,7 +193,7 @@ namespace PlexCleaner
             Log.Logger.Information("ReMuxing files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -236,7 +236,7 @@ namespace PlexCleaner
             Log.Logger.Information("Verifying files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -280,7 +280,7 @@ namespace PlexCleaner
             Log.Logger.Information("ReEncoding files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -323,7 +323,7 @@ namespace PlexCleaner
             Log.Logger.Information("DeInterlacing files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -365,14 +365,14 @@ namespace PlexCleaner
             Log.Logger.Information("Creating tag map ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // We want to create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
             // And how they map to each other for the same media file
-            TagMapDictionary fftags = new TagMapDictionary();
-            TagMapDictionary mktags = new TagMapDictionary();
-            TagMapDictionary mitags = new TagMapDictionary();
+            TagMapDictionary fftags = new();
+            TagMapDictionary mktags = new();
+            TagMapDictionary mitags = new();
 
             // Process all files
             int errorcount = 0;
@@ -388,7 +388,7 @@ namespace PlexCleaner
 
                 // Use ProcessFile to get media info
                 Log.Logger.Information("Getting media info : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new ProcessFile(fileinfo);
+                ProcessFile processFile = new(fileinfo);
                 if (!processFile.GetMediaInfo())
                 {
                     Log.Logger.Error("Error getting media info : {Name}", fileinfo.FullName);
@@ -430,7 +430,7 @@ namespace PlexCleaner
             Log.Logger.Information("Creating sidecar files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -472,7 +472,7 @@ namespace PlexCleaner
             Log.Logger.Information("Reading sidecar files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -489,7 +489,7 @@ namespace PlexCleaner
 
                 // Read the sidecar files
                 Log.Logger.Information("Reading sidecar file : {Name}", fileinfo.FullName);
-                SidecarFile sidecarfile = new SidecarFile(fileinfo);
+                SidecarFile sidecarfile = new(fileinfo);
                 if (!sidecarfile.Read())
                 {
                     Log.Logger.Error("Error reading sidecar file : {Name}", fileinfo.FullName);
@@ -519,7 +519,7 @@ namespace PlexCleaner
             Log.Logger.Information("Getting media information ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -536,7 +536,7 @@ namespace PlexCleaner
 
                 // Process the file
                 Log.Logger.Information("Getting media information : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new ProcessFile(fileinfo);
+                ProcessFile processFile = new(fileinfo);
                 if (!processFile.GetMediaInfo())
                 {
                     Log.Logger.Error("Error getting media information : {Name}", fileinfo.FullName);
@@ -569,7 +569,7 @@ namespace PlexCleaner
             Log.Logger.Information("Getting bitrate information ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -586,7 +586,7 @@ namespace PlexCleaner
 
                 // Process the file
                 Log.Logger.Information("Getting bitrate information : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new ProcessFile(fileinfo);
+                ProcessFile processFile = new(fileinfo);
                 if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
                 {
                     Log.Logger.Error("Error getting bitrate information : {Name}", fileinfo.FullName);
@@ -611,10 +611,11 @@ namespace PlexCleaner
             return true;
         }
 
-        private bool ProcessFile(FileInfo fileinfo, out bool modified)
+        private bool ProcessFile(FileInfo fileinfo, out bool modified, out SidecarFile.States state)
         {
             // Init
             modified = false;
+            state = SidecarFile.States.None;
 
             // Skip the file if it is in the ignore list
             if (IgnoreList.Contains(fileinfo.FullName))
@@ -631,7 +632,7 @@ namespace PlexCleaner
             }
 
             // Create file processor to hold state
-            ProcessFile processFile = new ProcessFile(fileinfo);
+            ProcessFile processFile = new(fileinfo);
 
             // Is the file writeable
             if (!processFile.IsWriteable())
@@ -764,6 +765,9 @@ namespace PlexCleaner
             if (!processFile.RemoveTags(ref modified))
                 return false;
 
+            // Get state from sidecar (if in use)
+            state = processFile.State;
+
             // TODO: Fix processing so we do not need to double clear tags or set track languages
 
             // Cancel handler
@@ -775,7 +779,7 @@ namespace PlexCleaner
             Log.Logger.Information("Upgrading sidecar files ...");
 
             // Start the stopwatch
-            Stopwatch timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             // Process all files
@@ -798,7 +802,7 @@ namespace PlexCleaner
 
                 // Upgrade the sidecar files
                 Log.Logger.Information("Upgrading sidecar file ({Done:P}) : {Name}", done, fileInfo.FullName);
-                SidecarFile sidecarfile = new SidecarFile(fileInfo);
+                SidecarFile sidecarfile = new(fileInfo);
                 if (!sidecarfile.Upgrade())
                 {
                     Log.Logger.Error("Error upgrading sidecar file : {Name}", fileInfo.FullName);
