@@ -12,7 +12,7 @@ namespace PlexCleaner
             public int Bottom { get; set; }
             public int Total => Neither + Top + Bottom;
         }
-        public Repeated RepeatedFields { get; } = new Repeated();
+        public Repeated RepeatedFields { get; } = new();
 
         public class Frames
         {
@@ -23,8 +23,8 @@ namespace PlexCleaner
             public int Total => Tff + Bff + Progressive + Undetermined;
             public double Percentage => System.Convert.ToDouble(Tff + Bff) / System.Convert.ToDouble(Total);
         }
-        public Frames SingleFrame { get; } = new Frames();
-        public Frames MultiFrame { get; } = new Frames();
+        public Frames SingleFrame { get; } = new();
+        public Frames MultiFrame { get; } = new();
 
         public bool IsInterlaced()
         {

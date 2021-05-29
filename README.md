@@ -1,6 +1,6 @@
 # PlexCleaner
 
-Utility to optimize media files for DirectPlay on Plex.
+Utility to optimize media files for DirectPlay in Plex, Emby, Jellyfin.
 
 ## License
 
@@ -51,7 +51,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Use Cases
 
-The objective of the tool is to modify media content such that it will [Direct Play](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/) in Plex.  
+The objective of the tool is to modify media content such that it will Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).  
 Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes.  
 Occasionally Plex would fix the issue, other times the only solution is modification of the media file.
 

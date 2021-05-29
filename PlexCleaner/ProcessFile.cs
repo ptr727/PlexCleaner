@@ -90,7 +90,7 @@ namespace PlexCleaner
             Log.Logger.Information("Making file extension lowercase : {Name}", MediaFile.Name);
 
             // Rename the file
-            // Windows is case insensisitve, so we need to rename in two steps
+            // Windows is case insensitive, so we need to rename in two steps
             string tempName = Path.ChangeExtension(MediaFile.FullName, ".tmp");
             string lowerName = Path.ChangeExtension(MediaFile.FullName, lowerExtension);
             if (!FileEx.RenameFile(MediaFile.FullName, tempName) ||
@@ -294,7 +294,7 @@ namespace PlexCleaner
         {
             // Start out with keeping all the tracks
             MediaInfo keepTracks = MkvMergeInfo;
-            MediaInfo removeTracks = new MediaInfo(MediaTool.ToolType.MkvMerge);
+            MediaInfo removeTracks = new(MediaTool.ToolType.MkvMerge);
 
             // Get all unwanted language tracks
             // Use MKVMerge logic
@@ -389,7 +389,7 @@ namespace PlexCleaner
                 return true;
 
             // Find all tracks that need re-encoding
-            // Use FfProbeInfo becasue the video matching logic uses FFprobe attributes
+            // Use FfProbeInfo because the video matching logic uses FFprobe attributes
             if (!FfProbeInfo.FindNeedReEncode(reencodeVideoInfos, reencodeAudioFormats, out MediaInfo keep, out MediaInfo reencode))
                 // Nothing to do
                 return true;
@@ -649,7 +649,7 @@ namespace PlexCleaner
             if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
             {
                 // Just warn, maybe tools changed, try again
-                Log.Logger.Warning("Previous attampts to repair failed : {State} : {Name}", SidecarFile.State, MediaFile.Name);
+                Log.Logger.Warning("Previous attempts to repair failed : {State} : {Name}", SidecarFile.State, MediaFile.Name);
             }
 
             // TODO : Analyze the error output and conditionally repair only the audio or video track
@@ -763,7 +763,7 @@ namespace PlexCleaner
         private bool Refresh(string filename)
         {
             // Media filename changed
-            // Compare case sensitive for Linux suppport
+            // Compare case sensitive for Linux support
             if (!MediaFile.FullName.Equals(filename, StringComparison.Ordinal))
             { 
                 MediaFile = new FileInfo(filename);
@@ -875,6 +875,7 @@ namespace PlexCleaner
         public MediaInfo FfProbeInfo { get; set; }
         public MediaInfo MkvMergeInfo { get; set; }
         public MediaInfo MediaInfoInfo { get; set; }
+        public SidecarFile.States State => SidecarFile.State;
 
         private FileInfo MediaFile;
         private SidecarFile SidecarFile;

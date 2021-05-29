@@ -63,18 +63,18 @@ namespace PlexCleaner.MediaInfoToolXmlSchema
 	public class MediaElement
 	{
 		[XmlElement(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
-		public List<Track> Track { get; } = new List<Track>();
+		public List<Track> Track { get; } = new();
 	}
 
 	[XmlRoot(ElementName = "MediaInfo", Namespace = "https://mediaarea.net/mediainfo")]
 	public class MediaInfo
 	{
 		[XmlElement(ElementName = "media", Namespace = "https://mediaarea.net/mediainfo")]
-		public MediaElement Media { get; set; } = new MediaElement();
+		public MediaElement Media { get; set; } = new();
 
 		public static MediaInfo FromXml(string xml)
 		{
-			XmlSerializer xmlserializer = new XmlSerializer(typeof(MediaInfo));
+			XmlSerializer xmlserializer = new(typeof(MediaInfo));
 			using TextReader textreader = new StringReader(xml);
 			using XmlReader xmlReader = XmlReader.Create(textreader);
 			return xmlserializer.Deserialize(xmlReader) as MediaInfo;

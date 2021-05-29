@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using System.Runtime.InteropServices;
 using System.IO;
 using Serilog;
 using System.Reflection;
+using System.Net.Http;
 
 namespace PlexCleaner
 {
@@ -50,7 +50,7 @@ namespace PlexCleaner
 
             // Extract the short version number
             const string pattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
-            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             Match match = regex.Match(lines[0]);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
@@ -61,7 +61,7 @@ namespace PlexCleaner
             // Get other attributes if we can read the file
             if (File.Exists(mediaToolInfo.FileName))
             {
-                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
                 mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
                 mediaToolInfo.Size = fileInfo.Length;
             }
@@ -79,14 +79,14 @@ namespace PlexCleaner
                 // Load the download page
                 // TODO : Find a more reliable way of getting the last released version number
                 // https://www.7-zip.org/download.html
-                using WebClient wc = new WebClient();
-                string downloadpage = wc.DownloadString("https://www.7-zip.org/download.html");
+                using HttpClient httpClient = new();
+                string downloadPage = httpClient.GetStringAsync("https://www.7-zip.org/download.html").Result;
 
                 // Extract the version number from the page source
                 // E.g. "Download 7-Zip 18.05 (2018-04-30) for Windows"
                 const string pattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)\ for\ Windows";
-                Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-                Match match = regex.Match(downloadpage);
+                Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                Match match = regex.Match(downloadPage);
                 Debug.Assert(match.Success);
                 mediaToolInfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
 

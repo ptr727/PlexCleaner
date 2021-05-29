@@ -17,9 +17,9 @@ namespace PlexCleaner
         // MkvMerge, FfProbe, MediaInfo
         public MediaTool.ToolType Parser { get; }
 
-        public List<VideoInfo> Video { get; } = new List<VideoInfo>();
-        public List<AudioInfo> Audio { get; } = new List<AudioInfo>();
-        public List<SubtitleInfo> Subtitle { get; } = new List<SubtitleInfo>();
+        public List<VideoInfo> Video { get; } = new();
+        public List<AudioInfo> Audio { get; } = new();
+        public List<SubtitleInfo> Subtitle { get; } = new();
 
         public bool HasTags { get; set; }
         public bool HasErrors { get; set; }
@@ -42,7 +42,7 @@ namespace PlexCleaner
         public List<TrackInfo> GetTrackList()
         {
             // Combine all tracks
-            List<TrackInfo> combined = new List<TrackInfo>();
+            List<TrackInfo> combined = new();
             combined.AddRange(Video);
             combined.AddRange(Audio);
             combined.AddRange(Subtitle);
@@ -55,21 +55,21 @@ namespace PlexCleaner
 
         public static List<TrackInfo> GetTrackList(List<VideoInfo> list)
         {
-            List<TrackInfo> trackList = new List<TrackInfo>();
+            List<TrackInfo> trackList = new();
             trackList.AddRange(list);
             return trackList;
         }
 
         public static List<TrackInfo> GetTrackList(List<AudioInfo> list)
         {
-            List<TrackInfo> trackList = new List<TrackInfo>();
+            List<TrackInfo> trackList = new();
             trackList.AddRange(list);
             return trackList;
         }
 
         public static List<TrackInfo> GetTrackList(List<SubtitleInfo> list)
         {
-            List<TrackInfo> trackList = new List<TrackInfo>();
+            List<TrackInfo> trackList = new();
             trackList.AddRange(list);
             return trackList;
         }
@@ -142,7 +142,7 @@ namespace PlexCleaner
             // Note, foreign films may not have any matching language tracks
 
             // Keep all video tracks that match a language
-            HashSet<string> videoLanguages = new HashSet<string>();
+            HashSet<string> videoLanguages = new();
             foreach (VideoInfo video in Video)
             {
                 // Available languages
@@ -167,7 +167,7 @@ namespace PlexCleaner
             }
 
             // Keep all audio tracks that match a language
-            HashSet<string> audioLanguages = new HashSet<string>();
+            HashSet<string> audioLanguages = new();
             foreach (AudioInfo audio in Audio)
             {
                 // Available languages
@@ -196,7 +196,7 @@ namespace PlexCleaner
                 audioMatch = true;
 
             // Keep all subtitle tracks that match a language
-            HashSet<string> subtitleLanguages = new HashSet<string>();
+            HashSet<string> subtitleLanguages = new();
             foreach (SubtitleInfo subtitle in Subtitle)
             {
                 // Available languages
@@ -322,7 +322,7 @@ namespace PlexCleaner
             }
 
             // Create a list of all the languages
-            HashSet<string> languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
             foreach (VideoInfo video in Video)
             {
                 languages.Add(video.Language);
@@ -365,7 +365,7 @@ namespace PlexCleaner
             }
 
             // Create a list of all the languages
-            HashSet<string> languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
             foreach (SubtitleInfo subtitle in Subtitle)
             {
                 languages.Add(subtitle.Language);
@@ -446,7 +446,7 @@ namespace PlexCleaner
             }
 
             // Create a list of all the languages
-            HashSet<string> languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
             foreach (AudioInfo audio in Audio)
             {
                 languages.Add(audio.Language);

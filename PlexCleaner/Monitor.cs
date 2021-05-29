@@ -29,7 +29,7 @@ namespace PlexCleaner
             {
                 // Create a file system watcher for the folder
                 Log.Logger.Information("Monitoring : {Folder}", folder);
-                FileSystemWatcher watch = new FileSystemWatcher();
+                FileSystemWatcher watch = new();
                 Watcher.Add(watch);
                 watch.Path = folder;
                 watch.NotifyFilter = NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -50,7 +50,7 @@ namespace PlexCleaner
             while (!Program.IsCancelled(1000))
             {
                 // Lock and process the list of folders
-                List<string> watchlist = new List<string>();
+                List<string> watchlist = new();
                 lock (WatchLock)
                 {
                     if (WatchFolders.Any())
@@ -83,7 +83,7 @@ namespace PlexCleaner
                 // Process changes in the watched folders
                 foreach (string folder in watchlist)
                     Log.Logger.Information("Monitored changes in : {Folder}", folder);
-                Process process = new Process();
+                Process process = new();
                 process.ProcessFolders(watchlist);
                 Process.DeleteEmptyFolders(watchlist);
             }
@@ -175,7 +175,7 @@ namespace PlexCleaner
             if (File.Exists(pathname))
             {
                 // Get the file details
-                FileInfo fileinfo = new FileInfo(pathname);
+                FileInfo fileinfo = new(pathname);
 
                 // Ignore our own sidecar and *.tmp files being created
                 if (!fileinfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
