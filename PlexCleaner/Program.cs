@@ -319,6 +319,11 @@ namespace PlexCleaner
                 Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
             }
 
+            // Log app and runtime version
+            string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            string runtimeVersion = Environment.Version.ToString();
+            Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
+
             // Verify tools
             if (verifyTools)
             {
