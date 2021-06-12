@@ -104,7 +104,7 @@ namespace PlexCleaner
 
                 // Process the file
                 Log.Logger.Information("Processing ({Done:P}) : {Name}", done, fileInfo.FullName);
-                if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state) &&
+                if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo) &&
                     !Program.IsCancelled())
                 {
                     Log.Logger.Error("Error processing : {Name}", fileInfo.FullName);
@@ -113,7 +113,7 @@ namespace PlexCleaner
                 }
                 else if (modified)
                 {
-                    modifiedInfo.Add(new (fileInfo.FullName, state));
+                    modifiedInfo.Add(new ValueTuple<string, SidecarFile.States>(processInfo.FullName, state));
                     modifiedCount ++;
                 }
 
@@ -611,11 +611,12 @@ namespace PlexCleaner
             return true;
         }
 
-        private bool ProcessFile(FileInfo fileinfo, out bool modified, out SidecarFile.States state)
+        private bool ProcessFile(FileInfo fileinfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo)
         {
             // Init
             modified = false;
             state = SidecarFile.States.None;
+            processInfo = fileinfo;
 
             // Skip the file if it is in the ignore list
             if (IgnoreList.Contains(fileinfo.FullName))
@@ -765,8 +766,9 @@ namespace PlexCleaner
             if (!processFile.RemoveTags(ref modified))
                 return false;
 
-            // Get state from sidecar (if in use)
+            // Return state and current fileinfo
             state = processFile.State;
+            processInfo = processFile.FileInfo;
 
             // TODO: Fix processing so we do not need to double clear tags or set track languages
 

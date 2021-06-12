@@ -23,7 +23,8 @@ namespace PlexCleaner
             Verified = 1 << 6,
             VerifyFailed = 1 << 7,
             BitrateExceeded = 1 << 8,
-            ClearedTags = 1 << 9
+            ClearedTags = 1 << 9,
+            ReNamed = 1 << 10
         }
 
         public SidecarFile(FileInfo mediaFileInfo)
@@ -183,6 +184,7 @@ namespace PlexCleaner
                 return false;
 
             // Check one by one to log all the mismatches
+            // ReSharper disable once ReplaceWithSingleAssignment.False
             bool update = false;
             if (!IsSchemaCurrent())
                 update = true;

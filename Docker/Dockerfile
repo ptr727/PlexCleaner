@@ -10,7 +10,7 @@ ARG LABEL_VERSION="1.0.0.0"
 
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
-    description="Utility to optimize media files for DirectPlay on Plex" \
+    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
 # https://github.com/dotnet/dotnet-docker/blob/master/src/sdk/5.0/focal/amd64/Dockerfile
