@@ -243,14 +243,14 @@ namespace PlexCleaner
             return exitcode == 0;
         }
 
-        private void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
+        private static void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
         {
             // Remux only
             MediaInfo reencode = new(ToolType.FfProbe);
             CreateFfMpegMap("", 0, "", keep, reencode, out input, out output);
         }
 
-        private void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
+        private static void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
         {
             // Verify correct data type
             Debug.Assert(keep.Parser == ToolType.FfProbe);

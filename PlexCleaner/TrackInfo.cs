@@ -111,7 +111,7 @@ namespace PlexCleaner
 
             // ID can be an integer or an integer-type, e.g. 3-CC1
             // https://github.com/MediaArea/MediaInfo/issues/201
-            Id = int.Parse(track.Id.All(char.IsDigit) ? track.Id : track.Id.Substring(0, track.Id.IndexOf('-', StringComparison.OrdinalIgnoreCase)), CultureInfo.InvariantCulture);
+            Id = int.Parse(track.Id.All(char.IsDigit) ? track.Id : track.Id[..track.Id.IndexOf('-', StringComparison.OrdinalIgnoreCase)], CultureInfo.InvariantCulture);
 
             // Use streamorder for number
             Number = track.StreamOrder;

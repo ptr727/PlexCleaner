@@ -17,7 +17,7 @@ namespace PlexCleaner
         public static RootCommand CreateRootCommand()
         {
             // Root command and global options
-            RootCommand rootCommand = new("Utility to optimize media files for DirectPlay on Plex");
+            RootCommand rootCommand = new("Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin");
             AddGlobalOptions(rootCommand);
 
             // Create default settings

@@ -1,6 +1,6 @@
 # PlexCleaner
 
-Utility to optimize media files for DirectPlay in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## License
 
@@ -299,7 +299,7 @@ Commandline options:
 ```console
 > ./PlexCleaner --help
 PlexCleaner:
-  Utility to optimize media files for DirectPlay on Plex
+  Utility to optimize media files for Direct Play on Plex, Emby, Jellyfin
 
 Usage:
   PlexCleaner [options] [command]

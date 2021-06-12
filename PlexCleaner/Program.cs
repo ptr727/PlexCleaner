@@ -252,7 +252,7 @@ namespace PlexCleaner
 
             // Signal the cancel event
             // We could signal Cancel directly now that it is static
-            program.Break();
+            Break();
         }
 
         private Program()
@@ -341,7 +341,7 @@ namespace PlexCleaner
             return new Program();
         }
 
-        private void Break()
+        private static void Break()
         {
             // Signal the cancel event
             Cancel();
@@ -425,7 +425,7 @@ namespace PlexCleaner
         public static CommandLineOptions Options { get; set; }
         public static ConfigFileJsonSchema Config { get; set; }
 
-        private static CancellationTokenSource CancelSource = new();
+        private static readonly CancellationTokenSource CancelSource = new();
 
         private readonly List<string> FolderList = new();
         private readonly List<DirectoryInfo> DirectoryInfoList = new();
