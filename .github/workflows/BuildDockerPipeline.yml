@@ -86,7 +86,7 @@ jobs:
           # Do not push pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
-            LABEL_VERSION:${{ steps.gitversion.outputs.nuGetVersionV2 }}
+            LABEL_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }}
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.gitversion.outputs.nuGetVersionV2 }}
@@ -101,7 +101,7 @@ jobs:
           # Do not push pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
-            LABEL_VERSION:${{ steps.gitversion.outputs.nuGetVersionV2 }}
+            LABEL_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }}
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:develop
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.gitversion.outputs.nuGetVersionV2 }}
