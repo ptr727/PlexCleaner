@@ -65,6 +65,7 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
 
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
+# https://mediaarea.net/en/Repos
 RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-16_all.deb \
     && dpkg -i repo-mediaarea_1.0-16_all.deb \
     && apt-get update \
