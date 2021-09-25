@@ -138,7 +138,7 @@ namespace PlexCleaner
             if (modifiedInfo.Count > 0)
             {
                 Log.Logger.Information("Modified files :");
-                foreach (var (fileName, state) in modifiedInfo)
+                foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
                     Log.Logger.Information("{State} : {Name}", state, fileName);
             }
             if (errorFiles.Count > 0)

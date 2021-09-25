@@ -100,7 +100,7 @@ namespace PlexCleaner
         private static Command CreateDefaultSettingsCommand()
         {
             // Create default settings file
-            return new("defaultsettings")
+            return new Command("defaultsettings")
             {
                 Description = "Write default values to settings file",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteDefaultSettingsCommand)
@@ -110,7 +110,7 @@ namespace PlexCleaner
         private static Command CreateCheckForNewToolsCommand()
         {
             // Check for new tools
-            return new("checkfornewtools")
+            return new Command("checkfornewtools")
             {
                 Description = "Check for and download new tools",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.CheckForNewToolsCommand)
