@@ -48,7 +48,7 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y aspnetcore-runtime-6.0 \
+    && apt-get install -y dotnet-runtime-6.0 \
     && dotnet --info \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

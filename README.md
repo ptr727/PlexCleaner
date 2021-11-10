@@ -101,7 +101,7 @@ Below are a few examples of issues I've experienced over the many years of using
   - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
   - `sudo dpkg -i packages-microsoft-prod.deb`
   - `sudo apt update`
-  - `sudo apt install -y aspnetcore-runtime-6.0`
+  - `sudo apt install -y dotnet-runtime-6.0`
   - `dotnet --info`
 - Install the required 3rd Party tools:
   - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4):
