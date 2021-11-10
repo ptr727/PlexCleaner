@@ -1,5 +1,6 @@
 # https://chocolatey.org/packages/GitVersion.Portable
 # https://gitversion.net/docs/reference/modes/mainline
 # https://gitversion.net/docs/reference/version-increments
+# E.g. add "+semver: minor" to merge message
 
 mode: Mainline
