@@ -15,14 +15,10 @@ namespace PlexCleaner
             // TODO : Add cleanup for extra empty entry when string is empty
             // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
 
-            // Wanted extensions, always keep .mkv and sidecar files
+            // Extensions of otehr files to skip and keep
             // TODO : Add support for ignoring FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
             List<string> stringlist = Program.Config.ProcessOptions.KeepExtensions.Split(',').ToList();
-            KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
-            {
-                ".mkv",
-                SidecarFile.SidecarExtension
-            };
+            KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
 
             // Containers types that can be remuxed to MKV
             stringlist = Program.Config.ProcessOptions.ReMuxExtensions.Split(',').ToList();
@@ -138,7 +134,7 @@ namespace PlexCleaner
             if (modifiedInfo.Count > 0)
             {
                 Log.Logger.Information("Modified files :");
-                foreach (var (fileName, state) in modifiedInfo)
+                foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
                     Log.Logger.Information("{State} : {Name}", state, fileName);
             }
             if (errorFiles.Count > 0)
@@ -484,7 +480,7 @@ namespace PlexCleaner
                     return false;
 
                 // Handle only sidecar files
-                if (!SidecarFile.IsSidecarFileName(fileinfo))
+                if (!SidecarFile.IsSidecarFile(fileinfo))
                     continue;
 
                 // Read the sidecar files
@@ -625,6 +621,13 @@ namespace PlexCleaner
                 return true;
             }
 
+            // Skip the file if it is in the keep extensions list
+            if (KeepExtensions.Contains(fileinfo.Extension))
+            {
+                Log.Logger.Warning("Skipping keep extensions file : {Name}", fileinfo.FullName);
+                return true;
+            }
+
             // Does the file still exist
             if (!File.Exists(fileinfo.FullName))
             {
@@ -642,54 +645,26 @@ namespace PlexCleaner
                 return false;
             }
 
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
-            // Delete files not in our desired extensions lists
-            if (!processFile.DeleteUnwantedExtensions(KeepExtensions, ReMuxExtensions, ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
             // Delete the sidecar file if matching MKV file not found
-            if (!processFile.DeleteMissingSidecarFiles(ref modified))
+            if (!processFile.DeleteMismatchedSidecarFile(ref modified))
                 return false;
 
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
-            // Nothing more to do for files in the keep extensions list
-            // Except if it is a MKV file or a file to be remuxed to MKV
-            if (!MkvMergeTool.IsMkvFile(fileinfo) &&
-                !ReMuxExtensions.Contains(fileinfo.Extension) &&
-                KeepExtensions.Contains(fileinfo.Extension))
+            // Skip if this a sidecar file
+            if (SidecarFile.IsSidecarFile(fileinfo))
                 return true;
 
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
-            // Make sure the file extension is lowercase
-            if (!processFile.MakeExtensionLowercase(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
-
             // ReMux non-MKV containers matched by extension
-            if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified))
+            if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // All files past this point are MKV files
-
-            // Cancel handler
-            if (Program.IsCancelled())
-                return false;
+            if (!processFile.DeleteNonMkvFile(ref modified))
+            {
+                // File may have been deleted or skipped
+                state = processFile.State;
+                return true;
+            }
 
             // If a sidecar file exists for this MKV file it must be writable
             if (!processFile.IsSidecarWriteable())
@@ -699,71 +674,57 @@ namespace PlexCleaner
             }
 
             // Read the media info
-            if (!processFile.GetMediaInfo())
+            if (!processFile.GetMediaInfo() ||
+                Program.IsCancelled())
+                return false;
+
+            // Make sure the file extension is lowercase
+            // Case sensitive on Linux, i.e. .MKV != .mkv
+            if (!processFile.MakeExtensionLowercase(ref modified))
                 return false;
 
             // ReMux non-MKV containers using MKV filenames
-            if (!processFile.RemuxNonMkvContainer(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.RemuxNonMkvContainer(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Try to ReMux metadata errors away
-            if (!processFile.ReMuxMediaInfoErrors(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Change all tracks with an unknown language to the default language
             // Merge operation uses language tags, make sure they are set
-            if (!processFile.SetUnknownLanguage(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.SetUnknownLanguage(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Merge all remux operations into a single call
             // Remove all the unwanted language tracks
             // Remove all duplicate tracks
-            if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // De-interlace interlaced content
-            if (!processFile.DeInterlace(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.DeInterlace(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Re-Encode formats that cannot be direct-played
-            if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Verify media streams
             // Repair if possible
-            if (!processFile.Verify(ref modified))
-                return false;
-
-            // Cancel handler
-            if (Program.IsCancelled())
+            if (!processFile.Verify(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Remove tags and titles
-            if (!processFile.RemoveTags(ref modified))
+            if (!processFile.RemoveTags(ref modified) ||
+                Program.IsCancelled())
                 return false;
 
             // Return state and current fileinfo

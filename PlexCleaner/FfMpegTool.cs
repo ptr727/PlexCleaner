@@ -422,7 +422,7 @@ namespace PlexCleaner
                 const string multiframe = @"\[Parsed_idet_0 \@ (.*?)\] Multi frame detection: TFF: (?<multi_tff>.*?)BFF: (?<multi_bff>.*?)Progressive: (?<multi_prog>.*?)Undetermined: (?<multi_und>.*?)$";
 
                 // We need to match in LF not CRLF mode else $ does not work as expected
-                string pattern = $"{repeatedfields}\n{singleframe}\n{multiframe}";
+                const string pattern = $"{repeatedfields}\n{singleframe}\n{multiframe}";
                 string textlf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
 
                 // Match

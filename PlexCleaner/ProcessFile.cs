@@ -18,41 +18,10 @@ namespace PlexCleaner
             SidecarFile = new SidecarFile(mediaFile);
         }
 
-        public bool DeleteUnwantedExtensions(HashSet<string> keepExtensions, HashSet<string> remuxExtensions, ref bool modified)
-        {
-            if (keepExtensions == null)
-                throw new ArgumentNullException(nameof(keepExtensions));
-            if (remuxExtensions == null)
-                throw new ArgumentNullException(nameof(remuxExtensions));
-
-            // Optional
-            if (!Program.Config.ProcessOptions.DeleteUnwantedExtensions)
-                return true;
-
-            // Is the file extension in our keep list
-            if (keepExtensions.Contains(FileInfo.Extension) ||
-                remuxExtensions.Contains(FileInfo.Extension))
-                // Keep file, nothing more to do
-                return true;
-
-            // Delete the file
-            Log.Logger.Information("Deleting file with undesired extension : {Name}", FileInfo.Name);
-
-            // Delete the file
-            if (!Program.Options.TestNoModify &&
-                !FileEx.DeleteFile(FileInfo.FullName))
-                // Error
-                return false;
-
-            // File deleted, do not continue processing
-            modified = true;
-            return false;
-        }
-
-        public bool DeleteMissingSidecarFiles(ref bool modified)
+        public bool DeleteMismatchedSidecarFile(ref bool modified)
         {
             // Is this a sidecar file
-            if (!SidecarFile.IsSidecarFileName(FileInfo))
+            if (!SidecarFile.IsSidecarFile(FileInfo))
                 // Nothing to do
                 return true;
 
@@ -60,7 +29,6 @@ namespace PlexCleaner
             string mediafile = Path.ChangeExtension(FileInfo.FullName, ".mkv");
 
             // Does the media file exist
-            // Case sensitive on Linux, i.e. .MKV != .mkv
             if (File.Exists(mediafile))
                 // File exists, nothing more to do
                 return true;
@@ -76,6 +44,34 @@ namespace PlexCleaner
 
             // File deleted, do not continue processing
             modified = true;
+            return false;
+        }
+
+        public bool DeleteNonMkvFile(ref bool modified)
+        {
+            // If MKV file nothing to do
+            if (MkvMergeTool.IsMkvFile(FileInfo))
+                return true;
+
+            // Only delete if the option is enabled else just skip
+            if (!Program.Config.ProcessOptions.DeleteUnwantedExtensions)
+            {
+                Log.Logger.Warning("Skipping non-MKV file : {Name}", FileInfo.Name);
+                return false;
+            }
+
+            // Non-MKV file, delete
+            Log.Logger.Warning("Deleting non-MKV file : {Name}", FileInfo.Name);
+
+            // Delete the file
+            if (!Program.Options.TestNoModify &&
+                !FileEx.DeleteFile(FileInfo.FullName))
+                // Error
+                return false;
+
+            // File deleted, do not continue processing
+            modified = true;
+            SidecarFile.State |= SidecarFile.States.Deleted;
             return false;
         }
 
@@ -95,6 +91,7 @@ namespace PlexCleaner
             string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
             if (!FileEx.RenameFile(FileInfo.FullName, tempName) ||
                 !FileEx.RenameFile(tempName, lowerName))
+                // TODO: Chance of partial failure
                 return false;
 
             // Modified filename
