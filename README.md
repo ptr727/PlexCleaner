@@ -19,7 +19,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.2:
+- Version 2.3:
   - Migrated from .NET 5 to .NET 6.
 - Version 2.1:
   - Added backwards compatibility for some older JSON schemas.
