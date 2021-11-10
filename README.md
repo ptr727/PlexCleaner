@@ -20,8 +20,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.2:
-  - Migrated from .NET 5 to .NET 6
-
+  - Migrated from .NET 5 to .NET 6.
 - Version 2.1:
   - Added backwards compatibility for some older JSON schemas.
   - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
@@ -31,7 +30,6 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Run the `upgradesidecar` command to migrate sidecar files to the current schema version.
   - Repairing metadata inconsistencies, e.g. MuxingMode not specified for S_VOBSUB subtitle codecs, by remuxing the MKV file.
   - Added a `ToolsOptions:AutoUpdate` configuration option to automatically update the tools before each run.
-
 - Version 2.0:
   - Linux and Docker are now supported platforms.
     - Automatic downloading of tools on Linux is not currently supported, tools need to be manually installed on the system.
