@@ -13,7 +13,8 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# https://github.com/dotnet/dotnet-docker/blob/master/src/sdk/5.0/focal/amd64/Dockerfile
+# Follow pattern used in .NET Dockerfile
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/6.0/focal/amd64/Dockerfile
 ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
@@ -40,13 +41,14 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Install .NET 5
+# Install .NET 6 Runtime
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
+# TODO: Substitute ubuntu with $(lsb_release -si | tr '[:upper:]' '[:lower:]')
 RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y aspnetcore-runtime-5.0 \
+    && apt-get install -y aspnetcore-runtime-6.0 \
     && dotnet --info \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -66,8 +68,8 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-16_all.deb \
-    && dpkg -i repo-mediaarea_1.0-16_all.deb \
+RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
+    && dpkg -i repo-mediaarea_1.0-19_all.deb \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y mediainfo \

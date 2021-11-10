@@ -24,7 +24,8 @@ namespace PlexCleaner
             VerifyFailed = 1 << 7,
             BitrateExceeded = 1 << 8,
             ClearedTags = 1 << 9,
-            ReNamed = 1 << 10
+            ReNamed = 1 << 10,
+            Deleted = 1 << 11
         }
 
         public SidecarFile(FileInfo mediaFileInfo)
@@ -529,7 +530,7 @@ namespace PlexCleaner
             }
         }
 
-        public static bool IsSidecarFileName(FileInfo sidecarFileInfo)
+        public static bool IsSidecarFile(FileInfo sidecarFileInfo)
         {
             if (sidecarFileInfo == null)
                 throw new ArgumentNullException(nameof(sidecarFileInfo));

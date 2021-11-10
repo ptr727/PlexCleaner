@@ -19,6 +19,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.2:
+  - Migrated from .NET 5 to .NET 6
+
 - Version 2.1:
   - Added backwards compatibility for some older JSON schemas.
   - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
@@ -73,9 +76,9 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Windows
 
-- Install [.NET 5 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
-- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
+- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
 - Install the required 3rd Party tools:
   - The 3rd party tools are downloaded in the `Tools` folder.
   - Make sure the folder exists, the default location is in the same folder as the binary.
@@ -94,22 +97,23 @@ Below are a few examples of issues I've experienced over the many years of using
 - Install prerequisites:
   - `sudo apt update`
   - `sudo apt install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full`
-- Install [.NET 5 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
-  - TODO: How to convert distribution to lowercase using $(lsb_release -si) to create a generic download URL, e.g. `debian` instead of `Debian`?
+- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
   - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
   - `sudo dpkg -i packages-microsoft-prod.deb`
   - `sudo apt update`
-  - `sudo apt install -y dotnet-sdk-5.0`
-  - `dotnet --version`
+  - `sudo apt install -y aspnetcore-runtime-6.0`
+  - `dotnet --info`
 - Install the required 3rd Party tools:
   - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4):
+    - `sudo add-apt-repository -y ppa:savoury1/graphics`
+    - `sudo add-apt-repository -y ppa:savoury1/multimedia`
     - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
     - `sudo apt update`
     - `sudo apt install -y ffmpeg`
     - `ffmpeg -version`
   - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu):
-    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb`
-    - `sudo dpkg -i repo-mediaarea_1.0-13_all.deb`
+    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb`
+    - `sudo dpkg -i repo-mediaarea_1.0-19_all.deb`
     - `sudo apt update`
     - `sudo apt install -y mediainfo`
     - `mediainfo --version`
@@ -125,11 +129,9 @@ Below are a few examples of issues I've experienced over the many years of using
     - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
   - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
-- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
-- Or compile from code:
-  - `git clone https://github.com/ptr727/PlexCleaner.git`
-  - `cd PlexCleaner`
-  - `dotnet build`
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+
 
 ### Docker
 
@@ -182,6 +184,9 @@ Create a default configuration file by running:
 
 ```jsonc
 {
+  // JSON Schema version
+  "SchemaVersion": 1,
+  // Tools options
   "ToolsOptions": {
     // Use system installed tools
     "UseSystem": false,
@@ -192,26 +197,27 @@ Create a default configuration file by running:
     // Automatically check for new tools
     "AutoUpdate":  false
   },
+  // Convert options
   "ConvertOptions": {
     // Enable H.265 encoding, else use H.264
     "EnableH265Encoder": true,
     // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
     // Audio encoding codec
-    "AudioEncodeCodec": "ac3",
-    // Automatically check for new tools
-    "AutoUpdate":  false
+    "AudioEncodeCodec": "ac3"
   },
+  // Process options
   "ProcessOptions": {
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete non-media files
+    // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
-    // Files to keep, e.g. subtitle or partial files
-    "KeepExtensions": ".partial~",
+    // Files to keep but not process, e.g. subtitles, cover art, info, partial, etc.
+    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
     // Enable re-mux
     "ReMux": true,
-    // Remux files to MKV if the extension matches
+    // Files to remux to MKV
     "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
     // Enable de-interlace
     // Note de-interlace detection is not absolute
@@ -227,7 +233,7 @@ Create a default configuration file by running:
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -262,6 +268,7 @@ Create a default configuration file by running:
       "\\\\server\\share2\\path2\\file2.mkv"
     ]
   },
+  // Monitor options
   "MonitorOptions": {
     // Time to wait after detecting a file change
     "MonitorWaitTime": 60,
@@ -270,6 +277,7 @@ Create a default configuration file by running:
     // Number of times to retry a file operation
     "FileRetryCount": 2
   },
+  // Verify options
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,

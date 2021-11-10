@@ -26,12 +26,13 @@
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete non-media files
+    // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
-    // Files to keep, e.g. subtitle or partial files
-    "KeepExtensions": ".partial~",
+    // Files to keep but not process, e.g. subtitles, cover art, info, partial, etc.
+    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
     // Enable re-mux
     "ReMux": true,
-    // Remux files to MKV if the extension matches
+    // Files to remux to MKV
     "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
     // Enable de-interlace
     // Note de-interlace detection is not absolute
