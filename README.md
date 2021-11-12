@@ -19,12 +19,12 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.3.1
+- Version 2.3.2
   - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
     - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
     - The warning is only logged during the verify step, repair is not possible.
     - To re-verify existing 4K files use the `verify` command, or reset the state using the `createsidecar` and `process` commands.
-  - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other getfooinfo commands.
+  - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other `getxxxinfo` commands.
   - Added `gettoolinfo` command to print media info reported by tools.
   - Refactored duplicate file iteration logic to use lambdas.
 - Version 2.3:
@@ -137,7 +137,6 @@ Below are a few examples of issues I've experienced over the many years of using
   - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
-
 
 ### Docker
 
