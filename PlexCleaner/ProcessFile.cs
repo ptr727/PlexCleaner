@@ -410,25 +410,29 @@ namespace PlexCleaner
             return Refresh(outputname);
         }
 
-        public bool Verify(ref bool modified)
+        public bool Verify(bool conditional, ref bool modified)
         {
-            // Verify if enabled
-            if (!Program.Config.ProcessOptions.Verify)
-                return true;
+            // Conditional or always
+            if (conditional)
+            { 
+                // Verify if enabled
+                if (!Program.Config.ProcessOptions.Verify)
+                    return true;
 
-            // If we are using a sidecar file we can use the last result
-            if (Program.Config.ProcessOptions.UseSidecarFiles &&
-                SidecarFile.State.HasFlag(SidecarFile.States.Verified))
-                return true;
+                // If we are using a sidecar file we can use the last result
+                if (Program.Config.ProcessOptions.UseSidecarFiles &&
+                    SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+                    return true;
 
-            // Skip files that are older than the minimum age
-            TimeSpan fileAge = DateTime.UtcNow - FileInfo.LastWriteTimeUtc;
-            TimeSpan testAge = TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge);
-            if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
-                fileAge > testAge)
-            {
-                Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, FileInfo.Name);
-                return true;
+                // Skip files that are older than the minimum age
+                TimeSpan fileAge = DateTime.UtcNow - FileInfo.LastWriteTimeUtc;
+                TimeSpan testAge = TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge);
+                if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
+                    fileAge > testAge)
+                {
+                    Log.Logger.Warning("Skipping file due to age : {FileAge} > {TestAge} : {Name}", fileAge, testAge, FileInfo.Name);
+                    return true;
+                }
             }
 
             // Break out and skip to end when any verification step fails
@@ -502,6 +506,17 @@ namespace PlexCleaner
 
                 // Verify bitrate
                 if (!VerifyBitrate())
+                {
+                    // Cancel requested
+                    if (Program.IsCancelledError())
+                        return false;
+
+                    // Done
+                    break;
+                }
+
+                // Verify HDR
+                if (!VerifyHdr())
                 {
                     // Cancel requested
                     if (Program.IsCancelledError())
@@ -600,6 +615,77 @@ namespace PlexCleaner
                                     Bitrate.ToBitsPerSecond(bitrateInfo.VideoBitrate.Average),
                                     FileInfo.Name);
 
+            // Ignore the error
+            return true;
+        }
+
+        private bool VerifyHdr()
+        {
+            // Verify that HDR profiles are HDR or Dolby Vision Profile 7+
+            // If HDR10 compatibility is not reported the video can't play (without funky colors) on non-DV hardware
+            // https://en.wikipedia.org/wiki/High-dynamic-range_video
+            // https://en.wikipedia.org/wiki/Dolby_Vision
+
+            // From MediaInfo:
+
+            // HDR:
+            /*
+            <HDR_Format>SMPTE ST 2086</HDR_Format>
+            <HDR_Format_Compatibility>HDR10</HDR_Format_Compatibility>
+            */
+
+            // Dolby Vision Profile 5
+            /*
+            <HDR_Format>Dolby Vision</HDR_Format>
+            <HDR_Format_Version>1.0</HDR_Format_Version>
+            <HDR_Format_Profile>dvhe.05</HDR_Format_Profile>
+            <HDR_Format_Level>06</HDR_Format_Level>
+            <HDR_Format_Settings>BL+RPU</HDR_Format_Settings>
+            */
+
+            // Dolby Vision Profile 7
+            /*
+            <HDR_Format>Dolby Vision / SMPTE ST 2086</HDR_Format>
+            <HDR_Format_Version>1.0 / </HDR_Format_Version>
+            <HDR_Format_Profile>dvhe.07 / </HDR_Format_Profile>
+            <HDR_Format_Level>06 / </HDR_Format_Level>
+            <HDR_Format_Settings>BL+EL+RPU / </HDR_Format_Settings>
+            <HDR_Format_Compatibility>Blu-ray / HDR10</HDR_Format_Compatibility>
+            */
+
+            // Dolby Vision Profile 8.1
+            /*
+            <HDR_Format>Dolby Vision / SMPTE ST 2086</HDR_Format>
+            <HDR_Format_Version>1.0 / </HDR_Format_Version>
+            <HDR_Format_Profile>dvhe.08 / </HDR_Format_Profile>
+            <HDR_Format_Level>09 / </HDR_Format_Level>
+            <HDR_Format_Settings>BL+RPU / </HDR_Format_Settings>
+            <HDR_Format_Compatibility>Blu-ray / HDR10</HDR_Format_Compatibility>
+            */
+
+            // Use first video track
+            VideoInfo videoInfo = MediaInfoInfo.Video.FirstOrDefault();
+
+            // Test for HDR
+            if (string.IsNullOrEmpty(videoInfo.FormatHdr))
+                return true;
+
+            // Look for HDR10 format
+            bool hdr10 = false;
+            foreach (string format in Hdr10Format)
+            {
+                if (videoInfo.FormatHdr.Contains(format, StringComparison.OrdinalIgnoreCase))
+                {
+                    hdr10 = true;
+                    break;
+                }
+            }
+            if (!hdr10)
+            {
+                Log.Logger.Warning("Video lacks HDR10 compatibility : {Hdr} : {Name}", videoInfo.FormatHdr, FileInfo.Name);
+            }
+
+            // Ignore the error
             return true;
         }
 
@@ -633,6 +719,7 @@ namespace PlexCleaner
                                     idetinterlaced,
                                     FileInfo.Name);
 
+            // Ignore the error
             return true;
         }
 
@@ -825,11 +912,31 @@ namespace PlexCleaner
 
         public bool GetMediaInfo()
         {
-            // By now all the files we are processing should be MKV files
+            // Only MKV files
             Debug.Assert(MkvMergeTool.IsMkvFile(FileInfo));
 
             // Get media info
             return Refresh(false);
+        }
+
+        public bool GetToolInfo()
+        {
+            // Read the tool info text
+            string mediaInfoXml, mkvMergeInfoJson, ffProbeInfoJson;
+            if (!Tools.MediaInfo.GetMediaInfoXml(FileInfo.FullName, out mediaInfoXml) ||
+                !Tools.MkvMerge.GetMkvInfoJson(FileInfo.FullName, out mkvMergeInfoJson) ||
+                !Tools.FfProbe.GetFfProbeInfoJson(FileInfo.FullName, out ffProbeInfoJson))
+            {
+                Log.Logger.Error("Failed to read tool info : {Name}", FileInfo.Name);
+                return false;
+            }
+
+            // Assign the text values
+            MediaInfoText = mediaInfoXml;
+            MkvMergeText = mkvMergeInfoJson;
+            FfProbeText = ffProbeInfoJson;
+
+            return true;
         }
 
         public bool MonitorFileTime(int seconds)
@@ -881,12 +988,15 @@ namespace PlexCleaner
         public MediaInfo FfProbeInfo { get; set; }
         public MediaInfo MkvMergeInfo { get; set; }
         public MediaInfo MediaInfoInfo { get; set; }
+        public string MkvMergeText { get; set; }
+        public string FfProbeText { get; set; }
+        public string MediaInfoText { get; set; }
         public SidecarFile.States State => SidecarFile.State;
-
         public FileInfo FileInfo { get; private set; }
 
         private SidecarFile SidecarFile;
 
         private const int RefreshWaitTime = 5;
+        private readonly string[] Hdr10Format = { "SMPTE ST 2086", "SMPTE ST 2094" };
     }
 }

@@ -48,7 +48,7 @@ namespace PlexCleaner
             List<string> profilelist = Program.Config.ProcessOptions.ReEncodeVideoProfiles.Split(',').ToList();
             Debug.Assert(codeclist.Count == formatlist.Count && formatlist.Count == profilelist.Count);
             ReEncodeVideoInfos = new List<VideoInfo>();
-            for (int i = 0; i < codeclist.Count; i++)
+            for (int i = 0; i < codeclist.Count; i ++)
             {
                 // We match against the format and profile
                 // Match the logic in VideoInfo.CompareVideo
@@ -72,89 +72,6 @@ namespace PlexCleaner
 
             // File ignore list
             IgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
-        }
-
-        public bool ProcessFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Processing {Count} files ...", fileList.Count);
-
-            // Keep a List of failed and modified files to print when done
-            // This makes followup easier vs. looking the logs
-            List<(string fileName, SidecarFile.States state)> modifiedInfo = new();
-            List<string> errorFiles = new();
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int totalCount = fileList.Count;
-            int processedCount = 0;
-            int errorCount = 0;
-            int modifiedCount = 0;
-            foreach (FileInfo fileInfo in fileList)
-            {
-                // Percentage
-                processedCount ++;
-                double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
-
-                // Process the file
-                Log.Logger.Information("Processing ({Done:P}) : {Name}", done, fileInfo.FullName);
-                if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo) &&
-                    !Program.IsCancelled())
-                {
-                    Log.Logger.Error("Error processing : {Name}", fileInfo.FullName);
-                    errorFiles.Add(fileInfo.FullName);
-                    errorCount ++;
-                }
-                else if (modified)
-                {
-                    modifiedInfo.Add(new ValueTuple<string, SidecarFile.States>(processInfo.FullName, state));
-                    modifiedCount ++;
-                }
-
-                // Cancel handler
-                if (Program.IsCancelled())
-                    // Break, don't return, complete the cleanup logic
-                    break;
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Modified files : {Count}", modifiedCount);
-            Log.Logger.Information("Error files : {Count}", errorCount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            // Print summary of failed and modified files
-            if (modifiedInfo.Count > 0)
-            {
-                Log.Logger.Information("Modified files :");
-                foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
-                    Log.Logger.Information("{State} : {Name}", state, fileName);
-            }
-            if (errorFiles.Count > 0)
-            {
-                Log.Logger.Information("Error files :");
-                foreach (string file in errorFiles)
-                    Log.Logger.Information("{Name}", file);
-            }
-
-            // Write the updated ignore file list
-            // Compare the item counts to know if modifications were made
-            if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-                Program.Config.ProcessOptions.FileIgnoreList.Count != IgnoreList.Count)
-            {
-                Log.Logger.Information("Updating settings file : {SettingsFile}", Program.Options.SettingsFile);
-                Program.Config.ProcessOptions.FileIgnoreList.Sort();
-                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
-            }
-
-            return !Program.IsCancelled();
         }
 
         public bool ProcessFolders(List<string> folderList)
@@ -184,429 +101,59 @@ namespace PlexCleaner
             return true;
         }
 
-        public bool ReMuxFiles(List<FileInfo> fileList)
+        public bool ProcessFiles(List<FileInfo> fileList)
         {
-            Log.Logger.Information("ReMuxing files ...");
+            // Keep a List of failed and modified files to print when done
+            List<(string fileName, SidecarFile.States state)> modifiedInfo = new();
+            List<string> errorFiles = new();
 
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
+            // Process all the files
+            bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
             {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files, and files in the remux extension list
-                if (!MkvMergeTool.IsMkvFile(fileinfo) &&
-                    !ReMuxExtensions.Contains(fileinfo.Extension))
-                    continue;
-
-                // ReMux the file
-                Log.Logger.Information("ReMuxing : {Name}", fileinfo.FullName);
-                if (!Convert.ReMuxToMkv(fileinfo.FullName, out string _))
-                {
-                    Log.Logger.Error("Error ReMuxing : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool VerifyFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Verifying files ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
-            {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
                 // Process the file
-                // TODO : Consolidate the logic with ProcessFile.Verify()
-                Log.Logger.Information("Verifying : {Name}", fileinfo.FullName);
-                if (!Tools.FfMpeg.VerifyMedia(fileinfo.FullName, out string error))
+                if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
                 {
-                    Log.Logger.Error("Error Verifying : {Name}", fileinfo.FullName);
-                    Log.Logger.Error("{Error}", error);
-                    errorcount ++;
-                }
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool ReEncodeFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("ReEncoding files ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
-            {
-                // Cancel handler
-                if (Program.IsCancelled())
+                    if (!Program.IsCancelled())
+                        errorFiles.Add(fileInfo.FullName);
                     return false;
-
-                // Handle only MKV files
-                // ReMux before re-encode, so the track attribute logic works as expected
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // ReEncode the file
-                Log.Logger.Information("ReEncoding : {Name}", fileinfo.FullName);
-                if (!Convert.ConvertToMkv(fileinfo.FullName, out string _))
-                {
-                    Log.Logger.Error("Error ReEncoding : {Name}", fileinfo.FullName);
-                    errorcount ++;
                 }
 
-                // Next file
-            }
+                // Modified
+                if (modified)
+                {
+                    modifiedInfo.Add(new ValueTuple<string, SidecarFile.States>(processInfo.FullName, state));
+                }
 
-            // Stop the timer
-            timer.Stop();
+                return true;
+            });
 
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool DeInterlaceFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("DeInterlacing files ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
+            // Summary
+            // ProcessFilesDriver() does primary logging
+            Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
+            if (errorFiles.Count > 0)
             {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // De-interlace the file
-                Log.Logger.Information("DeInterlacing : {Name}", fileinfo.FullName);
-                if (!Convert.DeInterlaceToMkv(fileinfo.FullName, out string _))
-                {
-                    Log.Logger.Error("Error DeInterlacing : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-
-                // Next file
+                Log.Logger.Information("Error files:");
+                foreach (string file in errorFiles)
+                    Log.Logger.Information("{FileName}", file);
             }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool GetTagMapFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Creating tag map ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // We want to create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
-            // And how they map to each other for the same media file
-            TagMapDictionary fftags = new();
-            TagMapDictionary mktags = new();
-            TagMapDictionary mitags = new();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
+            if (modifiedInfo.Count > 0)
             {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // Use ProcessFile to get media info
-                Log.Logger.Information("Getting media info : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new(fileinfo);
-                if (!processFile.GetMediaInfo())
-                {
-                    Log.Logger.Error("Error getting media info : {Name}", fileinfo.FullName);
-                    errorcount ++;
-
-                    // Next file
-                    continue;
-                }
-
-                // Add all the tags
-                fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
-                mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
-                mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
-
-                // Next file
+                Log.Logger.Information("Modified files:");
+                foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
+                    Log.Logger.Information("{State} : {FileName}", state, fileName);
             }
 
-            // Print the results
-            Log.Logger.Information("FFprobe:");
-            fftags.WriteLine();
-            Log.Logger.Information("MKVMerge:");
-            mktags.WriteLine();
-            Log.Logger.Information("MediaInfo:");
-            mitags.WriteLine();
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool CreateSidecarFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Creating sidecar files ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
+            // Write the updated ignore file list
+            if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
+                Program.Config.ProcessOptions.FileIgnoreList.Count != IgnoreList.Count)
             {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // Write the sidecar files
-                Log.Logger.Information("Creating sidecar : {Name}", fileinfo.FullName);
-                if (!SidecarFile.CreateSidecarFile(fileinfo))
-                {
-                    Log.Logger.Error("Error creating sidecar : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-
-                // Next file
+                Log.Logger.Information("Updating settings file : {SettingsFile}", Program.Options.SettingsFile);
+                Program.Config.ProcessOptions.FileIgnoreList.Sort();
+                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
             }
 
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
+            return ret;
         }
-
-        public static bool GetSidecarFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Reading sidecar files ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
-            {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only sidecar files
-                if (!SidecarFile.IsSidecarFile(fileinfo))
-                    continue;
-
-                // Read the sidecar files
-                Log.Logger.Information("Reading sidecar file : {Name}", fileinfo.FullName);
-                SidecarFile sidecarfile = new(fileinfo);
-                if (!sidecarfile.Read())
-                {
-                    Log.Logger.Error("Error reading sidecar file : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-                else 
-                {
-                    sidecarfile.WriteLine();
-                }
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool GetMediaInfoFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Getting media information ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
-            {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // Process the file
-                Log.Logger.Information("Getting media information : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new(fileinfo);
-                if (!processFile.GetMediaInfo())
-                {
-                    Log.Logger.Error("Error getting media information : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-                else
-                {
-                    Log.Logger.Information("{Name}", fileinfo.FullName);
-                    processFile.FfProbeInfo.WriteLine("FFprobe");
-                    processFile.MkvMergeInfo.WriteLine("MKVMerge");
-                    processFile.MediaInfoInfo.WriteLine("MediaInfo");
-                }
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
-        public static bool GetBitrateFiles(List<FileInfo> fileList)
-        {
-            Log.Logger.Information("Getting bitrate information ...");
-
-            // Start the stopwatch
-            Stopwatch timer = new();
-            timer.Start();
-
-            // Process all files
-            int errorcount = 0;
-            foreach (FileInfo fileinfo in fileList)
-            {
-                // Cancel handler
-                if (Program.IsCancelled())
-                    return false;
-
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileinfo))
-                    continue;
-
-                // Process the file
-                Log.Logger.Information("Getting bitrate information : {Name}", fileinfo.FullName);
-                ProcessFile processFile = new(fileinfo);
-                if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
-                {
-                    Log.Logger.Error("Error getting bitrate information : {Name}", fileinfo.FullName);
-                    errorcount ++;
-                }
-                else
-                {
-                    bitrateInfo.WriteLine();
-                }
-
-                // Next file
-            }
-
-            // Stop the timer
-            timer.Stop();
-
-            // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorcount);
-            Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
-
-            return true;
-        }
-
         private bool ProcessFile(FileInfo fileinfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo)
         {
             // Init
@@ -718,7 +265,7 @@ namespace PlexCleaner
 
             // Verify media streams
             // Repair if possible
-            if (!processFile.Verify(ref modified) ||
+            if (!processFile.Verify(true, ref modified) ||
                 Program.IsCancelled())
                 return false;
 
@@ -737,11 +284,224 @@ namespace PlexCleaner
             return !Program.IsCancelled();
         }
 
+        public bool ReMuxFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "ReMux", fileInfo =>
+            {
+                // Handle only MKV files, and files in the remux extension list
+                if (!MkvMergeTool.IsMkvFile(fileInfo) &&
+                    !ReMuxExtensions.Contains(fileInfo.Extension))
+                    return true;
+
+                // ReMux
+                return Convert.ReMuxToMkv(fileInfo.FullName, out string _);
+            });
+        }
+
+        public static bool VerifyFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Verify", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Get media information
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetMediaInfo())
+                    return false;
+
+                // Verify
+                bool modified = false;
+                return processFile.Verify(false, ref modified);
+            });
+        }
+
+        public static bool ReEncodeFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "ReEncode", fileInfo =>
+            {
+                // Handle only MKV files
+                // ReMux before re-encode, so the track attribute logic works as expected
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Re-encode
+                return Convert.ConvertToMkv(fileInfo.FullName, out string _);
+            });
+        }
+
+        public static bool DeInterlaceFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "DeInterlace", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // De-interlace
+                return Convert.DeInterlaceToMkv(fileInfo.FullName, out string _);
+            });
+        }
+
+        public static bool GetTagMapFiles(List<FileInfo> fileList)
+        {
+            // Create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
+            TagMapDictionary fftags = new();
+            TagMapDictionary mktags = new();
+            TagMapDictionary mitags = new();
+
+            // Process all the files
+            if (!ProcessFilesDriver(fileList, "Create Tag Map", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Get media information
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetMediaInfo())
+                    return false;
+
+                // Add all the tags
+                fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
+                mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
+                mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+
+                return true;
+            }))
+                return false;
+
+            // Print the tags
+            Log.Logger.Information("FFprobe:");
+            fftags.WriteLine();
+            Log.Logger.Information("MKVMerge:");
+            mktags.WriteLine();
+            Log.Logger.Information("MediaInfo:");
+            mitags.WriteLine();
+
+            return true;
+        }
+
+        public static bool CreateSidecarFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Create Sidecar Files", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Create the sidecar file
+                SidecarFile sidecarfile = new(fileInfo);
+                return sidecarfile.Create();
+            });
+        }
+
         public static bool UpgradeSidecarFiles(List<FileInfo> fileList)
         {
-            Log.Logger.Information("Upgrading sidecar files ...");
+            return ProcessFilesDriver(fileList, "Upgrade Sidecar Files", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
 
-            // Start the stopwatch
+                // Upgrade the sidecar file
+                SidecarFile sidecarfile = new(fileInfo);
+                return sidecarfile.Upgrade();
+            });
+        }
+
+        public static bool GetSidecarFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Get Sidecar Information", fileInfo =>
+            {
+                // Handle only sidecar files
+                if (!SidecarFile.IsSidecarFile(fileInfo))
+                    return true;
+
+                // Get sidecar information
+                SidecarFile sidecarfile = new(fileInfo);
+                if (!sidecarfile.Read())
+                    return false;
+
+                // Print info
+                sidecarfile.WriteLine();
+
+                return true;
+            });
+        }
+
+        public static bool GetMediaInfoFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Get Media Information", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Get media information
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetMediaInfo())
+                    return false;
+
+                // Print info
+                Log.Logger.Information("{Name}", fileInfo.FullName);
+                processFile.MediaInfoInfo.WriteLine("MediaInfo");
+                processFile.MkvMergeInfo.WriteLine("MKVMerge");
+                processFile.FfProbeInfo.WriteLine("FFprobe");
+
+                return true;
+            });
+        }
+
+        public static bool GetToolInfoFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Get Tool Information", fileInfo =>
+            {
+                // Don't limit to MKV only
+
+                // Get tool information
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetToolInfo())
+                    return false;
+
+                // Print info
+                Log.Logger.Information("{Name}", fileInfo.FullName);
+                Log.Logger.Information("FFprobe:");
+                Console.Write(processFile.FfProbeText);
+                Log.Logger.Information("MKVMerge:");
+                Console.Write(processFile.MkvMergeText);
+                Log.Logger.Information("MediaInfo:");
+                Console.Write(processFile.MediaInfoText);
+
+                return true;
+            });
+        }
+
+        public static bool GetBitrateInfoFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Get Bitrate Information", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Get bitrate info
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
+                    return false;
+
+                // Print bitrate info
+                bitrateInfo.WriteLine();
+
+                return true;
+            });
+        }
+
+        private static bool ProcessFilesDriver(List<FileInfo> fileList, string taskName, Func<FileInfo, bool> taskFunc)
+        {
+            // Start
+            Log.Logger.Information("Starting {TaskName}, processing {Count} files ...", taskName, fileList.Count);
             Stopwatch timer = new();
             timer.Start();
 
@@ -749,26 +509,21 @@ namespace PlexCleaner
             int totalCount = fileList.Count;
             int processedCount = 0;
             int errorCount = 0;
+            double processedPercentage = 0.0;
             foreach (FileInfo fileInfo in fileList)
             {
-                // Percentage
-                processedCount ++;
-                double done = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
-
                 // Cancel handler
                 if (Program.IsCancelled())
                     return false;
 
-                // Handle only MKV files
-                if (!SidecarFile.IsMediaFileName(fileInfo))
-                    continue;
-
-                // Upgrade the sidecar files
-                Log.Logger.Information("Upgrading sidecar file ({Done:P}) : {Name}", done, fileInfo.FullName);
-                SidecarFile sidecarfile = new(fileInfo);
-                if (!sidecarfile.Upgrade())
+                // Perform the task
+                processedCount ++;
+                processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
+                Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
+                if (!taskFunc(fileInfo) &&
+                    !Program.IsCancelled())
                 {
-                    Log.Logger.Error("Error upgrading sidecar file : {Name}", fileInfo.FullName);
+                    Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
                     errorCount ++;
                 }
 
@@ -779,11 +534,12 @@ namespace PlexCleaner
             timer.Stop();
 
             // Done
-            Log.Logger.Information("Total files : {Count}", fileList.Count);
-            Log.Logger.Information("Error files : {Count}", errorCount);
+            Log.Logger.Information("Completed {TaskName}", taskName);
             Log.Logger.Information("Processing time : {Elapsed}", timer.Elapsed);
+            Log.Logger.Information("Total files : {Count}", totalCount);
+            Log.Logger.Information("Error files : {Count}", errorCount);
 
-            return true;
+            return errorCount == 0;
         }
 
         private readonly HashSet<string> IgnoreList;

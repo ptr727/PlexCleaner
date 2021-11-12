@@ -164,7 +164,7 @@ namespace PlexCleaner
             string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
             // Create the root from the relative directory
-            return Path.GetFullPath(Path.Combine(toolsroot, Program.Config.ToolsOptions.RootPath));
+            return Path.GetFullPath(Path.Combine(toolsroot!, Program.Config.ToolsOptions.RootPath));
         }
 
         public static string CombineToolPath(string filename)

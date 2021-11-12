@@ -14,23 +14,15 @@
     },
     "Monitor": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" monitor --mediafiles \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" monitor --mediafiles \"D:\\Test\""
     },
     "Re-Mux": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" remux --mediafiles \"D:\\Temp\\DivX.SharkTaleHD.mkv\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" remux --mediafiles \"D:\\Test\""
     },
     "Re-Encode": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" reencode --mediafiles \"D:\\Temp\\DivX.SharkTaleHD.mkv\""
-    },
-    "Write Sidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" writesidecar --mediafiles \"D:\\Temp\""
-    },
-    "Create Tag Map": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" createtagmap --mediafiles \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" reencode --mediafiles \"D:\\Test\""
     },
     "Version": {
       "commandName": "Project",
@@ -40,40 +32,52 @@
       "commandName": "Project",
       "commandLineArgs": "--help"
     },
-    "Print Info": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" printmediainfo --mediafiles \"D:\\Temp\""
-    },
     "DeInterlace": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"\\\\server-1\\Media\\Series\\Top Gear\\Season 29\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Test\""
     },
     "Verify": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"D:\\Temp\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
     },
     "Get Bitrate Info": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getbitrateinfo --mediafiles \"\\\\server-1\\media\\Series\\ALF\\Season 1\""
-    },
-    "Read Sidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" readsidecar --mediafiles \"\\\\server-1\\media\\movies\\The Bourne Identity (2002)\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getbitrateinfo --mediafiles \"D:\\Test\""
     },
     "Process Snippets": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"\\\\server-1\\Media\\TestPlex\\Troublesome\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"D:\\Test\""
     },
     "Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
-    },
-    "UpgradeSidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"\\\\server-1\\Media\\Series\" \"\\\\server-1\\Media\\Movies\" \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\Server-1\\Media\\Movies-4K\""
     },
     "Docker": {
       "commandName": "Docker"
+    },
+    "Upgrade Sidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"D:\\Test\""
+    },
+    "Print Tag Map": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" gettagmap --mediafiles \"D:\\Test\""
+    },
+    "Create Sidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" createsidecar --mediafiles \"D:\\Test\""
+    },
+    "Get Media Info": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getmediainfo --mediafiles \"D:\\Test\""
+    },
+    "Get Sidecar Info": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getsidecarinfo --mediafiles \"D:\\Test\""
+    },
+    "Get Tool Info": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" gettoolinfo --mediafiles \"D:\\Test\""
     }
   }
 }

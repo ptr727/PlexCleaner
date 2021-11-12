@@ -2,9 +2,11 @@
 using Newtonsoft.Json;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// Use ffproble example output
 // TODO: Find JSON schema definition
 // https://stackoverflow.com/questions/61398647/where-can-i-get-the-ffprobe-json-schema-definition
+
+// Use ffprobe example output:
+// ffprobe -loglevel quiet -show_streams -print_format json file.mkv
 
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings

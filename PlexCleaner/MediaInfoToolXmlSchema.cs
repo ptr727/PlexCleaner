@@ -6,7 +6,9 @@ using System.Xml;
 
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
 // Do not use XSD, https://mediaarea.net/mediainfo/mediainfo.xsd
-// Use an example XML output
+
+// Use mediainfo example output:
+// mediainfo --Output=XML file.mkv	
 
 // Replace the namespace with Namespace="https://mediaarea.net/mediainfo"
 // Add FromXml() method
@@ -17,20 +19,32 @@ namespace PlexCleaner.MediaInfoToolXmlSchema
 	[XmlRoot(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
 	public class Track
 	{
-		[XmlElement(ElementName = "Format", Namespace = "https://mediaarea.net/mediainfo")]
-		public string Format { get; set; } = "";
-
 		[XmlAttribute(AttributeName = "type")]
 		public string Type { get; set; } = "";
 
 		[XmlElement(ElementName = "ID", Namespace = "https://mediaarea.net/mediainfo")]
 		public string Id { get; set; } = "";
 
+		[XmlElement(ElementName = "Format", Namespace = "https://mediaarea.net/mediainfo")]
+		public string Format { get; set; } = "";
+
 		[XmlElement(ElementName = "Format_Profile", Namespace = "https://mediaarea.net/mediainfo")]
 		public string FormatProfile { get; set; } = "";
 
 		[XmlElement(ElementName = "Format_Level", Namespace = "https://mediaarea.net/mediainfo")]
 		public string FormatLevel { get; set; } = "";
+
+		[XmlElement(ElementName = "HDR_Format", Namespace = "https://mediaarea.net/mediainfo")]
+		public string HdrFormat { get; set; } = "";
+
+		[XmlElement(ElementName = "HDR_Format_Profile", Namespace = "https://mediaarea.net/mediainfo")]
+		public string HdrFormatProfile { get; set; } = "";
+
+		[XmlElement(ElementName = "HDR_Format_Level", Namespace = "https://mediaarea.net/mediainfo")]
+		public string HdrFormatLevel { get; set; } = "";
+
+		[XmlElement(ElementName = "HDR_Format_Compatibility", Namespace = "https://mediaarea.net/mediainfo")]
+		public string HdrFormatCompatibility { get; set; } = "";
 
 		[XmlElement(ElementName = "CodecID", Namespace = "https://mediaarea.net/mediainfo")]
 		public string CodecId { get; set; } = "";

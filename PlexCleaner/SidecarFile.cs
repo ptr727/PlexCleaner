@@ -298,8 +298,6 @@ namespace PlexCleaner
             if (MediaFileInfo.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc)
             {
                 // Ignore LastWriteTimeUtc, it is unreliable over SMB
-                // The SHA256 and file length checks are sufficient
-                // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3024
                 // mismatch = true;
                 if (log)
                     Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {Name}",
@@ -319,8 +317,6 @@ namespace PlexCleaner
             string hash = ComputeHash();
             if (string.Compare(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase) != 0)
             {
-                // Something is wrong if hash changed but not size or timestamps
-                // Debug.Assert(mismatch != false);
                 mismatch = true;
                 if (log)
                     Log.Logger.Warning("Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {Name}",
@@ -476,9 +472,14 @@ namespace PlexCleaner
             }
 
             // Assign the mediainfo data
-            FfProbeInfo = ffProbeInfo;
-            MkvMergeInfo = mkvMergeInfo;
             MediaInfoInfo = mediaInfoInfo;
+            MkvMergeInfo = mkvMergeInfo;
+            FfProbeInfo = ffProbeInfo;
+
+            // Print info
+            MediaInfoInfo.WriteLine("MediaInfo");
+            MkvMergeInfo.WriteLine("MKVMerge");
+            FfProbeInfo.WriteLine("FFprobe");
 
             return true;
         }

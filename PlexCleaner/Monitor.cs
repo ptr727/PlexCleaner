@@ -211,7 +211,7 @@ namespace PlexCleaner
             }
         }
 
-        private void OnDeleted(string pathname)
+        private void OnDeleted(string _)
         {
             // The path we get no longer exists, it may be a file, or it may be a folder
             // TODO : Figure out how to accurately test if deleted path was a file or folder
