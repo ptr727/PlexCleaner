@@ -48,13 +48,16 @@ namespace PlexCleaner
             rootCommand.AddCommand(CreateCreateSidecarCommand());
 
             // Read sidecar files
-            rootCommand.AddCommand(CreateGetSidecarCommand());
+            rootCommand.AddCommand(CreateGetSidecarInfoCommand());
 
             // Create tag-map
             rootCommand.AddCommand(CreateGetTagMapCommand());
 
             // Print media info
             rootCommand.AddCommand(CreateGetMediaInfoCommand());
+
+            // Print tool info
+            rootCommand.AddCommand(CreateGetToolInfoCommand());
 
             // Calculate bitrate info
             rootCommand.AddCommand(CreateGetBitrateInfoCommand());
@@ -223,19 +226,19 @@ namespace PlexCleaner
             return createsidecarCommand;
         }
 
-        private static Command CreateGetSidecarCommand()
+        private static Command CreateGetSidecarInfoCommand()
         {
             // Read sidecar files
-            Command getsidecarCommand = new("getsidecar")
+            Command getsidecarinfoCommand = new("getsidecarinfo")
             {
                 Description = "Print sidecar file attribute information",
-                Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarCommand)
+                Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarInfoCommand)
             };
 
             // Media files or folders option
-            getsidecarCommand.AddOption(CreateMediaFilesOption());
+            getsidecarinfoCommand.AddOption(CreateMediaFilesOption());
 
-            return getsidecarCommand;
+            return getsidecarinfoCommand;
         }
 
         private static Command CreateGetTagMapCommand()
@@ -268,49 +271,64 @@ namespace PlexCleaner
             return getmediainfoCommand;
         }
 
+        private static Command CreateGetToolInfoCommand()
+        {
+            // Print tool info
+            Command gettoolinfoCommand = new("gettoolinfo")
+            {
+                Description = "Print tool file attribute information",
+                Handler = CommandHandler.Create<CommandLineOptions>(Program.GetToolInfoCommand)
+            };
+
+            // Media files or folders option
+            gettoolinfoCommand.AddOption(CreateMediaFilesOption());
+
+            return gettoolinfoCommand;
+        }
+
         private static Command CreateGetBitrateInfoCommand()
         {
             // Print media info
-            Command bitrateinfoCommand = new("getbitrateinfo")
+            Command getbitrateinfoCommand = new("getbitrateinfo")
             {
                 Description = "Print media file bitrate information",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.GetBitrateInfoCommand)
             };
 
             // Media files or folders option
-            bitrateinfoCommand.AddOption(CreateMediaFilesOption());
+            getbitrateinfoCommand.AddOption(CreateMediaFilesOption());
 
-            return bitrateinfoCommand;
+            return getbitrateinfoCommand;
         }
 
         private static Command CreateVerifyCommand()
         {
             // Print media info
-            Command printmediainfoCommand = new("verify")
+            Command verifyCommand = new("verify")
             {
                 Description = "Verify media files",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
             };
 
             // Media files or folders option
-            printmediainfoCommand.AddOption(CreateMediaFilesOption());
+            verifyCommand.AddOption(CreateMediaFilesOption());
 
-            return printmediainfoCommand;
+            return verifyCommand;
         }
 
         private static Command CreateUpgradeSidecarCommand()
         {
             // Print media info
-            Command printmediainfoCommand = new("upgradesidecar")
+            Command upgradesidecarCommand = new("upgradesidecar")
             {
                 Description = "Upgrade sidecar file schemas",
                 Handler = CommandHandler.Create<CommandLineOptions>(Program.UpgradeSidecarCommand)
             };
 
             // Media files or folders option
-            printmediainfoCommand.AddOption(CreateMediaFilesOption());
+            upgradesidecarCommand.AddOption(CreateMediaFilesOption());
 
-            return printmediainfoCommand;
+            return upgradesidecarCommand;
         }
 
         private static Option CreateMediaFilesOption()

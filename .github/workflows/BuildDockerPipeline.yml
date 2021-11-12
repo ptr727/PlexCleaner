@@ -9,6 +9,7 @@ on:
   schedule:
     # Rebuild docker container 2am every Monday
     - cron: '0 2 * * MON'
+  workflow_dispatch:
 
 jobs:
   build:

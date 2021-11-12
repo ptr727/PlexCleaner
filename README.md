@@ -19,6 +19,14 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.3.1
+  - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
+    - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
+    - The warning is only logged during the verify step, repair is not possible.
+    - To re-verify existing 4K files use the `verify` command, or reset the state using the `createsidecar` and `process` commands.
+  - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other getfooinfo commands.
+  - Added `gettoolinfo` command to print media info reported by tools.
+  - Refactored duplicate file iteration logic to use lambdas.
 - Version 2.3:
   - Migrated from .NET 5 to .NET 6.
 - Version 2.1:
@@ -327,9 +335,10 @@ Commands:
   deinterlace         De-Interlace media files
   verify              Verify media files
   createsidecar       Create sidecar files
-  getsidecar          Print sidecar file attribute information
+  getsidecarinfo      Print sidecar file attribute information
   gettagmap           Print attribute tag-map created from media files
   getmediainfo        Print media file attribute information
+  gettoolinfo         Print tool file attribute information
   getbitrateinfo      Print media file bitrate information
   upgradesidecar      Upgrade sidecar file schemas
 ```
@@ -353,7 +362,7 @@ Options:
   --mediafiles <mediafiles> (REQUIRED)    List of media files or folders.
   --testsnippets                          Create short video clips, useful during testing.
   --testnomodify                          Do not make any modifications, useful during testing.
-  -?, -h, --help                          Show help and usage information
+  -?, -h, --help                          Show help and usage information.
 ```
 
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
@@ -384,9 +393,7 @@ The `reencode` command will re-encode the media files using `FFMPeg` and H.264 a
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
-The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
-
-Unlike the `process` command, no conditional logic will be applied, the file will always be modified.
+The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.  
 
 ### Monitor
 
@@ -395,20 +402,23 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### CreateSidecar, GetSidecar, UpgradeSidecar
+### CreateSidecar, UpgradeSidecar
 
-The `createsidecar` command will create sidecar files.
-
-The `getsidecar` command will print sidecar file attributes.
+The `createsidecar` command will create sidecar files.  
+All state attributes will be deleted, e.g. the file will be re-verified.
 
 The `upgradesidecar` command will upgrade the sidecar schemas to the current version.  
 When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
 
-### GetTagMap, GetMediaInfo, GetBitrateInfo
+### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo, GetBitrateInfo
 
 The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
 
 The `getmediainfo` command will print media attribute information.
+
+The `gettoolinfo` command will print tool attribute information.
+
+The `getsidecarinfo` command will print sidecar attribute information.
 
 The `getbitrateinfo` command will calculate and print media bitrate information.
 

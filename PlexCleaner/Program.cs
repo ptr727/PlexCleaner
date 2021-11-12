@@ -182,7 +182,7 @@ namespace PlexCleaner
             return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        internal static int GetSidecarCommand(CommandLineOptions options)
+        internal static int GetSidecarInfoCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
             if (program == null)
@@ -218,6 +218,18 @@ namespace PlexCleaner
             return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int GetToolInfoCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         internal static int GetBitrateInfoCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
@@ -227,7 +239,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            return Process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int UpgradeSidecarCommand(CommandLineOptions options)
@@ -245,7 +257,7 @@ namespace PlexCleaner
         // Add a reference to this class in the event handler arguments
         private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
 
-        private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
+        private static void CancelHandler(ConsoleCancelEventArgs e, Program _)
         {
             Log.Logger.Warning("Cancel key pressed");
             e.Cancel = true;
