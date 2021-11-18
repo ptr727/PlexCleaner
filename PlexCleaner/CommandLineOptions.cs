@@ -76,7 +76,7 @@ namespace PlexCleaner
             // Path to the settings file, required
             // IsRequired flag is ignored on global options
             // https://github.com/dotnet/command-line-api/issues/1138
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<string>("--settingsfile")
                 {
                     Description = "Path to settings file",
@@ -84,7 +84,7 @@ namespace PlexCleaner
                 });
 
             // Path to the log file, optional
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<string>("--logfile")
                 {
                     Description = "Path to log file",
@@ -92,7 +92,7 @@ namespace PlexCleaner
                 });
 
             // Append to log vs. overwrite, optional
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<bool>("--logappend")
                 {
                     Description = "Append to the log file vs. default overwrite",

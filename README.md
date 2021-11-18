@@ -382,7 +382,7 @@ The following processing will be done:
 - De-interlace the video track if interlaced.
 - Re-encode video to H.264 or H.265 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
+- Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
 ### Re-Multiplex, Re-Encode, De-Interlace, Verify
 
@@ -406,7 +406,7 @@ Also note that changes made directly to the underlying filesystem will not trigg
 The `createsidecar` command will create sidecar files.  
 All state attributes will be deleted, e.g. the file will be re-verified.
 
-The `upgradesidecar` command will upgrade the sidecar schemas to the current version.  
+The `upgradesidecar` command will upgrade the sidecar schemas (not tool info) to the current version.  
 When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
 
 ### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo, GetBitrateInfo
