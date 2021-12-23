@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 
 namespace PlexCleaner
 {
@@ -74,8 +74,6 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(rootCommand));
 
             // Path to the settings file, required
-            // IsRequired flag is ignored on global options
-            // https://github.com/dotnet/command-line-api/issues/1138
             rootCommand.AddGlobalOption(
                 new Option<string>("--settingsfile")
                 {
