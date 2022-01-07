@@ -27,10 +27,9 @@ namespace PlexCleaner
             preventSleepTimer.AutoReset = true;
             preventSleepTimer.Start();
 
-            // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
-            // https://github.com/gsscoder/commandline/issues/473
+            // Create the commandline and execute commands
             RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-            int ret = rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
+            int ret = rootCommand.Invoke(Environment.CommandLine);
 
             // Stop the timer
             preventSleepTimer.Stop();

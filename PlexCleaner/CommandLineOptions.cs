@@ -353,7 +353,10 @@ namespace PlexCleaner
             return new Option<List<string>>("--mediafiles")
             {
                 Description = "List of media files or folders",
-                IsRequired = true
+                IsRequired = true,
+                // TODO: This should not be required when the type is a list
+                // https://github.com/dotnet/command-line-api/issues/1199
+                AllowMultipleArgumentsPerToken = true
             };
         }
     }
