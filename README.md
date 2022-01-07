@@ -19,6 +19,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.3.3
+  - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles containing ads.
 - Version 2.3.2
   - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
     - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
@@ -311,35 +313,36 @@ Commandline options:
 
 ```console
 > ./PlexCleaner --help
-PlexCleaner:
-  Utility to optimize media files for Direct Play on Plex, Emby, Jellyfin
+Description:
+  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
 Usage:
-  PlexCleaner [options] [command]
+  PlexCleaner [command] [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)    Path to settings file
-  --logfile <logfile>                         Path to log file
-  --logappend                                 Append to the log file vs. default overwrite
-  --version                                   Show version information
-  -?, -h, --help                              Show help and usage information
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to the log file vs. default overwrite
+  --version                                 Show version information
+  -?, -h, --help                            Show help and usage information
 
 Commands:
-  defaultsettings     Write default values to settings file
-  checkfornewtools    Check for and download new tools
-  process             Process media files
-  monitor             Monitor and process media file changes in folders
-  remux               Re-Multiplex media files
-  reencode            Re-Encode media files
-  deinterlace         De-Interlace media files
-  verify              Verify media files
-  createsidecar       Create sidecar files
-  getsidecarinfo      Print sidecar file attribute information
-  gettagmap           Print attribute tag-map created from media files
-  getmediainfo        Print media file attribute information
-  gettoolinfo         Print tool file attribute information
-  getbitrateinfo      Print media file bitrate information
-  upgradesidecar      Upgrade sidecar file schemas
+  defaultsettings   Write default values to settings file
+  checkfornewtools  Check for and download new tools
+  process           Process media files
+  monitor           Monitor and process media file changes in folders
+  remux             Re-Multiplex media files
+  reencode          Re-Encode media files
+  deinterlace       De-Interlace media files
+  verify            Verify media files
+  createsidecar     Create sidecar files
+  getsidecarinfo    Print sidecar file attribute information
+  gettagmap         Print attribute tag-map created from media files
+  getmediainfo      Print media file attribute information
+  gettoolinfo       Print tool file attribute information
+  getbitrateinfo    Print media file bitrate information
+  upgradesidecar    Upgrade sidecar file schemas
+  removesubtitles   Remove subtitles
 ```
 
 The `--settingsfile` JSON settings file is required.  
@@ -382,7 +385,7 @@ The following processing will be done:
 - De-interlace the video track if interlaced.
 - Re-encode video to H.264 or H.265 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
+- Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
 ### Re-Multiplex, Re-Encode, De-Interlace, Verify
 
@@ -406,7 +409,7 @@ Also note that changes made directly to the underlying filesystem will not trigg
 The `createsidecar` command will create sidecar files.  
 All state attributes will be deleted, e.g. the file will be re-verified.
 
-The `upgradesidecar` command will upgrade the sidecar schemas to the current version.  
+The `upgradesidecar` command will upgrade the sidecar schemas (not tool info) to the current version.  
 When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
 
 ### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo, GetBitrateInfo

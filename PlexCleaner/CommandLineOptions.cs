@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 
 namespace PlexCleaner
 {
@@ -65,6 +65,9 @@ namespace PlexCleaner
             // Upgrade sidecar JSON schemas
             rootCommand.AddCommand(CreateUpgradeSidecarCommand());
 
+            // Remove subtitles
+            rootCommand.AddCommand(CreateRemoveSubtitlesCommand());
+
             return rootCommand;
         }
 
@@ -74,9 +77,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(rootCommand));
 
             // Path to the settings file, required
-            // IsRequired flag is ignored on global options
-            // https://github.com/dotnet/command-line-api/issues/1138
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<string>("--settingsfile")
                 {
                     Description = "Path to settings file",
@@ -84,7 +85,7 @@ namespace PlexCleaner
                 });
 
             // Path to the log file, optional
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<string>("--logfile")
                 {
                     Description = "Path to log file",
@@ -92,7 +93,7 @@ namespace PlexCleaner
                 });
 
             // Append to log vs. overwrite, optional
-            rootCommand.AddOption(
+            rootCommand.AddGlobalOption(
                 new Option<bool>("--logappend")
                 {
                     Description = "Append to the log file vs. default overwrite",
@@ -303,7 +304,7 @@ namespace PlexCleaner
 
         private static Command CreateVerifyCommand()
         {
-            // Print media info
+            // Verify media
             Command verifyCommand = new("verify")
             {
                 Description = "Verify media files",
@@ -318,7 +319,7 @@ namespace PlexCleaner
 
         private static Command CreateUpgradeSidecarCommand()
         {
-            // Print media info
+            // Upgrade sidecar schema
             Command upgradesidecarCommand = new("upgradesidecar")
             {
                 Description = "Upgrade sidecar file schemas",
@@ -329,6 +330,21 @@ namespace PlexCleaner
             upgradesidecarCommand.AddOption(CreateMediaFilesOption());
 
             return upgradesidecarCommand;
+        }
+
+        private static Command CreateRemoveSubtitlesCommand()
+        {
+            // Remove subtitles
+            Command removesubtitlesCommand = new("removesubtitles")
+            {
+                Description = "Remove subtitles",
+                Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
+            };
+
+            // Media files or folders option
+            removesubtitlesCommand.AddOption(CreateMediaFilesOption());
+
+            return removesubtitlesCommand;
         }
 
         private static Option CreateMediaFilesOption()

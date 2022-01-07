@@ -379,6 +379,40 @@ namespace PlexCleaner
             return Refresh(outputname);
         }
 
+        public bool RemoveSubtitles(ref bool modified)
+        {
+            // Start out with keeping all the tracks
+            MediaInfo keepTracks = MkvMergeInfo;
+            MediaInfo removeTracks = new(MediaTool.ToolType.MkvMerge);
+
+            // Remove all the subtitle tracks
+            removeTracks.Subtitle.AddRange(keepTracks.Subtitle);
+            keepTracks.Subtitle.Clear();
+
+            // Any remuxing to do
+            if (removeTracks.Subtitle.Count == 0)
+                // Done
+                return true;
+
+            Log.Logger.Information("Re-muxing tracks : {Name}", FileInfo.Name);
+            keepTracks.WriteLine("Keep");
+            removeTracks.WriteLine("Remove");
+
+            // ReMux and only keep the specified tracks
+            // Convert will test for Options.TestNoModify
+            if (!Convert.ReMuxToMkv(FileInfo.FullName, keepTracks, out string outputname))
+                // Error
+                return false;
+
+            // Update state
+            SidecarFile.State |= SidecarFile.States.ReMuxed;
+
+            // Extension may have changed
+            // Refresh
+            modified = true;
+            return Refresh(outputname);
+        }
+
         public bool ReEncode(List<VideoInfo> reencodeVideoInfos, HashSet<string> reencodeAudioFormats, ref bool modified)
         {
             // Optional

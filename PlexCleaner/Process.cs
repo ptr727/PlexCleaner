@@ -498,6 +498,25 @@ namespace PlexCleaner
             });
         }
 
+        public static bool RemoveSubtitlesFiles(List<FileInfo> fileList)
+        {
+            return ProcessFilesDriver(fileList, "Remove Subtitles", fileInfo =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                    return true;
+
+                // Get media information
+                ProcessFile processFile = new(fileInfo);
+                if (!processFile.GetMediaInfo())
+                    return false;
+
+                // Remove subtitles
+                bool modified = false;
+                return processFile.RemoveSubtitles(ref modified);
+            });
+        }
+
         private static bool ProcessFilesDriver(List<FileInfo> fileList, string taskName, Func<FileInfo, bool> taskFunc)
         {
             // Start

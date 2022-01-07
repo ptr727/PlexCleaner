@@ -78,6 +78,10 @@
     "Get Tool Info": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" gettoolinfo --mediafiles \"D:\\Test\""
+    },
+    "Remove Subtitles": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"\\\\Server-1\\Media\\Series\\Dexter\\Season 2\""
     }
   }
 }

@@ -254,6 +254,18 @@ namespace PlexCleaner
             return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int RemoveSubtitlesCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         // Add a reference to this class in the event handler arguments
         private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
 
