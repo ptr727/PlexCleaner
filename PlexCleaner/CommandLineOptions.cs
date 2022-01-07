@@ -65,6 +65,9 @@ namespace PlexCleaner
             // Upgrade sidecar JSON schemas
             rootCommand.AddCommand(CreateUpgradeSidecarCommand());
 
+            // Remove subtitles
+            rootCommand.AddCommand(CreateRemoveSubtitlesCommand());
+
             return rootCommand;
         }
 
@@ -301,7 +304,7 @@ namespace PlexCleaner
 
         private static Command CreateVerifyCommand()
         {
-            // Print media info
+            // Verify media
             Command verifyCommand = new("verify")
             {
                 Description = "Verify media files",
@@ -316,7 +319,7 @@ namespace PlexCleaner
 
         private static Command CreateUpgradeSidecarCommand()
         {
-            // Print media info
+            // Upgrade sidecar schema
             Command upgradesidecarCommand = new("upgradesidecar")
             {
                 Description = "Upgrade sidecar file schemas",
@@ -327,6 +330,21 @@ namespace PlexCleaner
             upgradesidecarCommand.AddOption(CreateMediaFilesOption());
 
             return upgradesidecarCommand;
+        }
+
+        private static Command CreateRemoveSubtitlesCommand()
+        {
+            // Remove subtitles
+            Command removesubtitlesCommand = new("removesubtitles")
+            {
+                Description = "Remove subtitles",
+                Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
+            };
+
+            // Media files or folders option
+            removesubtitlesCommand.AddOption(CreateMediaFilesOption());
+
+            return removesubtitlesCommand;
         }
 
         private static Option CreateMediaFilesOption()
