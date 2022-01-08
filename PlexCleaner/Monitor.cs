@@ -175,12 +175,12 @@ namespace PlexCleaner
             if (File.Exists(pathname))
             {
                 // Get the file details
-                FileInfo fileinfo = new(pathname);
+                FileInfo fileInfo = new(pathname);
 
                 // Ignore our own sidecar and *.tmp files being created
-                if (!fileinfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
-                    !SidecarFile.IsSidecarFile(fileinfo))
-                    foldername = fileinfo.DirectoryName;
+                if (!fileInfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
+                    !SidecarFile.IsSidecarFile(fileInfo))
+                    foldername = fileInfo.DirectoryName;
             }
             // Or directory
             else if(Directory.Exists(pathname))

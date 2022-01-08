@@ -75,10 +75,10 @@ namespace PlexCleaner
                 // Query the installed version information
                 if (!mediaTool.GetInstalledVersion(out MediaToolInfo mediaToolInfo))
                 {
-                    Log.Logger.Error("{Tool} not found : {Name}", mediaTool.GetToolType(), mediaTool.GetToolPath());
+                    Log.Logger.Error("{Tool} not found : {FileName}", mediaTool.GetToolType(), mediaTool.GetToolPath());
                     return false;
                 }
-                Log.Logger.Information("{Tool} : Version: {Version}, Path: {Name}", mediaTool.GetToolType(), mediaToolInfo.Version, mediaToolInfo.FileName);
+                Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}", mediaTool.GetToolType(), mediaToolInfo.Version, mediaToolInfo.FileName);
 
                 // Assign the tool info
                 mediaTool.Info = mediaToolInfo;
@@ -92,7 +92,7 @@ namespace PlexCleaner
             // Make sure the tools root folder exists
             if (!Directory.Exists(GetToolsRoot()))
             {
-                Log.Logger.Error("Tools directory not found : {Name}", GetToolsRoot());
+                Log.Logger.Error("Tools directory not found : {Directory}", GetToolsRoot());
                 return false;
             }
 
@@ -100,7 +100,7 @@ namespace PlexCleaner
             string toolsfile = GetToolsJsonPath();
             if (!File.Exists(toolsfile))
             {
-                Log.Logger.Error("{Name} not found, run the 'checkfornewtools' command", toolsfile);
+                Log.Logger.Error("{FileName} not found, run the 'checkfornewtools' command", toolsfile);
                 return false;
             }
 
@@ -108,7 +108,7 @@ namespace PlexCleaner
             ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsfile));
             if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}", 
+                Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}", 
                                  toolInfoJson.SchemaVersion, 
                                  ToolInfoJsonSchema.CurrentSchemaVersion,
                                  toolsfile);
@@ -134,10 +134,10 @@ namespace PlexCleaner
                 if (!File.Exists(mediaTool.GetToolPath()) ||
                     !mediaTool.GetInstalledVersion(out mediaToolInfo))
                 {
-                    Log.Logger.Error("{Tool} not found in path {Name}", mediaTool.GetToolType(), mediaTool.GetToolPath());
+                    Log.Logger.Error("{Tool} not found in path {Directory}", mediaTool.GetToolType(), mediaTool.GetToolPath());
                     return false;
                 }
-                Log.Logger.Information("{Tool} : Version: {Version}, Path: {Name}", 
+                Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}", 
                                        mediaTool.GetToolType(), 
                                        mediaToolInfo.Version, 
                                        mediaToolInfo.FileName);
@@ -206,7 +206,7 @@ namespace PlexCleaner
             // 7-Zip must be installed
             if (!File.Exists(SevenZip.GetToolPath()))
             {
-                Log.Logger.Error("{Tool} not found : {Name}", SevenZip.GetToolType(), SevenZip.GetToolPath());
+                Log.Logger.Error("{Tool} not found : {Directory}", SevenZip.GetToolType(), SevenZip.GetToolPath());
                 return false;
             }
 
@@ -279,7 +279,7 @@ namespace PlexCleaner
                         continue;
 
                     // Download the update file in the tools folder
-                    Log.Logger.Information("Downloading {Name} ...", latestToolInfo.FileName);
+                    Log.Logger.Information("Downloading {FileName} ...", latestToolInfo.FileName);
                     string downloadFile = CombineToolPath(latestToolInfo.FileName);
                     if (!Download.DownloadFile(new Uri(latestToolInfo.Url), downloadFile))
                         return false;

@@ -554,28 +554,28 @@ namespace PlexCleaner
             Subtitle.AddRange(addTracks.Subtitle.Where(item => !Subtitle.Contains(item)));
         }
 
-        public static bool GetMediaInfo(FileInfo fileinfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
+        public static bool GetMediaInfo(FileInfo fileInfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
         {
             ffprobe = null;
             mkvmerge = null;
             mediainfo = null;
 
-            return GetMediaInfo(fileinfo, MediaTool.ToolType.FfProbe, out ffprobe) &&
-                   GetMediaInfo(fileinfo, MediaTool.ToolType.MkvMerge, out mkvmerge) &&
-                   GetMediaInfo(fileinfo, MediaTool.ToolType.MediaInfo, out mediainfo);
+            return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffprobe) &&
+                   GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvmerge) &&
+                   GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediainfo);
         }
 
-        public static bool GetMediaInfo(FileInfo fileinfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
+        public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
         {
-            if (fileinfo == null)
-                throw new ArgumentNullException(nameof(fileinfo));
+            if (fileInfo == null)
+                throw new ArgumentNullException(nameof(fileInfo));
 
             // Use the specified stream parser tool
             return parser switch
             {
-                MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileinfo.FullName, out mediainfo),
-                MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileinfo.FullName, out mediainfo),
-                MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileinfo.FullName, out mediainfo),
+                MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediainfo),
+                MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileInfo.FullName, out mediainfo),
+                MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileInfo.FullName, out mediainfo),
                 _ => throw new NotImplementedException()
             };
         }

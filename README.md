@@ -19,8 +19,14 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.3.3
-  - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles containing ads.
+- Version 2.3.6
+  - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
+  - Fixed media tool logic to account for MWV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
+- Version 2.3.5
+  - Deprecation warning for `--mediafiles` option taking multiple paths, instead use multiple invocations.
+    - Old style: `--mediafiles path1 path2`
+    - New style: `--mediafiles path1 --mediafiles path2`
+  - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles with ads.
 - Version 2.3.2
   - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
     - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
@@ -78,7 +84,8 @@ Below are a few examples of issues I've experienced over the many years of using
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
-- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, verify content bitrate does not exceed the network bitrate.
+- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
+- Dolby Vision is only supported on DV capable hardware, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
 
 ## Installation
 
@@ -181,7 +188,8 @@ docker run \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
     process \
-    --mediafiles /media/Movies /media/Series
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
 ```
 
 ## Configuration
@@ -234,13 +242,13 @@ Create a default configuration file by running:
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
+    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3",
+    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*",
+    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -268,6 +276,8 @@ Create a default configuration file by running:
     "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
+    // Restore media file modified timestamp to original value
+    "RestoreFileTimestamp": false,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
     // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [
@@ -368,10 +378,10 @@ Options:
 ```
 
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
-The `--mediafiles` option can point to a combination of files or folders.  
+The `--mediafiles` option can include multiple files and directories, e.g. `--mediafiles path1 --mediafiles path2 --mediafiles file1 --mediafiles file2`.  
 
 Example:  
-`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" "D:\Media"`
+`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" --mediafiles "D:\Media"`
 
 The following processing will be done:
 
@@ -423,6 +433,10 @@ The `gettoolinfo` command will print tool attribute information.
 The `getsidecarinfo` command will print sidecar attribute information.
 
 The `getbitrateinfo` command will calculate and print media bitrate information.
+
+### RemoveSubtitles
+
+The `removesubtitles` command will remove all subtitle tracks.
 
 ## 3rd Party Tools
 
