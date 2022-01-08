@@ -2,9 +2,11 @@
 using Newtonsoft.Json;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// Use ffproble example output
 // TODO: Find JSON schema definition
 // https://stackoverflow.com/questions/61398647/where-can-i-get-the-ffprobe-json-schema-definition
+
+// Use ffprobe example output:
+// ffprobe -loglevel quiet -show_streams -print_format json file.mkv
 
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
@@ -15,12 +17,12 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class FfProbe
     {
         [JsonProperty("streams")]
-        public List<Stream> Streams { get; } = new List<Stream>();
+        public List<Stream> Streams { get; } = new();
 
         public static FfProbe FromJson(string json) => 
             JsonConvert.DeserializeObject<FfProbe>(json, Settings);
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Formatting = Formatting.Indented
         };
@@ -53,10 +55,10 @@ namespace PlexCleaner.FfMpegToolJsonSchema
         public string FieldOrder { get; set; } = "";
 
         [JsonProperty("tags")]
-        public Tags Tags { get; } = new Tags();
+        public Tags Tags { get; } = new();
 
         [JsonProperty("disposition")]
-        public Disposition Disposition { get; } = new Disposition();
+        public Disposition Disposition { get; } = new();
     }
 
     public class Tags
@@ -78,7 +80,7 @@ namespace PlexCleaner.FfMpegToolJsonSchema
     public class PacketInfo
     {
         [JsonProperty("packets")]
-        public List<Packet> Packets { get; } = new List<Packet>();
+        public List<Packet> Packets { get; } = new();
     }
 
     public class Packet

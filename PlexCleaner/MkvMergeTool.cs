@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.IO.Compression;
 using InsaneGenius.Utilities;
 using System.Linq;
@@ -9,6 +8,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Serilog;
 using System.Reflection;
+using System.Net.Http;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -55,7 +55,7 @@ namespace PlexCleaner
             // Extract the short version number
             // Match word for mkvmerge or mkvpropedit
             const string pattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
-            Regex regex = new Regex(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
             Match match = regex.Match(lines[0]);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
@@ -66,7 +66,7 @@ namespace PlexCleaner
             // Get other attributes if we can read the file
             if (File.Exists(mediaToolInfo.FileName))
             {
-                FileInfo fileInfo = new FileInfo(mediaToolInfo.FileName);
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
                 mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
                 mediaToolInfo.Size = fileInfo.Length;
             }
@@ -83,12 +83,12 @@ namespace PlexCleaner
             {
                 // Download latest release file
                 // https://mkvtoolnix.download/latest-release.xml.gz
-                using WebClient wc = new WebClient();
-                Stream wcstream = wc.OpenRead("https://mkvtoolnix.download/latest-release.xml.gz");
+                using HttpClient httpClient = new();
+                Stream releaseStream = httpClient.GetStreamAsync("https://mkvtoolnix.download/latest-release.xml.gz").Result;
 
                 // Get XML from Gzip
-                using GZipStream gzstream = new GZipStream(wcstream, CompressionMode.Decompress);
-                using StreamReader sr = new StreamReader(gzstream);
+                using GZipStream gzstream = new(releaseStream, CompressionMode.Decompress);
+                using StreamReader sr = new(gzstream);
                 string xml = sr.ReadToEnd();
 
                 // Get the version number from XML
@@ -151,17 +151,21 @@ namespace PlexCleaner
                 {
                     if (track.Type.Equals("video", StringComparison.OrdinalIgnoreCase))
                     {
-                        VideoInfo info = new VideoInfo(track);
+                        // We need to exclude cover art
+                        if (track.Codec.Equals("V_MJPEG", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        VideoInfo info = new(track);
                         mediaInfo.Video.Add(info);
                     }
                     else if (track.Type.Equals("audio", StringComparison.OrdinalIgnoreCase))
                     {
-                        AudioInfo info = new AudioInfo(track);
+                        AudioInfo info = new(track);
                         mediaInfo.Audio.Add(info);
                     }
                     else if (track.Type.Equals("subtitles", StringComparison.OrdinalIgnoreCase))
                     {
-                        SubtitleInfo info = new SubtitleInfo(track);
+                        SubtitleInfo info = new(track);
                         mediaInfo.Subtitle.Add(info);
                     }
                 }
@@ -212,12 +216,12 @@ namespace PlexCleaner
             return IsMkvExtension(Path.GetExtension(filename));
         }
 
-        public static bool IsMkvFile(FileInfo fileinfo)
+        public static bool IsMkvFile(FileInfo fileInfo)
         {
-            if (fileinfo == null)
-                throw new ArgumentNullException(nameof(fileinfo));
+            if (fileInfo == null)
+                throw new ArgumentNullException(nameof(fileInfo));
 
-            return IsMkvExtension(fileinfo.Extension);
+            return IsMkvExtension(fileInfo.Extension);
         }
 
         public static bool IsMkvExtension(string extension)
@@ -250,7 +254,7 @@ namespace PlexCleaner
             string snippets = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
             int exitcode = Command(commandline);
-            return exitcode == 0 || exitcode == 1;
+            return exitcode is 0 or 1;
         }
 
         public bool ReMuxToMkv(string inputname, string outputname)
@@ -262,7 +266,7 @@ namespace PlexCleaner
             string snippets = Program.Options.TestSnippets ? Snippet : "";
             string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" \"{inputname}\"";
             int exitcode = Command(commandline);
-            return exitcode == 0 || exitcode == 1;
+            return exitcode is 0 or 1;
         }
 
         private const string Snippet = "--split parts:00:00:00-00:01:00";

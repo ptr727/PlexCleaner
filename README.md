@@ -1,6 +1,6 @@
 # PlexCleaner
 
-Utility to optimize media files for DirectPlay on Plex.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## License
 
@@ -19,6 +19,24 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.3.6
+  - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
+  - Fixed media tool logic to account for MWV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
+- Version 2.3.5
+  - Deprecation warning for `--mediafiles` option taking multiple paths, instead use multiple invocations.
+    - Old style: `--mediafiles path1 path2`
+    - New style: `--mediafiles path1 --mediafiles path2`
+  - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles with ads.
+- Version 2.3.2
+  - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
+    - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
+    - The warning is only logged during the verify step, repair is not possible.
+    - To re-verify existing 4K files use the `verify` command, or reset the state using the `createsidecar` and `process` commands.
+  - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other `getxxxinfo` commands.
+  - Added `gettoolinfo` command to print media info reported by tools.
+  - Refactored duplicate file iteration logic to use lambdas.
+- Version 2.3:
+  - Migrated from .NET 5 to .NET 6.
 - Version 2.1:
   - Added backwards compatibility for some older JSON schemas.
   - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
@@ -28,7 +46,6 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Run the `upgradesidecar` command to migrate sidecar files to the current schema version.
   - Repairing metadata inconsistencies, e.g. MuxingMode not specified for S_VOBSUB subtitle codecs, by remuxing the MKV file.
   - Added a `ToolsOptions:AutoUpdate` configuration option to automatically update the tools before each run.
-
 - Version 2.0:
   - Linux and Docker are now supported platforms.
     - Automatic downloading of tools on Linux is not currently supported, tools need to be manually installed on the system.
@@ -51,7 +68,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Use Cases
 
-The objective of the tool is to modify media content such that it will [Direct Play](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/) in Plex.  
+The objective of the tool is to modify media content such that it will Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).  
 Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes.  
 Occasionally Plex would fix the issue, other times the only solution is modification of the media file.
 
@@ -67,15 +84,16 @@ Below are a few examples of issues I've experienced over the many years of using
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
-- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, verify content bitrate does not exceed the network bitrate.
+- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
+- Dolby Vision is only supported on DV capable hardware, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
 
 ## Installation
 
 ### Windows
 
-- Install [.NET 5 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
-- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 5 SDK](https://dotnet.microsoft.com/download).
+- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
 - Install the required 3rd Party tools:
   - The 3rd party tools are downloaded in the `Tools` folder.
   - Make sure the folder exists, the default location is in the same folder as the binary.
@@ -94,22 +112,23 @@ Below are a few examples of issues I've experienced over the many years of using
 - Install prerequisites:
   - `sudo apt update`
   - `sudo apt install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full`
-- Install [.NET 5 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
-  - TODO: How to convert distribution to lowercase using $(lsb_release -si) to create a generic download URL, e.g. `debian` instead of `Debian`?
+- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
   - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
   - `sudo dpkg -i packages-microsoft-prod.deb`
   - `sudo apt update`
-  - `sudo apt install -y dotnet-sdk-5.0`
-  - `dotnet --version`
+  - `sudo apt install -y dotnet-runtime-6.0`
+  - `dotnet --info`
 - Install the required 3rd Party tools:
   - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4):
+    - `sudo add-apt-repository -y ppa:savoury1/graphics`
+    - `sudo add-apt-repository -y ppa:savoury1/multimedia`
     - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
     - `sudo apt update`
     - `sudo apt install -y ffmpeg`
     - `ffmpeg -version`
   - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu):
-    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb`
-    - `sudo dpkg -i repo-mediaarea_1.0-13_all.deb`
+    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb`
+    - `sudo dpkg -i repo-mediaarea_1.0-19_all.deb`
     - `sudo apt update`
     - `sudo apt install -y mediainfo`
     - `mediainfo --version`
@@ -125,11 +144,8 @@ Below are a few examples of issues I've experienced over the many years of using
     - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
   - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
-- [Download](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
-- Or compile from code:
-  - `git clone https://github.com/ptr727/PlexCleaner.git`
-  - `cd PlexCleaner`
-  - `dotnet build`
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
 
 ### Docker
 
@@ -172,7 +188,8 @@ docker run \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
     process \
-    --mediafiles /media/Movies /media/Series
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
 ```
 
 ## Configuration
@@ -182,6 +199,9 @@ Create a default configuration file by running:
 
 ```jsonc
 {
+  // JSON Schema version
+  "SchemaVersion": 1,
+  // Tools options
   "ToolsOptions": {
     // Use system installed tools
     "UseSystem": false,
@@ -192,26 +212,27 @@ Create a default configuration file by running:
     // Automatically check for new tools
     "AutoUpdate":  false
   },
+  // Convert options
   "ConvertOptions": {
     // Enable H.265 encoding, else use H.264
     "EnableH265Encoder": true,
     // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
     "VideoEncodeQuality": 20,
     // Audio encoding codec
-    "AudioEncodeCodec": "ac3",
-    // Automatically check for new tools
-    "AutoUpdate":  false
+    "AudioEncodeCodec": "ac3"
   },
+  // Process options
   "ProcessOptions": {
     // Delete empty folders
     "DeleteEmptyFolders": true,
     // Delete non-media files
+    // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
-    // Files to keep, e.g. subtitle or partial files
-    "KeepExtensions": ".partial~",
+    // Files to keep but not process, e.g. subtitles, cover art, info, partial, etc.
+    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
     // Enable re-mux
     "ReMux": true,
-    // Remux files to MKV if the extension matches
+    // Files to remux to MKV
     "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
     // Enable de-interlace
     // Note de-interlace detection is not absolute
@@ -221,13 +242,13 @@ Create a default configuration file by running:
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
+    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3",
+    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*",
+    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -255,6 +276,8 @@ Create a default configuration file by running:
     "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
+    // Restore media file modified timestamp to original value
+    "RestoreFileTimestamp": false,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
     // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [
@@ -262,6 +285,7 @@ Create a default configuration file by running:
       "\\\\server\\share2\\path2\\file2.mkv"
     ]
   },
+  // Monitor options
   "MonitorOptions": {
     // Time to wait after detecting a file change
     "MonitorWaitTime": 60,
@@ -270,6 +294,7 @@ Create a default configuration file by running:
     // Number of times to retry a file operation
     "FileRetryCount": 2
   },
+  // Verify options
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
@@ -298,34 +323,36 @@ Commandline options:
 
 ```console
 > ./PlexCleaner --help
-PlexCleaner:
-  Utility to optimize media files for DirectPlay on Plex
+Description:
+  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
 Usage:
-  PlexCleaner [options] [command]
+  PlexCleaner [command] [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)    Path to settings file
-  --logfile <logfile>                         Path to log file
-  --logappend                                 Append to the log file vs. default overwrite
-  --version                                   Show version information
-  -?, -h, --help                              Show help and usage information
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to the log file vs. default overwrite
+  --version                                 Show version information
+  -?, -h, --help                            Show help and usage information
 
 Commands:
-  defaultsettings     Write default values to settings file
-  checkfornewtools    Check for and download new tools
-  process             Process media files
-  monitor             Monitor and process media file changes in folders
-  remux               Re-Multiplex media files
-  reencode            Re-Encode media files
-  deinterlace         De-Interlace media files
-  verify              Verify media files
-  createsidecar       Create sidecar files
-  getsidecar          Print sidecar file attribute information
-  gettagmap           Print attribute tag-map created from media files
-  getmediainfo        Print media file attribute information
-  getbitrateinfo      Print media file bitrate information
-  upgradesidecar      Upgrade sidecar file schemas
+  defaultsettings   Write default values to settings file
+  checkfornewtools  Check for and download new tools
+  process           Process media files
+  monitor           Monitor and process media file changes in folders
+  remux             Re-Multiplex media files
+  reencode          Re-Encode media files
+  deinterlace       De-Interlace media files
+  verify            Verify media files
+  createsidecar     Create sidecar files
+  getsidecarinfo    Print sidecar file attribute information
+  gettagmap         Print attribute tag-map created from media files
+  getmediainfo      Print media file attribute information
+  gettoolinfo       Print tool file attribute information
+  getbitrateinfo    Print media file bitrate information
+  upgradesidecar    Upgrade sidecar file schemas
+  removesubtitles   Remove subtitles
 ```
 
 The `--settingsfile` JSON settings file is required.  
@@ -347,14 +374,14 @@ Options:
   --mediafiles <mediafiles> (REQUIRED)    List of media files or folders.
   --testsnippets                          Create short video clips, useful during testing.
   --testnomodify                          Do not make any modifications, useful during testing.
-  -?, -h, --help                          Show help and usage information
+  -?, -h, --help                          Show help and usage information.
 ```
 
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
-The `--mediafiles` option can point to a combination of files or folders.  
+The `--mediafiles` option can include multiple files and directories, e.g. `--mediafiles path1 --mediafiles path2 --mediafiles file1 --mediafiles file2`.  
 
 Example:  
-`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" "D:\Media"`
+`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" --mediafiles "D:\Media"`
 
 The following processing will be done:
 
@@ -368,7 +395,7 @@ The following processing will be done:
 - De-interlace the video track if interlaced.
 - Re-encode video to H.264 or H.265 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, if corrupt try to automatically repair, else delete the file.
+- Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
 ### Re-Multiplex, Re-Encode, De-Interlace, Verify
 
@@ -378,9 +405,7 @@ The `reencode` command will re-encode the media files using `FFMPeg` and H.264 a
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
-The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
-
-Unlike the `process` command, no conditional logic will be applied, the file will always be modified.
+The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.  
 
 ### Monitor
 
@@ -389,22 +414,29 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### CreateSidecar, GetSidecar, UpgradeSidecar
+### CreateSidecar, UpgradeSidecar
 
-The `createsidecar` command will create sidecar files.
+The `createsidecar` command will create sidecar files.  
+All state attributes will be deleted, e.g. the file will be re-verified.
 
-The `getsidecar` command will print sidecar file attributes.
-
-The `upgradesidecar` command will upgrade the sidecar schemas to the current version.  
+The `upgradesidecar` command will upgrade the sidecar schemas (not tool info) to the current version.  
 When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
 
-### GetTagMap, GetMediaInfo, GetBitrateInfo
+### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo, GetBitrateInfo
 
 The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
 
 The `getmediainfo` command will print media attribute information.
 
+The `gettoolinfo` command will print tool attribute information.
+
+The `getsidecarinfo` command will print sidecar attribute information.
+
 The `getbitrateinfo` command will calculate and print media bitrate information.
+
+### RemoveSubtitles
+
+The `removesubtitles` command will remove all subtitle tracks.
 
 ## 3rd Party Tools
 

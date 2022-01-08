@@ -22,15 +22,14 @@ namespace PlexCleaner
             CreateLogger(null);
 
             // Create a 30s timer to keep the system from going to sleep
-            using System.Timers.Timer preventSleepTimer = new System.Timers.Timer(30000);
+            using System.Timers.Timer preventSleepTimer = new(30000);
             preventSleepTimer.Elapsed += OnTimedEvent;
             preventSleepTimer.AutoReset = true;
             preventSleepTimer.Start();
 
-            // TODO : Quoted paths ending in a \ fail to parse properly, use our own parser
-            // https://github.com/gsscoder/commandline/issues/473
+            // Create the commandline and execute commands
             RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-            int ret = rootCommand.Invoke(CommandLineEx.GetCommandLineArgs());
+            int ret = rootCommand.Invoke(Environment.CommandLine);
 
             // Stop the timer
             preventSleepTimer.Stop();
@@ -50,7 +49,7 @@ namespace PlexCleaner
             // Log to console
             // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
             // Remove lj to quote strings
-            LoggerConfiguration loggerConfiguration = new LoggerConfiguration();
+            LoggerConfiguration loggerConfiguration = new();
             loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}");
 
             // Log to file
@@ -63,7 +62,7 @@ namespace PlexCleaner
             Log.Logger = loggerConfiguration.CreateLogger();
 
             // Set library logger to Serilog logger
-            LoggerFactory loggerFactory = new LoggerFactory();
+            LoggerFactory loggerFactory = new();
             loggerFactory.AddSerilog(Log.Logger);
             LogOptions.CreateLogger(loggerFactory);
         }
@@ -106,7 +105,7 @@ namespace PlexCleaner
                 return -1;
 
             // Process all files
-            Process process = new Process();
+            Process process = new();
             return process.ProcessFiles(program.FileInfoList) && 
                    Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
         }
@@ -117,7 +116,7 @@ namespace PlexCleaner
             if (program == null)
                 return -1;
 
-            Monitor monitor = new Monitor();
+            Monitor monitor = new();
             return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
         }
 
@@ -130,7 +129,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            Process process = new Process();
+            Process process = new();
             return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
         }
 
@@ -182,7 +181,7 @@ namespace PlexCleaner
             return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
-        internal static int GetSidecarCommand(CommandLineOptions options)
+        internal static int GetSidecarInfoCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
             if (program == null)
@@ -218,6 +217,18 @@ namespace PlexCleaner
             return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int GetToolInfoCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         internal static int GetBitrateInfoCommand(CommandLineOptions options)
         {
             Program program = Create(options, true);
@@ -227,7 +238,7 @@ namespace PlexCleaner
             if (!program.CreateFileList(options.MediaFiles))
                 return -1;
 
-            return Process.GetBitrateFiles(program.FileInfoList) ? 0 : -1;
+            return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
         }
 
         internal static int UpgradeSidecarCommand(CommandLineOptions options)
@@ -242,17 +253,29 @@ namespace PlexCleaner
             return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
         }
 
+        internal static int RemoveSubtitlesCommand(CommandLineOptions options)
+        {
+            Program program = Create(options, true);
+            if (program == null)
+                return -1;
+
+            if (!program.CreateFileList(options.MediaFiles))
+                return -1;
+
+            return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
+        }
+
         // Add a reference to this class in the event handler arguments
         private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
 
-        private static void CancelHandler(ConsoleCancelEventArgs e, Program program)
+        private static void CancelHandler(ConsoleCancelEventArgs e, Program _)
         {
             Log.Logger.Warning("Cancel key pressed");
             e.Cancel = true;
 
             // Signal the cancel event
             // We could signal Cancel directly now that it is static
-            program.Break();
+            Break();
         }
 
         private Program()
@@ -281,7 +304,7 @@ namespace PlexCleaner
             // Compare the schema version
             if (config.SchemaVersion != ConfigFileJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}",
+                Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
                                    config.SchemaVersion,
                                    ConfigFileJsonSchema.CurrentSchemaVersion,
                                    options.SettingsFile);
@@ -314,10 +337,15 @@ namespace PlexCleaner
                     return null;
                 }
 
-                // Recreate the clooger with a file
+                // Recreate the logger with a file
                 CreateLogger(options.LogFile);
                 Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
             }
+
+            // Log app and runtime version
+            string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            string runtimeVersion = Environment.Version.ToString();
+            Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
 
             // Verify tools
             if (verifyTools)
@@ -336,7 +364,7 @@ namespace PlexCleaner
             return new Program();
         }
 
-        private void Break()
+        private static void Break()
         {
             // Signal the cancel event
             Cancel();
@@ -366,15 +394,15 @@ namespace PlexCleaner
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
-                    DirectoryInfo dirInfo = new DirectoryInfo(fileorfolder);
+                    DirectoryInfo dirInfo = new(fileorfolder);
                     DirectoryInfoList.Add(dirInfo);
                     FolderList.Add(fileorfolder);
 
                     // Create the file list from the directory
-                    Log.Logger.Information("Getting files and folders from {Name} ...", dirInfo.FullName);
+                    Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
-                        Log.Logger.Error("Failed to enumerate directory {Name}", fileorfolder);
+                        Log.Logger.Error("Failed to enumerate directory {Directory}", fileorfolder);
                         return false;
                     }
                     FileInfoList.AddRange(fileInfoList);
@@ -420,11 +448,11 @@ namespace PlexCleaner
         public static CommandLineOptions Options { get; set; }
         public static ConfigFileJsonSchema Config { get; set; }
 
-        private static CancellationTokenSource CancelSource = new CancellationTokenSource();
+        private static readonly CancellationTokenSource CancelSource = new();
 
-        private readonly List<string> FolderList = new List<string>();
-        private readonly List<DirectoryInfo> DirectoryInfoList = new List<DirectoryInfo>();
-        private readonly List<string> FileList = new List<string>();
-        private readonly List<FileInfo> FileInfoList = new List<FileInfo>();
+        private readonly List<string> FolderList = new();
+        private readonly List<DirectoryInfo> DirectoryInfoList = new();
+        private readonly List<string> FileList = new();
+        private readonly List<FileInfo> FileInfoList = new();
     }
 }

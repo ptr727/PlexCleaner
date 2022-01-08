@@ -7,6 +7,7 @@ on:
     paths:
       - README.md
       - .github/workflows/UpdateDockerHubDescription.yml
+  workflow_dispatch:
 
 jobs:
   description:

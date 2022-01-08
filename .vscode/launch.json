@@ -1,36 +1,26 @@
 {
-   // https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-   "version": "0.2.0",
-   "configurations": [
+    "version": "0.2.0",
+    "configurations": [
         {
-            "name": ".NET Launch",
+            // Use IntelliSense to find out which attributes exist for C# debugging
+            // Use hover for the description of the existing attributes
+            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+            "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net5.0/PlexCleaner.dll",
-            "args": ["--help"],
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net6.0/PlexCleaner.dll",
+            "args": [],
             "cwd": "${workspaceFolder}/PlexCleaner",
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
-            "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "stopAtEntry": false
         },
         {
-            "name": ".NET Attach",
+            "name": ".NET Core Attach",
             "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        },
-        {
-            "name": "Process",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net5.0/PlexCleaner.dll",
-            "args": ["--settingsfile", "PlexCleaner.json", "process", "--testsnippets", "--mediafiles", "/mnt/d/Troublesome"],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net5.0/",
-            "console": "internalConsole",
-            "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "request": "attach"
         }
-    ,]
+    ]
 }

@@ -2,7 +2,10 @@
 using Newtonsoft.Json;
 
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// https://gitlab.com/mbunkus/mkvtoolnix/-/raw/main/doc/json-schema/mkvmerge-identification-output-schema-v13.json
+// JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v14.json
+
+// Use mkvinfo example output:
+// mkvmerge --identify file.mkv --identification-format json
 
 // Convert array[] to List<>
 // Change uid long to UInt64
@@ -14,27 +17,27 @@ namespace PlexCleaner.MkvToolJsonSchema
     public class MkvMerge
     {
         [JsonProperty("container")]
-        public Container Container { get; } = new Container();
+        public Container Container { get; } = new();
 
         [JsonProperty("global_tags")]
-        public List<GlobalTag> GlobalTags { get; } = new List<GlobalTag>();
+        public List<GlobalTag> GlobalTags { get; } = new();
 
         [JsonProperty("track_tags")]
-        public List<TrackTag> TrackTags { get; } = new List<TrackTag>();
+        public List<TrackTag> TrackTags { get; } = new();
 
         [JsonProperty("tracks")]
-        public List<Track> Tracks { get; } = new List<Track>();
+        public List<Track> Tracks { get; } = new();
 
         [JsonProperty("attachments")]
-        public List<Attachment> Attachments { get; } = new List<Attachment>();
+        public List<Attachment> Attachments { get; } = new();
 
         [JsonProperty("chapters")]
-        public List<Chapter> Chapters { get; } = new List<Chapter>();
+        public List<Chapter> Chapters { get; } = new();
 
         public static MkvMerge FromJson(string json) => 
             JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Formatting = Formatting.Indented
         };
@@ -43,7 +46,7 @@ namespace PlexCleaner.MkvToolJsonSchema
     public class Container
     {
         [JsonProperty("properties")]
-        public ContainerProperties Properties { get; } = new ContainerProperties();
+        public ContainerProperties Properties { get; } = new();
 
         [JsonProperty("type")]
         public string Type { get; set; } = "";
@@ -81,7 +84,7 @@ namespace PlexCleaner.MkvToolJsonSchema
         public int Id { get; set; }
 
         [JsonProperty("properties")]
-        public TrackProperties Properties { get; } = new TrackProperties();
+        public TrackProperties Properties { get; } = new();
 
         [JsonProperty("type")]
         public string Type { get; set; } = "";

@@ -438,3 +438,6 @@ fabric.properties
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Docker project
+Docker/PlexCleaner

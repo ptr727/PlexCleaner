@@ -23,7 +23,9 @@ namespace PlexCleaner
             Verified = 1 << 6,
             VerifyFailed = 1 << 7,
             BitrateExceeded = 1 << 8,
-            ClearedTags = 1 << 9
+            ClearedTags = 1 << 9,
+            ReNamed = 1 << 10,
+            Deleted = 1 << 11
         }
 
         public SidecarFile(FileInfo mediaFileInfo)
@@ -49,7 +51,7 @@ namespace PlexCleaner
             if (!WriteJson())
                 return false;
 
-            Log.Logger.Information("Sidecar created : State: {States} : {Name}", State, SidecarFileInfo.Name);
+            Log.Logger.Information("Sidecar created : State: {States} : {FileName}", State, SidecarFileInfo.Name);
 
             return true;
         }
@@ -71,12 +73,12 @@ namespace PlexCleaner
                 // Remove the verified state flag
                 if (State.HasFlag(States.Verified))
                 { 
-                    Log.Logger.Warning("Sidecar out of sync, clearing Verified flag : {Name}", SidecarFileInfo.Name);
+                    Log.Logger.Warning("Sidecar out of sync, clearing Verified flag : {FileName}", SidecarFileInfo.Name);
                     State &= ~States.Verified;
                 }
             }
 
-            Log.Logger.Information("Sidecar read : State: {States} : {Name}", State, SidecarFileInfo.Name);
+            Log.Logger.Information("Sidecar read : State: {States} : {FileName}", State, SidecarFileInfo.Name);
 
             return true;
         }
@@ -110,7 +112,7 @@ namespace PlexCleaner
             if (!WriteJson())
                 return false;
 
-            Log.Logger.Information("Sidecar updated : State: {States} : {Name}", State, SidecarFileInfo.Name);
+            Log.Logger.Information("Sidecar updated : State: {States} : {FileName}", State, SidecarFileInfo.Name);
 
             return true;
         }
@@ -122,7 +124,7 @@ namespace PlexCleaner
                 if (SidecarFileInfo.Exists)
                     SidecarFileInfo.Delete();
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -134,7 +136,7 @@ namespace PlexCleaner
             MkvMergeInfo = null;
             MediaInfoInfo = null;
 
-            Log.Logger.Information("Sidecar deleted : {Name}", SidecarFileInfo.Name);
+            Log.Logger.Information("Sidecar deleted : {FileName}", SidecarFileInfo.Name);
 
             return true;
         }
@@ -183,6 +185,7 @@ namespace PlexCleaner
                 return false;
 
             // Check one by one to log all the mismatches
+            // ReSharper disable once ReplaceWithSingleAssignment.False
             bool update = false;
             if (!IsSchemaCurrent())
                 update = true;
@@ -194,7 +197,7 @@ namespace PlexCleaner
                 update = true;
             if (!update)
             { 
-                Log.Logger.Information("Sidecar up to date : State: {States} : {Name}", State, SidecarFileInfo.Name);
+                Log.Logger.Information("Sidecar up to date : State: {States} : {FileName}", State, SidecarFileInfo.Name);
                 return true;
             }
 
@@ -204,7 +207,7 @@ namespace PlexCleaner
                 !WriteJson())
                 return false;
 
-            Log.Logger.Information("Sidecar upgraded : State: {States} : {Name}", State, SidecarFileInfo.Name);
+            Log.Logger.Information("Sidecar upgraded : State: {States} : {FileName}", State, SidecarFileInfo.Name);
 
             return true;
         }
@@ -217,12 +220,11 @@ namespace PlexCleaner
         private bool IsMediaAndToolsCurrent(bool log)
         {
             // Verify the media file matches the json info
-            bool mismatch = false || !IsMediaCurrent(log);
+            bool mismatch = !IsMediaCurrent(log);
 
             // Verify the tools matches the json info
             // Ignore changes if SidecarUpdateOnToolChange is not set
-            if (!IsToolsCurrent(log) &&
-                Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+            if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
                 mismatch = true;
 
             return !mismatch;
@@ -256,7 +258,7 @@ namespace PlexCleaner
 
         private bool GetInfoFromJson()
         {
-            Log.Logger.Information("Reading media info from sidecar : {Name}", SidecarFileInfo.Name);
+            Log.Logger.Information("Reading media info from sidecar : {FileName}", SidecarFileInfo.Name);
 
             // Decompress the tool data
             FfProbeInfoJson = StringCompression.Decompress(SidecarJson.FfProbeInfoData);
@@ -271,7 +273,7 @@ namespace PlexCleaner
                 !Tools.MkvMerge.GetMkvInfoFromJson(MkvMergeInfoJson, out mkvMergeInfo) ||
                 !Tools.FfProbe.GetFfProbeInfoFromJson(FfProbeInfoJson, out ffProbeInfo))
             {
-                Log.Logger.Error("Failed to de-serialize tool data : {Name}", SidecarFileInfo.Name);
+                Log.Logger.Error("Failed to de-serialize tool data : {FileName}", SidecarFileInfo.Name);
                 return false;
             }
 
@@ -296,11 +298,9 @@ namespace PlexCleaner
             if (MediaFileInfo.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc)
             {
                 // Ignore LastWriteTimeUtc, it is unreliable over SMB
-                // The SHA256 and file length checks are sufficient
-                // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3024
                 // mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {Name}",
+                    Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {FileName}",
                                        SidecarJson.MediaLastWriteTimeUtc,
                                        MediaFileInfo.LastWriteTimeUtc,
                                        SidecarFileInfo.Name);
@@ -309,7 +309,7 @@ namespace PlexCleaner
             {
                 mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {Name}",
+                    Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {FileName}",
                                        SidecarJson.MediaLength,
                                        MediaFileInfo.Length,
                                        SidecarFileInfo.Name);
@@ -317,11 +317,9 @@ namespace PlexCleaner
             string hash = ComputeHash();
             if (string.Compare(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase) != 0)
             {
-                // Something is wrong if hash changed but not size or timestamps
-                // Debug.Assert(mismatch != false);
                 mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {Name}",
+                    Log.Logger.Warning("Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {FileName}",
                                        SidecarJson.MediaHash,
                                        hash,
                                        SidecarFileInfo.Name);
@@ -338,7 +336,7 @@ namespace PlexCleaner
             {
                 mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {Name}",
+                    Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
                                        SidecarJson.FfProbeToolVersion,
                                        Tools.FfProbe.Info.Version,
                                        SidecarFileInfo.Name);
@@ -347,7 +345,7 @@ namespace PlexCleaner
             {
                 mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {Name}",
+                    Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
                                        SidecarJson.MkvMergeToolVersion,
                                        Tools.MkvMerge.Info.Version,
                                        SidecarFileInfo.Name);
@@ -356,7 +354,7 @@ namespace PlexCleaner
             {
                 mismatch = true;
                 if (log)
-                    Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {Name}",
+                    Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
                                        SidecarJson.MediaInfoToolVersion,
                                        Tools.MediaInfo.Info.Version,
                                        SidecarFileInfo.Name);
@@ -377,7 +375,7 @@ namespace PlexCleaner
                 // Create object from text
                 SidecarJson = SidecarFileJsonSchema.FromJson(json);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -385,7 +383,7 @@ namespace PlexCleaner
             // Compare the schema version
             if (SidecarJson.SchemaVersion != SidecarFileJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Warning("Sidecar JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}",
+                Log.Logger.Warning("Sidecar JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
                                    SidecarJson.SchemaVersion,
                                    SidecarFileJsonSchema.CurrentSchemaVersion,
                                    SidecarFileInfo.Name);
@@ -411,7 +409,7 @@ namespace PlexCleaner
                 streamWriter.Flush();
                 streamWriter.Close();
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -450,14 +448,14 @@ namespace PlexCleaner
 
         private bool GetToolInfo()
         {
-            Log.Logger.Information("Reading media info from tools : {Name}", MediaFileInfo.Name);
+            Log.Logger.Information("Reading media info from tools : {FileName}", MediaFileInfo.Name);
 
             // Read the tool data text
             if (!Tools.MediaInfo.GetMediaInfoXml(MediaFileInfo.FullName, out MediaInfoXml) ||
                 !Tools.MkvMerge.GetMkvInfoJson(MediaFileInfo.FullName, out MkvMergeInfoJson) ||
                 !Tools.FfProbe.GetFfProbeInfoJson(MediaFileInfo.FullName, out FfProbeInfoJson))
             {
-                Log.Logger.Error("Failed to read media info : {Name}", MediaFileInfo.Name);
+                Log.Logger.Error("Failed to read media info : {FileName}", MediaFileInfo.Name);
                 return false;
             }
 
@@ -469,22 +467,33 @@ namespace PlexCleaner
                 !Tools.MkvMerge.GetMkvInfoFromJson(MkvMergeInfoJson, out mkvMergeInfo) ||
                 !Tools.FfProbe.GetFfProbeInfoFromJson(FfProbeInfoJson, out ffProbeInfo))
             {
-                Log.Logger.Error("Failed to de-serialize tool data : {Name}", MediaFileInfo.Name);
+                Log.Logger.Error("Failed to de-serialize tool data : {FileName}", MediaFileInfo.Name);
                 return false;
             }
 
             // Assign the mediainfo data
-            FfProbeInfo = ffProbeInfo;
-            MkvMergeInfo = mkvMergeInfo;
             MediaInfoInfo = mediaInfoInfo;
+            MkvMergeInfo = mkvMergeInfo;
+            FfProbeInfo = ffProbeInfo;
+
+            // Print info
+            MediaInfoInfo.WriteLine("MediaInfo");
+            MkvMergeInfo.WriteLine("MKVMerge");
+            FfProbeInfo.WriteLine("FFprobe");
 
             return true;
+        }
+
+        public static bool CanHash(FileInfo fileInfo)
+        {
+            // Media file must be at least 2 * the hash window length
+            return fileInfo.Length >= 2 * HashWindowLength;
         }
 
         private string ComputeHash()
         {
             // Media file must be at least 2 * the hash window length
-            Debug.Assert(MediaFileInfo.Length >= 2 * HashWindowLength);
+            Debug.Assert(CanHash(MediaFileInfo));
 
             try
             {
@@ -501,7 +510,7 @@ namespace PlexCleaner
                 fileStream.Seek(0, SeekOrigin.Begin);
                 if (fileStream.Read(buffer, 0, HashWindowLength) != HashWindowLength)
                 {
-                    Log.Logger.Error("Error reading from media file : {Name}", MediaFileInfo.Name);
+                    Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
                     return null;
                 }
 
@@ -509,11 +518,11 @@ namespace PlexCleaner
                 fileStream.Seek(-HashWindowLength, SeekOrigin.End);
                 if (fileStream.Read(buffer, HashWindowLength, HashWindowLength) != HashWindowLength)
                 {
-                    Log.Logger.Error("Error reading from media file : {Name}", MediaFileInfo.Name);
+                    Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
                     return null;
                 }
 
-                // Clsoe stream
+                // Close stream
                 fileStream.Close();
 
                 // Calculate the hash 
@@ -522,13 +531,13 @@ namespace PlexCleaner
                 // Convert to string
                 return System.Convert.ToBase64String(hash);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return null;
             }
         }
 
-        public static bool IsSidecarFileName(FileInfo sidecarFileInfo)
+        public static bool IsSidecarFile(FileInfo sidecarFileInfo)
         {
             if (sidecarFileInfo == null)
                 throw new ArgumentNullException(nameof(sidecarFileInfo));
@@ -569,7 +578,7 @@ namespace PlexCleaner
                 throw new ArgumentNullException(nameof(mediaFileInfo));
 
             // Create new sidecar for media file
-            SidecarFile sidecarfile = new SidecarFile(mediaFileInfo);
+            SidecarFile sidecarfile = new(mediaFileInfo);
             return sidecarfile.Create();
         }
 
