@@ -154,41 +154,42 @@ namespace PlexCleaner
 
             return ret;
         }
-        private bool ProcessFile(FileInfo fileinfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo)
+        private bool ProcessFile(FileInfo fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo)
         {
             // Init
             modified = false;
             state = SidecarFile.States.None;
-            processInfo = fileinfo;
+            processInfo = fileInfo;
+            DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
             // Skip the file if it is in the ignore list
-            if (IgnoreList.Contains(fileinfo.FullName))
+            if (IgnoreList.Contains(fileInfo.FullName))
             {
-                Log.Logger.Warning("Skipping ignored file : {Name}", fileinfo.FullName);
+                Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
                 return true;
             }
 
             // Skip the file if it is in the keep extensions list
-            if (KeepExtensions.Contains(fileinfo.Extension))
+            if (KeepExtensions.Contains(fileInfo.Extension))
             {
-                Log.Logger.Warning("Skipping keep extensions file : {Name}", fileinfo.FullName);
+                Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileInfo.FullName);
                 return true;
             }
 
             // Does the file still exist
-            if (!File.Exists(fileinfo.FullName))
+            if (!File.Exists(fileInfo.FullName))
             {
-                Log.Logger.Warning("Skipping missing file : {Name}", fileinfo.FullName);
+                Log.Logger.Warning("Skipping missing file : {FileName}", fileInfo.FullName);
                 return false;
             }
 
             // Create file processor to hold state
-            ProcessFile processFile = new(fileinfo);
+            ProcessFile processFile = new(fileInfo);
 
             // Is the file writeable
             if (!processFile.IsWriteable())
             {
-                Log.Logger.Error("Skipping read-only file : {Name}", fileinfo.FullName);
+                Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
                 return false;
             }
 
@@ -197,8 +198,15 @@ namespace PlexCleaner
                 return false;
 
             // Skip if this a sidecar file
-            if (SidecarFile.IsSidecarFile(fileinfo))
+            if (SidecarFile.IsSidecarFile(fileInfo))
                 return true;
+
+            // Media file must be at least 2 * the hash window length for sidecar files to work
+            if (!SidecarFile.CanHash(fileInfo))
+            {
+                Log.Logger.Warning("Skipping too small file : {FileName}", fileInfo.FullName);
+                return false;
+            }
 
             // ReMux non-MKV containers matched by extension
             if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
@@ -216,7 +224,7 @@ namespace PlexCleaner
             // If a sidecar file exists for this MKV file it must be writable
             if (!processFile.IsSidecarWriteable())
             {
-                Log.Logger.Error("Skipping media file due to read-only sidecar file : {Name}", fileinfo.FullName);
+                Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
                 return false;
             }
 
@@ -233,6 +241,10 @@ namespace PlexCleaner
             // ReMux non-MKV containers using MKV filenames
             if (!processFile.RemuxNonMkvContainer(ref modified) ||
                 Program.IsCancelled())
+                return false;
+
+            // Now that the file and container is MKV all media info should be valid
+            if (!processFile.VerifyMediaInfo())
                 return false;
 
             // Try to ReMux metadata errors away
@@ -269,16 +281,23 @@ namespace PlexCleaner
                 Program.IsCancelled())
                 return false;
 
+            // Repair may have modified track tags, reset the default language again
+            if (!processFile.SetUnknownLanguage(ref modified) ||
+                Program.IsCancelled())
+                return false;
+
             // Remove tags and titles
             if (!processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
                 return false;
 
+            // Restore the file timestamps
+            if (Program.Config.ProcessOptions.RestoreFileTimestamp)
+                File.SetLastWriteTimeUtc(processFile.FileInfo.FullName, lastWriteTime);
+
             // Return state and current fileinfo
             state = processFile.State;
             processInfo = processFile.FileInfo;
-
-            // TODO: Fix processing so we do not need to double clear tags or set track languages
 
             // Cancel handler
             return !Program.IsCancelled();
@@ -445,7 +464,7 @@ namespace PlexCleaner
                     return false;
 
                 // Print info
-                Log.Logger.Information("{Name}", fileInfo.FullName);
+                Log.Logger.Information("{FileName}", fileInfo.FullName);
                 processFile.MediaInfoInfo.WriteLine("MediaInfo");
                 processFile.MkvMergeInfo.WriteLine("MKVMerge");
                 processFile.FfProbeInfo.WriteLine("FFprobe");
@@ -466,7 +485,7 @@ namespace PlexCleaner
                     return false;
 
                 // Print info
-                Log.Logger.Information("{Name}", fileInfo.FullName);
+                Log.Logger.Information("{FileName}", fileInfo.FullName);
                 Log.Logger.Information("FFprobe:");
                 Console.Write(processFile.FfProbeText);
                 Log.Logger.Information("MKVMerge:");

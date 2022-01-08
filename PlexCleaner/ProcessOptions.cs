@@ -11,10 +11,10 @@ namespace PlexCleaner
         public string ReMuxExtensions { get; set; } = ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv";
         public bool DeInterlace { get; set; } = true;
         public bool ReEncode { get; set; } = true;
-        public string ReEncodeVideoFormats { get; set; } = "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264";
-        public string ReEncodeVideoCodecs { get; set; } = "*,dx50,div3,mp42,*,*";
-        public string ReEncodeVideoProfiles { get; set; } = "*,*,*,*,*,Constrained Baseline@30";
-        public string ReEncodeAudioFormats { get; set; } = "flac,mp2,vorbis,wmapro,pcm_s16le,opus";
+        public string ReEncodeVideoFormats { get; set; } = "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3";
+        public string ReEncodeVideoCodecs { get; set; } = "*,dx50,div3,mp42,*,*,*";
+        public string ReEncodeVideoProfiles { get; set; } = "*,*,*,*,*,Constrained Baseline@30,*";
+        public string ReEncodeAudioFormats { get; set; } = "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2";
         public bool SetUnknownLanguage { get; set; } = true;
         public string DefaultLanguage { get; set; } = "eng";
         public bool RemoveUnwantedLanguageTracks { get; set; } = true;
@@ -25,6 +25,7 @@ namespace PlexCleaner
         public bool UseSidecarFiles { get; set; } = true;
         public bool SidecarUpdateOnToolChange { get; set; }
         public bool Verify { get; set; } = true;
+        public bool RestoreFileTimestamp { get; set; } = false;
         public List<string> FileIgnoreList { get; } = new();
     }
 }

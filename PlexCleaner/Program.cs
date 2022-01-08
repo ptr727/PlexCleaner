@@ -304,7 +304,7 @@ namespace PlexCleaner
             // Compare the schema version
             if (config.SchemaVersion != ConfigFileJsonSchema.CurrentSchemaVersion)
             {
-                Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {Name}",
+                Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
                                    config.SchemaVersion,
                                    ConfigFileJsonSchema.CurrentSchemaVersion,
                                    options.SettingsFile);
@@ -399,10 +399,10 @@ namespace PlexCleaner
                     FolderList.Add(fileorfolder);
 
                     // Create the file list from the directory
-                    Log.Logger.Information("Getting files and folders from {Name} ...", dirInfo.FullName);
+                    Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
                     if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                     {
-                        Log.Logger.Error("Failed to enumerate directory {Name}", fileorfolder);
+                        Log.Logger.Error("Failed to enumerate directory {Directory}", fileorfolder);
                         return false;
                     }
                     FileInfoList.AddRange(fileInfoList);

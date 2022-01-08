@@ -171,6 +171,10 @@ namespace PlexCleaner
                 {
                     if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                     {
+                        // We need to exclude cover art
+                        if (track.CodecId.Equals("V_MJPEG", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         VideoInfo info = new(track);
                         mediaInfo.Video.Add(info);
                     }

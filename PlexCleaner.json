@@ -42,13 +42,13 @@
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30",
+    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3",
+    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*",
+    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -76,6 +76,8 @@
     "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
+    // Restore media file modified timestamp to original value
+    "RestoreFileTimestamp": false,
     // List of media files to ignore, e.g. repeat processing failures, but media still plays
     // Non-ascii characters must be JSON escaped
     "FileIgnoreList": [

@@ -151,6 +151,10 @@ namespace PlexCleaner
                 {
                     if (track.Type.Equals("video", StringComparison.OrdinalIgnoreCase))
                     {
+                        // We need to exclude cover art
+                        if (track.Codec.Equals("V_MJPEG", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         VideoInfo info = new(track);
                         mediaInfo.Video.Add(info);
                     }
@@ -212,12 +216,12 @@ namespace PlexCleaner
             return IsMkvExtension(Path.GetExtension(filename));
         }
 
-        public static bool IsMkvFile(FileInfo fileinfo)
+        public static bool IsMkvFile(FileInfo fileInfo)
         {
-            if (fileinfo == null)
-                throw new ArgumentNullException(nameof(fileinfo));
+            if (fileInfo == null)
+                throw new ArgumentNullException(nameof(fileInfo));
 
-            return IsMkvExtension(fileinfo.Extension);
+            return IsMkvExtension(fileInfo.Extension);
         }
 
         public static bool IsMkvExtension(string extension)
