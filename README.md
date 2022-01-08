@@ -19,7 +19,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.3.6
+- Version 2.4.1
   - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
   - Fixed media tool logic to account for MWV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
 - Version 2.3.5
