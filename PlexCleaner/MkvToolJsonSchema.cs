@@ -12,123 +12,122 @@ using Newtonsoft.Json;
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
 // ReSharper disable once CheckNamespace
-namespace PlexCleaner.MkvToolJsonSchema
+namespace PlexCleaner.MkvToolJsonSchema;
+
+public class MkvMerge
 {
-    public class MkvMerge
+    [JsonProperty("container")]
+    public Container Container { get; } = new();
+
+    [JsonProperty("global_tags")]
+    public List<GlobalTag> GlobalTags { get; } = new();
+
+    [JsonProperty("track_tags")]
+    public List<TrackTag> TrackTags { get; } = new();
+
+    [JsonProperty("tracks")]
+    public List<Track> Tracks { get; } = new();
+
+    [JsonProperty("attachments")]
+    public List<Attachment> Attachments { get; } = new();
+
+    [JsonProperty("chapters")]
+    public List<Chapter> Chapters { get; } = new();
+
+    public static MkvMerge FromJson(string json) => 
+        JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+
+    private static readonly JsonSerializerSettings Settings = new()
     {
-        [JsonProperty("container")]
-        public Container Container { get; } = new();
+        Formatting = Formatting.Indented
+    };
+}
 
-        [JsonProperty("global_tags")]
-        public List<GlobalTag> GlobalTags { get; } = new();
+public class Container
+{
+    [JsonProperty("properties")]
+    public ContainerProperties Properties { get; } = new();
 
-        [JsonProperty("track_tags")]
-        public List<TrackTag> TrackTags { get; } = new();
+    [JsonProperty("type")]
+    public string Type { get; set; } = "";
+}
 
-        [JsonProperty("tracks")]
-        public List<Track> Tracks { get; } = new();
+public class ContainerProperties
+{
+    [JsonProperty("duration")]
+    public long Duration { get; set; }
+    [JsonProperty("title")]
+    public string Title { get; set; } = "";
+}
 
-        [JsonProperty("attachments")]
-        public List<Attachment> Attachments { get; } = new();
+public class GlobalTag
+{
+    [JsonProperty("num_entries")]
+    public int NumEntries { get; set; }
+}
 
-        [JsonProperty("chapters")]
-        public List<Chapter> Chapters { get; } = new();
+public class TrackTag
+{
+    [JsonProperty("num_entries")]
+    public int NumEntries { get; set; }
 
-        public static MkvMerge FromJson(string json) => 
-            JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+    [JsonProperty("track_id")]
+    public int TrackId { get; set; }
+}
 
-        private static readonly JsonSerializerSettings Settings = new()
-        {
-            Formatting = Formatting.Indented
-        };
-    }
+public class Track
+{
+    [JsonProperty("codec")]
+    public string Codec { get; set; } = "";
 
-    public class Container
-    {
-        [JsonProperty("properties")]
-        public ContainerProperties Properties { get; } = new();
+    [JsonProperty("id")]
+    public int Id { get; set; }
 
-        [JsonProperty("type")]
-        public string Type { get; set; } = "";
-    }
+    [JsonProperty("properties")]
+    public TrackProperties Properties { get; } = new();
 
-    public class ContainerProperties
-    {
-        [JsonProperty("duration")]
-        public long Duration { get; set; }
-        [JsonProperty("title")]
-        public string Title { get; set; } = "";
-    }
+    [JsonProperty("type")]
+    public string Type { get; set; } = "";
+}
 
-    public class GlobalTag
-    {
-        [JsonProperty("num_entries")]
-        public int NumEntries { get; set; }
-    }
+public class TrackProperties
+{
+    [JsonProperty("codec_id")]
+    public string CodecId { get; set; } = "";
 
-    public class TrackTag
-    {
-        [JsonProperty("num_entries")]
-        public int NumEntries { get; set; }
+    [JsonProperty("codec_name")]
+    public string CodecName { get; set; } = "";
 
-        [JsonProperty("track_id")]
-        public int TrackId { get; set; }
-    }
+    [JsonProperty("language")]
+    public string Language { get; set; } = "";
 
-    public class Track
-    {
-        [JsonProperty("codec")]
-        public string Codec { get; set; } = "";
+    [JsonProperty("forced_track")]
+    public bool Forced { get; set; }
 
-        [JsonProperty("id")]
-        public int Id { get; set; }
+    [JsonProperty("tag_language")]
+    public string TagLanguage { get; set; } = "";
 
-        [JsonProperty("properties")]
-        public TrackProperties Properties { get; } = new();
+    [JsonProperty("number")]
+    public int Number { get; set; }
 
-        [JsonProperty("type")]
-        public string Type { get; set; } = "";
-    }
+    [JsonProperty("track_name")]
+    public string TrackName { get; set; } = "";
 
-    public class TrackProperties
-    {
-        [JsonProperty("codec_id")]
-        public string CodecId { get; set; } = "";
+    [JsonProperty("default_track")]
+    public bool DefaultTrack { get; set; }
+}
 
-        [JsonProperty("codec_name")]
-        public string CodecName { get; set; } = "";
+public class Attachment
+{
+    [JsonProperty("content_type")]
+    public string ContentType { get; set; } = "";
 
-        [JsonProperty("language")]
-        public string Language { get; set; } = "";
+    [JsonProperty("id")]
+    public int Id { get; set; }
+}
 
-        [JsonProperty("forced_track")]
-        public bool Forced { get; set; }
-
-        [JsonProperty("tag_language")]
-        public string TagLanguage { get; set; } = "";
-
-        [JsonProperty("number")]
-        public int Number { get; set; }
-
-        [JsonProperty("track_name")]
-        public string TrackName { get; set; } = "";
-
-        [JsonProperty("default_track")]
-        public bool DefaultTrack { get; set; }
-    }
-
-    public class Attachment
-    {
-        [JsonProperty("content_type")]
-        public string ContentType { get; set; } = "";
-
-        [JsonProperty("id")]
-        public int Id { get; set; }
-    }
-
-    public class Chapter
-    {
-        [JsonProperty("type")]
-        public string Type { get; set; } = "";
-    }
+public class Chapter
+{
+    [JsonProperty("type")]
+    public string Type { get; set; } = "";
 }

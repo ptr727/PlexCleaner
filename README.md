@@ -19,9 +19,16 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.3.6
+- Version 2.4.2
+  - Added more robust error and control logic for handling specific AVI files.
+    - Detect and ignore cover art and thumbnail video tracks.
+    - Perform conditional interlace detection using FFmpeg idet filter.
+    - Verify media tool track identification matches.
+    - Modify sidecar file hashing to support small files.
+  - Use C# 10 file scoped namespaces.
+- Version 2.4.1
   - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
-  - Fixed media tool logic to account for MWV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
+  - Fixed media tool logic to account for WMV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
 - Version 2.3.5
   - Deprecation warning for `--mediafiles` option taking multiple paths, instead use multiple invocations.
     - Old style: `--mediafiles path1 path2`
@@ -233,7 +240,7 @@ Create a default configuration file by running:
     // Enable re-mux
     "ReMux": true,
     // Files to remux to MKV
-    "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
+    "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",
     // Enable de-interlace
     // Note de-interlace detection is not absolute
     "DeInterlace": true,
@@ -242,13 +249,13 @@ Create a default configuration file by running:
     // Re-encode the video if the format, codec, and profile values match
     // * will match anything, the number of filter entries must match
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*",
+    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5",
+    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*",
+    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*",
     // Re-encode matching audio codecs
     // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2,pcm_u8,adpcm_ms",
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
