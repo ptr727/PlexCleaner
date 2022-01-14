@@ -10,6 +10,7 @@ using System.IO;
 using Serilog;
 using System.Reflection;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -53,7 +54,7 @@ public class FfMpegTool : MediaTool
 
         // Get version
         const string commandline = "-version";
-        int exitcode = Command(commandline, false, false, out string output, out string error);
+        int exitcode = Command(commandline, out string output, out string error);
         if (exitcode != 0 || error.Length > 0)
             return false;
 
@@ -204,10 +205,14 @@ public class FfMpegTool : MediaTool
         // Too many packets buffered for output stream 0:1
         // Set max_muxing_queue_size to large value to work around issue
 
+        // Use null muxer, no stats, report errors
+        // https://trac.ffmpeg.org/wiki/Null
+
         // Create the FFmpeg commandline and execute
         string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
-        string commandline = $"-i \"{filename}\" -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
-        int exitcode = Command(commandline, true, true, out string _, out error);
+        string commandline = $"-i \"{filename}\" -hide_banner -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
+        // Limit captured output to 5 lines
+        int exitcode = Command(commandline, 5, out string _, out error);
 
         // Test exitcode and stderr errors
         return exitcode == 0 && error.Length == 0;
@@ -388,13 +393,19 @@ public class FfMpegTool : MediaTool
 
     public bool GetIdetInfoText(string inputName, out string text)
     {
-        // Use Idet to get statistics
+        // Use Idet to get frame statistics
         // https://ffmpeg.org/ffmpeg-filters.html#idet
         // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
+
+        // Null output is platform specific
         // https://trac.ffmpeg.org/wiki/Null
+        string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null";
+
+        // Run idet filter
         string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
-        string commandline = $"-i \"{inputName}\" -nostats -xerror -filter:v idet {snippet} -an -f rawvideo -y nul";
-        int exitcode = Command(commandline, false, false, out string _, out text);
+        string commandline = $"-i \"{inputName}\" -hide_banner -nostats -xerror -filter:v idet {snippet} -an -f rawvideo {nullOut}";
+        // Limit captured output to 5 lines
+        int exitcode = Command(commandline, 5, out string _, out text);
         return exitcode == 0;
     }
 

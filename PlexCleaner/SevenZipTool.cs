@@ -39,7 +39,7 @@ public class SevenZipTool : MediaTool
 
         // No version command, run with no arguments
         const string commandline = "";
-        int exitcode = Command(commandline, false, false, out string output);
+        int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
             return false;
 

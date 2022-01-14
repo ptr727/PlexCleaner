@@ -40,7 +40,7 @@ public class MediaInfoTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, false, false, out string output);
+        int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
             return false;
 
@@ -141,7 +141,7 @@ public class MediaInfoTool : MediaTool
     {
         // Get media info as XML
         string commandline = $"--Output=XML \"{filename}\"";
-        int exitcode = Command(commandline, false, false, out xml);
+        int exitcode = Command(commandline, out xml);
 
         // TODO : No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
@@ -176,7 +176,7 @@ public class MediaInfoTool : MediaTool
                 }
                 else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Skip sub-tracks, e.g. DV where TrackId is reported as 0-1
+                    // Skip sub-tracks e.g. 0-1
                     if (string.IsNullOrEmpty(track.CodecId) &&
                         track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
                     { 

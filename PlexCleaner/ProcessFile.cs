@@ -1078,9 +1078,20 @@ public class ProcessFile
             return false;
 
         // Count the frame types using the idet filter
-        Log.Logger.Information("Counting interlaced frames using idet filter : {FileName}", FileInfo.Name);
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out FfMpegIdetInfo idetInfo) ||
-            !idetInfo.IsInterlaced())
+        Log.Logger.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out FfMpegIdetInfo idetInfo))
+            // Error
+            return false;
+
+        // Result
+        bool result = idetInfo.IsInterlaced();
+        Log.Logger.Information("Idet Interlaced: {Result}, Undetermined: {Undetermined}, Progressive: {Progressive}, Interlaced: {Interlaced}, Total: {Total}", 
+                               result,
+                               idetInfo.Undetermined, 
+                               idetInfo.Progressive,
+                               idetInfo.Interlaced,
+                               idetInfo.Total);
+        if (!result)
             return false;
 
         // Idet says yes metadata said no

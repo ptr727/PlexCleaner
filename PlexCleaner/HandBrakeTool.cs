@@ -40,7 +40,7 @@ public class HandBrakeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, false, false, out string output);
+        int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
             return false;
 

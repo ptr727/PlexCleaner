@@ -43,7 +43,7 @@ public class MkvMergeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, false, false, out string output);
+        int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
             return false;
 
@@ -127,7 +127,7 @@ public class MkvMergeTool : MediaTool
     {
         // Get media info as JSON
         string commandline = $"--identify \"{filename}\" --identification-format json";
-        int exitcode = Command(commandline, false, false, out json);
+        int exitcode = Command(commandline, out json);
         return exitcode == 0;
     }
 
@@ -166,6 +166,11 @@ public class MkvMergeTool : MediaTool
                 }
                 else if (track.Type.Equals("subtitles", StringComparison.OrdinalIgnoreCase))
                 {
+                    // TODO: Some variants of DVBSUB are not supported by MkvToolNix
+                    // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1648
+                    // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
+                    // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
+
                     SubtitleInfo info = new(track);
                     mediaInfo.Subtitle.Add(info);
                 }

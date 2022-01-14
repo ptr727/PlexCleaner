@@ -110,7 +110,7 @@ public abstract class MediaTool
         return exitcode;
     }
 
-    public int Command(string parameters, bool console, bool limit, out string output)
+    public int Command(string parameters, out string output)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -119,16 +119,13 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, 
-            parameters, 
-            console, limit ? MaxConsoleLines : 0, 
-            out output);
+        int exitcode = ProcessEx.Execute(path, parameters, false, 0, out output);
         if (exitcode != 0)
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
         return exitcode;
     }
 
-    public int Command(string parameters, bool console, bool limit, out string output, out string error)
+    public int Command(string parameters, out string output, out string error)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -137,12 +134,22 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, 
-            parameters, 
-            console, 
-            limit ? MaxConsoleLines : 0, 
-            out output, 
-            out error);
+        int exitcode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
+        if (exitcode != 0)
+            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
+        return exitcode;
+    }
+
+    public int Command(string parameters, int limit, out string output, out string error)
+    {
+        if (parameters == null)
+            throw new ArgumentNullException(nameof(parameters));
+        parameters = parameters.Trim();
+
+        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
+
+        string path = GetToolPath();
+        int exitcode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
         if (exitcode != 0)
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
         return exitcode;
