@@ -483,6 +483,7 @@ public class MediaInfo
             audio ??= Audio.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase));
 
             // The default track is not always the best track
+            Debug.Assert(audio != null);
             if (preferred != null && 
                 !audio.Format.Equals(preferred.Format, StringComparison.OrdinalIgnoreCase))
             {

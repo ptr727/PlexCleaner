@@ -161,7 +161,7 @@ public static class Tools
             return Program.Config.ToolsOptions.RootPath;
             
         // Get the assembly directory
-        string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+        string toolsroot = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
 
         // Create the root from the relative directory
         return Path.GetFullPath(Path.Combine(toolsroot!, Program.Config.ToolsOptions.RootPath));
@@ -303,7 +303,7 @@ public static class Tools
             // Write updated JSON to file
             ToolInfoJsonSchema.ToFile(toolsFile, toolInfoJson);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }

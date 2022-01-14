@@ -154,6 +154,4 @@ public abstract class MediaTool
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
         return exitcode;
     }
-
-    private const int MaxConsoleLines = 5;
 }
