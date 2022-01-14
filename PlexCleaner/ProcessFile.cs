@@ -970,7 +970,7 @@ public class ProcessFile
 
     public bool VerifyMediaInfo()
     { 
-        // Make sure that the track counts match, else something went wrong
+        // Make sure the track counts match
         if (FfProbeInfo.Audio.Count != MkvMergeInfo.Audio.Count ||
             MkvMergeInfo.Audio.Count != MediaInfoInfo.Audio.Count ||
             FfProbeInfo.Video.Count != MkvMergeInfo.Video.Count ||
@@ -978,12 +978,12 @@ public class ProcessFile
             FfProbeInfo.Subtitle.Count != MkvMergeInfo.Subtitle.Count ||
             MkvMergeInfo.Subtitle.Count != MediaInfoInfo.Subtitle.Count)
         {
-            // Fix faulty logic
+            // Something is wrong; bad logic, bad media, bad tools?
             Log.Logger.Error("Tool track count discrepency : {File}", FileInfo.Name);
             MediaInfoInfo.WriteLine("MediaInfo");
             MkvMergeInfo.WriteLine("MkvMerge");
             FfProbeInfo.WriteLine("FfProbe");
-            Debug.Assert(false);
+
             return false;
         }
         return true;

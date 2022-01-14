@@ -1,4 +1,5 @@
 ﻿using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -46,6 +47,8 @@ public class BitrateInfo
         CombinedBitrate = new Bitrate(Duration);
 
         // Iterate through all the packets
+        long videoPackets = 0;
+        long audioPackets = 0;
         foreach (Packet packet in packetList)
         {
             if (!ShouldCompute(packet, videoStream, audioStream))
@@ -57,14 +60,23 @@ public class BitrateInfo
             // Calculate values
             if (packet.StreamIndex == videoStream)
             {
+                videoPackets ++;
                 VideoBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }
             if (packet.StreamIndex == audioStream)
             {
+                audioPackets ++;
                 AudioBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }
+        }
+
+        // If there are no packets the stream is empty?
+        // MkvMerge and Handbrake do not like empty streams
+        if (videoPackets == 0 || audioPackets == 0)
+        {
+            Log.Logger.Error("Empty stream detected : VideoPackets: {VideoPackets}, AudioPackets: {AudioPackets}", videoPackets, audioPackets);
         }
 
         // Calculate the bitrates
