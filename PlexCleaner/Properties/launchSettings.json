@@ -46,7 +46,7 @@
     },
     "Process Snippets": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --testsnippets --mediafiles \"D:\\Test\""
     },
     "Test": {
       "commandName": "Project",

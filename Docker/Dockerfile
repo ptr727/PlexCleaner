@@ -1,6 +1,8 @@
 # Test locally:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 # docker build ./Docker
+# Ignore docker layer cache
+# docker build --no-cache ./Docker
 
 # Build from latest LTS Ubuntu base image
 FROM ubuntu:latest
@@ -40,6 +42,8 @@ RUN apt-get update \
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
+
+# TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
 
 # Install .NET 6 Runtime
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
