@@ -19,6 +19,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.4.5
+  - Update FFmpeg on Linux to version 5.0. 
 - Version 2.4.3
   - Added more robust error and control logic for handling specific AVI files.
     - Detect and ignore cover art and thumbnail video tracks.
@@ -118,18 +120,20 @@ Below are a few examples of issues I've experienced over the many years of using
 - Listed steps are for Ubuntu, adjust as appropriate for your distribution.
 - Install prerequisites:
   - `sudo apt update`
+  - `sudo apt upgrade -y`
   - `sudo apt install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full`
 - Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
-  - `wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb`
+  - `wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb`
   - `sudo dpkg -i packages-microsoft-prod.deb`
   - `sudo apt update`
   - `sudo apt install -y dotnet-runtime-6.0`
   - `dotnet --info`
 - Install the required 3rd Party tools:
-  - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4):
+  - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5):
     - `sudo add-apt-repository -y ppa:savoury1/graphics`
     - `sudo add-apt-repository -y ppa:savoury1/multimedia`
     - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
+    - `sudo add-apt-repository -y ppa:savoury1/ffmpeg5`
     - `sudo apt update`
     - `sudo apt install -y ffmpeg`
     - `ffmpeg -version`
