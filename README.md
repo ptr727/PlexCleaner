@@ -21,7 +21,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.4.5
   - Update FFmpeg on Linux to version 5.0. 
-- Version 2.4.2
+- Version 2.4.3
   - Added more robust error and control logic for handling specific AVI files.
     - Detect and ignore cover art and thumbnail video tracks.
     - Perform conditional interlace detection using FFmpeg idet filter.
