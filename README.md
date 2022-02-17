@@ -19,6 +19,20 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.5:
+  - Changed the config file JSON schema to v2:
+    - Older file schemas will automatically be upgraded without user input required.
+    - Comma separated lists in string format converted to array of strings.
+      - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
+      - New: `"ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ]`
+    - Multiple VideoFormat comma separated lists in strings converted to array of objects.
+      - Old:
+        - `"ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5"`
+        - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"
+        - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*",`
+      - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
+  - Posting of docker builds to GitHub Packages.
+    - Docker builds will continue to be posted to Docker Hub.
 - Version 2.4.5
   - Update FFmpeg on Linux to version 5.0. 
 - Version 2.4.3
@@ -211,7 +225,7 @@ Create a default configuration file by running:
 ```jsonc
 {
   // JSON Schema version
-  "SchemaVersion": 1,
+  "SchemaVersion": 2,
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
@@ -221,7 +235,7 @@ Create a default configuration file by running:
     // Tools directory relative to binary location
     "RootRelative": true,
     // Automatically check for new tools
-    "AutoUpdate":  false
+    "AutoUpdate": false
   },
   // Convert options
   "ConvertOptions": {
@@ -239,27 +253,48 @@ Create a default configuration file by running:
     // Delete non-media files
     // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
-    // Files to keep but not process, e.g. subtitles, cover art, info, partial, etc.
-    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
+    // File extensions to keep but not process, e.g. subtitles, cover art, info, partial, etc.
+    "KeepExtensions": [ ".partial~", ".nfo", ".jpg", ".srt", ".smi", ".ssa", ".ass", ".vtt" ],
     // Enable re-mux
     "ReMux": true,
-    // Files to remux to MKV
-    "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",
+    // File extensions to remux to MKV
+    "ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ],
     // Enable de-interlace
     // Note de-interlace detection is not absolute
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
-    // Re-encode the video if the format, codec, and profile values match
-    // * will match anything, the number of filter entries must match
+    // Re-encode the video if the Format, Codec, and Profile values match
+    // Empty fields will match with any value
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*",
+    "ReEncodeVideo": [
+      { "Format": "mpeg2video" },
+      {
+        "Format": "mpeg4",
+        "Codec": "dx50"
+      },
+      {
+        "Format": "msmpeg4v3",
+        "Codec": "div3"
+      },
+      {
+        "Format": "msmpeg4v2",
+        "Codec": "mp42"
+      },
+      { "Format": "vc1" },
+      {
+        "Format": "h264",
+        "Profile": "Constrained Baseline@30"
+      },
+      { "Format": "wmv3" },
+      { "Format": "msrle" },
+      { "Format": "rawvideo" },
+      { "Format": "indeo5" }
+    ],
     // Re-encode matching audio codecs
-    // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
+    // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2,pcm_u8,adpcm_ms",
+    "ReEncodeAudioFormats": [ "flac", "mp2", "vorbis", "wmapro", "pcm_s16le", "opus", "wmav2", "pcm_u8", "adpcm_ms" ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -267,8 +302,8 @@ Create a default configuration file by running:
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
-    // Use ISO 639-2 3 letter short form
-    "KeepLanguages": "eng,afr,chi,ind",
+    // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
+    "KeepLanguages": [ "eng", "afr", "chi", "ind" ],
     // Enable removing of duplicate tracks of the same type and language
     // Priority is given to tracks marked as Default
     // Forced subtitle tracks are prioritized
@@ -277,7 +312,7 @@ Create a default configuration file by running:
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
     // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
-    "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
+    "PreferredAudioFormats": [ "truehd atmos", "truehd", "dts-hd master audio", "dts-hd high resolution audio", "dts", "e-ac-3", "ac-3" ],
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
@@ -398,13 +433,14 @@ The following processing will be done:
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
-- Remove all tags, titles, and attachments from the media file.
+- Remove all tags, titles, thumbnails, and attachments from the media file.
 - Set the language to `DefaultLanguage` for any track with an undefined language.
+- If multiple audio tracks of the same language but different encoding formats are present, set the default track based on `PreferredAudioFormats`.
 - Remove tracks with languages not in the `KeepLanguages` list.
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
 - De-interlace the video track if interlaced.
-- Re-encode video to H.264 or H.265 at `VideoEncodeQuality` if video matches the `ReEncodeVideoFormats`, `ReEncodeVideoCodecs`, and `ReEncodeVideoProfiles` list.
+- Re-encode video to H.264/5 if video format matches `ReEncodeVideo`.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 

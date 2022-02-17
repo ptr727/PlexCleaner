@@ -302,16 +302,16 @@ internal class Program
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
         // Compare the schema version
-        if (config.SchemaVersion != ConfigFileJsonSchema.CurrentSchemaVersion)
+        if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+            Log.Logger.Warning("Settings JSON schema out of date : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
-                ConfigFileJsonSchema.CurrentSchemaVersion,
+                ConfigFileJsonSchema.Version,
                 options.SettingsFile);
 
-            // Upgrade schema
-            if (!ConfigFileJsonSchema.Upgrade(config))
-                return null;
+            // Upgrade the file schema
+            Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
+            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
         // Set the static options from the loaded settings
