@@ -287,7 +287,7 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool ReMux(HashSet<string> keepLanguages, List<string> preferredAudioFormats, ref bool modified)
+    public bool ReMux(HashSet<string> keepLanguages, HashSet<string> preferredAudioFormats, ref bool modified)
     {
         // Start out with keeping all the tracks
         MediaInfo keepTracks = MkvMergeInfo;

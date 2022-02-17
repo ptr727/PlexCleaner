@@ -12,66 +12,36 @@ internal class Process
 {
     public Process()
     {
-        // TODO : Add cleanup for extra empty entry when string is empty
-        // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
+        // Convert List<string> to HashSet<string>
+        KeepExtensions = new HashSet<string>(Program.Config.ProcessOptions.KeepExtensions, StringComparer.OrdinalIgnoreCase);
+        ReMuxExtensions = new HashSet<string>(Program.Config.ProcessOptions.ReMuxExtensions, StringComparer.OrdinalIgnoreCase);
+        ReEncodeAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.ReEncodeAudioFormats, StringComparer.OrdinalIgnoreCase);
+        FileIgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
+        PreferredAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.PreferredAudioFormats, StringComparer.OrdinalIgnoreCase);
 
-        // Extensions of otehr files to skip and keep
-        // TODO : Add support for ignoring FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
-        List<string> stringlist = Program.Config.ProcessOptions.KeepExtensions.Split(',').ToList();
-        KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
-
-        // Containers types that can be remuxed to MKV
-        stringlist = Program.Config.ProcessOptions.ReMuxExtensions.Split(',').ToList();
-        ReMuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
-
-        // Languages are in short form using ISO 639-2 notation
-        // https://www.loc.gov/standards/iso639-2/php/code_list.php
-        // zxx = no linguistic content, und = undetermined
-        // Default language
+        // Default to eng if language not set
         if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
             Program.Config.ProcessOptions.DefaultLanguage = "eng";
 
-        // Languages to keep, always keep no linguistic content and the default language
-        // The languages must be in ISO 639-2 form
-        stringlist = Program.Config.ProcessOptions.KeepLanguages.Split(',').ToList();
-        KeepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+        // Always keep zxx no linguistic content and the default language
+        KeepLanguages = new HashSet<string>(Program.Config.ProcessOptions.KeepLanguages, StringComparer.OrdinalIgnoreCase)
         {
             "zxx",
             Program.Config.ProcessOptions.DefaultLanguage
         };
 
-        // Re-encode any video track that match the list
-        // We use ffmpeg to re-encode, so we use ffprobe formats
-        // All other formats will be encoded to h264
-        List<string> codeclist = Program.Config.ProcessOptions.ReEncodeVideoCodecs.Split(',').ToList();
-        List<string> formatlist = Program.Config.ProcessOptions.ReEncodeVideoFormats.Split(',').ToList();
-        List<string> profilelist = Program.Config.ProcessOptions.ReEncodeVideoProfiles.Split(',').ToList();
-        Debug.Assert(codeclist.Count == formatlist.Count && formatlist.Count == profilelist.Count);
-        ReEncodeVideoInfos = new List<VideoInfo>();
-        for (int i = 0; i < codeclist.Count; i ++)
+        // Convert VideoFormat to VideoInfo
+        ReEncodeVideoInfos = new();
+        foreach (var format in Program.Config.ProcessOptions.ReEncodeVideo)
         {
-            // We match against the format and profile
-            // Match the logic in VideoInfo.CompareVideo
             VideoInfo videoinfo = new()
             {
-                Codec = codeclist.ElementAt(i),
-                Format = formatlist.ElementAt(i),
-                Profile = profilelist.ElementAt(i)
+                Codec = format.Codec,
+                Format = format.Format,
+                Profile = format.Profile
             };
             ReEncodeVideoInfos.Add(videoinfo);
         }
-
-        // Re-encode any audio track that match the list
-        // We use ffmpeg to re-encode, so we use ffprobe formats
-        // All other formats will be encoded to the default codec, e.g. ac3
-        stringlist = Program.Config.ProcessOptions.ReEncodeAudioFormats.Split(',').ToList();
-        ReEncodeAudioFormats = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
-
-        // Preferred audio codecs
-        PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats.Split(',').ToList();
-
-        // File ignore list
-        IgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
     }
 
     public bool ProcessFolders(List<string> folderList)
@@ -145,7 +115,7 @@ internal class Process
 
         // Write the updated ignore file list
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-            Program.Config.ProcessOptions.FileIgnoreList.Count != IgnoreList.Count)
+            Program.Config.ProcessOptions.FileIgnoreList.Count != FileIgnoreList.Count)
         {
             Log.Logger.Information("Updating settings file : {SettingsFile}", Program.Options.SettingsFile);
             Program.Config.ProcessOptions.FileIgnoreList.Sort();
@@ -163,7 +133,7 @@ internal class Process
         DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
         // Skip the file if it is in the ignore list
-        if (IgnoreList.Contains(fileInfo.FullName))
+        if (FileIgnoreList.Contains(fileInfo.FullName))
         {
             Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
             return true;
@@ -579,11 +549,11 @@ internal class Process
         return errorCount == 0;
     }
 
-    private readonly HashSet<string> IgnoreList;
+    private readonly HashSet<string> FileIgnoreList;
     private readonly HashSet<string> KeepExtensions;
     private readonly HashSet<string> ReMuxExtensions;
     private readonly HashSet<string> ReEncodeAudioFormats;
     private readonly HashSet<string> KeepLanguages;
-    private readonly List<string> PreferredAudioFormats;
+    private readonly HashSet<string> PreferredAudioFormats;
     private readonly List<VideoInfo> ReEncodeVideoInfos;
 }

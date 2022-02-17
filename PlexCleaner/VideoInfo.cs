@@ -79,13 +79,10 @@ public class VideoInfo : TrackInfo
             throw new ArgumentNullException(nameof(compare));
 
         // Match the Format, Codec, and Profile
-        // * is a wildcard match
-        bool formatMatch = compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase) || 
-                           compare.Format.Equals("*", StringComparison.OrdinalIgnoreCase);
-        bool codecMatch = compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase) || 
-                          compare.Codec.Equals("*", StringComparison.OrdinalIgnoreCase);
-        bool profileMatch = compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase) || 
-                            compare.Profile.Equals("*", StringComparison.OrdinalIgnoreCase);
+        // Null or empty string is a wildcard match
+        bool formatMatch = string.IsNullOrEmpty(compare.Format) || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);
+        bool codecMatch = string.IsNullOrEmpty(compare.Codec) || compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase);
+        bool profileMatch = string.IsNullOrEmpty(compare.Profile) || compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase);
 
         return formatMatch && codecMatch && profileMatch;
     }
