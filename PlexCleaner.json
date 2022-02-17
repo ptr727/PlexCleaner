@@ -29,11 +29,30 @@
     // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
     // File extensions to keep but not process, e.g. subtitles, cover art, info, partial, etc.
-    "KeepExtensions": [ ".partial~", ".nfo", ".jpg", ".srt", ".smi", ".ssa", ".ass", ".vtt" ],
+    "KeepExtensions": [
+      ".partial~",
+      ".nfo",
+      ".jpg",
+      ".srt",
+      ".smi",
+      ".ssa",
+      ".ass",
+      ".vtt"
+    ],
     // Enable re-mux
     "ReMux": true,
     // File extensions to remux to MKV
-    "ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ],
+    "ReMuxExtensions": [
+      ".avi",
+      ".m2ts",
+      ".ts",
+      ".vob",
+      ".mp4",
+      ".m4v",
+      ".asf",
+      ".wmv",
+      ".dv"
+    ],
     // Enable de-interlace
     // Note de-interlace detection is not absolute
     "DeInterlace": true,
@@ -43,7 +62,9 @@
     // Empty fields will match with any value
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideo": [
-      { "Format": "mpeg2video" },
+      {
+        "Format": "mpeg2video"
+      },
       {
         "Format": "mpeg4",
         "Codec": "dx50"
@@ -56,20 +77,40 @@
         "Format": "msmpeg4v2",
         "Codec": "mp42"
       },
-      { "Format": "vc1" },
+      {
+        "Format": "vc1"
+      },
       {
         "Format": "h264",
         "Profile": "Constrained Baseline@30"
       },
-      { "Format": "wmv3" },
-      { "Format": "msrle" },
-      { "Format": "rawvideo" },
-      { "Format": "indeo5" }
+      {
+        "Format": "wmv3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "indeo5"
+      }
     ],
     // Re-encode matching audio codecs
     // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": [ "flac", "mp2", "vorbis", "wmapro", "pcm_s16le", "opus", "wmav2", "pcm_u8", "adpcm_ms" ],
+    "ReEncodeAudioFormats": [
+      "flac",
+      "mp2",
+      "vorbis",
+      "wmapro",
+      "pcm_s16le",
+      "opus",
+      "wmav2",
+      "pcm_u8",
+      "adpcm_ms"
+    ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -78,7 +119,12 @@
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
     // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
-    "KeepLanguages": [ "eng", "afr", "chi", "ind" ],
+    "KeepLanguages": [
+      "eng",
+      "afr",
+      "chi",
+      "ind"
+    ],
     // Enable removing of duplicate tracks of the same type and language
     // Priority is given to tracks marked as Default
     // Forced subtitle tracks are prioritized
@@ -87,7 +133,15 @@
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
     // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
-    "PreferredAudioFormats": [ "truehd atmos", "truehd", "dts-hd master audio", "dts-hd high resolution audio", "dts", "e-ac-3", "ac-3" ],
+    "PreferredAudioFormats": [
+      "truehd atmos",
+      "truehd",
+      "dts-hd master audio",
+      "dts-hd high resolution audio",
+      "dts",
+      "e-ac-3",
+      "ac-3"
+    ],
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,

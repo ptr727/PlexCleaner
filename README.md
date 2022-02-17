@@ -15,26 +15,28 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)  
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ptr727/PlexCleaner/Build%20and%20Publish%20Pipeline?logo=github)  
 ![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)  
-![Docker Image Version](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)
+![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)  
+![Docker Develop Release](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=develop&logo=docker)
 
 ## Release Notes
 
 - Version 2.5:
   - Changed the config file JSON schema to v2:
-    - Older file schemas will automatically be upgraded without user input required.
+    - Simplifies authoring of multi-value settings.
+    - Older file schemas will automatically be upgraded without requiring user input.
     - Comma separated lists in string format converted to array of strings.
       - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
       - New: `"ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ]`
     - Multiple VideoFormat comma separated lists in strings converted to array of objects.
       - Old:
         - `"ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5"`
-        - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"
-        - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*",`
+        - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"`
+        - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*"`
       - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
-  - Posting of docker builds to GitHub Packages.
-    - Docker builds will continue to be posted to Docker Hub.
+  - Posting of docker builds to [GitHub Packages](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+    - Docker builds will continue to also be posted to Docker Hub.
 - Version 2.4.5
-  - Update FFmpeg on Linux to version 5.0. 
+  - Update FFmpeg in Linux instructions and in Docker builds to version 5.0.
 - Version 2.4.3
   - Added more robust error and control logic for handling specific AVI files.
     - Detect and ignore cover art and thumbnail video tracks.
@@ -254,11 +256,30 @@ Create a default configuration file by running:
     // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
     // File extensions to keep but not process, e.g. subtitles, cover art, info, partial, etc.
-    "KeepExtensions": [ ".partial~", ".nfo", ".jpg", ".srt", ".smi", ".ssa", ".ass", ".vtt" ],
+    "KeepExtensions": [
+      ".partial~",
+      ".nfo",
+      ".jpg",
+      ".srt",
+      ".smi",
+      ".ssa",
+      ".ass",
+      ".vtt"
+    ],
     // Enable re-mux
     "ReMux": true,
     // File extensions to remux to MKV
-    "ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ],
+    "ReMuxExtensions": [
+      ".avi",
+      ".m2ts",
+      ".ts",
+      ".vob",
+      ".mp4",
+      ".m4v",
+      ".asf",
+      ".wmv",
+      ".dv"
+    ],
     // Enable de-interlace
     // Note de-interlace detection is not absolute
     "DeInterlace": true,
@@ -268,7 +289,9 @@ Create a default configuration file by running:
     // Empty fields will match with any value
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideo": [
-      { "Format": "mpeg2video" },
+      {
+        "Format": "mpeg2video"
+      },
       {
         "Format": "mpeg4",
         "Codec": "dx50"
@@ -281,20 +304,40 @@ Create a default configuration file by running:
         "Format": "msmpeg4v2",
         "Codec": "mp42"
       },
-      { "Format": "vc1" },
+      {
+        "Format": "vc1"
+      },
       {
         "Format": "h264",
         "Profile": "Constrained Baseline@30"
       },
-      { "Format": "wmv3" },
-      { "Format": "msrle" },
-      { "Format": "rawvideo" },
-      { "Format": "indeo5" }
+      {
+        "Format": "wmv3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "indeo5"
+      }
     ],
     // Re-encode matching audio codecs
     // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": [ "flac", "mp2", "vorbis", "wmapro", "pcm_s16le", "opus", "wmav2", "pcm_u8", "adpcm_ms" ],
+    "ReEncodeAudioFormats": [
+      "flac",
+      "mp2",
+      "vorbis",
+      "wmapro",
+      "pcm_s16le",
+      "opus",
+      "wmav2",
+      "pcm_u8",
+      "adpcm_ms"
+    ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -303,7 +346,12 @@ Create a default configuration file by running:
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
     // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
-    "KeepLanguages": [ "eng", "afr", "chi", "ind" ],
+    "KeepLanguages": [
+      "eng",
+      "afr",
+      "chi",
+      "ind"
+    ],
     // Enable removing of duplicate tracks of the same type and language
     // Priority is given to tracks marked as Default
     // Forced subtitle tracks are prioritized
@@ -312,7 +360,15 @@ Create a default configuration file by running:
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
     // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
-    "PreferredAudioFormats": [ "truehd atmos", "truehd", "dts-hd master audio", "dts-hd high resolution audio", "dts", "e-ac-3", "ac-3" ],
+    "PreferredAudioFormats": [
+      "truehd atmos",
+      "truehd",
+      "dts-hd master audio",
+      "dts-hd high resolution audio",
+      "dts",
+      "e-ac-3",
+      "ac-3"
+    ],
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
