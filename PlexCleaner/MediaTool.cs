@@ -1,8 +1,8 @@
-using System;
 using InsaneGenius.Utilities;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System;
+using System.Runtime.InteropServices;
 
 namespace PlexCleaner;
 
@@ -36,8 +36,8 @@ public abstract class MediaTool
     // Installed version information retrieved from the tool commandline
     public abstract bool GetInstalledVersion(out MediaToolInfo mediaToolInfo);
     // Latest downloadable version
-    public abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
-    public abstract bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo);
+    protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
+    protected abstract bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo);
 
     // Tools can override the default behavior as needed
     public virtual bool Update(string updateFile)
@@ -55,7 +55,7 @@ public abstract class MediaTool
 
     // Tool subfolder, e.g. /x64, /bin
     // Used in GetToolPath()
-    public virtual string GetSubFolder()
+    protected virtual string GetSubFolder()
     {
         return "";
     }
@@ -64,7 +64,7 @@ public abstract class MediaTool
     // Version information is used in the sidecar tool logic
     public MediaToolInfo Info { get; set; }
 
-    public string GetToolName()
+    private string GetToolName()
     {
         // Windows or Linux
         // TODO: Mac may work the same as Linux, but untested
@@ -81,7 +81,7 @@ public abstract class MediaTool
         return Program.Config.ToolsOptions.UseSystem ? toolName : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
     }
 
-    public string GetToolFolder()
+    protected string GetToolFolder()
     {
         // Append to tools folder using tool family type as folder name
         // Sub folders are not included in the tool folder
@@ -95,7 +95,7 @@ public abstract class MediaTool
         return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
     }
 
-    public int Command(string parameters)
+    protected int Command(string parameters)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -104,13 +104,13 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, parameters);
-        if (exitcode != 0)
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
-        return exitcode;
+        int exitCode = ProcessEx.Execute(path, parameters);
+        if (exitCode != 0)
+            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        return exitCode;
     }
 
-    public int Command(string parameters, out string output)
+    protected int Command(string parameters, out string output)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -119,13 +119,13 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, parameters, false, 0, out output);
-        if (exitcode != 0)
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
-        return exitcode;
+        int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output);
+        if (exitCode != 0)
+            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        return exitCode;
     }
 
-    public int Command(string parameters, out string output, out string error)
+    protected int Command(string parameters, out string output, out string error)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -134,13 +134,13 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
-        if (exitcode != 0)
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
-        return exitcode;
+        int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
+        if (exitCode != 0)
+            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        return exitCode;
     }
 
-    public int Command(string parameters, int limit, out string output, out string error)
+    protected int Command(string parameters, int limit, out string output, out string error)
     {
         if (parameters == null)
             throw new ArgumentNullException(nameof(parameters));
@@ -149,9 +149,9 @@ public abstract class MediaTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
-        int exitcode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
-        if (exitcode != 0)
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitcode);
-        return exitcode;
+        int exitCode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
+        if (exitCode != 0)
+            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        return exitCode;
     }
 }

@@ -25,12 +25,12 @@ public class MediaToolInfo : IComparable
 
     public void WriteLine(string prefix)
     {
-        Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}", 
-            prefix, 
-            ToolType, 
-            Version, 
-            FileName, 
-            Size, 
+        Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}",
+            prefix,
+            ToolType,
+            Version,
+            FileName,
+            Size,
             ModifiedTime, Url);
     }
 

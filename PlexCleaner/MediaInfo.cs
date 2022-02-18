@@ -53,21 +53,21 @@ public class MediaInfo
         return ordered;
     }
 
-    public static List<TrackInfo> GetTrackList(List<VideoInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<VideoInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
         return trackList;
     }
 
-    public static List<TrackInfo> GetTrackList(List<AudioInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<AudioInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
         return trackList;
     }
 
-    public static List<TrackInfo> GetTrackList(List<SubtitleInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<SubtitleInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
@@ -265,7 +265,7 @@ public class MediaInfo
         // [matroska @ 00000195b3585c80] Can't write packet with unknown timestamp
         // av_interleaved_write_frame(): Invalid argument
         if (reencode.Audio.Count > 0 &&
-            keep.Video.Any(item => 
+            keep.Video.Any(item =>
                 !item.Format.Equals("h264", StringComparison.OrdinalIgnoreCase) &&
                 !item.Format.Equals("hevc", StringComparison.OrdinalIgnoreCase)))
         {
@@ -338,16 +338,10 @@ public class MediaInfo
         }
 
         // Keep one instance of each language
-        foreach (string language in languages)
+        foreach (VideoInfo video in from language in languages
+                                    let video = Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) && item.Default)
+                                    select video ?? Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase)))
         {
-            // Use the first default track
-            VideoInfo video = Video.Find(item =>
-                item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
-                item.Default);
-
-            // If nothing found, use the first track
-            video ??= Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase));
-
             // Keep it
             keep.Video.Add(video);
         }
@@ -484,7 +478,7 @@ public class MediaInfo
 
             // The default track is not always the best track
             Debug.Assert(audio != null);
-            if (preferred != null && 
+            if (preferred != null &&
                 !audio.Format.Equals(preferred.Format, StringComparison.OrdinalIgnoreCase))
             {
                 audio = preferred;
@@ -586,10 +580,7 @@ public class MediaInfo
     public static bool IsUsefulTrackTitle(string title)
     {
         // Does the track have a useful title
-        // TODO: Keep the logic updated as new title logic is added
-        return title.Equals("SDH", StringComparison.OrdinalIgnoreCase) ||
-               title.Equals("Commentary", StringComparison.OrdinalIgnoreCase) ||
-               title.Equals("Forced", StringComparison.OrdinalIgnoreCase);
+        return UsefulTitles.Any(useful => title.Equals(useful, StringComparison.OrdinalIgnoreCase));
     }
 
     public static bool IsTagTitle(string title)
@@ -648,15 +639,11 @@ public class MediaInfo
 
     private static bool MatchCoverArt(string codec)
     {
-        foreach (string cover in CoverArtFormat)
-        {
-            // Match on substrings
-            if (codec.Contains(cover, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
+        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
     }
 
     // Cover art and thumbnail formats
     private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "mjpeg", "png" };
+    // Not so useful track titles
+    private static readonly string[] UsefulTitles = { "SDH", "Commentary", "Forced" };
 }

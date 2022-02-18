@@ -1,12 +1,12 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using InsaneGenius.Utilities;
-using System.Runtime.InteropServices;
-using System.IO;
+﻿using InsaneGenius.Utilities;
 using Serilog;
-using System.Reflection;
+using System;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace PlexCleaner;
 
@@ -69,7 +69,7 @@ public class SevenZipTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -102,7 +102,7 @@ public class SevenZipTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -111,7 +111,7 @@ public class SevenZipTool : MediaTool
         return false;
     }
 
-    public override string GetSubFolder()
+    protected override string GetSubFolder()
     {
         return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
     }

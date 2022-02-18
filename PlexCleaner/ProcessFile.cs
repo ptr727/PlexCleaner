@@ -267,8 +267,8 @@ public class ProcessFile
             // Nothing to do
             return true;
 
-        Log.Logger.Information("Setting unknown language tracks to {DefaultLanguage} : {FileName}", 
-            Program.Config.ProcessOptions.DefaultLanguage, 
+        Log.Logger.Information("Setting unknown language tracks to {DefaultLanguage} : {FileName}",
+            Program.Config.ProcessOptions.DefaultLanguage,
             FileInfo.Name);
         known.WriteLine("Known");
         unknown.WriteLine("Unknown");
@@ -446,7 +446,7 @@ public class ProcessFile
     {
         // Conditional or always
         if (conditional)
-        { 
+        {
             // Verify if enabled
             if (!Program.Config.ProcessOptions.Verify)
                 return true;
@@ -469,14 +469,14 @@ public class ProcessFile
 
         // Break out and skip to end when any verification step fails
         bool verified = false;
-        for (;;)
+        for (; ; )
         {
             // Need at least one video or audio track
             if (MediaInfoInfo.Video.Count == 0 && MediaInfoInfo.Audio.Count == 0)
             {
                 Log.Logger.Error("File missing audio and video track : {FileName}", FileInfo.Name);
                 MediaInfoInfo.WriteLine("Missing");
-                    
+
                 // Done
                 break;
             }
@@ -583,7 +583,7 @@ public class ProcessFile
 
             // Delete files if enabled
             if (Program.Config.VerifyOptions.DeleteInvalidFiles)
-            { 
+            {
                 // Delete the media file and sidecar file
                 // Ignore delete errors
                 Log.Logger.Information("Deleting media file due to failed verification : {FileName}", FileInfo.FullName);
@@ -712,15 +712,7 @@ public class ProcessFile
             return true;
 
         // Look for HDR10 format
-        bool hdr10 = false;
-        foreach (string format in Hdr10Format)
-        {
-            if (videoInfo.FormatHdr.Contains(format, StringComparison.OrdinalIgnoreCase))
-            {
-                hdr10 = true;
-                break;
-            }
-        }
+        bool hdr10 = Hdr10Format.Any(format => videoInfo.FormatHdr.Contains(format, StringComparison.OrdinalIgnoreCase));
         if (!hdr10)
         {
             Log.Logger.Warning("Video lacks HDR10 compatibility : {Hdr} : {FileName}", videoInfo.FormatHdr, FileInfo.Name);
@@ -748,7 +740,7 @@ public class ProcessFile
             FileInfo.Name);
         Log.Logger.Information("Calculating interlaced frame info : {FileName}", FileInfo.Name);
         if (!Tools.FfMpeg.GetIdetInfo(FileInfo.FullName, out FfMpegIdetInfo idetinfo))
-        { 
+        {
             Log.Logger.Error("Failed to calculate interlaced frame info : {FileName}", FileInfo.Name);
             return false;
         }
@@ -897,7 +889,7 @@ public class ProcessFile
 
         // Set modified timestamp
         File.SetLastWriteTimeUtc(FileInfo.FullName, lastWriteTimeUtc);
-            
+
         // Refresh sidecar info
         return Refresh(true);
     }
@@ -907,7 +899,7 @@ public class ProcessFile
         // Media filename changed
         // Compare case sensitive for Linux support
         if (!FileInfo.FullName.Equals(filename, StringComparison.Ordinal))
-        { 
+        {
             // Refresh file info but preserve state
             FileInfo = new FileInfo(filename);
             SidecarFile.States state = SidecarFile.State | SidecarFile.States.ReNamed;
@@ -954,9 +946,9 @@ public class ProcessFile
         }
 
         // Get info directly from tools
-        if (!MediaInfo.GetMediaInfo(FileInfo, 
-                out MediaInfo ffprobeInfo, 
-                out MediaInfo mkvmergeInfo, 
+        if (!MediaInfo.GetMediaInfo(FileInfo,
+                out MediaInfo ffprobeInfo,
+                out MediaInfo mkvmergeInfo,
                 out MediaInfo mediainfoInfo))
             return false;
 
@@ -969,7 +961,7 @@ public class ProcessFile
     }
 
     public bool VerifyMediaInfo()
-    { 
+    {
         // Make sure the track counts match
         if (FfProbeInfo.Audio.Count != MkvMergeInfo.Audio.Count ||
             MkvMergeInfo.Audio.Count != MediaInfoInfo.Audio.Count ||
@@ -981,8 +973,8 @@ public class ProcessFile
             // Something is wrong; bad logic, bad media, bad tools?
             Log.Logger.Error("Tool track count discrepency : {File}", FileInfo.Name);
             MediaInfoInfo.WriteLine("MediaInfo");
-            MkvMergeInfo.WriteLine("MkvMerge");
-            FfProbeInfo.WriteLine("FfProbe");
+            MkvMergeInfo.WriteLine("MKVMerge");
+            FfProbeInfo.WriteLine("FFProbe");
 
             return false;
         }
@@ -1001,11 +993,9 @@ public class ProcessFile
     public bool GetToolInfo()
     {
         // Read the tool info text
-        // ReSharper disable once InlineOutVariableDeclaration
-        string mediaInfoXml, mkvMergeInfoJson, ffProbeInfoJson;
-        if (!Tools.MediaInfo.GetMediaInfoXml(FileInfo.FullName, out mediaInfoXml) ||
-            !Tools.MkvMerge.GetMkvInfoJson(FileInfo.FullName, out mkvMergeInfoJson) ||
-            !Tools.FfProbe.GetFfProbeInfoJson(FileInfo.FullName, out ffProbeInfoJson))
+        if (!Tools.MediaInfo.GetMediaInfoXml(FileInfo.FullName, out string mediaInfoXml) ||
+            !Tools.MkvMerge.GetMkvInfoJson(FileInfo.FullName, out string mkvMergeInfoJson) ||
+            !Tools.FfProbe.GetFfProbeInfoJson(FileInfo.FullName, out string ffProbeInfoJson))
         {
             Log.Logger.Error("Failed to read tool info : {FileName}", FileInfo.Name);
             return false;
@@ -1025,7 +1015,7 @@ public class ProcessFile
         FileInfo.Refresh();
         DateTime fileTime = FileInfo.LastWriteTimeUtc;
         Log.Logger.Information("MonitorFileTime : {FileTime} : {FileName}\"", fileTime, FileInfo.Name);
-        for (int i = 0; i < seconds; i ++)
+        for (int i = 0; i < seconds; i++)
         {
             if (Program.IsCancelled(1000))
                 break;
@@ -1033,9 +1023,9 @@ public class ProcessFile
             if (FileInfo.LastWriteTimeUtc != fileTime)
             {
                 timestampChanged = true;
-                Log.Logger.Warning("MonitorFileTime : {LastWriteTimeUtc} != {FileTime} : {FileName}", 
-                    FileInfo.LastWriteTimeUtc, 
-                    fileTime, 
+                Log.Logger.Warning("MonitorFileTime : {LastWriteTimeUtc} != {FileTime} : {FileName}",
+                    FileInfo.LastWriteTimeUtc,
+                    fileTime,
                     FileInfo.Name);
             }
             fileTime = FileInfo.LastWriteTimeUtc;
@@ -1058,7 +1048,7 @@ public class ProcessFile
         bitrateInfo = new BitrateInfo();
         bitrateInfo.Calculate(packetList,
             FfProbeInfo.Video.Count > 0 ? FfProbeInfo.Video.First().Id : -1,
-            FfProbeInfo.Audio.Count > 0 ? FfProbeInfo.Audio.First().Id : -1, 
+            FfProbeInfo.Audio.Count > 0 ? FfProbeInfo.Audio.First().Id : -1,
             Program.Config.VerifyOptions.MaximumBitrate / 8);
 
         return true;
@@ -1085,9 +1075,9 @@ public class ProcessFile
 
         // Result
         bool result = idetInfo.IsInterlaced();
-        Log.Logger.Information("Idet Interlaced: {Result}, Undetermined: {Undetermined}, Progressive: {Progressive}, Interlaced: {Interlaced}, Total: {Total}", 
+        Log.Logger.Information("Idet Interlaced: {Result}, Undetermined: {Undetermined}, Progressive: {Progressive}, Interlaced: {Interlaced}, Total: {Total}",
                                result,
-                               idetInfo.Undetermined, 
+                               idetInfo.Undetermined,
                                idetInfo.Progressive,
                                idetInfo.Interlaced,
                                idetInfo.Total);

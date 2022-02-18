@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
-using System.IO;
-using System.ComponentModel;
 using System;
+using System.ComponentModel;
+using System.IO;
 
 namespace PlexCleaner;
 
@@ -16,11 +16,11 @@ public class ConfigFileJsonSchemaBase
 [Obsolete("Replaced in Schema v2", false)]
 public class ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    public ToolsOptions ToolsOptions { get; set; } = new();
-    public ConvertOptions ConvertOptions { get; set; } = new();
-    public ProcessOptions1 ProcessOptions { get; set; } = new();
-    public MonitorOptions MonitorOptions { get; set; } = new();
-    public VerifyOptions VerifyOptions { get; set; } = new();
+    public ToolsOptions ToolsOptions { get; } = new();
+    public ConvertOptions ConvertOptions { get; } = new();
+    public ProcessOptions1 ProcessOptions { get; } = new();
+    public MonitorOptions MonitorOptions { get; } = new();
+    public VerifyOptions VerifyOptions { get; } = new();
 
     public const int Version = 1;
 }
@@ -43,14 +43,14 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         VerifyOptions = configFileJsonSchema1.VerifyOptions;
 
         // Create current version from old version
-        ProcessOptions = new(configFileJsonSchema1.ProcessOptions);
+        ProcessOptions = new ProcessOptions(configFileJsonSchema1.ProcessOptions);
     }
 
-    public ToolsOptions ToolsOptions { get; set; } = new();
-    public ConvertOptions ConvertOptions { get; set; } = new();
-    public ProcessOptions ProcessOptions { get; set; } = new();
-    public MonitorOptions MonitorOptions { get; set; } = new();
-    public VerifyOptions VerifyOptions { get; set; } = new();
+    public ToolsOptions ToolsOptions { get; } = new();
+    public ConvertOptions ConvertOptions { get; } = new();
+    public ProcessOptions ProcessOptions { get; } = new();
+    public MonitorOptions MonitorOptions { get; } = new();
+    public VerifyOptions VerifyOptions { get; } = new();
 
     public const int Version = 2;
 
@@ -68,19 +68,22 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
     public static void ToFile(string path, ConfigFileJsonSchema json)
     {
         // Set the schema to the current version
-        json.SchemaVersion = ConfigFileJsonSchema.Version;
+        json.SchemaVersion = Version;
 
         // Write JSON to file
         File.WriteAllText(path, ToJson(json));
     }
 
-    public static string ToJson(ConfigFileJsonSchema settings) =>
+    private static string ToJson(ConfigFileJsonSchema settings) =>
         JsonConvert.SerializeObject(settings, Settings);
 
-    public static ConfigFileJsonSchema FromJson(string json)
+    private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        int schemaVersion = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings).SchemaVersion;
+        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
+        if (configFileJsonSchemaBase == null)
+            return null;
+        int schemaVersion = configFileJsonSchemaBase.SchemaVersion;
 
         // Deserialize the correct version
         switch (schemaVersion)
@@ -92,7 +95,7 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
                 return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings));
 #pragma warning restore CS0618 // Type or member is obsolete
             // Current version
-            case ConfigFileJsonSchema.Version:
+            case Version:
                 return JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
             // Unknown version
             default:

@@ -12,13 +12,8 @@ public class Bitrate
         Rate = new long[seconds];
     }
 
-    public void Calculate()
-    {
-        Calculate(0);
-    }
-
     // Threshold is in bytes per second
-    public void Calculate(int threshold)
+    public void Calculate(int threshold = 0)
     {
         Minimum = 0;
         Maximum = 0;
@@ -42,8 +37,8 @@ public class Bitrate
                 // Bitrate exceeds threshold
                 if (bitrate > threshold)
                 {
-                    Exceeded ++;
-                    exceeded ++;
+                    Exceeded++;
+                    exceeded++;
 
                     // Maximum exceeded duration
                     if (exceeded > Duration)
@@ -59,13 +54,13 @@ public class Bitrate
 
     public void WriteLine(string prefix)
     {
-        Log.Logger.Information("{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}", 
-            prefix,                    
-            TimeSpan.FromSeconds(Rate.Length), 
-            ToBitsPerSecond(Minimum), 
-            ToBitsPerSecond(Maximum), 
-            ToBitsPerSecond(Average), 
-            Exceeded, 
+        Log.Logger.Information("{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
+            prefix,
+            TimeSpan.FromSeconds(Rate.Length),
+            ToBitsPerSecond(Minimum),
+            ToBitsPerSecond(Maximum),
+            ToBitsPerSecond(Average),
+            Exceeded,
             TimeSpan.FromSeconds(Duration));
     }
 

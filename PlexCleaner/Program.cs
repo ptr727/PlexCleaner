@@ -106,7 +106,7 @@ internal class Program
 
         // Process all files
         Process process = new();
-        return process.ProcessFiles(program.FileInfoList) && 
+        return process.ProcessFiles(program.FileInfoList) &&
                Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
     }
 
@@ -266,9 +266,9 @@ internal class Program
     }
 
     // Add a reference to this class in the event handler arguments
-    private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
+    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e);
 
-    private static void CancelHandler(ConsoleCancelEventArgs e, Program _)
+    private static void CancelHandler(ConsoleCancelEventArgs e)
     {
         Log.Logger.Warning("Cancel key pressed");
         e.Cancel = true;
@@ -325,7 +325,7 @@ internal class Program
 
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = CancelSource.Token;
-            
+
         // Use log file
         if (!string.IsNullOrEmpty(options.LogFile))
         {
@@ -343,7 +343,7 @@ internal class Program
         }
 
         // Log app and runtime version
-        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
 
@@ -378,15 +378,15 @@ internal class Program
         files = files.Select(file => file.Trim('"')).ToList();
 
         // Process all entries
-        foreach (string fileorfolder in files)
+        foreach (string fileOrFolder in files)
         {
             // File or a directory
             FileAttributes fileAttributes;
             try
             {
-                fileAttributes = File.GetAttributes(fileorfolder);
+                fileAttributes = File.GetAttributes(fileOrFolder);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -394,15 +394,15 @@ internal class Program
             if (fileAttributes.HasFlag(FileAttributes.Directory))
             {
                 // Add this directory
-                DirectoryInfo dirInfo = new(fileorfolder);
+                DirectoryInfo dirInfo = new(fileOrFolder);
                 DirectoryInfoList.Add(dirInfo);
-                FolderList.Add(fileorfolder);
+                FolderList.Add(fileOrFolder);
 
                 // Create the file list from the directory
                 Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
-                if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                 {
-                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileorfolder);
+                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
                     return false;
                 }
                 FileInfoList.AddRange(fileInfoList);
@@ -411,8 +411,7 @@ internal class Program
             else
             {
                 // Add this file
-                FileList.Add(fileorfolder);
-                FileInfoList.Add(new FileInfo(fileorfolder));
+                FileInfoList.Add(new FileInfo(fileOrFolder));
             }
         }
 
@@ -429,12 +428,7 @@ internal class Program
         return IsCancelled(100);
     }
 
-    public static bool IsCancelled()
-    {
-        return IsCancelled(0);
-    }
-
-    public static bool IsCancelled(int milliseconds)
+    public static bool IsCancelled(int milliseconds = 0)
     {
         return CancelSource.Token.WaitHandle.WaitOne(milliseconds);
     }
@@ -445,13 +439,12 @@ internal class Program
         CancelSource.Cancel();
     }
 
-    public static CommandLineOptions Options { get; set; }
-    public static ConfigFileJsonSchema Config { get; set; }
+    public static CommandLineOptions Options { get; private set; }
+    public static ConfigFileJsonSchema Config { get; private set; }
 
     private static readonly CancellationTokenSource CancelSource = new();
 
     private readonly List<string> FolderList = new();
     private readonly List<DirectoryInfo> DirectoryInfoList = new();
-    private readonly List<string> FileList = new();
     private readonly List<FileInfo> FileInfoList = new();
 }

@@ -1,13 +1,13 @@
+using InsaneGenius.Utilities;
+using Newtonsoft.Json;
+using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using InsaneGenius.Utilities;
-using PlexCleaner.FfMpegToolJsonSchema;
 using System.IO;
-using Newtonsoft.Json;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
-using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -51,8 +51,8 @@ public class FfProbeTool : FfMpegTool
         string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
         string path = GetToolPath();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
-        int exitcode = process.ExecuteEx(path, commandline);
-        if (exitcode != 0)
+        int exitCode = process.ExecuteEx(path, commandline);
+        if (exitCode != 0)
             return false;
 
         // Read JSON from stream
@@ -61,17 +61,20 @@ public class FfProbeTool : FfMpegTool
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
         using StreamReader streamReader = new(decompressStream);
         using JsonTextReader jsonReader = new(streamReader);
-        JsonSerializer serializer = new();
-        PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
-        packets = packetInfo.Packets;
 
+        JsonSerializer serializer = new();
+        var packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+        if (packetInfo == null)
+            return false;
+
+        packets = packetInfo.Packets;
         return true;
     }
 
     public bool GetFfProbeInfo(string filename, out MediaInfo mediainfo)
     {
         mediainfo = null;
-        return GetFfProbeInfoJson(filename, out string json) && 
+        return GetFfProbeInfoJson(filename, out string json) &&
                GetFfProbeInfoFromJson(json, out mediainfo);
     }
 
@@ -79,11 +82,11 @@ public class FfProbeTool : FfMpegTool
     {
         // Get media info as JSON
         string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
-        int exitcode = Command(commandline, out json, out string error);
-        return exitcode == 0 && error.Length == 0;
+        int exitCode = Command(commandline, out json, out string error);
+        return exitCode == 0 && error.Length == 0;
     }
 
-    public bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
+    public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
     {
         // Parser type is FfProbe
         mediaInfo = new MediaInfo(ToolType.FfProbe);
@@ -117,7 +120,7 @@ public class FfProbeTool : FfMpegTool
                     if (string.IsNullOrEmpty(stream.CodecName) ||
                         string.IsNullOrEmpty(stream.CodecLongName))
                     {
-                        Log.Logger.Warning("FfProbe Subtitle Format unknown");
+                        Log.Logger.Warning("FFProbe Subtitle Format unknown");
                         if (string.IsNullOrEmpty(stream.CodecName))
                             stream.CodecName = "Unknown";
                         if (string.IsNullOrEmpty(stream.CodecLongName))
@@ -133,8 +136,8 @@ public class FfProbeTool : FfMpegTool
             MediaInfo.RemoveCoverArt(mediaInfo);
 
             // Errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) || 
-                                  mediaInfo.Audio.Any(item => item.HasErrors) || 
+            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
+                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
             // TODO : Tags

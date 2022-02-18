@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
@@ -73,20 +74,18 @@ public class MkvPropEditTool : MkvMergeTool
         commandline.Append($"\"{filename}\" {Options} --tags all: --delete title ");
 
         // Delete all track titles
-        foreach (TrackInfo track in info.GetTrackList())
+        foreach (TrackInfo track in info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) &&
+                                                                       !MediaInfo.IsUsefulTrackTitle(track.Title)))
         {
-            // Add all tracks with a title that is not used in processing
-            if (!string.IsNullOrEmpty(track.Title) &&
-                !MediaInfo.IsUsefulTrackTitle(track.Title))
-                commandline.Append($"--edit track:@{track.Number} --delete name ");
+            commandline.Append($"--edit track:@{track.Number} --delete name ");
         }
 
         // Delete all attachments
-        for (int id = 0; id < info.Attachments; id ++)
+        for (int id = 0; id < info.Attachments; id++)
             commandline.Append($"--delete-attachment {id + 1} ");
 
-        int exitcode = Command(commandline.ToString());
-        return exitcode == 0;
+        int exitCode = Command(commandline.ToString());
+        return exitCode == 0;
     }
 
     private const string Options = "--flush-on-close";

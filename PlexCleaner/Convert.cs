@@ -1,7 +1,7 @@
-﻿using System;
+﻿using InsaneGenius.Utilities;
+using System;
 using System.Diagnostics;
 using System.IO;
-using InsaneGenius.Utilities;
 
 namespace PlexCleaner;
 
@@ -54,7 +54,7 @@ public static class Convert
             return false;
 
         // If the input and output names are not the same, delete the input
-        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || 
+        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
                FileEx.DeleteFile(inputname);
     }
 
@@ -79,7 +79,7 @@ public static class Convert
         // MKVToolNix and FFmpeg both have problems dealing with some AVI files, so we will try both
         // E.g. https://github.com/FFmpeg/FFmpeg/commit/8de1ee9f725aa3c550f425bd3120bcd95d5b2ea8
         // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
-            
+
         // Try MKV first
         if (!Tools.MkvMerge.ReMuxToMkv(inputname, tempname))
         {
@@ -146,7 +146,7 @@ public static class Convert
             return false;
 
         // If the input and output names are not the same, delete the input
-        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || 
+        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
                FileEx.DeleteFile(inputname);
     }
 
@@ -186,7 +186,7 @@ public static class Convert
             return false;
 
         // If the input and output names are not the same, delete the input
-        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) || 
+        return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
                FileEx.DeleteFile(inputname);
     }
 

@@ -53,7 +53,7 @@ public class FfMpegIdetInfo
     {
         if (mediaFile == null)
             throw new ArgumentNullException(nameof(mediaFile));
-            
+
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }
 

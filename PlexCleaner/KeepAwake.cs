@@ -25,8 +25,10 @@ public static class KeepAwake
     [FlagsAttribute]
     private enum ExecutionState : uint
     {
+        // ReSharper disable once UnusedMember.Local
         EsAwayModeRequired = 0x00000040,
         EsContinuous = 0x80000000,
+        // ReSharper disable once UnusedMember.Local
         EsDisplayRequired = 0x00000002,
         EsSystemRequired = 0x00000001
     }

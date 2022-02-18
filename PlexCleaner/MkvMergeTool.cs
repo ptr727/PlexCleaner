@@ -1,14 +1,14 @@
+using InsaneGenius.Utilities;
+using Serilog;
 using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using InsaneGenius.Utilities;
 using System.Linq;
-using System.Globalization;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using Serilog;
-using System.Reflection;
 using System.Net.Http;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -74,7 +74,7 @@ public class MkvMergeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -107,7 +107,7 @@ public class MkvMergeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -119,7 +119,7 @@ public class MkvMergeTool : MediaTool
     public bool GetMkvInfo(string filename, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMkvInfoJson(filename, out string json) && 
+        return GetMkvInfoJson(filename, out string json) &&
                GetMkvInfoFromJson(json, out mediaInfo);
     }
 
@@ -131,7 +131,7 @@ public class MkvMergeTool : MediaTool
         return exitcode == 0;
     }
 
-    public bool GetMkvInfoFromJson(string json, out MediaInfo mediaInfo)
+    public static bool GetMkvInfoFromJson(string json, out MediaInfo mediaInfo)
     {
         // Parser type is MkvMerge
         mediaInfo = new MediaInfo(ToolType.MkvMerge);
@@ -183,13 +183,13 @@ public class MkvMergeTool : MediaTool
             mediaInfo.Container = mkvmerge.Container.Type;
 
             // Track errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) || 
-                                  mediaInfo.Audio.Any(item => item.HasErrors) || 
+            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
+                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
             // Must be Matroska type
             if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
-            { 
+            {
                 mediaInfo.HasErrors = true;
                 Log.Logger.Warning("MKV container type is not Matroska : {Type}", mkvmerge.Container.Type);
             }
@@ -202,7 +202,7 @@ public class MkvMergeTool : MediaTool
 
             // Tags or title or track name or attachments
             // Only if track title is present but is not useful
-            mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 || 
+            mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 ||
                                 mkvmerge.TrackTags.Count > 0 ||
                                 !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title) ||
                                 mediaInfo.Video.Any(item => MediaInfo.IsTagTitle(item.Title)) ||

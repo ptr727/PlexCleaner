@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace PlexCleaner;
 
@@ -15,11 +16,8 @@ public class BitrateInfo
 
         // Calculating duration from timestamp values
         Duration = 0;
-        foreach (Packet packet in packetList)
+        foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
-            if (!ShouldCompute(packet, videoStream, audioStream))
-                continue;
-
             // Use DTS if PTS not set
             if (double.IsNaN(packet.PtsTime))
             {
@@ -39,7 +37,7 @@ public class BitrateInfo
         }
 
         // Add 1 for index offset
-        Duration ++;
+        Duration++;
 
         // Set the bitrate array size to the duration in seconds
         VideoBitrate = new Bitrate(Duration);
@@ -60,13 +58,13 @@ public class BitrateInfo
             // Calculate values
             if (packet.StreamIndex == videoStream)
             {
-                videoPackets ++;
+                videoPackets++;
                 VideoBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }
             if (packet.StreamIndex == audioStream)
             {
-                audioPackets ++;
+                audioPackets++;
                 AudioBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }

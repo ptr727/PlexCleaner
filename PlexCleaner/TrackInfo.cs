@@ -1,15 +1,15 @@
+using InsaneGenius.Utilities;
+using Serilog;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using InsaneGenius.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
 public class TrackInfo
 {
-    public TrackInfo() {}
+    protected TrackInfo() { }
 
     internal TrackInfo(MkvToolJsonSchema.Track track)
     {
@@ -40,7 +40,7 @@ public class TrackInfo
             Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Properties.Language);
             Language = lang != null ? lang.Part2B : "und";
         }
-            
+
         // Take care to use id and number correctly in MKVMerge and MKVPropEdit
         Id = track.Id;
         Number = track.Properties.Number;

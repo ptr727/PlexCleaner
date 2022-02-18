@@ -1,11 +1,11 @@
-﻿using System;
-using InsaneGenius.Utilities;
+﻿using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Reflection;
 using Serilog;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -70,7 +70,7 @@ public class HandBrakeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -99,7 +99,7 @@ public class HandBrakeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);

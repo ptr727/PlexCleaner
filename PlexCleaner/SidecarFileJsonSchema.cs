@@ -53,7 +53,7 @@ public class SidecarFileJsonSchema
 
     public static SidecarFileJsonSchema FromJson(JsonTextReader reader)
     {
-        JsonSerializer serializer = JsonSerializer.Create(Settings);
+        var serializer = JsonSerializer.Create(Settings);
         return (SidecarFileJsonSchema)serializer.Deserialize(reader, typeof(SidecarFileJsonSchema));
     }
 
@@ -68,36 +68,45 @@ public class SidecarFileJsonSchema
         if (json.SchemaVersion == CurrentSchemaVersion)
             return true;
 
-#pragma warning disable CS0612
-#pragma warning disable 618
-
-        // Schema must be v2 or later
-        // Verify was added in v2
-        if (json.SchemaVersion < 2)
+        // Version 0 in undetermined
+        if (json.SchemaVersion == 0)
         {
-            Log.Logger.Error("Sidecar schema not upgradeable : {Schema} < 2", json.SchemaVersion);
+            Log.Logger.Error("Sidecar schema not upgradeable : {SchemaVersion} < 1", json.SchemaVersion);
             return false;
         }
 
+        // v1 Schema
+        // FfIdetInfoData was todo in v1, removed in v2
+        // Verify was added in v2, missing in v1
+        if (json.SchemaVersion == 1)
+            json.State = SidecarFile.States.None;
+
+        // v2 Schema
         // FfMpegToolVersion was replaced with FfProbeToolVersion in v3
         // MkvToolVersion was replaced with MkvMergeToolVersion in v3
         // Migrating the versions is not really useful as the version format changed
         // TODO : Convert the version format from longform to shortform
         if (json.SchemaVersion < 3)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             json.FfProbeToolVersion = json.FfMpegToolVersion;
             json.MkvMergeToolVersion = json.MkvToolVersion;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
+        // v3 Schema
         // Verified was replaced with State in v4
         if (json.SchemaVersion < 4)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (json.Verified)
+#pragma warning restore CS0618 // Type or member is obsolete
                 json.State |= SidecarFile.States.Verified;
         }
 
-#pragma warning restore CS0612
-#pragma warning restore 618
+        // v4 Schema
+        // MediaHash was added
+        // Will always require a recomputation if missing
 
         return true;
     }

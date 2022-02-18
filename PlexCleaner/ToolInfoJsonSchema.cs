@@ -41,7 +41,7 @@ public class ToolInfoJsonSchema
         File.WriteAllText(path, ToJson(json));
     }
 
-    public static string ToJson(ToolInfoJsonSchema tools) =>
+    private static string ToJson(ToolInfoJsonSchema tools) =>
         JsonConvert.SerializeObject(tools, Settings);
 
     public static ToolInfoJsonSchema FromJson(string json) =>

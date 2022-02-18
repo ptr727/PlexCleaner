@@ -1,10 +1,10 @@
-﻿using System;
+﻿using InsaneGenius.Utilities;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using InsaneGenius.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -31,16 +31,16 @@ internal class Process
         };
 
         // Convert VideoFormat to VideoInfo
-        ReEncodeVideoInfos = new();
-        foreach (var format in Program.Config.ProcessOptions.ReEncodeVideo)
-        {
-            VideoInfo videoinfo = new()
+        ReEncodeVideoInfos = new List<VideoInfo>();
+        foreach (VideoInfo videoInfo in Program.Config.ProcessOptions.ReEncodeVideo.Select(format =>
+            new VideoInfo
             {
                 Codec = format.Codec,
                 Format = format.Format,
                 Profile = format.Profile
-            };
-            ReEncodeVideoInfos.Add(videoinfo);
+            }))
+        {
+            ReEncodeVideoInfos.Add(videoInfo);
         }
     }
 
@@ -516,7 +516,6 @@ internal class Process
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
-        double processedPercentage = 0.0;
         foreach (FileInfo fileInfo in fileList)
         {
             // Cancel handler
@@ -524,14 +523,14 @@ internal class Process
                 return false;
 
             // Perform the task
-            processedCount ++;
-            processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
+            processedCount++;
+            double processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
             Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
             if (!taskFunc(fileInfo) &&
                 !Program.IsCancelled())
             {
                 Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
-                errorCount ++;
+                errorCount++;
             }
 
             // Next file
