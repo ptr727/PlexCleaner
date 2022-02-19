@@ -95,7 +95,7 @@ jobs:
       # https://github.com/marketplace/actions/automatic-releases
       - name: 'Create GitHub Release'
         # Do not push on pull requests
-        if: ${{ (github.event_name != 'pull_request')
+        if: ${{ (github.event_name != 'pull_request') }}
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
