@@ -24,10 +24,11 @@ public class TrackInfo
         // If the "language" and "tag_language" fields are set FFprobe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
         if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
+            !string.IsNullOrEmpty(track.Properties.Language) &&
             !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
-            Log.Logger.Warning("Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
+            Log.Logger.Warning("Tag and Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
         }
 
         // Set language
@@ -77,7 +78,8 @@ public class TrackInfo
         if (string.IsNullOrEmpty(stream.Tags.Language))
             Language = "und";
         // Some sample files are "???" or "null", set to und
-        else if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) || Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+        else if (stream.Tags.Language.Equals("???", StringComparison.OrdinalIgnoreCase) || 
+                 stream.Tags.Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
             Log.Logger.Warning("Invalid Language : {Language}", stream.Tags.Language);
