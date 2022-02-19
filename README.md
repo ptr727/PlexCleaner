@@ -20,8 +20,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.5:
-  - Changed the config file JSON schema to v2:
-    - Simplifies authoring of multi-value settings.
+  - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [Refactor codec encoding options #85](https://github.com/ptr727/PlexCleaner/issues/85)
     - Older file schemas will automatically be upgraded without requiring user input.
     - Comma separated lists in string format converted to array of strings.
       - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
@@ -32,11 +31,15 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
         - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"`
         - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*"`
       - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
-  - Posting of docker builds to [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-    - Docker builds will continue to also be posted to Docker Hub (while it remains free).
-  - Added xUnit unit test project, currently only testing config and sidecar JSON schema backwards compatibility.
+  - Replaced [GitVersion](https://github.com/GitTools/GitVersion) with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool, resolves [Release develop builds as pre-release #16](httpshttps://github.com/ptr727/PlexCleaner/issues/16).
+    - Main branch will now build using `Release` configuration, other branches will continue building with `Debug` configuration.
+    - Prerelease builds are now posted to GitHub releases tagges as `pre-release`, Docker builds continue to be tagged as `develop`.
+  - Docker builds are now also pushed to [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+    - Builds will continue to push to Docker Hub while it remains free to use.
+  - Added a xUnit unit test project.
+    - Currently the only tests are for config and sidecar JSON schema backwards compatibility.
   - Code cleanup to make current versions of Visual Studio and Rider happy.
-  - Replaced GitVersion with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool.
+- See [Release History](#Release-History) for older Release Notes.
 
 ## Use Cases
 
@@ -511,7 +514,7 @@ The `removesubtitles` command will remove all subtitle tracks.
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
 - [MPlayer](https://samples.mplayerhq.hu/)
 
-## Old Release Notes
+## Release History
 
 - Version 2.4.5
   - Update FFmpeg in Linux instructions and in Docker builds to version 5.0.
