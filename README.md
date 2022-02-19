@@ -36,6 +36,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Docker builds will continue to also be posted to Docker Hub (while it remains free).
   - Added xUnit unit test project, currently only testing config and sidecar JSON schema backwards compatibility.
   - Code cleanup to make current versions of Visual Studio and Rider happy.
+  - Replaced GitVersion with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool.
 
 ## Use Cases
 
