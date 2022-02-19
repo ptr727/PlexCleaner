@@ -45,7 +45,7 @@ jobs:
       - name: 'Checkout Code'
         uses: actions/checkout@v2
         with:
-          # Get all history for version calculation using GitVersion
+          # Get all history for version calculation
           fetch-depth: 0
 
       # Run GitVersion
@@ -53,6 +53,17 @@ jobs:
       - name: 'Run GitVersion Tool'
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0
+
+      # Run Nerdbank.GitVersioning
+      # https://github.com/marketplace/actions/nerdbank-gitversioning
+      - name: 'Run Nerdbank.GitVersioning Tool'
+        id: nbgv
+        uses: dotnet/nbgv@master
+
+      # Run Unit Tests
+      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
+      - name: 'Run Unit Tests'
+        run: dotnet test ./PlexCleaner.Tests/PlexCleaner.Tests.csproj
 
       # Build and publish project to ./Docker/PlexCleaner
       # Replace version information with GitVersion attributes
