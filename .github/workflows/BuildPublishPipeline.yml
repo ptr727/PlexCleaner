@@ -52,6 +52,7 @@ jobs:
             --runtime win-x64
             --self-contained false
             --output ./Publish/win-x64
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
             -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
             -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
@@ -63,6 +64,7 @@ jobs:
             --runtime linux-x64
             --self-contained false
             --output ./Publish/linux-x64
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
             -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
             -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}

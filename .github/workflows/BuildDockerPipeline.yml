@@ -55,6 +55,7 @@ jobs:
             --runtime linux-x64
             --self-contained false
             --output ./Docker/PlexCleaner
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
             -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
             -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
@@ -84,39 +85,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Docker build and push
-      # TODO : Figure out how to conditionally tag as latest or develop
       # https://github.com/marketplace/actions/build-and-push-docker-images
-      - name: 'Build and Push Latest'
+      - name: 'Docker Build and Push'
         uses: docker/build-push-action@v2
-        # Enable for main branch only
-        if: ${{ endsWith(github.ref, 'refs/heads/main') }}
         with:
           context: ./Docker
           file: ./Docker/Dockerfile
           platforms: linux/amd64
-          # Do not push pull requests
+          # Do not push on pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
             LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:latest
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
-      - name: 'Build and Push Develop'
-        uses: docker/build-push-action@v2
-        # Enable for develop branch only
-        if: ${{ endsWith(github.ref, 'refs/heads/develop') }}
-        with:
-          context: ./Docker
-          file: ./Docker/Dockerfile
-          platforms: linux/amd64
-          # Do not push pull requests
-          push: ${{ (github.event_name != 'pull_request') }}
-          build-args: |
-            LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:develop
-            ${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:develop
+            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
