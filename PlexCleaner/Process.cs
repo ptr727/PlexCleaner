@@ -17,7 +17,9 @@ internal class Process
         ReMuxExtensions = new HashSet<string>(Program.Config.ProcessOptions.ReMuxExtensions, StringComparer.OrdinalIgnoreCase);
         ReEncodeAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.ReEncodeAudioFormats, StringComparer.OrdinalIgnoreCase);
         FileIgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
-        PreferredAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.PreferredAudioFormats, StringComparer.OrdinalIgnoreCase);
+        
+        // Maintain order, keep in List<string>
+        PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats;
 
         // Default to eng if language not set
         if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
@@ -553,6 +555,6 @@ internal class Process
     private readonly HashSet<string> ReMuxExtensions;
     private readonly HashSet<string> ReEncodeAudioFormats;
     private readonly HashSet<string> KeepLanguages;
-    private readonly HashSet<string> PreferredAudioFormats;
+    private readonly List<string> PreferredAudioFormats;
     private readonly List<VideoInfo> ReEncodeVideoInfos;
 }

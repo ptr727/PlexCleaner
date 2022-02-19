@@ -38,7 +38,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Builds will continue to push to Docker Hub while it remains free to use.
   - Added a xUnit unit test project.
     - Currently the only tests are for config and sidecar JSON schema backwards compatibility.
-  - Code cleanup to make current versions of Visual Studio and Rider happy.
+  - Code cleanup and refactoring to make current versions of Visual Studio and Rider happy.
 - See [Release History](#Release-History) for older Release Notes.
 
 ## Use Cases

@@ -16,11 +16,11 @@ public class ConfigFileJsonSchemaBase
 [Obsolete("Replaced in Schema v2", false)]
 public class ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    public ToolsOptions ToolsOptions { get; } = new();
-    public ConvertOptions ConvertOptions { get; } = new();
-    public ProcessOptions1 ProcessOptions { get; } = new();
-    public MonitorOptions MonitorOptions { get; } = new();
-    public VerifyOptions VerifyOptions { get; } = new();
+    public ToolsOptions ToolsOptions { get; set; } = new();
+    public ConvertOptions ConvertOptions { get; set; } = new();
+    public ProcessOptions1 ProcessOptions { get; set; } = new();
+    public MonitorOptions MonitorOptions { get; set; } = new();
+    public VerifyOptions VerifyOptions { get; set; } = new();
 
     public const int Version = 1;
 }
@@ -46,17 +46,27 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         ProcessOptions = new ProcessOptions(configFileJsonSchema1.ProcessOptions);
     }
 
-    public ToolsOptions ToolsOptions { get; } = new();
-    public ConvertOptions ConvertOptions { get; } = new();
-    public ProcessOptions ProcessOptions { get; } = new();
-    public MonitorOptions MonitorOptions { get; } = new();
-    public VerifyOptions VerifyOptions { get; } = new();
+    public ToolsOptions ToolsOptions { get; set; } = new();
+    public ConvertOptions ConvertOptions { get; set; } = new();
+    public ProcessOptions ProcessOptions { get; set; } = new();
+    public MonitorOptions MonitorOptions { get; set; } = new();
+    public VerifyOptions VerifyOptions { get; set; } = new();
 
     public const int Version = 2;
+
+    public void SetDefaults()
+    {
+        ToolsOptions.SetDefaults();
+        ConvertOptions.SetDefaults();
+        ProcessOptions.SetDefaults();
+        MonitorOptions.SetDefaults();
+        VerifyOptions.SetDefaults();
+    }
 
     public static void WriteDefaultsToFile(string path)
     {
         ConfigFileJsonSchema config = new();
+        config.SetDefaults();
         ToFile(path, config);
     }
 
@@ -107,6 +117,9 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
     {
         Formatting = Formatting.Indented,
         StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-        NullValueHandling = NullValueHandling.Ignore
+        NullValueHandling = NullValueHandling.Ignore,
+        // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
+        ObjectCreationHandling = ObjectCreationHandling.Replace
+        // TODO : Add TraceWriter to log to Serilog
     };
 }

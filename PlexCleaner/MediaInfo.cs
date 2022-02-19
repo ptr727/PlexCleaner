@@ -132,7 +132,7 @@ public class MediaInfo
         return deinterlace.Count > 0;
     }
 
-    public bool FindUnwantedLanguage(HashSet<string> languages, HashSet<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
+    public bool FindUnwantedLanguage(HashSet<string> languages, List<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
     {
         if (languages == null)
             throw new ArgumentNullException(nameof(languages));
@@ -286,7 +286,7 @@ public class MediaInfo
         return reencode.Count > 0;
     }
 
-    public bool FindDuplicateTracks(HashSet<string> codecs, out MediaInfo keep, out MediaInfo remove)
+    public bool FindDuplicateTracks(List<string> codecs, out MediaInfo keep, out MediaInfo remove)
     {
         if (codecs == null)
             throw new ArgumentNullException(nameof(codecs));
@@ -432,7 +432,7 @@ public class MediaInfo
         remove.Subtitle.AddRange(Subtitle.Except(keep.Subtitle));
     }
 
-    private void FindDuplicateAudioTracks(HashSet<string> codecs, MediaInfo keep, MediaInfo remove)
+    private void FindDuplicateAudioTracks(List<string> codecs, MediaInfo keep, MediaInfo remove)
     {
         // Skip if just one track
         if (Audio.Count <= 1)
@@ -493,7 +493,7 @@ public class MediaInfo
         remove.Audio.AddRange(Audio.Except(keep.Audio));
     }
 
-    private AudioInfo FindPreferredAudio(HashSet<string> codecs, string language)
+    private AudioInfo FindPreferredAudio(List<string> codecs, string language)
     {
         // Iterate through the codecs in order of preference
         AudioInfo audio = null;
@@ -509,7 +509,7 @@ public class MediaInfo
         return audio;
     }
 
-    private AudioInfo FindPreferredAudio(HashSet<string> codecs)
+    private AudioInfo FindPreferredAudio(List<string> codecs)
     {
         // Iterate through the codecs in order of preference
         AudioInfo audio = null;
