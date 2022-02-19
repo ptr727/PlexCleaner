@@ -70,14 +70,14 @@ jobs:
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project linux-x64'
         run: >
-            dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-                --runtime linux-x64 \
-                --self-contained false \
-                --output ./Docker/PlexCleaner \
-                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }} \
-                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }} \
+            dotnet publish ./PlexCleaner/PlexCleaner.csproj
+                --runtime linux-x64
+                --self-contained false
+                --output ./Docker/PlexCleaner
+                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
                 -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
 
       # Setup docker build

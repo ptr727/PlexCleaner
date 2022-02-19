@@ -66,25 +66,25 @@ jobs:
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project win-x64'
         run: >
-            dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-                --runtime win-x64 \
-                --self-contained false \
-                --output ./Publish/win-x64 \
-                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }} \
-                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }} \
+            dotnet publish ./PlexCleaner/PlexCleaner.csproj
+                --runtime win-x64
+                --self-contained false
+                --output ./Publish/win-x64
+                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
                 -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
       - name: 'Build Project linux-x64'
         run: >
-            dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-                --runtime linux-x64 \
-                --self-contained false \
-                --output ./Publish/linux-x64 \
-                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }} \
-                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }} \
-                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }} \
+            dotnet publish ./PlexCleaner/PlexCleaner.csproj
+                --runtime linux-x64
+                --self-contained false
+                --output ./Publish/linux-x64
+                -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+                -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
+                -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
                 -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
 
       # Zip the output
