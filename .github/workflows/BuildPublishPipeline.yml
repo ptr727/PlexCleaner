@@ -65,7 +65,7 @@ jobs:
       # Set version information attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project win-x64'
-        run: >
+        run: >-
             dotnet publish ./PlexCleaner/PlexCleaner.csproj
                 --runtime win-x64
                 --self-contained false
@@ -76,7 +76,7 @@ jobs:
                 -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
                 -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
       - name: 'Build Project linux-x64'
-        run: >
+        run: >-
             dotnet publish ./PlexCleaner/PlexCleaner.csproj
                 --runtime linux-x64
                 --self-contained false
