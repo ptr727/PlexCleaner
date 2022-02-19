@@ -568,6 +568,7 @@ public class MediaInfo
             throw new ArgumentNullException(nameof(fileInfo));
 
         // Use the specified stream parser tool
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         return parser switch
         {
             MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediainfo),

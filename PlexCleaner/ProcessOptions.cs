@@ -63,17 +63,17 @@ public class ProcessOptions
         RestoreFileTimestamp = processOptions1.RestoreFileTimestamp;
 
         DefaultLanguage = processOptions1.DefaultLanguage ?? "";
-        FileIgnoreList = processOptions1.FileIgnoreList ?? new();
+        FileIgnoreList = processOptions1.FileIgnoreList ?? new List<string>();
 
         // Convert CSV to List<string>
-        KeepExtensions = !string.IsNullOrEmpty(processOptions1.KeepExtensions) ? processOptions1.KeepExtensions.Split(',').ToList() : new();
-        ReMuxExtensions = !string.IsNullOrEmpty(processOptions1.ReMuxExtensions) ? processOptions1.ReMuxExtensions.Split(',').ToList() : new();
-        ReEncodeAudioFormats = !string.IsNullOrEmpty(processOptions1.ReEncodeAudioFormats) ? processOptions1.ReEncodeAudioFormats.Split(',').ToList() : new();
-        KeepLanguages = !string.IsNullOrEmpty(processOptions1.KeepLanguages) ? processOptions1.KeepLanguages.Split(',').ToList() : new();
-        PreferredAudioFormats = !string.IsNullOrEmpty(processOptions1.PreferredAudioFormats) ? processOptions1.PreferredAudioFormats.Split(',').ToList() : new();
+        KeepExtensions = !string.IsNullOrEmpty(processOptions1.KeepExtensions) ? processOptions1.KeepExtensions.Split(',').ToList() : new List<string>();
+        ReMuxExtensions = !string.IsNullOrEmpty(processOptions1.ReMuxExtensions) ? processOptions1.ReMuxExtensions.Split(',').ToList() : new List<string>();
+        ReEncodeAudioFormats = !string.IsNullOrEmpty(processOptions1.ReEncodeAudioFormats) ? processOptions1.ReEncodeAudioFormats.Split(',').ToList() : new List<string>();
+        KeepLanguages = !string.IsNullOrEmpty(processOptions1.KeepLanguages) ? processOptions1.KeepLanguages.Split(',').ToList() : new List<string>();
+        PreferredAudioFormats = !string.IsNullOrEmpty(processOptions1.PreferredAudioFormats) ? processOptions1.PreferredAudioFormats.Split(',').ToList() : new List<string>();
 
         // Convert to List<VideoFormat>
-        ReEncodeVideo = new();
+        ReEncodeVideo = new List<VideoFormat>();
         if (!string.IsNullOrEmpty(processOptions1.ReEncodeVideoCodecs) &&
             !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats) &&
             !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles))
@@ -141,9 +141,9 @@ public class ProcessOptions
         Verify = true;
         RestoreFileTimestamp = false;
         RemoveDuplicateTracks = true;
-        FileIgnoreList = new();
+        FileIgnoreList = new List<string>();
         DefaultLanguage = "eng";
-        KeepExtensions = new() 
+        KeepExtensions = new List<string>
         {
             // TODO : Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
             ".partial~", 
@@ -155,7 +155,7 @@ public class ProcessOptions
             ".ass", 
             ".vtt" 
         };
-        ReMuxExtensions = new() 
+        ReMuxExtensions = new List<string>
         { 
             ".avi", 
             ".m2ts", 
@@ -166,20 +166,20 @@ public class ProcessOptions
             ".asf", 
             ".wmv" 
         };
-        ReEncodeVideo = new()
+        ReEncodeVideo = new List<VideoFormat>
         {
-            new VideoFormat { Format = "mpeg2video" },
-            new VideoFormat { Format = "vc1" },
-            new VideoFormat { Format = "wmv3" },
-            new VideoFormat { Format = "msrle" },
-            new VideoFormat { Format = "rawvideo" },
-            new VideoFormat { Format = "indeo5" },
-            new VideoFormat { Format = "h264", Profile = "Constrained Baseline@30" },
-            new VideoFormat { Format = "mpeg4", Codec = "dx50" },
-            new VideoFormat { Format = "msmpeg4v2", Codec = "mp42" },
-            new VideoFormat { Format = "msmpeg4v3", Codec = "div3" }
+            new() { Format = "mpeg2video" },
+            new() { Format = "vc1" },
+            new() { Format = "wmv3" },
+            new() { Format = "msrle" },
+            new() { Format = "rawvideo" },
+            new() { Format = "indeo5" },
+            new() { Format = "h264", Profile = "Constrained Baseline@30" },
+            new() { Format = "mpeg4", Codec = "dx50" },
+            new() { Format = "msmpeg4v2", Codec = "mp42" },
+            new() { Format = "msmpeg4v3", Codec = "div3" }
         };
-        ReEncodeAudioFormats = new() 
+        ReEncodeAudioFormats = new List<string>
         { 
             "flac", 
             "mp2", 
@@ -191,14 +191,14 @@ public class ProcessOptions
             "pcm_u8",
             "pcm_s16le"
         };
-        KeepLanguages = new() 
+        KeepLanguages = new List<string>
         { 
             "eng", 
             "afr", 
             "chi", 
             "ind" 
         };
-        PreferredAudioFormats = new() 
+        PreferredAudioFormats = new List<string>
         { 
             "truehd atmos", 
             "truehd", 
