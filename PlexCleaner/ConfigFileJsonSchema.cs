@@ -118,7 +118,9 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         Formatting = Formatting.Indented,
         StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
         NullValueHandling = NullValueHandling.Ignore,
+        // We expect containers to be cleared before deserializing
         // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
+        // https://stackoverflow.com/questions/35482896/clear-collections-before-adding-items-when-populating-existing-objects
         ObjectCreationHandling = ObjectCreationHandling.Replace
         // TODO : Add TraceWriter to log to Serilog
     };
