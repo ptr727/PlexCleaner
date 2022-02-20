@@ -56,7 +56,9 @@ internal class Program
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
+        {
             loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
+        }
 
         // Create static Serilog logger
         Log.Logger = loggerConfiguration.CreateLogger();
@@ -87,7 +89,9 @@ internal class Program
         // Do not verify tools
         Program program = Create(options, false);
         if (program == null)
+        {
             return -1;
+        }
 
         // Update tools
         // Make sure that the tools exist
@@ -98,11 +102,15 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         // Get file list
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         // Process all files
         Process process = new();
@@ -114,7 +122,9 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         Monitor monitor = new();
         return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
@@ -124,10 +134,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         Process process = new();
         return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
@@ -137,10 +151,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -149,10 +167,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -161,10 +183,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.VerifyFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -173,10 +199,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -185,10 +215,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -197,10 +231,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -209,10 +247,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -221,10 +263,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -233,10 +279,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -245,10 +295,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -257,16 +311,23 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
     }
 
     // Add a reference to this class in the event handler arguments
-    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e);
+    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e)
+    {
+        CancelHandler(e);
+    }
 
     private static void CancelHandler(ConsoleCancelEventArgs e)
     {
@@ -353,11 +414,15 @@ internal class Program
             // Upgrade tools if auto update is enabled
             if (Config.ToolsOptions.AutoUpdate &&
                 !Tools.CheckForNewTools())
+            {
                 return null;
+            }
 
             // Verify tools
             if (!Tools.VerifyTools())
+            {
                 return null;
+            }
         }
 
         // Create program instance

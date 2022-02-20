@@ -27,7 +27,9 @@ public static class Convert
     public static bool ConvertToMkvFfMpeg(string inputname, MediaInfo keep, MediaInfo reencode, out string outputname)
     {
         if (inputname == null)
+        {
             throw new ArgumentNullException(nameof(inputname));
+        }
 
         // Match the logic in ReMuxToMKV()
 
@@ -51,7 +53,9 @@ public static class Convert
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempname, outputname))
+        {
             return false;
+        }
 
         // If the input and output names are not the same, delete the input
         return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
@@ -61,7 +65,9 @@ public static class Convert
     public static bool ReMuxToMkv(string inputname, out string outputname)
     {
         if (inputname == null)
+        {
             throw new ArgumentNullException(nameof(inputname));
+        }
 
         // Match the logic in ConvertToMKV()
 
@@ -88,7 +94,9 @@ public static class Convert
 
             // Cancel requested
             if (Program.IsCancelledError())
+            {
                 return false;
+            }
 
             // Retry using FFmpeg
             if (!Tools.FfMpeg.ReMuxToMkv(inputname, tempname))
@@ -103,7 +111,9 @@ public static class Convert
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempname, outputname))
+        {
             return false;
+        }
 
         // If the input and output names are not the same, delete the input
         return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
@@ -113,9 +123,14 @@ public static class Convert
     public static bool ReMuxToMkv(string inputname, MediaInfo keep, out string outputname)
     {
         if (inputname == null)
+        {
             throw new ArgumentNullException(nameof(inputname));
+        }
+
         if (keep == null)
+        {
             throw new ArgumentNullException(nameof(keep));
+        }
 
         // This only works on MKV files and MkvMerge MediaInfo types
         Debug.Assert(keep.Parser == MediaTool.ToolType.MkvMerge);
@@ -143,7 +158,9 @@ public static class Convert
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempname, outputname))
+        {
             return false;
+        }
 
         // If the input and output names are not the same, delete the input
         return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
@@ -159,7 +176,9 @@ public static class Convert
     public static bool DeInterlaceToMkvHandbrake(string inputname, out string outputname)
     {
         if (inputname == null)
+        {
             throw new ArgumentNullException(nameof(inputname));
+        }
 
         // Match the logic in ConvertToMKV()
 
@@ -183,7 +202,9 @@ public static class Convert
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempname, outputname))
+        {
             return false;
+        }
 
         // If the input and output names are not the same, delete the input
         return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||
@@ -193,7 +214,9 @@ public static class Convert
     public static bool ConvertToMkvHandBrake(string inputname, out string outputname)
     {
         if (inputname == null)
+        {
             throw new ArgumentNullException(nameof(inputname));
+        }
 
         // Match the logic in ConvertToMKV()
 
@@ -217,7 +240,9 @@ public static class Convert
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempname, outputname))
+        {
             return false;
+        }
 
         // If the input and output names are not the same, delete the input
         return inputname.Equals(outputname, StringComparison.OrdinalIgnoreCase) ||

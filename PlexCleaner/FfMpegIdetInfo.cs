@@ -38,11 +38,15 @@ public class FfMpegIdetInfo
 
         // All undetermined
         if (Undetermined == Total)
+        {
             return false;
+        }
 
         // No interlaced
         if (Interlaced == 0)
+        {
             return false;
+        }
 
         // Calculate the % of interlaced frames vs. progressive frames
         double percentage = 100.0 * System.Convert.ToDouble(Interlaced) / System.Convert.ToDouble(Interlaced + Progressive);
@@ -52,7 +56,9 @@ public class FfMpegIdetInfo
     public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
     {
         if (mediaFile == null)
+        {
             throw new ArgumentNullException(nameof(mediaFile));
+        }
 
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }

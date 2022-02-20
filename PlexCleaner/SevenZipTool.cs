@@ -41,7 +41,9 @@ public class SevenZipTool : MediaTool
         const string commandline = "";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "7-Zip (a) 19.00 (x64) : Copyright (c) 1999-2018 Igor Pavlov : 2019-02-21"
@@ -127,12 +129,16 @@ public class SevenZipTool : MediaTool
         // Extract the update file
         Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
         if (!Tools.SevenZip.UnZip(updateFile, extractPath))
+        {
             return false;
+        }
 
         // Delete the tool destination directory
         string toolPath = GetToolFolder();
         if (!FileEx.DeleteDirectory(toolPath, true))
+        {
             return false;
+        }
 
         // Rename the folder
         // E.g. 7z1805-extra to .\Tools\7Zip

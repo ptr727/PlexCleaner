@@ -84,15 +84,20 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         File.WriteAllText(path, ToJson(json));
     }
 
-    private static string ToJson(ConfigFileJsonSchema settings) =>
-        JsonConvert.SerializeObject(settings, Settings);
+    private static string ToJson(ConfigFileJsonSchema settings)
+    {
+        return JsonConvert.SerializeObject(settings, Settings);
+    }
 
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
+        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
         if (configFileJsonSchemaBase == null)
+        {
             return null;
+        }
+
         int schemaVersion = configFileJsonSchemaBase.SchemaVersion;
 
         // Deserialize the correct version

@@ -30,7 +30,9 @@ public class VideoInfo : TrackInfo
         // Ignore bad tags like 0x0000 / [0][0][0][0]
         if (!string.IsNullOrEmpty(stream.CodecTagString) &&
             !stream.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
+        {
             Codec = stream.CodecTagString;
+        }
 
         // Build the Profile
         Profile = string.IsNullOrEmpty(stream.Profile) switch
@@ -80,7 +82,9 @@ public class VideoInfo : TrackInfo
     public bool CompareVideo(VideoInfo compare)
     {
         if (compare == null)
+        {
             throw new ArgumentNullException(nameof(compare));
+        }
 
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match

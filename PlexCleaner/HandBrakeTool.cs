@@ -42,7 +42,9 @@ public class HandBrakeTool : MediaTool
         const string commandline = "--version";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "HandBrake 1.3.3"
@@ -80,7 +82,9 @@ public class HandBrakeTool : MediaTool
             // Get the latest release version number from github releases
             // https://api.github.com/repos/handbrake/handbrake/releases/latest
             if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out string json))
+            {
                 return false;
+            }
 
             JObject releases = JObject.Parse(json);
             // "tag_name": "1.2.2",

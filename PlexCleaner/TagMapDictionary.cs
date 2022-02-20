@@ -15,11 +15,19 @@ public class TagMapDictionary
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
         if (prime == null)
+        {
             throw new ArgumentNullException(nameof(prime));
+        }
+
         if (sec1 == null)
+        {
             throw new ArgumentNullException(nameof(sec1));
+        }
+
         if (sec2 == null)
+        {
             throw new ArgumentNullException(nameof(sec2));
+        }
 
         // Make sure we can do matching
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
@@ -78,30 +86,40 @@ public class TagMapDictionary
     private static bool DoTracksMatch(MediaInfo mediaInfo, MediaInfo mkvMerge, MediaInfo ffProbe)
     {
         if (mediaInfo == null || mkvMerge == null || ffProbe == null)
+        {
             return false;
+        }
 
         // Verify the track counts match
         if (mediaInfo.Video.Count != mkvMerge.Video.Count || mediaInfo.Video.Count != ffProbe.Video.Count ||
             mediaInfo.Audio.Count != mkvMerge.Audio.Count || mediaInfo.Audio.Count != ffProbe.Audio.Count ||
             mediaInfo.Subtitle.Count != mkvMerge.Subtitle.Count || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count)
+        {
             return false;
+        }
 
         // Verify the track languages match
         // FFprobe has bugs with language vs. tag_language, try removing the tags
         if (ffProbe.Video.Where((t, i) =>
                 !t.Language.Equals(mediaInfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
                 !t.Language.Equals(mkvMerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
         if (ffProbe.Audio.Where((t, i) =>
                 !t.Language.Equals(mediaInfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
                 !t.Language.Equals(mkvMerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
         if (ffProbe.Subtitle.Where((t, i) =>
                 !t.Language.Equals(mediaInfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
                 !t.Language.Equals(mkvMerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
         return true;
     }
@@ -109,10 +127,18 @@ public class TagMapDictionary
     public void WriteLine()
     {
         foreach ((_, TagMap value) in Video)
+        {
             Log.Logger.Information("Video, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
+
         foreach ((_, TagMap value) in Audio)
+        {
             Log.Logger.Information("Audio, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
+
         foreach ((_, TagMap value) in Subtitle)
+        {
             Log.Logger.Information("Subtitle, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
     }
 }

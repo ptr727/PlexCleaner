@@ -90,14 +90,16 @@ public class MediaInfo
     {
         XmlSerializer xmlserializer = new(typeof(MediaInfo));
         using TextReader textreader = new StringReader(xml);
-        using var xmlReader = XmlReader.Create(textreader);
+        using XmlReader xmlReader = XmlReader.Create(textreader);
         return xmlserializer.Deserialize(xmlReader) as MediaInfo;
     }
 
     public static bool StringToBool(string value)
     {
         if (value == null)
+        {
             return false;
+        }
 
         return value.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
                value.Equals("true", StringComparison.OrdinalIgnoreCase) ||

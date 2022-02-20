@@ -20,9 +20,20 @@ internal class Monitor
     {
         Log.Logger.Information("Monitoring folders ...");
 
-        void ChangeHandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
-        void RenameHandler(object s, RenamedEventArgs e) => OnRenamed(e, this);
-        void ErrorHandler(object s, ErrorEventArgs e) => OnError(e);
+        void ChangeHandler(object s, FileSystemEventArgs e)
+        {
+            OnChanged(e, this);
+        }
+
+        void RenameHandler(object s, RenamedEventArgs e)
+        {
+            OnRenamed(e, this);
+        }
+
+        void ErrorHandler(object s, ErrorEventArgs e)
+        {
+            OnError(e);
+        }
 
         // Create file system watcher for each folder
         foreach (string folder in folders)
@@ -44,7 +55,9 @@ internal class Monitor
 
         // Enable event watching
         foreach (FileSystemWatcher watch in Watcher)
+        {
             watch.EnableRaisingEvents = true;
+        }
 
         // Wait for exit to be signalled
         while (!Program.IsCancelled(1000))
@@ -63,26 +76,41 @@ internal class Monitor
                     // Find folders that have settled down, i.e. not modified in last wait time
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
                     foreach ((string key, DateTime value) in WatchFolders)
+                    {
                         // If not recently modified and all files in the folder are readable
                         if (value < settleTime)
+                        {
                             if (!FileEx.AreFilesInDirectoryReadable(key))
+                            {
                                 Log.Logger.Information("Folder not readable : {Folder}", key);
+                            }
                             else
+                            {
                                 watchlist.Add(key);
+                            }
+                        }
+                    }
 
                     // Remove watched folders from the watchlist
                     foreach (string folder in watchlist)
+                    {
                         WatchFolders.Remove(folder);
+                    }
                 }
             }
 
             // Any work to do
             if (!watchlist.Any())
+            {
                 continue;
+            }
 
             // Process changes in the watched folders
             foreach (string folder in watchlist)
+            {
                 Log.Logger.Information("Monitored changes in : {Folder}", folder);
+            }
+
             Process process = new();
             process.ProcessFolders(watchlist);
             Process.DeleteEmptyFolders(watchlist);
@@ -90,7 +118,10 @@ internal class Monitor
 
         // Disable event watching
         foreach (FileSystemWatcher watch in Watcher)
+        {
             watch.EnableRaisingEvents = false;
+        }
+
         Watcher.Clear();
 
         return true;
@@ -180,7 +211,9 @@ internal class Monitor
             // Ignore our own sidecar and *.tmp files being created
             if (!fileInfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
                 !SidecarFile.IsSidecarFile(fileInfo))
+            {
                 folderName = fileInfo.DirectoryName;
+            }
         }
         // Or directory
         else if (Directory.Exists(pathname))
@@ -190,7 +223,9 @@ internal class Monitor
 
         // Did we get a folder
         if (string.IsNullOrEmpty(folderName))
+        {
             return;
+        }
 
         // Lock
         lock (WatchLock)

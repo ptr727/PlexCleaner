@@ -34,8 +34,10 @@ public class MkvMerge
     [JsonProperty("chapters")]
     public List<Chapter> Chapters { get; } = new();
 
-    public static MkvMerge FromJson(string json) =>
-        JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+    public static MkvMerge FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+    }
 
     private static readonly JsonSerializerSettings Settings = new()
     {

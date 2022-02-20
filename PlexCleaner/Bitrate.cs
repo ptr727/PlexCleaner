@@ -25,9 +25,14 @@ public class Bitrate
         {
             // Min, max, average
             if (bitrate > Maximum)
+            {
                 Maximum = bitrate;
+            }
+
             if (bitrate < Minimum || Minimum == 0)
+            {
                 Minimum = bitrate;
+            }
             // TODO: Chance of overflow
             Average += bitrate;
 
@@ -42,11 +47,15 @@ public class Bitrate
 
                     // Maximum exceeded duration
                     if (exceeded > Duration)
+                    {
                         Duration = exceeded;
+                    }
                 }
                 else
+                {
                     // Reset
                     exceeded = 0;
+                }
             }
         }
         Average /= Rate.Length;

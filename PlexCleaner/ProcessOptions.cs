@@ -82,8 +82,11 @@ public class ProcessOptions
             List<string> formatList = processOptions1.ReEncodeVideoFormats.Split(',').ToList();
             List<string> profileList = processOptions1.ReEncodeVideoProfiles.Split(',').ToList();
             if (codecList.Count != formatList.Count || formatList.Count != profileList.Count)
+            {
                 // The number of arguments has to match
                 throw new ArgumentException("ReEncodeVideo argument count mismath");
+            }
+
             for (int i = 0; i < codecList.Count; i++)
             {
                 VideoFormat videoFormat = new()
@@ -94,11 +97,20 @@ public class ProcessOptions
                 };
                 // Convert the * as wildcard to a null as any match
                 if (videoFormat.Codec.Equals("*", StringComparison.OrdinalIgnoreCase))
+                {
                     videoFormat.Codec = null;
+                }
+
                 if (videoFormat.Format.Equals("*", StringComparison.OrdinalIgnoreCase))
+                {
                     videoFormat.Format = null;
+                }
+
                 if (videoFormat.Profile.Equals("*", StringComparison.OrdinalIgnoreCase))
+                {
                     videoFormat.Profile = null;
+                }
+
                 ReEncodeVideo.Add(videoFormat);
             }
         }
@@ -146,25 +158,25 @@ public class ProcessOptions
         KeepExtensions = new List<string>
         {
             // TODO : Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
-            ".partial~", 
-            ".nfo", 
-            ".jpg", 
-            ".srt", 
-            ".smi", 
-            ".ssa", 
-            ".ass", 
-            ".vtt" 
+            ".partial~",
+            ".nfo",
+            ".jpg",
+            ".srt",
+            ".smi",
+            ".ssa",
+            ".ass",
+            ".vtt"
         };
         ReMuxExtensions = new List<string>
-        { 
-            ".avi", 
-            ".m2ts", 
-            ".ts", 
-            ".vob", 
-            ".mp4", 
-            ".m4v", 
-            ".asf", 
-            ".wmv" 
+        {
+            ".avi",
+            ".m2ts",
+            ".ts",
+            ".vob",
+            ".mp4",
+            ".m4v",
+            ".asf",
+            ".wmv"
         };
         ReEncodeVideo = new List<VideoFormat>
         {
@@ -180,32 +192,32 @@ public class ProcessOptions
             new() { Format = "msmpeg4v3", Codec = "div3" }
         };
         ReEncodeAudioFormats = new List<string>
-        { 
-            "flac", 
-            "mp2", 
-            "vorbis", 
-            "wmapro", 
-            "opus", 
+        {
+            "flac",
+            "mp2",
+            "vorbis",
+            "wmapro",
+            "opus",
             "wmav2",
             "adpcm_ms",
             "pcm_u8",
             "pcm_s16le"
         };
         KeepLanguages = new List<string>
-        { 
-            "eng", 
-            "afr", 
-            "chi", 
-            "ind" 
+        {
+            "eng",
+            "afr",
+            "chi",
+            "ind"
         };
         PreferredAudioFormats = new List<string>
-        { 
-            "truehd atmos", 
-            "truehd", 
-            "dts-hd master audio", 
-            "dts-hd high resolution audio", 
-            "dts", 
-            "e-ac-3", 
+        {
+            "truehd atmos",
+            "truehd",
+            "dts-hd master audio",
+            "dts-hd high resolution audio",
+            "dts",
+            "e-ac-3",
             "ac-3"
         };
     }

@@ -38,18 +38,24 @@ public class SidecarFile
     {
         // Get tool info
         if (!GetToolInfo())
+        {
             return false;
+        }
 
         // Reset state
         State = States.None;
 
         // Set the JSON info
         if (!SetJsonInfo())
+        {
             return false;
+        }
 
         // Write the JSON to file
         if (!WriteJson())
+        {
             return false;
+        }
 
         Log.Logger.Information("Sidecar created : State: {State} : {FileName}", State, SidecarFileInfo.Name);
 
@@ -60,15 +66,21 @@ public class SidecarFile
     {
         // Read the JSON from file
         if (!ReadJson())
+        {
             return false;
+        }
 
         // Get the info from JSON
         if (!GetInfoFromJson())
+        {
             return false;
+        }
 
         // Stop here if not verifying
         if (!verify)
+        {
             return true;
+        }
 
         // Log warnings
         // Do not read new tool data, will be read in Update()
@@ -103,7 +115,9 @@ public class SidecarFile
     {
         // Create or Read must be called before update
         if (!IsValid())
+        {
             return false;
+        }
 
         // Did the media file or tools change
         // Do not log if not current, updates are intentional
@@ -112,16 +126,22 @@ public class SidecarFile
         {
             // Get updated tool info
             if (!GetToolInfo())
+            {
                 return false;
+            }
         }
 
         // Set the JSON info from tool info
         if (!SetJsonInfo())
+        {
             return false;
+        }
 
         // Write the JSON to file
         if (!WriteJson())
+        {
             return false;
+        }
 
         Log.Logger.Information("Sidecar updated : State: {State} : {FileName}", State, SidecarFileInfo.Name);
 
@@ -133,7 +153,9 @@ public class SidecarFile
         try
         {
             if (SidecarFileInfo.Exists)
+            {
                 SidecarFileInfo.Delete();
+            }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -160,7 +182,9 @@ public class SidecarFile
             // If the sidecar does not exist, or can't be read, create it
             if (!SidecarFileInfo.Exists ||
                 !Read())
+            {
                 return Create();
+            }
         }
 
         // Update if not current
@@ -168,7 +192,9 @@ public class SidecarFile
         if (modified ||
             !IsStateCurrent() ||
             !IsMediaAndToolsCurrent(false))
+        {
             return Update(modified);
+        }
 
         // Already up to date
         return true;
@@ -188,17 +214,28 @@ public class SidecarFile
         // Get the info from JSON
         if (!ReadJson() ||
             !GetInfoFromJson())
+        {
             return false;
+        }
 
         // Check one by one to log all the mismatches
         bool update = !IsSchemaCurrent();
         // ReSharper disable once ConvertIfToOrExpression
         if (!IsStateCurrent())
+        {
             update = true;
+        }
+
         if (!IsMediaCurrent(true))
+        {
             update = true;
+        }
+
         if (!IsToolsCurrent(true))
+        {
             update = true;
+        }
+
         if (!update)
         {
             Log.Logger.Information("Sidecar up to date : State: {State} : {FileName}", State, SidecarFileInfo.Name);
@@ -209,7 +246,9 @@ public class SidecarFile
         // Write the JSON to file
         if (!SetJsonInfo() ||
             !WriteJson())
+        {
             return false;
+        }
 
         Log.Logger.Information("Sidecar upgraded : State: {State} : {FileName}", State, SidecarFileInfo.Name);
 
@@ -296,29 +335,35 @@ public class SidecarFile
             // Ignore LastWriteTimeUtc, it is unreliable over SMB
             // mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {FileName}",
                     SidecarJson.MediaLastWriteTimeUtc,
                     MediaFileInfo.LastWriteTimeUtc,
                     SidecarFileInfo.Name);
+            }
         }
         if (MediaFileInfo.Length != SidecarJson.MediaLength)
         {
             mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {FileName}",
                     SidecarJson.MediaLength,
                     MediaFileInfo.Length,
                     SidecarFileInfo.Name);
+            }
         }
         string hash = ComputeHash();
         if (string.Compare(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase) != 0)
         {
             mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {FileName}",
                     SidecarJson.MediaHash,
                     hash,
                     SidecarFileInfo.Name);
+            }
         }
 
         return !mismatch;
@@ -332,28 +377,34 @@ public class SidecarFile
         {
             mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar FFProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
                     SidecarJson.FfProbeToolVersion,
                     Tools.FfProbe.Info.Version,
                     SidecarFileInfo.Name);
+            }
         }
         if (!SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar MKVMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
                     SidecarJson.MkvMergeToolVersion,
                     Tools.MkvMerge.Info.Version,
                     SidecarFileInfo.Name);
+            }
         }
         if (!SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
             if (log)
+            {
                 Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
                     SidecarJson.MediaInfoToolVersion,
                     Tools.MediaInfo.Info.Version,
                     SidecarFileInfo.Name);
+            }
         }
 
         return !mismatch;
@@ -386,7 +437,9 @@ public class SidecarFile
 
             // Upgrade schema
             if (!SidecarFileJsonSchema.Upgrade(SidecarJson))
+            {
                 return false;
+            }
         }
 
         return true;
@@ -482,7 +535,7 @@ public class SidecarFile
         try
         {
             // Create SHA256 hash calculator
-            using var hashCalculator = SHA256.Create();
+            using SHA256 hashCalculator = SHA256.Create();
 
             // Create a buffer to hold the file data being hashed
             byte[] buffer = new byte[2 * HashWindowLength];
@@ -538,7 +591,9 @@ public class SidecarFile
     public static bool IsSidecarFile(FileInfo sidecarFileInfo)
     {
         if (sidecarFileInfo == null)
+        {
             throw new ArgumentNullException(nameof(sidecarFileInfo));
+        }
 
         // Compare extension
         return sidecarFileInfo.Extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
@@ -546,7 +601,9 @@ public class SidecarFile
     public static string GetSidecarName(FileInfo mediaFileInfo)
     {
         if (mediaFileInfo == null)
+        {
             throw new ArgumentNullException(nameof(mediaFileInfo));
+        }
 
         // Change extension of media file
         return Path.ChangeExtension(mediaFileInfo.FullName, SidecarExtension);
@@ -555,7 +612,9 @@ public class SidecarFile
     public static bool IsMediaFileName(FileInfo mediaFileInfo)
     {
         if (mediaFileInfo == null)
+        {
             throw new ArgumentNullException(nameof(mediaFileInfo));
+        }
 
         // Compare extension
         return mediaFileInfo.Extension.Equals(MkvExtension, StringComparison.OrdinalIgnoreCase);
@@ -564,7 +623,9 @@ public class SidecarFile
     public static string GetMediaName(FileInfo sidecarFileInfo)
     {
         if (sidecarFileInfo == null)
+        {
             throw new ArgumentNullException(nameof(sidecarFileInfo));
+        }
 
         // Change extension of media file
         return Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
@@ -573,7 +634,9 @@ public class SidecarFile
     public static bool CreateSidecarFile(FileInfo mediaFileInfo)
     {
         if (mediaFileInfo == null)
+        {
             throw new ArgumentNullException(nameof(mediaFileInfo));
+        }
 
         // Create new sidecar for media file
         SidecarFile sidecarFile = new(mediaFileInfo);

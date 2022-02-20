@@ -28,7 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B
 		.github\workflows\UpdateDockerHubDescription.yml = .github\workflows\UpdateDockerHubDescription.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleaner.Tests", "PlexCleaner.Tests\PlexCleaner.Tests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerTests", "PlexCleanerTests\PlexCleanerTests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

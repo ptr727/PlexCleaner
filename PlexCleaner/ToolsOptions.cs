@@ -13,7 +13,7 @@ public class ToolsOptions
     {
         // Set defaults based on OS
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        { 
+        {
             UseSystem = false;
             RootPath = @".\Tools\";
             RootRelative = true;

@@ -1,6 +1,7 @@
+using PlexCleaner;
 using Xunit;
 
-namespace PlexCleaner.Tests;
+namespace PlexCleanerTests;
 
 public class SidecarFileTests
 {

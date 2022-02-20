@@ -19,8 +19,10 @@ public class FfProbe
     [JsonProperty("streams")]
     public List<Stream> Streams { get; } = new();
 
-    public static FfProbe FromJson(string json) =>
-        JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+    public static FfProbe FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+    }
 
     private static readonly JsonSerializerSettings Settings = new()
     {

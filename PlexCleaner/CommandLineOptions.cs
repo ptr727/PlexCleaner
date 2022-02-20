@@ -74,7 +74,9 @@ public class CommandLineOptions
     private static void AddGlobalOptions(RootCommand rootCommand)
     {
         if (rootCommand == null)
+        {
             throw new ArgumentNullException(nameof(rootCommand));
+        }
 
         // Path to the settings file, required
         rootCommand.AddGlobalOption(

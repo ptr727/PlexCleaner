@@ -14,7 +14,9 @@ public class TrackInfo
     internal TrackInfo(MkvToolJsonSchema.Track track)
     {
         if (track == null)
+        {
             throw new ArgumentNullException(nameof(track));
+        }
 
         Format = track.Codec;
         Codec = track.Properties.CodecId;
@@ -33,7 +35,9 @@ public class TrackInfo
 
         // Set language
         if (string.IsNullOrEmpty(track.Properties.Language))
+        {
             Language = "und";
+        }
         else
         {
             // MKVMerge normally sets the language to und or 3 letter ISO 639-2 code
@@ -63,7 +67,9 @@ public class TrackInfo
     internal TrackInfo(FfMpegToolJsonSchema.Stream stream)
     {
         if (stream == null)
+        {
             throw new ArgumentNullException(nameof(stream));
+        }
 
         Format = stream.CodecName;
         Codec = stream.CodecLongName;
@@ -76,9 +82,11 @@ public class TrackInfo
 
         // Set language
         if (string.IsNullOrEmpty(stream.Tags.Language))
+        {
             Language = "und";
+        }
         // Some sample files are "???" or "null", set to und
-        else if (stream.Tags.Language.Equals("???", StringComparison.OrdinalIgnoreCase) || 
+        else if (stream.Tags.Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
                  stream.Tags.Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
@@ -91,7 +99,7 @@ public class TrackInfo
             // Try to lookup the language to make sure it is correct
             Iso6393 lang = PlexCleaner.Language.GetIso6393(stream.Tags.Language);
             if (lang != null)
-            { 
+            {
                 Language = lang.Part2B;
             }
             else
@@ -114,7 +122,9 @@ public class TrackInfo
     internal TrackInfo(MediaInfoToolXmlSchema.Track track)
     {
         if (track == null)
+        {
             throw new ArgumentNullException(nameof(track));
+        }
 
         Format = track.Format;
         Codec = track.CodecId;
@@ -123,7 +133,9 @@ public class TrackInfo
 
         // Set language
         if (string.IsNullOrEmpty(track.Language))
+        {
             Language = "und";
+        }
         else
         {
             // MediaInfo uses ab or abc or ab-cd tags, we need to convert to ISO 639-2
@@ -145,7 +157,9 @@ public class TrackInfo
         // FFprobe and MKVToolNix use chi not zho
         // https://github.com/mbunkus/mkvtoolnix/issues/1149
         if (Language.Equals("zho", StringComparison.OrdinalIgnoreCase))
+        {
             Language = "chi";
+        }
 
         // ID can be an integer or an integer-type, e.g. 3-CC1
         // https://github.com/MediaArea/MediaInfo/issues/201

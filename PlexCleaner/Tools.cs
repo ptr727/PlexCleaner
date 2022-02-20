@@ -114,7 +114,9 @@ public static class Tools
                 toolsFile);
             // Upgrade schema
             if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+            {
                 return false;
+            }
         }
 
         // Verify each tool
@@ -153,12 +155,16 @@ public static class Tools
     {
         // System tools
         if (Program.Config.ToolsOptions.UseSystem)
+        {
             return "";
+        }
 
         // Process relative or absolute tools path
         if (!Program.Config.ToolsOptions.RootRelative)
+        {
             // Return the absolute path
             return Program.Config.ToolsOptions.RootPath;
+        }
 
         // Get the assembly directory
         string toolsRoot = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
@@ -229,7 +235,9 @@ public static class Tools
 
                     // Upgrade Schema
                     if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+                    {
                         toolInfoJson = null;
+                    }
                 }
             }
             toolInfoJson ??= new ToolInfoJsonSchema();
@@ -276,13 +284,17 @@ public static class Tools
 
                 // If no update is required continue
                 if (!updateRequired)
+                {
                     continue;
+                }
 
                 // Download the update file in the tools folder
                 Log.Logger.Information("Downloading {FileName} ...", latestToolInfo.FileName);
                 string downloadFile = CombineToolPath(latestToolInfo.FileName);
                 if (!Download.DownloadFile(new Uri(latestToolInfo.Url), downloadFile))
+                {
                     return false;
+                }
 
                 // Update the tool using the downloaded file
                 if (!mediaTool.Update(downloadFile))
@@ -314,7 +326,9 @@ public static class Tools
     {
         // Get URL content details
         if (!Download.GetContentInfo(new Uri(mediaToolInfo.Url), out long size, out DateTime modified))
+        {
             return false;
+        }
 
         mediaToolInfo.Size = size;
         mediaToolInfo.ModifiedTime = modified;

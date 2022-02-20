@@ -45,15 +45,19 @@ public class SidecarFileJsonSchema
         File.WriteAllText(path, ToJson(json));
     }
 
-    public static string ToJson(SidecarFileJsonSchema json) =>
-        JsonConvert.SerializeObject(json, Settings);
+    public static string ToJson(SidecarFileJsonSchema json)
+    {
+        return JsonConvert.SerializeObject(json, Settings);
+    }
 
-    public static SidecarFileJsonSchema FromJson(string json) =>
-        JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
+    public static SidecarFileJsonSchema FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
+    }
 
     public static SidecarFileJsonSchema FromJson(JsonTextReader reader)
     {
-        var serializer = JsonSerializer.Create(Settings);
+        JsonSerializer serializer = JsonSerializer.Create(Settings);
         return (SidecarFileJsonSchema)serializer.Deserialize(reader, typeof(SidecarFileJsonSchema));
     }
 
@@ -66,7 +70,9 @@ public class SidecarFileJsonSchema
     {
         // Current version
         if (json.SchemaVersion == CurrentSchemaVersion)
+        {
             return true;
+        }
 
         // Version 0 in undetermined
         if (json.SchemaVersion == 0)
@@ -79,7 +85,9 @@ public class SidecarFileJsonSchema
         // FfIdetInfoData was todo in v1, removed in v2
         // Verify was added in v2, missing in v1
         if (json.SchemaVersion == 1)
+        {
             json.State = SidecarFile.States.None;
+        }
 
         // v2 Schema
         // FfMpegToolVersion was replaced with FfProbeToolVersion in v3
@@ -100,8 +108,10 @@ public class SidecarFileJsonSchema
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             if (json.Verified)
+            {
 #pragma warning restore CS0618 // Type or member is obsolete
                 json.State |= SidecarFile.States.Verified;
+            }
         }
 
         // v4 Schema

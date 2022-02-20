@@ -53,7 +53,9 @@ public class FfProbeTool : FfMpegTool
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
         int exitCode = process.ExecuteEx(path, commandline);
         if (exitCode != 0)
+        {
             return false;
+        }
 
         // Read JSON from stream
         process.OutputStream.Flush();
@@ -63,9 +65,11 @@ public class FfProbeTool : FfMpegTool
         using JsonTextReader jsonReader = new(streamReader);
 
         JsonSerializer serializer = new();
-        var packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+        PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
         if (packetInfo == null)
+        {
             return false;
+        }
 
         packets = packetInfo.Packets;
         return true;
@@ -99,7 +103,9 @@ public class FfProbeTool : FfMpegTool
 
             // No tracks
             if (ffprobe.Streams.Count == 0)
+            {
                 return false;
+            }
 
             // Tracks
             foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
@@ -122,9 +128,14 @@ public class FfProbeTool : FfMpegTool
                     {
                         Log.Logger.Warning("FFProbe Subtitle Format unknown");
                         if (string.IsNullOrEmpty(stream.CodecName))
+                        {
                             stream.CodecName = "Unknown";
+                        }
+
                         if (string.IsNullOrEmpty(stream.CodecLongName))
+                        {
                             stream.CodecLongName = "Unknown";
+                        }
                     }
 
                     SubtitleInfo info = new(stream);

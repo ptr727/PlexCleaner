@@ -45,7 +45,9 @@ public class MkvMergeTool : MediaTool
         const string commandline = "--version";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "mkvmerge v51.0.0 ('I Wish') 64-bit"
@@ -144,7 +146,9 @@ public class MkvMergeTool : MediaTool
 
             // No tracks
             if (mkvmerge.Tracks.Count == 0)
+            {
                 return false;
+            }
 
             // Tracks
             foreach (MkvToolJsonSchema.Track track in mkvmerge.Tracks)
@@ -152,7 +156,9 @@ public class MkvMergeTool : MediaTool
                 // If the container is not a MKV, ignore missing CodecId's
                 if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase) &&
                     string.IsNullOrEmpty(track.Properties.CodecId))
+                {
                     track.Properties.CodecId = "Unknown";
+                }
 
                 if (track.Type.Equals("video", StringComparison.OrdinalIgnoreCase))
                 {
@@ -228,7 +234,9 @@ public class MkvMergeTool : MediaTool
     public static bool IsMkvFile(FileInfo fileInfo)
     {
         if (fileInfo == null)
+        {
             throw new ArgumentNullException(nameof(fileInfo));
+        }
 
         return IsMkvExtension(fileInfo.Extension);
     }
@@ -236,7 +244,9 @@ public class MkvMergeTool : MediaTool
     public static bool IsMkvExtension(string extension)
     {
         if (extension == null)
+        {
             throw new ArgumentNullException(nameof(extension));
+        }
 
         // Case insensitive match, .mkv or .MKV
         return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
@@ -245,7 +255,9 @@ public class MkvMergeTool : MediaTool
     public bool ReMuxToMkv(string inputname, MediaInfo keep, string outputname)
     {
         if (keep == null)
+        {
             return ReMuxToMkv(inputname, outputname);
+        }
 
         // Verify correct data type
         Debug.Assert(keep.Parser == ToolType.MkvMerge);

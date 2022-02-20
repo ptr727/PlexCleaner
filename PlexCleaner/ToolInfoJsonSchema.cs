@@ -41,11 +41,15 @@ public class ToolInfoJsonSchema
         File.WriteAllText(path, ToJson(json));
     }
 
-    private static string ToJson(ToolInfoJsonSchema tools) =>
-        JsonConvert.SerializeObject(tools, Settings);
+    private static string ToJson(ToolInfoJsonSchema tools)
+    {
+        return JsonConvert.SerializeObject(tools, Settings);
+    }
 
-    public static ToolInfoJsonSchema FromJson(string json) =>
-        JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, Settings);
+    public static ToolInfoJsonSchema FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, Settings);
+    }
 
     private static readonly JsonSerializerSettings Settings = new()
     {
@@ -56,7 +60,9 @@ public class ToolInfoJsonSchema
     {
         // Current version
         if (json.SchemaVersion == CurrentSchemaVersion)
+        {
             return true;
+        }
 
         // Unspecified / v0 to v2 was the first set version
         // Tools changed from List<ToolInfo> to List<MediaToolInfo>

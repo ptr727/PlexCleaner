@@ -46,7 +46,9 @@ public abstract class MediaTool
         string toolPath = GetToolFolder();
         if (!FileEx.CreateDirectory(toolPath) ||
             !FileEx.DeleteInsideDirectory(toolPath))
+        {
             return false;
+        }
 
         // Extract the update file
         LogOptions.Logger.LogInformation("Extracting {UpdateFile} ...", updateFile);
@@ -98,7 +100,10 @@ public abstract class MediaTool
     protected int Command(string parameters)
     {
         if (parameters == null)
+        {
             throw new ArgumentNullException(nameof(parameters));
+        }
+
         parameters = parameters.Trim();
 
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
@@ -106,14 +111,20 @@ public abstract class MediaTool
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters);
         if (exitCode != 0)
+        {
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        }
+
         return exitCode;
     }
 
     protected int Command(string parameters, out string output)
     {
         if (parameters == null)
+        {
             throw new ArgumentNullException(nameof(parameters));
+        }
+
         parameters = parameters.Trim();
 
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
@@ -121,14 +132,20 @@ public abstract class MediaTool
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output);
         if (exitCode != 0)
+        {
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        }
+
         return exitCode;
     }
 
     protected int Command(string parameters, out string output, out string error)
     {
         if (parameters == null)
+        {
             throw new ArgumentNullException(nameof(parameters));
+        }
+
         parameters = parameters.Trim();
 
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
@@ -136,14 +153,20 @@ public abstract class MediaTool
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
         if (exitCode != 0)
+        {
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        }
+
         return exitCode;
     }
 
     protected int Command(string parameters, int limit, out string output, out string error)
     {
         if (parameters == null)
+        {
             throw new ArgumentNullException(nameof(parameters));
+        }
+
         parameters = parameters.Trim();
 
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
@@ -151,7 +174,10 @@ public abstract class MediaTool
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
         if (exitCode != 0)
+        {
             Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
+        }
+
         return exitCode;
     }
 }

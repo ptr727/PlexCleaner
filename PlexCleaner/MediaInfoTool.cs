@@ -42,7 +42,9 @@ public class MediaInfoTool : MediaTool
         const string commandline = "--version";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // Second line as version
         // E.g. Windows : "MediaInfoLib - v20.09"
@@ -91,15 +93,21 @@ public class MediaInfoTool : MediaTool
                 // Read the line
                 line = sr.ReadLine();
                 if (line == null)
+                {
                     break;
+                }
 
                 // See if the line starts with "Version"
                 line = line.Trim();
                 if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
+                {
                     break;
+                }
             }
             if (string.IsNullOrEmpty(line))
+            {
                 throw new NotImplementedException();
+            }
 
             // Extract the version number from the line
             // E.g. Version 17.10, 2017-11-02
@@ -164,7 +172,9 @@ public class MediaInfoTool : MediaTool
 
             // No tracks
             if (xmlmedia.Track.Count == 0)
+            {
                 return false;
+            }
 
             // Tracks
             foreach (MediaInfoToolXmlSchema.Track track in xmlmedia.Track)

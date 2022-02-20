@@ -9,14 +9,18 @@ public static class KeepAwake
     {
         // Windows only
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
             SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+        }
     }
 
     public static void AllowSleep()
     {
         // Windows only
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
             SetThreadExecutionState(ExecutionState.EsContinuous);
+        }
     }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]

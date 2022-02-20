@@ -56,7 +56,9 @@ public class FfMpegTool : MediaTool
         const string commandline = "-version";
         int exitCode = Command(commandline, out string output, out string error);
         if (exitCode != 0 || error.Length > 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
@@ -135,15 +137,21 @@ public class FfMpegTool : MediaTool
                 // Read the line
                 line = sr.ReadLine();
                 if (line == null)
+                {
                     break;
+                }
 
                 // See if the line starts with "Version:"
                 line = line.Trim();
                 if (line.IndexOf("Version:", StringComparison.Ordinal) == 0)
+                {
                     break;
+                }
             }
             if (string.IsNullOrEmpty(line))
+            {
                 throw new NotImplementedException();
+            }
 
             // Extract the version number from the line
             // E.g. version: 4.3.1
@@ -178,12 +186,16 @@ public class FfMpegTool : MediaTool
         // Extract the update file
         Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
         if (!Tools.SevenZip.UnZip(updateFile, extractPath))
+        {
             return false;
+        }
 
         // Delete the tool destination directory
         string toolPath = GetToolFolder();
         if (!FileEx.DeleteDirectory(toolPath, true))
+        {
             return false;
+        }
 
         // Build the versioned out folder from the downloaded filename
         // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
@@ -221,7 +233,9 @@ public class FfMpegTool : MediaTool
     public bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
     {
         if (keep == null)
+        {
             return ReMuxToMkv(inputName, outputName);
+        }
 
         // Delete output file
         FileEx.DeleteFile(outputName);
@@ -286,7 +300,10 @@ public class FfMpegTool : MediaTool
         trackList.AddRange(subtitleList);
         StringBuilder sb = new();
         foreach (TrackInfo info in trackList)
+        {
             sb.Append($"-map 0:{info.Id} ");
+        }
+
         input = sb.ToString();
         input = input.Trim();
 
@@ -300,16 +317,22 @@ public class FfMpegTool : MediaTool
         {
             // Copy or encode
             if (info.GetType() == typeof(VideoInfo))
+            {
                 sb.Append(info.State == TrackInfo.StateType.Keep
                     ? $"-c:v:{videoIndex++} copy "
                     : $"-c:v:{videoIndex++} {videoCodec} -crf {videoQuality} -preset medium ");
+            }
             else if (info.GetType() == typeof(AudioInfo))
+            {
                 sb.Append(info.State == TrackInfo.StateType.Keep
                     ? $"-c:a:{audioIndex++} copy "
                     : $"-c:a:{audioIndex++} {audioCodec} ");
+            }
             else if (info.GetType() == typeof(SubtitleInfo))
+            {
                 // No re-encoding of subtitles, just copy
                 sb.Append($"-c:s:{subtitleIndex++} copy ");
+            }
         }
         output = sb.ToString();
         output = output.Trim();
@@ -319,7 +342,9 @@ public class FfMpegTool : MediaTool
     {
         // Simple encoding of audio and video and passthrough of other tracks
         if (keep == null || reEncode == null)
+        {
             return ConvertToMkv(inputName, videoCodec, videoQuality, audioCodec, outputName);
+        }
 
         // Delete output file
         FileEx.DeleteFile(outputName);
@@ -412,7 +437,9 @@ public class FfMpegTool : MediaTool
     private static bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetInfo)
     {
         if (string.IsNullOrEmpty(text))
+        {
             throw new ArgumentNullException(nameof(text));
+        }
 
         // Init
         idetInfo = new FfMpegIdetInfo();

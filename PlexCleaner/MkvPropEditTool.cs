@@ -28,7 +28,9 @@ public class MkvPropEditTool : MkvMergeTool
     public bool SetMkvTrackLanguage(string filename, MediaInfo unknown, string language)
     {
         if (unknown == null)
+        {
             throw new ArgumentNullException(nameof(unknown));
+        }
 
         // Verify correct data type
         Debug.Assert(unknown.Parser == ToolType.MkvMerge);
@@ -64,7 +66,9 @@ public class MkvPropEditTool : MkvMergeTool
     public bool ClearMkvTags(string filename, MediaInfo info)
     {
         if (info == null)
+        {
             throw new ArgumentNullException(nameof(info));
+        }
 
         // Verify correct data type
         Debug.Assert(info.Parser == ToolType.MkvMerge);
@@ -82,7 +86,9 @@ public class MkvPropEditTool : MkvMergeTool
 
         // Delete all attachments
         for (int id = 0; id < info.Attachments; id++)
+        {
             commandline.Append($"--delete-attachment {id + 1} ");
+        }
 
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;

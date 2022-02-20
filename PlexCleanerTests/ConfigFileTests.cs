@@ -1,6 +1,7 @@
-﻿using Xunit;
+﻿using PlexCleaner;
+using Xunit;
 
-namespace PlexCleaner.Tests;
+namespace PlexCleanerTests;
 
 public class ConfigFileTests
 {
