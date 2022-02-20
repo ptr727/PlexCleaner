@@ -13,6 +13,7 @@ public class SidecarFileTests
     public void Open_OldSchemas_Opens(string fileName)
     {
         SidecarFile sidecarFile = new(SampleFiles.GetSampleFileInfo(fileName));
-        Assert.True(sidecarFile.Read(false));
+        // Read the JSON file but do not verify the MKV media attributes (TODO : Use a media file that matches the JSON)
+        Assert.True(sidecarFile.Read(out _, false));
     }
 }

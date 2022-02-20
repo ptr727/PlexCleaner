@@ -62,8 +62,15 @@ public class SidecarFile
         return true;
     }
 
-    public bool Read(bool verify = true)
+    public bool Read()
     {
+        return Read(out _);
+    }
+
+    public bool Read(out bool current, bool verify = true)
+    {
+        current = true;
+
         // Read the JSON from file
         if (!ReadJson())
         {
@@ -89,6 +96,7 @@ public class SidecarFile
         if (!IsMediaCurrent(true))
         {
             // The media file has been changed
+            current = false;
             Log.Logger.Warning("Sidecar out of sync with media file, clearing state : {FileName}", SidecarFileInfo.Name);
             State = States.Modified;
         }
@@ -99,6 +107,7 @@ public class SidecarFile
             Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             // Remove the verified state flag if set
+            current = false;
             if (State.HasFlag(States.Verified))
             {
                 Log.Logger.Warning("Sidecar out of sync with tools, clearing Verified flag : {FileName}", SidecarFileInfo.Name);
@@ -177,21 +186,20 @@ public class SidecarFile
     public bool Open(bool modified = false)
     {
         // Make sure the sidecar file has been read or created
+        bool current = true;
         if (!IsValid())
         {
             // If the sidecar does not exist, or can't be read, create it
+            // Read() will only read, it will not Update()
             if (!SidecarFileInfo.Exists ||
-                !Read())
+                !Read(out current, true))
             {
                 return Create();
             }
         }
 
-        // Update if not current
-        // Do not log if not current, updates are intentional
-        if (modified ||
-            !IsStateCurrent() ||
-            !IsMediaAndToolsCurrent(false))
+        // Update info if modified or not current
+        if (modified || !current)
         {
             return Update(modified);
         }
