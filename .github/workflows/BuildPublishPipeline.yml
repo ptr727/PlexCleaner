@@ -41,7 +41,7 @@ jobs:
       # Run Unit Tests
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: 'Run Unit Tests'
-        run: dotnet test ./PlexCleaner.Tests/PlexCleaner.Tests.csproj
+        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
       
       # Build and publish project to ./Publish
       # Set version information attributes
