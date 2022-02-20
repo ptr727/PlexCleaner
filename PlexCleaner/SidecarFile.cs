@@ -262,10 +262,18 @@ public class SidecarFile
 
     private bool IsMediaAndToolsCurrent(bool log)
     {
+        // Follow all steps to log all mismatches, do not jump out early
+        
         // Verify the media file matches the json info
+        bool mismatch = !IsMediaCurrent(log);
+
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
-        return !IsMediaCurrent(log) || !IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange;
+        // ReSharper disable once ConvertIfToOrExpression
+        if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+            mismatch = true;
+
+        return !mismatch;
     }
 
     private bool IsStateCurrent()

@@ -210,16 +210,16 @@ internal class Process
             return false;
         }
 
-        // Read the media info
-        if (!processFile.GetMediaInfo() ||
-            Program.IsCancelled())
+        // Make sure the file extension is lowercase
+        // Case sensitive on Linux, i.e. .MKV != .mkv
+        if (!processFile.MakeExtensionLowercase(ref modified))
         {
             return false;
         }
 
-        // Make sure the file extension is lowercase
-        // Case sensitive on Linux, i.e. .MKV != .mkv
-        if (!processFile.MakeExtensionLowercase(ref modified))
+        // Read the media info
+        if (!processFile.GetMediaInfo() ||
+            Program.IsCancelled())
         {
             return false;
         }
@@ -276,8 +276,7 @@ internal class Process
             return false;
         }
 
-        // Verify media streams
-        // Repair if possible
+        // Verify media streams, and repair if possible
         if (!processFile.Verify(true, ref modified) ||
             Program.IsCancelled())
         {
