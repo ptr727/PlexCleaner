@@ -50,7 +50,7 @@
     },
     "Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\\MP4inMKV - La Révolution - S01E01 - Chapter One - The Origins.mkv\""
     },
     "Docker": {
       "commandName": "Docker"
