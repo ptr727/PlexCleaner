@@ -56,7 +56,9 @@ internal class Program
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
+        {
             loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
+        }
 
         // Create static Serilog logger
         Log.Logger = loggerConfiguration.CreateLogger();
@@ -87,7 +89,9 @@ internal class Program
         // Do not verify tools
         Program program = Create(options, false);
         if (program == null)
+        {
             return -1;
+        }
 
         // Update tools
         // Make sure that the tools exist
@@ -98,15 +102,19 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         // Get file list
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         // Process all files
         Process process = new();
-        return process.ProcessFiles(program.FileInfoList) && 
+        return process.ProcessFiles(program.FileInfoList) &&
                Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
     }
 
@@ -114,7 +122,9 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         Monitor monitor = new();
         return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
@@ -124,10 +134,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         Process process = new();
         return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
@@ -137,10 +151,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -149,10 +167,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -161,10 +183,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.VerifyFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -173,10 +199,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -185,10 +215,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -197,10 +231,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -209,10 +247,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -221,10 +263,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -233,10 +279,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -245,10 +295,14 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
     }
@@ -257,18 +311,25 @@ internal class Program
     {
         Program program = Create(options, true);
         if (program == null)
+        {
             return -1;
+        }
 
         if (!program.CreateFileList(options.MediaFiles))
+        {
             return -1;
+        }
 
         return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
     }
 
     // Add a reference to this class in the event handler arguments
-    private void CancelHandlerEx(object s, ConsoleCancelEventArgs e) => CancelHandler(e, this);
+    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e)
+    {
+        CancelHandler(e);
+    }
 
-    private static void CancelHandler(ConsoleCancelEventArgs e, Program _)
+    private static void CancelHandler(ConsoleCancelEventArgs e)
     {
         Log.Logger.Warning("Cancel key pressed");
         e.Cancel = true;
@@ -302,16 +363,16 @@ internal class Program
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
 
         // Compare the schema version
-        if (config.SchemaVersion != ConfigFileJsonSchema.CurrentSchemaVersion)
+        if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+            Log.Logger.Warning("Settings JSON schema out of date : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
-                ConfigFileJsonSchema.CurrentSchemaVersion,
+                ConfigFileJsonSchema.Version,
                 options.SettingsFile);
 
-            // Upgrade schema
-            if (!ConfigFileJsonSchema.Upgrade(config))
-                return null;
+            // Upgrade the file schema
+            Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
+            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
         // Set the static options from the loaded settings
@@ -325,7 +386,7 @@ internal class Program
 
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = CancelSource.Token;
-            
+
         // Use log file
         if (!string.IsNullOrEmpty(options.LogFile))
         {
@@ -343,7 +404,7 @@ internal class Program
         }
 
         // Log app and runtime version
-        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
 
@@ -353,11 +414,15 @@ internal class Program
             // Upgrade tools if auto update is enabled
             if (Config.ToolsOptions.AutoUpdate &&
                 !Tools.CheckForNewTools())
+            {
                 return null;
+            }
 
             // Verify tools
             if (!Tools.VerifyTools())
+            {
                 return null;
+            }
         }
 
         // Create program instance
@@ -378,15 +443,15 @@ internal class Program
         files = files.Select(file => file.Trim('"')).ToList();
 
         // Process all entries
-        foreach (string fileorfolder in files)
+        foreach (string fileOrFolder in files)
         {
             // File or a directory
             FileAttributes fileAttributes;
             try
             {
-                fileAttributes = File.GetAttributes(fileorfolder);
+                fileAttributes = File.GetAttributes(fileOrFolder);
             }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
                 return false;
             }
@@ -394,15 +459,15 @@ internal class Program
             if (fileAttributes.HasFlag(FileAttributes.Directory))
             {
                 // Add this directory
-                DirectoryInfo dirInfo = new(fileorfolder);
+                DirectoryInfo dirInfo = new(fileOrFolder);
                 DirectoryInfoList.Add(dirInfo);
-                FolderList.Add(fileorfolder);
+                FolderList.Add(fileOrFolder);
 
                 // Create the file list from the directory
                 Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
-                if (!FileEx.EnumerateDirectory(fileorfolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
                 {
-                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileorfolder);
+                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
                     return false;
                 }
                 FileInfoList.AddRange(fileInfoList);
@@ -411,8 +476,7 @@ internal class Program
             else
             {
                 // Add this file
-                FileList.Add(fileorfolder);
-                FileInfoList.Add(new FileInfo(fileorfolder));
+                FileInfoList.Add(new FileInfo(fileOrFolder));
             }
         }
 
@@ -429,12 +493,7 @@ internal class Program
         return IsCancelled(100);
     }
 
-    public static bool IsCancelled()
-    {
-        return IsCancelled(0);
-    }
-
-    public static bool IsCancelled(int milliseconds)
+    public static bool IsCancelled(int milliseconds = 0)
     {
         return CancelSource.Token.WaitHandle.WaitOne(milliseconds);
     }
@@ -445,13 +504,12 @@ internal class Program
         CancelSource.Cancel();
     }
 
-    public static CommandLineOptions Options { get; set; }
-    public static ConfigFileJsonSchema Config { get; set; }
+    public static CommandLineOptions Options { get; private set; }
+    public static ConfigFileJsonSchema Config { get; private set; }
 
     private static readonly CancellationTokenSource CancelSource = new();
 
     private readonly List<string> FolderList = new();
     private readonly List<DirectoryInfo> DirectoryInfoList = new();
-    private readonly List<string> FileList = new();
     private readonly List<FileInfo> FileInfoList = new();
 }

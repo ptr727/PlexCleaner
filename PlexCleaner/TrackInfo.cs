@@ -1,20 +1,22 @@
+using InsaneGenius.Utilities;
+using Serilog;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using InsaneGenius.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
 public class TrackInfo
 {
-    public TrackInfo() {}
+    protected TrackInfo() { }
 
     internal TrackInfo(MkvToolJsonSchema.Track track)
     {
         if (track == null)
+        {
             throw new ArgumentNullException(nameof(track));
+        }
 
         Format = track.Codec;
         Codec = track.Properties.CodecId;
@@ -24,23 +26,35 @@ public class TrackInfo
         // If the "language" and "tag_language" fields are set FFprobe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
         if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
+            !string.IsNullOrEmpty(track.Properties.Language) &&
             !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
-            Log.Logger.Warning("Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
+            Log.Logger.Warning("Tag and Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
         }
 
         // Set language
         if (string.IsNullOrEmpty(track.Properties.Language))
+        {
             Language = "und";
+        }
         else
         {
-            // MKVMerge sets the language to always be und or 3 letter ISO 639-2 code
-            // TODO : Make sure it is correct anyway
+            // MKVMerge normally sets the language to und or 3 letter ISO 639-2 code
+            // Try to lookup the language to make sure it is correct
             Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Properties.Language);
-            Language = lang != null ? lang.Part2B : "und";
+            if (lang != null)
+            {
+                Language = lang.Part2B;
+            }
+            else
+            {
+                HasErrors = true;
+                Log.Logger.Warning("Invalid Language : {Language}", track.Properties.Language);
+                Language = "und";
+            }
         }
-            
+
         // Take care to use id and number correctly in MKVMerge and MKVPropEdit
         Id = track.Id;
         Number = track.Properties.Number;
@@ -53,7 +67,9 @@ public class TrackInfo
     internal TrackInfo(FfMpegToolJsonSchema.Stream stream)
     {
         if (stream == null)
+        {
             throw new ArgumentNullException(nameof(stream));
+        }
 
         Format = stream.CodecName;
         Codec = stream.CodecLongName;
@@ -65,21 +81,33 @@ public class TrackInfo
         // https://github.com/MediaArea/MediaAreaXml/issues/34
 
         // Set language
-        // TODO : Language is supposed to be 3 characters, but some sample files are "???" or "null", set to und
-        Language = stream.Tags.Language;
-        if (string.IsNullOrEmpty(Language))
+        if (string.IsNullOrEmpty(stream.Tags.Language))
+        {
             Language = "und";
-        else if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) || Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+        }
+        // Some sample files are "???" or "null", set to und
+        else if (stream.Tags.Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
+                 stream.Tags.Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
+            Log.Logger.Warning("Invalid Language : {Language}", stream.Tags.Language);
             Language = "und";
-            Log.Logger.Warning("Invalid Language : {Language}", Language);
         }
         else
         {
             // FFprobe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
-            Iso6393 lang = PlexCleaner.Language.GetIso6393(Language);
-            Language = lang != null ? lang.Part2B : "und";
+            // Try to lookup the language to make sure it is correct
+            Iso6393 lang = PlexCleaner.Language.GetIso6393(stream.Tags.Language);
+            if (lang != null)
+            {
+                Language = lang.Part2B;
+            }
+            else
+            {
+                HasErrors = true;
+                Log.Logger.Warning("Invalid Language : {Language}", stream.Tags.Language);
+                Language = "und";
+            }
         }
 
         // Use index for number
@@ -94,7 +122,9 @@ public class TrackInfo
     internal TrackInfo(MediaInfoToolXmlSchema.Track track)
     {
         if (track == null)
+        {
             throw new ArgumentNullException(nameof(track));
+        }
 
         Format = track.Format;
         Codec = track.CodecId;
@@ -102,21 +132,34 @@ public class TrackInfo
         Default = track.Default;
 
         // Set language
-        Language = track.Language;
         if (string.IsNullOrEmpty(track.Language))
+        {
             Language = "und";
+        }
         else
         {
             // MediaInfo uses ab or abc or ab-cd tags, we need to convert to ISO 639-2
             // https://github.com/MediaArea/MediaAreaXml/issues/33
+            // Try to lookup the language to make sure it is correct
             Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Language);
-            Language = lang != null ? lang.Part2B : "und";
+            if (lang != null)
+            {
+                Language = lang.Part2B;
+            }
+            else
+            {
+                HasErrors = true;
+                Log.Logger.Warning("Invalid Language : {Language}", track.Language);
+                Language = "und";
+            }
         }
 
         // FFprobe and MKVToolNix use chi not zho
         // https://github.com/mbunkus/mkvtoolnix/issues/1149
         if (Language.Equals("zho", StringComparison.OrdinalIgnoreCase))
+        {
             Language = "chi";
+        }
 
         // ID can be an integer or an integer-type, e.g. 3-CC1
         // https://github.com/MediaArea/MediaInfo/issues/201

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // TODO: Find JSON schema definition
@@ -19,8 +19,10 @@ public class FfProbe
     [JsonProperty("streams")]
     public List<Stream> Streams { get; } = new();
 
-    public static FfProbe FromJson(string json) => 
-        JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+    public static FfProbe FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+    }
 
     private static readonly JsonSerializerSettings Settings = new()
     {

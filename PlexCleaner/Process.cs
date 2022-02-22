@@ -1,10 +1,10 @@
-﻿using System;
+﻿using InsaneGenius.Utilities;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using InsaneGenius.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -12,66 +12,40 @@ internal class Process
 {
     public Process()
     {
-        // TODO : Add cleanup for extra empty entry when string is empty
-        // extensionlist = extensionlist.Where(s => !String.IsNullOrWhiteSpace(s)).Distinct().ToList();
+        // Convert List<string> to HashSet<string>
+        KeepExtensions = new HashSet<string>(Program.Config.ProcessOptions.KeepExtensions, StringComparer.OrdinalIgnoreCase);
+        ReMuxExtensions = new HashSet<string>(Program.Config.ProcessOptions.ReMuxExtensions, StringComparer.OrdinalIgnoreCase);
+        ReEncodeAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.ReEncodeAudioFormats, StringComparer.OrdinalIgnoreCase);
+        FileIgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
 
-        // Extensions of otehr files to skip and keep
-        // TODO : Add support for ignoring FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
-        List<string> stringlist = Program.Config.ProcessOptions.KeepExtensions.Split(',').ToList();
-        KeepExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
+        // Maintain order, keep in List<string>
+        PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats;
 
-        // Containers types that can be remuxed to MKV
-        stringlist = Program.Config.ProcessOptions.ReMuxExtensions.Split(',').ToList();
-        ReMuxExtensions = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
-
-        // Languages are in short form using ISO 639-2 notation
-        // https://www.loc.gov/standards/iso639-2/php/code_list.php
-        // zxx = no linguistic content, und = undetermined
-        // Default language
+        // Default to eng if language not set
         if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
+        {
             Program.Config.ProcessOptions.DefaultLanguage = "eng";
+        }
 
-        // Languages to keep, always keep no linguistic content and the default language
-        // The languages must be in ISO 639-2 form
-        stringlist = Program.Config.ProcessOptions.KeepLanguages.Split(',').ToList();
-        KeepLanguages = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase)
+        // Always keep zxx no linguistic content and the default language
+        KeepLanguages = new HashSet<string>(Program.Config.ProcessOptions.KeepLanguages, StringComparer.OrdinalIgnoreCase)
         {
             "zxx",
             Program.Config.ProcessOptions.DefaultLanguage
         };
 
-        // Re-encode any video track that match the list
-        // We use ffmpeg to re-encode, so we use ffprobe formats
-        // All other formats will be encoded to h264
-        List<string> codeclist = Program.Config.ProcessOptions.ReEncodeVideoCodecs.Split(',').ToList();
-        List<string> formatlist = Program.Config.ProcessOptions.ReEncodeVideoFormats.Split(',').ToList();
-        List<string> profilelist = Program.Config.ProcessOptions.ReEncodeVideoProfiles.Split(',').ToList();
-        Debug.Assert(codeclist.Count == formatlist.Count && formatlist.Count == profilelist.Count);
+        // Convert VideoFormat to VideoInfo
         ReEncodeVideoInfos = new List<VideoInfo>();
-        for (int i = 0; i < codeclist.Count; i ++)
-        {
-            // We match against the format and profile
-            // Match the logic in VideoInfo.CompareVideo
-            VideoInfo videoinfo = new()
+        foreach (VideoInfo videoInfo in Program.Config.ProcessOptions.ReEncodeVideo.Select(format =>
+            new VideoInfo
             {
-                Codec = codeclist.ElementAt(i),
-                Format = formatlist.ElementAt(i),
-                Profile = profilelist.ElementAt(i)
-            };
-            ReEncodeVideoInfos.Add(videoinfo);
+                Codec = format.Codec,
+                Format = format.Format,
+                Profile = format.Profile
+            }))
+        {
+            ReEncodeVideoInfos.Add(videoInfo);
         }
-
-        // Re-encode any audio track that match the list
-        // We use ffmpeg to re-encode, so we use ffprobe formats
-        // All other formats will be encoded to the default codec, e.g. ac3
-        stringlist = Program.Config.ProcessOptions.ReEncodeAudioFormats.Split(',').ToList();
-        ReEncodeAudioFormats = new HashSet<string>(stringlist, StringComparer.OrdinalIgnoreCase);
-
-        // Preferred audio codecs
-        PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats.Split(',').ToList();
-
-        // File ignore list
-        IgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
     }
 
     public bool ProcessFolders(List<string> folderList)
@@ -84,7 +58,9 @@ internal class Process
     public static bool DeleteEmptyFolders(List<string> folderList)
     {
         if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
+        {
             return true;
+        }
 
         Log.Logger.Information("Deleting empty folders ...");
 
@@ -114,7 +90,10 @@ internal class Process
             if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
             {
                 if (!Program.IsCancelled())
+                {
                     errorFiles.Add(fileInfo.FullName);
+                }
+
                 return false;
             }
 
@@ -134,18 +113,22 @@ internal class Process
         {
             Log.Logger.Information("Error files:");
             foreach (string file in errorFiles)
+            {
                 Log.Logger.Information("{FileName}", file);
+            }
         }
         if (modifiedInfo.Count > 0)
         {
             Log.Logger.Information("Modified files:");
             foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
+            {
                 Log.Logger.Information("{State} : {FileName}", state, fileName);
+            }
         }
 
         // Write the updated ignore file list
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-            Program.Config.ProcessOptions.FileIgnoreList.Count != IgnoreList.Count)
+            Program.Config.ProcessOptions.FileIgnoreList.Count != FileIgnoreList.Count)
         {
             Log.Logger.Information("Updating settings file : {SettingsFile}", Program.Options.SettingsFile);
             Program.Config.ProcessOptions.FileIgnoreList.Sort();
@@ -163,7 +146,7 @@ internal class Process
         DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
 
         // Skip the file if it is in the ignore list
-        if (IgnoreList.Contains(fileInfo.FullName))
+        if (FileIgnoreList.Contains(fileInfo.FullName))
         {
             Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
             return true;
@@ -195,16 +178,22 @@ internal class Process
 
         // Delete the sidecar file if matching MKV file not found
         if (!processFile.DeleteMismatchedSidecarFile(ref modified))
+        {
             return false;
+        }
 
         // Skip if this a sidecar file
         if (SidecarFile.IsSidecarFile(fileInfo))
+        {
             return true;
+        }
 
         // ReMux non-MKV containers matched by extension
         if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // All files past this point are MKV files
         if (!processFile.DeleteNonMkvFile(ref modified))
@@ -221,78 +210,105 @@ internal class Process
             return false;
         }
 
-        // Read the media info
-        if (!processFile.GetMediaInfo() ||
-            Program.IsCancelled())
-            return false;
-
         // Make sure the file extension is lowercase
         // Case sensitive on Linux, i.e. .MKV != .mkv
         if (!processFile.MakeExtensionLowercase(ref modified))
+        {
             return false;
+        }
+
+        // Read the media info
+        if (!processFile.GetMediaInfo() ||
+            Program.IsCancelled())
+        {
+            return false;
+        }
 
         // ReMux non-MKV containers using MKV filenames
         if (!processFile.RemuxNonMkvContainer(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Now that the file and container is MKV all media info should be valid
         if (!processFile.VerifyMediaInfo())
+        {
             return false;
+        }
 
         // Try to ReMux metadata errors away
         if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Change all tracks with an unknown language to the default language
         // Merge operation uses language tags, make sure they are set
         if (!processFile.SetUnknownLanguage(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Merge all remux operations into a single call
         // Remove all the unwanted language tracks
         // Remove all duplicate tracks
         if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // De-interlace interlaced content
         // Make sure to deinterlace before encoding, H.265 is not interlaced content friendly
         if (!processFile.DeInterlace(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Re-Encode formats that cannot be direct-played
         if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
-        // Verify media streams
-        // Repair if possible
+        // Verify media streams, and repair if possible
         if (!processFile.Verify(true, ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Repair may have modified track tags, reset the default language again
         if (!processFile.SetUnknownLanguage(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Remove tags and titles
         if (!processFile.RemoveTags(ref modified) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Restore the file timestamp
         if (!processFile.SetLastWriteTimeUtc(lastWriteTime) ||
             Program.IsCancelled())
+        {
             return false;
+        }
 
         // Re-verify the tool info is correctly recorded
         if (!processFile.VerifyMediaInfo())
+        {
             return false;
+        }
 
         // Return state and current fileinfo
         state = processFile.State;
@@ -309,7 +325,9 @@ internal class Process
             // Handle only MKV files, and files in the remux extension list
             if (!MkvMergeTool.IsMkvFile(fileInfo) &&
                 !ReMuxExtensions.Contains(fileInfo.Extension))
+            {
                 return true;
+            }
 
             // ReMux
             return Convert.ReMuxToMkv(fileInfo.FullName, out string _);
@@ -322,12 +340,16 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Get media information
             ProcessFile processFile = new(fileInfo);
             if (!processFile.GetMediaInfo())
+            {
                 return false;
+            }
 
             // Verify
             bool modified = false;
@@ -342,7 +364,9 @@ internal class Process
             // Handle only MKV files
             // ReMux before re-encode, so the track attribute logic works as expected
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Re-encode
             return Convert.ConvertToMkv(fileInfo.FullName, out string _);
@@ -355,7 +379,9 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // De-interlace
             return Convert.DeInterlaceToMkv(fileInfo.FullName, out string _);
@@ -374,12 +400,16 @@ internal class Process
             {
                 // Handle only MKV files
                 if (!MkvMergeTool.IsMkvFile(fileInfo))
+                {
                     return true;
+                }
 
                 // Get media information
                 ProcessFile processFile = new(fileInfo);
                 if (!processFile.GetMediaInfo())
+                {
                     return false;
+                }
 
                 // Add all the tags
                 fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
@@ -388,7 +418,9 @@ internal class Process
 
                 return true;
             }))
+        {
             return false;
+        }
 
         // Print the tags
         Log.Logger.Information("FFprobe:");
@@ -407,7 +439,9 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Create the sidecar file
             SidecarFile sidecarfile = new(fileInfo);
@@ -421,7 +455,9 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Upgrade the sidecar file
             SidecarFile sidecarfile = new(fileInfo);
@@ -435,12 +471,16 @@ internal class Process
         {
             // Handle only sidecar files
             if (!SidecarFile.IsSidecarFile(fileInfo))
+            {
                 return true;
+            }
 
             // Get sidecar information
             SidecarFile sidecarfile = new(fileInfo);
             if (!sidecarfile.Read())
+            {
                 return false;
+            }
 
             // Print info
             sidecarfile.WriteLine();
@@ -455,12 +495,16 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Get media information
             ProcessFile processFile = new(fileInfo);
             if (!processFile.GetMediaInfo())
+            {
                 return false;
+            }
 
             // Print info
             Log.Logger.Information("{FileName}", fileInfo.FullName);
@@ -481,7 +525,9 @@ internal class Process
             // Get tool information
             ProcessFile processFile = new(fileInfo);
             if (!processFile.GetToolInfo())
+            {
                 return false;
+            }
 
             // Print info
             Log.Logger.Information("{FileName}", fileInfo.FullName);
@@ -502,12 +548,16 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Get bitrate info
             ProcessFile processFile = new(fileInfo);
             if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
+            {
                 return false;
+            }
 
             // Print bitrate info
             bitrateInfo.WriteLine();
@@ -522,12 +572,16 @@ internal class Process
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
                 return true;
+            }
 
             // Get media information
             ProcessFile processFile = new(fileInfo);
             if (!processFile.GetMediaInfo())
+            {
                 return false;
+            }
 
             // Remove subtitles
             bool modified = false;
@@ -546,22 +600,23 @@ internal class Process
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
-        double processedPercentage = 0.0;
         foreach (FileInfo fileInfo in fileList)
         {
             // Cancel handler
             if (Program.IsCancelled())
+            {
                 return false;
+            }
 
             // Perform the task
-            processedCount ++;
-            processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
+            processedCount++;
+            double processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
             Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
             if (!taskFunc(fileInfo) &&
                 !Program.IsCancelled())
             {
                 Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
-                errorCount ++;
+                errorCount++;
             }
 
             // Next file
@@ -579,7 +634,7 @@ internal class Process
         return errorCount == 0;
     }
 
-    private readonly HashSet<string> IgnoreList;
+    private readonly HashSet<string> FileIgnoreList;
     private readonly HashSet<string> KeepExtensions;
     private readonly HashSet<string> ReMuxExtensions;
     private readonly HashSet<string> ReEncodeAudioFormats;

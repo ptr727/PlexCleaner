@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace PlexCleaner;
 
@@ -11,15 +12,14 @@ public class BitrateInfo
     public void Calculate(List<Packet> packetList, int videoStream, int audioStream, int threshold)
     {
         if (packetList == null)
+        {
             throw new ArgumentNullException(nameof(packetList));
+        }
 
         // Calculating duration from timestamp values
         Duration = 0;
-        foreach (Packet packet in packetList)
+        foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
-            if (!ShouldCompute(packet, videoStream, audioStream))
-                continue;
-
             // Use DTS if PTS not set
             if (double.IsNaN(packet.PtsTime))
             {
@@ -35,11 +35,13 @@ public class BitrateInfo
 
             int packetTime = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
             if (packetTime > Duration)
+            {
                 Duration = packetTime;
+            }
         }
 
         // Add 1 for index offset
-        Duration ++;
+        Duration++;
 
         // Set the bitrate array size to the duration in seconds
         VideoBitrate = new Bitrate(Duration);
@@ -52,7 +54,9 @@ public class BitrateInfo
         foreach (Packet packet in packetList)
         {
             if (!ShouldCompute(packet, videoStream, audioStream))
+            {
                 continue;
+            }
 
             // Round down when calculating index
             int index = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
@@ -60,13 +64,13 @@ public class BitrateInfo
             // Calculate values
             if (packet.StreamIndex == videoStream)
             {
-                videoPackets ++;
+                videoPackets++;
                 VideoBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }
             if (packet.StreamIndex == audioStream)
             {
-                audioPackets ++;
+                audioPackets++;
                 AudioBitrate.Rate[index] += packet.Size;
                 CombinedBitrate.Rate[index] += packet.Size;
             }
@@ -103,21 +107,29 @@ public class BitrateInfo
         // Must match the audio or video stream index
         if (packet.StreamIndex != videoStream &&
             packet.StreamIndex != audioStream)
+        {
             return false;
+        }
 
         // Must have PTS or DTS
         if (double.IsNaN(packet.PtsTime) &&
             double.IsNaN(packet.DtsTime))
+        {
             return false;
+        }
 
         // If duration is set it must be less than 1.0
         if (!double.IsNaN(packet.DurationTime) &&
             packet.DurationTime > 1.0)
+        {
             return false;
+        }
 
         // Must have size
         if (packet.Size <= 0)
+        {
             return false;
+        }
 
         // Verify streams match expected type
         Debug.Assert(packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) ||

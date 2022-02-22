@@ -25,12 +25,12 @@ public class MediaToolInfo : IComparable
 
     public void WriteLine(string prefix)
     {
-        Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}", 
-            prefix, 
-            ToolType, 
-            Version, 
-            FileName, 
-            Size, 
+        Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}",
+            prefix,
+            ToolType,
+            Version,
+            FileName,
+            Size,
             ModifiedTime, Url);
     }
 
@@ -42,19 +42,27 @@ public class MediaToolInfo : IComparable
     public int CompareTo(MediaToolInfo toolInfo)
     {
         if (toolInfo == null)
+        {
             throw new ArgumentNullException(nameof(toolInfo));
+        }
 
         int result = string.Compare(FileName, toolInfo.FileName, StringComparison.OrdinalIgnoreCase);
         if (result != 0)
+        {
             return result;
+        }
 
         result = ModifiedTime.CompareTo(toolInfo.ModifiedTime);
         if (result != 0)
+        {
             return result;
+        }
 
         result = Size.CompareTo(toolInfo.Size);
         if (result != 0)
+        {
             return result;
+        }
 
         return string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
     }
@@ -63,7 +71,9 @@ public class MediaToolInfo : IComparable
     {
         // Do not assign to self
         if (Equals(toolInfo))
+        {
             return;
+        }
 
         // Copy values
         ToolType = toolInfo.ToolType;

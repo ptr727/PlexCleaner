@@ -1,9 +1,9 @@
-﻿using System;
+﻿using InsaneGenius.Utilities;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using InsaneGenius.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -20,9 +20,20 @@ internal class Monitor
     {
         Log.Logger.Information("Monitoring folders ...");
 
-        void Changehandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
-        void Renamehandler(object s, RenamedEventArgs e) => OnRenamed(e, this);
-        void Errorhandler(object s, ErrorEventArgs e) => OnError(e, this);
+        void ChangeHandler(object s, FileSystemEventArgs e)
+        {
+            OnChanged(e, this);
+        }
+
+        void RenameHandler(object s, RenamedEventArgs e)
+        {
+            OnRenamed(e, this);
+        }
+
+        void ErrorHandler(object s, ErrorEventArgs e)
+        {
+            OnError(e);
+        }
 
         // Create file system watcher for each folder
         foreach (string folder in folders)
@@ -35,16 +46,18 @@ internal class Monitor
             watch.NotifyFilter = NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
             watch.Filter = "*.*";
             watch.IncludeSubdirectories = true;
-            watch.Changed += Changehandler;
-            watch.Created += Changehandler;
-            watch.Deleted += Changehandler;
-            watch.Renamed += Renamehandler;
-            watch.Error += Errorhandler;
+            watch.Changed += ChangeHandler;
+            watch.Created += ChangeHandler;
+            watch.Deleted += ChangeHandler;
+            watch.Renamed += RenameHandler;
+            watch.Error += ErrorHandler;
         }
 
         // Enable event watching
         foreach (FileSystemWatcher watch in Watcher)
+        {
             watch.EnableRaisingEvents = true;
+        }
 
         // Wait for exit to be signalled
         while (!Program.IsCancelled(1000))
@@ -61,28 +74,43 @@ internal class Monitor
                     //    WatchFolders.Remove(folder);
 
                     // Find folders that have settled down, i.e. not modified in last wait time
-                    DateTime settletime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
+                    DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
                     foreach ((string key, DateTime value) in WatchFolders)
+                    {
                         // If not recently modified and all files in the folder are readable
-                        if (value < settletime)
+                        if (value < settleTime)
+                        {
                             if (!FileEx.AreFilesInDirectoryReadable(key))
+                            {
                                 Log.Logger.Information("Folder not readable : {Folder}", key);
+                            }
                             else
+                            {
                                 watchlist.Add(key);
+                            }
+                        }
+                    }
 
                     // Remove watched folders from the watchlist
                     foreach (string folder in watchlist)
+                    {
                         WatchFolders.Remove(folder);
+                    }
                 }
             }
 
             // Any work to do
             if (!watchlist.Any())
+            {
                 continue;
+            }
 
             // Process changes in the watched folders
             foreach (string folder in watchlist)
+            {
                 Log.Logger.Information("Monitored changes in : {Folder}", folder);
+            }
+
             Process process = new();
             process.ProcessFolders(watchlist);
             Process.DeleteEmptyFolders(watchlist);
@@ -90,7 +118,10 @@ internal class Monitor
 
         // Disable event watching
         foreach (FileSystemWatcher watch in Watcher)
+        {
             watch.EnableRaisingEvents = false;
+        }
+
         Watcher.Clear();
 
         return true;
@@ -114,7 +145,7 @@ internal class Monitor
                 break;
             case WatcherChangeTypes.Deleted:
                 // Cleanup when a file or directory gets deleted
-                OnDeleted(e.FullPath);
+                OnDeleted();
                 break;
             case WatcherChangeTypes.Renamed:
                 break;
@@ -138,7 +169,7 @@ internal class Monitor
         {
             case WatcherChangeTypes.Renamed:
                 // Treat the old file as a deleted file
-                OnDeleted(e.OldFullPath);
+                OnDeleted();
                 // Treat the renamed file as a changed file
                 OnChanged(e.FullPath);
                 break;
@@ -155,13 +186,13 @@ internal class Monitor
         }
     }
 
-    private static void OnError(ErrorEventArgs e, Monitor monitor)
+    private static void OnError(ErrorEventArgs e)
     {
         // Call the instance version
-        monitor.OnErrorEx(e);
+        OnErrorEx(e);
     }
 
-    private void OnErrorEx(ErrorEventArgs e)
+    private static void OnErrorEx(ErrorEventArgs e)
     {
         // Cancel in case of error
         Log.Logger.Error(e.GetException(), "OnErrorEx()");
@@ -171,7 +202,7 @@ internal class Monitor
     private void OnChanged(string pathname)
     {
         // File
-        string foldername = null;
+        string folderName = null;
         if (File.Exists(pathname))
         {
             // Get the file details
@@ -180,38 +211,42 @@ internal class Monitor
             // Ignore our own sidecar and *.tmp files being created
             if (!fileInfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
                 !SidecarFile.IsSidecarFile(fileInfo))
-                foldername = fileInfo.DirectoryName;
+            {
+                folderName = fileInfo.DirectoryName;
+            }
         }
         // Or directory
-        else if(Directory.Exists(pathname))
+        else if (Directory.Exists(pathname))
         {
-            foldername = pathname;
+            folderName = pathname;
         }
 
         // Did we get a folder
-        if (string.IsNullOrEmpty(foldername))
+        if (string.IsNullOrEmpty(folderName))
+        {
             return;
+        }
 
         // Lock
         lock (WatchLock)
         {
             // Add new folder or update existing timestamp
-            if (WatchFolders.ContainsKey(foldername))
+            if (WatchFolders.ContainsKey(folderName))
             {
                 // Update the modified time
-                Log.Logger.Information("Updating folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), foldername);
-                WatchFolders[foldername] = DateTime.UtcNow;
+                Log.Logger.Information("Updating folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), folderName);
+                WatchFolders[folderName] = DateTime.UtcNow;
             }
             else
             {
                 // Add the folder
-                Log.Logger.Information("Adding folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), foldername);
-                WatchFolders.Add(foldername, DateTime.UtcNow);
+                Log.Logger.Information("Adding folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), folderName);
+                WatchFolders.Add(folderName, DateTime.UtcNow);
             }
         }
     }
 
-    private void OnDeleted(string _)
+    private static void OnDeleted()
     {
         // The path we get no longer exists, it may be a file, or it may be a folder
         // TODO : Figure out how to accurately test if deleted path was a file or folder

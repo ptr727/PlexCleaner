@@ -1,11 +1,11 @@
-﻿using System;
-using InsaneGenius.Utilities;
+﻿using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Reflection;
 using Serilog;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -42,7 +42,9 @@ public class HandBrakeTool : MediaTool
         const string commandline = "--version";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "HandBrake 1.3.3"
@@ -70,7 +72,7 @@ public class HandBrakeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -80,7 +82,9 @@ public class HandBrakeTool : MediaTool
             // Get the latest release version number from github releases
             // https://api.github.com/repos/handbrake/handbrake/releases/latest
             if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out string json))
+            {
                 return false;
+            }
 
             JObject releases = JObject.Parse(json);
             // "tag_name": "1.2.2",
@@ -99,7 +103,7 @@ public class HandBrakeTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);

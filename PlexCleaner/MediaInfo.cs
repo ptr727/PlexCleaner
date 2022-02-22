@@ -32,11 +32,19 @@ public class MediaInfo
     public void WriteLine(string prefix)
     {
         foreach (VideoInfo info in Video)
+        {
             info.WriteLine(prefix);
+        }
+
         foreach (AudioInfo info in Audio)
+        {
             info.WriteLine(prefix);
+        }
+
         foreach (SubtitleInfo info in Subtitle)
+        {
             info.WriteLine(prefix);
+        }
     }
 
     public List<TrackInfo> GetTrackList()
@@ -53,21 +61,21 @@ public class MediaInfo
         return ordered;
     }
 
-    public static List<TrackInfo> GetTrackList(List<VideoInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<VideoInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
         return trackList;
     }
 
-    public static List<TrackInfo> GetTrackList(List<AudioInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<AudioInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
         return trackList;
     }
 
-    public static List<TrackInfo> GetTrackList(List<SubtitleInfo> list)
+    public static List<TrackInfo> GetTrackList(IEnumerable<SubtitleInfo> list)
     {
         List<TrackInfo> trackList = new();
         trackList.AddRange(list);
@@ -83,24 +91,42 @@ public class MediaInfo
 
         // Video
         foreach (VideoInfo video in Video)
+        {
             if (video.IsLanguageUnknown())
+            {
                 unknown.Video.Add(video);
+            }
             else
+            {
                 known.Video.Add(video);
+            }
+        }
 
         // Audio
         foreach (AudioInfo audio in Audio)
+        {
             if (audio.IsLanguageUnknown())
+            {
                 unknown.Audio.Add(audio);
+            }
             else
+            {
                 known.Audio.Add(audio);
+            }
+        }
 
         // Subtitle
         foreach (SubtitleInfo subtitle in Subtitle)
+        {
             if (subtitle.IsLanguageUnknown())
+            {
                 unknown.Subtitle.Add(subtitle);
+            }
             else
+            {
                 known.Subtitle.Add(subtitle);
+            }
+        }
 
         // Return true on any match
         return unknown.Count > 0;
@@ -119,10 +145,16 @@ public class MediaInfo
 
         // Add all tracks with the interlaced flag set
         foreach (VideoInfo video in Video)
+        {
             if (video.Interlaced)
+            {
                 deinterlace.Video.Add(video);
+            }
             else
+            {
                 keep.Video.Add(video);
+            }
+        }
 
         // Set the correct state on all the objects
         deinterlace.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.DeInterlace);
@@ -135,7 +167,9 @@ public class MediaInfo
     public bool FindUnwantedLanguage(HashSet<string> languages, List<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
     {
         if (languages == null)
+        {
             throw new ArgumentNullException(nameof(languages));
+        }
 
         keep = new MediaInfo(Parser);
         remove = new MediaInfo(Parser);
@@ -151,9 +185,13 @@ public class MediaInfo
 
             // Keep or remove
             if (languages.Contains(video.Language))
+            {
                 keep.Video.Add(video);
+            }
             else
+            {
                 remove.Video.Add(video);
+            }
         }
 
         // No language matching video tracks
@@ -176,9 +214,13 @@ public class MediaInfo
 
             // Keep or remove
             if (languages.Contains(audio.Language))
+            {
                 keep.Audio.Add(audio);
+            }
             else
+            {
                 remove.Audio.Add(audio);
+            }
         }
 
         // No language matching audio tracks
@@ -193,8 +235,10 @@ public class MediaInfo
             remove.Audio.Remove(info);
         }
         else
+        {
             // One or more audio tracks matched
             audioMatch = true;
+        }
 
         // Keep all subtitle tracks that match a language
         HashSet<string> subtitleLanguages = new();
@@ -205,18 +249,26 @@ public class MediaInfo
 
             // Keep or remove
             if (languages.Contains(subtitle.Language))
+            {
                 keep.Subtitle.Add(subtitle);
+            }
             else
+            {
                 remove.Subtitle.Add(subtitle);
+            }
         }
 
         // No language matching subtitle tracks
         if (keep.Subtitle.Count == 0 && Subtitle.Count > 0)
+        {
             Log.Logger.Warning("No subtitle track matching requested language : {Available} != {Languages}", subtitleLanguages, languages);
+        }
 
         // No audio match and no subtitle match, foreign film with no matching subtitles
         if (keep.Subtitle.Count == 0 && !audioMatch)
+        {
             Log.Logger.Warning("No audio or subtitle track matching requested language : {Available} != {Languages}", audioLanguages, languages);
+        }
 
         // Set the correct state on all the objects
         remove.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Remove);
@@ -229,9 +281,14 @@ public class MediaInfo
     public bool FindNeedReEncode(List<VideoInfo> reencodevideo, HashSet<string> reencodeaudio, out MediaInfo keep, out MediaInfo reencode)
     {
         if (reencodevideo == null)
+        {
             throw new ArgumentNullException(nameof(reencodevideo));
+        }
+
         if (reencodeaudio == null)
+        {
             throw new ArgumentNullException(nameof(reencodeaudio));
+        }
 
         // Filter logic values are based FFprobe attributes
         Debug.Assert(Parser == MediaTool.ToolType.FfProbe);
@@ -244,9 +301,13 @@ public class MediaInfo
         {
             // See if the video track matches any of the re-encode specs
             if (reencodevideo.Any(item => video.CompareVideo(item)))
+            {
                 reencode.Video.Add(video);
+            }
             else
+            {
                 keep.Video.Add(video);
+            }
         }
 
         // Match audio codecs from the reencode list
@@ -255,9 +316,13 @@ public class MediaInfo
             // Re-encode or passthrough
             // TODO: Add wildcard support for e.g. *pcm matching any pcm format 
             if (reencodeaudio.Contains(audio.Format))
+            {
                 reencode.Audio.Add(audio);
+            }
             else
+            {
                 keep.Audio.Add(audio);
+            }
         }
 
         // If we are encoding audio, the video track must be h264 or h265 else we get ffmpeg encoding errors
@@ -265,7 +330,7 @@ public class MediaInfo
         // [matroska @ 00000195b3585c80] Can't write packet with unknown timestamp
         // av_interleaved_write_frame(): Invalid argument
         if (reencode.Audio.Count > 0 &&
-            keep.Video.Any(item => 
+            keep.Video.Any(item =>
                 !item.Format.Equals("h264", StringComparison.OrdinalIgnoreCase) &&
                 !item.Format.Equals("hevc", StringComparison.OrdinalIgnoreCase)))
         {
@@ -289,7 +354,9 @@ public class MediaInfo
     public bool FindDuplicateTracks(List<string> codecs, out MediaInfo keep, out MediaInfo remove)
     {
         if (codecs == null)
+        {
             throw new ArgumentNullException(nameof(codecs));
+        }
 
         // If we have one of each track type then keep all tracks
         keep = null;
@@ -338,16 +405,10 @@ public class MediaInfo
         }
 
         // Keep one instance of each language
-        foreach (string language in languages)
+        foreach (VideoInfo video in from language in languages
+                                    let video = Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) && item.Default)
+                                    select video ?? Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase)))
         {
-            // Use the first default track
-            VideoInfo video = Video.Find(item =>
-                item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
-                item.Default);
-
-            // If nothing found, use the first track
-            video ??= Video.Find(item => item.Language.Equals(language, StringComparison.OrdinalIgnoreCase));
-
             // Keep it
             keep.Video.Add(video);
         }
@@ -406,7 +467,9 @@ public class MediaInfo
 
             // Add non-forced track
             if (subtitle != null)
+            {
                 keep.Subtitle.Add(subtitle);
+            }
 
             // Find forced track
 
@@ -430,7 +493,9 @@ public class MediaInfo
 
             // Add forced track
             if (subtitle != null)
+            {
                 keep.Subtitle.Add(subtitle);
+            }
         }
         Debug.Assert(keep.Subtitle.Count > 0);
 
@@ -484,7 +549,7 @@ public class MediaInfo
 
             // The default track is not always the best track
             Debug.Assert(audio != null);
-            if (preferred != null && 
+            if (preferred != null &&
                 !audio.Format.Equals(preferred.Format, StringComparison.OrdinalIgnoreCase))
             {
                 audio = preferred;
@@ -510,7 +575,9 @@ public class MediaInfo
                 item.Language.Equals(language, StringComparison.OrdinalIgnoreCase) &&
                 item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
             if (audio != null)
+            {
                 break;
+            }
         }
         return audio;
     }
@@ -524,7 +591,9 @@ public class MediaInfo
             // Match by format
             audio = Audio.Find(item => item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
             if (audio != null)
+            {
                 break;
+            }
         }
         return audio;
     }
@@ -532,7 +601,9 @@ public class MediaInfo
     public void RemoveTracks(MediaInfo removeTracks)
     {
         if (removeTracks == null)
+        {
             throw new ArgumentNullException(nameof(removeTracks));
+        }
 
         // Only between same types else value comparison logic does not work
         Debug.Assert(Parser == removeTracks.Parser);
@@ -546,7 +617,9 @@ public class MediaInfo
     public void AddTracks(MediaInfo addTracks)
     {
         if (addTracks == null)
+        {
             throw new ArgumentNullException(nameof(addTracks));
+        }
 
         // Only between same types else value comparison logic does not work
         Debug.Assert(Parser == addTracks.Parser);
@@ -571,9 +644,12 @@ public class MediaInfo
     public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
     {
         if (fileInfo == null)
+        {
             throw new ArgumentNullException(nameof(fileInfo));
+        }
 
         // Use the specified stream parser tool
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         return parser switch
         {
             MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediainfo),
@@ -586,17 +662,16 @@ public class MediaInfo
     public static bool IsUsefulTrackTitle(string title)
     {
         // Does the track have a useful title
-        // TODO: Keep the logic updated as new title logic is added
-        return title.Equals("SDH", StringComparison.OrdinalIgnoreCase) ||
-               title.Equals("Commentary", StringComparison.OrdinalIgnoreCase) ||
-               title.Equals("Forced", StringComparison.OrdinalIgnoreCase);
+        return UsefulTitles.Any(useful => title.Equals(useful, StringComparison.OrdinalIgnoreCase));
     }
 
     public static bool IsTagTitle(string title)
     {
         // Empty is not a tag
         if (string.IsNullOrEmpty(title))
+        {
             return false;
+        }
 
         // Useful is not a tag
         return !IsUsefulTrackTitle(title);
@@ -610,12 +685,18 @@ public class MediaInfo
 
         // If there is none or one video track leave it as is
         if (mediaInfo.Video.Count == 0)
+        {
             return;
+        }
+
         if (mediaInfo.Video.Count == 1)
         {
             // Warn if the only video track is possibly cover art
             if (MatchCoverArt(mediaInfo.Video.First().Codec))
+            {
                 Log.Logger.Warning("Covert art match on only video track : {Codec}", mediaInfo.Video.First().Codec);
+            }
+
             return;
         }
 
@@ -648,15 +729,11 @@ public class MediaInfo
 
     private static bool MatchCoverArt(string codec)
     {
-        foreach (string cover in CoverArtFormat)
-        {
-            // Match on substrings
-            if (codec.Contains(cover, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
+        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
     }
 
     // Cover art and thumbnail formats
     private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "mjpeg", "png" };
+    // Not so useful track titles
+    private static readonly string[] UsefulTitles = { "SDH", "Commentary", "Forced" };
 }

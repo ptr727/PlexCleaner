@@ -1,16 +1,16 @@
-﻿using System;
+﻿using InsaneGenius.Utilities;
+using Serilog;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using InsaneGenius.Utilities;
-using System.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using Serilog;
-using System.Reflection;
+using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -54,9 +54,11 @@ public class FfMpegTool : MediaTool
 
         // Get version
         const string commandline = "-version";
-        int exitcode = Command(commandline, out string output, out string error);
-        if (exitcode != 0 || error.Length > 0)
+        int exitCode = Command(commandline, out string output, out string error);
+        if (exitCode != 0 || error.Length > 0)
+        {
             return false;
+        }
 
         // First line as version
         // E.g. Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
@@ -85,7 +87,7 @@ public class FfMpegTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -104,14 +106,14 @@ public class FfMpegTool : MediaTool
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
             mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -135,15 +137,21 @@ public class FfMpegTool : MediaTool
                 // Read the line
                 line = sr.ReadLine();
                 if (line == null)
+                {
                     break;
+                }
 
                 // See if the line starts with "Version:"
                 line = line.Trim();
                 if (line.IndexOf("Version:", StringComparison.Ordinal) == 0)
+                {
                     break;
+                }
             }
             if (string.IsNullOrEmpty(line))
+            {
                 throw new NotImplementedException();
+            }
 
             // Extract the version number from the line
             // E.g. version: 4.3.1
@@ -158,7 +166,7 @@ public class FfMpegTool : MediaTool
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-amd-static.tar.xz";
             mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
@@ -178,12 +186,16 @@ public class FfMpegTool : MediaTool
         // Extract the update file
         Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
         if (!Tools.SevenZip.UnZip(updateFile, extractPath))
+        {
             return false;
+        }
 
         // Delete the tool destination directory
         string toolPath = GetToolFolder();
         if (!FileEx.DeleteDirectory(toolPath, true))
+        {
             return false;
+        }
 
         // Build the versioned out folder from the downloaded filename
         // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
@@ -194,7 +206,7 @@ public class FfMpegTool : MediaTool
         return FileEx.RenameFolder(extractPath, toolPath);
     }
 
-    public override string GetSubFolder()
+    protected override string GetSubFolder()
     {
         return "bin";
     }
@@ -212,16 +224,18 @@ public class FfMpegTool : MediaTool
         string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
         string commandline = $"-i \"{filename}\" -hide_banner -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
         // Limit captured output to 5 lines
-        int exitcode = Command(commandline, 5, out string _, out error);
+        int exitCode = Command(commandline, 5, out string _, out error);
 
-        // Test exitcode and stderr errors
-        return exitcode == 0 && error.Length == 0;
+        // Test exitCode and stderr errors
+        return exitCode == 0 && error.Length == 0;
     }
 
     public bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
     {
         if (keep == null)
+        {
             return ReMuxToMkv(inputName, outputName);
+        }
 
         // Delete output file
         FileEx.DeleteFile(outputName);
@@ -232,8 +246,8 @@ public class FfMpegTool : MediaTool
         // Remux using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
         string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ReMuxToMkv(string inputName, string outputName)
@@ -244,39 +258,39 @@ public class FfMpegTool : MediaTool
         // Remux and copy all streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
         string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     private static void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
     {
         // Remux only
-        MediaInfo reencode = new(ToolType.FfProbe);
-        CreateFfMpegMap("", 0, "", keep, reencode, out input, out output);
+        MediaInfo reEncode = new(ToolType.FfProbe);
+        CreateFfMpegMap("", 0, "", keep, reEncode, out input, out output);
     }
 
-    private static void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, out string input, out string output)
+    private static void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reEncode, out string input, out string output)
     {
         // Verify correct data type
         Debug.Assert(keep.Parser == ToolType.FfProbe);
-        Debug.Assert(reencode.Parser == ToolType.FfProbe);
+        Debug.Assert(reEncode.Parser == ToolType.FfProbe);
 
         // Create an input and output map
         // Order by video, audio, and subtitle
         // Each ordered by id, to keep the original order
         List<TrackInfo> videoList = new();
         videoList.AddRange(keep.Video);
-        videoList.AddRange(reencode.Video);
+        videoList.AddRange(reEncode.Video);
         videoList = videoList.OrderBy(item => item.Id).ToList();
-            
+
         List<TrackInfo> audioList = new();
         audioList.AddRange(keep.Audio);
-        videoList.AddRange(reencode.Audio);
+        videoList.AddRange(reEncode.Audio);
         audioList = audioList.OrderBy(item => item.Id).ToList();
-            
+
         List<TrackInfo> subtitleList = new();
         subtitleList.AddRange(keep.Subtitle);
-        videoList.AddRange(reencode.Subtitle);
+        videoList.AddRange(reEncode.Subtitle);
         subtitleList = subtitleList.OrderBy(item => item.Id).ToList();
 
         // Create a map list of all the input streams we want in the output
@@ -286,7 +300,10 @@ public class FfMpegTool : MediaTool
         trackList.AddRange(subtitleList);
         StringBuilder sb = new();
         foreach (TrackInfo info in trackList)
+        {
             sb.Append($"-map 0:{info.Id} ");
+        }
+
         input = sb.ToString();
         input = input.Trim();
 
@@ -300,32 +317,40 @@ public class FfMpegTool : MediaTool
         {
             // Copy or encode
             if (info.GetType() == typeof(VideoInfo))
+            {
                 sb.Append(info.State == TrackInfo.StateType.Keep
-                    ? $"-c:v:{videoIndex ++} copy "
-                    : $"-c:v:{videoIndex ++} {videoCodec} -crf {videoQuality} -preset medium ");
+                    ? $"-c:v:{videoIndex++} copy "
+                    : $"-c:v:{videoIndex++} {videoCodec} -crf {videoQuality} -preset medium ");
+            }
             else if (info.GetType() == typeof(AudioInfo))
+            {
                 sb.Append(info.State == TrackInfo.StateType.Keep
-                    ? $"-c:a:{audioIndex ++} copy "
-                    : $"-c:a:{audioIndex ++} {audioCodec} ");
+                    ? $"-c:a:{audioIndex++} copy "
+                    : $"-c:a:{audioIndex++} {audioCodec} ");
+            }
             else if (info.GetType() == typeof(SubtitleInfo))
+            {
                 // No re-encoding of subtitles, just copy
-                sb.Append($"-c:s:{subtitleIndex ++} copy ");
+                sb.Append($"-c:s:{subtitleIndex++} copy ");
+            }
         }
         output = sb.ToString();
         output = output.Trim();
     }
 
-    public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reencode, string outputName)
+    private bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reEncode, string outputName)
     {
         // Simple encoding of audio and video and passthrough of other tracks
-        if (keep == null || reencode == null)
+        if (keep == null || reEncode == null)
+        {
             return ConvertToMkv(inputName, videoCodec, videoQuality, audioCodec, outputName);
+        }
 
         // Delete output file
         FileEx.DeleteFile(outputName);
 
         // Create an input and output map
-        CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reencode, out string input, out string output);
+        CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reEncode, out string input, out string output);
 
         // TODO : Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
@@ -334,32 +359,32 @@ public class FfMpegTool : MediaTool
 
         // Convert using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\""; 
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
-    public bool ConvertToMkv(string inputName, MediaInfo keep, MediaInfo reencode, string outputName)
+    public bool ConvertToMkv(string inputName, MediaInfo keep, MediaInfo reEncode, string outputName)
     {
         // Use defaults
         return ConvertToMkv(inputName,
             Program.Config.ConvertOptions.EnableH265Encoder ? H265Codec : H264Codec,
             Program.Config.ConvertOptions.VideoEncodeQuality,
             Program.Config.ConvertOptions.AudioEncodeCodec,
-            keep, 
-            reencode, 
+            keep,
+            reEncode,
             outputName);
     }
 
-    public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, string outputName)
+    private bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, string outputName)
     {
         // Delete output file
         FileEx.DeleteFile(outputName);
 
         // Encode video and audio, copy subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\""; 
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
@@ -369,9 +394,9 @@ public class FfMpegTool : MediaTool
 
         // Encode video, copy audio and subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\""; 
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string outputName)
@@ -391,7 +416,7 @@ public class FfMpegTool : MediaTool
                GetIdetInfoFromText(text, out idetInfo);
     }
 
-    public bool GetIdetInfoText(string inputName, out string text)
+    private bool GetIdetInfoText(string inputName, out string text)
     {
         // Use Idet to get frame statistics
         // https://ffmpeg.org/ffmpeg-filters.html#idet
@@ -405,15 +430,17 @@ public class FfMpegTool : MediaTool
         string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
         string commandline = $"-i \"{inputName}\" -hide_banner -nostats -xerror -filter:v idet {snippet} -an -f rawvideo {nullOut}";
         // Limit captured output to 5 lines
-        int exitcode = Command(commandline, 5, out string _, out text);
-        return exitcode == 0;
+        int exitCode = Command(commandline, 5, out string _, out text);
+        return exitCode == 0;
     }
 
-    public bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetInfo)
+    private static bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetInfo)
     {
         if (string.IsNullOrEmpty(text))
+        {
             throw new ArgumentNullException(nameof(text));
-            
+        }
+
         // Init
         idetInfo = new FfMpegIdetInfo();
 
@@ -426,19 +453,19 @@ public class FfMpegTool : MediaTool
             // [Parsed_idet_0 @ 00000234e42d0440] Repeated Fields: Neither:  2049 Top:     0 Bottom:     0
             // [Parsed_idet_0 @ 00000234e42d0440] Single frame detection: TFF:     0 BFF:     0 Progressive:  1745 Undetermined:   304
             // [Parsed_idet_0 @ 00000234e42d0440] Multi frame detection: TFF:     0 BFF:     0 Progressive:  2021 Undetermined:    28
-                
+
             // Pattern
-            const string repeatedfields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
-            const string singleframe = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
-            const string multiframe = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
+            const string repeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
+            const string singleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
+            const string multiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
 
             // We need to match in LF not CRLF mode else $ does not work as expected
-            const string pattern = $"{repeatedfields}\n{singleframe}\n{multiframe}";
-            string textlf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
+            const string pattern = $"{repeatedFields}\n{singleFrame}\n{multiFrame}";
+            string textLf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
 
             // Match
             Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            Match match = regex.Match(textlf);
+            Match match = regex.Match(textLf);
             Debug.Assert(match.Success);
 
             // Get the frame counts
@@ -447,7 +474,7 @@ public class FfMpegTool : MediaTool
             idetInfo.RepeatedFields.Bottom = int.Parse(match.Groups["repeated_bottom"].Value.Trim(), CultureInfo.InvariantCulture);
 
             idetInfo.SingleFrame.Tff = int.Parse(match.Groups["single_tff"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.SingleFrame.Bff  = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
+            idetInfo.SingleFrame.Bff = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
             idetInfo.SingleFrame.Progressive = int.Parse(match.Groups["single_prog"].Value.Trim(), CultureInfo.InvariantCulture);
             idetInfo.SingleFrame.Undetermined = int.Parse(match.Groups["single_und"].Value.Trim(), CultureInfo.InvariantCulture);
 
@@ -456,7 +483,7 @@ public class FfMpegTool : MediaTool
             idetInfo.MultiFrame.Progressive = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
             idetInfo.MultiFrame.Undetermined = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }

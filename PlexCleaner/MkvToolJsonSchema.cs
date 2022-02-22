@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v14.json
@@ -34,8 +34,10 @@ public class MkvMerge
     [JsonProperty("chapters")]
     public List<Chapter> Chapters { get; } = new();
 
-    public static MkvMerge FromJson(string json) => 
-        JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+    public static MkvMerge FromJson(string json)
+    {
+        return JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+    }
 
     private static readonly JsonSerializerSettings Settings = new()
     {

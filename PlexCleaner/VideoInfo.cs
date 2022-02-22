@@ -30,13 +30,17 @@ public class VideoInfo : TrackInfo
         // Ignore bad tags like 0x0000 / [0][0][0][0]
         if (!string.IsNullOrEmpty(stream.CodecTagString) &&
             !stream.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
+        {
             Codec = stream.CodecTagString;
+        }
 
         // Build the Profile
-        if (!string.IsNullOrEmpty(stream.Profile) && !string.IsNullOrEmpty(stream.Level))
-            Profile = $"{stream.Profile}@{stream.Level}";
-        else if (!string.IsNullOrEmpty(stream.Profile))
-            Profile = stream.Profile;
+        Profile = string.IsNullOrEmpty(stream.Profile) switch
+        {
+            false when !string.IsNullOrEmpty(stream.Level) => $"{stream.Profile}@{stream.Level}",
+            false => stream.Profile,
+            _ => Profile
+        };
 
         // Test for interlaced
         // https://ffmpeg.org/ffprobe-all.html
@@ -50,10 +54,12 @@ public class VideoInfo : TrackInfo
     internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
     {
         // Build the Profile
-        if (!string.IsNullOrEmpty(track.FormatProfile) && !string.IsNullOrEmpty(track.FormatLevel))
-            Profile = $"{track.FormatProfile}@{track.FormatLevel}";
-        else if (!string.IsNullOrEmpty(track.FormatProfile))
-            Profile = track.FormatProfile;
+        Profile = string.IsNullOrEmpty(track.FormatProfile) switch
+        {
+            false when !string.IsNullOrEmpty(track.FormatLevel) => $"{track.FormatProfile}@{track.FormatLevel}",
+            false => track.FormatProfile,
+            _ => Profile
+        };
 
         // Test for interlaced
         // TODO : Does not currently work for HEVC
@@ -76,16 +82,15 @@ public class VideoInfo : TrackInfo
     public bool CompareVideo(VideoInfo compare)
     {
         if (compare == null)
+        {
             throw new ArgumentNullException(nameof(compare));
+        }
 
         // Match the Format, Codec, and Profile
-        // * is a wildcard match
-        bool formatMatch = compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase) || 
-                           compare.Format.Equals("*", StringComparison.OrdinalIgnoreCase);
-        bool codecMatch = compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase) || 
-                          compare.Codec.Equals("*", StringComparison.OrdinalIgnoreCase);
-        bool profileMatch = compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase) || 
-                            compare.Profile.Equals("*", StringComparison.OrdinalIgnoreCase);
+        // Null or empty string is a wildcard match
+        bool formatMatch = string.IsNullOrEmpty(compare.Format) || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);
+        bool codecMatch = string.IsNullOrEmpty(compare.Codec) || compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase);
+        bool profileMatch = string.IsNullOrEmpty(compare.Profile) || compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase);
 
         return formatMatch && codecMatch && profileMatch;
     }

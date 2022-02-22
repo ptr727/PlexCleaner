@@ -9,10 +9,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		gitversion.yml = gitversion.yml
 		LICENSE = LICENSE
 		PlexCleaner.json = PlexCleaner.json
 		README.md = README.md
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F57F-962E-4C71-8F27-939D06813302}"
@@ -28,6 +28,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B
 		.github\workflows\UpdateDockerHubDescription.yml = .github\workflows\UpdateDockerHubDescription.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerTests", "PlexCleanerTests\PlexCleanerTests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{1A686E6C-DD3F-4D71-A5F1-DCEE8F872A2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A686E6C-DD3F-4D71-A5F1-DCEE8F872A2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A686E6C-DD3F-4D71-A5F1-DCEE8F872A2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

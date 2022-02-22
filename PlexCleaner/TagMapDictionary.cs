@@ -8,18 +8,26 @@ namespace PlexCleaner;
 
 public class TagMapDictionary
 {
-    public Dictionary<string, TagMap> Video { get; } = new(StringComparer.OrdinalIgnoreCase);
-    public Dictionary<string, TagMap> Audio { get; } = new(StringComparer.OrdinalIgnoreCase);
-    public Dictionary<string, TagMap> Subtitle { get; } = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, TagMap> Video { get; } = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, TagMap> Audio { get; } = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, TagMap> Subtitle { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
         if (prime == null)
+        {
             throw new ArgumentNullException(nameof(prime));
+        }
+
         if (sec1 == null)
+        {
             throw new ArgumentNullException(nameof(sec1));
+        }
+
         if (sec2 == null)
+        {
             throw new ArgumentNullException(nameof(sec2));
+        }
 
         // Make sure we can do matching
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
@@ -27,7 +35,7 @@ public class TagMapDictionary
         // Video
         Add(MediaInfo.GetTrackList(prime.Video), prime.Parser,
             MediaInfo.GetTrackList(sec1.Video), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Video), sec2.Parser, 
+            MediaInfo.GetTrackList(sec2.Video), sec2.Parser,
             Video);
 
         // Audio
@@ -43,10 +51,10 @@ public class TagMapDictionary
             Subtitle);
     }
 
-    private static void Add(List<TrackInfo> prime, MediaTool.ToolType primeType,
-        List<TrackInfo> sec1, MediaTool.ToolType sec1Type,
-        List<TrackInfo> sec2, MediaTool.ToolType sec2Type,
-        Dictionary<string, TagMap> dictionary) 
+    private static void Add(IReadOnlyCollection<TrackInfo> prime, MediaTool.ToolType primeType,
+        IReadOnlyCollection<TrackInfo> sec1, MediaTool.ToolType sec1Type,
+        IReadOnlyCollection<TrackInfo> sec2, MediaTool.ToolType sec2Type,
+        IDictionary<string, TagMap> dictionary)
     {
         for (int i = 0; i < prime.Count; i++)
         {
@@ -75,33 +83,43 @@ public class TagMapDictionary
         }
     }
 
-    public static bool DoTracksMatch(MediaInfo mediainfo, MediaInfo mkvmerge, MediaInfo ffprobe)
+    private static bool DoTracksMatch(MediaInfo mediaInfo, MediaInfo mkvMerge, MediaInfo ffProbe)
     {
-        if (mediainfo == null || mkvmerge == null || ffprobe == null)
+        if (mediaInfo == null || mkvMerge == null || ffProbe == null)
+        {
             return false;
+        }
 
         // Verify the track counts match
-        if (mediainfo.Video.Count != mkvmerge.Video.Count || mediainfo.Video.Count != ffprobe.Video.Count ||
-            mediainfo.Audio.Count != mkvmerge.Audio.Count || mediainfo.Audio.Count != ffprobe.Audio.Count ||
-            mediainfo.Subtitle.Count != mkvmerge.Subtitle.Count || mediainfo.Subtitle.Count != ffprobe.Subtitle.Count)
+        if (mediaInfo.Video.Count != mkvMerge.Video.Count || mediaInfo.Video.Count != ffProbe.Video.Count ||
+            mediaInfo.Audio.Count != mkvMerge.Audio.Count || mediaInfo.Audio.Count != ffProbe.Audio.Count ||
+            mediaInfo.Subtitle.Count != mkvMerge.Subtitle.Count || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count)
+        {
             return false;
+        }
 
         // Verify the track languages match
         // FFprobe has bugs with language vs. tag_language, try removing the tags
-        if (ffprobe.Video.Where((t, i) =>
-                !t.Language.Equals(mediainfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvmerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        if (ffProbe.Video.Where((t, i) =>
+                !t.Language.Equals(mediaInfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvMerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
-        if (ffprobe.Audio.Where((t, i) =>
-                !t.Language.Equals(mediainfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvmerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        if (ffProbe.Audio.Where((t, i) =>
+                !t.Language.Equals(mediaInfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvMerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
-        if (ffprobe.Subtitle.Where((t, i) =>
-                !t.Language.Equals(mediainfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvmerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        if (ffProbe.Subtitle.Where((t, i) =>
+                !t.Language.Equals(mediaInfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
+                !t.Language.Equals(mkvMerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
+        {
             return false;
+        }
 
         return true;
     }
@@ -109,10 +127,18 @@ public class TagMapDictionary
     public void WriteLine()
     {
         foreach ((_, TagMap value) in Video)
+        {
             Log.Logger.Information("Video, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
+
         foreach ((_, TagMap value) in Audio)
+        {
             Log.Logger.Information("Audio, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
+
         foreach ((_, TagMap value) in Subtitle)
+        {
             Log.Logger.Information("Subtitle, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}", value.PrimaryTool, value.Primary, value.SecondaryTool, value.Secondary, value.TertiaryTool, value.Tertiary, value.Count);
+        }
     }
 }

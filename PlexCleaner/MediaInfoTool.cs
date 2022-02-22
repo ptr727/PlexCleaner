@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 
@@ -42,7 +42,9 @@ public class MediaInfoTool : MediaTool
         const string commandline = "--version";
         int exitcode = Command(commandline, out string output);
         if (exitcode != 0)
+        {
             return false;
+        }
 
         // Second line as version
         // E.g. Windows : "MediaInfoLib - v20.09"
@@ -70,7 +72,7 @@ public class MediaInfoTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -91,15 +93,21 @@ public class MediaInfoTool : MediaTool
                 // Read the line
                 line = sr.ReadLine();
                 if (line == null)
+                {
                     break;
+                }
 
                 // See if the line starts with "Version"
                 line = line.Trim();
                 if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
+                {
                     break;
+                }
             }
             if (string.IsNullOrEmpty(line))
+            {
                 throw new NotImplementedException();
+            }
 
             // Extract the version number from the line
             // E.g. Version 17.10, 2017-11-02
@@ -121,7 +129,7 @@ public class MediaInfoTool : MediaTool
         return true;
     }
 
-    public override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
+    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
@@ -133,7 +141,7 @@ public class MediaInfoTool : MediaTool
     public bool GetMediaInfo(string filename, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(filename, out string xml) && 
+        return GetMediaInfoXml(filename, out string xml) &&
                GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
@@ -150,7 +158,7 @@ public class MediaInfoTool : MediaTool
         return exitcode == 0 && xml.Length >= 100;
     }
 
-    public bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
+    public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
     {
         // Parser type is MediaInfo
         mediaInfo = new MediaInfo(ToolType.MediaInfo);
@@ -164,7 +172,9 @@ public class MediaInfoTool : MediaTool
 
             // No tracks
             if (xmlmedia.Track.Count == 0)
+            {
                 return false;
+            }
 
             // Tracks
             foreach (MediaInfoToolXmlSchema.Track track in xmlmedia.Track)
@@ -179,7 +189,7 @@ public class MediaInfoTool : MediaTool
                     // Skip sub-tracks e.g. 0-1
                     if (string.IsNullOrEmpty(track.CodecId) &&
                         track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
-                    { 
+                    {
                         Log.Logger.Warning("MediaInfo skipping Audio sub-track : {TrackId}", track.Id);
                         continue;
                     }
@@ -198,8 +208,8 @@ public class MediaInfoTool : MediaTool
             MediaInfo.RemoveCoverArt(mediaInfo);
 
             // Errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) || 
-                                  mediaInfo.Audio.Any(item => item.HasErrors) || 
+            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
+                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
             // TODO : Tags, maybe look in the Extra field, but not reliable
