@@ -39,8 +39,8 @@ public class SevenZipTool : MediaTool
 
         // No version command, run with no arguments
         const string commandline = "";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -149,7 +149,7 @@ public class SevenZipTool : MediaTool
     {
         // 7z.exe x archive.zip -o"C:\Doc"
         string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 }

@@ -92,7 +92,7 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
+        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
         if (configFileJsonSchemaBase == null)
         {
             return null;

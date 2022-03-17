@@ -57,7 +57,7 @@ public class SidecarFileJsonSchema
 
     public static SidecarFileJsonSchema FromJson(JsonTextReader reader)
     {
-        JsonSerializer serializer = JsonSerializer.Create(Settings);
+        var serializer = JsonSerializer.Create(Settings);
         return (SidecarFileJsonSchema)serializer.Deserialize(reader, typeof(SidecarFileJsonSchema));
     }
 

@@ -90,7 +90,7 @@ public class MediaInfo
     {
         XmlSerializer xmlserializer = new(typeof(MediaInfo));
         using TextReader textreader = new StringReader(xml);
-        using XmlReader xmlReader = XmlReader.Create(textreader);
+        using var xmlReader = XmlReader.Create(textreader);
         return xmlserializer.Deserialize(xmlReader) as MediaInfo;
     }
 

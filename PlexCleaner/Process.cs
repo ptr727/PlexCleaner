@@ -112,10 +112,7 @@ internal class Process
         if (errorFiles.Count > 0)
         {
             Log.Logger.Information("Error files:");
-            foreach (string file in errorFiles)
-            {
-                Log.Logger.Information("{FileName}", file);
-            }
+            errorFiles.ForEach(item => Log.Logger.Information("{FileName}", item));
         }
         if (modifiedInfo.Count > 0)
         {
@@ -162,7 +159,7 @@ internal class Process
         // Does the file still exist
         if (!File.Exists(fileInfo.FullName))
         {
-            Log.Logger.Warning("Skipping missing file : {FileName}", fileInfo.FullName);
+            Log.Logger.Warning("Skipping missing or access denied file : {FileName}", fileInfo.FullName);
             return false;
         }
 
@@ -210,8 +207,7 @@ internal class Process
             return false;
         }
 
-        // Make sure the file extension is lowercase
-        // Case sensitive on Linux, i.e. .MKV != .mkv
+        // Make sure the file extension is lowercase for case sensitive filesystems
         if (!processFile.MakeExtensionLowercase(ref modified))
         {
             return false;
@@ -224,46 +220,49 @@ internal class Process
             return false;
         }
 
-        // ReMux non-MKV containers using MKV filenames
+        // ReMux non-MKV containers using MKV file extensions
         if (!processFile.RemuxNonMkvContainer(ref modified) ||
             Program.IsCancelled())
         {
             return false;
         }
 
-        // Now that the file and container is MKV all media info should be valid
+        // The file extension and container type is MKV and all media info should be valid
         if (!processFile.VerifyMediaInfo())
         {
             return false;
         }
 
-        // Try to ReMux metadata errors away
+        // ReMux to repair metadata errors
         if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
             Program.IsCancelled())
         {
             return false;
         }
 
-        // Change all tracks with an unknown language to the default language
-        // Merge operation uses language tags, make sure they are set
-        if (!processFile.SetUnknownLanguage(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Merge all remux operations into a single call
-        // Remove all the unwanted language tracks
-        // Remove all duplicate tracks
-        if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
+        // Remove EIA-608 / Closed Captions from the video stream
+        if (!processFile.RemoveClosedCaptions(ref modified) ||
             Program.IsCancelled())
         {
             return false;
         }
 
         // De-interlace interlaced content
-        // Make sure to deinterlace before encoding, H.265 is not interlaced content friendly
         if (!processFile.DeInterlace(ref modified) ||
+            Program.IsCancelled())
+        {
+            return false;
+        }
+
+        // Change all tracks with an unknown language to the default language
+        if (!processFile.SetUnknownLanguage(ref modified) ||
+            Program.IsCancelled())
+        {
+            return false;
+        }
+
+        // Remove all the unwanted and duplicate language tracks
+        if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
             Program.IsCancelled())
         {
             return false;
@@ -423,9 +422,9 @@ internal class Process
         }
 
         // Print the tags
-        Log.Logger.Information("FFprobe:");
+        Log.Logger.Information("FfProbe:");
         fftags.WriteLine();
-        Log.Logger.Information("MKVMerge:");
+        Log.Logger.Information("MkvMerge:");
         mktags.WriteLine();
         Log.Logger.Information("MediaInfo:");
         mitags.WriteLine();
@@ -508,9 +507,9 @@ internal class Process
 
             // Print info
             Log.Logger.Information("{FileName}", fileInfo.FullName);
+            processFile.FfProbeInfo.WriteLine("FfProbe");
+            processFile.MkvMergeInfo.WriteLine("MkvMerge");
             processFile.MediaInfoInfo.WriteLine("MediaInfo");
-            processFile.MkvMergeInfo.WriteLine("MKVMerge");
-            processFile.FfProbeInfo.WriteLine("FFprobe");
 
             return true;
         });
@@ -520,7 +519,11 @@ internal class Process
     {
         return ProcessFilesDriver(fileList, "Get Tool Information", fileInfo =>
         {
-            // Don't limit to MKV only
+            // Skip sidecar files
+            if (SidecarFile.IsSidecarFile(fileInfo))
+            {
+                return true;
+            }
 
             // Get tool information
             ProcessFile processFile = new(fileInfo);
@@ -529,13 +532,13 @@ internal class Process
                 return false;
             }
 
-            // Print info
+            // Print and log info
             Log.Logger.Information("{FileName}", fileInfo.FullName);
-            Log.Logger.Information("FFprobe:");
+            Log.Logger.Information("FfProbe: {FfProbeText}", processFile.FfProbeText);
             Console.Write(processFile.FfProbeText);
-            Log.Logger.Information("MKVMerge:");
+            Log.Logger.Information("MkvMerge: {MkvMergeText}", processFile.MkvMergeText);
             Console.Write(processFile.MkvMergeText);
-            Log.Logger.Information("MediaInfo:");
+            Log.Logger.Information("MediaInfo: {MediaInfoText}", processFile.MediaInfoText);
             Console.Write(processFile.MediaInfoText);
 
             return true;

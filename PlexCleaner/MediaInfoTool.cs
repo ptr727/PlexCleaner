@@ -40,8 +40,8 @@ public class MediaInfoTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -149,13 +149,13 @@ public class MediaInfoTool : MediaTool
     {
         // Get media info as XML
         string commandline = $"--Output=XML \"{filename}\"";
-        int exitcode = Command(commandline, out xml);
+        int exitCode = Command(commandline, out xml);
 
         // TODO : No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
         // Empty XML files are around 86 bytes
         // Match size check with ProcessSidecarFile()
-        return exitcode == 0 && xml.Length >= 100;
+        return exitCode == 0 && xml.Length >= 100;
     }
 
     public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)

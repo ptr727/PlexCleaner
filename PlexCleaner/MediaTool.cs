@@ -26,7 +26,8 @@ public abstract class MediaTool
         MediaInfo,
         MkvMerge,
         MkvPropEdit,
-        SevenZip
+        SevenZip,
+        MkvExtract
     }
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();

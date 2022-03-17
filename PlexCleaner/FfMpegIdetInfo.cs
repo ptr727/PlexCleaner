@@ -31,6 +31,9 @@ public class FfMpegIdetInfo
     public int Interlaced => SingleFrame.Interlaced + MultiFrame.Interlaced;
     public int Total => SingleFrame.Total + MultiFrame.Total;
 
+    // % of interlaced frames vs. progressive frames
+    public double InterlacedPercentage => System.Convert.ToDouble(Interlaced) / System.Convert.ToDouble(Interlaced + Progressive);
+
     public bool IsInterlaced()
     {
         // TODO: Based on experimentation this logic is not reliable
@@ -48,9 +51,7 @@ public class FfMpegIdetInfo
             return false;
         }
 
-        // Calculate the % of interlaced frames vs. progressive frames
-        double percentage = 100.0 * System.Convert.ToDouble(Interlaced) / System.Convert.ToDouble(Interlaced + Progressive);
-        return percentage > InterlacedThreshold;
+        return InterlacedPercentage > InterlacedThreshold;
     }
 
     public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
@@ -64,5 +65,5 @@ public class FfMpegIdetInfo
     }
 
     // TODO : Figure out what reliable threshold would be
-    private const double InterlacedThreshold = 5.0;
+    public const double InterlacedThreshold = 5.0 / 100.0;
 }

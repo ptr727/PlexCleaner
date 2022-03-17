@@ -65,7 +65,7 @@ public class FfProbeTool : FfMpegTool
         using JsonTextReader jsonReader = new(streamReader);
 
         JsonSerializer serializer = new();
-        PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+        var packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
         if (packetInfo == null)
         {
             return false;
@@ -126,7 +126,7 @@ public class FfProbeTool : FfMpegTool
                     if (string.IsNullOrEmpty(stream.CodecName) ||
                         string.IsNullOrEmpty(stream.CodecLongName))
                     {
-                        Log.Logger.Warning("FFProbe Subtitle Format unknown");
+                        Log.Logger.Warning("FfProbe Subtitle Format unknown");
                         if (string.IsNullOrEmpty(stream.CodecName))
                         {
                             stream.CodecName = "Unknown";

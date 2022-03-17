@@ -1,6 +1,7 @@
 ﻿using InsaneGenius.Utilities;
 using Serilog;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -90,7 +91,7 @@ public class SidecarFile
         }
 
         // Log warnings
-        // Do not read new tool data, will be read in Update()
+        // Do not get new tool data, do not check state, will be set in Update()
 
         // Verify the media file matches the json info
         if (!IsMediaCurrent(true))
@@ -123,10 +124,7 @@ public class SidecarFile
     private bool Update(bool modified = false)
     {
         // Create or Read must be called before update
-        if (!IsValid())
-        {
-            return false;
-        }
+        Debug.Assert(SidecarJson != null);
 
         // Did the media file or tools change
         // Do not log if not current, updates are intentional
@@ -185,22 +183,41 @@ public class SidecarFile
 
     public bool Open(bool modified = false)
     {
+        // Open will Read, Create, Update
+
         // Make sure the sidecar file has been read or created
-        bool current = true;
-        if (!IsValid())
+        // If the sidecar file exists, read it
+        // If we can't read it, re-create it
+        // If it does not exist, create it
+        // If it no longer matches, update it
+        if (SidecarJson == null)
         {
-            // If the sidecar does not exist, or can't be read, create it
-            // Read() will only read, it will not Update()
-            if (!SidecarFileInfo.Exists ||
-                !Read(out current, true))
+            if (SidecarFileInfo.Exists)
             {
+                // Sidecar file exists, read and verify it matches media file
+                if (!Read(out bool current, true))
+                {
+                    return Create();
+                }
+                // Media file changed, force an update
+                if (!current)
+                {
+                    modified = true;
+                }
+            }
+            else 
+            {
+                // Sidecar file does not exist, create it
                 return Create();
             }
         }
+        Debug.Assert(SidecarJson != null);
 
-        // Update info if modified or not current
-        if (modified || !current)
+        // Update info if media file or tools changed, or if state is not current
+        if (modified ||
+            !IsStateCurrent())
         {
+            // Update will write the JSON including state, but only update tool and hash info if modified set
             return Update(modified);
         }
 
@@ -210,11 +227,15 @@ public class SidecarFile
 
     public bool Upgrade()
     {
-        // Do the files exist
-        if (!SidecarFileInfo.Exists ||
-            !MediaFileInfo.Exists)
+        // Does the media and sidecar files exist
+        if (!SidecarFileInfo.Exists)
         {
-            Log.Logger.Error("File not found : {File}", SidecarFileInfo.FullName);
+            Log.Logger.Error("Sidecar file not found : {File}", SidecarFileInfo.FullName);
+            return false;
+        }
+        if (!MediaFileInfo.Exists)
+        {
+            Log.Logger.Error("Media file not found : {File}", MediaFileInfo.FullName);
             return false;
         }
 
@@ -233,12 +254,10 @@ public class SidecarFile
         {
             update = true;
         }
-
         if (!IsMediaCurrent(true))
         {
             update = true;
         }
-
         if (!IsToolsCurrent(true))
         {
             update = true;
@@ -292,11 +311,6 @@ public class SidecarFile
     private bool IsSchemaCurrent()
     {
         return SidecarJson.SchemaVersion == SidecarFileJsonSchema.CurrentSchemaVersion;
-    }
-
-    private bool IsValid()
-    {
-        return SidecarJson != null;
     }
 
     public bool IsWriteable()
@@ -394,7 +408,7 @@ public class SidecarFile
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar FFProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
+                Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
                     SidecarJson.FfProbeToolVersion,
                     Tools.FfProbe.Info.Version,
                     SidecarFileInfo.Name);
@@ -405,7 +419,7 @@ public class SidecarFile
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar MKVMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
+                Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
                     SidecarJson.MkvMergeToolVersion,
                     Tools.MkvMerge.Info.Version,
                     SidecarFileInfo.Name);
@@ -506,6 +520,7 @@ public class SidecarFile
         SidecarJson.MediaInfoData = StringCompression.Compress(MediaInfoXml);
 
         // State
+        // TODO: Only update tool and file info if changed, else just update state
         SidecarJson.State = State;
 
         return true;
@@ -540,8 +555,8 @@ public class SidecarFile
 
         // Print info
         MediaInfoInfo.WriteLine("MediaInfo");
-        MkvMergeInfo.WriteLine("MKVMerge");
-        FfProbeInfo.WriteLine("FFProbe");
+        MkvMergeInfo.WriteLine("MkvMerge");
+        FfProbeInfo.WriteLine("FfProbe");
 
         return true;
     }
@@ -551,7 +566,7 @@ public class SidecarFile
         try
         {
             // Create SHA256 hash calculator
-            using SHA256 hashCalculator = SHA256.Create();
+            using var hashCalculator = SHA256.Create();
 
             // Create a buffer to hold the file data being hashed
             byte[] buffer = new byte[2 * HashWindowLength];

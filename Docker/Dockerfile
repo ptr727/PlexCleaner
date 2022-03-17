@@ -62,7 +62,9 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
 RUN add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    && add-apt-repository -y ppa:savoury1/ffmpeg5 \
+    # ffmpeg5 is currently broken
+    # https://bugs.launchpad.net/savos/+bug/1965181
+    # && add-apt-repository -y ppa:savoury1/ffmpeg5 \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y ffmpeg \

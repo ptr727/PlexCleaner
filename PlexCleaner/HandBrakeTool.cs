@@ -40,8 +40,8 @@ public class HandBrakeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -120,8 +120,8 @@ public class HandBrakeTool : MediaTool
         // Encode audio and video, copy subtitles
         string snippets = Program.Options.TestSnippets ? Snippet : "";
         string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
@@ -132,8 +132,8 @@ public class HandBrakeTool : MediaTool
         // Encode video, copy audio and subtitles
         string snippets = Program.Options.TestSnippets ? Snippet : "";
         string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string outputName)
@@ -146,25 +146,27 @@ public class HandBrakeTool : MediaTool
             outputName);
     }
 
-    public bool DeInterlaceToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
+    public bool DeInterlaceToMkv(string inputName, string videoCodec, int videoQuality, string outputName, bool includeSubtitles = true)
     {
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Encode and decomb video, copy audio and subtitles
+        // Encode and decomb video, copy audio, and conditionally copy subtitles
         string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string subtitles = includeSubtitles ? "--all-subtitles" : "--subtitle none";
+        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb {subtitles} --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
-    public bool DeInterlaceToMkv(string inputName, string outputName)
+    public bool DeInterlaceToMkv(string inputName, string outputName, bool includeSubtitles = true)
     {
         // Use defaults
         return DeInterlaceToMkv(inputName,
             Program.Config.ConvertOptions.EnableH265Encoder ? H265Codec : H264Codec,
             Program.Config.ConvertOptions.VideoEncodeQuality,
-            outputName);
+            outputName,
+            includeSubtitles);
     }
 
     private const string H264Codec = "x264";

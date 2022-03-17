@@ -43,8 +43,8 @@ public class MkvMergeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -62,7 +62,7 @@ public class MkvMergeTool : MediaTool
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
-        // Get tool filename
+        // Get tool fileName
         mediaToolInfo.FileName = GetToolPath();
 
         // Get other attributes if we can read the file
@@ -97,7 +97,7 @@ public class MkvMergeTool : MediaTool
             MkvToolXmlSchema.MkvToolnixReleases mkvtools = MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
             mediaToolInfo.Version = mkvtools.LatestSource.Version;
 
-            // Create download URL and the output filename using the version number
+            // Create download URL and the output fileName using the version number
             // E.g. https://mkvtoolnix.download/windows/releases/18.0.0/mkvtoolnix-64-bit-18.0.0.7z
             mediaToolInfo.FileName = $"mkvtoolnix-64-bit-{mediaToolInfo.Version}.7z";
             mediaToolInfo.Url = $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
@@ -118,19 +118,19 @@ public class MkvMergeTool : MediaTool
         return false;
     }
 
-    public bool GetMkvInfo(string filename, out MediaInfo mediaInfo)
+    public bool GetMkvInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMkvInfoJson(filename, out string json) &&
+        return GetMkvInfoJson(fileName, out string json) &&
                GetMkvInfoFromJson(json, out mediaInfo);
     }
 
-    public bool GetMkvInfoJson(string filename, out string json)
+    public bool GetMkvInfoJson(string fileName, out string json)
     {
         // Get media info as JSON
-        string commandline = $"--identify \"{filename}\" --identification-format json";
-        int exitcode = Command(commandline, out json);
-        return exitcode == 0;
+        string commandline = $"--identify \"{fileName}\" --identification-format json";
+        int exitCode = Command(commandline, out json);
+        return exitCode == 0;
     }
 
     public static bool GetMkvInfoFromJson(string json, out MediaInfo mediaInfo)
@@ -226,9 +226,9 @@ public class MkvMergeTool : MediaTool
         return true;
     }
 
-    public static bool IsMkvFile(string filename)
+    public static bool IsMkvFile(string fileName)
     {
-        return IsMkvExtension(Path.GetExtension(filename));
+        return IsMkvExtension(Path.GetExtension(fileName));
     }
 
     public static bool IsMkvFile(FileInfo fileInfo)
@@ -252,44 +252,67 @@ public class MkvMergeTool : MediaTool
         return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
     }
 
-    public bool ReMuxToMkv(string inputname, MediaInfo keep, string outputname)
+    public bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
     {
         if (keep == null)
         {
-            return ReMuxToMkv(inputname, outputname);
+            return ReMuxToMkv(inputName, outputName);
         }
 
         // Verify correct data type
         Debug.Assert(keep.Parser == ToolType.MkvMerge);
 
         // Delete output file
-        FileEx.DeleteFile(outputname);
+        FileEx.DeleteFile(outputName);
 
         // Create the track number filters
-        // The track numbers are reported by MKVMerge --identify, use the track.id values
-        string videotracks = keep.Video.Count > 0 ? $"--video-tracks {string.Join(",", keep.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-video ";
-        string audiotracks = keep.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keep.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-audio ";
-        string subtitletracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keep.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
+        // The track numbers are reported by MkvMerge --identify, use the track.id values
+        string videoTracks = keep.Video.Count > 0 ? $"--video-tracks {string.Join(",", keep.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-video ";
+        string audioTracks = keep.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keep.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-audio ";
+        string subtitleTracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keep.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
 
         // Remux tracks
         string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" {videotracks}{audiotracks}{subtitletracks} \"{inputname}\"";
-        int exitcode = Command(commandline);
-        return exitcode is 0 or 1;
+        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" {videoTracks}{audioTracks}{subtitleTracks} \"{inputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode is 0 or 1;
     }
 
-    public bool ReMuxToMkv(string inputname, string outputname)
+    public bool ReMuxToMkv(string inputName, string outputName)
     {
         // Delete output file
-        FileEx.DeleteFile(outputname);
+        FileEx.DeleteFile(outputName);
 
         // Remux all
         string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{MergeOptions} {snippets} --output \"{outputname}\" \"{inputname}\"";
-        int exitcode = Command(commandline);
-        return exitcode is 0 or 1;
+        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" \"{inputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode is 0 or 1;
+    }
+
+    public bool MergeToMkv(string sourceOne, MediaInfo keepOne, string sourceTwo, string outputName)
+    {
+        // Selectively merge tracks from sourceOne with all tracks in sourceTwo
+
+        // Verify correct data type
+        Debug.Assert(keepOne.Parser == ToolType.MkvMerge);
+
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Create the track number filters
+        // The track numbers are reported by MkvMerge --identify, use the track.id values
+        string videoTracks = keepOne.Video.Count > 0 ? $"--video-tracks {string.Join(",", keepOne.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-video ";
+        string audioTracks = keepOne.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keepOne.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-audio ";
+        string subtitleTracks = keepOne.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keepOne.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
+
+        // Remux tracks
+        string snippets = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" {videoTracks}{audioTracks}{subtitleTracks} --no-chapters \"{sourceOne}\" \"{sourceTwo}\"";
+        int exitCode = Command(commandline);
+        return exitCode is 0 or 1;
     }
 
     private const string Snippet = "--split parts:00:00:00-00:03:00";
-    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --flush-on-close";
+    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close";
 }

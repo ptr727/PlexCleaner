@@ -5,11 +5,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 ## Release History
 
 - Version 2.4.5
-  - Update FFmpeg in Linux instructions and in Docker builds to version 5.0.
+  - Update FfMpeg in Linux instructions and in Docker builds to version 5.0.
 - Version 2.4.3
   - Added more robust error and control logic for handling specific AVI files.
     - Detect and ignore cover art and thumbnail video tracks.
-    - Perform conditional interlace detection using FFmpeg idet filter.
+    - Perform conditional interlace detection using FfMpeg idet filter.
     - Verify media tool track identification matches.
     - Modify sidecar file hashing to support small files.
   - Use C# 10 file scoped namespaces.

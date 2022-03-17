@@ -177,7 +177,7 @@ public class FfMpegTool : MediaTool
     {
         // TODO: This only works for Windows
 
-        // FFmpeg archives have versioned folders in the zip file
+        // FfMpeg archives have versioned folders in the zip file
         // The 7Zip -spe option does not work for zip files
         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
@@ -220,7 +220,7 @@ public class FfMpegTool : MediaTool
         // Use null muxer, no stats, report errors
         // https://trac.ffmpeg.org/wiki/Null
 
-        // Create the FFmpeg commandline and execute
+        // Create the FfMpeg commandline and execute
         string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
         string commandline = $"-i \"{filename}\" -hide_banner -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
         // Limit captured output to 5 lines
@@ -299,11 +299,7 @@ public class FfMpegTool : MediaTool
         trackList.AddRange(audioList);
         trackList.AddRange(subtitleList);
         StringBuilder sb = new();
-        foreach (TrackInfo info in trackList)
-        {
-            sb.Append($"-map 0:{info.Id} ");
-        }
-
+        trackList.ForEach(item => sb.Append($"-map 0:{item.Id} "));
         input = sb.ToString();
         input = input.Trim();
 
@@ -407,6 +403,19 @@ public class FfMpegTool : MediaTool
             Program.Config.ConvertOptions.VideoEncodeQuality,
             Program.Config.ConvertOptions.AudioEncodeCodec,
             outputName);
+    }
+
+    public bool RemoveClosedCaptions(string inputName, string outputName)
+    {
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
+        // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool GetIdetInfo(string filename, out FfMpegIdetInfo idetInfo)

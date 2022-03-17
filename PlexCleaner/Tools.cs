@@ -15,6 +15,7 @@ public static class Tools
     public static readonly FfProbeTool FfProbe = new();
     public static readonly MkvMergeTool MkvMerge = new();
     public static readonly MkvPropEditTool MkvPropEdit = new();
+    public static readonly MkvExtractTool MkvExtract = new();
     public static readonly MediaInfoTool MediaInfo = new();
     public static readonly HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
@@ -28,6 +29,7 @@ public static class Tools
             FfProbe,
             MkvMerge,
             MkvPropEdit,
+            MkvExtract,
             MediaInfo,
             HandBrake,
             SevenZip

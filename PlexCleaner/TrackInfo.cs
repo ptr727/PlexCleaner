@@ -23,7 +23,7 @@ public class TrackInfo
         Title = track.Properties.TrackName;
         Default = track.Properties.DefaultTrack;
 
-        // If the "language" and "tag_language" fields are set FFprobe uses the tag language instead of the track language
+        // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
         if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
             !string.IsNullOrEmpty(track.Properties.Language) &&
@@ -40,7 +40,7 @@ public class TrackInfo
         }
         else
         {
-            // MKVMerge normally sets the language to und or 3 letter ISO 639-2 code
+            // MkvMerge normally sets the language to und or 3 letter ISO 639-2 code
             // Try to lookup the language to make sure it is correct
             Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Properties.Language);
             if (lang != null)
@@ -55,7 +55,7 @@ public class TrackInfo
             }
         }
 
-        // Take care to use id and number correctly in MKVMerge and MKVPropEdit
+        // Take care to use id and number correctly in MkvMerge and MKVPropEdit
         Id = track.Id;
         Number = track.Properties.Number;
 
@@ -76,8 +76,8 @@ public class TrackInfo
         Title = stream.Tags.Title;
         Default = stream.Disposition.Default;
 
-        // TODO : FFprobe uses the tag language value instead of the track language
-        // Some files show MediaInfo and MKVMerge say language is "eng", FFprobe says language is "und"
+        // TODO : FfProbe uses the tag language value instead of the track language
+        // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
         // https://github.com/MediaArea/MediaAreaXml/issues/34
 
         // Set language
@@ -95,7 +95,7 @@ public class TrackInfo
         }
         else
         {
-            // FFprobe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
+            // FfProbe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
             // Try to lookup the language to make sure it is correct
             Iso6393 lang = PlexCleaner.Language.GetIso6393(stream.Tags.Language);
             if (lang != null)
@@ -154,7 +154,7 @@ public class TrackInfo
             }
         }
 
-        // FFprobe and MKVToolNix use chi not zho
+        // FfProbe and MkvMerge use chi not zho
         // https://github.com/mbunkus/mkvtoolnix/issues/1149
         if (Language.Equals("zho", StringComparison.OrdinalIgnoreCase))
         {

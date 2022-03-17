@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Timers;
 
 namespace PlexCleaner;
 
@@ -21,19 +20,22 @@ internal class Program
         // Create default logger
         CreateLogger(null);
 
-        // Create a 30s timer to keep the system from going to sleep
-        using System.Timers.Timer preventSleepTimer = new(30000);
-        preventSleepTimer.Elapsed += OnTimedEvent;
-        preventSleepTimer.AutoReset = true;
-        preventSleepTimer.Start();
+        // Create a 15s timer to keep the system from going to sleep
+        // TODO: The system occasionally still goes to sleep when debugging, why?
+        KeepAwake.PreventSleep();
+        using System.Timers.Timer keepAwakeTimer = new(15 * 1000);
+        keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
+        keepAwakeTimer.AutoReset = true;
+        keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         int ret = rootCommand.Invoke(Environment.CommandLine);
 
         // Stop the timer
-        preventSleepTimer.Stop();
-        preventSleepTimer.Dispose();
+        keepAwakeTimer.Stop();
+        keepAwakeTimer.Dispose();
+        KeepAwake.AllowSleep();
 
         // Flush the logs
         Log.CloseAndFlush();
@@ -67,11 +69,6 @@ internal class Program
         LoggerFactory loggerFactory = new();
         loggerFactory.AddSerilog(Log.Logger);
         LogOptions.CreateLogger(loggerFactory);
-    }
-
-    private static void OnTimedEvent(object sender, ElapsedEventArgs e)
-    {
-        KeepAwake.PreventSleep();
     }
 
     internal static int WriteDefaultSettingsCommand(CommandLineOptions options)

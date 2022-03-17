@@ -31,20 +31,9 @@ public class MediaInfo
 
     public void WriteLine(string prefix)
     {
-        foreach (VideoInfo info in Video)
-        {
-            info.WriteLine(prefix);
-        }
-
-        foreach (AudioInfo info in Audio)
-        {
-            info.WriteLine(prefix);
-        }
-
-        foreach (SubtitleInfo info in Subtitle)
-        {
-            info.WriteLine(prefix);
-        }
+        Video.ForEach(item => item.WriteLine(prefix));
+        Audio.ForEach(item => item.WriteLine(prefix));
+        Subtitle.ForEach(item => item.WriteLine(prefix));
     }
 
     public List<TrackInfo> GetTrackList()
@@ -90,6 +79,7 @@ public class MediaInfo
         unknown = new MediaInfo(Parser);
 
         // Video
+        // Video.ForEach(item => item.IsLanguageUnknown() ? unknown.Video.Add(item) : known.Video.Add(item));
         foreach (VideoInfo video in Video)
         {
             if (video.IsLanguageUnknown())
@@ -143,7 +133,7 @@ public class MediaInfo
         keep.Audio.Clear();
         keep.Audio.AddRange(Audio);
 
-        // Add all tracks with the interlaced flag set
+        // Add all video tracks with the interlaced flag set
         foreach (VideoInfo video in Video)
         {
             if (video.Interlaced)
@@ -156,7 +146,7 @@ public class MediaInfo
             }
         }
 
-        // Set the correct state on all the objects
+        // Set the correct state on all the items
         deinterlace.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.DeInterlace);
         keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
 
@@ -290,7 +280,7 @@ public class MediaInfo
             throw new ArgumentNullException(nameof(reencodeaudio));
         }
 
-        // Filter logic values are based FFprobe attributes
+        // Filter logic values are based FfProbe attributes
         Debug.Assert(Parser == MediaTool.ToolType.FfProbe);
 
         keep = new MediaInfo(Parser);
@@ -392,10 +382,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (VideoInfo video in Video)
-        {
-            languages.Add(video.Language);
-        }
+        Video.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Video.Count == languages.Count)
@@ -429,10 +416,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (SubtitleInfo subtitle in Subtitle)
-        {
-            languages.Add(subtitle.Language);
-        }
+        Subtitle.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Subtitle.Count == languages.Count)
@@ -514,10 +498,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (AudioInfo audio in Audio)
-        {
-            languages.Add(audio.Language);
-        }
+        Audio.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Audio.Count == languages.Count)

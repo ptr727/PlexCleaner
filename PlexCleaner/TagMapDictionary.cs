@@ -99,7 +99,7 @@ public class TagMapDictionary
         }
 
         // Verify the track languages match
-        // FFprobe has bugs with language vs. tag_language, try removing the tags
+        // FfProbe has bugs with language vs. tag_language, try removing the tags
         if (ffProbe.Video.Where((t, i) =>
                 !t.Language.Equals(mediaInfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
                 !t.Language.Equals(mkvMerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())

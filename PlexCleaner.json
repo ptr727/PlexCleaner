@@ -132,7 +132,7 @@
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
+    // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": [
       "truehd atmos",
       "truehd",

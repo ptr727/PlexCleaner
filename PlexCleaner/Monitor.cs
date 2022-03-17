@@ -54,10 +54,7 @@ internal class Monitor
         }
 
         // Enable event watching
-        foreach (FileSystemWatcher watch in Watcher)
-        {
-            watch.EnableRaisingEvents = true;
-        }
+        Watcher.ForEach(item => item.EnableRaisingEvents = true);
 
         // Wait for exit to be signalled
         while (!Program.IsCancelled(1000))
@@ -92,10 +89,7 @@ internal class Monitor
                     }
 
                     // Remove watched folders from the watchlist
-                    foreach (string folder in watchlist)
-                    {
-                        WatchFolders.Remove(folder);
-                    }
+                    watchlist.ForEach(item => WatchFolders.Remove(item));
                 }
             }
 
@@ -117,11 +111,7 @@ internal class Monitor
         }
 
         // Disable event watching
-        foreach (FileSystemWatcher watch in Watcher)
-        {
-            watch.EnableRaisingEvents = false;
-        }
-
+        Watcher.ForEach(item => item.EnableRaisingEvents = false);
         Watcher.Clear();
 
         return true;

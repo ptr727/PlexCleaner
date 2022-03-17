@@ -19,6 +19,21 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.6:
+  - Fixed over-optimized `SidecarFile.Update()` that would not update when only the `State` changed, and keep re-verifying the same verified files.
+  - FFmpeg v5 PPA install on Docker is [currently broken](https://bugs.launchpad.net/savos/+bug/1965181).
+    - Reverting to FFmpeg v4 until resolved.
+    - Tracked [here](https://github.com/ptr727/PlexCleaner/issues/93).
+  - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
+    - De-interlacing is still done using HandBrake and the `decomb` filter, but the output file contains no subtitles.
+    - After de-interlacing the subtitles from the original media file are merged back in with the de-interlaced file.
+    - Subtitle track formats are preserved, and closed captions embedded in video streams are not converted to subtitle tracks.
+  - An incomplete attempt was made to detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
+    - Closed Caption subtitles in video streams are undesired as they cannot be managed, but shows up in media players, all subtitles should be discrete tracks.
+    - HandBrake exasperates the problem by converting closed captions in the video stream into `ASS` subtitle tracks.
+    - Obstacle is that ffprobe fails to set the `closed_captions` JSON attribue in JSON output mode, but does detect and print "Closed Captions" in normal output mode.
+    - Hoping that FFmpeg would [reconsider](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) and accept an [abandoned patch](https://patchwork.ffmpeg.org/project/ffmpeg/patch/MN2PR04MB59815313285AA685E37D09AEBAB09@MN2PR04MB5981.namprd04.prod.outlook.com/) for this issue.
+    - Tracked [here](https://github.com/ptr727/PlexCleaner/issues/94).
 - Version 2.5:
   - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [Refactor codec encoding options #85](https://github.com/ptr727/PlexCleaner/issues/85)
     - Older file schemas will automatically be upgraded without requiring user input.
@@ -95,7 +110,7 @@ Below are a few examples of issues I've experienced over the many years of using
   - `sudo apt install -y dotnet-runtime-6.0`
   - `dotnet --info`
 - Install the required 3rd Party tools:
-  - Install [FfMpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5):
+  - Install [FFmpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5):
     - `sudo add-apt-repository -y ppa:savoury1/graphics`
     - `sudo add-apt-repository -y ppa:savoury1/multimedia`
     - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
@@ -309,7 +324,7 @@ Create a default configuration file by running:
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
+    // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": [
       "truehd atmos",
       "truehd",
@@ -452,9 +467,9 @@ The following processing will be done:
 
 ### Re-Multiplex, Re-Encode, De-Interlace, Verify
 
-The `remux` command will re-multiplex the media files using `MKVMerge`.
+The `remux` command will re-multiplex the media files using `MkvMerge`.
 
-The `reencode` command will re-encode the media files using `FFMPeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
+The `reencode` command will re-encode the media files using `FfMpeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
 The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
