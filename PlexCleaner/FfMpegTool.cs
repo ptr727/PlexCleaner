@@ -23,6 +23,9 @@ using System.Text.RegularExpressions;
 // TODO: Figure out how to get ffmpeg more resilient to power events
 // TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
 
+// Typical commandline:
+// ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
+
 namespace PlexCleaner;
 
 public class FfMpegTool : MediaTool
@@ -243,7 +246,11 @@ public class FfMpegTool : MediaTool
 
         // Create the FfMpeg commandline and execute
         string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
-        string commandline = $"-i \"{filename}\" -hide_banner -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
+        if (Program.Options.TestSnippets)
+        {
+            snippet = Snippet;
+        }
+        string commandline = $"{GlobalOptions} -i \"{filename}\" {OutputOptions} {snippet} -hide_banner -nostats -loglevel error -xerror -f null -";
         // Limit captured output to 5 lines
         int exitCode = Command(commandline, 5, out string _, out error);
 
@@ -266,7 +273,7 @@ public class FfMpegTool : MediaTool
 
         // Remux using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -278,7 +285,7 @@ public class FfMpegTool : MediaTool
 
         // Remux and copy all streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -376,7 +383,7 @@ public class FfMpegTool : MediaTool
 
         // Convert using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -399,7 +406,7 @@ public class FfMpegTool : MediaTool
 
         // Encode video and audio, copy subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -411,7 +418,7 @@ public class FfMpegTool : MediaTool
 
         // Encode video, copy audio and subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -434,7 +441,20 @@ public class FfMpegTool : MediaTool
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
+    }
+
+    public bool RemoveMetadata(string inputName, string outputName)
+    {
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Remove all metadata using -map_metadata -1
+        // OutputOptions already includes -map_metadata -1
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -458,7 +478,11 @@ public class FfMpegTool : MediaTool
 
         // Run idet filter
         string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
-        string commandline = $"-i \"{inputName}\" -hide_banner -nostats -xerror -filter:v idet {snippet} -an -f rawvideo {nullOut}";
+        if (Program.Options.TestSnippets)
+        {
+            snippet = Snippet;
+        }
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}";
         // Limit captured output to 5 lines
         int exitCode = Command(commandline, 5, out string _, out text);
         return exitCode == 0;
@@ -523,5 +547,6 @@ public class FfMpegTool : MediaTool
     private const string H264Codec = "libx264";
     private const string H265Codec = "libx265";
     private const string Snippet = "-ss 0 -t 180";
-    private const string ConvertOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    private const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    private const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output -map_metadata -1";
 }

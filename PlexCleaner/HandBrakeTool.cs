@@ -119,8 +119,8 @@ public class HandBrakeTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Encode audio and video, copy subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec} {snippets}";
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec}";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -131,8 +131,8 @@ public class HandBrakeTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Encode video, copy audio and subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -153,9 +153,9 @@ public class HandBrakeTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Encode and decomb video, copy audio, and conditionally copy subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
         string subtitles = includeSubtitles ? "--all-subtitles" : "--subtitle none";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb {subtitles} --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb {subtitles} --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -172,5 +172,5 @@ public class HandBrakeTool : MediaTool
 
     private const string H264Codec = "x264";
     private const string H265Codec = "x265";
-    private const string Snippet = "--start-at duration:00 --stop-at duration:180";
+    private const string Snippet = "--start-at seconds:00 --stop-at seconds:180";
 }

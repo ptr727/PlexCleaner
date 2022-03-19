@@ -449,6 +449,7 @@ public class ProcessFile
 
         // Use the first video track from FfPprobe
         interlacedVideo = FfProbeInfo.Video.First();
+        interlacedVideo.Interlaced = true;
         return true;
     }
 
@@ -471,7 +472,7 @@ public class ProcessFile
         // https://github.com/ptr727/PlexCleaner/issues/94
 
         // Running ffprobe is not free, skip if already verified or CC's already removed
-        // TODO: !!! Revert before release !!!
+        // TODO: !!! Remove before ship !!!
         if (/*State.HasFlag(SidecarFile.States.Verified) ||*/
             State.HasFlag(SidecarFile.States.ClearedCaptions))
         {
@@ -501,6 +502,7 @@ public class ProcessFile
             {
                 // Use the first video track from FfPprobe
                 ccVideo = FfProbeInfo.Video.First();
+                ccVideo.ClosedCaptions = true;
                 return true;
             }
         }

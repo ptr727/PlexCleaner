@@ -48,7 +48,8 @@ public class FfProbeTool : FfMpegTool
         };
 
         // Get packet info
-        string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"-loglevel error {snippet} -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
         string path = GetToolPath();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
         int exitCode = process.ExecuteEx(path, commandline);
@@ -85,7 +86,8 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfoJson(string filename, out string json)
     {
         // Get media info as JSON
-        string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
+        // TODO: Add format to JSON
+        string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{filename}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
     }
@@ -93,7 +95,7 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfoText(string filename, out string text)
     {
         // Get media info using default output
-        string commandline = $"\"{filename}\"";
+        string commandline = $"-hide_banner \"{filename}\"";
         int exitCode = Command(commandline, out _, out text);
         return exitCode == 0;
     }
@@ -171,4 +173,6 @@ public class FfProbeTool : FfMpegTool
         }
         return true;
     }
+
+    private const string Snippet = "-read_intervals %03:00";
 }

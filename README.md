@@ -22,8 +22,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
-    - Deinterlacing is still done using HandBrake and the `decomb` filter, but the output file contains no subtitles.
-    - After deinterlacing the subtitles from the original media file are merged back in with the deinterlaced file.
+    - Deinterlacing is still done using HandBrake and the `decomb` filter, but the deinterlaced output file is devoid of subtitles.
+    - After deinterlacing, the subtitles from the original media file, are merged back in with the deinterlaced file.
     - Subtitle track formats are preserved, and closed captions embedded in video streams are not converted to subtitle tracks.
     - Tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
   - Detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
@@ -38,9 +38,10 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Added `--reverify` option to the `process` command.
     - When set, the `Verified` state in sidecar files will be removed, and the media re-verified.
   - `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
+    - Deprecation warning initially issued with v2.3.5.
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
-  - Minor code cleanup.
+  - Minor code cleanup and fixes.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases
