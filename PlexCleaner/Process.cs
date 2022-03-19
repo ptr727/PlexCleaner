@@ -247,7 +247,7 @@ internal class Process
             return false;
         }
 
-        // De-interlace interlaced content
+        // Deinterlace interlaced content
         if (!processFile.DeInterlace(ref modified) ||
             Program.IsCancelled())
         {
@@ -382,7 +382,7 @@ internal class Process
                 return true;
             }
 
-            // De-interlace
+            // Deinterlace
             return Convert.DeInterlaceToMkv(fileInfo.FullName, out string _);
         });
     }
@@ -526,20 +526,23 @@ internal class Process
             }
 
             // Get tool information
-            ProcessFile processFile = new(fileInfo);
-            if (!processFile.GetToolInfo())
+            // Read the tool info text
+            if (!Tools.MediaInfo.GetMediaInfoXml(fileInfo.FullName, out string mediaInfoXml) ||
+                !Tools.MkvMerge.GetMkvInfoJson(fileInfo.FullName, out string mkvMergeInfoJson) ||
+                !Tools.FfProbe.GetFfProbeInfoJson(fileInfo.FullName, out string ffProbeInfoJson))
             {
+                Log.Logger.Error("Failed to read tool info : {FileName}", fileInfo.Name);
                 return false;
             }
 
             // Print and log info
             Log.Logger.Information("{FileName}", fileInfo.FullName);
-            Log.Logger.Information("FfProbe: {FfProbeText}", processFile.FfProbeText);
-            Console.Write(processFile.FfProbeText);
-            Log.Logger.Information("MkvMerge: {MkvMergeText}", processFile.MkvMergeText);
-            Console.Write(processFile.MkvMergeText);
-            Log.Logger.Information("MediaInfo: {MediaInfoText}", processFile.MediaInfoText);
-            Console.Write(processFile.MediaInfoText);
+            Log.Logger.Information("FfProbe: {FfProbeText}", ffProbeInfoJson);
+            Console.Write(ffProbeInfoJson);
+            Log.Logger.Information("MkvMerge: {MkvMergeText}", mkvMergeInfoJson);
+            Console.Write(mkvMergeInfoJson);
+            Log.Logger.Information("MediaInfo: {MediaInfoText}", mediaInfoXml);
+            Console.Write(mediaInfoXml);
 
             return true;
         });

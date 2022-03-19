@@ -82,6 +82,10 @@
     "Remove Subtitles": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"\\\\Server-1\\Media\\Series\\Dexter\\Season 2\""
+    },
+    "Process ReVerify": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --reverify --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
     }
   }
 }

@@ -53,8 +53,8 @@
       ".wmv",
       ".dv"
     ],
-    // Enable de-interlace
-    // Note de-interlace detection is not absolute
+    // Enable deinterlace
+    // Note deinterlace detection is not absolute
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,

@@ -169,7 +169,7 @@ public static class Convert
 
     public static bool DeInterlaceToMkv(string inputName, out string outputName)
     {
-        // HandBrake produces the best de-interlacing results
+        // HandBrake produces the best deinterlacing results
         return DeInterlaceToMkvHandbrake(inputName, out outputName);
     }
 
@@ -193,7 +193,7 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp");
 
-        // De-interlace video using handbrake
+        // Deinterlace video using handbrake
         if (!Tools.HandBrake.DeInterlaceToMkv(inputName, tempName))
         {
             FileEx.DeleteFile(tempName);

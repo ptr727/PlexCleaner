@@ -127,6 +127,6 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
         // https://stackoverflow.com/questions/35482896/clear-collections-before-adding-items-when-populating-existing-objects
         ObjectCreationHandling = ObjectCreationHandling.Replace
-        // TODO : Add TraceWriter to log to Serilog
+        // TODO: Add TraceWriter to log to Serilog
     };
 }

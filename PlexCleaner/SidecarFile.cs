@@ -26,7 +26,8 @@ public class SidecarFile
         ClearedTags = 1 << 9,
         ReNamed = 1 << 10,
         Deleted = 1 << 11,
-        Modified = 1 << 12
+        Modified = 1 << 12,
+        ClearedCaptions = 1 << 13
     }
 
     public SidecarFile(FileInfo mediaFileInfo)
@@ -37,14 +38,13 @@ public class SidecarFile
 
     public bool Create()
     {
+        // Do not modify the state, it is managed external to the create path
+
         // Get tool info
         if (!GetToolInfo())
         {
             return false;
         }
-
-        // Reset state
-        State = States.None;
 
         // Set the JSON info
         if (!SetJsonInfo())
@@ -195,7 +195,7 @@ public class SidecarFile
             if (SidecarFileInfo.Exists)
             {
                 // Sidecar file exists, read and verify it matches media file
-                if (!Read(out bool current, true))
+                if (!Read(out bool current))
                 {
                     return Create();
                 }
@@ -298,7 +298,9 @@ public class SidecarFile
         // Ignore changes if SidecarUpdateOnToolChange is not set
         // ReSharper disable once ConvertIfToOrExpression
         if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+        {
             mismatch = true;
+        }
 
         return !mismatch;
     }
@@ -384,7 +386,7 @@ public class SidecarFile
             }
         }
         string hash = ComputeHash();
-        if (string.Compare(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase) != 0)
+        if (!string.Equals(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
             if (log)
@@ -408,7 +410,7 @@ public class SidecarFile
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar FfProbe tool version out of date : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
+                Log.Logger.Warning("Sidecar FfProbe tool version mismatch : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
                     SidecarJson.FfProbeToolVersion,
                     Tools.FfProbe.Info.Version,
                     SidecarFileInfo.Name);
@@ -419,7 +421,7 @@ public class SidecarFile
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar MkvMerge tool version out of date : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
+                Log.Logger.Warning("Sidecar MkvMerge tool version mismatch : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
                     SidecarJson.MkvMergeToolVersion,
                     Tools.MkvMerge.Info.Version,
                     SidecarFileInfo.Name);
@@ -430,7 +432,7 @@ public class SidecarFile
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar MediaInfo tool version out of date : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
+                Log.Logger.Warning("Sidecar MediaInfo tool version mismatch : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
                     SidecarJson.MediaInfoToolVersion,
                     Tools.MediaInfo.Info.Version,
                     SidecarFileInfo.Name);

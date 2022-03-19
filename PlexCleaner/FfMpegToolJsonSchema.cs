@@ -11,6 +11,9 @@ using System.Collections.Generic;
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
+// No JSON schema, but XML schema
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
+
 // ReSharper disable once CheckNamespace
 namespace PlexCleaner.FfMpegToolJsonSchema;
 
@@ -55,6 +58,9 @@ public class Stream
 
     [JsonProperty("field_order")]
     public string FieldOrder { get; set; } = "";
+
+    [JsonProperty("closed_captions")]
+    public bool ClosedCaptions { get; set; }
 
     [JsonProperty("tags")]
     public Tags Tags { get; } = new();

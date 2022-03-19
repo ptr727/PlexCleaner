@@ -89,6 +89,7 @@ public class HandBrakeTool : MediaTool
             JObject releases = JObject.Parse(json);
             // "tag_name": "1.2.2",
             JToken versiontag = releases["tag_name"];
+            Debug.Assert(versiontag != null);
             mediaToolInfo.Version = versiontag.ToString();
 
             // Create download URL and the output filename using the version number
@@ -96,7 +97,7 @@ public class HandBrakeTool : MediaTool
             mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
             mediaToolInfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }

@@ -76,7 +76,7 @@ public class TrackInfo
         Title = stream.Tags.Title;
         Default = stream.Disposition.Default;
 
-        // TODO : FfProbe uses the tag language value instead of the track language
+        // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
         // https://github.com/MediaArea/MediaAreaXml/issues/34
 

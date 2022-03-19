@@ -20,8 +20,8 @@ using System.Text.RegularExpressions;
 // FfMpeg logs to stderr, not stdout
 // "By default the program logs to stderr. If coloring is supported by the terminal, colors are used to mark errors and warnings."
 // Power events, e.g. sleep, can result in an invalid argument error
-// TODO : Figure out how to get ffmpeg more resilient to power events
-// TODO : Figure out how to capture logs while still allowing ffmpeg to print in color
+// TODO: Figure out how to get ffmpeg more resilient to power events
+// TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
 
 namespace PlexCleaner;
 
@@ -128,43 +128,64 @@ public class FfMpegTool : MediaTool
             using HttpClient httpClient = new();
             string readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
 
-            // Read each line until we find the first version line
-            // version: 4.3.1
+            // Read each line until we find the build and version lines
+            // build: ffmpeg-5.0-amd64-static.tar.xz
+            // version: 5.0
             using StringReader sr = new(readmePage);
-            string line;
+            string buildLine = "", versionLine = "";
             while (true)
             {
-                // Read the line
-                line = sr.ReadLine();
+                // Read the line and trim whitespace
+                string line = sr.ReadLine();
                 if (line == null)
                 {
+                    // No more lines to read
                     break;
                 }
-
-                // See if the line starts with "Version:"
                 line = line.Trim();
-                if (line.IndexOf("Version:", StringComparison.Ordinal) == 0)
+
+                // See if the line starts with "version:" or "build:"
+                if (line.IndexOf("version:", StringComparison.Ordinal) == 0)
                 {
+                    versionLine = line;
+                }
+                if (line.IndexOf("build:", StringComparison.Ordinal) == 0)
+                {
+                    buildLine = line;
+                }
+
+                // Do we have both lines
+                if (!string.IsNullOrEmpty(versionLine) &&
+                    !string.IsNullOrEmpty(buildLine))
+                { 
+                    // Done
                     break;
                 }
             }
-            if (string.IsNullOrEmpty(line))
+
+            // Did we find the version and build
+            if (string.IsNullOrEmpty(versionLine) ||
+                string.IsNullOrEmpty(buildLine))
             {
                 throw new NotImplementedException();
             }
 
-            // Extract the version number from the line
-            // E.g. version: 4.3.1
-            const string pattern = @"Version:\ (?<version>.*?)";
-            Regex regex = new(pattern);
-            Match match = regex.Match(line);
+            // Extract the build and version number from the lines
+            const string versionPattern = @"version:\ (?<version>.*?)";
+            const string buildPattern = @"build:\ (?<build>.*?)";
+            Regex regex = new(versionPattern);
+            Match match = regex.Match(versionLine);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
+            regex = new Regex(buildPattern);
+            match = regex.Match(buildLine);
+            Debug.Assert(match.Success);
+            mediaToolInfo.FileName = match.Groups["build"].Value;
 
-            // Create download URL and the output filename using the version number
-            // E.g. ffmpeg-4.3.1-amd64-static.tar.xz
-            mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-amd-static.tar.xz";
-            mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
+            // Create download URL and the output filename
+            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-5.0-amd64-static.tar.xz
+            mediaToolInfo.Url = $"https://johnvansickle.com/ffmpeg/releases/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -348,7 +369,7 @@ public class FfMpegTool : MediaTool
         // Create an input and output map
         CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reEncode, out string input, out string output);
 
-        // TODO : Error with some PGS subtitles
+        // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
         //  [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
         //  Consider increasing the value for the 'analyzeduration' and 'probesize' options

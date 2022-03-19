@@ -37,7 +37,7 @@ public class FfProbeTool : FfMpegTool
         packets = null;
 
         // Write JSON text output to compressed memory stream to save memory
-        // TODO : Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
+        // TODO: Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
         // Make sure that the various stream processors leave the memory stream open for the duration of operations
         using MemoryStream memoryStream = new();
         using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
@@ -88,6 +88,14 @@ public class FfProbeTool : FfMpegTool
         string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
+    }
+
+    public bool GetFfProbeInfoText(string filename, out string text)
+    {
+        // Get media info using default output
+        string commandline = $"\"{filename}\"";
+        int exitCode = Command(commandline, out _, out text);
+        return exitCode == 0;
     }
 
     public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
@@ -151,11 +159,11 @@ public class FfProbeTool : FfMpegTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO : Tags
-            // TODO : Duration
-            // TODO : ContainerType
-            // TODO : Chapters
-            // TODO : Attachments
+            // TODO: Tags
+            // TODO: Duration
+            // TODO: ContainerType
+            // TODO: Chapters
+            // TODO: Attachments
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
         {

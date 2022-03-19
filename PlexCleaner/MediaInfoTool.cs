@@ -151,7 +151,7 @@ public class MediaInfoTool : MediaTool
         string commandline = $"--Output=XML \"{filename}\"";
         int exitCode = Command(commandline, out xml);
 
-        // TODO : No error is returned when the file does not exist
+        // TODO: No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
         // Empty XML files are around 86 bytes
         // Match size check with ProcessSidecarFile()
@@ -212,12 +212,12 @@ public class MediaInfoTool : MediaTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO : Tags, maybe look in the Extra field, but not reliable
-            // TODO : Duration, too many different formats to parse
+            // TODO: Tags, maybe look in the Extra field, but not reliable
+            // TODO: Duration, too many different formats to parse
             // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
-            // TODO : ContainerType
-            // TODO : Chapters
-            // TODO : Attachments
+            // TODO: ContainerType
+            // TODO: Chapters
+            // TODO: Attachments
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {

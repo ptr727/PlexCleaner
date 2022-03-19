@@ -13,6 +13,7 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
+    public bool ReVerify { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
@@ -32,13 +33,13 @@ public class CommandLineOptions
         // Monitor and process files
         rootCommand.AddCommand(CreateMonitorCommand());
 
-        // Re-multiplex files
+        // Re-Multiplex files
         rootCommand.AddCommand(CreateReMuxCommand());
 
         // Re-Encode files
         rootCommand.AddCommand(CreateReEncodeCommand());
 
-        // De-interlace files
+        // Deinterlace files
         rootCommand.AddCommand(CreateDeInterlaceCommand());
 
         // Verify files
@@ -151,6 +152,14 @@ public class CommandLineOptions
                 IsRequired = false
             });
 
+        //  Re-verify, ignore verified state, optional
+        processCommand.AddOption(
+            new Option<bool>("--reverify")
+            {
+                Description = "Re-verify media by ignoring Sidecar Verified state",
+                IsRequired = false
+            });
+
         return processCommand;
     }
 
@@ -201,10 +210,10 @@ public class CommandLineOptions
 
     private static Command CreateDeInterlaceCommand()
     {
-        // De-interlace files
+        // Deinterlace files
         Command deinterlaceCommand = new("deinterlace")
         {
-            Description = "De-Interlace media files",
+            Description = "Deinterlace media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.DeInterlaceCommand)
         };
 
@@ -354,11 +363,8 @@ public class CommandLineOptions
         // Media files or folders option
         return new Option<List<string>>("--mediafiles")
         {
-            Description = "List of media files or folders",
-            IsRequired = true,
-            // TODO: This should not be required when the type is a list
-            // https://github.com/dotnet/command-line-api/issues/1199
-            AllowMultipleArgumentsPerToken = true
+            Description = "Media file or folder to process, repeat for multiples",
+            IsRequired = true
         };
     }
 }

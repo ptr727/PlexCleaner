@@ -157,7 +157,7 @@ public class ProcessOptions
         DefaultLanguage = "eng";
         KeepExtensions = new List<string>
         {
-            // TODO : Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
+            // TODO: Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
             ".partial~",
             ".nfo",
             ".jpg",

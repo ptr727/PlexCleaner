@@ -64,6 +64,6 @@ public class FfMpegIdetInfo
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }
 
-    // TODO : Figure out what reliable threshold would be
+    // TODO: Figure out what reliable threshold would be
     public const double InterlacedThreshold = 5.0 / 100.0;
 }

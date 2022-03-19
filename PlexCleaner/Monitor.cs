@@ -66,7 +66,7 @@ internal class Monitor
                 if (WatchFolders.Any())
                 {
                     // Remove root folders from the watchlist
-                    // TODO : Maybe we need a way to not process sub-directories?
+                    //TODO : Maybe we need a way to not process sub-directories?
                     //foreach (string folder in folders)
                     //    WatchFolders.Remove(folder);
 
@@ -239,7 +239,7 @@ internal class Monitor
     private static void OnDeleted()
     {
         // The path we get no longer exists, it may be a file, or it may be a folder
-        // TODO : Figure out how to accurately test if deleted path was a file or folder
+        // TODO: Figure out how to accurately test if deleted path was a file or folder
     }
 
     private readonly List<FileSystemWatcher> Watcher;

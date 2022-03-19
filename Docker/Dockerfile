@@ -1,4 +1,7 @@
-# Test locally:
+# Test in docker shell:
+# docker run -it --rm ubuntu:latest /bin/bash
+
+# Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 # docker build ./Docker
 # Ignore docker layer cache
@@ -62,9 +65,7 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
 RUN add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    # ffmpeg5 is currently broken
-    # https://bugs.launchpad.net/savos/+bug/1965181
-    # && add-apt-repository -y ppa:savoury1/ffmpeg5 \
+    && add-apt-repository -y ppa:savoury1/ffmpeg5 \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y ffmpeg \

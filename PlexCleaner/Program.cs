@@ -362,7 +362,7 @@ internal class Program
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema out of date : {SchemaVersion} != {Version}, {FileName}",
+            Log.Logger.Warning("Settings JSON schema mismatch : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
                 options.SettingsFile);

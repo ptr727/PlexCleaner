@@ -1,5 +1,4 @@
 using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Runtime.InteropServices;
@@ -52,7 +51,7 @@ public abstract class MediaTool
         }
 
         // Extract the update file
-        LogOptions.Logger.LogInformation("Extracting {UpdateFile} ...", updateFile);
+        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
         return Tools.SevenZip.UnZip(updateFile, toolPath);
     }
 

@@ -1,7 +1,7 @@
 using Serilog;
 using System;
 
-// TODO : Find a better way to create profile levels
+// TODO: Find a better way to create profile levels
 // https://trac.ffmpeg.org/ticket/2901
 // https://stackoverflow.com/questions/42619191/what-does-level-mean-in-ffprobe-output
 // https://www.ffmpeg.org/doxygen/3.2/nvEncodeAPI_8h_source.html#l00331
@@ -18,9 +18,10 @@ public class VideoInfo : TrackInfo
 
     internal VideoInfo(MkvToolJsonSchema.Track track) : base(track)
     {
-        // TODO: Profile
-        // TODO: Interlaced
-        // TODO: HDR
+        // Missing: Profile
+        // Missing: Interlaced
+        // Missing: HDR
+        // Missing: ClosedCaptions
     }
 
     internal VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
@@ -48,7 +49,10 @@ public class VideoInfo : TrackInfo
         Interlaced = !string.IsNullOrEmpty(stream.FieldOrder) &&
                      !stream.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
 
-        // TODO: HDR
+        // ClosedCaptions
+        ClosedCaptions = stream.ClosedCaptions;
+
+        // Missing: HDR
     }
 
     internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
@@ -62,7 +66,7 @@ public class VideoInfo : TrackInfo
         };
 
         // Test for interlaced
-        // TODO : Does not currently work for HEVC
+        // TODO: Does not currently work for HEVC
         // https://sourceforge.net/p/mediainfo/bugs/771/
         // https://github.com/MediaArea/MediaInfoLib/issues/1092
         // Test for Progressive, Interlaced, MBAFF, or empty
@@ -71,6 +75,8 @@ public class VideoInfo : TrackInfo
 
         // HDR
         FormatHdr = track.HdrFormat;
+
+        // Missing: ClosedCaptions
     }
 
     public string Profile { get; set; } = "";
@@ -78,6 +84,8 @@ public class VideoInfo : TrackInfo
     public bool Interlaced { get; set; }
 
     public string FormatHdr { get; set; } = "";
+
+    public bool ClosedCaptions { get; set; }
 
     public bool CompareVideo(VideoInfo compare)
     {
@@ -98,7 +106,7 @@ public class VideoInfo : TrackInfo
     public override void WriteLine(string prefix)
     {
         // Add Profile and Interlaced
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}, Profile: {Profile}, Interlaced: {Interlaced}",
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}, Profile: {Profile}, Interlaced: {Interlaced}, ClosedCaptions: {ClosedCaptions}",
             prefix,
             GetType().Name,
             Format,
@@ -112,6 +120,7 @@ public class VideoInfo : TrackInfo
             Default,
             HasErrors,
             Profile,
-            Interlaced);
+            Interlaced,
+            ClosedCaptions);
     }
 }

@@ -122,38 +122,6 @@ public class MediaInfo
         return unknown.Count > 0;
     }
 
-    public bool FindNeedDeInterlace(out MediaInfo keep, out MediaInfo deinterlace)
-    {
-        keep = new MediaInfo(Parser);
-        deinterlace = new MediaInfo(Parser);
-
-        // No filter for audio or subtitle
-        keep.Subtitle.Clear();
-        keep.Subtitle.AddRange(Subtitle);
-        keep.Audio.Clear();
-        keep.Audio.AddRange(Audio);
-
-        // Add all video tracks with the interlaced flag set
-        foreach (VideoInfo video in Video)
-        {
-            if (video.Interlaced)
-            {
-                deinterlace.Video.Add(video);
-            }
-            else
-            {
-                keep.Video.Add(video);
-            }
-        }
-
-        // Set the correct state on all the items
-        deinterlace.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.DeInterlace);
-        keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
-
-        // Return true on any match
-        return deinterlace.Count > 0;
-    }
-
     public bool FindUnwantedLanguage(HashSet<string> languages, List<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
     {
         if (languages == null)
@@ -426,7 +394,8 @@ public class MediaInfo
         }
 
         // Keep one normal and one forced instance of each language 
-        // TODO : Add a SDH processing option
+        // TODO: Add a SDH processing option
+        // TODO: Add logic to handle CHI for Cantonese, Traditional, and Simplified
         foreach (string language in languages)
         {
             // Find non-forced track

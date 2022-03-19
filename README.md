@@ -20,40 +20,27 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.6:
-  - Fixed over-optimized `SidecarFile.Update()` that would not update when only the `State` changed, and keep re-verifying the same verified files.
-  - FFmpeg v5 PPA install on Docker is [currently broken](https://bugs.launchpad.net/savos/+bug/1965181).
-    - Reverting to FFmpeg v4 until resolved.
-    - Tracked [here](https://github.com/ptr727/PlexCleaner/issues/93).
+  - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
-    - De-interlacing is still done using HandBrake and the `decomb` filter, but the output file contains no subtitles.
-    - After de-interlacing the subtitles from the original media file are merged back in with the de-interlaced file.
+    - Deinterlacing is still done using HandBrake and the `decomb` filter, but the output file contains no subtitles.
+    - After deinterlacing the subtitles from the original media file are merged back in with the deinterlaced file.
     - Subtitle track formats are preserved, and closed captions embedded in video streams are not converted to subtitle tracks.
-  - An incomplete attempt was made to detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
+    - Tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
+  - Detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
     - Closed Caption subtitles in video streams are undesired as they cannot be managed, but shows up in media players, all subtitles should be discrete tracks.
     - HandBrake exasperates the problem by converting closed captions in the video stream into `ASS` subtitle tracks.
-    - Obstacle is that ffprobe fails to set the `closed_captions` JSON attribue in JSON output mode, but does detect and print "Closed Captions" in normal output mode.
-    - Hoping that FFmpeg would [reconsider](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) and accept an [abandoned patch](https://patchwork.ffmpeg.org/project/ffmpeg/patch/MN2PR04MB59815313285AA685E37D09AEBAB09@MN2PR04MB5981.namprd04.prod.outlook.com/) for this issue.
-    - Tracked [here](https://github.com/ptr727/PlexCleaner/issues/94).
-- Version 2.5:
-  - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [Refactor codec encoding options #85](https://github.com/ptr727/PlexCleaner/issues/85)
-    - Older file schemas will automatically be upgraded without requiring user input.
-    - Comma separated lists in string format converted to array of strings.
-      - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
-      - New: `"ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ]`
-    - Multiple VideoFormat comma separated lists in strings converted to array of objects.
-      - Old:
-        - `"ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5"`
-        - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"`
-        - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*"`
-      - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
-  - Replaced [GitVersion](https://github.com/GitTools/GitVersion) with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool, resolves [Release develop builds as pre-release #16](https://github.com/ptr727/PlexCleaner/issues/16).
-    - Main branch will now build using `Release` configuration, other branches will continue building with `Debug` configuration.
-    - Prerelease builds are now posted to GitHub releases tagges as `pre-release`, Docker builds continue to be tagged as `develop`.
-  - Docker builds are now also pushed to [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-    - Builds will continue to push to Docker Hub while it remains free to use.
-  - Added a xUnit unit test project.
-    - Currently the only tests are for config and sidecar JSON schema backwards compatibility.
-  - Code cleanup and refactoring to make current versions of Visual Studio and Rider happy.
+    - FFprobe [fails](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) to set the `closed_captions` JSON attribute in JSON output mode, but does detect and print `Closed Captions` in normal output mode.
+    - Tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
+  - Added the ability to bootstrap 7-Zip downloads on Windows, manually downloading `7za.exe` is no longer required.
+    - Getting started is now easier, just run:
+      - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
+      - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
+  - Added `--reverify` option to the `process` command.
+    - When set, the `Verified` state in sidecar files will be removed, and the media re-verified.
+  - `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
+    - Old style: `--mediafiles path1 path2`
+    - New style: `--mediafiles path1 --mediafiles path2`
+  - Minor code cleanup.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases
@@ -68,32 +55,31 @@ Below are a few examples of issues I've experienced over the many years of using
 - MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H.264.
 - Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H.264.
 - Some H.264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H.264 "High@40".
-- Interlaced video cause playback issues, re-encode to H.264 using HandBrake and de-interlace using `--comb-detect --decomb` options.
+- Interlaced video cause playback issues, re-encode to H.264 using HandBrake and deinterlace using `--comb-detect --decomb` options.
 - Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
-- Some subtitle tracks like VOBsub cause hangs when the MuxingMode attribute is not set, re-multiplex the file.
+- Some subtitle tracks like VOBsub cause hangs when the `MuxingMode` attribute is not set, re-multiplex the file.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
 - Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
 - Dolby Vision is only supported on DV capable hardware, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
+- EIA-608 Closed Captions embedded in video streams can't be disable or managed, remove embedded closed captions, only allow discrete subtitle tracks.
 
 ## Installation
 
 ### Windows
 
-- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
-- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
+- Install the [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
-- Install the required 3rd Party tools:
-  - The 3rd party tools are downloaded in the `Tools` folder.
-  - Make sure the folder exists, the default location is in the same folder as the binary.
-  - [Download](https://www.7-zip.org/download.html) the 7-Zip commandline tool, e.g. [7z1805-extra.7z](https://www.7-zip.org/a/7z1805-extra.7z)
-  - Extract the contents of the archive to the `Tools\SevenZip` folder.
-  - The 7-Zip commandline tool should be in `Tools\SevenZip\x64\7za.exe`
-  - With 7-Zip ready, the other 3rd party tools can automatically be downloaded and extracted by running:
-    - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - The tool version information will be stored in `Tools\Tools.json`
-  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command.
+- Create a default JSON settings file using the `defaultsettings` command:
+  - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
+  - Modify the settings to suit your needs.
+- Download the required 3rd party tools using the `checkfornewtools` command:
+  - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
+  - The default `Tools` folder will be created in the same folder as the `PlexCleaner.exe` binary file.
+  - The tool version information will be stored in `Tools\Tools.json`.
+  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or enabling the `ToolsOptions:AutoUpdate` setting.
 
 ### Linux
 
@@ -136,8 +122,11 @@ Below are a few examples of issues I've experienced over the many years of using
     - `sudo apt install -y mkvtoolnix`
     - `mkvmerge --version`
   - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
-- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+- Create a default JSON settings file using the `defaultsettings` command:
+  - `./PlexCleaner --settingsfile "PlexCleaner.json" defaultsettings`
+  - Modify the settings to suit your needs.
 
 ### Docker
 
@@ -245,8 +234,8 @@ Create a default configuration file by running:
       ".wmv",
       ".dv"
     ],
-    // Enable de-interlace
-    // Note de-interlace detection is not absolute
+    // Enable deinterlace
+    // Note deinterlace detection is not absolute
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
@@ -389,7 +378,7 @@ Commandline options:
 `PlexCleaner.exe --help`
 
 ```console
-> ./PlexCleaner --help
+> ./PlexCleaner.exe --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
@@ -410,7 +399,7 @@ Commands:
   monitor           Monitor and process media file changes in folders
   remux             Re-Multiplex media files
   reencode          Re-Encode media files
-  deinterlace       De-Interlace media files
+  deinterlace       Deinterlace media files
   verify            Verify media files
   createsidecar     Create sidecar files
   getsidecarinfo    Print sidecar file attribute information
@@ -431,17 +420,21 @@ One of the commands must be specified.
 
 ```console
 > .\PlexCleaner.exe process --help
-process:
-  Process media files.
+Description:
+  Process media files
 
 Usage:
   PlexCleaner process [options]
 
 Options:
-  --mediafiles <mediafiles> (REQUIRED)    List of media files or folders.
-  --testsnippets                          Create short video clips, useful during testing.
-  --testnomodify                          Do not make any modifications, useful during testing.
-  -?, -h, --help                          Show help and usage information.
+  --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
+  --testsnippets                            Create short video clips, useful during testing
+  --testnomodify                            Do not make any modifications, useful during testing
+  --reverify                                Re-verify media by ignoring Sidecar Verified state
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to the log file vs. default overwrite
+  -?, -h, --help                            Show help and usage information
 ```
 
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
@@ -460,18 +453,19 @@ The following processing will be done:
 - Remove tracks with languages not in the `KeepLanguages` list.
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
-- De-interlace the video track if interlaced.
+- Deinterlace the video track if interlaced.
+- Remove EIA-608 Closed Captions from video streams.
 - Re-encode video to H.264/5 if video format matches `ReEncodeVideo`.
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
-### Re-Multiplex, Re-Encode, De-Interlace, Verify
+### Re-Multiplex, Re-Encode, Deinterlace, Verify
 
 The `remux` command will re-multiplex the media files using `MkvMerge`.
 
 The `reencode` command will re-encode the media files using `FfMpeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
-The `deinterlace` command will de-interlace interlaced media files using `HandBrake --comb-detect --decomb`.
+The `deinterlace` command will deinterlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
 The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.  
 

@@ -2,6 +2,7 @@
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -214,8 +215,13 @@ public static class Tools
         // 7-Zip must be installed
         if (!File.Exists(SevenZip.GetToolPath()))
         {
-            Log.Logger.Error("{Tool} not found : {Directory}", SevenZip.GetToolType(), SevenZip.GetToolPath());
-            return false;
+            // Bootstrap the 7-Zip download, only supported on Windows
+            Log.Logger.Warning("Downloading missing {Tool} ... : \"{ToolPath}\"", SevenZip.GetToolType(), SevenZip.GetToolPath());
+            if (!SevenZip.BootstrapDownload())
+            { 
+                return false;
+            }
+            Debug.Assert(File.Exists(SevenZip.GetToolPath()));
         }
 
         Log.Logger.Information("Checking for new tools ...");

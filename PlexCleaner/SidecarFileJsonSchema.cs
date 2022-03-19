@@ -93,7 +93,7 @@ public class SidecarFileJsonSchema
         // FfMpegToolVersion was replaced with FfProbeToolVersion in v3
         // MkvToolVersion was replaced with MkvMergeToolVersion in v3
         // Migrating the versions is not really useful as the version format changed
-        // TODO : Convert the version format from longform to shortform
+        // TODO: Convert the version format from longform to shortform
         if (json.SchemaVersion < 3)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
