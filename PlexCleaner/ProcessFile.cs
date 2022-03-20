@@ -827,7 +827,7 @@ public class ProcessFile
             // Warn if audio or video tracks are missing
             if (MediaInfoInfo.Video.Count == 0 || MediaInfoInfo.Audio.Count == 0)
             {
-                Log.Logger.Warning("File missing audio or video track : {FileName}", FileInfo.Name);
+                Log.Logger.Warning("File missing audio ({Audio}) or video ({Video}) track : {FileName}", MediaInfoInfo.Audio.Count, MediaInfoInfo.Video.Count, FileInfo.Name);
                 MediaInfoInfo.WriteLine("Missing");
 
                 // Warning only, continue
@@ -836,7 +836,7 @@ public class ProcessFile
             // Warn if more than one video track
             if (MediaInfoInfo.Video.Count > 1)
             {
-                Log.Logger.Warning("File has more than one video track : {FileName}", FileInfo.Name);
+                Log.Logger.Warning("File has more than one video ({Video}) track : {FileName}", MediaInfoInfo.Video.Count, FileInfo.Name);
                 MediaInfoInfo.WriteLine("Extra");
 
                 // Warning only, continue

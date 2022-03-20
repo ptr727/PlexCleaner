@@ -188,7 +188,7 @@ public class MediaInfo
             // Use the preferred audio codec track or the first track
             AudioInfo info = FindPreferredAudio(preferredAudioFormats) ?? Audio.First();
 
-            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, {Selected}", audioLanguages, languages, info.Language);
+            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, Using: {Selected}", audioLanguages, languages, info.Language);
             keep.Audio.Add(info);
             remove.Audio.Remove(info);
         }
@@ -657,7 +657,7 @@ public class MediaInfo
             // Skip cover tracks
             if (MatchCoverArt(videoInfo.Codec))
             {
-                Log.Logger.Warning("Ignoring covert art video track : {Codec}", videoInfo.Codec);
+                Log.Logger.Warning("Ignoring cover art video track : {Codec}", videoInfo.Codec);
                 continue;
             }
 
