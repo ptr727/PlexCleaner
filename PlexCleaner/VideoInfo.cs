@@ -106,7 +106,9 @@ public class VideoInfo : TrackInfo
     public override void WriteLine(string prefix)
     {
         // Add Profile and Interlaced
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}, Profile: {Profile}, Interlaced: {Interlaced}, ClosedCaptions: {ClosedCaptions}",
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, " +
+                               "Id: {Id}, Number: {Number}, Title: {Title}, Default: {Default}, Profile: {Profile}, Interlaced: {Interlaced}, " +
+                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
             Format,
@@ -115,12 +117,13 @@ public class VideoInfo : TrackInfo
             Language,
             Id,
             Number,
-            State,
             Title,
             Default,
-            HasErrors,
             Profile,
             Interlaced,
-            ClosedCaptions);
+            ClosedCaptions,
+            State,
+            HasErrors,
+            HasTags);
     }
 }

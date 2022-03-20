@@ -223,11 +223,10 @@ public class ProcessFile
             return true;
         }
 
-        // Look for the ReMuxed flag and don't try to remux again
+        // Already ReMuxed, something is wrong with detection or removal
         if (SidecarFile.State.HasFlag(SidecarFile.States.ReMuxed))
         {
-            Log.Logger.Warning("Skipping ReMux due to previous ReMux failed to clear errors : {FileName}", FileInfo.Name);
-            // Return success
+            Log.Logger.Error("Errors re-detected after remuxing : {FileName}", FileInfo.Name);
             return true;
         }
 
@@ -280,9 +279,18 @@ public class ProcessFile
         }
 
         // Does the file have tags
-        if (!MkvMergeInfo.HasTags)
+        if (!MkvMergeInfo.HasTags &&
+            !FfProbeInfo.HasTags &&
+            !MediaInfoInfo.HasTags)
         {
             // No tags
+            return true;
+        }
+
+        // Do not remove tags again, something is wrong with tag detection or removal
+        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
+        {
+            Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
             return true;
         }
 
@@ -291,7 +299,7 @@ public class ProcessFile
 
         // Delete the tags
         if (!Program.Options.TestNoModify &&
-            !Tools.MkvPropEdit.ClearMkvTags(FileInfo.FullName, MkvMergeInfo))
+            !Tools.MkvPropEdit.ClearTags(FileInfo.FullName, MkvMergeInfo))
         {
             // Error
             return false;
@@ -299,6 +307,48 @@ public class ProcessFile
 
         // Set modified state
         SidecarFile.State |= SidecarFile.States.ClearedTags;
+
+        // Refresh
+        modified = true;
+        return Refresh(true);
+    }
+
+    public bool RemoveAttachments(ref bool modified)
+    {
+        // Optional
+        if (!Program.Config.ProcessOptions.RemoveTags)
+        {
+            return true;
+        }
+
+        // Does the file have attachments
+        // Use MkvMerge info
+        if (MkvMergeInfo.Attachments == 0)
+        {
+            // No attachments
+            return true;
+        }
+
+        // Do not remove tags again, something is wrong with tag detection or removal
+        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
+        {
+            Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
+            return true;
+        }
+
+        // Remove tags
+        Log.Logger.Information("Clearing all tags from media file : {FileName}", FileInfo.Name);
+
+        // Delete the attachments
+        if (!Program.Options.TestNoModify &&
+            !Tools.MkvPropEdit.ClearAttachments(FileInfo.FullName, MkvMergeInfo))
+        {
+            // Error
+            return false;
+        }
+
+        // Set modified state
+        SidecarFile.State |= SidecarFile.States.ClearedAttachments;
 
         // Refresh
         modified = true;
@@ -328,7 +378,7 @@ public class ProcessFile
 
         // Set the track language to the default language
         if (!Program.Options.TestNoModify &&
-            !Tools.MkvPropEdit.SetMkvTrackLanguage(FileInfo.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
+            !Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
         {
             // Error
             return false;
@@ -453,7 +503,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptions(out VideoInfo ccVideo)
+    private bool FindClosedCaptions(out VideoInfo ccVideo, bool conditional = true)
     {
         // Init
         ccVideo = null;
@@ -471,13 +521,16 @@ public class ProcessFile
         // TODO: Detecting CC's using ffprobe JSON output is broken, run ffprobe in normal output mode
         // https://github.com/ptr727/PlexCleaner/issues/94
 
-        // Running ffprobe is not free, skip if already verified or CC's already removed
-        // TODO: !!! Remove before ship !!!
-        if (/*State.HasFlag(SidecarFile.States.Verified) ||*/
-            State.HasFlag(SidecarFile.States.ClearedCaptions))
-        {
-            // Skip ffprobe
-            return false;
+        // Conditional
+        if (conditional)
+        { 
+            // Running ffprobe is not free, skip if already verified or CC's already removed
+            if (State.HasFlag(SidecarFile.States.Verified) ||
+                State.HasFlag(SidecarFile.States.ClearedCaptions))
+            {
+                // Skip ffprobe
+                return false;
+            }
         }
 
         // Get ffprobe text output
@@ -532,7 +585,7 @@ public class ProcessFile
         // To work around this we will deinterlace without subtitles then add the subtitles back
         // https://github.com/ptr727/PlexCleaner/issues/95
 
-        // Conditional
+        // Test
         if (Program.Options.TestNoModify)
         {
             return true;
@@ -636,10 +689,10 @@ public class ProcessFile
         return Refresh(outputname);
     }
 
-    public bool RemoveClosedCaptions(ref bool modified)
+    public bool RemoveClosedCaptions(ref bool modified, bool conditional = true)
     {
         // Do we have any closed captions
-        if (!FindClosedCaptions(out VideoInfo ccVideo))
+        if (!FindClosedCaptions(out VideoInfo ccVideo, conditional))
         {
             return true;
         }
@@ -647,7 +700,7 @@ public class ProcessFile
         Log.Logger.Information("Removing Closed Captions from video stream : {FileName}", FileInfo.Name);
         ccVideo.WriteLine("Closed Captions");
 
-        // Conditional
+        // Test
         if (Program.Options.TestNoModify)
         {
             return true;
@@ -717,7 +770,7 @@ public class ProcessFile
         return Refresh(outputname);
     }
 
-    public bool Verify(bool conditional, ref bool modified)
+    public bool Verify(ref bool modified, bool conditional = true)
     {
         // Conditional or always
         if (conditional)
@@ -857,7 +910,7 @@ public class ProcessFile
         // If failed
         if (!verified)
         {
-            // If testing we are done
+            // Test
             if (Program.Options.TestNoModify)
             {
                 return false;
@@ -996,7 +1049,6 @@ public class ProcessFile
         {
             return true;
         }
-
         VideoInfo videoInfo = MediaInfoInfo.Video.First();
 
         // Test for HDR
@@ -1018,7 +1070,7 @@ public class ProcessFile
 
     private bool VerifyRepair(ref bool modified)
     {
-        // Don't repair in test mode
+        // Test
         if (Program.Options.TestNoModify)
         {
             return false;
@@ -1259,20 +1311,7 @@ public class ProcessFile
         Debug.Assert(MkvMergeTool.IsMkvFile(FileInfo));
 
         // Get media info
-        if (!Refresh(false))
-        {
-            // Error
-            return false;
-        }
-
-        // Remove the verified flag if the --reverify option is active
-        if (Program.Options.ReVerify)
-        {
-            Log.Logger.Warning("Clearing Verified state due to ReVerify : {FileName}", FileInfo.Name);
-            SidecarFile.State &= ~SidecarFile.States.Verified;
-        }
-
-        return true;
+        return Refresh(false);
     }
 
     public bool MonitorFileTime(int seconds)

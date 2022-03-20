@@ -452,9 +452,8 @@ public class FfMpegTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Remove all metadata using -map_metadata -1
-        // OutputOptions already includes -map_metadata -1
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -548,5 +547,5 @@ public class FfMpegTool : MediaTool
     private const string H265Codec = "libx265";
     private const string Snippet = "-ss 0 -t 180";
     private const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
-    private const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output -map_metadata -1";
+    private const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
 }

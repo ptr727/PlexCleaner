@@ -55,9 +55,12 @@ public class TrackInfo
             }
         }
 
-        // Take care to use id and number correctly in MkvMerge and MKVPropEdit
+        // Take care to use id and number correctly in MkvMerge and MkvPropEdit
         Id = track.Id;
         Number = track.Properties.Number;
+
+        // Has tags
+        HasTags = MediaInfo.IsTagTitle(Title);
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -71,33 +74,37 @@ public class TrackInfo
             throw new ArgumentNullException(nameof(stream));
         }
 
+        // Fixed attributes
         Format = stream.CodecName;
         Codec = stream.CodecLongName;
-        Title = stream.Tags.Title;
         Default = stream.Disposition.Default;
+
+        // Variable attributes
+        Title = stream.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Language = stream.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
         // https://github.com/MediaArea/MediaAreaXml/issues/34
 
         // Set language
-        if (string.IsNullOrEmpty(stream.Tags.Language))
+        if (string.IsNullOrEmpty(Language))
         {
             Language = "und";
         }
         // Some sample files are "???" or "null", set to und
-        else if (stream.Tags.Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
-                 stream.Tags.Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+        else if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
+                 Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
             HasErrors = true;
-            Log.Logger.Warning("Invalid Language : {Language}", stream.Tags.Language);
+            Log.Logger.Warning("Invalid Language : {Language}", Language);
             Language = "und";
         }
         else
         {
             // FfProbe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
             // Try to lookup the language to make sure it is correct
-            Iso6393 lang = PlexCleaner.Language.GetIso6393(stream.Tags.Language);
+            Iso6393 lang = PlexCleaner.Language.GetIso6393(Language);
             if (lang != null)
             {
                 Language = lang.Part2B;
@@ -105,7 +112,7 @@ public class TrackInfo
             else
             {
                 HasErrors = true;
-                Log.Logger.Warning("Invalid Language : {Language}", stream.Tags.Language);
+                Log.Logger.Warning("Invalid Language : {Language}", Language);
                 Language = "und";
             }
         }
@@ -113,6 +120,9 @@ public class TrackInfo
         // Use index for number
         Id = stream.Index;
         Number = stream.Index;
+
+        // Has tags
+        HasTags = MediaInfo.IsTagTitle(Title);
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -168,6 +178,9 @@ public class TrackInfo
         // Use streamorder for number
         Number = track.StreamOrder;
 
+        // Has tags
+        HasTags = MediaInfo.IsTagTitle(Title);
+
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
         Debug.Assert(!string.IsNullOrEmpty(Codec));
@@ -182,6 +195,7 @@ public class TrackInfo
     public StateType State { get; set; } = StateType.None;
     public string Title { get; set; } = "";
     public bool Default { get; set; }
+    public bool HasTags { get; set; }
     public bool HasErrors { get; set; }
 
     public bool IsLanguageUnknown()
@@ -193,7 +207,8 @@ public class TrackInfo
 
     public virtual void WriteLine(string prefix)
     {
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, Default: {Default}, HasErrors: {HasErrors}",
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, Id: {Id}, Number: {Number}, " +
+                               "Title: {Title}, Default: {Default}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
             Format,
@@ -201,9 +216,10 @@ public class TrackInfo
             Language,
             Id,
             Number,
-            State,
             Title,
             Default,
-            HasErrors);
+            State,
+            HasErrors,
+            HasTags);
     }
 }

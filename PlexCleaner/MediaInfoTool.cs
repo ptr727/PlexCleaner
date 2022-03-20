@@ -212,7 +212,12 @@ public class MediaInfoTool : MediaTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO: Tags, maybe look in the Extra field, but not reliable
+            // Tags
+            // TODO: Look in the Extra field, but not reliable
+            mediaInfo.HasTags = mediaInfo.Video.Any(item => item.HasTags) ||
+                                mediaInfo.Audio.Any(item => item.HasTags) ||
+                                mediaInfo.Subtitle.Any(item => item.HasTags);
+
             // TODO: Duration, too many different formats to parse
             // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
             // TODO: ContainerType

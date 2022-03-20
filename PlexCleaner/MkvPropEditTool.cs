@@ -25,7 +25,7 @@ public class MkvPropEditTool : MkvMergeTool
         return "mkvpropedit";
     }
 
-    public bool SetMkvTrackLanguage(string filename, MediaInfo unknown, string language)
+    public bool SetTrackLanguage(string filename, MediaInfo unknown, string language)
     {
         if (unknown == null)
         {
@@ -43,7 +43,7 @@ public class MkvPropEditTool : MkvMergeTool
         return exitCode == 0;
     }
 
-    public bool SetMkvTrackLanguage(string filename, int track, string language)
+    public bool SetTrackLanguage(string filename, int track, string language)
     {
         // Set track language
         string commandline = $"\"{filename}\" {EditOptions} --edit track:@{track} --set language={language}";
@@ -51,7 +51,7 @@ public class MkvPropEditTool : MkvMergeTool
         return exitCode == 0;
     }
 
-    public bool ClearMkvTags(string filename)
+    public bool ClearTags(string filename)
     {
         // Clear all tags
         string commandline = $"\"{filename}\" {EditOptions} --tags all: --delete title";
@@ -59,7 +59,7 @@ public class MkvPropEditTool : MkvMergeTool
         return exitCode == 0;
     }
 
-    public bool ClearMkvTags(string filename, MediaInfo info)
+    public bool ClearTags(string filename, MediaInfo info)
     {
         if (info == null)
         {
@@ -79,6 +79,30 @@ public class MkvPropEditTool : MkvMergeTool
         {
             commandline.Append($"--edit track:@{track.Number} --delete name ");
         }
+
+        // Delete all attachments
+        for (int id = 0; id < info.Attachments; id++)
+        {
+            commandline.Append($"--delete-attachment {id + 1} ");
+        }
+
+        int exitCode = Command(commandline.ToString());
+        return exitCode == 0;
+    }
+
+    public bool ClearAttachments(string filename, MediaInfo info)
+    {
+        if (info == null)
+        {
+            throw new ArgumentNullException(nameof(info));
+        }
+
+        // Verify correct data type
+        Debug.Assert(info.Parser == ToolType.MkvMerge);
+
+        // Clear all tags
+        StringBuilder commandline = new();
+        commandline.Append($"\"{filename}\" {EditOptions} ");
 
         // Delete all attachments
         for (int id = 0; id < info.Attachments; id++)

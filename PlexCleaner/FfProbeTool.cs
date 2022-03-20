@@ -120,6 +120,7 @@ public class FfProbeTool : FfMpegTool
             // Tracks
             foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
             {
+                // Process by track type
                 if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
                 {
                     VideoInfo info = new(stream);
@@ -161,9 +162,18 @@ public class FfProbeTool : FfMpegTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO: Tags
-            // TODO: Duration
-            // TODO: ContainerType
+            // Tags in container or any tracks
+            mediaInfo.HasTags = HasTags(ffprobe.Format.Tags) ||
+                mediaInfo.Video.Any(item => item.HasTags) ||
+                mediaInfo.Audio.Any(item => item.HasTags) ||
+                mediaInfo.Subtitle.Any(item => item.HasTags);
+
+            // Duration in seconds
+            mediaInfo.Duration = TimeSpan.FromSeconds(ffprobe.Format.Duration);
+
+            // Container type
+            mediaInfo.Container = ffprobe.Format.FormatName;
+
             // TODO: Chapters
             // TODO: Attachments
         }
@@ -172,6 +182,28 @@ public class FfProbeTool : FfMpegTool
             return false;
         }
         return true;
+    }
+
+    private static bool HasTags(Dictionary<string, string> tags)
+    {
+        // Format tags:
+        // "encoder": "libebml v1.4.2 + libmatroska v1.6.4",
+        // "creation_time": "2022-03-10T12:55:01.000000Z"
+
+        // Stream tags:
+        // "language": "eng",
+        // "BPS": "4969575",
+        // "DURATION": "00:42:30.648000000",
+        // "NUMBER_OF_FRAMES": "76434",
+        // "NUMBER_OF_BYTES": "1584454580",
+        // "_STATISTICS_WRITING_APP": "mkvmerge v61.0.0 ('So') 64-bit",
+        // "_STATISTICS_WRITING_DATE_UTC": "2022-03-10 12:55:01",
+        // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
+        
+        // Language and title are expected tags
+        // Look for any key containing "statistics"
+        // TODO: Find a more relaible method for determining what tags are expected or not
+        return tags.Keys.FirstOrDefault(item => item.Contains("statistics", StringComparison.OrdinalIgnoreCase)) != null;
     }
 
     private const string Snippet = "-read_intervals %03:00";

@@ -25,23 +25,25 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Deinterlacing is still done using HandBrake and the `decomb` filter, but the deinterlaced output file is devoid of subtitles.
     - After deinterlacing, the subtitles from the original media file, are merged back in with the deinterlaced file.
     - Subtitle track formats are preserved, and closed captions embedded in video streams are not converted to subtitle tracks.
-    - Tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
+    - HandBrake issue tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
   - Detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
     - Closed Caption subtitles in video streams are undesired as they cannot be managed, but shows up in media players, all subtitles should be discrete tracks.
     - HandBrake exasperates the problem by converting closed captions in the video stream into `ASS` subtitle tracks.
     - FFprobe [fails](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) to set the `closed_captions` JSON attribute in JSON output mode, but does detect and print `Closed Captions` in normal output mode.
-    - Tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
+    - FFprobe issue tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
+    - To remove closed captions from files that have already been verified, use the new `removeclosedcaptions` command.
   - Added the ability to bootstrap 7-Zip downloads on Windows, manually downloading `7za.exe` is no longer required.
     - Getting started is now easier, just run:
       - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
       - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - Added `--reverify` option to the `process` command.
-    - When set, the `Verified` state in sidecar files will be removed, and the media re-verified.
-  - `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
+  - Added `removeclosedcaptions` command to remove Closed Captions from media files.
+    - The `removeclosedcaptions` command, like other explicit commands, will use the sidecar information, but ignore any performance improving conditional logic.
+  - The `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
     - Deprecation warning initially issued with v2.3.5.
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
-  - Minor code cleanup and fixes.
+  - Improved the metadata tag and attachment detection and cleanup logic.
+  - Minor code cleanup and improvements.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases
@@ -439,10 +441,10 @@ Options:
 ```
 
 The `process` command will use the JSON configuration settings to conditionally modify the media content.  
-The `--mediafiles` option can include multiple files and directories, e.g. `--mediafiles path1 --mediafiles path2 --mediafiles file1 --mediafiles file2`.  
+The `--mediafiles` option can include multiple files and directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
 
 Example:  
-`PlexCleaner.exe --settingsfile "PlexCleaner.json" --logfile "PlexCleaner.log" --appendtolog process --mediafiles "C:\Foo\Test.mkv" --mediafiles "D:\Media"`
+`PlexCleaner.exe --settingsfile PlexCleaner.json --logfile PlexCleaner.log --appendtolog process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
 
 The following processing will be done:
 
@@ -460,7 +462,7 @@ The following processing will be done:
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
-### Re-Multiplex, Re-Encode, Deinterlace, Verify
+### Re-Multiplex, Re-Encode, Deinterlace, Verify, RemoveSubtitles, RemoveClosedCaptions
 
 The `remux` command will re-multiplex the media files using `MkvMerge`.
 
@@ -468,7 +470,11 @@ The `reencode` command will re-encode the media files using `FfMpeg` and H.264 a
 
 The `deinterlace` command will deinterlace interlaced media files using `HandBrake --comb-detect --decomb`.
 
-The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.  
+The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
+
+The `removesubtitles` command will remove all subtitle tracks.
+
+The `removeclosedcaptions` command will use `FFmpeg` and `-bsf:v \"filter_units=remove_types=6\"` to remove video stram embedded EIA-608 closed captions.
 
 ### Monitor
 
@@ -496,10 +502,6 @@ The `gettoolinfo` command will print tool attribute information.
 The `getsidecarinfo` command will print sidecar attribute information.
 
 The `getbitrateinfo` command will calculate and print media bitrate information.
-
-### RemoveSubtitles
-
-The `removesubtitles` command will remove all subtitle tracks.
 
 ## 3rd Party Tools
 

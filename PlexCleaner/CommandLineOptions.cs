@@ -13,7 +13,6 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
-    public bool ReVerify { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
@@ -68,6 +67,9 @@ public class CommandLineOptions
 
         // Remove subtitles
         rootCommand.AddCommand(CreateRemoveSubtitlesCommand());
+
+        // Remove closed captions
+        rootCommand.AddCommand(CreateRemoveClosedCaptionsCommand());
 
         return rootCommand;
     }
@@ -149,14 +151,6 @@ public class CommandLineOptions
             new Option<bool>("--testnomodify")
             {
                 Description = "Do not make any modifications, useful during testing",
-                IsRequired = false
-            });
-
-        //  Re-verify, ignore verified state, optional
-        processCommand.AddOption(
-            new Option<bool>("--reverify")
-            {
-                Description = "Re-verify media by ignoring Sidecar Verified state",
                 IsRequired = false
             });
 
@@ -350,6 +344,21 @@ public class CommandLineOptions
         {
             Description = "Remove subtitles",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
+        };
+
+        // Media files or folders option
+        removesubtitlesCommand.AddOption(CreateMediaFilesOption());
+
+        return removesubtitlesCommand;
+    }
+
+    private static Command CreateRemoveClosedCaptionsCommand()
+    {
+        // Remove subtitles
+        Command removesubtitlesCommand = new("removeclosedcaptions")
+        {
+            Description = "Remove closed captions",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveClosedCaptionsCommand)
         };
 
         // Media files or folders option

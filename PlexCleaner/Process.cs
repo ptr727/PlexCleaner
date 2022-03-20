@@ -227,6 +227,13 @@ internal class Process
             return false;
         }
 
+        // Remove all attachments, they can interfere and show up as video streams
+        if (!processFile.RemoveAttachments(ref modified) ||
+            Program.IsCancelled())
+        {
+            return false;
+        }
+
         // The file extension and container type is MKV and all media info should be valid
         if (!processFile.VerifyMediaInfo())
         {
@@ -276,7 +283,7 @@ internal class Process
         }
 
         // Verify media streams, and repair if possible
-        if (!processFile.Verify(true, ref modified) ||
+        if (!processFile.Verify(ref modified) ||
             Program.IsCancelled())
         {
             return false;
@@ -352,7 +359,7 @@ internal class Process
 
             // Verify
             bool modified = false;
-            return processFile.Verify(false, ref modified);
+            return processFile.Verify(ref modified, false);
         });
     }
 
@@ -592,6 +599,29 @@ internal class Process
             // Remove subtitles
             bool modified = false;
             return processFile.RemoveSubtitles(ref modified);
+        });
+    }
+
+    public static bool RemoveClosedCaptionsFiles(List<FileInfo> fileList)
+    {
+        return ProcessFilesDriver(fileList, "Remove Closed Captions", fileInfo =>
+        {
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
+                return true;
+            }
+
+            // Get media information
+            ProcessFile processFile = new(fileInfo);
+            if (!processFile.GetMediaInfo())
+            {
+                return false;
+            }
+
+            // Remove closed captions
+            bool modified = false;
+            return processFile.RemoveClosedCaptions(ref modified, false);
         });
     }
 

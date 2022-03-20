@@ -38,7 +38,7 @@
     },
     "Verify": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"D:\\Test\""
     },
     "Get Bitrate Info": {
       "commandName": "Project",
@@ -81,11 +81,11 @@
     },
     "Remove Subtitles": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"\\\\Server-1\\Media\\Series\\Dexter\\Season 2\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"D:\\Test\""
     },
-    "Process ReVerify": {
+    "Remove Closed Captions": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --reverify --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removeclosedcaptions --mediafiles \"D:\\Test\""
     }
   }
 }

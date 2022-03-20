@@ -37,8 +37,8 @@ public class SubtitleInfo : TrackInfo
     {
         // Add Forced
         Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, " +
-                               "Language: {Language}, Id: {Id}, Number: {Number}, State: {State}, Title: {Title}, " +
-                               "Default: {Default}, HasErrors: {HasErrors}, Forced: {Forced}",
+                               "Language: {Language}, Id: {Id}, Number: {Number}, Title: {Title}, Default: {Default}, " +
+                               "Forced: {Forced}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
             Format,
@@ -46,10 +46,11 @@ public class SubtitleInfo : TrackInfo
             Language,
             Id,
             Number,
-            State,
             Title,
             Default,
+            Forced,
+            State,
             HasErrors,
-            Forced);
+            HasTags);
     }
 }

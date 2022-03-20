@@ -320,6 +320,22 @@ internal class Program
         return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
     }
 
+    internal static int RemoveClosedCaptionsCommand(CommandLineOptions options)
+    {
+        Program program = Create(options, true);
+        if (program == null)
+        {
+            return -1;
+        }
+
+        if (!program.CreateFileList(options.MediaFiles))
+        {
+            return -1;
+        }
+
+        return Process.RemoveClosedCaptionsFiles(program.FileInfoList) ? 0 : -1;
+    }
+
     // Add a reference to this class in the event handler arguments
     private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e)
     {

@@ -27,7 +27,8 @@ public class SidecarFile
         ReNamed = 1 << 10,
         Deleted = 1 << 11,
         Modified = 1 << 12,
-        ClearedCaptions = 1 << 13
+        ClearedCaptions = 1 << 13,
+        ClearedAttachments = 1 << 14
     }
 
     public SidecarFile(FileInfo mediaFileInfo)
