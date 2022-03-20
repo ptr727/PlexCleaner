@@ -625,6 +625,29 @@ internal class Process
         });
     }
 
+    public static bool RemoveTagsAndAttachmentsFiles(List<FileInfo> fileList)
+    {
+        return ProcessFilesDriver(fileList, "Remove Tags and Attachments", fileInfo =>
+        {
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            {
+                return true;
+            }
+
+            // Get media information
+            ProcessFile processFile = new(fileInfo);
+            if (!processFile.GetMediaInfo())
+            {
+                return false;
+            }
+
+            // Remove closed captions
+            bool modified = false;
+            return processFile.RemoveTagsAndAttachments(ref modified, false);
+        });
+    }
+
     private static bool ProcessFilesDriver(List<FileInfo> fileList, string taskName, Func<FileInfo, bool> taskFunc)
     {
         // Start

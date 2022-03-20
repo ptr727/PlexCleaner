@@ -69,23 +69,19 @@ public class MkvPropEditTool : MkvMergeTool
         // Verify correct data type
         Debug.Assert(info.Parser == ToolType.MkvMerge);
 
-        // Clear all tags
+        // Clear all tags and main title
         StringBuilder commandline = new();
         commandline.Append($"\"{filename}\" {EditOptions} --tags all: --delete title ");
 
-        // Delete all track titles
+        // Delete all track titles if the title is not considered "useful"
+        // TODO: Consider using HasTags() or other methods to be more consistent
         foreach (TrackInfo track in info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) &&
                                                                        !MediaInfo.IsUsefulTrackTitle(track.Title)))
         {
             commandline.Append($"--edit track:@{track.Number} --delete name ");
         }
 
-        // Delete all attachments
-        for (int id = 0; id < info.Attachments; id++)
-        {
-            commandline.Append($"--delete-attachment {id + 1} ");
-        }
-
+        // Command
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
@@ -110,6 +106,7 @@ public class MkvPropEditTool : MkvMergeTool
             commandline.Append($"--delete-attachment {id + 1} ");
         }
 
+        // Command
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }

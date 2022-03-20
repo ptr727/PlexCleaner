@@ -21,6 +21,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
+  - Added `removeclosedcaptions` command to remove Closed Captions from media files.
+  - Added `removetagsandattachments` command to remove Tags and Attachments from media files.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
     - Deinterlacing is still done using HandBrake and the `decomb` filter, but the deinterlaced output file is devoid of subtitles.
     - After deinterlacing, the subtitles from the original media file, are merged back in with the deinterlaced file.
@@ -36,13 +38,12 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Getting started is now easier, just run:
       - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
       - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - Added `removeclosedcaptions` command to remove Closed Captions from media files.
-    - The `removeclosedcaptions` command, like other explicit commands, will use the sidecar information, but ignore any performance improving conditional logic.
   - The `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
     - Deprecation warning initially issued with v2.3.5.
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
   - Improved the metadata tag and attachment detection and cleanup logic.
+    - To remove tags and attachments from files that have already been verified, use the new `removetagsandattachments` command.
   - Minor code cleanup and improvements.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
@@ -381,7 +382,7 @@ Commandline options:
 `PlexCleaner.exe --help`
 
 ```console
-> ./PlexCleaner.exe --help
+> .\PlexCleaner.exe --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
@@ -396,22 +397,24 @@ Options:
   -?, -h, --help                            Show help and usage information
 
 Commands:
-  defaultsettings   Write default values to settings file
-  checkfornewtools  Check for and download new tools
-  process           Process media files
-  monitor           Monitor and process media file changes in folders
-  remux             Re-Multiplex media files
-  reencode          Re-Encode media files
-  deinterlace       Deinterlace media files
-  verify            Verify media files
-  createsidecar     Create sidecar files
-  getsidecarinfo    Print sidecar file attribute information
-  gettagmap         Print attribute tag-map created from media files
-  getmediainfo      Print media file attribute information
-  gettoolinfo       Print tool file attribute information
-  getbitrateinfo    Print media file bitrate information
-  upgradesidecar    Upgrade sidecar file schemas
-  removesubtitles   Remove subtitles
+  defaultsettings           Write default values to settings file
+  checkfornewtools          Check for and download new tools
+  process                   Process media files
+  monitor                   Monitor and process media file changes in folders
+  remux                     Re-Multiplex media files
+  reencode                  Re-Encode media files
+  deinterlace               Deinterlace media files
+  verify                    Verify media files
+  createsidecar             Create sidecar files
+  getsidecarinfo            Print sidecar file attribute information
+  gettagmap                 Print attribute tag-map created from media files
+  getmediainfo              Print media file attribute information
+  gettoolinfo               Print tool file attribute information
+  getbitrateinfo            Print media file bitrate information
+  upgradesidecar            Upgrade sidecar file schemas
+  removesubtitles           Remove subtitles
+  removeclosedcaptions      Remove closed captions
+  removetagsandattachments  Remove tags and attachments
 ```
 
 The `--settingsfile` JSON settings file is required.  

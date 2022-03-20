@@ -270,7 +270,7 @@ public class ProcessFile
         return result;
     }
 
-    public bool RemoveTags(ref bool modified)
+    public bool RemoveTags(ref bool modified, bool conditional = true)
     {
         // Optional
         if (!Program.Config.ProcessOptions.RemoveTags)
@@ -287,11 +287,15 @@ public class ProcessFile
             return true;
         }
 
-        // Do not remove tags again, something is wrong with tag detection or removal
-        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
-        {
-            Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
-            return true;
+        // Conditional
+        if (conditional)
+        { 
+            // Do not remove tags again, something is wrong with tag detection or removal
+            if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
+            {
+                Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
+                return true;
+            }
         }
 
         // Remove tags
@@ -313,7 +317,7 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool RemoveAttachments(ref bool modified)
+    public bool RemoveAttachments(ref bool modified, bool conditional = true)
     {
         // Optional
         if (!Program.Config.ProcessOptions.RemoveTags)
@@ -329,11 +333,15 @@ public class ProcessFile
             return true;
         }
 
-        // Do not remove tags again, something is wrong with tag detection or removal
-        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
-        {
-            Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
-            return true;
+        // Conditional
+        if (conditional)
+        { 
+            // Do not remove tags again, something is wrong with tag detection or removal
+            if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
+            {
+                Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
+                return true;
+            }
         }
 
         // Remove tags
@@ -731,6 +739,12 @@ public class ProcessFile
         // Refresh
         modified = true;
         return Refresh(true);
+    }
+
+    public bool RemoveTagsAndAttachments(ref bool modified, bool conditional = true)
+    {
+        return RemoveTags(ref modified, conditional) &&
+               RemoveAttachments(ref modified, conditional);
     }
 
     public bool ReEncode(List<VideoInfo> reencodeVideoInfos, HashSet<string> reencodeAudioFormats, ref bool modified)
