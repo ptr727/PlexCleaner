@@ -13,7 +13,7 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
-    public bool Unconditional { get; set; }
+    public int ReProcess { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
@@ -143,11 +143,11 @@ public class CommandLineOptions
                 IsRequired = false
             });
 
-        //  Unconditional processing, retry if past attempts failed
+        //  Re-process level, optional
         command.AddOption(
-            new Option<bool>("--unconditional")
+            new Option<int>("--reprocess")
             {
-                Description = "Unconditional processing, ignore past failures or performance constraints",
+                Description = "Re-process level, 0 = none (default), 1 = some, 2 = all",
                 IsRequired = false
             });
 

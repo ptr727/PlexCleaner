@@ -83,6 +83,13 @@ internal class Process
         List<(string fileName, SidecarFile.States state)> modifiedInfo = new();
         List<string> errorFiles = new();
 
+        // Warn if reprocessing
+        // TODO: Find a better way to scale conditional processing, e.g. flags
+        if (Program.Options.ReProcess > 0)
+        {
+            Log.Logger.Warning("Re-processing level is {ReProcess}", Program.Options.ReProcess);
+        }
+
         // Process all the files
         bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
         {

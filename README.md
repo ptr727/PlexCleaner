@@ -21,11 +21,12 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
-  - Added the `unconditional` option to the `process` command.
-    - The `unconditional` option will ignore any previous conditional processing, e.g. when past operations were unsuccessful or requires file processing.
-    - The `unconditional` option will not re-verify media, will not run idet deinterlace detection again, and will not calculate the bitrate again, too expensive.
-    - To completely reprocess all steps, run the `createsidecar` command, and then the `process` command.
-    - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run `process` at least once with the `unconditional` option set.
+  - Added a `--reprocess` option to the `process` command, `process --reprocess [0 (default), 1, 2]`
+    - The `--reprocess` option can be used to override conditional sidecar state optimizations, e.g. don't verify if already verified.
+    - 0: Default behavior, do not do any reprocessing.
+    - 1: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.
+    - 2: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+    - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run with `--reprocess 1` at least once.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
     - After HandBrake deinterlacing, the original subtitles are added to the output file, bypassing HandBrake subtle logic.
     - Subtitle track formats and attributes are preserved, and closed captions embedded are not converted to subtitle tracks.
@@ -43,14 +44,15 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
   - Improved the metadata, tag, and attachment detection and cleanup logic.
-    - To re-process files with the improved logic, run the `process` command with the `unconditional` option enabled.
+    - FFprobe container and track tags are now evaluated for unwanted metadata.
     - Attachments are now deleted before processing, eliminating problems with cover art being detected as video tracks, or FFMpeg converting covert art into video tracks.
+    - Run with `process --reprocess 1` at least once to re-evaluate conditions.
   - Removed the `upgradesidecar` command.
     - Sidecar schemas are automatically upgraded since v2.5.
   - Removed the `verify` command.
-    - Use the `process` command with the `unconditional` option instead.
+    - Use `process --reprocess 2` instead.
   - Removed the `getbitrateinfo` command.
-    - Bitrate information is calculated and printed during the `process` operation.
+    - Use `process --reprocess 2` instead.
   - Minor code cleanup and improvements.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
@@ -419,10 +421,9 @@ Commands:
   removesubtitles   Remove all subtitles
 ```
 
-The `--settingsfile` JSON settings file is required.  
-The `--logfile` output log file is optional, the file will be overwritten unless `--logappend` is set.
-
-One of the commands must be specified.
+One of the commands must be specified, some commands have more options.  
+The `--settingsfile` JSON settings file is required. A default settings file can be created using the `defaultsettings` command.  
+The `--logfile` output is optional, the file will be overwritten unless `--logappend` is set.
 
 ### Process Media Files
 
@@ -438,20 +439,27 @@ Options:
   --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
   --testsnippets                            Create short video clips, useful during testing
   --testnomodify                            Do not make any modifications, useful during testing
-  --unconditional                           Unconditional processing, ignore past failures or performance constraints
+  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = some, 2 = all
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
   -?, -h, --help                            Show help and usage information
 ```
 
-The `process` command will use the JSON configuration settings to conditionally modify the media content.  
-The `--mediafiles` option can include multiple files and directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
+The `process` command will process the media content using options as defined in the settings file.
+
+The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
+Paths with spaces should be double quoted.
+
+The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.  
+`0`: Default behavior, do not do any reprocessing.  
+`1`: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.  
+`2`: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
 
 Example:  
-`PlexCleaner.exe --settingsfile PlexCleaner.json --logfile PlexCleaner.log --appendtolog process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
+`PlexCleaner.exe --settingsfile PlexCleaner.json --logfile PlexCleaner.log process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media --reprocess 1`
 
-The following processing will be done:
+The `process` command will perform the following operations:
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.

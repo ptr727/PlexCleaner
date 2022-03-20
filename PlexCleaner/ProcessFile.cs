@@ -288,7 +288,7 @@ public class ProcessFile
         }
 
         // Conditional
-        if (!Program.Options.Unconditional)
+        if (Program.Options.ReProcess == 0)
         { 
             // Do not remove tags again, something is wrong with tag detection or removal
             if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
@@ -334,7 +334,7 @@ public class ProcessFile
         }
 
         // Conditional
-        if (!Program.Options.Unconditional)
+        if (Program.Options.ReProcess == 0)
         { 
             // Do not remove tags again, something is wrong with tag detection or removal
             if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
@@ -480,13 +480,16 @@ public class ProcessFile
             return true;
         }
 
-        // Running idet is expensive, skip if already verified or already deinterlaced
-        // Ignore Program.Options.Unconditional, too expensive
-        if (State.HasFlag(SidecarFile.States.Verified) ||
-            State.HasFlag(SidecarFile.States.DeInterlaced))
-        {
-            // Skip idet
-            return false;
+        // Conditional
+        if (Program.Options.ReProcess < 2)
+        { 
+            // Running idet is expensive, skip if already verified or already deinterlaced
+            if (State.HasFlag(SidecarFile.States.Verified) ||
+                State.HasFlag(SidecarFile.States.DeInterlaced))
+            {
+                // Skip idet
+                return false;
+            }
         }
 
         // Count the frame types using the idet filter, expensive
@@ -531,7 +534,7 @@ public class ProcessFile
         // https://github.com/ptr727/PlexCleaner/issues/94
 
         // Conditional
-        if (!Program.Options.Unconditional)
+        if (Program.Options.ReProcess == 0)
         { 
             // Running ffprobe is not free, skip if already verified or CC's already removed
             if (State.HasFlag(SidecarFile.States.Verified) ||
@@ -797,11 +800,13 @@ public class ProcessFile
             return true;
         }
 
-        // If we are using a sidecar file we can use the last result
-        // Use Program.Options.Unconditional logic to gate expensive operations
-        if (!Program.Options.Unconditional &&
+        // Conditional
+        // 0 = skip all if already verified
+        // 1 = skip bitrate and verify if already verified
+        // 2 = re-verify all
+        if (Program.Options.ReProcess == 0 &&
             SidecarFile.State.HasFlag(SidecarFile.States.Verified))
-        {
+        { 
             return true;
         }
 
@@ -850,7 +855,7 @@ public class ProcessFile
                 // Warning only, continue
             }
 
-            // Verify HDR
+            // Verify HDR, cheap
             if (!VerifyHdr())
             {
                 // Cancel requested
@@ -863,9 +868,9 @@ public class ProcessFile
                 break;
             }
 
-            // If we are using a sidecar file we can use the last result
-            // We would only get here if Program.Options.Unconditional is set and Verified was set
-            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+            // Conditional, 0 or 1, 2 will pass
+            if (Program.Options.ReProcess < 2 &&
+                SidecarFile.State.HasFlag(SidecarFile.States.Verified))
             {
                 return true;
             }

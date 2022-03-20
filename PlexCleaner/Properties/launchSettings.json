@@ -69,7 +69,15 @@
     },
     "Process Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --unconditional --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
+    },
+    "Process Test ReProcess 1": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --reprocess 1 --mediafiles \"D:\\Test\""
+    },
+    "Process Test ReProcess 2": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --reprocess 2 --mediafiles \"D:\\Test\""
     }
   }
 }
