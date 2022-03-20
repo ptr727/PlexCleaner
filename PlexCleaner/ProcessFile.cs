@@ -1306,6 +1306,16 @@ public class ProcessFile
 
             return false;
         }
+
+        // Unusual to have 0 or more than 1 video tracks
+        // Unusual to have 0 audio tracks
+        // Not impossible, but could indicate an issue, e.g. ffmpeg converts PNG attachments to a second video stream.
+        if (MkvMergeInfo.Video.Count != 1 ||
+            MkvMergeInfo.Audio.Count == 0)
+        {
+            Log.Logger.Warning("Unusual media track count, Video: {Video}, Audio: {Audio} : {FileName}", MkvMergeInfo.Video.Count, MkvMergeInfo.Audio.Count, FileInfo.Name);
+        }
+
         return true;
     }
 
