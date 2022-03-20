@@ -219,7 +219,7 @@ public class CommandLineOptions
         // Create sidecar files
         Command command = new("createsidecar")
         {
-            Description = "Create sidecar files",
+            Description = "Create new sidecar files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateSidecarCommand)
         };
 
@@ -294,7 +294,7 @@ public class CommandLineOptions
         // Remove subtitles
         Command command = new("removesubtitles")
         {
-            Description = "Remove subtitles",
+            Description = "Remove all subtitles",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
         };
 

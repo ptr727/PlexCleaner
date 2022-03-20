@@ -481,6 +481,7 @@ public class ProcessFile
         }
 
         // Running idet is expensive, skip if already verified or already deinterlaced
+        // Ignore Program.Options.Unconditional, too expensive
         if (State.HasFlag(SidecarFile.States.Verified) ||
             State.HasFlag(SidecarFile.States.DeInterlaced))
         {
@@ -488,7 +489,7 @@ public class ProcessFile
             return false;
         }
 
-        // Count the frame types using the idet filter
+        // Count the frame types using the idet filter, expensive
         if (!GetIdetInfo(out FfMpegIdetInfo idetInfo))
         {
             // Error
@@ -797,8 +798,9 @@ public class ProcessFile
         }
 
         // If we are using a sidecar file we can use the last result
-        // The Program.Options.Unconditional logic does not apply to verify
-        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+        // Use Program.Options.Unconditional logic to gate expensive operations
+        if (!Program.Options.Unconditional &&
+            SidecarFile.State.HasFlag(SidecarFile.States.Verified))
         {
             return true;
         }
@@ -826,6 +828,15 @@ public class ProcessFile
                 // Warning only, continue
             }
 
+            // Warn if more than one video track
+            if (MediaInfoInfo.Video.Count > 1)
+            {
+                Log.Logger.Warning("File has more than one video track : {FileName}", FileInfo.Name);
+                MediaInfoInfo.WriteLine("Extra");
+
+                // Warning only, continue
+            }
+
             // Test playback duration
             if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration))
             {
@@ -839,7 +850,40 @@ public class ProcessFile
                 // Warning only, continue
             }
 
-            // Verify media streams
+            // Verify HDR
+            if (!VerifyHdr())
+            {
+                // Cancel requested
+                if (Program.IsCancelledError())
+                {
+                    return false;
+                }
+
+                // Done
+                break;
+            }
+
+            // If we are using a sidecar file we can use the last result
+            // We would only get here if Program.Options.Unconditional is set and Verified was set
+            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+            {
+                return true;
+            }
+
+            // Verify bitrate, expensive
+            if (!VerifyBitrate())
+            {
+                // Cancel requested
+                if (Program.IsCancelledError())
+                {
+                    return false;
+                }
+
+                // Done
+                break;
+            }
+
+            // Verify media streams, expensive
             Log.Logger.Information("Verifying media streams : {FileName}", FileInfo.Name);
             if (!Tools.FfMpeg.VerifyMedia(FileInfo.FullName, out string error))
             {
@@ -872,32 +916,6 @@ public class ProcessFile
                     // Done
                     break;
                 }
-            }
-
-            // Verify bitrate
-            if (!VerifyBitrate())
-            {
-                // Cancel requested
-                if (Program.IsCancelledError())
-                {
-                    return false;
-                }
-
-                // Done
-                break;
-            }
-
-            // Verify HDR
-            if (!VerifyHdr())
-            {
-                // Cancel requested
-                if (Program.IsCancelledError())
-                {
-                    return false;
-                }
-
-                // Done
-                break;
             }
 
             // Done
@@ -1305,15 +1323,6 @@ public class ProcessFile
             FfProbeInfo.WriteLine("FfProbe");
 
             return false;
-        }
-
-        // Unusual to have 0 or more than 1 video tracks
-        // Unusual to have 0 audio tracks
-        // Not impossible, but could indicate an issue, e.g. ffmpeg converts PNG attachments to a second video stream.
-        if (MkvMergeInfo.Video.Count != 1 ||
-            MkvMergeInfo.Audio.Count == 0)
-        {
-            Log.Logger.Warning("Unusual media track count, Video: {Video}, Audio: {Audio} : {FileName}", MkvMergeInfo.Video.Count, MkvMergeInfo.Audio.Count, FileInfo.Name);
         }
 
         return true;
