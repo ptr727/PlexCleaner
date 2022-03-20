@@ -345,7 +345,7 @@ public class ProcessFile
         }
 
         // Remove tags
-        Log.Logger.Information("Clearing all tags from media file : {FileName}", FileInfo.Name);
+        Log.Logger.Information("Clearing all attachments from media file : {FileName}", FileInfo.Name);
 
         // Delete the attachments
         if (!Program.Options.TestNoModify &&
