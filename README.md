@@ -42,6 +42,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - New style: `--mediafiles path1 --mediafiles path2`
   - Improved the metadata, tag, and attachment detection and cleanup logic.
     - To re-process verified files, it is recommended to run the `process` command at least once with the `unconditional` option enabled.
+    - Attachments are now deleted before processing, eliminating problems with cover art being detected as video tracks, or FFMpeg converting covert art into video tracks.
+    - Emit log warnings when the video track count != 1 or audio track count == 0, could indicate problems with past repairs, inspect by hand.
   - Removed the `upgradesidecar` command.
     - Sidecar schemas are automatically upgraded since v2.5.
   - Removed the `verify` command.
@@ -413,7 +415,6 @@ Commands:
   gettagmap         Print attribute tag-map created from media files
   getmediainfo      Print media file attribute information
   gettoolinfo       Print tool file attribute information
-  getbitrateinfo    Print media file bitrate information
   removesubtitles   Remove subtitles
 ```
 
