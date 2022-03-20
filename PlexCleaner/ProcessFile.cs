@@ -1125,14 +1125,21 @@ public class ProcessFile
         }
 
         // Conditional re-process
-        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed) &&
-            !Process.CanReProcess(Process.Tasks.Repair))
+        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed) ||
+            SidecarFile.State.HasFlag(SidecarFile.States.Repaired))
         {
-            return false;
+            if (!Process.CanReProcess(Process.Tasks.Repair))
+            {
+                // Done
+                return false;
+            }
         }
         
         // Trying again may not succeed unless tools changed
-        Log.Logger.Warning("Previous attempts to repair failed : {FileName}", FileInfo.Name);
+        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+        { 
+            Log.Logger.Warning("Repairing again after previous attempt failed : {FileName}", FileInfo.Name);
+        }
 
         // TODO: Analyze the error output and conditionally repair only the audio or video track
         // [aac @ 000001d3c5652440] noise_facs_q 32 is invalid
