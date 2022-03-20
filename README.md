@@ -22,7 +22,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
   - Added the `unconditional` option to the `process` command.
-    - The `unconditional` option will ignore any previous conditional processing, e.g. when past operations were unsuccsessful, or repeat operations are considred too costly.
+    - The `unconditional` option will ignore any previous conditional processing, e.g. when past operations were unsuccessful, or repeat operations are considered too costly.
     - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run `process` at least once with the `unconditional` option set.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
     - After HandBrake deinterlacing, the original subtitles are added to the output file, bypassing HandBrake subtle logic.
@@ -41,7 +41,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
   - Improved the metadata, tag, and attachment detection and cleanup logic.
-    - To re-process verified files, it is recommended to run the `process` command at least once with the `unconditional` option enabled.
+    - To re-process verified files with the improved logic, run the `process` command with the `unconditional` option enabled.
     - Attachments are now deleted before processing, eliminating problems with cover art being detected as video tracks, or FFMpeg converting covert art into video tracks.
     - Emit log warnings when the video track count != 1 or audio track count == 0, could indicate problems with past repairs, inspect by hand.
   - Removed the `upgradesidecar` command.
