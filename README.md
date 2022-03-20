@@ -21,29 +21,33 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
-  - Added `removeclosedcaptions` command to remove Closed Captions from media files.
-  - Added `removetagsandattachments` command to remove Tags and Attachments from media files.
+  - Added the `unconditional` option to the `process` command.
+    - The `unconditional` option will ignore any previous conditional processing, e.g. when past operations were unsuccsessful, or repeat operations are considred too costly.
+    - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run `process` at least once with the `unconditional` option set.
   - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
-    - Deinterlacing is still done using HandBrake and the `decomb` filter, but the deinterlaced output file is devoid of subtitles.
-    - After deinterlacing, the subtitles from the original media file, are merged back in with the deinterlaced file.
-    - Subtitle track formats are preserved, and closed captions embedded in video streams are not converted to subtitle tracks.
-    - HandBrake issue tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
-  - Detect and remove [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
-    - Closed Caption subtitles in video streams are undesired as they cannot be managed, but shows up in media players, all subtitles should be discrete tracks.
-    - HandBrake exasperates the problem by converting closed captions in the video stream into `ASS` subtitle tracks.
+    - After HandBrake deinterlacing, the original subtitles are added to the output file, bypassing HandBrake subtle logic.
+    - Subtitle track formats and attributes are preserved, and closed captions embedded are not converted to subtitle tracks.
+    - The HandBrake issue tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
+  - Added the removal of [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
+    - Closed Caption subtitles in video streams are undesired as they cannot be managed, all subtitles should be in discrete tracks.
     - FFprobe [fails](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) to set the `closed_captions` JSON attribute in JSON output mode, but does detect and print `Closed Captions` in normal output mode.
     - FFprobe issue tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
-    - To remove closed captions from files that have already been verified, use the new `removeclosedcaptions` command.
   - Added the ability to bootstrap 7-Zip downloads on Windows, manually downloading `7za.exe` is no longer required.
     - Getting started is now easier, just run:
       - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
       - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - The `--mediafiles` option no longer supports multiple entries, use multiple `--mediafiles` options.
+  - The `--mediafiles` option no longer supports multiple entries per option, use multiple `--mediafiles` options instead.
     - Deprecation warning initially issued with v2.3.5.
     - Old style: `--mediafiles path1 path2`
     - New style: `--mediafiles path1 --mediafiles path2`
-  - Improved the metadata tag and attachment detection and cleanup logic.
-    - To remove tags and attachments from files that have already been verified, use the new `removetagsandattachments` command.
+  - Improved the metadata, tag, and attachment detection and cleanup logic.
+    - To re-process verified files, it is recommended to run the `process` command at least once with the `unconditional` option enabled.
+  - Removed the `upgradesidecar` command.
+    - Sidecar schemas are automatically upgraded since v2.5.
+  - Removed the `verify` command.
+    - Use the `process` command with the `unconditional` option instead.
+  - Removed the `getbitrateinfo` command.
+    - Bitrate information is calculated and printed during the `process` operation.
   - Minor code cleanup and improvements.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
@@ -397,24 +401,20 @@ Options:
   -?, -h, --help                            Show help and usage information
 
 Commands:
-  defaultsettings           Write default values to settings file
-  checkfornewtools          Check for and download new tools
-  process                   Process media files
-  monitor                   Monitor and process media file changes in folders
-  remux                     Re-Multiplex media files
-  reencode                  Re-Encode media files
-  deinterlace               Deinterlace media files
-  verify                    Verify media files
-  createsidecar             Create sidecar files
-  getsidecarinfo            Print sidecar file attribute information
-  gettagmap                 Print attribute tag-map created from media files
-  getmediainfo              Print media file attribute information
-  gettoolinfo               Print tool file attribute information
-  getbitrateinfo            Print media file bitrate information
-  upgradesidecar            Upgrade sidecar file schemas
-  removesubtitles           Remove subtitles
-  removeclosedcaptions      Remove closed captions
-  removetagsandattachments  Remove tags and attachments
+  defaultsettings   Write default values to settings file
+  checkfornewtools  Check for and download new tools
+  process           Process media files
+  monitor           Monitor and process media file changes in folders
+  remux             Re-Multiplex media files
+  reencode          Re-Encode media files
+  deinterlace       Deinterlace media files
+  createsidecar     Create sidecar files
+  getsidecarinfo    Print sidecar file attribute information
+  gettagmap         Print attribute tag-map created from media files
+  getmediainfo      Print media file attribute information
+  gettoolinfo       Print tool file attribute information
+  getbitrateinfo    Print media file bitrate information
+  removesubtitles   Remove subtitles
 ```
 
 The `--settingsfile` JSON settings file is required.  
@@ -436,7 +436,7 @@ Options:
   --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
   --testsnippets                            Create short video clips, useful during testing
   --testnomodify                            Do not make any modifications, useful during testing
-  --reverify                                Re-verify media by ignoring Sidecar Verified state
+  --unconditional                           Unconditional processing, ignore past failures or performance constraints
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
@@ -465,19 +465,13 @@ The following processing will be done:
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
-### Re-Multiplex, Re-Encode, Deinterlace, Verify, RemoveSubtitles, RemoveClosedCaptions
+### Re-Multiplex, Re-Encode, Deinterlace
 
 The `remux` command will re-multiplex the media files using `MkvMerge`.
 
 The `reencode` command will re-encode the media files using `FfMpeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
 The `deinterlace` command will deinterlace interlaced media files using `HandBrake --comb-detect --decomb`.
-
-The `verify` command will use `FFmpeg` to render the file streams and report on any container or stream errors.
-
-The `removesubtitles` command will remove all subtitle tracks.
-
-The `removeclosedcaptions` command will use `FFmpeg` and `-bsf:v \"filter_units=remove_types=6\"` to remove video stram embedded EIA-608 closed captions.
 
 ### Monitor
 
@@ -486,15 +480,12 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### CreateSidecar, UpgradeSidecar
+### CreateSidecar
 
-The `createsidecar` command will create sidecar files.  
-All state attributes will be deleted, e.g. the file will be re-verified.
+The `createsidecar` command will create or re-create sidecar files.  
+All existing state attributes will be deleted.
 
-The `upgradesidecar` command will upgrade the sidecar schemas (not tool info) to the current version.  
-When possible the verified state of the file will be maintained, avoiding the cost of unnecessary and time consuming re-verification operations.
-
-### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo, GetBitrateInfo
+### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo
 
 The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
 
@@ -503,8 +494,6 @@ The `getmediainfo` command will print media attribute information.
 The `gettoolinfo` command will print tool attribute information.
 
 The `getsidecarinfo` command will print sidecar attribute information.
-
-The `getbitrateinfo` command will calculate and print media bitrate information.
 
 ## 3rd Party Tools
 

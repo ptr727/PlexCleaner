@@ -340,29 +340,6 @@ internal class Process
         });
     }
 
-    public static bool VerifyFiles(List<FileInfo> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Verify", fileInfo =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
-            {
-                return true;
-            }
-
-            // Get media information
-            ProcessFile processFile = new(fileInfo);
-            if (!processFile.GetMediaInfo())
-            {
-                return false;
-            }
-
-            // Verify
-            bool modified = false;
-            return processFile.Verify(ref modified, false);
-        });
-    }
-
     public static bool ReEncodeFiles(List<FileInfo> fileList)
     {
         return ProcessFilesDriver(fileList, "ReEncode", fileInfo =>
@@ -455,22 +432,6 @@ internal class Process
         });
     }
 
-    public static bool UpgradeSidecarFiles(List<FileInfo> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Upgrade Sidecar Files", fileInfo =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
-            {
-                return true;
-            }
-
-            // Upgrade the sidecar file
-            SidecarFile sidecarfile = new(fileInfo);
-            return sidecarfile.Upgrade();
-        });
-    }
-
     public static bool GetSidecarFiles(List<FileInfo> fileList)
     {
         return ProcessFilesDriver(fileList, "Get Sidecar Information", fileInfo =>
@@ -555,30 +516,6 @@ internal class Process
         });
     }
 
-    public static bool GetBitrateInfoFiles(List<FileInfo> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Get Bitrate Information", fileInfo =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
-            {
-                return true;
-            }
-
-            // Get bitrate info
-            ProcessFile processFile = new(fileInfo);
-            if (!processFile.GetBitrateInfo(out BitrateInfo bitrateInfo))
-            {
-                return false;
-            }
-
-            // Print bitrate info
-            bitrateInfo.WriteLine();
-
-            return true;
-        });
-    }
-
     public static bool RemoveSubtitlesFiles(List<FileInfo> fileList)
     {
         return ProcessFilesDriver(fileList, "Remove Subtitles", fileInfo =>
@@ -599,52 +536,6 @@ internal class Process
             // Remove subtitles
             bool modified = false;
             return processFile.RemoveSubtitles(ref modified);
-        });
-    }
-
-    public static bool RemoveClosedCaptionsFiles(List<FileInfo> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Remove Closed Captions", fileInfo =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
-            {
-                return true;
-            }
-
-            // Get media information
-            ProcessFile processFile = new(fileInfo);
-            if (!processFile.GetMediaInfo())
-            {
-                return false;
-            }
-
-            // Remove closed captions
-            bool modified = false;
-            return processFile.RemoveClosedCaptions(ref modified, false);
-        });
-    }
-
-    public static bool RemoveTagsAndAttachmentsFiles(List<FileInfo> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Remove Tags and Attachments", fileInfo =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
-            {
-                return true;
-            }
-
-            // Get media information
-            ProcessFile processFile = new(fileInfo);
-            if (!processFile.GetMediaInfo())
-            {
-                return false;
-            }
-
-            // Remove closed captions
-            bool modified = false;
-            return processFile.RemoveTagsAndAttachments(ref modified, false);
         });
     }
 

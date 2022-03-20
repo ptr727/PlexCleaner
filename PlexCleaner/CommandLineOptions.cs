@@ -13,6 +13,7 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
+    public bool Unconditional { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
@@ -41,9 +42,6 @@ public class CommandLineOptions
         // Deinterlace files
         command.AddCommand(CreateDeInterlaceCommand());
 
-        // Verify files
-        command.AddCommand(CreateVerifyCommand());
-
         // Write sidecar files
         command.AddCommand(CreateCreateSidecarCommand());
 
@@ -59,20 +57,8 @@ public class CommandLineOptions
         // Print tool info
         command.AddCommand(CreateGetToolInfoCommand());
 
-        // Calculate bitrate info
-        command.AddCommand(CreateGetBitrateInfoCommand());
-
-        // Upgrade sidecar JSON schemas
-        command.AddCommand(CreateUpgradeSidecarCommand());
-
         // Remove subtitles
         command.AddCommand(CreateRemoveSubtitlesCommand());
-
-        // Remove closed captions
-        command.AddCommand(CreateRemoveClosedCaptionsCommand());
-
-        // Remove tags and attachmenents
-        command.AddCommand(CreateRemoveTagsAndAttachmentsCommand());
 
         return command;
     }
@@ -154,6 +140,14 @@ public class CommandLineOptions
             new Option<bool>("--testnomodify")
             {
                 Description = "Do not make any modifications, useful during testing",
+                IsRequired = false
+            });
+
+        //  Unconditional processing, retry if past attempts failed
+        command.AddOption(
+            new Option<bool>("--unconditional")
+            {
+                Description = "Unconditional processing, ignore past failures or performance constraints",
                 IsRequired = false
             });
 
@@ -295,51 +289,6 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Command CreateGetBitrateInfoCommand()
-    {
-        // Print media info
-        Command command = new("getbitrateinfo")
-        {
-            Description = "Print media file bitrate information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetBitrateInfoCommand)
-        };
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateVerifyCommand()
-    {
-        // Verify media
-        Command command = new("verify")
-        {
-            Description = "Verify media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
-        };
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateUpgradeSidecarCommand()
-    {
-        // Upgrade sidecar schema
-        Command command = new("upgradesidecar")
-        {
-            Description = "Upgrade sidecar file schemas",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.UpgradeSidecarCommand)
-        };
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
     private static Command CreateRemoveSubtitlesCommand()
     {
         // Remove subtitles
@@ -347,36 +296,6 @@ public class CommandLineOptions
         {
             Description = "Remove subtitles",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
-        };
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateRemoveClosedCaptionsCommand()
-    {
-        // Remove subtitles
-        Command command = new("removeclosedcaptions")
-        {
-            Description = "Remove closed captions",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveClosedCaptionsCommand)
-        };
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateRemoveTagsAndAttachmentsCommand()
-    {
-        // Remove subtitles
-        Command command = new("removetagsandattachments")
-        {
-            Description = "Remove tags and attachments",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveTagsAndAttachmentsCommand)
         };
 
         // Media files or folders option

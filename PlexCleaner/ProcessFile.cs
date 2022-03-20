@@ -270,7 +270,7 @@ public class ProcessFile
         return result;
     }
 
-    public bool RemoveTags(ref bool modified, bool conditional = true)
+    public bool RemoveTags(ref bool modified)
     {
         // Optional
         if (!Program.Config.ProcessOptions.RemoveTags)
@@ -288,7 +288,7 @@ public class ProcessFile
         }
 
         // Conditional
-        if (conditional)
+        if (!Program.Options.Unconditional)
         { 
             // Do not remove tags again, something is wrong with tag detection or removal
             if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
@@ -317,7 +317,7 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool RemoveAttachments(ref bool modified, bool conditional = true)
+    public bool RemoveAttachments(ref bool modified)
     {
         // Optional
         if (!Program.Config.ProcessOptions.RemoveTags)
@@ -334,7 +334,7 @@ public class ProcessFile
         }
 
         // Conditional
-        if (conditional)
+        if (!Program.Options.Unconditional)
         { 
             // Do not remove tags again, something is wrong with tag detection or removal
             if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
@@ -511,7 +511,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptions(out VideoInfo ccVideo, bool conditional = true)
+    private bool FindClosedCaptions(out VideoInfo ccVideo)
     {
         // Init
         ccVideo = null;
@@ -530,7 +530,7 @@ public class ProcessFile
         // https://github.com/ptr727/PlexCleaner/issues/94
 
         // Conditional
-        if (conditional)
+        if (!Program.Options.Unconditional)
         { 
             // Running ffprobe is not free, skip if already verified or CC's already removed
             if (State.HasFlag(SidecarFile.States.Verified) ||
@@ -697,10 +697,10 @@ public class ProcessFile
         return Refresh(outputname);
     }
 
-    public bool RemoveClosedCaptions(ref bool modified, bool conditional = true)
+    public bool RemoveClosedCaptions(ref bool modified)
     {
         // Do we have any closed captions
-        if (!FindClosedCaptions(out VideoInfo ccVideo, conditional))
+        if (!FindClosedCaptions(out VideoInfo ccVideo))
         {
             return true;
         }
@@ -741,12 +741,6 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool RemoveTagsAndAttachments(ref bool modified, bool conditional = true)
-    {
-        return RemoveTags(ref modified, conditional) &&
-               RemoveAttachments(ref modified, conditional);
-    }
-
     public bool ReEncode(List<VideoInfo> reencodeVideoInfos, HashSet<string> reencodeAudioFormats, ref bool modified)
     {
         // Optional
@@ -784,33 +778,29 @@ public class ProcessFile
         return Refresh(outputname);
     }
 
-    public bool Verify(ref bool modified, bool conditional = true)
+    public bool Verify(ref bool modified)
     {
-        // Conditional or always
-        if (conditional)
+        // Verify if enabled
+        if (!Program.Config.ProcessOptions.Verify)
         {
-            // Verify if enabled
-            if (!Program.Config.ProcessOptions.Verify)
-            {
-                return true;
-            }
+            return true;
+        }
 
-            // If we are using a sidecar file we can use the last result
-            if (Program.Config.ProcessOptions.UseSidecarFiles &&
-                SidecarFile.State.HasFlag(SidecarFile.States.Verified))
-            {
-                return true;
-            }
+        // Skip files that are older than the minimum age
+        TimeSpan fileAge = DateTime.UtcNow - FileInfo.LastWriteTimeUtc;
+        TimeSpan testAge = TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge);
+        if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
+            fileAge > testAge)
+        {
+            Log.Logger.Warning("Skipping file due to MinimumFileAge : {FileAge} > {TestAge} : {FileName}", fileAge, testAge, FileInfo.Name);
+            return true;
+        }
 
-            // Skip files that are older than the minimum age
-            TimeSpan fileAge = DateTime.UtcNow - FileInfo.LastWriteTimeUtc;
-            TimeSpan testAge = TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge);
-            if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
-                fileAge > testAge)
-            {
-                Log.Logger.Warning("Skipping file due to MinimumFileAge : {FileAge} > {TestAge} : {FileName}", fileAge, testAge, FileInfo.Name);
-                return true;
-            }
+        // If we are using a sidecar file we can use the last result
+        // The Program.Options.Unconditional logic does not apply to verify
+        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+        {
+            return true;
         }
 
         // Break out and skip to end when any verification step fails

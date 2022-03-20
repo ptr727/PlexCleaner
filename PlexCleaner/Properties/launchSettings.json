@@ -4,10 +4,6 @@
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" checkfornewtools"
     },
-    "Write Defaults": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.Defaults.json\" defaultsettings"
-    },
     "Process": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
@@ -36,28 +32,12 @@
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Test\""
     },
-    "Verify": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"D:\\Test\""
-    },
-    "Get Bitrate Info": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getbitrateinfo --mediafiles \"D:\\Test\""
-    },
     "Process Snippets": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --testsnippets --mediafiles \"D:\\Test\""
     },
-    "Test": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
-    },
     "Docker": {
       "commandName": "Docker"
-    },
-    "Upgrade Sidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"D:\\Test\""
     },
     "Print Tag Map": {
       "commandName": "Project",
@@ -83,13 +63,13 @@
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"D:\\Test\""
     },
-    "Remove Closed Captions": {
+    "Defaults Settings": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removeclosedcaptions --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.Defaults.json\" defaultsettings"
     },
-    "Remove Tags and Attachments": {
+    "Process Test": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removetagsandattachments --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --unconditional --mediafiles \"D:\\Test\""
     }
   }
 }

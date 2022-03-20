@@ -176,22 +176,6 @@ internal class Program
         return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
     }
 
-    internal static int VerifyCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.VerifyFiles(program.FileInfoList) ? 0 : -1;
-    }
-
     internal static int CreateSidecarCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
@@ -272,38 +256,6 @@ internal class Program
         return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
     }
 
-    internal static int GetBitrateInfoCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
-    }
-
-    internal static int UpgradeSidecarCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
-    }
-
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
@@ -318,38 +270,6 @@ internal class Program
         }
 
         return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
-    }
-
-    internal static int RemoveClosedCaptionsCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.RemoveClosedCaptionsFiles(program.FileInfoList) ? 0 : -1;
-    }
-
-    internal static int RemoveTagsAndAttachmentsCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.RemoveTagsAndAttachmentsFiles(program.FileInfoList) ? 0 : -1;
     }
 
     // Add a reference to this class in the event handler arguments
