@@ -287,13 +287,15 @@ public class ProcessFile
             return true;
         }
 
-        // Conditional
-        if (Program.Options.ReProcess == 0)
-        { 
-            // Do not remove tags again, something is wrong with tag detection or removal
-            if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
-            {
-                Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
+        // Something is wrong with tag detection or removal
+        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
+        {
+            Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
+
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.ClearTags))
+            { 
+                // Done
                 return true;
             }
         }
@@ -333,13 +335,15 @@ public class ProcessFile
             return true;
         }
 
-        // Conditional
-        if (Program.Options.ReProcess == 0)
-        { 
-            // Do not remove tags again, something is wrong with tag detection or removal
-            if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
+        // Something is wrong with attachment detection or removal
+        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
+        {
+            Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
+
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.ClearAttachments))
             {
-                Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
+                // Done
                 return true;
             }
         }
@@ -480,14 +484,15 @@ public class ProcessFile
             return true;
         }
 
-        // Conditional
-        if (Program.Options.ReProcess < 2)
-        { 
-            // Running idet is expensive, skip if already verified or already deinterlaced
-            if (State.HasFlag(SidecarFile.States.Verified) ||
-                State.HasFlag(SidecarFile.States.DeInterlaced))
+        // Running idet is expensive, skip if already verified or already deinterlaced
+        if (State.HasFlag(SidecarFile.States.Verified) ||
+            State.HasFlag(SidecarFile.States.VerifyFailed) ||
+            State.HasFlag(SidecarFile.States.DeInterlaced))
+        {
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.IdetFilter))
             {
-                // Skip idet
+                // Not interlaced
                 return false;
             }
         }
@@ -533,14 +538,15 @@ public class ProcessFile
         // TODO: Detecting CC's using ffprobe JSON output is broken, run ffprobe in normal output mode
         // https://github.com/ptr727/PlexCleaner/issues/94
 
-        // Conditional
-        if (Program.Options.ReProcess == 0)
-        { 
-            // Running ffprobe is not free, skip if already verified or CC's already removed
-            if (State.HasFlag(SidecarFile.States.Verified) ||
-                State.HasFlag(SidecarFile.States.ClearedCaptions))
+        // Running ffprobe is not free, skip if already verified or CC's already removed
+        if (State.HasFlag(SidecarFile.States.Verified) ||
+            State.HasFlag(SidecarFile.States.VerifyFailed) ||
+            State.HasFlag(SidecarFile.States.ClearedCaptions))
+        {
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.FindClosedCaptions))
             {
-                // Skip ffprobe
+                // Not found
                 return false;
             }
         }
@@ -588,6 +594,12 @@ public class ProcessFile
         if (!FindInterlaced(out VideoInfo interlacedVideo))
         {
             return true;
+        }
+
+        // Already deinterlaced and still interlaced
+        if (State.HasFlag(SidecarFile.States.DeInterlaced))
+        {
+            Log.Logger.Error("Interlacing re-detected after deinterlacing : {FileName}", FileInfo.Name);
         }
 
         Log.Logger.Information("Deinterlacing interlaced video : {FileName}", FileInfo.Name);
@@ -784,6 +796,8 @@ public class ProcessFile
 
     public bool Verify(ref bool modified)
     {
+        // TODO: Refactor
+
         // Verify if enabled
         if (!Program.Config.ProcessOptions.Verify)
         {
@@ -800,14 +814,16 @@ public class ProcessFile
             return true;
         }
 
-        // Conditional
-        // 0 = skip all if already verified
-        // 1 = skip bitrate and verify if already verified
-        // 2 = re-verify all
-        if (Program.Options.ReProcess == 0 &&
-            SidecarFile.State.HasFlag(SidecarFile.States.Verified))
-        { 
-            return true;
+        // Skip all if already verified, light processing
+        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) || 
+            SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
+        {
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.VerifyLight))
+            {
+                // Skip
+                return true;
+            }
         }
 
         // Break out and skip to end when any verification step fails
@@ -868,11 +884,16 @@ public class ProcessFile
                 break;
             }
 
-            // Conditional, 0 or 1, 2 will pass
-            if (Program.Options.ReProcess < 2 &&
-                SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+            // Skip all if already verified, heavy processing
+            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) || 
+                SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
             {
-                return true;
+                // Conditional re-process
+                if (!Process.CanReProcess(Process.Tasks.VerifyHeavy))
+                {
+                    // Skip
+                    return true;
+                }
             }
 
             // Verify bitrate, expensive
@@ -1103,12 +1124,15 @@ public class ProcessFile
             return false;
         }
 
-        // Previous repair attempt failed
-        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+        // Conditional re-process
+        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed) &&
+            !Process.CanReProcess(Process.Tasks.Repair))
         {
-            // Just warn, maybe tools changed, try again
-            Log.Logger.Warning("Previous attempts to repair failed : {State} : {FileName}", SidecarFile.State, FileInfo.Name);
+            return false;
         }
+        
+        // Trying again may not succeed unless tools changed
+        Log.Logger.Warning("Previous attempts to repair failed : {FileName}", FileInfo.Name);
 
         // TODO: Analyze the error output and conditionally repair only the audio or video track
         // [aac @ 000001d3c5652440] noise_facs_q 32 is invalid

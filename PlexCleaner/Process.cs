@@ -10,6 +10,45 @@ namespace PlexCleaner;
 
 internal class Process
 {
+    // Processing tasks
+    public enum Tasks
+    {
+        ClearTags,
+        ClearAttachments,
+        IdetFilter,
+        FindClosedCaptions,
+        Repair,
+        VerifyLight,
+        VerifyHeavy
+    }
+
+    public static bool CanReProcess(Tasks task)
+    {
+        // 0: No re-processing
+        if (Program.Options.ReProcess == 0)
+        {
+            return false;
+        }
+
+        // Compare type of task with level of re-processing
+        switch (task)
+        {
+            // 1+: Lightweight processing
+            case Tasks.ClearTags:
+            case Tasks.ClearAttachments:
+            case Tasks.FindClosedCaptions:
+            case Tasks.VerifyLight:
+                return Program.Options.ReProcess >= 1;
+            // 2+: Heavyweight processing
+            case Tasks.IdetFilter:
+            case Tasks.VerifyHeavy:
+            case Tasks.Repair:
+                return Program.Options.ReProcess >= 2;
+            default:
+                return false;
+        }
+    }
+
     public Process()
     {
         // Convert List<string> to HashSet<string>
@@ -84,7 +123,6 @@ internal class Process
         List<string> errorFiles = new();
 
         // Warn if reprocessing
-        // TODO: Find a better way to scale conditional processing, e.g. flags
         if (Program.Options.ReProcess > 0)
         {
             Log.Logger.Warning("Re-processing level is {ReProcess}", Program.Options.ReProcess);
