@@ -31,6 +31,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerTests", "PlexCleanerTests\PlexCleanerTests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{344C9194-BA16-4776-9DDB-B9E776D5C0EF}"
+	ProjectSection(SolutionItems) = preProject
+		Test\PlexCleaner-Develop-Test.sh = Test\PlexCleaner-Develop-Test.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +57,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C560F57F-962E-4C71-8F27-939D06813302} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 		{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
+		{344C9194-BA16-4776-9DDB-B9E776D5C0EF} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A127C929-B096-4BFD-8BAD-56A3860AEB94}
