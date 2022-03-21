@@ -735,9 +735,11 @@ public class ProcessFile
 
         // Remove Closed Captions
         FileEx.DeleteFile(tempName);
+        Log.Logger.Information("Removing Closed Captions using FfMpeg : {FileName}", FileInfo.Name);
         if (!Tools.FfMpeg.RemoveClosedCaptions(FileInfo.FullName, tempName))
         {
             // Error
+            Log.Logger.Error("Removing Closed Captions using FfMpeg failed : {FileName}", FileInfo.Name);
             FileEx.DeleteFile(tempName);
             return false;
         }
@@ -773,7 +775,7 @@ public class ProcessFile
             return true;
         }
 
-        Log.Logger.Information("Re-encoding required tracks : {FileName}", FileInfo.Name);
+        Log.Logger.Information("ReEncoding required tracks : {FileName}", FileInfo.Name);
         keep.WriteLine("Passthrough");
         reencode.WriteLine("ReEncode");
 
@@ -781,6 +783,7 @@ public class ProcessFile
         // Convert will test for Options.TestNoModify
         if (!Convert.ConvertToMkv(FileInfo.FullName, keep, reencode, out string outputname))
         {
+            // Convert will log error
             // Error
             return false;
         }
@@ -828,7 +831,7 @@ public class ProcessFile
 
         // Break out and skip to end when any verification step fails
         bool verified = false;
-        for (; ; )
+        for (;;)
         {
             // Need at least one video or audio track
             if (MediaInfoInfo.Video.Count == 0 && MediaInfoInfo.Audio.Count == 0)
@@ -1179,10 +1182,11 @@ public class ProcessFile
         string tempname = Path.ChangeExtension(FileInfo.FullName, ".tmp");
 
         // Convert using ffmpeg
-        Log.Logger.Information("Attempting media repair by re-encoding using FfMpeg : {FileName}", FileInfo.Name);
+        Log.Logger.Information("Attempting media repair by ReEncoding using FfMpeg : {FileName}", FileInfo.Name);
         if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempname))
         {
             // Failed, delete temp file
+            Log.Logger.Error("ReEncoding using FfMpeg failed : {FileName}", FileInfo.Name);
             FileEx.DeleteFile(tempname);
 
             // Cancel requested
@@ -1192,10 +1196,11 @@ public class ProcessFile
             }
 
             // Try again using handbrake
-            Log.Logger.Information("Attempting media repair by re-encoding using HandBrake : {FileName}", FileInfo.Name);
+            Log.Logger.Information("Attempting media repair by ReEncoding using HandBrake : {FileName}", FileInfo.Name);
             if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempname))
             {
                 // Failed, delete temp file
+                Log.Logger.Error("ReEncode using HandBrake failed : {FileName}", FileInfo.Name);
                 FileEx.DeleteFile(tempname);
 
                 // Cancel requested
@@ -1203,9 +1208,6 @@ public class ProcessFile
                 {
                     return false;
                 }
-
-                // Failed again
-                Log.Logger.Error("Repair by re-encoding failed : {FileName}", FileInfo.Name);
 
                 // Update state
                 // Caller will Refresh()
@@ -1448,9 +1450,9 @@ public class ProcessFile
     }
 
     public bool Modified { get; set; }
-    public MediaInfo FfProbeInfo { get; set; }
-    public MediaInfo MkvMergeInfo { get; set; }
-    public MediaInfo MediaInfoInfo { get; set; }
+    public MediaInfo FfProbeInfo { get; private set; }
+    public MediaInfo MkvMergeInfo { get; private set; }
+    public MediaInfo MediaInfoInfo { get; private set; }
     public SidecarFile.States State => SidecarFile.State;
     public FileInfo FileInfo { get; private set; }
 

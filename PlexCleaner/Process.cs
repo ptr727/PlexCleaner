@@ -121,11 +121,11 @@ internal class Process
 
     public bool ProcessFiles(List<FileInfo> fileList)
     {
-        // Warn if reprocessing
-        if (Program.Options.ReProcess > 0)
-        {
-            Log.Logger.Warning("Re-processing level is {ReProcess}", Program.Options.ReProcess);
-        }
+        // Log active options
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify} ReProcess: {ReProcess}", 
+                               Program.Options.TestSnippets, 
+                               Program.Options.TestNoModify, 
+                               Program.Options.ReProcess);
 
         // Process all the files
         List<ProcessTuple> errorInfo = new();

@@ -1,4 +1,5 @@
 ﻿using InsaneGenius.Utilities;
+using Serilog;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -45,8 +46,10 @@ public static class Convert
         string tempName = Path.ChangeExtension(inputName, ".tmp");
 
         // Convert using ffmpeg
+        Log.Logger.Information("ReEncode using FfMpeg : {FileName}", inputName);
         if (!Tools.FfMpeg.ConvertToMkv(inputName, keep, reencode, tempName))
         {
+            Log.Logger.Error("ReEncode using FfMpeg failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
             return false;
         }
@@ -87,9 +90,11 @@ public static class Convert
         // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
 
         // Try MKV first
+        Log.Logger.Information("ReMux using MkvMerge : {FileName}", inputName);
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
         {
             // Failed, delete temp file
+            Log.Logger.Error("ReMux using MkvMerge failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
 
             // Cancel requested
@@ -99,12 +104,14 @@ public static class Convert
             }
 
             // Retry using FfMpeg
+            Log.Logger.Information("ReMux using FfMpeg : {FileName}", inputName);
             if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempName);
 
                 // Error
+                Log.Logger.Error("ReMux using FfMpeg failed : {FileName}", inputName);
                 return false;
             }
         }
@@ -150,8 +157,10 @@ public static class Convert
         string tempName = Path.ChangeExtension(inputName, ".tmp");
 
         // Remux keeping specific tracks
+        Log.Logger.Information("ReMux using MkvMerge : {FileName}", inputName);
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, keep, tempName))
         {
+            Log.Logger.Error("ReMux using MkvMerge failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
             return false;
         }
@@ -194,8 +203,10 @@ public static class Convert
         string tempName = Path.ChangeExtension(inputName, ".tmp");
 
         // Deinterlace video using handbrake
+        Log.Logger.Information("DeInterlace using HandBrake : {FileName}", inputName);
         if (!Tools.HandBrake.DeInterlaceToMkv(inputName, tempName))
         {
+            Log.Logger.Error("DeInterlace using HandBrake failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
             return false;
         }
@@ -232,8 +243,10 @@ public static class Convert
         string tempName = Path.ChangeExtension(inputName, ".tmp");
 
         // Re-encode audio and video using handbrake
+        Log.Logger.Information("ReEncode using HandBrake : {FileName}", inputName);
         if (!Tools.HandBrake.ConvertToMkv(inputName, tempName))
         {
+            Log.Logger.Error("ReEncode using HandBrake failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
             return false;
         }
