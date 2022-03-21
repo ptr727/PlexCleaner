@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace PlexCleaner;
 
+// Filename, State
+using ProcessTuple = ValueTuple<string, SidecarFile.States>;
+
 internal class Process
 {
     // Processing tasks
@@ -118,10 +121,6 @@ internal class Process
 
     public bool ProcessFiles(List<FileInfo> fileList)
     {
-        // Keep a List of failed and modified files to print when done
-        List<(string fileName, SidecarFile.States state)> modifiedInfo = new();
-        List<string> errorFiles = new();
-
         // Warn if reprocessing
         if (Program.Options.ReProcess > 0)
         {
@@ -129,23 +128,26 @@ internal class Process
         }
 
         // Process all the files
+        List<ProcessTuple> errorInfo = new();
+        List<ProcessTuple> modifiedInfo = new();
         bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
         {
             // Process the file
             if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
             {
+                // Only record failure if not cancelled
                 if (!Program.IsCancelled())
                 {
-                    errorFiles.Add(fileInfo.FullName);
+                    errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
                 }
 
                 return false;
             }
 
-            // Modified
+            // Success and modified
             if (modified)
             {
-                modifiedInfo.Add(new ValueTuple<string, SidecarFile.States>(processInfo.FullName, state));
+                modifiedInfo.Add(new ProcessTuple(processInfo.FullName, state));
             }
 
             return true;
@@ -153,20 +155,10 @@ internal class Process
 
         // Summary
         // ProcessFilesDriver() does primary logging
+        // Log.Logger.Information("Error files : {Count}", errorCount);
+        errorInfo.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.Item2, item.Item1));
         Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
-        if (errorFiles.Count > 0)
-        {
-            Log.Logger.Information("Error files:");
-            errorFiles.ForEach(item => Log.Logger.Information("{FileName}", item));
-        }
-        if (modifiedInfo.Count > 0)
-        {
-            Log.Logger.Information("Modified files:");
-            foreach ((string fileName, SidecarFile.States state) in modifiedInfo)
-            {
-                Log.Logger.Information("{State} : {FileName}", state, fileName);
-            }
-        }
+        modifiedInfo.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.Item2, item.Item1));
 
         // Write the updated ignore file list
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
@@ -186,187 +178,223 @@ internal class Process
         state = SidecarFile.States.None;
         processInfo = fileInfo;
         DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
+        ProcessFile processFile = null;
+        bool result;
 
-        // Skip the file if it is in the ignore list
-        if (FileIgnoreList.Contains(fileInfo.FullName))
-        {
-            Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
-            return true;
+        // Process in jump loop
+        for (;;)
+        { 
+            // Skip the file if it is in the ignore list
+            if (FileIgnoreList.Contains(fileInfo.FullName))
+            {
+                Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
+                result = true;
+                break;
+            }
+
+            // Skip the file if it is in the keep extensions list
+            if (KeepExtensions.Contains(fileInfo.Extension))
+            {
+                Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileInfo.FullName);
+                result = true;
+                break;
+            }
+
+            // Does the file still exist
+            if (!File.Exists(fileInfo.FullName))
+            {
+                Log.Logger.Warning("Skipping missing or access denied file : {FileName}", fileInfo.FullName);
+                result = false;
+                break;
+            }
+
+            // Create file processor to hold state
+            processFile = new ProcessFile(fileInfo);
+
+            // Is the file writeable
+            if (!processFile.IsWriteable())
+            {
+                Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
+                result = false;
+                break;
+            }
+
+            // Delete the sidecar file if matching MKV file not found
+            if (!processFile.DeleteMismatchedSidecarFile(ref modified))
+            {
+                result = false;
+                break;
+            }
+
+            // Skip if this a sidecar file
+            if (SidecarFile.IsSidecarFile(fileInfo))
+            {
+                result = true;
+                break;
+            }
+
+            // ReMux non-MKV containers matched by extension
+            if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Delete or skip non-MKV files
+            if (!processFile.DeleteNonMkvFile(ref modified))
+            {
+                result = true;
+                break;
+            }
+
+            // All files past this point are MKV files
+
+            // If a sidecar file exists for this MKV file it must be writable
+            if (!processFile.IsSidecarWriteable())
+            {
+                Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
+                result = false;
+                break;
+            }
+
+            // Make sure the file extension is lowercase for case sensitive filesystems
+            if (!processFile.MakeExtensionLowercase(ref modified))
+            {
+                result = false;
+                break;
+            }
+
+            // Read the media info
+            if (!processFile.GetMediaInfo() ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // ReMux non-MKV containers using MKV file extensions
+            if (!processFile.RemuxNonMkvContainer(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Remove all attachments, they can interfere and show up as video streams
+            if (!processFile.RemoveAttachments(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // The file extension and container type is MKV and all media info should be valid
+            if (!processFile.VerifyMediaInfo())
+            {
+                result = false;
+                break;
+            }
+
+            // ReMux to repair metadata errors
+            if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Remove EIA-608 / Closed Captions from the video stream
+            if (!processFile.RemoveClosedCaptions(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Deinterlace interlaced content
+            if (!processFile.DeInterlace(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Change all tracks with an unknown language to the default language
+            if (!processFile.SetUnknownLanguage(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Remove all the unwanted and duplicate language tracks
+            if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Re-Encode formats that cannot be direct-played
+            if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Verify media streams, and repair if possible
+            if (!processFile.Verify(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Repair may have modified track tags, reset the default language again
+            if (!processFile.SetUnknownLanguage(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Remove tags and titles
+            if (!processFile.RemoveTags(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Restore the file timestamp
+            if (!processFile.SetLastWriteTimeUtc(lastWriteTime) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Re-verify the tool info is correctly recorded
+            if (!processFile.VerifyMediaInfo())
+            {
+                result = false;
+                break;
+            }
+
+            // Done
+            result = true;
+            break;
         }
 
-        // Skip the file if it is in the keep extensions list
-        if (KeepExtensions.Contains(fileInfo.Extension))
-        {
-            Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileInfo.FullName);
-            return true;
-        }
-
-        // Does the file still exist
-        if (!File.Exists(fileInfo.FullName))
-        {
-            Log.Logger.Warning("Skipping missing or access denied file : {FileName}", fileInfo.FullName);
-            return false;
-        }
-
-        // Create file processor to hold state
-        ProcessFile processFile = new(fileInfo);
-
-        // Is the file writeable
-        if (!processFile.IsWriteable())
-        {
-            Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
-            return false;
-        }
-
-        // Delete the sidecar file if matching MKV file not found
-        if (!processFile.DeleteMismatchedSidecarFile(ref modified))
-        {
-            return false;
-        }
-
-        // Skip if this a sidecar file
-        if (SidecarFile.IsSidecarFile(fileInfo))
-        {
-            return true;
-        }
-
-        // ReMux non-MKV containers matched by extension
-        if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // All files past this point are MKV files
-        if (!processFile.DeleteNonMkvFile(ref modified))
-        {
-            // File may have been deleted or skipped
+        // Return current state and fileinfo
+        if (processFile != null)
+        { 
             state = processFile.State;
-            return true;
+            processInfo = processFile.FileInfo;
         }
-
-        // If a sidecar file exists for this MKV file it must be writable
-        if (!processFile.IsSidecarWriteable())
-        {
-            Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
-            return false;
-        }
-
-        // Make sure the file extension is lowercase for case sensitive filesystems
-        if (!processFile.MakeExtensionLowercase(ref modified))
-        {
-            return false;
-        }
-
-        // Read the media info
-        if (!processFile.GetMediaInfo() ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // ReMux non-MKV containers using MKV file extensions
-        if (!processFile.RemuxNonMkvContainer(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Remove all attachments, they can interfere and show up as video streams
-        if (!processFile.RemoveAttachments(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // The file extension and container type is MKV and all media info should be valid
-        if (!processFile.VerifyMediaInfo())
-        {
-            return false;
-        }
-
-        // ReMux to repair metadata errors
-        if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Remove EIA-608 / Closed Captions from the video stream
-        if (!processFile.RemoveClosedCaptions(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Deinterlace interlaced content
-        if (!processFile.DeInterlace(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Change all tracks with an unknown language to the default language
-        if (!processFile.SetUnknownLanguage(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Remove all the unwanted and duplicate language tracks
-        if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Re-Encode formats that cannot be direct-played
-        if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Verify media streams, and repair if possible
-        if (!processFile.Verify(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Repair may have modified track tags, reset the default language again
-        if (!processFile.SetUnknownLanguage(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Remove tags and titles
-        if (!processFile.RemoveTags(ref modified) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Restore the file timestamp
-        if (!processFile.SetLastWriteTimeUtc(lastWriteTime) ||
-            Program.IsCancelled())
-        {
-            return false;
-        }
-
-        // Re-verify the tool info is correctly recorded
-        if (!processFile.VerifyMediaInfo())
-        {
-            return false;
-        }
-
-        // Return state and current fileinfo
-        state = processFile.State;
-        processInfo = processFile.FileInfo;
-
-        // Cancel handler
-        return !Program.IsCancelled();
+        return result;
     }
 
     public bool ReMuxFiles(List<FileInfo> fileList)
