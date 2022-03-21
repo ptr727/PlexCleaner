@@ -526,9 +526,9 @@ public class ProcessFile
         ccVideo = null;
 
         // Are any CC attributes set
-        ccVideo ??= FfProbeInfo.Video.Find(item => item.Interlaced);
-        ccVideo ??= MediaInfoInfo.Video.Find(item => item.Interlaced);
-        ccVideo ??= MkvMergeInfo.Video.Find(item => item.Interlaced);
+        ccVideo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
+        ccVideo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
+        ccVideo ??= MkvMergeInfo.Video.Find(item => item.ClosedCaptions);
         if (ccVideo != null)
         {
             // CC attribute set
