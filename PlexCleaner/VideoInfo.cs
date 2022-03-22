@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Serilog;
 
 // TODO: Find a better way to create profile levels
