@@ -130,35 +130,47 @@ internal class Process
         // Process all the files
         List<ProcessTuple> errorInfo = new();
         List<ProcessTuple> modifiedInfo = new();
+        List<ProcessTuple> failedInfo = new();
         bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
         {
             // Process the file
             if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
             {
-                // Only record failure if not cancelled
                 if (!Program.IsCancelled())
                 {
-                    errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                    return false;
                 }
 
+                // Error
+                errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
                 return false;
             }
 
-            // Success and modified
+            // Modified
             if (modified)
             {
                 modifiedInfo.Add(new ProcessTuple(processInfo.FullName, state));
             }
+            
+            // Verify failed
+            if (state.HasFlag(SidecarFile.States.VerifyFailed))
+            {
+                failedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+            }
 
+            // Good
             return true;
         });
 
         // Summary
-        // ProcessFilesDriver() does primary logging
         // Log.Logger.Information("Error files : {Count}", errorCount);
         errorInfo.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.Item2, item.Item1));
+
         Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
         modifiedInfo.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.Item2, item.Item1));
+
+        Log.Logger.Information("VerifyFailed files : {Count}", failedInfo.Count);
+        failedInfo.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.Item2, item.Item1));
 
         // Write the updated ignore file list
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
