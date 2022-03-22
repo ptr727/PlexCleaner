@@ -136,7 +136,7 @@ internal class Process
             // Process the file
             if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
             {
-                if (!Program.IsCancelled())
+                if (Program.IsCancelled())
                 {
                     return false;
                 }
