@@ -6,8 +6,9 @@
 #fi
 
 # Prepare test datatset
+# hddpool/media/ is mounted as /data/media
 # sudo zfs create hddpool/media/test
-# Copy troublesome to test
+# Copy troublesome media files to test
 # chown -R nobody:users /data/media/Troublesome
 # chmod -R u=rwx,g=rwx+s,o=rx /data/media/Troublesome
 # rsync -av --delete --progress /data/media/Troublesome/. /data/media/test
@@ -18,6 +19,10 @@
 # zfs list hddpool/media/test -t snapshot
 # Restore snapshot
 # zfs rollback hddpool/media/test@backup
+# Run tests
+# Restore snapshot
+# zfs rollback hddpool/media/test@backup
+# Repeat
 
 echo "Restoring Test Dataset"
 sudo zfs rollback hddpool/media/test@backup
@@ -54,7 +59,7 @@ docker run \
   ptr727/plexcleaner:develop \
   /PlexCleaner/PlexCleaner \
     --settingsfile /settings/PlexCleaner-Develop.json \
-    --logfile /settings/PlexCleaner-Develop-Test.log \
+    --logfile /settings/PlexCleaner-Develop-Test-1.log \
     process \
     --reprocess 1 \
     --testsnippets \
