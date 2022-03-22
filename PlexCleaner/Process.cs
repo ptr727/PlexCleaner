@@ -122,7 +122,7 @@ internal class Process
     public bool ProcessFiles(List<FileInfo> fileList)
     {
         // Log active options
-        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify} ReProcess: {ReProcess}",
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}",
                                Program.Options.TestSnippets,
                                Program.Options.TestNoModify,
                                Program.Options.ReProcess);
