@@ -1,15 +1,15 @@
-﻿using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Debugging;
-using Serilog.Sinks.SystemConsole.Themes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using InsaneGenius.Utilities;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Debugging;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 

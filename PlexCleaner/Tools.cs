@@ -1,11 +1,11 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -218,7 +218,7 @@ public static class Tools
             // Bootstrap the 7-Zip download, only supported on Windows
             Log.Logger.Warning("Downloading missing {Tool} ... : \"{ToolPath}\"", SevenZip.GetToolType(), SevenZip.GetToolPath());
             if (!SevenZip.BootstrapDownload())
-            { 
+            {
                 return false;
             }
             Debug.Assert(File.Exists(SevenZip.GetToolPath()));

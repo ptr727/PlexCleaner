@@ -1,11 +1,11 @@
-﻿using InsaneGenius.Utilities;
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Newtonsoft.Json.Linq;
+using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 

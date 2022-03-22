@@ -1,5 +1,3 @@
-using InsaneGenius.Utilities;
-using Serilog;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -9,6 +7,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Serilog;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 

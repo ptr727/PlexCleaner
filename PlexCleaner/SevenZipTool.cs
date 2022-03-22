@@ -1,12 +1,12 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 

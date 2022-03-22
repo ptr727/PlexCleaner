@@ -1,6 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,6 +9,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Serilog;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -160,7 +160,7 @@ public class FfMpegTool : MediaTool
                 // Do we have both lines
                 if (!string.IsNullOrEmpty(versionLine) &&
                     !string.IsNullOrEmpty(buildLine))
-                { 
+                {
                     // Done
                     break;
                 }

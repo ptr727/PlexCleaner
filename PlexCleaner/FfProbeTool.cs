@@ -1,13 +1,13 @@
-using InsaneGenius.Utilities;
-using Newtonsoft.Json;
-using PlexCleaner.FfMpegToolJsonSchema;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using InsaneGenius.Utilities;
+using Newtonsoft.Json;
+using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -199,7 +199,7 @@ public class FfProbeTool : FfMpegTool
         // "_STATISTICS_WRITING_APP": "mkvmerge v61.0.0 ('So') 64-bit",
         // "_STATISTICS_WRITING_DATE_UTC": "2022-03-10 12:55:01",
         // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
-        
+
         // Language and title are expected tags
         // Look for any key containing "statistics"
         // TODO: Find a more relaible method for determining what tags are expected or not

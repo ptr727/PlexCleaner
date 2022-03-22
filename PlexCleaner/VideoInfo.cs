@@ -1,5 +1,5 @@
-using Serilog;
 using System;
+using Serilog;
 
 // TODO: Find a better way to create profile levels
 // https://trac.ffmpeg.org/ticket/2901

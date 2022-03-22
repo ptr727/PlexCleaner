@@ -1,10 +1,10 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -122,9 +122,9 @@ internal class Process
     public bool ProcessFiles(List<FileInfo> fileList)
     {
         // Log active options
-        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify} ReProcess: {ReProcess}", 
-                               Program.Options.TestSnippets, 
-                               Program.Options.TestNoModify, 
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify} ReProcess: {ReProcess}",
+                               Program.Options.TestSnippets,
+                               Program.Options.TestNoModify,
                                Program.Options.ReProcess);
 
         // Process all the files
@@ -182,8 +182,8 @@ internal class Process
         bool result;
 
         // Process in jump loop
-        for (;;)
-        { 
+        for (; ; )
+        {
             // Skip the file if it is in the ignore list
             if (FileIgnoreList.Contains(fileInfo.FullName))
             {
@@ -390,7 +390,7 @@ internal class Process
 
         // Return current state and fileinfo
         if (processFile != null)
-        { 
+        {
             state = processFile.State;
             processInfo = processFile.FileInfo;
         }

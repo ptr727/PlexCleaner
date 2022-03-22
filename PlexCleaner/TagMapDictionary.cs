@@ -1,8 +1,8 @@
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Serilog;
 
 namespace PlexCleaner;
 

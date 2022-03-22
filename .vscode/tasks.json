@@ -32,9 +32,8 @@
             "args": [
                 "watch",
                 "run",
-                "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "--project",
+                "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

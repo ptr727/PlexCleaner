@@ -1,13 +1,13 @@
-﻿using InsaneGenius.Utilities;
-using PlexCleaner.FfMpegToolJsonSchema;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using InsaneGenius.Utilities;
+using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -294,7 +294,7 @@ public class ProcessFile
 
             // Conditional re-process
             if (!Process.CanReProcess(Process.Tasks.ClearTags))
-            { 
+            {
                 // Done
                 return true;
             }
@@ -818,7 +818,7 @@ public class ProcessFile
         }
 
         // Skip all if already verified, light processing
-        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) || 
+        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
             SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
         {
             // Conditional re-process
@@ -831,7 +831,7 @@ public class ProcessFile
 
         // Break out and skip to end when any verification step fails
         bool verified = false;
-        for (;;)
+        for (; ; )
         {
             // Need at least one video or audio track
             if (MediaInfoInfo.Video.Count == 0 && MediaInfoInfo.Audio.Count == 0)
@@ -888,7 +888,7 @@ public class ProcessFile
             }
 
             // Skip all if already verified, heavy processing
-            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) || 
+            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
                 SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
             {
                 // Conditional re-process
@@ -1137,10 +1137,10 @@ public class ProcessFile
                 return false;
             }
         }
-        
+
         // Trying again may not succeed unless tools changed
         if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
-        { 
+        {
             Log.Logger.Warning("Repairing again after previous attempt failed : {FileName}", FileInfo.Name);
         }
 
@@ -1431,7 +1431,7 @@ public class ProcessFile
         Log.Logger.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
         if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out idetInfo))
         {
-            // Error
+            Log.Logger.Error("Failed to count interlaced frames : {FileName}", FileInfo.Name);
             return false;
         }
 

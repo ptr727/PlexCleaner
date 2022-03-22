@@ -1,10 +1,10 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -206,7 +206,7 @@ public class SidecarFile
                     modified = true;
                 }
             }
-            else 
+            else
             {
                 // Sidecar file does not exist, create it
                 return Create();
@@ -291,7 +291,7 @@ public class SidecarFile
     private bool IsMediaAndToolsCurrent(bool log)
     {
         // Follow all steps to log all mismatches, do not jump out early
-        
+
         // Verify the media file matches the json info
         bool mismatch = !IsMediaCurrent(log);
 
