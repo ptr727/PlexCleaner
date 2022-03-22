@@ -1,7 +1,7 @@
 # https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options
 # https://github.com/dotnet/roslyn/blob/main/.editorconfig
 # https://github.com/dotnet/runtime/blob/main/.editorconfig
-# Run: `dotnet-format`
+# dotnet-format --check
 
 ###############################
 # Core EditorConfig Options   #
