@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
-      
+
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: 'Checkout Code'
@@ -42,7 +42,7 @@ jobs:
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: 'Run Unit Tests'
         run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-      
+
       # Build and publish project to ./Publish
       # Set version information attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
@@ -89,4 +89,3 @@ jobs:
           files: |
             LICENSE
             ./Publish/PlexCleaner.7z
-   

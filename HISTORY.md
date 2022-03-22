@@ -5,77 +5,77 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 ## Release History
 
 - Version 2.5:
-  - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [#85](https://github.com/ptr727/PlexCleaner/issues/85)
-    - Older file schemas will automatically be upgraded without requiring user input.
-    - Comma separated lists in string format converted to array of strings.
-      - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
-      - New: `"ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ]`
-    - Multiple VideoFormat comma separated lists in strings converted to array of objects.
-      - Old:
-        - `"ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5"`
-        - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"`
-        - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*"`
-      - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
-  - Replaced [GitVersion](https://github.com/GitTools/GitVersion) with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool, resolves [#16](https://github.com/ptr727/PlexCleaner/issues/16).
-    - Main branch will now build using `Release` configuration, other branches will continue building with `Debug` configuration.
-    - Prerelease builds are now posted to GitHub releases tagges as `pre-release`, Docker builds continue to be tagged as `develop`.
-  - Docker builds are now also pushed to [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-    - Builds will continue to push to Docker Hub while it remains free to use.
-  - Added a xUnit unit test project.
-    - Currently the only tests are for config and sidecar JSON schema backwards compatibility.
-  - Code cleanup and refactoring to make current versions of Visual Studio and Rider happy.
+    - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [#85](https://github.com/ptr727/PlexCleaner/issues/85)
+        - Older file schemas will automatically be upgraded without requiring user input.
+        - Comma separated lists in string format converted to array of strings.
+            - Old: `"ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",`
+            - New: `"ReMuxExtensions": [ ".avi", ".m2ts", ".ts", ".vob", ".mp4", ".m4v", ".asf", ".wmv", ".dv" ]`
+        - Multiple VideoFormat comma separated lists in strings converted to array of objects.
+            - Old:
+                - `"ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5"`
+                - `"ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*"`
+                - `"ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*"`
+            - New: `"ReEncodeVideo": [ { "Format": "mpeg2video" }, { "Format": "mpeg4", "Codec": "dx50" }, ... ]`
+    - Replaced [GitVersion](https://github.com/GitTools/GitVersion) with [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) as versioning tool, resolves [#16](https://github.com/ptr727/PlexCleaner/issues/16).
+        - Main branch will now build using `Release` configuration, other branches will continue building with `Debug` configuration.
+        - Prerelease builds are now posted to GitHub releases tagges as `pre-release`, Docker builds continue to be tagged as `develop`.
+    - Docker builds are now also pushed to [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+        - Builds will continue to push to Docker Hub while it remains free to use.
+    - Added a xUnit unit test project.
+        - Currently the only tests are for config and sidecar JSON schema backwards compatibility.
+    - Code cleanup and refactoring to make current versions of Visual Studio and Rider happy.
 - Version 2.4.5
-  - Update FfMpeg in Linux instructions and in Docker builds to version 5.0.
+    - Update FfMpeg in Linux instructions and in Docker builds to version 5.0.
 - Version 2.4.3
-  - Added more robust error and control logic for handling specific AVI files.
-    - Detect and ignore cover art and thumbnail video tracks.
-    - Perform conditional interlace detection using FfMpeg idet filter.
-    - Verify media tool track identification matches.
-    - Modify sidecar file hashing to support small files.
-  - Use C# 10 file scoped namespaces.
+    - Added more robust error and control logic for handling specific AVI files.
+        - Detect and ignore cover art and thumbnail video tracks.
+        - Perform conditional interlace detection using FfMpeg idet filter.
+        - Verify media tool track identification matches.
+        - Modify sidecar file hashing to support small files.
+    - Use C# 10 file scoped namespaces.
 - Version 2.4.1
-  - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
-  - Fixed media tool logic to account for WMV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
+    - Added `ProcessOptions:RestoreFileTimestamp` JSON option to restore the media file modified time to match the original value.
+    - Fixed media tool logic to account for WMV files with cover art, and added `wmv3` and `wmav2` codecs to be converted.
 - Version 2.3.5
-  - Deprecation warning for `--mediafiles` option taking multiple paths, instead use multiple invocations.
-    - Old style: `--mediafiles path1 path2`
-    - New style: `--mediafiles path1 --mediafiles path2`
-  - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles with ads.
+    - Deprecation warning for `--mediafiles` option taking multiple paths, instead use multiple invocations.
+        - Old style: `--mediafiles path1 path2`
+        - New style: `--mediafiles path1 --mediafiles path2`
+    - Added `removesubtitles` command to remove all subtitles, useful when the media contains annoying forced subtitles with ads.
 - Version 2.3.2
-  - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
-    - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
-    - The warning is only logged during the verify step, repair is not possible.
-    - To re-verify existing 4K files use the `verify` command, or reset the state using the `createsidecar` and `process` commands.
-  - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other `getxxxinfo` commands.
-  - Added `gettoolinfo` command to print media info reported by tools.
-  - Refactored duplicate file iteration logic to use lambdas.
+    - Warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
+        - Unless using DV capable hardware, profile 5 may play but will result in funky colors on HDR10 hardware.
+        - The warning is only logged during the verify step, repair is not possible.
+        - To re-verify existing 4K files use the `verify` command, or reset the state using the `createsidecar` and `process` commands.
+    - Renamed `getsidecar` command to `getsidecarinfo` for consistency with other `getxxxinfo` commands.
+    - Added `gettoolinfo` command to print media info reported by tools.
+    - Refactored duplicate file iteration logic to use lambdas.
 - Version 2.3:
-  - Migrated from .NET 5 to .NET 6.
+    - Migrated from .NET 5 to .NET 6.
 - Version 2.1:
-  - Added backwards compatibility for some older JSON schemas.
-  - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
-  - Sidecar JSON schema changes:
-    - Replaced the unreliable file modified timestamp state tracking with a SHA256 hash of parts of the MKV file.
-    - Replaced the `Verified` boolean with `State` flags to track more granular file state and modification changes.
-    - Run the `upgradesidecar` command to migrate sidecar files to the current schema version.
-  - Repairing metadata inconsistencies, e.g. MuxingMode not specified for S_VOBSUB subtitle codecs, by remuxing the MKV file.
-  - Added a `ToolsOptions:AutoUpdate` configuration option to automatically update the tools before each run.
+    - Added backwards compatibility for some older JSON schemas.
+    - Added the `upgradesidecar` command to migrate sidecar files to the current JSON schema version.
+    - Sidecar JSON schema changes:
+        - Replaced the unreliable file modified timestamp state tracking with a SHA256 hash of parts of the MKV file.
+        - Replaced the `Verified` boolean with `State` flags to track more granular file state and modification changes.
+        - Run the `upgradesidecar` command to migrate sidecar files to the current schema version.
+    - Repairing metadata inconsistencies, e.g. MuxingMode not specified for S_VOBSUB subtitle codecs, by remuxing the MKV file.
+    - Added a `ToolsOptions:AutoUpdate` configuration option to automatically update the tools before each run.
 - Version 2.0:
-  - Linux and Docker are now supported platforms.
-    - Automatic downloading of tools on Linux is not currently supported, tools need to be manually installed on the system.
-    - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
-  - Support for H.265 encoding added.
-  - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
-  - Windows systems will be kept awake during processing.
-  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
-    - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
-    - Tools JSON will be invalid and `checkfortools` should be used to update tools.
-  - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.
-  - Processing of the same media can be mixed between Windows, Linux, and Docker, note that the paths in the `FileIgnoreList` setting are platform specific.
-  - New options were added to the JSON config file.
-    - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
-    - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.
-    - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
-    - `ProcessOptions:ReEncodeAudioFormats` : `opus` codec added to default list.
-  - File logging and console output is now done using structured Serilog logging.
-    - Basic console and file logging options are used, configuration from JSON is not currently supported.
+    - Linux and Docker are now supported platforms.
+        - Automatic downloading of tools on Linux is not currently supported, tools need to be manually installed on the system.
+        - The Docker build includes all the prerequisite tools, and is easier to use vs. installing all the tools on Linux.
+    - Support for H.265 encoding added.
+    - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
+    - Windows systems will be kept awake during processing.
+    - Schema version numbers were added to JSON config files, breaking backwards compatibility.
+        - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
+        - Tools JSON will be invalid and `checkfortools` should be used to update tools.
+    - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.
+    - Processing of the same media can be mixed between Windows, Linux, and Docker, note that the paths in the `FileIgnoreList` setting are platform specific.
+    - New options were added to the JSON config file.
+        - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
+        - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.
+        - `VerifyOptions:RegisterInvalidFiles`: Add files that fail verify and repair to the `ProcessOptions:FileIgnoreList`.
+        - `ProcessOptions:ReEncodeAudioFormats` : `opus` codec added to default list.
+    - File logging and console output is now done using structured Serilog logging.
+        - Basic console and file logging options are used, configuration from JSON is not currently supported.
