@@ -1,16 +1,15 @@
-﻿using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Debugging;
-using Serilog.Sinks.SystemConsole.Themes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Timers;
+using InsaneGenius.Utilities;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Debugging;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
@@ -21,19 +20,22 @@ internal class Program
         // Create default logger
         CreateLogger(null);
 
-        // Create a 30s timer to keep the system from going to sleep
-        using System.Timers.Timer preventSleepTimer = new(30000);
-        preventSleepTimer.Elapsed += OnTimedEvent;
-        preventSleepTimer.AutoReset = true;
-        preventSleepTimer.Start();
+        // Create a 15s timer to keep the system from going to sleep
+        // TODO: The system occasionally still goes to sleep when debugging, why?
+        KeepAwake.PreventSleep();
+        using System.Timers.Timer keepAwakeTimer = new(15 * 1000);
+        keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
+        keepAwakeTimer.AutoReset = true;
+        keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         int ret = rootCommand.Invoke(Environment.CommandLine);
 
         // Stop the timer
-        preventSleepTimer.Stop();
-        preventSleepTimer.Dispose();
+        keepAwakeTimer.Stop();
+        keepAwakeTimer.Dispose();
+        KeepAwake.AllowSleep();
 
         // Flush the logs
         Log.CloseAndFlush();
@@ -67,11 +69,6 @@ internal class Program
         LoggerFactory loggerFactory = new();
         loggerFactory.AddSerilog(Log.Logger);
         LogOptions.CreateLogger(loggerFactory);
-    }
-
-    private static void OnTimedEvent(object sender, ElapsedEventArgs e)
-    {
-        KeepAwake.PreventSleep();
     }
 
     internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
@@ -179,22 +176,6 @@ internal class Program
         return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
     }
 
-    internal static int VerifyCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.VerifyFiles(program.FileInfoList) ? 0 : -1;
-    }
-
     internal static int CreateSidecarCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
@@ -275,38 +256,6 @@ internal class Program
         return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
     }
 
-    internal static int GetBitrateInfoCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.GetBitrateInfoFiles(program.FileInfoList) ? 0 : -1;
-    }
-
-    internal static int UpgradeSidecarCommand(CommandLineOptions options)
-    {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return -1;
-        }
-
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return -1;
-        }
-
-        return Process.UpgradeSidecarFiles(program.FileInfoList) ? 0 : -1;
-    }
-
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
@@ -365,7 +314,7 @@ internal class Program
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema out of date : {SchemaVersion} != {Version}, {FileName}",
+            Log.Logger.Warning("Settings JSON schema mismatch : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
                 options.SettingsFile);

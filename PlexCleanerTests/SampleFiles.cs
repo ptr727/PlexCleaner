@@ -14,7 +14,7 @@ public static class SampleFiles
     public static string GetSampleFilePath(string fileName)
     {
         // Get the assembly directory
-        Assembly? entryAssembly = Assembly.GetEntryAssembly();
+        var entryAssembly = Assembly.GetEntryAssembly();
         Debug.Assert(entryAssembly != null);
         string? assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
         Debug.Assert(assemblyDirectory != null);

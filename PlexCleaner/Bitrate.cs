@@ -1,6 +1,6 @@
-﻿using InsaneGenius.Utilities;
+﻿using System;
+using InsaneGenius.Utilities;
 using Serilog;
-using System;
 
 namespace PlexCleaner;
 

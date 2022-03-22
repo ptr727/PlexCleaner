@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
+using Serilog;
 
 namespace PlexCleaner;
 

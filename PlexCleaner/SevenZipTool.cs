@@ -1,12 +1,12 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -39,8 +39,8 @@ public class SevenZipTool : MediaTool
 
         // No version command, run with no arguments
         const string commandline = "";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -79,7 +79,7 @@ public class SevenZipTool : MediaTool
         try
         {
             // Load the download page
-            // TODO : Find a more reliable way of getting the last released version number
+            // TODO: Find a more reliable way of getting the last released version number
             // https://www.7-zip.org/download.html
             using HttpClient httpClient = new();
             string downloadPage = httpClient.GetStringAsync("https://www.7-zip.org/download.html").Result;
@@ -97,7 +97,7 @@ public class SevenZipTool : MediaTool
             mediaToolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
             mediaToolInfo.Url = $"https://www.7-zip.org/a/{mediaToolInfo.FileName}";
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
@@ -149,7 +149,74 @@ public class SevenZipTool : MediaTool
     {
         // 7z.exe x archive.zip -o"C:\Doc"
         string commandline = $"x -aoa -spe -y \"{archive}\" -o\"{folder}\"";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        int exitCode = Command(commandline);
+        return exitCode == 0;
+    }
+
+    public bool BootstrapDownload()
+    {
+        // Only supported on Windows
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return false;
+        }
+
+        // Make sure that the Tools folder exists
+        if (!Directory.Exists(Tools.GetToolsRoot()))
+        {
+            Log.Logger.Warning("Creating missing Tools folder : \"{ToolsRoot}\"", Tools.GetToolsRoot());
+            if (!FileEx.CreateDirectory(Tools.GetToolsRoot()))
+            {
+                return false;
+            }
+        }
+
+        // Download 7zr.exe in the tools root folder
+        // https://www.7-zip.org/a/7zr.exe
+        Log.Logger.Information("Downloading \"7zr.exe\" ...");
+        string sevenZr = Tools.CombineToolPath("7zr.exe");
+        const string sevenZrUrl = "https://www.7-zip.org/a/7zr.exe";
+        if (!Download.DownloadFile(new Uri(sevenZrUrl), sevenZr))
+        {
+            return false;
+        }
+
+        // Get the latest version of 7z
+        if (!GetLatestVersionWindows(out MediaToolInfo mediaToolInfo))
+        {
+            return false;
+        }
+
+        // Download the lastest version in the tools root folder
+        Log.Logger.Information("Downloading \"{FileName}\" ...", mediaToolInfo.FileName);
+        string updateFile = Tools.CombineToolPath(mediaToolInfo.FileName);
+        if (!Download.DownloadFile(new Uri(mediaToolInfo.Url), updateFile))
+        {
+            return false;
+        }
+
+        // Follow the pattern from Update()
+
+        // Use 7zr.exe to extract the archive to the tools folder
+        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
+        string extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
+        string commandline = $"x -aoa -spe -y \"{updateFile}\" -o\"{extractPath}\"";
+        int exitCode = ProcessEx.Execute(sevenZr, commandline);
+        if (exitCode != 0)
+        {
+            Log.Logger.Error("Failed to extract archive : ExitCode: {ExitCode}", exitCode);
+            return false;
+        }
+
+        // Delete the tool destination directory
+        string toolPath = GetToolFolder();
+        if (!FileEx.DeleteDirectory(toolPath, true))
+        {
+            return false;
+        }
+
+        // Rename the folder
+        // E.g. 7z1805-extra to .\Tools\7Zip
+        return FileEx.RenameFolder(extractPath, toolPath);
     }
 }

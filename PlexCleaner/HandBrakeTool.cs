@@ -1,11 +1,11 @@
-﻿using InsaneGenius.Utilities;
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Newtonsoft.Json.Linq;
+using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -40,8 +40,8 @@ public class HandBrakeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -89,6 +89,7 @@ public class HandBrakeTool : MediaTool
             JObject releases = JObject.Parse(json);
             // "tag_name": "1.2.2",
             JToken versiontag = releases["tag_name"];
+            Debug.Assert(versiontag != null);
             mediaToolInfo.Version = versiontag.ToString();
 
             // Create download URL and the output filename using the version number
@@ -96,7 +97,7 @@ public class HandBrakeTool : MediaTool
             mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
             mediaToolInfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
@@ -118,10 +119,10 @@ public class HandBrakeTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Encode audio and video, copy subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec}";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
@@ -130,10 +131,10 @@ public class HandBrakeTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Encode video, copy audio and subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool ConvertToMkv(string inputName, string outputName)
@@ -146,28 +147,30 @@ public class HandBrakeTool : MediaTool
             outputName);
     }
 
-    public bool DeInterlaceToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
+    public bool DeInterlaceToMkv(string inputName, string videoCodec, int videoQuality, string outputName, bool includeSubtitles = true)
     {
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Encode and decomb video, copy audio and subtitles
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec} {snippets}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        // Encode and decomb video, copy audio, and conditionally copy subtitles
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string subtitles = includeSubtitles ? "--all-subtitles" : "--subtitle none";
+        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb {subtitles} --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
-    public bool DeInterlaceToMkv(string inputName, string outputName)
+    public bool DeInterlaceToMkv(string inputName, string outputName, bool includeSubtitles = true)
     {
         // Use defaults
         return DeInterlaceToMkv(inputName,
             Program.Config.ConvertOptions.EnableH265Encoder ? H265Codec : H264Codec,
             Program.Config.ConvertOptions.VideoEncodeQuality,
-            outputName);
+            outputName,
+            includeSubtitles);
     }
 
     private const string H264Codec = "x264";
     private const string H265Codec = "x265";
-    private const string Snippet = "--start-at duration:00 --stop-at duration:180";
+    private const string Snippet = "--start-at seconds:00 --stop-at seconds:180";
 }

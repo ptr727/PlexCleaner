@@ -13,73 +13,65 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
+    public int ReProcess { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
         // Root command and global options
-        RootCommand rootCommand = new("Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin");
-        AddGlobalOptions(rootCommand);
+        RootCommand command = new("Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin");
+        AddGlobalOptions(command);
 
         // Create default settings
-        rootCommand.AddCommand(CreateDefaultSettingsCommand());
+        command.AddCommand(CreateDefaultSettingsCommand());
 
         // Check for new tools
-        rootCommand.AddCommand(CreateCheckForNewToolsCommand());
+        command.AddCommand(CreateCheckForNewToolsCommand());
 
         // Process files
-        rootCommand.AddCommand(CreateProcessCommand());
+        command.AddCommand(CreateProcessCommand());
 
         // Monitor and process files
-        rootCommand.AddCommand(CreateMonitorCommand());
+        command.AddCommand(CreateMonitorCommand());
 
-        // Re-multiplex files
-        rootCommand.AddCommand(CreateReMuxCommand());
+        // Re-Multiplex files
+        command.AddCommand(CreateReMuxCommand());
 
         // Re-Encode files
-        rootCommand.AddCommand(CreateReEncodeCommand());
+        command.AddCommand(CreateReEncodeCommand());
 
-        // De-interlace files
-        rootCommand.AddCommand(CreateDeInterlaceCommand());
-
-        // Verify files
-        rootCommand.AddCommand(CreateVerifyCommand());
+        // Deinterlace files
+        command.AddCommand(CreateDeInterlaceCommand());
 
         // Write sidecar files
-        rootCommand.AddCommand(CreateCreateSidecarCommand());
+        command.AddCommand(CreateCreateSidecarCommand());
 
         // Read sidecar files
-        rootCommand.AddCommand(CreateGetSidecarInfoCommand());
+        command.AddCommand(CreateGetSidecarInfoCommand());
 
         // Create tag-map
-        rootCommand.AddCommand(CreateGetTagMapCommand());
+        command.AddCommand(CreateGetTagMapCommand());
 
         // Print media info
-        rootCommand.AddCommand(CreateGetMediaInfoCommand());
+        command.AddCommand(CreateGetMediaInfoCommand());
 
         // Print tool info
-        rootCommand.AddCommand(CreateGetToolInfoCommand());
-
-        // Calculate bitrate info
-        rootCommand.AddCommand(CreateGetBitrateInfoCommand());
-
-        // Upgrade sidecar JSON schemas
-        rootCommand.AddCommand(CreateUpgradeSidecarCommand());
+        command.AddCommand(CreateGetToolInfoCommand());
 
         // Remove subtitles
-        rootCommand.AddCommand(CreateRemoveSubtitlesCommand());
+        command.AddCommand(CreateRemoveSubtitlesCommand());
 
-        return rootCommand;
+        return command;
     }
 
-    private static void AddGlobalOptions(RootCommand rootCommand)
+    private static void AddGlobalOptions(RootCommand command)
     {
-        if (rootCommand == null)
+        if (command == null)
         {
-            throw new ArgumentNullException(nameof(rootCommand));
+            throw new ArgumentNullException(nameof(command));
         }
 
         // Path to the settings file, required
-        rootCommand.AddGlobalOption(
+        command.AddGlobalOption(
             new Option<string>("--settingsfile")
             {
                 Description = "Path to settings file",
@@ -87,7 +79,7 @@ public class CommandLineOptions
             });
 
         // Path to the log file, optional
-        rootCommand.AddGlobalOption(
+        command.AddGlobalOption(
             new Option<string>("--logfile")
             {
                 Description = "Path to log file",
@@ -95,7 +87,7 @@ public class CommandLineOptions
             });
 
         // Append to log vs. overwrite, optional
-        rootCommand.AddGlobalOption(
+        command.AddGlobalOption(
             new Option<bool>("--logappend")
             {
                 Description = "Append to the log file vs. default overwrite",
@@ -126,17 +118,17 @@ public class CommandLineOptions
     private static Command CreateProcessCommand()
     {
         // Process files
-        Command processCommand = new("process")
+        Command command = new("process")
         {
             Description = "Process media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.ProcessCommand)
         };
 
         // Media files or folders option
-        processCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
         // Create short video clips, optional
-        processCommand.AddOption(
+        command.AddOption(
             new Option<bool>("--testsnippets")
             {
                 Description = "Create short video clips, useful during testing",
@@ -144,209 +136,172 @@ public class CommandLineOptions
             });
 
         //  Do not make any modifications, optional
-        processCommand.AddOption(
+        command.AddOption(
             new Option<bool>("--testnomodify")
             {
                 Description = "Do not make any modifications, useful during testing",
                 IsRequired = false
             });
 
-        return processCommand;
+        //  Re-process level, optional
+        command.AddOption(
+            new Option<int>("--reprocess")
+            {
+                Description = "Re-process level, 0 = none (default), 1 = some, 2 = all",
+                IsRequired = false
+            });
+
+        return command;
     }
 
     private static Command CreateMonitorCommand()
     {
         // Monitor and process files
-        Command monitorCommand = new("monitor")
+        Command command = new("monitor")
         {
             Description = "Monitor and process media file changes in folders",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.MonitorCommand)
         };
 
         // Media files or folders option
-        monitorCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return monitorCommand;
+        return command;
     }
 
     private static Command CreateReMuxCommand()
     {
         // Re-Mux files
-        Command remuxCommand = new("remux")
+        Command command = new("remux")
         {
             Description = "Re-Multiplex media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.ReMuxCommand)
         };
 
         // Media files or folders option
-        remuxCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return remuxCommand;
+        return command;
     }
 
     private static Command CreateReEncodeCommand()
     {
         // Re-Encode files
-        Command reencodeCommand = new("reencode")
+        Command command = new("reencode")
         {
             Description = "Re-Encode media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.ReEncodeCommand)
         };
 
         // Media files or folders option
-        reencodeCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return reencodeCommand;
+        return command;
     }
 
     private static Command CreateDeInterlaceCommand()
     {
-        // De-interlace files
-        Command deinterlaceCommand = new("deinterlace")
+        // Deinterlace files
+        Command command = new("deinterlace")
         {
-            Description = "De-Interlace media files",
+            Description = "Deinterlace media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.DeInterlaceCommand)
         };
 
         // Media files or folders option
-        deinterlaceCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return deinterlaceCommand;
+        return command;
     }
 
     private static Command CreateCreateSidecarCommand()
     {
         // Create sidecar files
-        Command createsidecarCommand = new("createsidecar")
+        Command command = new("createsidecar")
         {
-            Description = "Create sidecar files",
+            Description = "Create new sidecar files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateSidecarCommand)
         };
 
         // Media files or folders option
-        createsidecarCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return createsidecarCommand;
+        return command;
     }
 
     private static Command CreateGetSidecarInfoCommand()
     {
         // Read sidecar files
-        Command getsidecarinfoCommand = new("getsidecarinfo")
+        Command command = new("getsidecarinfo")
         {
             Description = "Print sidecar file attribute information",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarInfoCommand)
         };
 
         // Media files or folders option
-        getsidecarinfoCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return getsidecarinfoCommand;
+        return command;
     }
 
     private static Command CreateGetTagMapCommand()
     {
         // Create tag-map
-        Command gettagmapCommand = new("gettagmap")
+        Command command = new("gettagmap")
         {
             Description = "Print attribute tag-map created from media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetTagMapCommand)
         };
 
         // Media files or folders option
-        gettagmapCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return gettagmapCommand;
+        return command;
     }
 
     private static Command CreateGetMediaInfoCommand()
     {
         // Print media info
-        Command getmediainfoCommand = new("getmediainfo")
+        Command command = new("getmediainfo")
         {
             Description = "Print media file attribute information",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetMediaInfoCommand)
         };
 
         // Media files or folders option
-        getmediainfoCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return getmediainfoCommand;
+        return command;
     }
 
     private static Command CreateGetToolInfoCommand()
     {
         // Print tool info
-        Command gettoolinfoCommand = new("gettoolinfo")
+        Command command = new("gettoolinfo")
         {
             Description = "Print tool file attribute information",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetToolInfoCommand)
         };
 
         // Media files or folders option
-        gettoolinfoCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return gettoolinfoCommand;
-    }
-
-    private static Command CreateGetBitrateInfoCommand()
-    {
-        // Print media info
-        Command getbitrateinfoCommand = new("getbitrateinfo")
-        {
-            Description = "Print media file bitrate information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetBitrateInfoCommand)
-        };
-
-        // Media files or folders option
-        getbitrateinfoCommand.AddOption(CreateMediaFilesOption());
-
-        return getbitrateinfoCommand;
-    }
-
-    private static Command CreateVerifyCommand()
-    {
-        // Verify media
-        Command verifyCommand = new("verify")
-        {
-            Description = "Verify media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
-        };
-
-        // Media files or folders option
-        verifyCommand.AddOption(CreateMediaFilesOption());
-
-        return verifyCommand;
-    }
-
-    private static Command CreateUpgradeSidecarCommand()
-    {
-        // Upgrade sidecar schema
-        Command upgradesidecarCommand = new("upgradesidecar")
-        {
-            Description = "Upgrade sidecar file schemas",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.UpgradeSidecarCommand)
-        };
-
-        // Media files or folders option
-        upgradesidecarCommand.AddOption(CreateMediaFilesOption());
-
-        return upgradesidecarCommand;
+        return command;
     }
 
     private static Command CreateRemoveSubtitlesCommand()
     {
         // Remove subtitles
-        Command removesubtitlesCommand = new("removesubtitles")
+        Command command = new("removesubtitles")
         {
-            Description = "Remove subtitles",
+            Description = "Remove all subtitles",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
         };
 
         // Media files or folders option
-        removesubtitlesCommand.AddOption(CreateMediaFilesOption());
+        command.AddOption(CreateMediaFilesOption());
 
-        return removesubtitlesCommand;
+        return command;
     }
 
     private static Option CreateMediaFilesOption()
@@ -354,11 +309,8 @@ public class CommandLineOptions
         // Media files or folders option
         return new Option<List<string>>("--mediafiles")
         {
-            Description = "List of media files or folders",
-            IsRequired = true,
-            // TODO: This should not be required when the type is a list
-            // https://github.com/dotnet/command-line-api/issues/1199
-            AllowMultipleArgumentsPerToken = true
+            Description = "Media file or folder to process, repeat for multiples",
+            IsRequired = true
         };
     }
 }

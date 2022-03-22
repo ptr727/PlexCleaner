@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // TODO: Find JSON schema definition
@@ -11,6 +11,9 @@ using System.Collections.Generic;
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
+// No JSON schema, but XML schema
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
+
 // ReSharper disable once CheckNamespace
 namespace PlexCleaner.FfMpegToolJsonSchema;
 
@@ -18,6 +21,9 @@ public class FfProbe
 {
     [JsonProperty("streams")]
     public List<Stream> Streams { get; } = new();
+
+    [JsonProperty("format")]
+    public Format Format { get; } = new();
 
     public static FfProbe FromJson(string json)
     {
@@ -28,6 +34,18 @@ public class FfProbe
     {
         Formatting = Formatting.Indented
     };
+}
+
+public class Format
+{
+    [JsonProperty("format_name")]
+    public string FormatName { get; set; } = "";
+
+    [JsonProperty("duration")]
+    public double Duration { get; set; }
+
+    [JsonProperty("tags")]
+    public Dictionary<string, string> Tags { get; } = new();
 }
 
 public class Stream
@@ -56,19 +74,14 @@ public class Stream
     [JsonProperty("field_order")]
     public string FieldOrder { get; set; } = "";
 
-    [JsonProperty("tags")]
-    public Tags Tags { get; } = new();
+    [JsonProperty("closed_captions")]
+    public bool ClosedCaptions { get; set; }
 
     [JsonProperty("disposition")]
     public Disposition Disposition { get; } = new();
-}
 
-public class Tags
-{
-    [JsonProperty("language")]
-    public string Language { get; set; } = "";
-    [JsonProperty("title")]
-    public string Title { get; set; } = "";
+    [JsonProperty("tags")]
+    public Dictionary<string, string> Tags { get; } = new();
 }
 
 public class Disposition

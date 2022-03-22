@@ -1,13 +1,13 @@
-using InsaneGenius.Utilities;
-using Newtonsoft.Json;
-using PlexCleaner.FfMpegToolJsonSchema;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using InsaneGenius.Utilities;
+using Newtonsoft.Json;
+using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -37,7 +37,7 @@ public class FfProbeTool : FfMpegTool
         packets = null;
 
         // Write JSON text output to compressed memory stream to save memory
-        // TODO : Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
+        // TODO: Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
         // Make sure that the various stream processors leave the memory stream open for the duration of operations
         using MemoryStream memoryStream = new();
         using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
@@ -48,7 +48,8 @@ public class FfProbeTool : FfMpegTool
         };
 
         // Get packet info
-        string commandline = $"-loglevel error -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"-loglevel error {snippet} -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
         string path = GetToolPath();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
         int exitCode = process.ExecuteEx(path, commandline);
@@ -65,7 +66,7 @@ public class FfProbeTool : FfMpegTool
         using JsonTextReader jsonReader = new(streamReader);
 
         JsonSerializer serializer = new();
-        PacketInfo packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+        var packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
         if (packetInfo == null)
         {
             return false;
@@ -85,9 +86,18 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfoJson(string filename, out string json)
     {
         // Get media info as JSON
-        string commandline = $"-loglevel quiet -show_streams -print_format json \"{filename}\"";
+        // TODO: Add format to JSON
+        string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{filename}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
+    }
+
+    public bool GetFfProbeInfoText(string filename, out string text)
+    {
+        // Get media info using default output
+        string commandline = $"-hide_banner \"{filename}\"";
+        int exitCode = Command(commandline, out _, out text);
+        return exitCode == 0;
     }
 
     public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
@@ -110,6 +120,7 @@ public class FfProbeTool : FfMpegTool
             // Tracks
             foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
             {
+                // Process by track type
                 if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
                 {
                     VideoInfo info = new(stream);
@@ -126,7 +137,7 @@ public class FfProbeTool : FfMpegTool
                     if (string.IsNullOrEmpty(stream.CodecName) ||
                         string.IsNullOrEmpty(stream.CodecLongName))
                     {
-                        Log.Logger.Warning("FFProbe Subtitle Format unknown");
+                        Log.Logger.Warning("FfProbe Subtitle Format unknown");
                         if (string.IsNullOrEmpty(stream.CodecName))
                         {
                             stream.CodecName = "Unknown";
@@ -151,11 +162,20 @@ public class FfProbeTool : FfMpegTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO : Tags
-            // TODO : Duration
-            // TODO : ContainerType
-            // TODO : Chapters
-            // TODO : Attachments
+            // Tags in container or any tracks
+            mediaInfo.HasTags = HasTags(ffprobe.Format.Tags) ||
+                mediaInfo.Video.Any(item => item.HasTags) ||
+                mediaInfo.Audio.Any(item => item.HasTags) ||
+                mediaInfo.Subtitle.Any(item => item.HasTags);
+
+            // Duration in seconds
+            mediaInfo.Duration = TimeSpan.FromSeconds(ffprobe.Format.Duration);
+
+            // Container type
+            mediaInfo.Container = ffprobe.Format.FormatName;
+
+            // TODO: Chapters
+            // TODO: Attachments
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
         {
@@ -163,4 +183,28 @@ public class FfProbeTool : FfMpegTool
         }
         return true;
     }
+
+    private static bool HasTags(Dictionary<string, string> tags)
+    {
+        // Format tags:
+        // "encoder": "libebml v1.4.2 + libmatroska v1.6.4",
+        // "creation_time": "2022-03-10T12:55:01.000000Z"
+
+        // Stream tags:
+        // "language": "eng",
+        // "BPS": "4969575",
+        // "DURATION": "00:42:30.648000000",
+        // "NUMBER_OF_FRAMES": "76434",
+        // "NUMBER_OF_BYTES": "1584454580",
+        // "_STATISTICS_WRITING_APP": "mkvmerge v61.0.0 ('So') 64-bit",
+        // "_STATISTICS_WRITING_DATE_UTC": "2022-03-10 12:55:01",
+        // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
+
+        // Language and title are expected tags
+        // Look for any key containing "statistics"
+        // TODO: Find a more relaible method for determining what tags are expected or not
+        return tags.Keys.FirstOrDefault(item => item.Contains("statistics", StringComparison.OrdinalIgnoreCase)) != null;
+    }
+
+    private const string Snippet = "-read_intervals %03:00";
 }

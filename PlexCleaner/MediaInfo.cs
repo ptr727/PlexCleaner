@@ -1,9 +1,9 @@
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -31,20 +31,9 @@ public class MediaInfo
 
     public void WriteLine(string prefix)
     {
-        foreach (VideoInfo info in Video)
-        {
-            info.WriteLine(prefix);
-        }
-
-        foreach (AudioInfo info in Audio)
-        {
-            info.WriteLine(prefix);
-        }
-
-        foreach (SubtitleInfo info in Subtitle)
-        {
-            info.WriteLine(prefix);
-        }
+        Video.ForEach(item => item.WriteLine(prefix));
+        Audio.ForEach(item => item.WriteLine(prefix));
+        Subtitle.ForEach(item => item.WriteLine(prefix));
     }
 
     public List<TrackInfo> GetTrackList()
@@ -90,6 +79,7 @@ public class MediaInfo
         unknown = new MediaInfo(Parser);
 
         // Video
+        // Video.ForEach(item => item.IsLanguageUnknown() ? unknown.Video.Add(item) : known.Video.Add(item));
         foreach (VideoInfo video in Video)
         {
             if (video.IsLanguageUnknown())
@@ -130,38 +120,6 @@ public class MediaInfo
 
         // Return true on any match
         return unknown.Count > 0;
-    }
-
-    public bool FindNeedDeInterlace(out MediaInfo keep, out MediaInfo deinterlace)
-    {
-        keep = new MediaInfo(Parser);
-        deinterlace = new MediaInfo(Parser);
-
-        // No filter for audio or subtitle
-        keep.Subtitle.Clear();
-        keep.Subtitle.AddRange(Subtitle);
-        keep.Audio.Clear();
-        keep.Audio.AddRange(Audio);
-
-        // Add all tracks with the interlaced flag set
-        foreach (VideoInfo video in Video)
-        {
-            if (video.Interlaced)
-            {
-                deinterlace.Video.Add(video);
-            }
-            else
-            {
-                keep.Video.Add(video);
-            }
-        }
-
-        // Set the correct state on all the objects
-        deinterlace.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.DeInterlace);
-        keep.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.Keep);
-
-        // Return true on any match
-        return deinterlace.Count > 0;
     }
 
     public bool FindUnwantedLanguage(HashSet<string> languages, List<string> preferredAudioFormats, out MediaInfo keep, out MediaInfo remove)
@@ -230,7 +188,7 @@ public class MediaInfo
             // Use the preferred audio codec track or the first track
             AudioInfo info = FindPreferredAudio(preferredAudioFormats) ?? Audio.First();
 
-            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, {Selected}", audioLanguages, languages, info.Language);
+            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, Using: {Selected}", audioLanguages, languages, info.Language);
             keep.Audio.Add(info);
             remove.Audio.Remove(info);
         }
@@ -290,7 +248,7 @@ public class MediaInfo
             throw new ArgumentNullException(nameof(reencodeaudio));
         }
 
-        // Filter logic values are based FFprobe attributes
+        // Filter logic values are based FfProbe attributes
         Debug.Assert(Parser == MediaTool.ToolType.FfProbe);
 
         keep = new MediaInfo(Parser);
@@ -392,10 +350,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (VideoInfo video in Video)
-        {
-            languages.Add(video.Language);
-        }
+        Video.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Video.Count == languages.Count)
@@ -429,10 +384,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (SubtitleInfo subtitle in Subtitle)
-        {
-            languages.Add(subtitle.Language);
-        }
+        Subtitle.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Subtitle.Count == languages.Count)
@@ -442,7 +394,8 @@ public class MediaInfo
         }
 
         // Keep one normal and one forced instance of each language 
-        // TODO : Add a SDH processing option
+        // TODO: Add a SDH processing option
+        // TODO: Add logic to handle CHI for Cantonese, Traditional, and Simplified
         foreach (string language in languages)
         {
             // Find non-forced track
@@ -514,10 +467,7 @@ public class MediaInfo
 
         // Create a list of all the languages
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (AudioInfo audio in Audio)
-        {
-            languages.Add(audio.Language);
-        }
+        Audio.ForEach(item => languages.Add(item.Language));
 
         // We have nothing to do if the track count equals the language count
         if (Audio.Count == languages.Count)
@@ -707,7 +657,7 @@ public class MediaInfo
             // Skip cover tracks
             if (MatchCoverArt(videoInfo.Codec))
             {
-                Log.Logger.Warning("Ignoring covert art video track : {Codec}", videoInfo.Codec);
+                Log.Logger.Warning("Ignoring cover art video track : {Codec}", videoInfo.Codec);
                 continue;
             }
 

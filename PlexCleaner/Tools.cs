@@ -1,10 +1,11 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -15,6 +16,7 @@ public static class Tools
     public static readonly FfProbeTool FfProbe = new();
     public static readonly MkvMergeTool MkvMerge = new();
     public static readonly MkvPropEditTool MkvPropEdit = new();
+    public static readonly MkvExtractTool MkvExtract = new();
     public static readonly MediaInfoTool MediaInfo = new();
     public static readonly HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
@@ -28,6 +30,7 @@ public static class Tools
             FfProbe,
             MkvMerge,
             MkvPropEdit,
+            MkvExtract,
             MediaInfo,
             HandBrake,
             SevenZip
@@ -212,8 +215,13 @@ public static class Tools
         // 7-Zip must be installed
         if (!File.Exists(SevenZip.GetToolPath()))
         {
-            Log.Logger.Error("{Tool} not found : {Directory}", SevenZip.GetToolType(), SevenZip.GetToolPath());
-            return false;
+            // Bootstrap the 7-Zip download, only supported on Windows
+            Log.Logger.Warning("Downloading missing {Tool} ... : \"{ToolPath}\"", SevenZip.GetToolType(), SevenZip.GetToolPath());
+            if (!SevenZip.BootstrapDownload())
+            {
+                return false;
+            }
+            Debug.Assert(File.Exists(SevenZip.GetToolPath()));
         }
 
         Log.Logger.Information("Checking for new tools ...");

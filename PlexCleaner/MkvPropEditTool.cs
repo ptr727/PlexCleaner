@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-// https://mkvtoolnix.download/doc/mkvmerge.html
+// https://mkvtoolnix.download/doc/mkvpropedit.html
 
 namespace PlexCleaner;
 
@@ -25,7 +25,7 @@ public class MkvPropEditTool : MkvMergeTool
         return "mkvpropedit";
     }
 
-    public bool SetMkvTrackLanguage(string filename, MediaInfo unknown, string language)
+    public bool SetTrackLanguage(string filename, MediaInfo unknown, string language)
     {
         if (unknown == null)
         {
@@ -37,33 +37,56 @@ public class MkvPropEditTool : MkvMergeTool
 
         // Set language on all unknown tracks
         StringBuilder commandline = new();
-        commandline.Append($"\"{filename}\" {Options} ");
-        foreach (TrackInfo track in unknown.GetTrackList())
-        {
-            commandline.Append($"--edit track:@{track.Number} --set language={language} ");
-        }
-
-        int exitcode = Command(commandline.ToString());
-        return exitcode == 0;
+        commandline.Append($"\"{filename}\" {EditOptions} ");
+        unknown.GetTrackList().ForEach(item => commandline.Append($"--edit track:@{item.Number} --set language={language} "));
+        int exitCode = Command(commandline.ToString());
+        return exitCode == 0;
     }
 
-    public bool SetMkvTrackLanguage(string filename, int track, string language)
+    public bool SetTrackLanguage(string filename, int track, string language)
     {
         // Set track language
-        string commandline = $"\"{filename}\" {Options} --edit track:@{track} --set language={language}";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string commandline = $"\"{filename}\" {EditOptions} --edit track:@{track} --set language={language}";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
-    public bool ClearMkvTags(string filename)
+    public bool ClearTags(string filename)
     {
         // Clear all tags
-        string commandline = $"\"{filename}\" {Options} --tags all: --delete title";
-        int exitcode = Command(commandline);
-        return exitcode == 0;
+        string commandline = $"\"{filename}\" {EditOptions} --tags all: --delete title";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
-    public bool ClearMkvTags(string filename, MediaInfo info)
+    public bool ClearTags(string filename, MediaInfo info)
+    {
+        if (info == null)
+        {
+            throw new ArgumentNullException(nameof(info));
+        }
+
+        // Verify correct data type
+        Debug.Assert(info.Parser == ToolType.MkvMerge);
+
+        // Clear all tags and main title
+        StringBuilder commandline = new();
+        commandline.Append($"\"{filename}\" {EditOptions} --tags all: --delete title ");
+
+        // Delete all track titles if the title is not considered "useful"
+        // TODO: Consider using HasTags() or other methods to be more consistent
+        foreach (TrackInfo track in info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) &&
+                                                                       !MediaInfo.IsUsefulTrackTitle(track.Title)))
+        {
+            commandline.Append($"--edit track:@{track.Number} --delete name ");
+        }
+
+        // Command
+        int exitCode = Command(commandline.ToString());
+        return exitCode == 0;
+    }
+
+    public bool ClearAttachments(string filename, MediaInfo info)
     {
         if (info == null)
         {
@@ -75,14 +98,7 @@ public class MkvPropEditTool : MkvMergeTool
 
         // Clear all tags
         StringBuilder commandline = new();
-        commandline.Append($"\"{filename}\" {Options} --tags all: --delete title ");
-
-        // Delete all track titles
-        foreach (TrackInfo track in info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) &&
-                                                                       !MediaInfo.IsUsefulTrackTitle(track.Title)))
-        {
-            commandline.Append($"--edit track:@{track.Number} --delete name ");
-        }
+        commandline.Append($"\"{filename}\" {EditOptions} ");
 
         // Delete all attachments
         for (int id = 0; id < info.Attachments; id++)
@@ -90,9 +106,10 @@ public class MkvPropEditTool : MkvMergeTool
             commandline.Append($"--delete-attachment {id + 1} ");
         }
 
+        // Command
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
-    private const string Options = "--flush-on-close";
+    private const string EditOptions = "--flush-on-close";
 }

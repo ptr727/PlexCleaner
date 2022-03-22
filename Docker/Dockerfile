@@ -1,4 +1,7 @@
-# Test locally:
+# Test in docker shell:
+# docker run -it --rm ubuntu:latest /bin/bash
+
+# Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 # docker build ./Docker
 # Ignore docker layer cache

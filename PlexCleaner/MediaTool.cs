@@ -1,8 +1,7 @@
-using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -26,7 +25,8 @@ public abstract class MediaTool
         MediaInfo,
         MkvMerge,
         MkvPropEdit,
-        SevenZip
+        SevenZip,
+        MkvExtract
     }
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();
@@ -51,7 +51,7 @@ public abstract class MediaTool
         }
 
         // Extract the update file
-        LogOptions.Logger.LogInformation("Extracting {UpdateFile} ...", updateFile);
+        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
         return Tools.SevenZip.UnZip(updateFile, toolPath);
     }
 
@@ -105,16 +105,10 @@ public abstract class MediaTool
         }
 
         parameters = parameters.Trim();
-
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters);
-        if (exitCode != 0)
-        {
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
-        }
-
         return exitCode;
     }
 
@@ -126,16 +120,10 @@ public abstract class MediaTool
         }
 
         parameters = parameters.Trim();
-
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output);
-        if (exitCode != 0)
-        {
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
-        }
-
         return exitCode;
     }
 
@@ -147,16 +135,10 @@ public abstract class MediaTool
         }
 
         parameters = parameters.Trim();
-
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
-        if (exitCode != 0)
-        {
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
-        }
-
         return exitCode;
     }
 
@@ -168,16 +150,10 @@ public abstract class MediaTool
         }
 
         parameters = parameters.Trim();
-
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
         string path = GetToolPath();
         int exitCode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
-        if (exitCode != 0)
-        {
-            Log.Logger.Warning("Executing {ToolType} : ExitCode: {ExitCode}", GetToolType(), exitCode);
-        }
-
         return exitCode;
     }
 }

@@ -1,9 +1,9 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using InsaneGenius.Utilities;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -54,10 +54,7 @@ internal class Monitor
         }
 
         // Enable event watching
-        foreach (FileSystemWatcher watch in Watcher)
-        {
-            watch.EnableRaisingEvents = true;
-        }
+        Watcher.ForEach(item => item.EnableRaisingEvents = true);
 
         // Wait for exit to be signalled
         while (!Program.IsCancelled(1000))
@@ -69,7 +66,7 @@ internal class Monitor
                 if (WatchFolders.Any())
                 {
                     // Remove root folders from the watchlist
-                    // TODO : Maybe we need a way to not process sub-directories?
+                    //TODO : Maybe we need a way to not process sub-directories?
                     //foreach (string folder in folders)
                     //    WatchFolders.Remove(folder);
 
@@ -92,10 +89,7 @@ internal class Monitor
                     }
 
                     // Remove watched folders from the watchlist
-                    foreach (string folder in watchlist)
-                    {
-                        WatchFolders.Remove(folder);
-                    }
+                    watchlist.ForEach(item => WatchFolders.Remove(item));
                 }
             }
 
@@ -117,11 +111,7 @@ internal class Monitor
         }
 
         // Disable event watching
-        foreach (FileSystemWatcher watch in Watcher)
-        {
-            watch.EnableRaisingEvents = false;
-        }
-
+        Watcher.ForEach(item => item.EnableRaisingEvents = false);
         Watcher.Clear();
 
         return true;
@@ -249,7 +239,7 @@ internal class Monitor
     private static void OnDeleted()
     {
         // The path we get no longer exists, it may be a file, or it may be a folder
-        // TODO : Figure out how to accurately test if deleted path was a file or folder
+        // TODO: Figure out how to accurately test if deleted path was a file or folder
     }
 
     private readonly List<FileSystemWatcher> Watcher;

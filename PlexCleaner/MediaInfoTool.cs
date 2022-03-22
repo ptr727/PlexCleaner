@@ -1,11 +1,11 @@
-﻿using Serilog;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 
@@ -40,8 +40,8 @@ public class MediaInfoTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitcode = Command(commandline, out string output);
-        if (exitcode != 0)
+        int exitCode = Command(commandline, out string output);
+        if (exitCode != 0)
         {
             return false;
         }
@@ -149,13 +149,13 @@ public class MediaInfoTool : MediaTool
     {
         // Get media info as XML
         string commandline = $"--Output=XML \"{filename}\"";
-        int exitcode = Command(commandline, out xml);
+        int exitCode = Command(commandline, out xml);
 
-        // TODO : No error is returned when the file does not exist
+        // TODO: No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
         // Empty XML files are around 86 bytes
         // Match size check with ProcessSidecarFile()
-        return exitcode == 0 && xml.Length >= 100;
+        return exitCode == 0 && xml.Length >= 100;
     }
 
     public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
@@ -212,12 +212,17 @@ public class MediaInfoTool : MediaTool
                                   mediaInfo.Audio.Any(item => item.HasErrors) ||
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
-            // TODO : Tags, maybe look in the Extra field, but not reliable
-            // TODO : Duration, too many different formats to parse
+            // Tags
+            // TODO: Look in the Extra field, but not reliable
+            mediaInfo.HasTags = mediaInfo.Video.Any(item => item.HasTags) ||
+                                mediaInfo.Audio.Any(item => item.HasTags) ||
+                                mediaInfo.Subtitle.Any(item => item.HasTags);
+
+            // TODO: Duration, too many different formats to parse
             // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
-            // TODO : ContainerType
-            // TODO : Chapters
-            // TODO : Attachments
+            // TODO: ContainerType
+            // TODO: Chapters
+            // TODO: Attachments
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {

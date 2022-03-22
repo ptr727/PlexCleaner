@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
-      
+
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: 'Checkout Code'
@@ -78,7 +78,7 @@ jobs:
       # Login to GitHub Container Registry
       # https://github.com/marketplace/actions/docker-login
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v1 
+        uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}

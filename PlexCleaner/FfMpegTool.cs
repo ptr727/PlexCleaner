@@ -1,6 +1,4 @@
-﻿using InsaneGenius.Utilities;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,6 +9,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
+using Serilog;
 
 // https://ffmpeg.org/ffmpeg.html
 // https://trac.ffmpeg.org/wiki/Map
@@ -20,8 +20,11 @@ using System.Text.RegularExpressions;
 // FfMpeg logs to stderr, not stdout
 // "By default the program logs to stderr. If coloring is supported by the terminal, colors are used to mark errors and warnings."
 // Power events, e.g. sleep, can result in an invalid argument error
-// TODO : Figure out how to get ffmpeg more resilient to power events
-// TODO : Figure out how to capture logs while still allowing ffmpeg to print in color
+// TODO: Figure out how to get ffmpeg more resilient to power events
+// TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
+
+// Typical commandline:
+// ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
 
 namespace PlexCleaner;
 
@@ -128,43 +131,64 @@ public class FfMpegTool : MediaTool
             using HttpClient httpClient = new();
             string readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
 
-            // Read each line until we find the first version line
-            // version: 4.3.1
+            // Read each line until we find the build and version lines
+            // build: ffmpeg-5.0-amd64-static.tar.xz
+            // version: 5.0
             using StringReader sr = new(readmePage);
-            string line;
+            string buildLine = "", versionLine = "";
             while (true)
             {
-                // Read the line
-                line = sr.ReadLine();
+                // Read the line and trim whitespace
+                string line = sr.ReadLine();
                 if (line == null)
                 {
+                    // No more lines to read
                     break;
                 }
-
-                // See if the line starts with "Version:"
                 line = line.Trim();
-                if (line.IndexOf("Version:", StringComparison.Ordinal) == 0)
+
+                // See if the line starts with "version:" or "build:"
+                if (line.IndexOf("version:", StringComparison.Ordinal) == 0)
                 {
+                    versionLine = line;
+                }
+                if (line.IndexOf("build:", StringComparison.Ordinal) == 0)
+                {
+                    buildLine = line;
+                }
+
+                // Do we have both lines
+                if (!string.IsNullOrEmpty(versionLine) &&
+                    !string.IsNullOrEmpty(buildLine))
+                {
+                    // Done
                     break;
                 }
             }
-            if (string.IsNullOrEmpty(line))
+
+            // Did we find the version and build
+            if (string.IsNullOrEmpty(versionLine) ||
+                string.IsNullOrEmpty(buildLine))
             {
                 throw new NotImplementedException();
             }
 
-            // Extract the version number from the line
-            // E.g. version: 4.3.1
-            const string pattern = @"Version:\ (?<version>.*?)";
-            Regex regex = new(pattern);
-            Match match = regex.Match(line);
+            // Extract the build and version number from the lines
+            const string versionPattern = @"version:\ (?<version>.*?)";
+            const string buildPattern = @"build:\ (?<build>.*?)";
+            Regex regex = new(versionPattern);
+            Match match = regex.Match(versionLine);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
+            regex = new Regex(buildPattern);
+            match = regex.Match(buildLine);
+            Debug.Assert(match.Success);
+            mediaToolInfo.FileName = match.Groups["build"].Value;
 
-            // Create download URL and the output filename using the version number
-            // E.g. ffmpeg-4.3.1-amd64-static.tar.xz
-            mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-amd-static.tar.xz";
-            mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
+            // Create download URL and the output filename
+            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-5.0-amd64-static.tar.xz
+            mediaToolInfo.Url = $"https://johnvansickle.com/ffmpeg/releases/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -177,7 +201,7 @@ public class FfMpegTool : MediaTool
     {
         // TODO: This only works for Windows
 
-        // FFmpeg archives have versioned folders in the zip file
+        // FfMpeg archives have versioned folders in the zip file
         // The 7Zip -spe option does not work for zip files
         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
@@ -220,9 +244,13 @@ public class FfMpegTool : MediaTool
         // Use null muxer, no stats, report errors
         // https://trac.ffmpeg.org/wiki/Null
 
-        // Create the FFmpeg commandline and execute
+        // Create the FfMpeg commandline and execute
         string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
-        string commandline = $"-i \"{filename}\" -hide_banner -max_muxing_queue_size 1024 -nostats -loglevel error -xerror {snippet} -f null -";
+        if (Program.Options.TestSnippets)
+        {
+            snippet = Snippet;
+        }
+        string commandline = $"{GlobalOptions} -i \"{filename}\" {OutputOptions} {snippet} -hide_banner -nostats -loglevel error -xerror -f null -";
         // Limit captured output to 5 lines
         int exitCode = Command(commandline, 5, out string _, out error);
 
@@ -245,7 +273,7 @@ public class FfMpegTool : MediaTool
 
         // Remux using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -257,7 +285,7 @@ public class FfMpegTool : MediaTool
 
         // Remux and copy all streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"-i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -299,11 +327,7 @@ public class FfMpegTool : MediaTool
         trackList.AddRange(audioList);
         trackList.AddRange(subtitleList);
         StringBuilder sb = new();
-        foreach (TrackInfo info in trackList)
-        {
-            sb.Append($"-map 0:{info.Id} ");
-        }
-
+        trackList.ForEach(item => sb.Append($"-map 0:{item.Id} "));
         input = sb.ToString();
         input = input.Trim();
 
@@ -352,14 +376,14 @@ public class FfMpegTool : MediaTool
         // Create an input and output map
         CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reEncode, out string input, out string output);
 
-        // TODO : Error with some PGS subtitles
+        // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
         //  [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
         //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
 
         // Convert using map
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} {input} {output} -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -382,7 +406,7 @@ public class FfMpegTool : MediaTool
 
         // Encode video and audio, copy subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -394,7 +418,7 @@ public class FfMpegTool : MediaTool
 
         // Encode video, copy audio and subtitle streams
         string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{ConvertOptions} -i \"{inputName}\" -abort_on empty_output {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
         int exitCode = Command(commandline);
         return exitCode == 0;
     }
@@ -407,6 +431,31 @@ public class FfMpegTool : MediaTool
             Program.Config.ConvertOptions.VideoEncodeQuality,
             Program.Config.ConvertOptions.AudioEncodeCodec,
             outputName);
+    }
+
+    public bool RemoveClosedCaptions(string inputName, string outputName)
+    {
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
+        // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
+    }
+
+    public bool RemoveMetadata(string inputName, string outputName)
+    {
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Remove all metadata using -map_metadata -1
+        string snippet = Program.Options.TestSnippets ? Snippet : "";
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"";
+        int exitCode = Command(commandline);
+        return exitCode == 0;
     }
 
     public bool GetIdetInfo(string filename, out FfMpegIdetInfo idetInfo)
@@ -428,7 +477,11 @@ public class FfMpegTool : MediaTool
 
         // Run idet filter
         string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
-        string commandline = $"-i \"{inputName}\" -hide_banner -nostats -xerror -filter:v idet {snippet} -an -f rawvideo {nullOut}";
+        if (Program.Options.TestSnippets)
+        {
+            snippet = Snippet;
+        }
+        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}";
         // Limit captured output to 5 lines
         int exitCode = Command(commandline, 5, out string _, out text);
         return exitCode == 0;
@@ -493,5 +546,6 @@ public class FfMpegTool : MediaTool
     private const string H264Codec = "libx264";
     private const string H265Codec = "libx265";
     private const string Snippet = "-ss 0 -t 180";
-    private const string ConvertOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    private const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    private const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
 }

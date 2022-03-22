@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Timers;
 
 namespace PlexCleaner;
 
@@ -22,6 +23,12 @@ public static class KeepAwake
             SetThreadExecutionState(ExecutionState.EsContinuous);
         }
     }
+
+    public static void OnTimedEvent(object sender, ElapsedEventArgs e)
+    {
+        PreventSleep();
+    }
+
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);

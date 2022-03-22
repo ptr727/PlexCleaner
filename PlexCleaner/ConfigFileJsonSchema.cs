@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace PlexCleaner;
 
@@ -92,7 +92,7 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
+        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
         if (configFileJsonSchemaBase == null)
         {
             return null;
@@ -127,6 +127,6 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
         // https://stackoverflow.com/questions/35482896/clear-collections-before-adding-items-when-populating-existing-objects
         ObjectCreationHandling = ObjectCreationHandling.Replace
-        // TODO : Add TraceWriter to log to Serilog
+        // TODO: Add TraceWriter to log to Serilog
     };
 }

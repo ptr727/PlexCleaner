@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using Serilog;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.IO;
+using Newtonsoft.Json;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -57,7 +57,7 @@ public class SidecarFileJsonSchema
 
     public static SidecarFileJsonSchema FromJson(JsonTextReader reader)
     {
-        JsonSerializer serializer = JsonSerializer.Create(Settings);
+        var serializer = JsonSerializer.Create(Settings);
         return (SidecarFileJsonSchema)serializer.Deserialize(reader, typeof(SidecarFileJsonSchema));
     }
 
@@ -93,7 +93,7 @@ public class SidecarFileJsonSchema
         // FfMpegToolVersion was replaced with FfProbeToolVersion in v3
         // MkvToolVersion was replaced with MkvMergeToolVersion in v3
         // Migrating the versions is not really useful as the version format changed
-        // TODO : Convert the version format from longform to shortform
+        // TODO: Convert the version format from longform to shortform
         if (json.SchemaVersion < 3)
         {
 #pragma warning disable CS0618 // Type or member is obsolete

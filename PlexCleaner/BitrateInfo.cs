@@ -1,9 +1,9 @@
-﻿using PlexCleaner.FfMpegToolJsonSchema;
-using Serilog;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using PlexCleaner.FfMpegToolJsonSchema;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -77,7 +77,7 @@ public class BitrateInfo
         }
 
         // If there are no packets the stream is empty?
-        // MkvMerge and Handbrake do not like empty streams
+        // MkvMerge and HandBrake do not like empty streams
         if (videoPackets == 0 || audioPackets == 0)
         {
             Log.Logger.Error("Empty stream detected : VideoPackets: {VideoPackets}, AudioPackets: {AudioPackets}", videoPackets, audioPackets);
