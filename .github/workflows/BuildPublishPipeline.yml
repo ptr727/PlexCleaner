@@ -1,4 +1,6 @@
-name: 'Build and Publish Pipeline'
+# TODO : Consolidate BuildPublishPipeline.yml and BuildDockerPipeline.yml
+
+name: 'Build and Publish GitHub Release Pipeline'
 
 on:
   push:
@@ -10,53 +12,64 @@ on:
 
 jobs:
   build:
-    name: 'Build and Publish Pipeline'
-    runs-on: windows-latest
+    name: 'Build and Publish GitHub Release Pipeline'
+    runs-on: ubuntu-latest
 
     steps:
 
-      # TODO: Build and push docker using same build used for release
-      
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: 'Setup .NET SDK 6.0'
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
-      
-      # Install GitVersion
-      # Requires .NET 5
-      # https://github.com/marketplace/actions/gittools
-      - name: 'Setup .NET 5.0'
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.0.x'
-      - name: 'Install GitVersion'
-        uses: gittools/actions/gitversion/setup@v0
-        with:
-          versionSpec: '5.x'
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: 'Checkout Code'
         uses: actions/checkout@v2
         with:
-          # Get all history for version calculation using GitVersion
+          # Get all history for version calculation
           fetch-depth: 0
 
-      # Run GitVersion
-      # https://github.com/marketplace/actions/gittools
-      - name: 'Run GitVersion Tool'
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v0
+      # Run Nerdbank.GitVersioning
+      # https://github.com/marketplace/actions/nerdbank-gitversioning
+      - name: 'Run Nerdbank.GitVersioning Tool'
+        id: nbgv
+        uses: dotnet/nbgv@master
+
+      # Run Unit Tests
+      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
+      - name: 'Run Unit Tests'
+        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
       # Build and publish project to ./Publish
-      # Replace version information with GitVersion attributes
+      # Set version information attributes
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: 'Build Project win-x64'
-        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime win-x64 --self-contained false --output ./Publish/win-x64 -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+        run: >-
+            dotnet publish ./PlexCleaner/PlexCleaner.csproj
+            --runtime win-x64
+            --self-contained false
+            --output ./Publish/win-x64
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
+            -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
+            -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+            -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
+            -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+            -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
       - name: 'Build Project linux-x64'
-        run: dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Publish/linux-x64 -property:Version=${{ steps.gitversion.outputs.assemblySemVer }} -property:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} -property:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} -property:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }} -property:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+        run: >-
+            dotnet publish ./PlexCleaner/PlexCleaner.csproj
+            --runtime linux-x64
+            --self-contained false
+            --output ./Publish/linux-x64
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
+            -property:Version=${{ steps.nbgv.outputs.AssemblyVersion }}
+            -property:FileVersion=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+            -property:AssemblyVersion=${{ steps.nbgv.outputs.AssemblyVersion }}
+            -property:InformationalVersion=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+            -property:PackageVersion=${{ steps.nbgv.outputs.SemVer2 }}
 
       # Zip the output
       - name: 'Zip Output'
@@ -66,16 +79,13 @@ jobs:
       # https://github.com/marketplace/actions/automatic-releases
       - name: 'Create GitHub Release'
         # Do not push on pull requests
-        # GitVersion tool fails when github contains pre-releases
-        # https://github.com/GitTools/actions/issues/271
-        if: ${{ (github.event_name != 'pull_request') && endsWith(github.ref, 'refs/heads/main') }}
+        if: ${{ (github.event_name != 'pull_request') }}
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
+          automatic_release_tag: ${{ steps.nbgv.outputs.SemVer2 }}
           # Only main branch is not a pre-release
           prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
           files: |
             LICENSE
             ./Publish/PlexCleaner.7z
-   

@@ -4,10 +4,6 @@
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" checkfornewtools"
     },
-    "Write Defaults": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.Defaults.json\" defaultsettings"
-    },
     "Process": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
@@ -36,28 +32,12 @@
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" deinterlace --mediafiles \"D:\\Test\""
     },
-    "Verify": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" verify --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
-    },
-    "Get Bitrate Info": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" getbitrateinfo --mediafiles \"D:\\Test\""
-    },
     "Process Snippets": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" --logappend process --testsnippets --mediafiles \"D:\\Test\""
-    },
-    "Test": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --testsnippets --mediafiles \"D:\\Test\""
     },
     "Docker": {
       "commandName": "Docker"
-    },
-    "Upgrade Sidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" upgradesidecar --mediafiles \"D:\\Test\""
     },
     "Print Tag Map": {
       "commandName": "Project",
@@ -77,11 +57,27 @@
     },
     "Get Tool Info": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" gettoolinfo --mediafiles \"D:\\Test\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" gettoolinfo --logfile \"PlexCleaner.log\" --mediafiles \"D:\\Test\""
     },
     "Remove Subtitles": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"\\\\Server-1\\Media\\Series\\Dexter\\Season 2\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" removesubtitles --mediafiles \"D:\\Test\""
+    },
+    "Defaults Settings": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.Defaults.json\" defaultsettings"
+    },
+    "Process Test": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"D:\\Test\""
+    },
+    "Process Test ReProcess 1": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --reprocess 1 --mediafiles \"D:\\Test\""
+    },
+    "Process Test ReProcess 2": {
+      "commandName": "Project",
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --reprocess 2 --mediafiles \"D:\\Test\""
     }
   }
 }

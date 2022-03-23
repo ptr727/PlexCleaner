@@ -1,6 +1,6 @@
 {
   // JSON Schema version
-  "SchemaVersion": 1,
+  "SchemaVersion": 2,
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
@@ -10,7 +10,7 @@
     // Tools directory relative to binary location
     "RootRelative": true,
     // Automatically check for new tools
-    "AutoUpdate":  false
+    "AutoUpdate": false
   },
   // Convert options
   "ConvertOptions": {
@@ -28,27 +28,89 @@
     // Delete non-media files
     // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
     "DeleteUnwantedExtensions": true,
-    // Files to keep but not process, e.g. subtitles, cover art, info, partial, etc.
-    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
+    // File extensions to keep but not process, e.g. subtitles, cover art, info, partial, etc.
+    "KeepExtensions": [
+      ".partial~",
+      ".nfo",
+      ".jpg",
+      ".srt",
+      ".smi",
+      ".ssa",
+      ".ass",
+      ".vtt"
+    ],
     // Enable re-mux
     "ReMux": true,
-    // Files to remux to MKV
-    "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv",
-    // Enable de-interlace
-    // Note de-interlace detection is not absolute
+    // File extensions to remux to MKV
+    "ReMuxExtensions": [
+      ".avi",
+      ".m2ts",
+      ".ts",
+      ".vob",
+      ".mp4",
+      ".m4v",
+      ".asf",
+      ".wmv",
+      ".dv"
+    ],
+    // Enable deinterlace
+    // Note deinterlace detection is not absolute
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
-    // Re-encode the video if the format, codec, and profile values match
-    // * will match anything, the number of filter entries must match
+    // Re-encode the video if the Format, Codec, and Profile values match
+    // Empty fields will match with any value
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3",
-    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*",
-    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*",
+    "ReEncodeVideo": [
+      {
+        "Format": "mpeg2video"
+      },
+      {
+        "Format": "mpeg4",
+        "Codec": "dx50"
+      },
+      {
+        "Format": "msmpeg4v3",
+        "Codec": "div3"
+      },
+      {
+        "Format": "msmpeg4v2",
+        "Codec": "mp42"
+      },
+      {
+        "Format": "vc1"
+      },
+      {
+        "Format": "h264",
+        "Profile": "Constrained Baseline@30"
+      },
+      {
+        "Format": "wmv3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "indeo5"
+      }
+    ],
     // Re-encode matching audio codecs
-    // If the video format is not H264 or H265, video will automatically be converted to H264 to avoid audio sync issues
+    // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2",
+    "ReEncodeAudioFormats": [
+      "flac",
+      "mp2",
+      "vorbis",
+      "wmapro",
+      "pcm_s16le",
+      "opus",
+      "wmav2",
+      "pcm_u8",
+      "adpcm_ms"
+    ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
@@ -56,8 +118,13 @@
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
-    // Use ISO 639-2 3 letter short form
-    "KeepLanguages": "eng,afr,chi,ind",
+    // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
+    "KeepLanguages": [
+      "eng",
+      "afr",
+      "chi",
+      "ind"
+    ],
     // Enable removing of duplicate tracks of the same type and language
     // Priority is given to tracks marked as Default
     // Forced subtitle tracks are prioritized
@@ -65,8 +132,16 @@
     // Audio tracks containing "Commentary" in the title are de-prioritized
     "RemoveDuplicateTracks": true,
     // If no Default audio tracks are found, tracks are prioritized by codec type
-    // Use MKVMerge attribute naming, and the `printmediainfo` command to get media info
-    "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
+    // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
+    "PreferredAudioFormats": [
+      "truehd atmos",
+      "truehd",
+      "dts-hd master audio",
+      "dts-hd high resolution audio",
+      "dts",
+      "e-ac-3",
+      "ac-3"
+    ],
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,

@@ -1,6 +1,11 @@
-# Test locally:
+# Test in docker shell:
+# docker run -it --rm ubuntu:latest /bin/bash
+
+# Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 # docker build ./Docker
+# Ignore docker layer cache
+# docker build --no-cache ./Docker
 
 # Build from latest LTS Ubuntu base image
 FROM ubuntu:latest
@@ -41,6 +46,8 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+# TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
+
 # Install .NET 6 Runtime
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
 # TODO: Substitute ubuntu with $(lsb_release -si | tr '[:upper:]' '[:lower:]')
@@ -54,10 +61,11 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
     && rm -rf /var/lib/apt/lists/*
 
 # Install FfMpeg
-# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4
+# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5
 RUN add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
+    && add-apt-repository -y ppa:savoury1/ffmpeg5 \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y ffmpeg \

@@ -1,59 +1,132 @@
-﻿using Newtonsoft.Json;
-using System.IO;
+﻿using System;
 using System.ComponentModel;
+using System.IO;
+using Newtonsoft.Json;
 
-namespace PlexCleaner
+namespace PlexCleaner;
+
+public class ConfigFileJsonSchemaBase
 {
-    public class ConfigFileJsonSchema
+    // Default to 0 if no value specified, and always write the version first
+    [DefaultValue(0)]
+    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
+    public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
+}
+
+[Obsolete("Replaced in Schema v2", false)]
+public class ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
+{
+    public ToolsOptions ToolsOptions { get; set; } = new();
+    public ConvertOptions ConvertOptions { get; set; } = new();
+    public ProcessOptions1 ProcessOptions { get; set; } = new();
+    public MonitorOptions MonitorOptions { get; set; } = new();
+    public VerifyOptions VerifyOptions { get; set; } = new();
+
+    public const int Version = 1;
+}
+
+public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
+{
+    public ConfigFileJsonSchema() { }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+    public ConfigFileJsonSchema(ConfigFileJsonSchema1 configFileJsonSchema1)
+#pragma warning restore CS0618 // Type or member is obsolete
     {
-        [DefaultValue(0)]
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-        public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-        public const int CurrentSchemaVersion = 1;
+        // Keep the original schema version
+        SchemaVersion = configFileJsonSchema1.SchemaVersion;
 
-        public ToolsOptions ToolsOptions { get; set; } = new();
-        public ConvertOptions ConvertOptions { get; set; } = new();
-        public ProcessOptions ProcessOptions { get; set; } = new();
-        public MonitorOptions MonitorOptions { get; set; } = new();
-        public VerifyOptions VerifyOptions { get; set; } = new();
+        // Assign same values
+        ToolsOptions = configFileJsonSchema1.ToolsOptions;
+        ConvertOptions = configFileJsonSchema1.ConvertOptions;
+        MonitorOptions = configFileJsonSchema1.MonitorOptions;
+        VerifyOptions = configFileJsonSchema1.VerifyOptions;
 
-        public static void WriteDefaultsToFile(string path)
+        // Create current version from old version
+        ProcessOptions = new ProcessOptions(configFileJsonSchema1.ProcessOptions);
+    }
+
+    public ToolsOptions ToolsOptions { get; set; } = new();
+    public ConvertOptions ConvertOptions { get; set; } = new();
+    public ProcessOptions ProcessOptions { get; set; } = new();
+    public MonitorOptions MonitorOptions { get; set; } = new();
+    public VerifyOptions VerifyOptions { get; set; } = new();
+
+    public const int Version = 2;
+
+    public void SetDefaults()
+    {
+        ToolsOptions.SetDefaults();
+        ConvertOptions.SetDefaults();
+        ProcessOptions.SetDefaults();
+        MonitorOptions.SetDefaults();
+        VerifyOptions.SetDefaults();
+    }
+
+    public static void WriteDefaultsToFile(string path)
+    {
+        ConfigFileJsonSchema config = new();
+        config.SetDefaults();
+        ToFile(path, config);
+    }
+
+    public static ConfigFileJsonSchema FromFile(string path)
+    {
+        return FromJson(File.ReadAllText(path));
+    }
+
+    public static void ToFile(string path, ConfigFileJsonSchema json)
+    {
+        // Set the schema to the current version
+        json.SchemaVersion = Version;
+
+        // Write JSON to file
+        File.WriteAllText(path, ToJson(json));
+    }
+
+    private static string ToJson(ConfigFileJsonSchema settings)
+    {
+        return JsonConvert.SerializeObject(settings, Settings);
+    }
+
+    private static ConfigFileJsonSchema FromJson(string json)
+    {
+        // Deserialize the base class to get the schema version
+        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
+        if (configFileJsonSchemaBase == null)
         {
-            ConfigFileJsonSchema config = new();
-            ToFile(path, config);
+            return null;
         }
 
-        public static ConfigFileJsonSchema FromFile(string path)
+        int schemaVersion = configFileJsonSchemaBase.SchemaVersion;
+
+        // Deserialize the correct version
+        switch (schemaVersion)
         {
-            return FromJson(File.ReadAllText(path));
-        }
-
-        public static void ToFile(string path, ConfigFileJsonSchema json)
-        {
-            File.WriteAllText(path, ToJson(json));
-        }
-
-        public static string ToJson(ConfigFileJsonSchema settings) =>
-            JsonConvert.SerializeObject(settings, Settings);
-
-        public static ConfigFileJsonSchema FromJson(string json) =>
-            JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
-
-        private static readonly JsonSerializerSettings Settings = new()
-        {
-            Formatting = Formatting.Indented,
-            StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
-        };
-
-        public static bool Upgrade(ConfigFileJsonSchema json)
-        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            // Version 1
+            case ConfigFileJsonSchema1.Version:
+                // Create current version from old version
+                return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings));
+#pragma warning restore CS0618 // Type or member is obsolete
             // Current version
-            if (json.SchemaVersion == CurrentSchemaVersion)
-                return true;
-
-            // Schema version was added in v1, and remains backwards compatible
-
-            return true;
+            case Version:
+                return JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
+            // Unknown version
+            default:
+                throw new NotSupportedException(nameof(schemaVersion));
         }
     }
+
+    private static readonly JsonSerializerSettings Settings = new()
+    {
+        Formatting = Formatting.Indented,
+        StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
+        NullValueHandling = NullValueHandling.Ignore,
+        // We expect containers to be cleared before deserializing
+        // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
+        // https://stackoverflow.com/questions/35482896/clear-collections-before-adding-items-when-populating-existing-objects
+        ObjectCreationHandling = ObjectCreationHandling.Replace
+        // TODO: Add TraceWriter to log to Serilog
+    };
 }

@@ -1,20 +1,19 @@
-﻿using Serilog;
-using System;
+﻿using System;
+using Serilog;
 
-namespace PlexCleaner
+namespace PlexCleaner;
+
+public static class Extensions
 {
-    public static class Extensions
+    public static bool LogAndPropagate(this ILogger logger, Exception exception, string function)
     {
-        public static bool LogAndPropagate(this ILogger logger, Exception exception, string function)
-        {
-            logger.Error(exception, "{Function}", function);
-            return false;
-        }
+        logger.Error(exception, "{Function}", function);
+        return false;
+    }
 
-        public static bool LogAndHandle(this ILogger logger, Exception exception, string function)
-        {
-            logger.Error(exception, "{Function}", function);
-            return true;
-        }
+    public static bool LogAndHandle(this ILogger logger, Exception exception, string function)
+    {
+        logger.Error(exception, "{Function}", function);
+        return true;
     }
 }

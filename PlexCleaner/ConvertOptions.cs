@@ -1,9 +1,15 @@
-﻿namespace PlexCleaner
+﻿namespace PlexCleaner;
+
+public class ConvertOptions
 {
-    public class ConvertOptions
+    public bool EnableH265Encoder { get; set; }
+    public int VideoEncodeQuality { get; set; }
+    public string AudioEncodeCodec { get; set; } = "";
+
+    public void SetDefaults()
     {
-        public bool EnableH265Encoder { get; set; } = true;
-        public int VideoEncodeQuality { get; set; } = 20;
-        public string AudioEncodeCodec { get; set; } = "ac3";
+        EnableH265Encoder = true;
+        VideoEncodeQuality = 20;
+        AudioEncodeCodec = "ac3";
     }
 }

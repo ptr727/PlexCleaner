@@ -11,96 +11,110 @@ using Newtonsoft.Json;
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
+// No JSON schema, but XML schema
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
+
 // ReSharper disable once CheckNamespace
-namespace PlexCleaner.FfMpegToolJsonSchema
+namespace PlexCleaner.FfMpegToolJsonSchema;
+
+public class FfProbe
 {
-    public class FfProbe
+    [JsonProperty("streams")]
+    public List<Stream> Streams { get; } = new();
+
+    [JsonProperty("format")]
+    public Format Format { get; } = new();
+
+    public static FfProbe FromJson(string json)
     {
-        [JsonProperty("streams")]
-        public List<Stream> Streams { get; } = new();
-
-        public static FfProbe FromJson(string json) => 
-            JsonConvert.DeserializeObject<FfProbe>(json, Settings);
-
-        private static readonly JsonSerializerSettings Settings = new()
-        {
-            Formatting = Formatting.Indented
-        };
+        return JsonConvert.DeserializeObject<FfProbe>(json, Settings);
     }
 
-    public class Stream
+    private static readonly JsonSerializerSettings Settings = new()
     {
-        [JsonProperty("index")]
-        public int Index { get; set; }
+        Formatting = Formatting.Indented
+    };
+}
 
-        [JsonProperty("codec_name")]
-        public string CodecName { get; set; } = "";
+public class Format
+{
+    [JsonProperty("format_name")]
+    public string FormatName { get; set; } = "";
 
-        [JsonProperty("codec_long_name")]
-        public string CodecLongName { get; set; } = "";
+    [JsonProperty("duration")]
+    public double Duration { get; set; }
 
-        [JsonProperty("profile")]
-        public string Profile { get; set; } = "";
+    [JsonProperty("tags")]
+    public Dictionary<string, string> Tags { get; } = new();
+}
 
-        [JsonProperty("codec_type")]
-        public string CodecType { get; set; } = "";
+public class Stream
+{
+    [JsonProperty("index")]
+    public int Index { get; set; }
 
-        [JsonProperty("codec_tag_string")]
-        public string CodecTagString { get; set; } = "";
+    [JsonProperty("codec_name")]
+    public string CodecName { get; set; } = "";
 
-        [JsonProperty("level")]
-        public string Level { get; set; } = "";
+    [JsonProperty("codec_long_name")]
+    public string CodecLongName { get; set; } = "";
 
-        [JsonProperty("field_order")]
-        public string FieldOrder { get; set; } = "";
+    [JsonProperty("profile")]
+    public string Profile { get; set; } = "";
 
-        [JsonProperty("tags")]
-        public Tags Tags { get; } = new();
+    [JsonProperty("codec_type")]
+    public string CodecType { get; set; } = "";
 
-        [JsonProperty("disposition")]
-        public Disposition Disposition { get; } = new();
-    }
+    [JsonProperty("codec_tag_string")]
+    public string CodecTagString { get; set; } = "";
 
-    public class Tags
-    {
-        [JsonProperty("language")]
-        public string Language { get; set; } = "";
-        [JsonProperty("title")]
-        public string Title { get; set; } = "";
-    }
+    [JsonProperty("level")]
+    public string Level { get; set; } = "";
 
-    public class Disposition
-    {
-        [JsonProperty("default")]
-        public bool Default { get; set; }
-        [JsonProperty("forced")]
-        public bool Forced { get; set; }
-    }
+    [JsonProperty("field_order")]
+    public string FieldOrder { get; set; } = "";
 
-    public class PacketInfo
-    {
-        [JsonProperty("packets")]
-        public List<Packet> Packets { get; } = new();
-    }
+    [JsonProperty("closed_captions")]
+    public bool ClosedCaptions { get; set; }
 
-    public class Packet
-    {
-        [JsonProperty("codec_type")]
-        public string CodecType { get; set; } = "";
+    [JsonProperty("disposition")]
+    public Disposition Disposition { get; } = new();
 
-        [JsonProperty("stream_index")]
-        public long StreamIndex { get; set; } = -1;
+    [JsonProperty("tags")]
+    public Dictionary<string, string> Tags { get; } = new();
+}
 
-        [JsonProperty("pts_time")]
-        public double PtsTime { get; set; } = double.NaN;
+public class Disposition
+{
+    [JsonProperty("default")]
+    public bool Default { get; set; }
+    [JsonProperty("forced")]
+    public bool Forced { get; set; }
+}
 
-        [JsonProperty("dts_time")]
-        public double DtsTime { get; set; } = double.NaN;
+public class PacketInfo
+{
+    [JsonProperty("packets")]
+    public List<Packet> Packets { get; } = new();
+}
 
-        [JsonProperty("duration_time")]
-        public double DurationTime { get; set; } = double.NaN;
+public class Packet
+{
+    [JsonProperty("codec_type")]
+    public string CodecType { get; set; } = "";
 
-        [JsonProperty("size")]
-        public long Size { get; set; } = -1;
-    }
+    [JsonProperty("stream_index")]
+    public long StreamIndex { get; set; } = -1;
+
+    [JsonProperty("pts_time")]
+    public double PtsTime { get; set; } = double.NaN;
+
+    [JsonProperty("dts_time")]
+    public double DtsTime { get; set; } = double.NaN;
+
+    [JsonProperty("duration_time")]
+    public double DurationTime { get; set; } = double.NaN;
+
+    [JsonProperty("size")]
+    public long Size { get; set; } = -1;
 }

@@ -1,9 +1,15 @@
-﻿namespace PlexCleaner
+﻿namespace PlexCleaner;
+
+public class MonitorOptions
 {
-    public class MonitorOptions
+    public int MonitorWaitTime { get; set; }
+    public int FileRetryWaitTime { get; set; }
+    public int FileRetryCount { get; set; }
+
+    public void SetDefaults()
     {
-        public int MonitorWaitTime { get; set; } = 60;
-        public int FileRetryWaitTime { get; set; } = 5;
-        public int FileRetryCount { get; set; } = 2;
+        MonitorWaitTime = 60;
+        FileRetryWaitTime = 5;
+        FileRetryCount = 2;
     }
 }
