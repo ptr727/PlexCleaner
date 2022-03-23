@@ -520,6 +520,11 @@ The `getsidecarinfo` command will print sidecar attribute information.
 - [Newtonsoft.Json](https://www.newtonsoft.com/json)
 - [System.CommandLine](https://github.com/dotnet/command-line-api)
 - [Serilog](https://serilog.net/)
+- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
+- [Docker Login](https://github.com/marketplace/actions/docker-login)
+- [Docker Setup Buildx](https://github.com/marketplace/actions/docker-setup-buildx)
+- [Setup .NET Core SDK](https://github.com/marketplace/actions/setup-net-core-sdk)
+- [Build and push Docker images](https://github.com/marketplace/actions/build-and-push-docker-images)
 
 ## Sample Media Files
 
