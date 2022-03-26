@@ -15,10 +15,7 @@
           "maximum": 51.0
         },
         "AudioEncodeCodec": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         }
       },
       "required": [
@@ -62,10 +59,7 @@
           "type": "boolean"
         },
         "KeepExtensions": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -77,10 +71,7 @@
           "type": "boolean"
         },
         "ReMuxExtensions": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -95,19 +86,13 @@
           "type": "boolean"
         },
         "ReEncodeVideo": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "$ref": "#/definitions/VideoFormat"
           }
         },
         "ReEncodeAudioFormats": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -119,19 +104,13 @@
           "type": "boolean"
         },
         "DefaultLanguage": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "RemoveUnwantedLanguageTracks": {
           "type": "boolean"
         },
         "KeepLanguages": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -143,10 +122,7 @@
           "type": "boolean"
         },
         "PreferredAudioFormats": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -170,10 +146,7 @@
           "type": "boolean"
         },
         "FileIgnoreList": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": [
               "string",
@@ -213,10 +186,7 @@
           "type": "boolean"
         },
         "RootPath": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "RootRelative": {
           "type": "boolean"
@@ -305,12 +275,7 @@
             "null"
           ]
         }
-      },
-      "required": [
-        "Format",
-        "Codec",
-        "Profile"
-      ]
+      }
     }
   },
   "type": "object",
@@ -342,8 +307,6 @@
     }
   },
   "required": [
-    "$schema",
-    "SchemaVersion",
     "ToolsOptions",
     "ConvertOptions",
     "ProcessOptions",
