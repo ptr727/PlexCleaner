@@ -19,6 +19,10 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 2.7:
+  - Log names of all processed files that are in `VerifyFailed` state.
+  - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set.
+  - Added a JSON schema for the configuration file.
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
   - Added a `--reprocess` option to the `process` command, `process --reprocess [0 (default), 1, 2]`
@@ -198,8 +202,9 @@ Create a default configuration file by running:
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
+    // Default true on Linux
     "UseSystem": false,
-    // Tools folder
+    // Tools folder, ignored when UseSystem is true
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
     "RootRelative": true,
@@ -254,7 +259,7 @@ Create a default configuration file by running:
     "ReEncode": true,
     // Re-encode the video if the Format, Codec, and Profile values match
     // Empty fields will match with any value
-    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideo": [
       {
         "Format": "mpeg2video"
@@ -293,7 +298,7 @@ Create a default configuration file by running:
     ],
     // Re-encode matching audio codecs
     // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
-    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": [
       "flac",
       "mp2",
@@ -339,16 +344,17 @@ Create a default configuration file by running:
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
-    // Speedup media metadata processing by saving media info in sidecar files
+    // Speedup media re-processing by saving media info and processed state in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
-    // Restore media file modified timestamp to original value
+    // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
-    // List of media files to ignore, e.g. repeat processing failures, but media still plays
-    // Non-ascii characters must be JSON escaped
+    // List of files to skip during processing
+    // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
+    // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
@@ -369,21 +375,21 @@ Create a default configuration file by running:
     "AutoRepair": true,
     // Delete media files that fail repair
     "DeleteInvalidFiles": false,
-    // Add media files that fail repair to the FileIgnoreList setting
-    "RegisterInvalidFiles": true,
+    // Add media files that fail verify or repair to the FileIgnoreList setting
+    // Not required when using sidecar files
+    "RegisterInvalidFiles": false,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file
     "VerifyDuration": 0,
-    // Time in seconds to count interlaced frames, 0 will count entire file
+    // Time in seconds to find interlaced frames, 0 will process entire file
     "IdetDuration": 0,
     // Maximum bitrate in bits per second, 0 will skip computation
     "MaximumBitrate": 100000000,
     // Skip files older than the minimum file age in days, 0 will process all files
     "MinimumFileAge": 0
   }
-}
-```
+}```
 
 ## Usage
 

@@ -975,15 +975,10 @@ public class ProcessFile
                 Log.Logger.Information("Deleting media file due to failed verification : {FileName}", FileInfo.FullName);
                 FileEx.DeleteFile(FileInfo.FullName);
                 FileEx.DeleteFile(SidecarFile.GetSidecarName(FileInfo));
+                SidecarFile.State |= SidecarFile.States.Deleted;
 
                 // Done
                 return false;
-            }
-
-            // Add the failed file to the ignore list
-            if (Program.Config.VerifyOptions.RegisterInvalidFiles)
-            {
-                Program.Config.ProcessOptions.FileIgnoreList.Add(FileInfo.FullName);
             }
 
             // Update state

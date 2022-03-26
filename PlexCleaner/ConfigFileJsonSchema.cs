@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -7,10 +8,18 @@ namespace PlexCleaner;
 
 public class ConfigFileJsonSchemaBase
 {
+    // TODO: How to set the $schema throug e.g. attributes on the class?
+    // https://stackoverflow.com/questions/71625019/how-to-inject-the-json-schema-value-during-newtonsoft-jsonconvert-serializeobje
+    // Schema reference
+    [JsonProperty(PropertyName = "$schema", Order = -3)]
+    public string Schema { get; } = SchemaUri;
+
     // Default to 0 if no value specified, and always write the version first
     [DefaultValue(0)]
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
+
+    private const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.schema.json";
 }
 
 [Obsolete("Replaced in Schema v2", false)]
@@ -46,10 +55,15 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         ProcessOptions = new ProcessOptions(configFileJsonSchema1.ProcessOptions);
     }
 
+    [Required]
     public ToolsOptions ToolsOptions { get; set; } = new();
+    [Required]
     public ConvertOptions ConvertOptions { get; set; } = new();
+    [Required]
     public ProcessOptions ProcessOptions { get; set; } = new();
+    [Required]
     public MonitorOptions MonitorOptions { get; set; } = new();
+    [Required]
     public VerifyOptions VerifyOptions { get; set; } = new();
 
     public const int Version = 2;

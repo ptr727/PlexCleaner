@@ -118,9 +118,9 @@ public class ProcessOptions
 
     public bool DeleteEmptyFolders { get; set; }
     public bool DeleteUnwantedExtensions { get; set; }
-    public List<string> KeepExtensions { get; set; }
+    public List<string> KeepExtensions { get; set; } = new();
     public bool ReMux { get; set; }
-    public List<string> ReMuxExtensions { get; set; }
+    public List<string> ReMuxExtensions { get; set; } = new();
     public bool DeInterlace { get; set; }
     public bool ReEncode { get; set; }
     public List<VideoFormat> ReEncodeVideo { get; set; } = new();
@@ -220,5 +220,22 @@ public class ProcessOptions
             "e-ac-3",
             "ac-3"
         };
+    }
+
+    public void AddIgnoreEntry(string fileName)
+    {
+        // Case insensite conditional add
+        if (!FileIgnoreList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+        {
+            FileIgnoreList.Add(fileName);
+        }
+    }
+
+    public void RemoveIgnoreDuplicates()
+    {
+        // Remove duplicates using case insensite hashset
+        var ignoreList = new HashSet<string>(FileIgnoreList, StringComparer.OrdinalIgnoreCase);
+        FileIgnoreList = ignoreList.ToList();
+        FileIgnoreList.Sort();
     }
 }

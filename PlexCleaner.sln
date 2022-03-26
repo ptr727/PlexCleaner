@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		HISTORY.md = HISTORY.md
 		LICENSE = LICENSE
 		PlexCleaner.json = PlexCleaner.json
+		PlexCleaner.schema.json = PlexCleaner.schema.json
 		README.md = README.md
 		version.json = version.json
 	EndProjectSection
@@ -38,6 +39,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{344C9194-B
 		Test\PlexCleaner-Develop-Test.sh = Test\PlexCleaner-Develop-Test.sh
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +55,10 @@ Global
 		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}.Release|Any CPU.Build.0 = Release|Any CPU
+		{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
