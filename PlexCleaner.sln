@@ -28,7 +28,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\BuildDockerPipeline.yml = .github\workflows\BuildDockerPipeline.yml
 		.github\workflows\BuildPublishPipeline.yml = .github\workflows\BuildPublishPipeline.yml
-		.github\workflows\SuperLinter.yml = .github\workflows\SuperLinter.yml
 		.github\workflows\UpdateDockerHubDescription.yml = .github\workflows\UpdateDockerHubDescription.yml
 	EndProjectSection
 EndProject

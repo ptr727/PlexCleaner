@@ -1,6 +1,6 @@
 {
   // JSON Schema
-  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.schema.json",
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
   // JSON Schema version
   "SchemaVersion": 2,
   // Tools options
