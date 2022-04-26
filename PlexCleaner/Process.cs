@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -21,8 +22,8 @@ internal class Process
         IdetFilter,
         FindClosedCaptions,
         Repair,
-        VerifyLight,
-        VerifyHeavy
+        VerifyMetadata,
+        VerifyStream
     }
 
     public static bool CanReProcess(Tasks task)
@@ -36,15 +37,15 @@ internal class Process
         // Compare type of task with level of re-processing
         switch (task)
         {
-            // 1+: Lightweight processing
+            // 1+: Metadata processing
             case Tasks.ClearTags:
             case Tasks.ClearAttachments:
             case Tasks.FindClosedCaptions:
-            case Tasks.VerifyLight:
+            case Tasks.VerifyMetadata:
                 return Program.Options.ReProcess >= 1;
-            // 2+: Heavyweight processing
+            // 2+: Stream processing
             case Tasks.IdetFilter:
-            case Tasks.VerifyHeavy:
+            case Tasks.VerifyStream:
             case Tasks.Repair:
                 return Program.Options.ReProcess >= 2;
             default:
@@ -153,7 +154,7 @@ internal class Process
             }
 
             // Error
-            if (processResult == false)
+            if (!processResult)
             { 
                 errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
             }
@@ -245,9 +246,15 @@ internal class Process
             // Is the file writeable
             if (!processFile.IsWriteable())
             {
-                Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
-                result = false;
-                break;
+                // TODO: There are occasional sharing violations right after opening FileInfo in the ProcessFile constructor
+                // Retrying the same operation again typically succeeds for these sporadic cases
+                Thread.Sleep(100);
+                if (!processFile.IsWriteable())
+                { 
+                    Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
+                    result = false;
+                    break;
+                }
             }
 
             // Delete the sidecar file if matching MKV file not found
@@ -257,7 +264,7 @@ internal class Process
                 break;
             }
 
-            // Skip if this a sidecar file
+            // Skip if this is a sidecar file
             if (SidecarFile.IsSidecarFile(fileInfo))
             {
                 result = true;

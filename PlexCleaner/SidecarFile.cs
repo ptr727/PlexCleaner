@@ -105,7 +105,7 @@ public class SidecarFile
 
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
-        if (!IsToolsCurrent(true) &&
+        if (!IsToolsCurrent(Program.Config.ProcessOptions.SidecarUpdateOnToolChange) &&
             Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             // Remove the verified state flag if set
@@ -298,7 +298,8 @@ public class SidecarFile
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
         // ReSharper disable once ConvertIfToOrExpression
-        if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+        if (!IsToolsCurrent(log) && 
+            Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             mismatch = true;
         }

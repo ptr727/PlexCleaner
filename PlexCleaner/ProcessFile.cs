@@ -797,6 +797,63 @@ public class ProcessFile
         return Refresh(outputname);
     }
 
+    private bool ShouldVerify(Process.Tasks task)
+    {
+        // Verified, nothing more to do
+        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+        {
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed));
+            return false;
+        }
+
+        // VerifyFailed
+        if (SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
+        {
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Verified));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Repaired));
+
+            // If repair is enabled but repair has not failed then re-verify
+            // Possible when a verify or repair is interrupted
+            if (Program.Config.VerifyOptions.AutoRepair &&
+                !SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+            {
+                return true;
+            }
+
+            // Conditional verify based on verify type
+            return Process.CanReProcess(task);
+        }
+
+        // Not Verified, not VerifyFailed
+        return true;
+    }
+
+    private bool ShouldRepair()
+    {
+        // Verified or Repaired, nothing more to do
+        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
+            SidecarFile.State.HasFlag(SidecarFile.States.Repaired))
+        {
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed));
+            return false;
+        }
+
+        // RepairFailed
+        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+        {
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Verified));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Repaired));
+            
+            // Conditional repair
+            return Process.CanReProcess(Process.Tasks.Repair);
+        }
+
+        // Not Verified, not RepairFailed
+        return true;
+    }
+
     public bool Verify(ref bool modified)
     {
         // TODO: Refactor
@@ -817,16 +874,11 @@ public class ProcessFile
             return true;
         }
 
-        // Skip all if already verified, light processing
-        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
-            SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
+        // Conditional
+        if (!ShouldVerify(Process.Tasks.VerifyMetadata))
         {
-            // Conditional re-process
-            if (!Process.CanReProcess(Process.Tasks.VerifyLight))
-            {
-                // Skip
-                return true;
-            }
+            // Skip
+            return true;
         }
 
         // Break out and skip to end when any verification step fails
@@ -887,16 +939,11 @@ public class ProcessFile
                 break;
             }
 
-            // Skip all if already verified, heavy processing
-            if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
-                SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
+            // Conditional
+            if (!ShouldVerify(Process.Tasks.VerifyStream))
             {
-                // Conditional re-process
-                if (!Process.CanReProcess(Process.Tasks.VerifyHeavy))
-                {
-                    // Skip
-                    return true;
-                }
+                // Skip
+                return true;
             }
 
             // Verify bitrate, expensive
@@ -1122,15 +1169,11 @@ public class ProcessFile
             return false;
         }
 
-        // Conditional re-process
-        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed) ||
-            SidecarFile.State.HasFlag(SidecarFile.States.Repaired))
+        // Conditional
+        if (!ShouldRepair())
         {
-            if (!Process.CanReProcess(Process.Tasks.Repair))
-            {
-                // Done
-                return false;
-            }
+            // Skip
+            return true;
         }
 
         // Trying again may not succeed unless tools changed

@@ -24,6 +24,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set, could happen when using `--reprocess 2`.
   - Added a JSON schema for the configuration file, useful when authoring in tools that honors schemas.
   - Added a "Sandbox" project to simplify code experimentation, e.g. creating a JSON schema from code.
+  - Fixed verify and repair logic when `VerifyOptions:AutoRepair` is enabled and file is in `VerifyFailed` state but not `RepairFailed`, could happen when processing is interrupted.
+  - Silenced noisy `tool version mismatch` warnings when `ProcessOptions:SidecarUpdateOnToolChange` is disabled.
+  - Pinned docker base image to `ubuntu:focal` until Handbrake PPA supports Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases
@@ -320,7 +323,7 @@ Create a default configuration file by running:
     "RestoreFileTimestamp": false,
     // List of files to skip during processing
     // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
-    // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
+    // Non-ascii characters must be JSON escaped, e.g. "Fiancï¿½" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
