@@ -244,17 +244,12 @@ internal class Process
             processFile = new ProcessFile(fileInfo);
 
             // Is the file writeable
+            // TODO: Rare sharing violations on SMB right after opening FileInfo in the ProcessFile constructor
             if (!processFile.IsWriteable())
             {
-                // TODO: There are occasional sharing violations right after opening FileInfo in the ProcessFile constructor
-                // Retrying the same operation again typically succeeds for these sporadic cases
-                Thread.Sleep(100);
-                if (!processFile.IsWriteable())
-                { 
-                    Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
-                    result = false;
-                    break;
-                }
+                Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
+                result = false;
+                break;
             }
 
             // Delete the sidecar file if matching MKV file not found
