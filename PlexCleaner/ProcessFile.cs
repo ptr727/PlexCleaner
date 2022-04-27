@@ -117,13 +117,14 @@ public class ProcessFile
     public bool IsWriteable()
     {
         // Media file must exist and be writeable
-        return FileInfo.Exists && FileEx.IsFileReadWriteable(FileInfo);
+        // TODO: FileEx.IsFileReadWriteable(FileInfo) slows down processing
+        return FileInfo.Exists && !FileInfo.IsReadOnly;
     }
 
     public bool IsSidecarWriteable()
     {
-        // If the sidecar file exists it must be writeable
-        return !SidecarFile.Exists() || SidecarFile.IsWriteable();
+        // Sidecar file must exist and be writeable
+        return SidecarFile.IsWriteable();
     }
 
     public bool RemuxByExtensions(HashSet<string> remuxExtensions, ref bool modified)

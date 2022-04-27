@@ -26,7 +26,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Added a "Sandbox" project to simplify code experimentation, e.g. creating a JSON schema from code.
   - Fixed verify and repair logic when `VerifyOptions:AutoRepair` is enabled and file is in `VerifyFailed` state but not `RepairFailed`, could happen when processing is interrupted.
   - Silenced noisy `tool version mismatch` warnings when `ProcessOptions:SidecarUpdateOnToolChange` is disabled.
-  - Pinned docker base image to `ubuntu:focal` until Handbrake PPA supports Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
+  - Replaced `FileEx.IsFileReadWriteable()` with `!FileInfo.IsReadOnly` to optimize for speed over accuracy, testing for attributes vs. opening for write access.
+  - Pinned docker base image to `ubuntu:focal` vs. `ubuntu:latest` until Handbrake PPA ads support for Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases

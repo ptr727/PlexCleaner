@@ -320,7 +320,8 @@ public class SidecarFile
     public bool IsWriteable()
     {
         // File must exist and be writeable
-        return SidecarFileInfo.Exists && FileEx.IsFileReadWriteable(SidecarFileInfo);
+        // TODO: FileEx.IsFileReadWriteable(FileInfo) slows down processing
+        return SidecarFileInfo.Exists && !SidecarFileInfo.IsReadOnly;
     }
 
     public bool Exists()

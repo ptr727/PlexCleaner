@@ -235,16 +235,18 @@ internal class Process
             // Does the file still exist
             if (!File.Exists(fileInfo.FullName))
             {
-                Log.Logger.Warning("Skipping missing or access denied file : {FileName}", fileInfo.FullName);
+                Log.Logger.Warning("Skipping missing file : {FileName}", fileInfo.FullName);
                 result = false;
                 break;
             }
+
+            // The file may have changed between catalog and processing
+            fileInfo.Refresh();
 
             // Create file processor to hold state
             processFile = new ProcessFile(fileInfo);
 
             // Is the file writeable
-            // TODO: Rare sharing violations on SMB right after opening FileInfo in the ProcessFile constructor
             if (!processFile.IsWriteable())
             {
                 Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
