@@ -21,8 +21,8 @@ internal class Process
         IdetFilter,
         FindClosedCaptions,
         Repair,
-        VerifyLight,
-        VerifyHeavy
+        VerifyMetadata,
+        VerifyStream
     }
 
     public static bool CanReProcess(Tasks task)
@@ -36,15 +36,15 @@ internal class Process
         // Compare type of task with level of re-processing
         switch (task)
         {
-            // 1+: Lightweight processing
+            // 1+: Metadata processing
             case Tasks.ClearTags:
             case Tasks.ClearAttachments:
             case Tasks.FindClosedCaptions:
-            case Tasks.VerifyLight:
+            case Tasks.VerifyMetadata:
                 return Program.Options.ReProcess >= 1;
-            // 2+: Heavyweight processing
+            // 2+: Stream processing
             case Tasks.IdetFilter:
-            case Tasks.VerifyHeavy:
+            case Tasks.VerifyStream:
             case Tasks.Repair:
                 return Program.Options.ReProcess >= 2;
             default:
@@ -55,10 +55,16 @@ internal class Process
     public Process()
     {
         // Convert List<string> to HashSet<string>
+        // Case insensitive, duplicates with different case is not supported
         KeepExtensions = new HashSet<string>(Program.Config.ProcessOptions.KeepExtensions, StringComparer.OrdinalIgnoreCase);
         ReMuxExtensions = new HashSet<string>(Program.Config.ProcessOptions.ReMuxExtensions, StringComparer.OrdinalIgnoreCase);
         ReEncodeAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.ReEncodeAudioFormats, StringComparer.OrdinalIgnoreCase);
         FileIgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
+        if (FileIgnoreList.Count != Program.Config.ProcessOptions.FileIgnoreList.Count)
+        {
+            Log.Logger.Warning("FileIgnoreList contains duplicates, {Set} != {List}", FileIgnoreList.Count, Program.Config.ProcessOptions.FileIgnoreList.Count);
+            Program.Config.ProcessOptions.RemoveIgnoreDuplicates();
+        }
 
         // Maintain order, keep in List<string>
         PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats;
@@ -122,10 +128,14 @@ internal class Process
     public bool ProcessFiles(List<FileInfo> fileList)
     {
         // Log active options
-        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}",
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}, FileIgnoreList: {FileIgnoreList}",
                                Program.Options.TestSnippets,
                                Program.Options.TestNoModify,
-                               Program.Options.ReProcess);
+                               Program.Options.ReProcess,
+                               Program.Config.ProcessOptions.FileIgnoreList.Count);
+
+        // Ignore count before
+        int ignoreCount = FileIgnoreList.Count;
 
         // Process all the files
         List<ProcessTuple> errorInfo = new();
@@ -134,16 +144,18 @@ internal class Process
         bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
         {
             // Process the file
-            if (!ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo))
+            bool processResult = ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo);
+            if (!processResult &&
+                Program.IsCancelled())
             {
-                if (Program.IsCancelled())
-                {
-                    return false;
-                }
-
-                // Error
-                errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                // Cancelled
                 return false;
+            }
+
+            // Error
+            if (!processResult)
+            { 
+                errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
             }
 
             // Modified
@@ -156,10 +168,15 @@ internal class Process
             if (state.HasFlag(SidecarFile.States.VerifyFailed))
             {
                 failedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+
+                // Add the failed file to the ignore list
+                if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+                {
+                    Program.Config.ProcessOptions.AddIgnoreEntry(processInfo.FullName);
+                }
             }
 
-            // Good
-            return true;
+            return processResult;
         });
 
         // Summary
@@ -174,9 +191,11 @@ internal class Process
 
         // Write the updated ignore file list
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-            Program.Config.ProcessOptions.FileIgnoreList.Count != FileIgnoreList.Count)
+            Program.Config.ProcessOptions.FileIgnoreList.Count != ignoreCount)
         {
-            Log.Logger.Information("Updating settings file : {SettingsFile}", Program.Options.SettingsFile);
+            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}", 
+                                    Program.Config.ProcessOptions.FileIgnoreList.Count, 
+                                    Program.Options.SettingsFile);
             Program.Config.ProcessOptions.FileIgnoreList.Sort();
             ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
         }
@@ -215,10 +234,13 @@ internal class Process
             // Does the file still exist
             if (!File.Exists(fileInfo.FullName))
             {
-                Log.Logger.Warning("Skipping missing or access denied file : {FileName}", fileInfo.FullName);
+                Log.Logger.Warning("Skipping missing file : {FileName}", fileInfo.FullName);
                 result = false;
                 break;
             }
+
+            // The file may have changed between catalog and processing
+            fileInfo.Refresh();
 
             // Create file processor to hold state
             processFile = new ProcessFile(fileInfo);
@@ -238,7 +260,7 @@ internal class Process
                 break;
             }
 
-            // Skip if this a sidecar file
+            // Skip if this is a sidecar file
             if (SidecarFile.IsSidecarFile(fileInfo))
             {
                 result = true;
@@ -263,7 +285,8 @@ internal class Process
             // All files past this point are MKV files
 
             // If a sidecar file exists for this MKV file it must be writable
-            if (!processFile.IsSidecarWriteable())
+            if (processFile.IsSidecarAvailable() &&
+                !processFile.IsSidecarWriteable())
             {
                 Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
                 result = false;

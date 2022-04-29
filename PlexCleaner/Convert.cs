@@ -94,7 +94,6 @@ public static class Convert
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
         {
             // Failed, delete temp file
-            Log.Logger.Error("ReMux using MkvMerge failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
 
             // Cancel requested
@@ -103,12 +102,21 @@ public static class Convert
                 return false;
             }
 
+            // Failed
+            Log.Logger.Error("ReMux using MkvMerge failed : {FileName}", inputName);
+
             // Retry using FfMpeg
             Log.Logger.Information("ReMux using FfMpeg : {FileName}", inputName);
             if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempName);
+
+                // Cancel requested
+                if (Program.IsCancelledError())
+                {
+                    return false;
+                }
 
                 // Error
                 Log.Logger.Error("ReMux using FfMpeg failed : {FileName}", inputName);

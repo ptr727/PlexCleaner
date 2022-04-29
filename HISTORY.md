@@ -4,6 +4,41 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 2.6:
+  - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
+  - Added a `--reprocess` option to the `process` command, `process --reprocess [0 (default), 1, 2]`
+    - The `--reprocess` option can be used to override conditional sidecar state optimizations, e.g. don't verify if already verified.
+    - 0: Default behavior, do not do any reprocessing.
+    - 1: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.
+    - 2: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+    - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run with `--reprocess 1` at least once.
+  - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
+    - After HandBrake deinterlacing, the original subtitles are added to the output file, bypassing HandBrake subtle logic.
+    - Subtitle track formats and attributes are preserved, and closed captions embedded are not converted to subtitle tracks.
+    - The HandBrake issue tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
+  - Added the removal of [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
+    - Closed Caption subtitles in video streams are undesired as they cannot be managed, all subtitles should be in discrete tracks.
+    - FFprobe [fails](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) to set the `closed_captions` JSON attribute in JSON output mode, but does detect and print `Closed Captions` in normal output mode.
+    - FFprobe issue tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
+  - Added the ability to bootstrap 7-Zip downloads on Windows, manually downloading `7za.exe` is no longer required.
+    - Getting started is now easier, just run:
+      - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
+      - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
+  - The `--mediafiles` option no longer supports multiple entries per option, use multiple `--mediafiles` options instead.
+    - Deprecation warning initially issued with v2.3.5.
+    - Old style: `--mediafiles path1 path2`
+    - New style: `--mediafiles path1 --mediafiles path2`
+  - Improved the metadata, tag, and attachment detection and cleanup logic.
+    - FFprobe container and track tags are now evaluated for unwanted metadata.
+    - Attachments are now deleted before processing, eliminating problems with cover art being detected as video tracks, or FFMpeg converting covert art into video tracks.
+    - Run with `process --reprocess 1` at least once to re-evaluate conditions.
+  - Removed the `upgradesidecar` command.
+    - Sidecar schemas are automatically upgraded since v2.5.
+  - Removed the `verify` command.
+    - Use `process --reprocess 2` instead.
+  - Removed the `getbitrateinfo` command.
+    - Use `process --reprocess 2` instead.
+  - Minor code cleanup and improvements.
 - Version 2.5:
   - Changed the config file JSON schema to simplify authoring of multi-value settings, resolves [#85](https://github.com/ptr727/PlexCleaner/issues/85)
     - Older file schemas will automatically be upgraded without requiring user input.

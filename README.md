@@ -7,53 +7,31 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 Licensed under the [MIT License](./LICENSE)  
 ![GitHub](https://img.shields.io/github/license/ptr727/PlexCleaner)
 
-## Build Status
+## Publishing
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner).
+Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
+Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
 
-![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)  
+## Build Status
+
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ptr727/PlexCleaner/Build%20and%20Publish%20Pipeline?logo=github)  
 ![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)  
-![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)
+![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)  
+![GitHub Latest Pre-Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=pre-release&logo=github)  
+![Docker Latest Pre-Release](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=develop&logo=docker&color=orange)
 
 ## Release Notes
 
-- Version 2.6:
-  - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
-  - Added a `--reprocess` option to the `process` command, `process --reprocess [0 (default), 1, 2]`
-    - The `--reprocess` option can be used to override conditional sidecar state optimizations, e.g. don't verify if already verified.
-    - 0: Default behavior, do not do any reprocessing.
-    - 1: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.
-    - 2: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
-    - Whenever processing logic is updated or improved (e.g. this release), it is recommended to run with `--reprocess 1` at least once.
-  - Added workaround for HandBrake that [force converts](https://github.com/HandBrake/HandBrake/issues/160) closed captions and subtitle tracks to `ASS` format.
-    - After HandBrake deinterlacing, the original subtitles are added to the output file, bypassing HandBrake subtle logic.
-    - Subtitle track formats and attributes are preserved, and closed captions embedded are not converted to subtitle tracks.
-    - The HandBrake issue tracked as [#95](https://github.com/ptr727/PlexCleaner/issues/95).
-  - Added the removal of [EIA-608](https://en.wikipedia.org/wiki/EIA-608) Closed Captions from video streams.
-    - Closed Caption subtitles in video streams are undesired as they cannot be managed, all subtitles should be in discrete tracks.
-    - FFprobe [fails](https://www.mail-archive.com/ffmpeg-devel@ffmpeg.org/msg126211.html) to set the `closed_captions` JSON attribute in JSON output mode, but does detect and print `Closed Captions` in normal output mode.
-    - FFprobe issue tracked as [#94](https://github.com/ptr727/PlexCleaner/issues/94).
-  - Added the ability to bootstrap 7-Zip downloads on Windows, manually downloading `7za.exe` is no longer required.
-    - Getting started is now easier, just run:
-      - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
-      - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - The `--mediafiles` option no longer supports multiple entries per option, use multiple `--mediafiles` options instead.
-    - Deprecation warning initially issued with v2.3.5.
-    - Old style: `--mediafiles path1 path2`
-    - New style: `--mediafiles path1 --mediafiles path2`
-  - Improved the metadata, tag, and attachment detection and cleanup logic.
-    - FFprobe container and track tags are now evaluated for unwanted metadata.
-    - Attachments are now deleted before processing, eliminating problems with cover art being detected as video tracks, or FFMpeg converting covert art into video tracks.
-    - Run with `process --reprocess 1` at least once to re-evaluate conditions.
-  - Removed the `upgradesidecar` command.
-    - Sidecar schemas are automatically upgraded since v2.5.
-  - Removed the `verify` command.
-    - Use `process --reprocess 2` instead.
-  - Removed the `getbitrateinfo` command.
-    - Use `process --reprocess 2` instead.
-  - Minor code cleanup and improvements.
+- Version 2.7:
+  - Log names of all processed files that are in `VerifyFailed` state at the end of the `process` command.
+  - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set, could happen when using `--reprocess 2`.
+  - Added a JSON schema for the configuration file, useful when authoring in tools that honors schemas.
+  - Added a "Sandbox" project to simplify code experimentation, e.g. creating a JSON schema from code.
+  - Fixed verify and repair logic when `VerifyOptions:AutoRepair` is enabled and file is in `VerifyFailed` state but not `RepairFailed`, could happen when processing is interrupted.
+  - Silenced the noisy `tool version mismatch` warnings when `ProcessOptions:SidecarUpdateOnToolChange` is disabled.
+  - Replaced `FileEx.IsFileReadWriteable()` with `!FileInfo.IsReadOnly` to optimize for speed over accuracy, testing for attributes vs. opening for write access.
+  - Pinned docker base image to `ubuntu:focal` vs. `ubuntu:latest` until Handbrake PPA ads support for Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Use Cases
@@ -143,7 +121,8 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Docker
 
-- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner), and updated weekly.
+- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+- Docker builds are updated weekly.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
@@ -151,8 +130,10 @@ Below are a few examples of issues I've experienced over the many years of using
 Example, run an interactive shell:
 
 ```console
+# Pull the latest container version
 docker pull ptr727/plexcleaner
 
+# Run the shell in an interactive session
 docker run \
   -it \
   --rm \
@@ -161,16 +142,27 @@ docker run \
   ptr727/plexcleaner \
   /bin/bash
 
+# Run PlexCleaner from the shell
 /PlexCleaner/PlexCleaner --version
 ```
 
-Example, run a command:
+Example, run a command in a screen session:
 
 ```console
-docker pull ptr727/plexcleaner
-
+# Start a new screen session
 screen
 
+# Or attach to an existing screen session
+screen -r
+
+# Make sure the media file permissions allow writing
+sudo chown -R nobody:users /data/media
+sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
+
+# Pull the latest container version
+docker pull ptr727/plexcleaner
+
+# Run the process command in an interactive session
 docker run \
   -it \
   --rm \
@@ -198,8 +190,9 @@ Create a default configuration file by running:
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
+    // Default true on Linux
     "UseSystem": false,
-    // Tools folder
+    // Tools folder, ignored when UseSystem is true
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
     "RootRelative": true,
@@ -254,7 +247,7 @@ Create a default configuration file by running:
     "ReEncode": true,
     // Re-encode the video if the Format, Codec, and Profile values match
     // Empty fields will match with any value
-    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideo": [
       {
         "Format": "mpeg2video"
@@ -293,7 +286,7 @@ Create a default configuration file by running:
     ],
     // Re-encode matching audio codecs
     // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
-    // Use FFProbe attribute naming, and the `printmediainfo` command to get media info
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": [
       "flac",
       "mp2",
@@ -339,16 +332,17 @@ Create a default configuration file by running:
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
-    // Speedup media metadata processing by saving media info in sidecar files
+    // Speedup media re-processing by saving media info and processed state in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
     // Enable verify
     "Verify": true,
-    // Restore media file modified timestamp to original value
+    // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
-    // List of media files to ignore, e.g. repeat processing failures, but media still plays
-    // Non-ascii characters must be JSON escaped
+    // List of files to skip during processing
+    // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
+    // Non-ascii characters must be JSON escaped, e.g. "Fianc�" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
@@ -369,21 +363,21 @@ Create a default configuration file by running:
     "AutoRepair": true,
     // Delete media files that fail repair
     "DeleteInvalidFiles": false,
-    // Add media files that fail repair to the FileIgnoreList setting
-    "RegisterInvalidFiles": true,
+    // Add media files that fail verify or repair to the FileIgnoreList setting
+    // Not required when using sidecar files
+    "RegisterInvalidFiles": false,
     // Minimum required playback duration in seconds
     "MinimumDuration": 300,
     // Time in seconds to verify media streams, 0 will verify entire file
     "VerifyDuration": 0,
-    // Time in seconds to count interlaced frames, 0 will count entire file
+    // Time in seconds to find interlaced frames, 0 will process entire file
     "IdetDuration": 0,
     // Maximum bitrate in bits per second, 0 will skip computation
     "MaximumBitrate": 100000000,
     // Skip files older than the minimum file age in days, 0 will process all files
     "MinimumFileAge": 0
   }
-}
-```
+}```
 
 ## Usage
 

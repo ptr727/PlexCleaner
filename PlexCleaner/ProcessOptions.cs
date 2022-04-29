@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace PlexCleaner;
@@ -36,6 +37,7 @@ public class ProcessOptions
 {
     public class VideoFormat
     {
+        // Not required
         public string Format;
         public string Codec;
         public string Profile;
@@ -116,26 +118,47 @@ public class ProcessOptions
         }
     }
 
+    [Required]
     public bool DeleteEmptyFolders { get; set; }
+    [Required]
     public bool DeleteUnwantedExtensions { get; set; }
-    public List<string> KeepExtensions { get; set; }
+    [Required]
+    public List<string> KeepExtensions { get; set; } = new();
+    [Required]
     public bool ReMux { get; set; }
-    public List<string> ReMuxExtensions { get; set; }
+    [Required]
+    public List<string> ReMuxExtensions { get; set; } = new();
+    [Required]
     public bool DeInterlace { get; set; }
+    [Required]
     public bool ReEncode { get; set; }
+    [Required]
     public List<VideoFormat> ReEncodeVideo { get; set; } = new();
+    [Required]
     public List<string> ReEncodeAudioFormats { get; set; } = new();
+    [Required]
     public bool SetUnknownLanguage { get; set; }
+    [Required]
     public string DefaultLanguage { get; set; } = "";
+    [Required]
     public bool RemoveUnwantedLanguageTracks { get; set; }
+    [Required]
     public List<string> KeepLanguages { get; set; } = new();
+    [Required]
     public bool RemoveDuplicateTracks { get; set; }
+    [Required]
     public List<string> PreferredAudioFormats { get; set; } = new();
+    [Required]
     public bool RemoveTags { get; set; }
+    [Required]
     public bool UseSidecarFiles { get; set; }
+    [Required]
     public bool SidecarUpdateOnToolChange { get; set; }
+    [Required]
     public bool Verify { get; set; }
+    [Required]
     public bool RestoreFileTimestamp { get; set; }
+    [Required]
     public List<string> FileIgnoreList { get; set; } = new();
 
     public void SetDefaults()
@@ -220,5 +243,22 @@ public class ProcessOptions
             "e-ac-3",
             "ac-3"
         };
+    }
+
+    public void AddIgnoreEntry(string fileName)
+    {
+        // Case insensite conditional add
+        if (!FileIgnoreList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+        {
+            FileIgnoreList.Add(fileName);
+        }
+    }
+
+    public void RemoveIgnoreDuplicates()
+    {
+        // Remove duplicates using case insensite hashset
+        var ignoreList = new HashSet<string>(FileIgnoreList, StringComparer.OrdinalIgnoreCase);
+        FileIgnoreList = ignoreList.ToList();
+        FileIgnoreList.Sort();
     }
 }

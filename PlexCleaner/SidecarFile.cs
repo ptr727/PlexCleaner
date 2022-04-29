@@ -105,7 +105,7 @@ public class SidecarFile
 
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
-        if (!IsToolsCurrent(true) &&
+        if (!IsToolsCurrent(Program.Config.ProcessOptions.SidecarUpdateOnToolChange) &&
             Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             // Remove the verified state flag if set
@@ -298,7 +298,8 @@ public class SidecarFile
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
         // ReSharper disable once ConvertIfToOrExpression
-        if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+        if (!IsToolsCurrent(log) && 
+            Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             mismatch = true;
         }
@@ -319,7 +320,8 @@ public class SidecarFile
     public bool IsWriteable()
     {
         // File must exist and be writeable
-        return SidecarFileInfo.Exists && FileEx.IsFileReadWriteable(SidecarFileInfo);
+        // TODO: FileEx.IsFileReadWriteable(FileInfo) slows down processing
+        return SidecarFileInfo.Exists && !SidecarFileInfo.IsReadOnly;
     }
 
     public bool Exists()

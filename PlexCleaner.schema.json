@@ -1,0 +1,316 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "title": "PlexCleaner Configuration Schema",
+  "definitions": {
+    "ConvertOptions": {
+      "type": "object",
+      "properties": {
+        "EnableH265Encoder": {
+          "type": "boolean"
+        },
+        "VideoEncodeQuality": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 51.0
+        },
+        "AudioEncodeCodec": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "EnableH265Encoder",
+        "VideoEncodeQuality",
+        "AudioEncodeCodec"
+      ]
+    },
+    "MonitorOptions": {
+      "type": "object",
+      "properties": {
+        "MonitorWaitTime": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "FileRetryWaitTime": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "FileRetryCount": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        }
+      },
+      "required": [
+        "MonitorWaitTime",
+        "FileRetryWaitTime",
+        "FileRetryCount"
+      ]
+    },
+    "ProcessOptions": {
+      "type": "object",
+      "properties": {
+        "DeleteEmptyFolders": {
+          "type": "boolean"
+        },
+        "DeleteUnwantedExtensions": {
+          "type": "boolean"
+        },
+        "KeepExtensions": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "ReMux": {
+          "type": "boolean"
+        },
+        "ReMuxExtensions": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "DeInterlace": {
+          "type": "boolean"
+        },
+        "ReEncode": {
+          "type": "boolean"
+        },
+        "ReEncodeVideo": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VideoFormat"
+          }
+        },
+        "ReEncodeAudioFormats": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "SetUnknownLanguage": {
+          "type": "boolean"
+        },
+        "DefaultLanguage": {
+          "type": "string"
+        },
+        "RemoveUnwantedLanguageTracks": {
+          "type": "boolean"
+        },
+        "KeepLanguages": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "RemoveDuplicateTracks": {
+          "type": "boolean"
+        },
+        "PreferredAudioFormats": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "RemoveTags": {
+          "type": "boolean"
+        },
+        "UseSidecarFiles": {
+          "type": "boolean"
+        },
+        "SidecarUpdateOnToolChange": {
+          "type": "boolean"
+        },
+        "Verify": {
+          "type": "boolean"
+        },
+        "RestoreFileTimestamp": {
+          "type": "boolean"
+        },
+        "FileIgnoreList": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "required": [
+        "DeleteEmptyFolders",
+        "DeleteUnwantedExtensions",
+        "KeepExtensions",
+        "ReMux",
+        "ReMuxExtensions",
+        "DeInterlace",
+        "ReEncode",
+        "ReEncodeVideo",
+        "ReEncodeAudioFormats",
+        "SetUnknownLanguage",
+        "DefaultLanguage",
+        "RemoveUnwantedLanguageTracks",
+        "KeepLanguages",
+        "RemoveDuplicateTracks",
+        "PreferredAudioFormats",
+        "RemoveTags",
+        "UseSidecarFiles",
+        "SidecarUpdateOnToolChange",
+        "Verify",
+        "RestoreFileTimestamp",
+        "FileIgnoreList"
+      ]
+    },
+    "ToolsOptions": {
+      "type": "object",
+      "properties": {
+        "UseSystem": {
+          "type": "boolean"
+        },
+        "RootPath": {
+          "type": "string"
+        },
+        "RootRelative": {
+          "type": "boolean"
+        },
+        "AutoUpdate": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "UseSystem",
+        "RootPath",
+        "RootRelative",
+        "AutoUpdate"
+      ]
+    },
+    "VerifyOptions": {
+      "type": "object",
+      "properties": {
+        "AutoRepair": {
+          "type": "boolean"
+        },
+        "DeleteInvalidFiles": {
+          "type": "boolean"
+        },
+        "RegisterInvalidFiles": {
+          "type": "boolean"
+        },
+        "MinimumDuration": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "VerifyDuration": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "IdetDuration": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "MaximumBitrate": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        },
+        "MinimumFileAge": {
+          "type": "integer",
+          "minimum": 0.0,
+          "maximum": 2147483647.0
+        }
+      },
+      "required": [
+        "AutoRepair",
+        "DeleteInvalidFiles",
+        "RegisterInvalidFiles",
+        "MinimumDuration",
+        "VerifyDuration",
+        "IdetDuration",
+        "MaximumBitrate",
+        "MinimumFileAge"
+      ]
+    },
+    "VideoFormat": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "Format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "SchemaVersion": {
+      "type": "integer",
+      "default": 0
+    },
+    "ToolsOptions": {
+      "$ref": "#/definitions/ToolsOptions"
+    },
+    "ConvertOptions": {
+      "$ref": "#/definitions/ConvertOptions"
+    },
+    "ProcessOptions": {
+      "$ref": "#/definitions/ProcessOptions"
+    },
+    "MonitorOptions": {
+      "$ref": "#/definitions/MonitorOptions"
+    },
+    "VerifyOptions": {
+      "$ref": "#/definitions/VerifyOptions"
+    }
+  },
+  "required": [
+    "ToolsOptions",
+    "ConvertOptions",
+    "ProcessOptions",
+    "MonitorOptions",
+    "VerifyOptions"
+  ]
+}
