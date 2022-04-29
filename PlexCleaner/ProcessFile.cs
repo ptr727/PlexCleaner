@@ -1485,6 +1485,13 @@ public class ProcessFile
         Log.Logger.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
         if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out idetInfo))
         {
+            // Cancel requested
+            if (Program.IsCancelledError())
+            {
+                return false;
+            }
+
+            // Failed
             Log.Logger.Error("Failed to count interlaced frames : {FileName}", FileInfo.Name);
             return false;
         }
