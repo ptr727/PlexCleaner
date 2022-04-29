@@ -1065,6 +1065,13 @@ public class ProcessFile
         Log.Logger.Information("Calculating bitrate info : {FileName}", FileInfo.Name);
         if (!GetBitrateInfo(out BitrateInfo bitrateInfo))
         {
+            // Cancel requested
+            if (Program.IsCancelledError())
+            {
+                return false;
+            }
+
+            // Failed
             Log.Logger.Error("Failed to calculate bitrate info : {FileName}", FileInfo.Name);
             return false;
         }
@@ -1084,7 +1091,6 @@ public class ProcessFile
             // Caller will Refresh()
             SidecarFile.State |= SidecarFile.States.BitrateExceeded;
         }
-
 
         // Audio bitrate exceeds video bitrate, may indicate an error with the video track
         if (bitrateInfo.AudioBitrate.Average > bitrateInfo.VideoBitrate.Average)
@@ -1230,7 +1236,6 @@ public class ProcessFile
         if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempname))
         {
             // Failed, delete temp file
-            Log.Logger.Error("ReEncoding using FfMpeg failed : {FileName}", FileInfo.Name);
             FileEx.DeleteFile(tempname);
 
             // Cancel requested
@@ -1239,12 +1244,14 @@ public class ProcessFile
                 return false;
             }
 
+            // Failed
+            Log.Logger.Error("ReEncoding using FfMpeg failed : {FileName}", FileInfo.Name);
+
             // Try again using handbrake
             Log.Logger.Information("Attempting media repair by ReEncoding using HandBrake : {FileName}", FileInfo.Name);
             if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempname))
             {
                 // Failed, delete temp file
-                Log.Logger.Error("ReEncode using HandBrake failed : {FileName}", FileInfo.Name);
                 FileEx.DeleteFile(tempname);
 
                 // Cancel requested
@@ -1252,6 +1259,9 @@ public class ProcessFile
                 {
                     return false;
                 }
+
+                // Failed
+                Log.Logger.Error("ReEncode using HandBrake failed : {FileName}", FileInfo.Name);
 
                 // Update state
                 // Caller will Refresh()
