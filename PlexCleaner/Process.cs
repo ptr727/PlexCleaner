@@ -285,7 +285,8 @@ internal class Process
             // All files past this point are MKV files
 
             // If a sidecar file exists for this MKV file it must be writable
-            if (!processFile.IsSidecarWriteable())
+            if (processFile.IsSidecarAvailable() &&
+                !processFile.IsSidecarWriteable())
             {
                 Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
                 result = false;

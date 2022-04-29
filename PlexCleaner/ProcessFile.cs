@@ -121,6 +121,11 @@ public class ProcessFile
         return FileInfo.Exists && !FileInfo.IsReadOnly;
     }
 
+    public bool IsSidecarAvailable()
+    {
+        return SidecarFile.Exists();
+    }
+
     public bool IsSidecarWriteable()
     {
         // Sidecar file must exist and be writeable
