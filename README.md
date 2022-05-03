@@ -185,6 +185,8 @@ Create a default configuration file by running:
 
 ```jsonc
 {
+  // JSON Schema
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
   // JSON Schema version
   "SchemaVersion": 2,
   // Tools options
@@ -342,7 +344,7 @@ Create a default configuration file by running:
     "RestoreFileTimestamp": false,
     // List of files to skip during processing
     // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
-    // Non-ascii characters must be JSON escaped, e.g. "Fianc�" into "Fianc\u00e9"
+    // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
       "\\\\server\\share2\\path2\\file2.mkv"
@@ -377,7 +379,8 @@ Create a default configuration file by running:
     // Skip files older than the minimum file age in days, 0 will process all files
     "MinimumFileAge": 0
   }
-}```
+}
+```
 
 ## Usage
 
