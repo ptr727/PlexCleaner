@@ -377,7 +377,8 @@ Create a default configuration file by running:
     // Skip files older than the minimum file age in days, 0 will process all files
     "MinimumFileAge": 0
   }
-}```
+}
+```
 
 ## Usage
 
