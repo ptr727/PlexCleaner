@@ -38,7 +38,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{344C9194-B
 		Test\PlexCleaner-Develop-Test.sh = Test\PlexCleaner-Develop-Test.sh
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Issue Templates", "Issue Templates", "{03A7B3AB-49DA-481B-AF3D-CF3D16BBFD0E}"
+	ProjectSection(SolutionItems) = preProject
+		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -66,6 +71,7 @@ Global
 		{C560F57F-962E-4C71-8F27-939D06813302} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 		{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 		{344C9194-BA16-4776-9DDB-B9E776D5C0EF} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
+		{03A7B3AB-49DA-481B-AF3D-CF3D16BBFD0E} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A127C929-B096-4BFD-8BAD-56A3860AEB94}
