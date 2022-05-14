@@ -1,33 +1,24 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: "[Bug]"
+about: Create a bug report
 labels: bug
 assignees: ''
-
 ---
 
-**Please use Discussions for general questions.**
+**Before filing an issue report**:
+  - Ask general questions in Discussions.
+  - Propose enhancements in Discussions.
+  - Reproduce using the latest version.
 
-**Describe the bug**
-A clear and concise description of what the bug is.
-
-**Steps to reproduce**
-1. Run command '...'
-2. See error '...'
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**Command line**
-Complete command line used.
-
-**Console output**
-Console output capture to help explain your problem.
-
-**Environment**
- - OS: [e.g. Windows 11, Docker on Ubuntu]
- - App version: [e.g. 1.2.3]
-
-**Additional information**
-Add any other context about the problem here.
+**Please include the following information:**
+- Steps to reproduce.
+- OS and app version.
+- Log file output:
+  - Paste relevent error output from the log file.
+  - Zip and attach the log file.
+- Settings file:
+  - Zip and attach the settings JSON file.
+- Media file with issue:
+  - Paste the output from the `getmediainfo` command.
+  - Link to downloadable snippet of media file.
+- Use GitHub Markdown and [Codeblocks]([codeblock](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks) to preserve formatting.

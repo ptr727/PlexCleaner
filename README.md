@@ -7,7 +7,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 Licensed under the [MIT License](./LICENSE)  
 ![GitHub](https://img.shields.io/github/license/ptr727/PlexCleaner)
 
-## Publishing
+## Publishing Pipeline
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
@@ -34,6 +34,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Pinned docker base image to `ubuntu:focal` vs. `ubuntu:latest` until Handbrake PPA ads support for Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
+## Questions and Issues
+
+Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions and proposed enhancements.  
+Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
+
 ## Use Cases
 
 The objective of the tool is to modify media content such that it will Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).  
@@ -58,6 +63,72 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ## Installation
 
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports x64 docker, including Linux, Windows, and MacOS (untested).  
+Alternatively install directly on [Windows](#windows) or [Linux](#linux) following the provided instructions.
+
+### Docker
+
+- Builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+- Images are updated weekly with the latest upstream PPA and OS updates included.
+- The container has all the prerequisite 3rd party tools pre-installed.
+- Map your host volumes, and make sure the user has permission to access and modify media files.
+- The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
+- See example below for instructions on getting started.
+
+Example, run in an interactive shell:
+
+```console
+# In this example the host "/data/media" directory is mapped to the container "/media" directory
+# Replace the volume mappings to suit your needs
+
+# Pull the latest container version
+docker pull ptr727/plexcleaner
+
+# Run the bash shell in an interactive session
+docker run -it --rm --volume /data/media:/media:rw ptr727/plexcleaner /bin/bash
+
+# Create default settings file, edit to suit your needs
+/PlexCleaner/PlexCleaner --settingsfile /media/PlexCleaner/PlexCleaner.json defaultsettings
+
+# Process media files
+/PlexCleaner/PlexCleaner --settingsfile /media/PlexCleaner/PlexCleaner.json --logfile /media/PlexCleaner/PlexCleaner.log process --mediafiles /media/Movies --mediafiles /media/Series
+
+# Exit the interactive session
+exit
+```
+
+Example, run in a screen session:
+
+```console
+# Start a new screen session
+screen
+
+# Or attach to an existing screen session
+screen -r
+
+# Make sure the media file permissions allow writing
+sudo chown -R nobody:users /data/media
+sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
+
+# Pull the latest container version
+docker pull ptr727/plexcleaner
+
+# Run the process command in an interactive session
+docker run \
+  -it \
+  --rm \
+  --user nobody:users \
+  --env TZ=America/Los_Angeles \
+  --volume /data/media:/media:rw \
+  ptr727/plexcleaner \
+  /PlexCleaner/PlexCleaner \
+    --settingsfile /media/PlexCleaner/PlexCleaner.json \
+    --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
+    process \
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
+```
+
 ### Windows
 
 - Install the [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
@@ -74,7 +145,7 @@ Below are a few examples of issues I've experienced over the many years of using
 
 ### Linux
 
-- Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](https://hub.docker.com/u/ptr727/plexcleaner) build instead.
+- Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](#docker) build instead.
 - Listed steps are for Ubuntu, adjust as appropriate for your distribution.
 - Install prerequisites:
   - `sudo apt update`
@@ -118,65 +189,6 @@ Below are a few examples of issues I've experienced over the many years of using
 - Create a default JSON settings file using the `defaultsettings` command:
   - `./PlexCleaner --settingsfile "PlexCleaner.json" defaultsettings`
   - Modify the settings to suit your needs.
-
-### Docker
-
-- Docker builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-- Docker builds are updated weekly.
-- The container has all the prerequisite 3rd party tools pre-installed.
-- Map your host volumes, and make sure the user has permission to access and modify media files.
-- The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
-
-Example, run an interactive shell:
-
-```console
-# Pull the latest container version
-docker pull ptr727/plexcleaner
-
-# Run the shell in an interactive session
-docker run \
-  -it \
-  --rm \
-  --user nobody:users \
-  --volume /data/media:/media:rw \
-  ptr727/plexcleaner \
-  /bin/bash
-
-# Run PlexCleaner from the shell
-/PlexCleaner/PlexCleaner --version
-```
-
-Example, run a command in a screen session:
-
-```console
-# Start a new screen session
-screen
-
-# Or attach to an existing screen session
-screen -r
-
-# Make sure the media file permissions allow writing
-sudo chown -R nobody:users /data/media
-sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
-
-# Pull the latest container version
-docker pull ptr727/plexcleaner
-
-# Run the process command in an interactive session
-docker run \
-  -it \
-  --rm \
-  --user nobody:users \
-  --env TZ=America/Los_Angeles \
-  --volume /data/media:/media:rw \
-  ptr727/plexcleaner \
-  /PlexCleaner/PlexCleaner \
-    --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
-    process \
-    --mediafiles /media/Movies \
-    --mediafiles /media/Series
-```
 
 ## Configuration
 
