@@ -4,6 +4,15 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 2.7:
+  - Log names of all processed files that are in `VerifyFailed` state at the end of the `process` command.
+  - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set, could happen when using `--reprocess 2`.
+  - Added a JSON schema for the configuration file, useful when authoring in tools that honors schemas.
+  - Added a "Sandbox" project to simplify code experimentation, e.g. creating a JSON schema from code.
+  - Fixed verify and repair logic when `VerifyOptions:AutoRepair` is enabled and file is in `VerifyFailed` state but not `RepairFailed`, could happen when processing is interrupted.
+  - Silenced the noisy `tool version mismatch` warnings when `ProcessOptions:SidecarUpdateOnToolChange` is disabled.
+  - Replaced `FileEx.IsFileReadWriteable()` with `!FileInfo.IsReadOnly` to optimize for speed over accuracy, testing for attributes vs. opening for write access.
+  - Pinned docker base image to `ubuntu:focal` vs. `ubuntu:latest` until Handbrake PPA ads support for Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
 - Version 2.6:
   - Fixed `SidecarFile.Update()` bug that would not update the sidecar when only the `State` changed, and kept re-verifying the same verified files.
   - Added a `--reprocess` option to the `process` command, `process --reprocess [0 (default), 1, 2]`

@@ -568,8 +568,7 @@ public class ProcessFile
         // Look for the "Closed Captions" in the video stream line
         // Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1280x720, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
         using StringReader lineReader = new(ffprobe);
-        string line;
-        while ((line = lineReader.ReadLine()) != null)
+        while (lineReader.ReadLine() is { } line)
         {
             // Line should start with "Stream #", and contain "Video" and contain "Closed Captions"
             line = line.Trim();

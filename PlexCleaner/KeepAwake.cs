@@ -33,7 +33,7 @@ public static class KeepAwake
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
 
-    [FlagsAttribute]
+    [Flags]
     private enum ExecutionState : uint
     {
         // ReSharper disable once UnusedMember.Local

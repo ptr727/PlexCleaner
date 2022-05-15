@@ -52,14 +52,20 @@ internal class Program
         // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         LoggerConfiguration loggerConfiguration = new();
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}");
+
+        // Log Thread Id
+        // Need to explicitly add thread id formatting to file and console output
+        loggerConfiguration.Enrich.WithThreadId();
+
+        // Log to console
+        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
         {
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
+            loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
         }
 
         // Create static Serilog logger
@@ -324,38 +330,54 @@ internal class Program
             ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
-        // Set the static options from the loaded settings
+        // Set the static options from the loaded settings and options
         Options = options;
         Config = config;
 
         // Set the FileEx options
         FileEx.Options.TestNoModify = Options.TestNoModify;
-        FileEx.Options.RetryCount = config.MonitorOptions.FileRetryCount;
-        FileEx.Options.RetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
+        FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
+        FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
 
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = CancelSource.Token;
 
         // Use log file
-        if (!string.IsNullOrEmpty(options.LogFile))
+        if (!string.IsNullOrEmpty(Options.LogFile))
         {
             // Delete if not in append mode
-            if (!options.LogAppend &&
-                !FileEx.DeleteFile(options.LogFile))
+            if (!Options.LogAppend &&
+                !FileEx.DeleteFile(Options.LogFile))
             {
-                Log.Logger.Error("Failed to clear the logfile : {LogFile}", options.LogFile);
+                Log.Logger.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
                 return null;
             }
 
             // Recreate the logger with a file
-            CreateLogger(options.LogFile);
-            Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
+            CreateLogger(Options.LogFile);
+            Log.Logger.Information("Logging output to : {LogFile}", Options.LogFile);
         }
 
         // Log app and runtime version
         string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
+
+        // Parallel processing config
+        if (Options.Parallel)
+        {
+            // If threadcount is 0 (default) use the number of processors
+            if (Options.ThreadCount == 0)
+            { 
+                Options.ThreadCount = Environment.ProcessorCount;
+            }
+        }
+        else
+        {
+            // If disabled set the threadcount to 1
+            Options.ThreadCount = 1;
+        }
+        Log.Logger.Information("Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}", Options.Parallel, Options.ThreadCount, Environment.ProcessorCount);
 
         // Verify tools
         if (verifyTools)
@@ -384,49 +406,68 @@ internal class Program
         Cancel();
     }
 
-    private bool CreateFileList(List<string> files)
+    private bool CreateFileList(List<string> mediaFiles)
     {
         Log.Logger.Information("Creating file and folder list ...");
 
         // Trim quotes from input paths
-        files = files.Select(file => file.Trim('"')).ToList();
+        mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
 
-        // Process all entries
-        foreach (string fileOrFolder in files)
+        try
         {
-            // File or a directory
-            FileAttributes fileAttributes;
-            try
-            {
-                fileAttributes = File.GetAttributes(fileOrFolder);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-            {
-                return false;
-            }
+            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
+            var lockObject = new Object();
 
-            if (fileAttributes.HasFlag(FileAttributes.Directory))
+            // Process each input in parallel
+            mediaFiles.AsParallel()
+                .WithDegreeOfParallelism(Options.ThreadCount)
+                .WithCancellation(CancelToken())
+                .ForAll(fileOrFolder =>
             {
-                // Add this directory
-                DirectoryInfo dirInfo = new(fileOrFolder);
-                DirectoryInfoList.Add(dirInfo);
-                FolderList.Add(fileOrFolder);
-
-                // Create the file list from the directory
-                Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
-                if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                // Test for file or a directory
+                var fileAttributes = File.GetAttributes(fileOrFolder);
+                if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
-                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
-                    return false;
+                    // Add this directory
+                    DirectoryInfo dirInfo = new(fileOrFolder);
+                    DirectoryInfoList.Add(dirInfo);
+                    FolderList.Add(fileOrFolder);
+
+                    // Create the file list from the directory
+                    Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
+                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                    {
+                        // Abort
+                        Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
+                        throw new OperationCanceledException();
+                    }
+
+                    // Add file and directory lists
+                    lock(lockObject)
+                    {
+                        FileInfoList.AddRange(fileInfoList);
+                        DirectoryInfoList.AddRange(directoryInfoList);
+                    }
                 }
-                FileInfoList.AddRange(fileInfoList);
-                DirectoryInfoList.AddRange(directoryInfoList);
-            }
-            else
-            {
-                // Add this file
-                FileInfoList.Add(new FileInfo(fileOrFolder));
-            }
+                else
+                {
+                    // Add this file
+                    lock (lockObject)
+                    {
+                        FileInfoList.Add(new FileInfo(fileOrFolder));
+                    }
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
+            return false;
         }
 
         // Report
@@ -451,6 +492,11 @@ internal class Program
     {
         // Signal cancel
         CancelSource.Cancel();
+    }
+
+    public static CancellationToken CancelToken()
+    {
+        return CancelSource.Token;
     }
 
     public static CommandLineOptions Options { get; private set; }

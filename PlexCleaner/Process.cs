@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -113,14 +116,32 @@ internal class Process
         Log.Logger.Information("Deleting empty folders ...");
 
         // Delete all empty folders
-        int deleted = 0;
-        foreach (string folder in folderList)
+        int totalDeleted = 0;
+        try
+        { 
+            folderList.AsParallel()
+                .WithDegreeOfParallelism(Program.Options.ThreadCount)
+                .WithCancellation(Program.CancelToken())
+                .ForAll(folder =>
+                {
+                    int deleted = 0;
+                    Log.Logger.Information("Looking for empty folders in {Folder}", folder);
+                    // Ignore errors
+                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    Interlocked.Add(ref totalDeleted, deleted);
+                });
+        }
+        catch (OperationCanceledException)
         {
-            Log.Logger.Information("Looking for empty folders in {Folder}", folder);
-            FileEx.DeleteEmptyDirectories(folder, ref deleted);
+            // Cancelled
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
+            return false;
         }
 
-        Log.Logger.Information("Deleted folders : {Deleted}", deleted);
+        Log.Logger.Information("Deleted folders : {Deleted}", totalDeleted);
 
         return true;
     }
@@ -654,30 +675,39 @@ internal class Process
         Stopwatch timer = new();
         timer.Start();
 
-        // Process all files
+        // Process all files in parallel
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
-        foreach (FileInfo fileInfo in fileList)
+        try 
         {
-            // Cancel handler
-            if (Program.IsCancelled())
+            // Create a load balanced partitioner vs. static range based
+            var partitioner = Partitioner.Create(fileList, true);
+            partitioner.AsParallel()
+                .WithDegreeOfParallelism(Program.Options.ThreadCount)
+                .WithCancellation(Program.CancelToken())
+                .ForAll(fileInfo =>
             {
-                return false;
-            }
+                // Perform the task
+                double processedPercentage = System.Convert.ToDouble(Interlocked.Increment(ref processedCount)) / System.Convert.ToDouble(totalCount);
+                Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
+                if (!taskFunc(fileInfo) &&
+                    !Program.IsCancelled())
+                {
+                    Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
+                    Interlocked.Increment(ref errorCount);
+                }
 
-            // Perform the task
-            processedCount++;
-            double processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
-            Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
-            if (!taskFunc(fileInfo) &&
-                !Program.IsCancelled())
-            {
-                Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
-                errorCount++;
-            }
-
-            // Next file
+                // Next file
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
         }
 
         // Stop the timer
