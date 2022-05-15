@@ -443,7 +443,7 @@ internal class Program
                     }
 
                     // Add file and directory lists
-                    lock(lockObject)
+                    lock (lockObject)
                     {
                         FileInfoList.AddRange(fileInfoList);
                         DirectoryInfoList.AddRange(directoryInfoList);

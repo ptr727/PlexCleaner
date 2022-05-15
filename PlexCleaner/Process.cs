@@ -162,6 +162,7 @@ internal class Process
         List<ProcessTuple> errorInfo = new();
         List<ProcessTuple> modifiedInfo = new();
         List<ProcessTuple> failedInfo = new();
+        var lockObject = new Object();
         bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
         {
             // Process the file
@@ -176,24 +177,36 @@ internal class Process
             // Error
             if (!processResult)
             { 
-                errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                }
             }
 
             // Modified
             if (modified)
             {
-                modifiedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    modifiedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                }
             }
             
             // Verify failed
             if (state.HasFlag(SidecarFile.States.VerifyFailed))
             {
-                failedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    failedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                }
 
                 // Add the failed file to the ignore list
                 if (Program.Config.VerifyOptions.RegisterInvalidFiles)
                 {
-                    Program.Config.ProcessOptions.AddIgnoreEntry(processInfo.FullName);
+                    lock (lockObject)
+                    { 
+                        Program.Config.ProcessOptions.AddIgnoreEntry(processInfo.FullName);
+                    }
                 }
             }
 
@@ -506,8 +519,7 @@ internal class Process
         TagMapDictionary fftags = new();
         TagMapDictionary mktags = new();
         TagMapDictionary mitags = new();
-
-        // Process all the files
+        var lockObject = new Object();
         if (!ProcessFilesDriver(fileList, "Create Tag Map", fileInfo =>
             {
                 // Handle only MKV files
@@ -524,9 +536,12 @@ internal class Process
                 }
 
                 // Add all the tags
-                fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
-                mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
-                mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+                lock (lockObject)
+                { 
+                    fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
+                    mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
+                    mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+                }
 
                 return true;
             }))
@@ -688,15 +703,22 @@ internal class Process
                 .WithCancellation(Program.CancelToken())
                 .ForAll(fileInfo =>
             {
+                // Log completion % before task starts
+                double processedPercentage = System.Convert.ToDouble(Interlocked.CompareExchange(ref processedCount, 0, 0)) / System.Convert.ToDouble(totalCount);
+                Log.Logger.Information("{TaskName} Begin ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
+
                 // Perform the task
-                double processedPercentage = System.Convert.ToDouble(Interlocked.Increment(ref processedCount)) / System.Convert.ToDouble(totalCount);
-                Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
                 if (!taskFunc(fileInfo) &&
                     !Program.IsCancelled())
                 {
+                    // Error
                     Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
                     Interlocked.Increment(ref errorCount);
                 }
+
+                // Log completion % after task completes
+                processedPercentage = System.Convert.ToDouble(Interlocked.Increment(ref processedCount)) / System.Convert.ToDouble(totalCount);
+                Log.Logger.Information("{TaskName} End ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
 
                 // Next file
             });
