@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using Newtonsoft.Json.Linq;
@@ -118,10 +119,14 @@ public class HandBrakeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, outputName, commandline);
+        commandline.Append($"--encoder {videoCodec} --encoder-preset medium --quality {videoQuality} ");
+        commandline.Append($"--all-subtitles --all-audio --aencoder {audioCodec}");
+
         // Encode audio and video, copy subtitles
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder {audioCodec}";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -130,10 +135,14 @@ public class HandBrakeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, outputName, commandline);
+        commandline.Append($"--encoder {videoCodec} --encoder-preset medium --quality {videoQuality} ");
+        commandline.Append($"--all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}");
+
         // Encode video, copy audio and subtitles
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --all-subtitles --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -152,11 +161,16 @@ public class HandBrakeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, outputName, commandline);
+        commandline.Append($"--encoder {videoCodec} --encoder-preset medium --quality {videoQuality} ");
+        commandline.Append("--comb-detect --decomb ");
+        commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
+        commandline.Append($"--all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}");
+
         // Encode and decomb video, copy audio, and conditionally copy subtitles
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string subtitles = includeSubtitles ? "--all-subtitles" : "--subtitle none";
-        string commandline = $"--input \"{inputName}\" {snippet} --output \"{outputName}\" --format av_mkv --encoder {videoCodec} --encoder-preset medium --quality {videoQuality} --comb-detect --decomb {subtitles} --all-audio --aencoder copy --audio-fallback {Program.Config.ConvertOptions.AudioEncodeCodec}";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -168,6 +182,19 @@ public class HandBrakeTool : MediaTool
             Program.Config.ConvertOptions.VideoEncodeQuality,
             outputName,
             includeSubtitles);
+    }
+
+    private static void DefaultArgs(string inputName, string outputName, StringBuilder commandline)
+    {
+        // TODO: How to suppress console output?
+        // if (Program.Options.Parallel)
+        commandline.Append($"--input \"{inputName}\" ");
+        if (Program.Options.TestSnippets)
+        {
+            commandline.Append($"{Snippet} ");
+        }
+        commandline.Append($"--output \"{outputName}\" ");
+        commandline.Append("--format av_mkv ");
     }
 
     private const string H264Codec = "x264";

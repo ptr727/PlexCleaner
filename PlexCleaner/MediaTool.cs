@@ -107,8 +107,9 @@ public abstract class MediaTool
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
+        // Suppress console output when running in parallel mode
         string path = GetToolPath();
-        int exitCode = ProcessEx.Execute(path, parameters);
+        int exitCode = ProcessEx.Execute(path, parameters, !Program.Options.Parallel);
         return exitCode;
     }
 

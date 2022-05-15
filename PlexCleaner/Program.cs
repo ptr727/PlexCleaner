@@ -366,10 +366,10 @@ internal class Program
         // Parallel processing config
         if (Options.Parallel)
         {
-            // If threadcount is 0 (default) use the number of processors
+            // If threadcount is 0 (default) use half the number of processors
             if (Options.ThreadCount == 0)
             { 
-                Options.ThreadCount = Environment.ProcessorCount;
+                Options.ThreadCount = Math.Max(Environment.ProcessorCount / 2, 1);
             }
         }
         else

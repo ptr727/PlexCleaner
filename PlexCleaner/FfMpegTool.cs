@@ -244,15 +244,19 @@ public class FfMpegTool : MediaTool
         // Use null muxer, no stats, report errors
         // https://trac.ffmpeg.org/wiki/Null
 
-        // Create the FfMpeg commandline and execute
-        string snippet = Program.Config.VerifyOptions.VerifyDuration == 0 ? "" : $"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration}";
-        if (Program.Options.TestSnippets)
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(filename, commandline);
+        if (!Program.Options.TestSnippets &&
+            Program.Config.VerifyOptions.VerifyDuration != 0)
         {
-            snippet = Snippet;
+            commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration} ");
         }
-        string commandline = $"{GlobalOptions} -i \"{filename}\" {OutputOptions} {snippet} -hide_banner -nostats -loglevel error -xerror -f null -";
+        commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
+
+        // Verify media stream using null filter
         // Limit captured output to 5 lines
-        int exitCode = Command(commandline, 5, out string _, out error);
+        int exitCode = Command(commandline.ToString(), 5, out string _, out error);
 
         // Test exitCode and stderr errors
         return exitCode == 0 && error.Length == 0;
@@ -271,10 +275,13 @@ public class FfMpegTool : MediaTool
         // Create an input and output map
         CreateFfMpegMap(keep, out string input, out string output);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"{input} {output} -f matroska \"{outputName}\"");
+
         // Remux using map
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -283,10 +290,13 @@ public class FfMpegTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
+
         // Remux and copy all streams
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -codec copy -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -381,10 +391,13 @@ public class FfMpegTool : MediaTool
         //  [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
         //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"{input} {output} -f matroska \"{outputName}\"");
+
         // Convert using map
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} {input} {output} -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
     public bool ConvertToMkv(string inputName, MediaInfo keep, MediaInfo reEncode, string outputName)
@@ -404,10 +417,13 @@ public class FfMpegTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"-map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"");
+
         // Encode video and audio, copy subtitle streams
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -416,10 +432,13 @@ public class FfMpegTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"-map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"");
+
         // Encode video, copy audio and subtitle streams
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -438,11 +457,14 @@ public class FfMpegTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");
+
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -451,10 +473,13 @@ public class FfMpegTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
+
         // Remove all metadata using -map_metadata -1
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -475,15 +500,19 @@ public class FfMpegTool : MediaTool
         // https://trac.ffmpeg.org/wiki/Null
         string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null";
 
-        // Run idet filter
-        string snippet = Program.Config.VerifyOptions.IdetDuration == 0 ? "" : $"-t 0 -ss {Program.Config.VerifyOptions.IdetDuration}";
-        if (Program.Options.TestSnippets)
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+        if (!Program.Options.TestSnippets && 
+            Program.Config.VerifyOptions.IdetDuration != 0)
         {
-            snippet = Snippet;
+            commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.IdetDuration} ");
         }
-        string commandline = $"{GlobalOptions} -i \"{inputName}\" {OutputOptions} {snippet} -hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}";
+        commandline.Append($"-hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}");
+
+        // Run idet filter
         // Limit captured output to 5 lines
-        int exitCode = Command(commandline, 5, out string _, out text);
+        int exitCode = Command(commandline.ToString(), 5, out string _, out text);
         return exitCode == 0;
     }
 
@@ -541,6 +570,23 @@ public class FfMpegTool : MediaTool
             return false;
         }
         return true;
+    }
+
+    private static void DefaultArgs(string inputName, StringBuilder commandline)
+    {
+        commandline.Append($"{GlobalOptions} ");
+        if (Program.Options.TestSnippets)
+        {
+            // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
+            commandline.Append($"{Snippet} ");
+        }
+        commandline.Append($"-i \"{inputName}\" {OutputOptions} ");
+        if (Program.Options.Parallel)
+        {
+            // Limit console output
+            // TODO: Verify no issues with duplicates when also added by other commands
+            commandline.Append("-hide_banner -nostats ");
+        }
     }
 
     private const string H264Codec = "libx264";

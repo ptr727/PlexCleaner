@@ -6,7 +6,7 @@
     },
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--parallel --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
     },
     "Monitor": {
       "commandName": "Project",
@@ -78,6 +78,14 @@
     "Process Test ReProcess 2": {
       "commandName": "Project",
       "commandLineArgs": "--settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --reprocess 2 --mediafiles \"D:\\Test\""
+    },
+    "Process Parallel": {
+      "commandName": "Project",
+      "commandLineArgs": "--parallel --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+    },
+    "Process Snippets Parallel": {
+      "commandName": "Project",
+      "commandLineArgs": "--parallel --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --testsnippets --mediafiles \"D:\\Test\""
     }
   }
 }

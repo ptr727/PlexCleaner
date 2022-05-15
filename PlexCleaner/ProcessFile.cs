@@ -919,7 +919,9 @@ public class ProcessFile
             }
 
             // Test playback duration
-            if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration))
+            // Ignore when snippets are enabled
+            if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration) &&
+                !Program.Options.TestSnippets)
             {
                 // Playback duration is too short
                 Log.Logger.Warning("File play duration is too short : {Duration} < {MinimumDuration} : {FileName}",

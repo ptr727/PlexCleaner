@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="2.5.6" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="2.6.2-g6a06f03c67" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Serilog" Version="2.11.1-dev-01397" />

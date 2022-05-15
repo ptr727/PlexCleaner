@@ -27,12 +27,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Added parallel processing support:
     - Not yet field tested, use with care, please report issues.
     - Implemented using [Parallel LINQ](https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/introduction-to-plinq).
-    - Using PLINQ was a relatively easy change, but more complex implementations, or a custom [Partitioner](https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.partitioner), may produce better results.
     - Enable parallel processing using the `--parallel` command line option.
-    - The default thread count is equal to the number of processors, override the value using the `--threadcount` option.
-    - The current ThreadId is logged to console and file output to help with troubleshooting.
-    - Interpreting the log output is significantly more complicated as logical operations are logged out of sync.
-    - Interactive console output from multiple tools running concurrently will overwriting the same console.
+    - The default thread count is equal to half the number of system cores, override the value using the `--threadcount` option.
+    - The current ThreadId is logged to output to help correlate logical actions.
+    - Interactive console output from tools are disabled when parallel processing.
+  - Refactored commandline construction to simplify appending conditional options.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions and Issues
