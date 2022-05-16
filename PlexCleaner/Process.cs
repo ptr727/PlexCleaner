@@ -704,8 +704,8 @@ internal class Process
                 .ForAll(fileInfo =>
             {
                 // Log completion % before task starts
-                double processedPercentage = System.Convert.ToDouble(Interlocked.CompareExchange(ref processedCount, 0, 0)) / System.Convert.ToDouble(totalCount);
-                Log.Logger.Information("{TaskName} Begin ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
+                double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
+                Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileInfo.FullName);
 
                 // Perform the task
                 if (!taskFunc(fileInfo) &&
@@ -717,8 +717,8 @@ internal class Process
                 }
 
                 // Log completion % after task completes
-                processedPercentage = System.Convert.ToDouble(Interlocked.Increment(ref processedCount)) / System.Convert.ToDouble(totalCount);
-                Log.Logger.Information("{TaskName} End ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
+                processedPercentage = GetPercentage(Interlocked.Increment(ref processedCount), totalCount);
+                Log.Logger.Information("{TaskName} ({Processed:N2}%) After : {FileName}", taskName, processedPercentage, fileInfo.FullName);
 
                 // Next file
             });
@@ -742,6 +742,27 @@ internal class Process
         Log.Logger.Information("Error files : {Count}", errorCount);
 
         return errorCount == 0;
+    }
+
+    private static double GetPercentage(int dividend, int divisor)
+    {
+        // Calculate double digit precision avoiding 100% until complete
+        if (dividend == 0)
+        {
+            return 0.0;
+        }
+        if (dividend == divisor)
+        {
+            return 100.0;
+        }
+        double percentage = System.Convert.ToDouble(dividend) / System.Convert.ToDouble(divisor) * 100.0;
+        percentage = Math.Round(percentage, 2);
+        if (percentage.Equals(100.0))
+        { 
+            // Do not show 100% until really done
+            percentage = 99.99;
+        }
+        return percentage;
     }
 
     private readonly HashSet<string> FileIgnoreList;
