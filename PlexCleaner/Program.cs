@@ -430,8 +430,11 @@ internal class Program
                 {
                     // Add this directory
                     DirectoryInfo dirInfo = new(fileOrFolder);
-                    DirectoryInfoList.Add(dirInfo);
-                    FolderList.Add(fileOrFolder);
+                    lock (lockObject)
+                    { 
+                        DirectoryInfoList.Add(dirInfo);
+                        FolderList.Add(fileOrFolder);
+                    }
 
                     // Create the file list from the directory
                     Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
