@@ -81,7 +81,7 @@
     },
     "Process Parallel": {
       "commandName": "Project",
-      "commandLineArgs": "--parallel --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--parallel --threadcount 2 --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
     },
     "Process Snippets Parallel": {
       "commandName": "Project",

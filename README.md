@@ -25,19 +25,18 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.8:
   - Added parallel file processing support:
-    - Not field tested, use with care, please discuss results in the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum.
     - Implemented using [Parallel LINQ](https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/introduction-to-plinq).
-    - Enable parallel processing using the `--parallel` command line option.
-    - The default thread count is equal to half the number of system cores, override the value using the `--threadcount` option.
-    - The current ThreadId is logged to help correlate between sequential and logical actions.
-    - Logging added before task starts and after task completes, avoids being 100% complete while last task is still running.
-    - Interactive console output from tools are disabled when parallel processing is enabled, avoids console overwrites.
+    - Enable parallel processing by using the `--parallel` command line option.
+    - The default thread count is equal to half the number of system cores.
+    - Override the default thread count by using the `--threadcount` option, e.g. `PlexCleaner --parallel --threadcount 2`.
+    - The executing ThreadId is logged to help correlate between sequential and logical actions.
+    - Interactive console output from tools are disabled when parallel processing is enabled, this avoids console overwrites.
   - General refactoring, bug fixes, and upstream package updates.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions and Issues
 
-Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions and proposed enhancements.  
+Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.  
 Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
 
 ## Use Cases

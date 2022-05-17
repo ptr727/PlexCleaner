@@ -696,8 +696,10 @@ internal class Process
         int errorCount = 0;
         try 
         {
-            // Create a load balanced partitioner vs. static range based
-            var partitioner = Partitioner.Create(fileList, true);
+            // Create a single item at a time partitioner
+            var partitioner = Partitioner.Create(fileList, EnumerablePartitionerOptions.NoBuffering);
+
+            // Process items in parallel
             partitioner.AsParallel()
                 .WithDegreeOfParallelism(Program.Options.ThreadCount)
                 .WithCancellation(Program.CancelToken())

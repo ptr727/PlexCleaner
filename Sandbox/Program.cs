@@ -1,25 +1,19 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-
+using System.Collections.Concurrent;
 
 // Generate JSON schema
 // SchemaGenerator.GenerateSchema();
 
 // Create test list of items
-var itemList = Enumerable.Range(0, 1000000).ToList();
+var itemList = Enumerable.Range(0, 1000).ToList();
 
-// Iterate of items in parallel
-/*
-var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-Parallel.ForEach(itemList, parallelOptions, item => {
-    Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}, Item: {item}");
-    Thread.Sleep(100);
-    }
-);
-*/
+// Create a dynamic partitioner
+//var partitioner = Partitioner.Create(itemList, true);
+var partitioner = Partitioner.Create(itemList, EnumerablePartitionerOptions.NoBuffering);
 
-itemList.AsParallel()
-    //.WithDegreeOfParallelism(Environment.ProcessorCount)
+// Iterate in parallel
+partitioner.AsParallel()
     .ForAll(item => {
         Console.WriteLine($"Thread: {Environment.CurrentManagedThreadId}, Item: {item}");
         Thread.Sleep(100);
