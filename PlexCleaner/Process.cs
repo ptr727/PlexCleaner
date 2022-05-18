@@ -698,19 +698,20 @@ internal class Process
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
-        try 
+        try
         {
+            // Group files by path ignoring extensions
+            // This prevents files with the same name being modified by different threads
+            // E.g. when remuxing from AVI to MKV, or when testing for existance of MKV for SideCar files
+            var groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
+
             // Use a single item partitioner
             // This prevents a long running task in one thread from starving outstanding work that is assigned to the same thread
             // E.g. a long running FFmpeg task with waiting tasks that could have been completed on the idle threads
-            var partitioner = Partitioner.Create(fileList, EnumerablePartitionerOptions.NoBuffering);
+            var partitioner = Partitioner.Create(groupedFiles, EnumerablePartitionerOptions.NoBuffering);
 
             // Process groups in parallel
             partitioner.AsParallel()
-                // Group files by path ignoring extensions
-                // This prevents files with the same name being modified by different threads
-                // E.g. when remuxing from AVI to MKV, or when testing for existance of MKV for SideCar files
-                .GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase)
                 .WithDegreeOfParallelism(Program.Options.ThreadCount)
                 .WithCancellation(Program.CancelToken())
                 .ForAll(keyPair =>

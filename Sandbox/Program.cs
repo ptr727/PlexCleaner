@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 // Generate JSON schema
 // SchemaGenerator.GenerateSchema();
 
-// All files with the same path minus extension must be processed together
 var fileList = new List<string>()
 {
     "/path/file1.ext",
@@ -18,6 +17,8 @@ var fileList = new List<string>()
     "/path/file2.mkv",
     "/path/file3.mkv"
 };
+
+var numList = Enumerable.Range(0, 1000).ToList();
 
 // Group files by path ignoring extensions
 var pathDictionary = new Dictionary<string, List<string>>();
@@ -32,8 +33,6 @@ fileList.ForEach(path => {
         pathDictionary.Add(normalPath, new List<string> { path });
     }
 });
-
-// HOWTO: Skip the grouping and use GroupBy() or a native hash iterator using the normalized path as index?
 
 // Process groups in parallel
 //var partitioner = Partitioner.Create(pathDictionary, EnumerablePartitionerOptions.NoBuffering);
