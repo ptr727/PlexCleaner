@@ -117,8 +117,8 @@ internal class Program
 
         // Process all files
         Process process = new();
-        return process.ProcessFiles(program.FileInfoList) &&
-               Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
+        return process.ProcessFiles(program.FileList) &&
+               Process.DeleteEmptyFolders(program.DirectoryList) ? 0 : -1;
     }
 
     internal static int MonitorCommand(CommandLineOptions options)
@@ -147,7 +147,7 @@ internal class Program
         }
 
         Process process = new();
-        return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
+        return process.ReMuxFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int ReEncodeCommand(CommandLineOptions options)
@@ -163,7 +163,7 @@ internal class Program
             return -1;
         }
 
-        return Process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
+        return Process.ReEncodeFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int DeInterlaceCommand(CommandLineOptions options)
@@ -179,7 +179,7 @@ internal class Program
             return -1;
         }
 
-        return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
+        return Process.DeInterlaceFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int CreateSidecarCommand(CommandLineOptions options)
@@ -195,7 +195,7 @@ internal class Program
             return -1;
         }
 
-        return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
+        return Process.CreateSidecarFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetSidecarInfoCommand(CommandLineOptions options)
@@ -211,7 +211,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetSidecarFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetTagMapCommand(CommandLineOptions options)
@@ -227,7 +227,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetTagMapFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetMediaInfoCommand(CommandLineOptions options)
@@ -243,7 +243,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetMediaInfoFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetToolInfoCommand(CommandLineOptions options)
@@ -259,7 +259,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetToolInfoFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
@@ -275,7 +275,7 @@ internal class Program
             return -1;
         }
 
-        return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
+        return Process.RemoveSubtitlesFiles(program.FileList) ? 0 : -1;
     }
 
     // Add a reference to this class in the event handler arguments
@@ -429,27 +429,25 @@ internal class Program
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
-                    DirectoryInfo dirInfo = new(fileOrFolder);
                     lock (lockObject)
                     { 
-                        DirectoryInfoList.Add(dirInfo);
-                        FolderList.Add(fileOrFolder);
+                        DirectoryList.Add(fileOrFolder);
                     }
 
                     // Create the file list from the directory
-                    Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
-                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                    Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                    // TODO: Create a variant that returns strings
+                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
                     {
                         // Abort
-                        Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
+                        Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
                         throw new OperationCanceledException();
                     }
 
-                    // Add file and directory lists
+                    // Add file list
                     lock (lockObject)
                     {
-                        FileInfoList.AddRange(fileInfoList);
-                        DirectoryInfoList.AddRange(directoryInfoList);
+                        fileInfoList.ForEach(item => FileList.Add(item.FullName));
                     }
                 }
                 else
@@ -457,7 +455,7 @@ internal class Program
                     // Add this file
                     lock (lockObject)
                     {
-                        FileInfoList.Add(new FileInfo(fileOrFolder));
+                        FileList.Add(fileOrFolder);
                     }
                 }
             });
@@ -474,7 +472,7 @@ internal class Program
         }
 
         // Report
-        Log.Logger.Information("Discovered {DirectoryInfoListCount} directories and {FileInfoListCount} files", DirectoryInfoList.Count, FileInfoList.Count);
+        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", FileList.Count, DirectoryList.Count);
 
         return true;
     }
@@ -507,7 +505,6 @@ internal class Program
 
     private static readonly CancellationTokenSource CancelSource = new();
 
-    private readonly List<string> FolderList = new();
-    private readonly List<DirectoryInfo> DirectoryInfoList = new();
-    private readonly List<FileInfo> FileInfoList = new();
+    private readonly List<string> DirectoryList = new();
+    private readonly List<string> FileList = new();
 }

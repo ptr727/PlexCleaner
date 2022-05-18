@@ -33,8 +33,14 @@ public class SidecarFile
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
-        MediaFileInfo = mediaFileInfo ?? throw new ArgumentNullException(nameof(mediaFileInfo));
-        SidecarFileInfo = new FileInfo(GetSidecarName(mediaFileInfo));
+        MediaFileInfo = mediaFileInfo;
+        SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
+    }
+
+    public SidecarFile(string mediaFileName)
+    {
+        MediaFileInfo = new FileInfo(mediaFileName);
+        SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
     }
 
     public bool Create()
@@ -624,34 +630,26 @@ public class SidecarFile
         }
     }
 
+    public static bool IsSidecarFile(string sidecarName)
+    {
+        // Compare extension
+        return Path.GetExtension(sidecarName).Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsSidecarFile(FileInfo sidecarFileInfo)
     {
-        if (sidecarFileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(sidecarFileInfo));
-        }
-
         // Compare extension
         return sidecarFileInfo.Extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
     }
+
     public static string GetSidecarName(FileInfo mediaFileInfo)
     {
-        if (mediaFileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(mediaFileInfo));
-        }
-
         // Change extension of media file
         return Path.ChangeExtension(mediaFileInfo.FullName, SidecarExtension);
     }
 
     public static bool IsMediaFileName(FileInfo mediaFileInfo)
     {
-        if (mediaFileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(mediaFileInfo));
-        }
-
         // Compare extension
         return mediaFileInfo.Extension.Equals(MkvExtension, StringComparison.OrdinalIgnoreCase);
     }

@@ -13,10 +13,10 @@ namespace PlexCleaner;
 
 public class ProcessFile
 {
-    public ProcessFile(FileInfo mediaFile)
+    public ProcessFile(string mediaFile)
     {
-        FileInfo = mediaFile;
-        SidecarFile = new SidecarFile(mediaFile);
+        FileInfo = new FileInfo(mediaFile);
+        SidecarFile = new SidecarFile(FileInfo);
     }
 
     public bool DeleteMismatchedSidecarFile(ref bool modified)
