@@ -117,8 +117,12 @@ internal class Program
 
         // Process all files
         Process process = new();
-        return process.ProcessFiles(program.FileList) &&
-               Process.DeleteEmptyFolders(program.DirectoryList) ? 0 : -1;
+        if (!process.ProcessFiles(program.FileList) || 
+            IsCancelledError())
+        {
+            return -1;
+        }
+        return Process.DeleteEmptyFolders(program.DirectoryList) ? 0 : -1;
     }
 
     internal static int MonitorCommand(CommandLineOptions options)

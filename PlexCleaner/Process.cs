@@ -700,23 +700,24 @@ internal class Process
         int errorCount = 0;
         try 
         {
-            // Group files by path ignoring extensions
-            // This prevents file modifications to happen to the same file from different threads
-            // TODO: Is there a way to use GroupBy or a custom Partitioner to simplify the logic?
-            var groupedFiles = GetGroupedFiles(fileList);
-
             // Use a single item partitioner
             // This prevents a long running task in one thread from starving outstanding work that is assigned to the same thread
-            var partitioner = Partitioner.Create(groupedFiles, EnumerablePartitionerOptions.NoBuffering);
+            // E.g. a long running FFmpeg task with waiting tasks that could have been completed on the idle threads
+            var partitioner = Partitioner.Create(fileList, EnumerablePartitionerOptions.NoBuffering);
 
             // Process groups in parallel
             partitioner.AsParallel()
+                // Group files by path ignoring extensions
+                // This prevents files with the same name being modified by different threads
+                // E.g. when remuxing from AVI to MKV, or when testing for existance of MKV for SideCar files
+                .GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase)
                 .WithDegreeOfParallelism(Program.Options.ThreadCount)
                 .WithCancellation(Program.CancelToken())
-                .ForAll(fileNames =>
+                .ForAll(keyPair =>
             {
-                // Process all files in this group in this thread
-                fileNames.ForEach(fileName => { 
+                // Process all files in the group in this thread
+                foreach (string fileName in keyPair)
+                { 
                     // Log completion % before task starts
                     double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
                     Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
@@ -733,7 +734,7 @@ internal class Process
                     // Log completion % after task completes
                     processedPercentage = GetPercentage(Interlocked.Increment(ref processedCount), totalCount);
                     Log.Logger.Information("{TaskName} ({Processed:N2}%) After : {FileName}", taskName, processedPercentage, fileName);
-                });
+                }
             });
         }
         catch (OperationCanceledException)
@@ -772,77 +773,9 @@ internal class Process
         percentage = Math.Round(percentage, 2);
         if (percentage.Equals(100.0))
         { 
-            // Do not show 100% until really commplete
             percentage = 99.99;
         }
         return percentage;
-    }
-
-    private static List<List<string>> GetGroupedFiles(List<string> fileList)
-    {
-        // Sort by full path
-        var sortedPathList = new List<string>(fileList);
-        sortedPathList.Sort();
-
-        // Files grouped by path excluding the extension
-        var groupList = new List<List<string>>();
-
-        // Iterate over all paths
-        var lastGroupPath = "";
-        List<string> lastGroup = null;
-        sortedPathList.ForEach(path => {
-            // Get group path
-            var groupPath = GetGroupPath(path);
-            if (String.IsNullOrEmpty(path))
-            {
-                return;
-            }
-
-            // Is this group path the same as the last group path
-            if (!lastGroupPath.Equals(groupPath))
-            {
-                // Create a new group and add the path
-                lastGroup = new List<string> { path };
-
-                // Add this group to the group list
-                groupList.Add(lastGroup);
-                lastGroupPath = groupPath;
-            }
-            else
-            {
-                // Use the last group and add the path
-                Debug.Assert(lastGroup != null);
-                lastGroup.Add(path);
-            }
-        });
-
-        return groupList;
-    }
-
-    private static string GetGroupPath(string path)
-    {
-        // Valid path
-        if (String.IsNullOrEmpty(path) || path.Length < 2)
-        {
-            return path;
-        }
-
-        // Get the path excluding the extension
-        var groupPath = path;
-        var extensionOffset = path.LastIndexOf('.');
-        if (extensionOffset != -1)
-        {
-            groupPath = path[..extensionOffset];
-
-            // Valid path
-            if (String.IsNullOrEmpty(groupPath))
-            {
-                return path;
-            }
-        }
-
-        // Group path
-        return groupPath;
     }
 
     private readonly HashSet<string> FileIgnoreList;
