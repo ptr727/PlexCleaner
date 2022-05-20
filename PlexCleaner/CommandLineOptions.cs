@@ -14,6 +14,8 @@ public class CommandLineOptions
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
     public int ReProcess { get; set; }
+    public bool Parallel { get; set; }
+    public int ThreadCount { get; set; }
 
     public static RootCommand CreateRootCommand()
     {
@@ -75,6 +77,7 @@ public class CommandLineOptions
             new Option<string>("--settingsfile")
             {
                 Description = "Path to settings file",
+                // Ignored for version check
                 IsRequired = true
             });
 
@@ -91,6 +94,22 @@ public class CommandLineOptions
             new Option<bool>("--logappend")
             {
                 Description = "Append to the log file vs. default overwrite",
+                IsRequired = false
+            });
+
+        // Parallel processing, optional
+        command.AddGlobalOption(
+            new Option<bool>("--parallel")
+            {
+                Description = "Enable parallel processing",
+                IsRequired = false
+            });
+
+        // Parallel processing thread count, optional
+        command.AddGlobalOption(
+            new Option<int>("--threadcount")
+            {
+                Description = "Number of threads to use for parallel processing",
                 IsRequired = false
             });
     }

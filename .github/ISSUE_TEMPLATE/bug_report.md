@@ -5,21 +5,21 @@ labels: bug
 assignees: ''
 ---
 
+**Please use the Discussions forum for general questions and enhancement requests.**
+
 **Before filing an issue report**:
-  - Ask general questions in the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum.
-  - Propose enhancements in the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum.
   - Reproduce the issue using the latest version.
   - If still an issue, and can be reproduced, please continue to file a bug report.
-  - Delete this template text after including all requested information.
+  - If not a bug, or can't reproduce, please ask for help in the Discussions forum.
 
 **Please include the following information:**
 - Steps to reproduce.
 - OS and app version.
 - Log file output:
-  - Paste relevent error output from the log file.
-  - Zip and attach the log file.
+  - Paste relevent error output sections from the log file, enclosed in code block markers.
+  - Upload log file to GitHub Gist, and paste the gist link.
 - Settings file:
-  - Zip and attach the settings JSON file.
+  - Upload settings file to GitHub Gist, and paste the gist link.
 - Media file with issue:
-  - Paste the output from the `getmediainfo` command.
-  - Link to downloadable snippet of media file.
+  - Upload output from the `getmediainfo` command to GitHub Gist, and paste the link.
+  - Do **not** upload or link to the media file, may be requested later if required.

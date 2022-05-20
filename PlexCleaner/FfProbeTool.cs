@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using InsaneGenius.Utilities;
 using Newtonsoft.Json;
 using PlexCleaner.FfMpegToolJsonSchema;
@@ -44,15 +45,24 @@ public class FfProbeTool : FfMpegTool
         using ProcessEx process = new()
         {
             RedirectOutput = true,
-            OutputStream = new StreamWriter(compressStream)
+            OutputStream = new StreamWriter(compressStream),
+            // No console output
+            RedirectError = true
         };
 
+        // Build commandline
+        StringBuilder commandline = new();
+        commandline.Append("-loglevel error ");
+        if (Program.Options.TestSnippets)
+        {
+            commandline.Append($"{Snippet} ");
+        }
+        commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"");
+
         // Get packet info
-        string snippet = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"-loglevel error {snippet} -show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"";
         string path = GetToolPath();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
-        int exitCode = process.ExecuteEx(path, commandline);
+        int exitCode = process.ExecuteEx(path, commandline.ToString());
         if (exitCode != 0)
         {
             return false;

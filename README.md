@@ -23,20 +23,20 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.7:
-  - Log names of all processed files that are in `VerifyFailed` state at the end of the `process` command.
-  - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set, could happen when using `--reprocess 2`.
-  - Added a JSON schema for the configuration file, useful when authoring in tools that honors schemas.
-  - Added a "Sandbox" project to simplify code experimentation, e.g. creating a JSON schema from code.
-  - Fixed verify and repair logic when `VerifyOptions:AutoRepair` is enabled and file is in `VerifyFailed` state but not `RepairFailed`, could happen when processing is interrupted.
-  - Silenced the noisy `tool version mismatch` warnings when `ProcessOptions:SidecarUpdateOnToolChange` is disabled.
-  - Replaced `FileEx.IsFileReadWriteable()` with `!FileInfo.IsReadOnly` to optimize for speed over accuracy, testing for attributes vs. opening for write access.
-  - Pinned docker base image to `ubuntu:focal` vs. `ubuntu:latest` until Handbrake PPA ads support for Jammy, tracked as [#98](https://github.com/ptr727/PlexCleaner/issues/98).
+- Version 2.8:
+  - Added parallel file processing support:
+    - Greatly improves throughput on high core count systems, where a single instance of FFmpeg or HandBrake can't utilize all available processing power.
+    - Enable parallel processing by using the `--parallel` command line option.
+    - The default thread count is equal to half the number of system cores.
+    - Override the default thread count by using the `--threadcount` option, e.g. `PlexCleaner --parallel --threadcount 2`.
+    - The executing ThreadId is logged to output, this helps with correlating between sequential and logical operations.
+    - Interactive console output from tools are disabled when parallel processing is enabled, this avoids console overwrites.
+  - General refactoring, bug fixes, and upstream package updates.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions and Issues
 
-Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions and proposed enhancements.  
+Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.  
 Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
 
 ## Use Cases
@@ -50,14 +50,14 @@ Below are a few examples of issues I've experienced over the many years of using
 - Container file formats other than MKV and MP4 are not supported by the client platform, re-multiplex to MKV.
 - MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H.264.
 - Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H.264.
-- Some H.264 video profiles like "Constrained Baseline@30" cause hangs on Roku, re-encode to H.264 "High@40".
+- Some H.264 video profiles like `Constrained Baseline@30` cause hangs on Roku, re-encode to H.264 `High@40`.
 - Interlaced video cause playback issues, re-encode to H.264 using HandBrake and deinterlace using `--comb-detect --decomb` options.
 - Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
 - Some subtitle tracks like VOBsub cause hangs when the `MuxingMode` attribute is not set, re-multiplex the file.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
 - Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
 - Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
-- Some WiFi or 100mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
+- Some WiFi or 100Mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
 - Dolby Vision is only supported on DV capable hardware, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
 - EIA-608 Closed Captions embedded in video streams can't be disable or managed, remove embedded closed captions, only allow discrete subtitle tracks.
 
@@ -91,7 +91,12 @@ docker run -it --rm --volume /data/media:/media:rw ptr727/plexcleaner /bin/bash
 /PlexCleaner/PlexCleaner --settingsfile /media/PlexCleaner/PlexCleaner.json defaultsettings
 
 # Process media files
-/PlexCleaner/PlexCleaner --settingsfile /media/PlexCleaner/PlexCleaner.json --logfile /media/PlexCleaner/PlexCleaner.log process --mediafiles /media/Movies --mediafiles /media/Series
+/PlexCleaner/PlexCleaner \
+  --settingsfile /media/PlexCleaner/PlexCleaner.json \
+  --logfile /media/PlexCleaner/PlexCleaner.log \
+  process \
+  --mediafiles /media/Movies \
+  --mediafiles /media/Series
 
 # Exit the interactive session
 exit
@@ -123,7 +128,8 @@ docker run \
   ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
+    --logfile /media/PlexCleaner/PlexCleaner.log \
+    --parallel \
     process \
     --mediafiles /media/Movies \
     --mediafiles /media/Series
@@ -397,10 +403,10 @@ Create a default configuration file by running:
 ## Usage
 
 Commandline options:  
-`PlexCleaner.exe --help`
+`PlexCleaner --help`
 
 ```console
-> .\PlexCleaner.exe --help
+> ./PlexCleaner --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
@@ -411,6 +417,8 @@ Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
+  --parallel                                Enable parallel processing
+  --threadcount <threadcount>               Number of threads to use for parallel processing
   --version                                 Show version information
   -?, -h, --help                            Show help and usage information
 

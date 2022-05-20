@@ -52,14 +52,20 @@ internal class Program
         // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         LoggerConfiguration loggerConfiguration = new();
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message}{NewLine}{Exception}");
+
+        // Log Thread Id
+        // Need to explicitly add thread id formatting to file and console output
+        loggerConfiguration.Enrich.WithThreadId();
+
+        // Log to console
+        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
         // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
         {
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message}{NewLine}{Exception}"));
+            loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
         }
 
         // Create static Serilog logger
@@ -111,8 +117,12 @@ internal class Program
 
         // Process all files
         Process process = new();
-        return process.ProcessFiles(program.FileInfoList) &&
-               Process.DeleteEmptyFolders(program.FolderList) ? 0 : -1;
+        if (!process.ProcessFiles(program.FileList) || 
+            IsCancelledError())
+        {
+            return -1;
+        }
+        return Process.DeleteEmptyFolders(program.DirectoryList) ? 0 : -1;
     }
 
     internal static int MonitorCommand(CommandLineOptions options)
@@ -141,7 +151,7 @@ internal class Program
         }
 
         Process process = new();
-        return process.ReMuxFiles(program.FileInfoList) ? 0 : -1;
+        return process.ReMuxFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int ReEncodeCommand(CommandLineOptions options)
@@ -157,7 +167,7 @@ internal class Program
             return -1;
         }
 
-        return Process.ReEncodeFiles(program.FileInfoList) ? 0 : -1;
+        return Process.ReEncodeFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int DeInterlaceCommand(CommandLineOptions options)
@@ -173,7 +183,7 @@ internal class Program
             return -1;
         }
 
-        return Process.DeInterlaceFiles(program.FileInfoList) ? 0 : -1;
+        return Process.DeInterlaceFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int CreateSidecarCommand(CommandLineOptions options)
@@ -189,7 +199,7 @@ internal class Program
             return -1;
         }
 
-        return Process.CreateSidecarFiles(program.FileInfoList) ? 0 : -1;
+        return Process.CreateSidecarFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetSidecarInfoCommand(CommandLineOptions options)
@@ -205,7 +215,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetSidecarFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetSidecarFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetTagMapCommand(CommandLineOptions options)
@@ -221,7 +231,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetTagMapFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetTagMapFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetMediaInfoCommand(CommandLineOptions options)
@@ -237,7 +247,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetMediaInfoFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetMediaInfoFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetToolInfoCommand(CommandLineOptions options)
@@ -253,7 +263,7 @@ internal class Program
             return -1;
         }
 
-        return Process.GetToolInfoFiles(program.FileInfoList) ? 0 : -1;
+        return Process.GetToolInfoFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
@@ -269,7 +279,7 @@ internal class Program
             return -1;
         }
 
-        return Process.RemoveSubtitlesFiles(program.FileInfoList) ? 0 : -1;
+        return Process.RemoveSubtitlesFiles(program.FileList) ? 0 : -1;
     }
 
     // Add a reference to this class in the event handler arguments
@@ -324,38 +334,54 @@ internal class Program
             ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
-        // Set the static options from the loaded settings
+        // Set the static options from the loaded settings and options
         Options = options;
         Config = config;
 
         // Set the FileEx options
         FileEx.Options.TestNoModify = Options.TestNoModify;
-        FileEx.Options.RetryCount = config.MonitorOptions.FileRetryCount;
-        FileEx.Options.RetryWaitTime = config.MonitorOptions.FileRetryWaitTime;
+        FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
+        FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
 
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = CancelSource.Token;
 
         // Use log file
-        if (!string.IsNullOrEmpty(options.LogFile))
+        if (!string.IsNullOrEmpty(Options.LogFile))
         {
             // Delete if not in append mode
-            if (!options.LogAppend &&
-                !FileEx.DeleteFile(options.LogFile))
+            if (!Options.LogAppend &&
+                !FileEx.DeleteFile(Options.LogFile))
             {
-                Log.Logger.Error("Failed to clear the logfile : {LogFile}", options.LogFile);
+                Log.Logger.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
                 return null;
             }
 
             // Recreate the logger with a file
-            CreateLogger(options.LogFile);
-            Log.Logger.Information("Logging output to : {LogFile}", options.LogFile);
+            CreateLogger(Options.LogFile);
+            Log.Logger.Information("Logging output to : {LogFile}", Options.LogFile);
         }
 
         // Log app and runtime version
         string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
+
+        // Parallel processing config
+        if (Options.Parallel)
+        {
+            // If threadcount is 0 (default) use half the number of processors
+            if (Options.ThreadCount == 0)
+            { 
+                Options.ThreadCount = Math.Max(Environment.ProcessorCount / 2, 1);
+            }
+        }
+        else
+        {
+            // If disabled set the threadcount to 1
+            Options.ThreadCount = 1;
+        }
+        Log.Logger.Information("Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}", Options.Parallel, Options.ThreadCount, Environment.ProcessorCount);
 
         // Verify tools
         if (verifyTools)
@@ -384,53 +410,73 @@ internal class Program
         Cancel();
     }
 
-    private bool CreateFileList(List<string> files)
+    private bool CreateFileList(List<string> mediaFiles)
     {
         Log.Logger.Information("Creating file and folder list ...");
 
         // Trim quotes from input paths
-        files = files.Select(file => file.Trim('"')).ToList();
+        mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
 
-        // Process all entries
-        foreach (string fileOrFolder in files)
+        try
         {
-            // File or a directory
-            FileAttributes fileAttributes;
-            try
-            {
-                fileAttributes = File.GetAttributes(fileOrFolder);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-            {
-                return false;
-            }
+            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
+            var lockObject = new Object();
 
-            if (fileAttributes.HasFlag(FileAttributes.Directory))
+            // Process each input in parallel
+            mediaFiles.AsParallel()
+                .WithDegreeOfParallelism(Options.ThreadCount)
+                .WithCancellation(CancelToken())
+                .ForAll(fileOrFolder =>
             {
-                // Add this directory
-                DirectoryInfo dirInfo = new(fileOrFolder);
-                DirectoryInfoList.Add(dirInfo);
-                FolderList.Add(fileOrFolder);
-
-                // Create the file list from the directory
-                Log.Logger.Information("Getting files and folders from {Directory} ...", dirInfo.FullName);
-                if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out List<DirectoryInfo> directoryInfoList))
+                // Test for file or a directory
+                var fileAttributes = File.GetAttributes(fileOrFolder);
+                if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
-                    Log.Logger.Error("Failed to enumerate directory {Directory}", fileOrFolder);
-                    return false;
+                    // Add this directory
+                    lock (lockObject)
+                    { 
+                        DirectoryList.Add(fileOrFolder);
+                    }
+
+                    // Create the file list from the directory
+                    Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                    // TODO: Create a variant that returns strings
+                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
+                    {
+                        // Abort
+                        Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
+                        throw new OperationCanceledException();
+                    }
+
+                    // Add file list
+                    lock (lockObject)
+                    {
+                        fileInfoList.ForEach(item => FileList.Add(item.FullName));
+                    }
                 }
-                FileInfoList.AddRange(fileInfoList);
-                DirectoryInfoList.AddRange(directoryInfoList);
-            }
-            else
-            {
-                // Add this file
-                FileInfoList.Add(new FileInfo(fileOrFolder));
-            }
+                else
+                {
+                    // Add this file
+                    lock (lockObject)
+                    {
+                        FileList.Add(fileOrFolder);
+                    }
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
+            return false;
         }
 
         // Report
-        Log.Logger.Information("Discovered {DirectoryInfoListCount} directories and {FileInfoListCount} files", DirectoryInfoList.Count, FileInfoList.Count);
+        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", FileList.Count, DirectoryList.Count);
 
         return true;
     }
@@ -453,12 +499,16 @@ internal class Program
         CancelSource.Cancel();
     }
 
+    public static CancellationToken CancelToken()
+    {
+        return CancelSource.Token;
+    }
+
     public static CommandLineOptions Options { get; private set; }
     public static ConfigFileJsonSchema Config { get; private set; }
 
     private static readonly CancellationTokenSource CancelSource = new();
 
-    private readonly List<string> FolderList = new();
-    private readonly List<DirectoryInfo> DirectoryInfoList = new();
-    private readonly List<FileInfo> FileInfoList = new();
+    private readonly List<string> DirectoryList = new();
+    private readonly List<string> FileList = new();
 }

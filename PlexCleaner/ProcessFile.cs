@@ -13,10 +13,10 @@ namespace PlexCleaner;
 
 public class ProcessFile
 {
-    public ProcessFile(FileInfo mediaFile)
+    public ProcessFile(string mediaFile)
     {
-        FileInfo = mediaFile;
-        SidecarFile = new SidecarFile(mediaFile);
+        FileInfo = new FileInfo(mediaFile);
+        SidecarFile = new SidecarFile(FileInfo);
     }
 
     public bool DeleteMismatchedSidecarFile(ref bool modified)
@@ -568,8 +568,7 @@ public class ProcessFile
         // Look for the "Closed Captions" in the video stream line
         // Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1280x720, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
         using StringReader lineReader = new(ffprobe);
-        string line;
-        while ((line = lineReader.ReadLine()) != null)
+        while (lineReader.ReadLine() is { } line)
         {
             // Line should start with "Stream #", and contain "Video" and contain "Closed Captions"
             line = line.Trim();
@@ -920,7 +919,9 @@ public class ProcessFile
             }
 
             // Test playback duration
-            if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration))
+            // Ignore when snippets are enabled
+            if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration) &&
+                !Program.Options.TestSnippets)
             {
                 // Playback duration is too short
                 Log.Logger.Warning("File play duration is too short : {Duration} < {MinimumDuration} : {FileName}",

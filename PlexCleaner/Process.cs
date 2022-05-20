@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -99,8 +102,15 @@ internal class Process
     public bool ProcessFolders(List<string> folderList)
     {
         // Create the file and directory list
+        if (!FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileInfoList, out _))
+        { 
+            return false;
+        }
+
         // Process the files
-        return FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileList, out _) && ProcessFiles(fileList);
+        List<string> fileList = new();
+        fileInfoList.ForEach(item => fileList.Add(item.FullName));
+        return ProcessFiles(fileList);
     }
 
     public static bool DeleteEmptyFolders(List<string> folderList)
@@ -113,19 +123,37 @@ internal class Process
         Log.Logger.Information("Deleting empty folders ...");
 
         // Delete all empty folders
-        int deleted = 0;
-        foreach (string folder in folderList)
+        int totalDeleted = 0;
+        try
+        { 
+            folderList.AsParallel()
+                .WithDegreeOfParallelism(Program.Options.ThreadCount)
+                .WithCancellation(Program.CancelToken())
+                .ForAll(folder =>
+                {
+                    int deleted = 0;
+                    Log.Logger.Information("Looking for empty folders in {Folder}", folder);
+                    // Ignore errors
+                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    Interlocked.Add(ref totalDeleted, deleted);
+                });
+        }
+        catch (OperationCanceledException)
         {
-            Log.Logger.Information("Looking for empty folders in {Folder}", folder);
-            FileEx.DeleteEmptyDirectories(folder, ref deleted);
+            // Cancelled
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
+            return false;
         }
 
-        Log.Logger.Information("Deleted folders : {Deleted}", deleted);
+        Log.Logger.Information("Deleted folders : {Deleted}", totalDeleted);
 
         return true;
     }
 
-    public bool ProcessFiles(List<FileInfo> fileList)
+    public bool ProcessFiles(List<string> fileList)
     {
         // Log active options
         Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}, FileIgnoreList: {FileIgnoreList}",
@@ -141,10 +169,11 @@ internal class Process
         List<ProcessTuple> errorInfo = new();
         List<ProcessTuple> modifiedInfo = new();
         List<ProcessTuple> failedInfo = new();
-        bool ret = ProcessFilesDriver(fileList, "Process", fileInfo =>
+        var lockObject = new Object();
+        bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
         {
             // Process the file
-            bool processResult = ProcessFile(fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo);
+            bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.States state, out string processName);
             if (!processResult &&
                 Program.IsCancelled())
             {
@@ -155,24 +184,36 @@ internal class Process
             // Error
             if (!processResult)
             { 
-                errorInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    errorInfo.Add(new ProcessTuple(processName, state));
+                }
             }
 
             // Modified
             if (modified)
             {
-                modifiedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    modifiedInfo.Add(new ProcessTuple(processName, state));
+                }
             }
             
             // Verify failed
             if (state.HasFlag(SidecarFile.States.VerifyFailed))
             {
-                failedInfo.Add(new ProcessTuple(processInfo.FullName, state));
+                lock (lockObject)
+                { 
+                    failedInfo.Add(new ProcessTuple(processName, state));
+                }
 
                 // Add the failed file to the ignore list
                 if (Program.Config.VerifyOptions.RegisterInvalidFiles)
                 {
-                    Program.Config.ProcessOptions.AddIgnoreEntry(processInfo.FullName);
+                    lock (lockObject)
+                    { 
+                        Program.Config.ProcessOptions.AddIgnoreEntry(processName);
+                    }
                 }
             }
 
@@ -202,13 +243,12 @@ internal class Process
 
         return ret;
     }
-    private bool ProcessFile(FileInfo fileInfo, out bool modified, out SidecarFile.States state, out FileInfo processInfo)
+    private bool ProcessFile(string fileName, out bool modified, out SidecarFile.States state, out string processName)
     {
         // Init
         modified = false;
         state = SidecarFile.States.None;
-        processInfo = fileInfo;
-        DateTime lastWriteTime = fileInfo.LastWriteTimeUtc;
+        processName = fileName;
         ProcessFile processFile = null;
         bool result;
 
@@ -216,39 +256,37 @@ internal class Process
         for (; ; )
         {
             // Skip the file if it is in the ignore list
-            if (FileIgnoreList.Contains(fileInfo.FullName))
+            if (FileIgnoreList.Contains(fileName))
             {
-                Log.Logger.Warning("Skipping ignored file : {FileName}", fileInfo.FullName);
-                result = true;
-                break;
-            }
-
-            // Skip the file if it is in the keep extensions list
-            if (KeepExtensions.Contains(fileInfo.Extension))
-            {
-                Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileInfo.FullName);
+                Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
                 result = true;
                 break;
             }
 
             // Does the file still exist
-            if (!File.Exists(fileInfo.FullName))
+            if (!File.Exists(fileName))
             {
-                Log.Logger.Warning("Skipping missing file : {FileName}", fileInfo.FullName);
+                Log.Logger.Warning("Skipping missing file : {FileName}", fileName);
                 result = false;
                 break;
             }
 
-            // The file may have changed between catalog and processing
-            fileInfo.Refresh();
-
             // Create file processor to hold state
-            processFile = new ProcessFile(fileInfo);
+            processFile = new ProcessFile(fileName);
+            DateTime lastWriteTime = processFile.FileInfo.LastWriteTimeUtc;
+
+            // Skip the file if the extension is in the keep extensions list
+            if (KeepExtensions.Contains(processFile.FileInfo.Extension))
+            {
+                Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileName);
+                result = true;
+                break;
+            }
 
             // Is the file writeable
             if (!processFile.IsWriteable())
             {
-                Log.Logger.Error("Skipping read-only file : {FileName}", fileInfo.FullName);
+                Log.Logger.Error("Skipping read-only file : {FileName}", fileName);
                 result = false;
                 break;
             }
@@ -261,7 +299,7 @@ internal class Process
             }
 
             // Skip if this is a sidecar file
-            if (SidecarFile.IsSidecarFile(fileInfo))
+            if (SidecarFile.IsSidecarFile(processFile.FileInfo))
             {
                 result = true;
                 break;
@@ -288,7 +326,7 @@ internal class Process
             if (processFile.IsSidecarAvailable() &&
                 !processFile.IsSidecarWriteable())
             {
-                Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileInfo.FullName);
+                Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileName);
                 result = false;
                 break;
             }
@@ -427,85 +465,87 @@ internal class Process
         if (processFile != null)
         {
             state = processFile.State;
-            processInfo = processFile.FileInfo;
+            processName = processFile.FileInfo.FullName;
         }
         return result;
     }
 
-    public bool ReMuxFiles(List<FileInfo> fileList)
+    public bool ReMuxFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "ReMux", fileInfo =>
+        return ProcessFilesDriver(fileList, "ReMux", fileName =>
         {
             // Handle only MKV files, and files in the remux extension list
-            if (!MkvMergeTool.IsMkvFile(fileInfo) &&
-                !ReMuxExtensions.Contains(fileInfo.Extension))
+            if (!MkvMergeTool.IsMkvFile(fileName) &&
+                !ReMuxExtensions.Contains(Path.GetExtension(fileName)))
             {
                 return true;
             }
 
             // ReMux
-            return Convert.ReMuxToMkv(fileInfo.FullName, out string _);
+            return Convert.ReMuxToMkv(fileName, out string _);
         });
     }
 
-    public static bool ReEncodeFiles(List<FileInfo> fileList)
+    public static bool ReEncodeFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "ReEncode", fileInfo =>
+        return ProcessFilesDriver(fileList, "ReEncode", fileName =>
         {
             // Handle only MKV files
             // ReMux before re-encode, so the track attribute logic works as expected
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
             // Re-encode
-            return Convert.ConvertToMkv(fileInfo.FullName, out string _);
+            return Convert.ConvertToMkv(fileName, out string _);
         });
     }
 
-    public static bool DeInterlaceFiles(List<FileInfo> fileList)
+    public static bool DeInterlaceFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "DeInterlace", fileInfo =>
+        return ProcessFilesDriver(fileList, "DeInterlace", fileName =>
         {
             // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
             // Deinterlace
-            return Convert.DeInterlaceToMkv(fileInfo.FullName, out string _);
+            return Convert.DeInterlaceToMkv(fileName, out string _);
         });
     }
 
-    public static bool GetTagMapFiles(List<FileInfo> fileList)
+    public static bool GetTagMapFiles(List<string> fileList)
     {
         // Create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
         TagMapDictionary fftags = new();
         TagMapDictionary mktags = new();
         TagMapDictionary mitags = new();
-
-        // Process all the files
-        if (!ProcessFilesDriver(fileList, "Create Tag Map", fileInfo =>
+        var lockObject = new Object();
+        if (!ProcessFilesDriver(fileList, "Create Tag Map", fileName =>
             {
                 // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileInfo))
+                if (!MkvMergeTool.IsMkvFile(fileName))
                 {
                     return true;
                 }
 
                 // Get media information
-                ProcessFile processFile = new(fileInfo);
+                ProcessFile processFile = new(fileName);
                 if (!processFile.GetMediaInfo())
                 {
                     return false;
                 }
 
                 // Add all the tags
-                fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
-                mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
-                mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+                lock (lockObject)
+                { 
+                    fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
+                    mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
+                    mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+                }
 
                 return true;
             }))
@@ -524,34 +564,34 @@ internal class Process
         return true;
     }
 
-    public static bool CreateSidecarFiles(List<FileInfo> fileList)
+    public static bool CreateSidecarFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Create Sidecar Files", fileInfo =>
+        return ProcessFilesDriver(fileList, "Create Sidecar Files", fileName =>
         {
             // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
             // Create the sidecar file
-            SidecarFile sidecarfile = new(fileInfo);
+            SidecarFile sidecarfile = new(fileName);
             return sidecarfile.Create();
         });
     }
 
-    public static bool GetSidecarFiles(List<FileInfo> fileList)
+    public static bool GetSidecarFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Get Sidecar Information", fileInfo =>
+        return ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
         {
             // Handle only sidecar files
-            if (!SidecarFile.IsSidecarFile(fileInfo))
+            if (!SidecarFile.IsSidecarFile(fileName))
             {
                 return true;
             }
 
             // Get sidecar information
-            SidecarFile sidecarfile = new(fileInfo);
+            SidecarFile sidecarfile = new(fileName);
             if (!sidecarfile.Read())
             {
                 return false;
@@ -564,25 +604,25 @@ internal class Process
         });
     }
 
-    public static bool GetMediaInfoFiles(List<FileInfo> fileList)
+    public static bool GetMediaInfoFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Get Media Information", fileInfo =>
+        return ProcessFilesDriver(fileList, "Get Media Information", fileName =>
         {
             // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
             // Get media information
-            ProcessFile processFile = new(fileInfo);
+            ProcessFile processFile = new(fileName);
             if (!processFile.GetMediaInfo())
             {
                 return false;
             }
 
             // Print info
-            Log.Logger.Information("{FileName}", fileInfo.FullName);
+            Log.Logger.Information("{FileName}", fileName);
             processFile.FfProbeInfo.WriteLine("FfProbe");
             processFile.MkvMergeInfo.WriteLine("MkvMerge");
             processFile.MediaInfoInfo.WriteLine("MediaInfo");
@@ -591,28 +631,28 @@ internal class Process
         });
     }
 
-    public static bool GetToolInfoFiles(List<FileInfo> fileList)
+    public static bool GetToolInfoFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Get Tool Information", fileInfo =>
+        return ProcessFilesDriver(fileList, "Get Tool Information", fileName =>
         {
             // Skip sidecar files
-            if (SidecarFile.IsSidecarFile(fileInfo))
+            if (SidecarFile.IsSidecarFile(fileName))
             {
                 return true;
             }
 
             // Get tool information
             // Read the tool info text
-            if (!Tools.MediaInfo.GetMediaInfoXml(fileInfo.FullName, out string mediaInfoXml) ||
-                !Tools.MkvMerge.GetMkvInfoJson(fileInfo.FullName, out string mkvMergeInfoJson) ||
-                !Tools.FfProbe.GetFfProbeInfoJson(fileInfo.FullName, out string ffProbeInfoJson))
+            if (!Tools.MediaInfo.GetMediaInfoXml(fileName, out string mediaInfoXml) ||
+                !Tools.MkvMerge.GetMkvInfoJson(fileName, out string mkvMergeInfoJson) ||
+                !Tools.FfProbe.GetFfProbeInfoJson(fileName, out string ffProbeInfoJson))
             {
-                Log.Logger.Error("Failed to read tool info : {FileName}", fileInfo.Name);
+                Log.Logger.Error("Failed to read tool info : {FileName}", fileName);
                 return false;
             }
 
             // Print and log info
-            Log.Logger.Information("{FileName}", fileInfo.FullName);
+            Log.Logger.Information("{FileName}", fileName);
             Log.Logger.Information("FfProbe: {FfProbeText}", ffProbeInfoJson);
             Console.Write(ffProbeInfoJson);
             Log.Logger.Information("MkvMerge: {MkvMergeText}", mkvMergeInfoJson);
@@ -624,18 +664,18 @@ internal class Process
         });
     }
 
-    public static bool RemoveSubtitlesFiles(List<FileInfo> fileList)
+    public static bool RemoveSubtitlesFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Remove Subtitles", fileInfo =>
+        return ProcessFilesDriver(fileList, "Remove Subtitles", fileName =>
         {
             // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileInfo))
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
             // Get media information
-            ProcessFile processFile = new(fileInfo);
+            ProcessFile processFile = new(fileName);
             if (!processFile.GetMediaInfo())
             {
                 return false;
@@ -647,37 +687,64 @@ internal class Process
         });
     }
 
-    private static bool ProcessFilesDriver(List<FileInfo> fileList, string taskName, Func<FileInfo, bool> taskFunc)
+    private static bool ProcessFilesDriver(List<string> fileList, string taskName, Func<string, bool> taskFunc)
     {
         // Start
         Log.Logger.Information("Starting {TaskName}, processing {Count} files ...", taskName, fileList.Count);
         Stopwatch timer = new();
         timer.Start();
 
-        // Process all files
+        // Process all files in parallel
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
-        foreach (FileInfo fileInfo in fileList)
+        try
         {
-            // Cancel handler
-            if (Program.IsCancelled())
-            {
-                return false;
-            }
+            // Group files by path ignoring extensions
+            // This prevents files with the same name being modified by different threads
+            // E.g. when remuxing from AVI to MKV, or when testing for existance of MKV for SideCar files
+            var groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
 
-            // Perform the task
-            processedCount++;
-            double processedPercentage = System.Convert.ToDouble(processedCount) / System.Convert.ToDouble(totalCount);
-            Log.Logger.Information("{TaskName} ({Processed:P}) : {FileName}", taskName, processedPercentage, fileInfo.FullName);
-            if (!taskFunc(fileInfo) &&
-                !Program.IsCancelled())
-            {
-                Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileInfo.FullName);
-                errorCount++;
-            }
+            // Use a single item partitioner
+            // This prevents a long running task in one thread from starving outstanding work that is assigned to the same thread
+            // E.g. a long running FFmpeg task with waiting tasks that could have been completed on the idle threads
+            var partitioner = Partitioner.Create(groupedFiles, EnumerablePartitionerOptions.NoBuffering);
 
-            // Next file
+            // Process groups in parallel
+            partitioner.AsParallel()
+                .WithDegreeOfParallelism(Program.Options.ThreadCount)
+                .WithCancellation(Program.CancelToken())
+                .ForAll(keyPair =>
+            {
+                // Process all files in the group in this thread
+                foreach (string fileName in keyPair)
+                { 
+                    // Log completion % before task starts
+                    double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
+                    Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
+
+                    // Perform the task
+                    if (!taskFunc(fileName) &&
+                        !Program.IsCancelled())
+                    {
+                        // Error
+                        Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);
+                        Interlocked.Increment(ref errorCount);
+                    }
+
+                    // Log completion % after task completes
+                    processedPercentage = GetPercentage(Interlocked.Increment(ref processedCount), totalCount);
+                    Log.Logger.Information("{TaskName} ({Processed:N2}%) After : {FileName}", taskName, processedPercentage, fileName);
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
         }
 
         // Stop the timer
@@ -690,6 +757,26 @@ internal class Process
         Log.Logger.Information("Error files : {Count}", errorCount);
 
         return errorCount == 0;
+    }
+
+    private static double GetPercentage(int dividend, int divisor)
+    {
+        // Calculate double digit precision avoiding 100% until really complete
+        if (dividend == 0)
+        {
+            return 0.0;
+        }
+        if (dividend == divisor)
+        {
+            return 100.0;
+        }
+        double percentage = System.Convert.ToDouble(dividend) / System.Convert.ToDouble(divisor) * 100.0;
+        percentage = Math.Round(percentage, 2);
+        if (percentage.Equals(100.0))
+        { 
+            percentage = 99.99;
+        }
+        return percentage;
     }
 
     private readonly HashSet<string> FileIgnoreList;

@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using Serilog;
@@ -264,16 +265,14 @@ public class MkvMergeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Create the track number filters
-        // The track numbers are reported by MkvMerge --identify, use the track.id values
-        string videoTracks = keep.Video.Count > 0 ? $"--video-tracks {string.Join(",", keep.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-video ";
-        string audioTracks = keep.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keep.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-audio ";
-        string subtitleTracks = keep.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keep.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(outputName, commandline);
+        TracksArgs(keep, commandline);
+        commandline.Append($"\"{inputName}\"");
 
         // Remux tracks
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" {videoTracks}{audioTracks}{subtitleTracks} \"{inputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }
 
@@ -282,10 +281,13 @@ public class MkvMergeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(outputName, commandline);
+        commandline.Append($"\"{inputName}\"");
+
         // Remux all
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" \"{inputName}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }
 
@@ -299,17 +301,60 @@ public class MkvMergeTool : MediaTool
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Create the track number filters
-        // The track numbers are reported by MkvMerge --identify, use the track.id values
-        string videoTracks = keepOne.Video.Count > 0 ? $"--video-tracks {string.Join(",", keepOne.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-video ";
-        string audioTracks = keepOne.Audio.Count > 0 ? $"--audio-tracks {string.Join(",", keepOne.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-audio ";
-        string subtitleTracks = keepOne.Subtitle.Count > 0 ? $"--subtitle-tracks {string.Join(",", keepOne.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} " : "--no-subtitles ";
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(outputName, commandline);
+        TracksArgs(keepOne, commandline);
+        commandline.Append($"--no-chapters \"{sourceOne}\" \"{sourceTwo}\"");
 
         // Remux tracks
-        string snippets = Program.Options.TestSnippets ? Snippet : "";
-        string commandline = $"{MergeOptions} {snippets} --output \"{outputName}\" {videoTracks}{audioTracks}{subtitleTracks} --no-chapters \"{sourceOne}\" \"{sourceTwo}\"";
-        int exitCode = Command(commandline);
+        int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
+    }
+
+    private static void DefaultArgs(string outputName, StringBuilder commandline)
+    {
+        commandline.Append($"{MergeOptions} ");
+        if (Program.Options.Parallel)
+        {
+            // Suppress console output
+            commandline.Append("--quiet ");
+        }
+        if (Program.Options.TestSnippets)
+        {
+            commandline.Append($"{Snippet} ");
+        }
+        commandline.Append($"--output \"{outputName}\" ");
+    }
+
+    private static void TracksArgs(MediaInfo mediaInfo, StringBuilder commandline)
+    {
+        // Create the track number filters
+        // The track numbers are reported by MkvMerge --identify, use the track.id values
+        if (mediaInfo.Video.Count > 0)
+        {
+            commandline.Append($"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+        }
+        else
+        {
+            commandline.Append("--no-video ");
+        }
+        if (mediaInfo.Audio.Count > 0)
+        {
+            commandline.Append($"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+        }
+        else
+        {
+            commandline.Append("--no-audio ");
+        }
+        if (mediaInfo.Subtitle.Count > 0)
+        {
+            commandline.Append($"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+        }
+        else
+        {
+            commandline.Append("--no-subtitles ");
+        }
     }
 
     private const string Snippet = "--split parts:00:00:00-00:03:00";
