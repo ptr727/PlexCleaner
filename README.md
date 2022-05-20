@@ -25,11 +25,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 2.8:
   - Added parallel file processing support:
-    - Implemented using [Parallel LINQ](https://docs.microsoft.com/en-us/dotnet/standard/parallel-programming/introduction-to-plinq).
+    - Greatly improves throughput on high core count systems, where a single instance of FFmpeg or HandBrake can't utilize all available processing power.
     - Enable parallel processing by using the `--parallel` command line option.
     - The default thread count is equal to half the number of system cores.
     - Override the default thread count by using the `--threadcount` option, e.g. `PlexCleaner --parallel --threadcount 2`.
-    - The executing ThreadId is logged to help correlate between sequential and logical actions.
+    - The executing ThreadId is logged to output, this helps with correlating between sequential and logical operations.
     - Interactive console output from tools are disabled when parallel processing is enabled, this avoids console overwrites.
   - General refactoring, bug fixes, and upstream package updates.
 - See [Release History](./HISTORY.md) for older Release Notes.
@@ -128,7 +128,8 @@ docker run \
   ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --logfile /media/PlexCleaner/PlexCleaner.log --logappend \
+    --logfile /media/PlexCleaner/PlexCleaner.log \
+    --parallel \
     process \
     --mediafiles /media/Movies \
     --mediafiles /media/Series

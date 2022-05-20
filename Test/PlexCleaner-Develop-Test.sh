@@ -43,6 +43,7 @@ docker run \
   /PlexCleaner/PlexCleaner \
     --settingsfile /settings/PlexCleaner-Develop.json \
     --logfile /settings/PlexCleaner-Develop-Test.log \
+    --parallel \
     process \
     --testsnippets \
     --mediafiles /media
@@ -60,6 +61,7 @@ docker run \
   /PlexCleaner/PlexCleaner \
     --settingsfile /settings/PlexCleaner-Develop.json \
     --logfile /settings/PlexCleaner-Develop-Test-1.log \
+    --parallel \
     process \
     --reprocess 1 \
     --testsnippets \
