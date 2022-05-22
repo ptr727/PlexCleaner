@@ -34,37 +34,47 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - General refactoring, bug fixes, and upstream package updates.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
-## Questions and Issues
+## Questions or Issues
 
 Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.  
 Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
 
 ## Use Cases
 
-The objective of the tool is to modify media content such that it will Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).  
-Different Plex server and client versions suffer different playback issues, and issues are often associated with specific media attributes.  
-Occasionally Plex would fix the issue, other times the only solution is modification of the media file.
+The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).
 
-Below are a few examples of issues I've experienced over the many years of using Plex on Roku, NVidia Shield, and Apple TV:
+Below are examples of issues that can be resolved using the primary `process` command:
 
-- Container file formats other than MKV and MP4 are not supported by the client platform, re-multiplex to MKV.
-- MPEG2 licensing prevents the platform from hardware decoding the content, re-encode to H.264.
-- Some video codecs like MPEG-4 or VC1 cause playback issues, re-encode to H.264.
-- Some H.264 video profiles like `Constrained Baseline@30` cause hangs on Roku, re-encode to H.264 `High@40`.
-- Interlaced video cause playback issues, re-encode to H.264 using HandBrake and deinterlace using `--comb-detect --decomb` options.
+- Container file formats other than MKV are not supported by all platforms, re-multiplex to MKV.
+- Licensing for some codecs like MPEG-2 prevents hardware decoding, re-encode to H.264.
+- Some video codecs like MPEG-4 or VC-1 cause playback issues, re-encode to H.264.
+- Some H.264 video profiles like `Constrained Baseline@30` cause playback issues, re-encode to H.264 `High@40`.
+- On some displays interlaced video cause playback issues, deinterlace using HandBrake and the `--comb-detect --decomb` options.
 - Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
-- Some subtitle tracks like VOBsub cause hangs when the `MuxingMode` attribute is not set, re-multiplex the file.
+- Some subtitle tracks like VOBsub cause hangs when the `MuxingMode` attribute is not set, re-multiplex to set the correct `MuxingMode`.
 - Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
-- Automatic track selection ignores the Default track attribute and uses the first track when multiple tracks are present, remove duplicate tracks.
-- Corrupt files cause playback issues, verify stream integrity, try to automatically repair, or delete.
-- Some WiFi or 100Mbps Ethernet connected devices with small read buffers cannot play high bitrate content, warn when media bitrate exceeds the network bitrate.
-- Dolby Vision is only supported on DV capable hardware, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7).
-- EIA-608 Closed Captions embedded in video streams can't be disable or managed, remove embedded closed captions, only allow discrete subtitle tracks.
+- Duplicate audio or subtitle tracks of the same language cause issues with player track selection, delete duplicate tracks, and keep the best quality audio tracks.
+- Corrupt media streams cause playback issues, verify stream integrity, and try to automatically repair by re-encoding.
+- Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
+- Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10 displays.
+- EIA-608 Closed Captions embedded in video streams can't be disable or managed from the player, remove embedded closed captions from video streams.
+
+## Performance Considerations
+
+- To improve processing performance of large media collections, the media file attributes and processing state is stored in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
+- Sidecar files allow re-processing of the same files to be very fast as the state will be read from the sidecar vs. re-computed from the media file.
+- The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
+- Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
+- On systems with high core counts the `--parallel` option can be used to process files concurrently.
+- Parallel processing is useful when a single instance of FFmpeg or Handbrake does not saturate the CPU resources of the system.
+- When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
+- The initial `process` run on a large collection can take a long time to complete.
+- Interrupt processing using `Ctl-C` and resume processing by re-running the same command.
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports x64 docker, including Linux, Windows, and MacOS (untested).  
-Alternatively install directly on [Windows](#windows) or [Linux](#linux) following the provided instructions.
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `x86-64` images.  
+Alternatively, install directly on [Windows](#windows) or [Linux](#linux) following the provided instructions.
 
 ### Docker
 
@@ -73,12 +83,12 @@ Alternatively install directly on [Windows](#windows) or [Linux](#linux) followi
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
-- See example below for instructions on getting started.
+- See examples below for instructions on getting started.
 
 Example, run in an interactive shell:
 
 ```console
-# In this example the host "/data/media" directory is mapped to the container "/media" directory
+# The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
 # Pull the latest container version
@@ -87,8 +97,11 @@ docker pull ptr727/plexcleaner
 # Run the bash shell in an interactive session
 docker run -it --rm --volume /data/media:/media:rw ptr727/plexcleaner /bin/bash
 
-# Create default settings file, edit to suit your needs
-/PlexCleaner/PlexCleaner --settingsfile /media/PlexCleaner/PlexCleaner.json defaultsettings
+# Create default settings file
+# Edit the settings file to suit your needs
+/PlexCleaner/PlexCleaner \
+  --settingsfile /media/PlexCleaner/PlexCleaner.json \
+  defaultsettings
 
 # Process media files
 /PlexCleaner/PlexCleaner \
@@ -141,11 +154,11 @@ docker run \
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
 - Create a default JSON settings file using the `defaultsettings` command:
-  - `PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
+  - `PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
   - Modify the settings to suit your needs.
 - Download the required 3rd party tools using the `checkfornewtools` command:
-  - `PlexCleaner.exe --settingsfile PlexCleaner.json checkfornewtools`
-  - The default `Tools` folder will be created in the same folder as the `PlexCleaner.exe` binary file.
+  - `PlexCleaner --settingsfile PlexCleaner.json checkfornewtools`
+  - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
   - The tool version information will be stored in `Tools\Tools.json`.
   - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or enabling the `ToolsOptions:AutoUpdate` setting.
 
@@ -199,7 +212,7 @@ docker run \
 ## Configuration
 
 Create a default configuration file by running:  
-`PlexCleaner.exe --settingsfile PlexCleaner.json defaultsettings`
+`PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
 
 ```jsonc
 {
@@ -361,7 +374,7 @@ Create a default configuration file by running:
     // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
     // List of files to skip during processing
-    // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
+    // Files that previously failed verify or repair will automatically be skipped
     // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",
@@ -402,9 +415,6 @@ Create a default configuration file by running:
 
 ## Usage
 
-Commandline options:  
-`PlexCleaner --help`
-
 ```console
 > ./PlexCleaner --help
 Description:
@@ -439,13 +449,14 @@ Commands:
 ```
 
 One of the commands must be specified, some commands have more options.  
+To get more help for a specific command run `PlexCleaner <command> --help`.  
 The `--settingsfile` JSON settings file is required. A default settings file can be created using the `defaultsettings` command.  
 The `--logfile` output is optional, the file will be overwritten unless `--logappend` is set.
 
 ### Process Media Files
 
 ```console
-> .\PlexCleaner.exe process --help
+> ./PlexCleaner process --help
 Description:
   Process media files
 
@@ -460,23 +471,12 @@ Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
+  --parallel                                Enable parallel processing
+  --threadcount <threadcount>               Number of threads to use for parallel processing
   -?, -h, --help                            Show help and usage information
 ```
 
-The `process` command will process the media content using options as defined in the settings file.
-
-The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
-Paths with spaces should be double quoted.
-
-The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.  
-`0`: Default behavior, do not do any reprocessing.  
-`1`: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.  
-`2`: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
-
-Example:  
-`PlexCleaner.exe --settingsfile PlexCleaner.json --logfile PlexCleaner.log process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media --reprocess 1`
-
-The `process` command will perform the following operations:
+The `process` command will process the media content using options as defined in the settings file:
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
@@ -492,13 +492,26 @@ The `process` command will perform the following operations:
 - Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
+The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
+Paths with spaces should be double quoted.
+
+The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.  
+`0`: Default behavior, do not do any reprocessing.  
+`1`: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.  
+`2`: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+
+Add the `--parallel` option to process multiple files concurrently. When parallel processing is enabled, the default thread count is half the number of cores, override the thread count using the `--threadcount` option.
+
+Example:  
+`PlexCleaner --parallel --settingsfile PlexCleaner.json --logfile PlexCleaner.log process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
+
 ### Re-Multiplex, Re-Encode, Deinterlace
 
 The `remux` command will re-multiplex the media files using `MkvMerge`.
 
-The `reencode` command will re-encode the media files using `FfMpeg` and H.264 at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
+The `reencode` command will re-encode the media files using FFmpeg to H.264/5 based on `EnableH265Encoder` at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
 
-The `deinterlace` command will deinterlace interlaced media files using `HandBrake --comb-detect --decomb`.
+The `deinterlace` command will deinterlace interlaced media files using HandBrake and the `--comb-detect --decomb` filters.
 
 ### Monitor
 
@@ -507,7 +520,7 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### CreateSidecar
+### Create Sidecar
 
 The `createsidecar` command will create or re-create sidecar files.  
 All existing state attributes will be deleted.
@@ -521,6 +534,11 @@ The `getmediainfo` command will print media attribute information.
 The `gettoolinfo` command will print tool attribute information.
 
 The `getsidecarinfo` command will print sidecar attribute information.
+
+## Remove Subtitles
+
+The `removesubtitles` command will remove all subtitle tracks from the media files.  
+This is useful when the subtitles are forced and offensive or contain advertising.
 
 ## 3rd Party Tools
 
