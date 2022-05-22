@@ -157,7 +157,7 @@
     // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
     // List of files to skip during processing
-    // Files that previously failed verify or repair will automatically be skipped (when using sidecar files for state)
+    // Files that previously failed verify or repair will automatically be skipped
     // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
     "FileIgnoreList": [
       "\\\\server\\share1\\path1\\file1.mkv",

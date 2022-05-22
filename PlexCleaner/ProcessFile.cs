@@ -82,7 +82,7 @@ public class ProcessFile
 
         // File deleted, do not continue processing
         modified = true;
-        SidecarFile.State |= SidecarFile.States.Deleted;
+        SidecarFile.State |= SidecarFile.States.FileDeleted;
         return false;
     }
 
@@ -1029,7 +1029,7 @@ public class ProcessFile
                 Log.Logger.Information("Deleting media file due to failed verification : {FileName}", FileInfo.FullName);
                 FileEx.DeleteFile(FileInfo.FullName);
                 FileEx.DeleteFile(SidecarFile.GetSidecarName(FileInfo));
-                SidecarFile.State |= SidecarFile.States.Deleted;
+                SidecarFile.State |= SidecarFile.States.FileDeleted;
 
                 // Done
                 return false;
@@ -1339,7 +1339,7 @@ public class ProcessFile
         {
             // Refresh sidecar file info but preserve existing state, mark as renamed
             FileInfo = new FileInfo(filename);
-            SidecarFile.States state = SidecarFile.State | SidecarFile.States.ReNamed;
+            SidecarFile.States state = SidecarFile.State | SidecarFile.States.FileReNamed;
             SidecarFile = new SidecarFile(FileInfo)
             {
                 State = state

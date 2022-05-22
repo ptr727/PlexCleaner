@@ -24,9 +24,9 @@ public class SidecarFile
         VerifyFailed = 1 << 7,
         BitrateExceeded = 1 << 8,
         ClearedTags = 1 << 9,
-        ReNamed = 1 << 10,
-        Deleted = 1 << 11,
-        Modified = 1 << 12,
+        FileReNamed = 1 << 10,
+        FileDeleted = 1 << 11,
+        FileModified = 1 << 12,
         ClearedCaptions = 1 << 13,
         ClearedAttachments = 1 << 14
     }
@@ -106,7 +106,7 @@ public class SidecarFile
             // The media file has been changed
             current = false;
             Log.Logger.Warning("Sidecar out of sync with media file, clearing state : {FileName}", SidecarFileInfo.Name);
-            State = States.Modified;
+            State = States.FileModified;
         }
 
         // Verify the tools matches the json info
