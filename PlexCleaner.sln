@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		PlexCleaner.json = PlexCleaner.json
 		PlexCleaner.schema.json = PlexCleaner.schema.json
-		README.md = README.md
+		HubREADME.md = HubREADME.md
 		version.json = version.json
 	EndProjectSection
 EndProject
