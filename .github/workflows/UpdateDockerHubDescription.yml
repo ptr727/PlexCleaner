@@ -25,4 +25,5 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           repository: ptr727/plexcleaner
+          short-description: ${{ github.event.repository.description }}
           readme-filepath: ./HubREADME.md
