@@ -5,7 +5,7 @@ on:
     # Only update main branch
     branches: [ main ]
     paths:
-      - README.md
+      - HubREADME.md
       - .github/workflows/UpdateDockerHubDescription.yml
   workflow_dispatch:
 
@@ -18,9 +18,11 @@ jobs:
       - name: 'Checkout Code'
         uses: actions/checkout@v2
 
+      # https://github.com/peter-evans/dockerhub-description
       - name: 'Update Docker Hub Description'
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           repository: ptr727/plexcleaner
+          readme-filepath: ./HubREADME.md
