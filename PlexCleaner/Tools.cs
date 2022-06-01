@@ -107,14 +107,22 @@ public static class Tools
             return false;
         }
 
-        // Deserialize and compare the schema version
-        ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromJson(File.ReadAllText(toolsFile));
+        // Deserialize
+        ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
+        if (toolInfoJson == null)
+        {
+            Log.Logger.Error("{FileName} is not a valid JSON file", toolsFile);
+            return false;
+        }
+
+        // Compare schema version
         if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
         {
             Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
                 toolInfoJson.SchemaVersion,
                 ToolInfoJsonSchema.CurrentSchemaVersion,
                 toolsFile);
+
             // Upgrade schema
             if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
             {

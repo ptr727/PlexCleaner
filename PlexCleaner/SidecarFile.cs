@@ -204,6 +204,7 @@ public class SidecarFile
                 // Sidecar file exists, read and verify it matches media file
                 if (!Read(out bool current))
                 {
+                    // Failed to read, create it
                     return Create();
                 }
                 // Media file changed, force an update
@@ -453,18 +454,11 @@ public class SidecarFile
 
     private bool ReadJson()
     {
-        try
+        // Deserialize
+        SidecarJson = SidecarFileJsonSchema.FromFile(SidecarFileInfo.FullName);
+        if (SidecarJson == null)
         {
-            // Read the text from the sidecar file
-            using StreamReader streamReader = SidecarFileInfo.OpenText();
-            string json = streamReader.ReadToEnd();
-            streamReader.Close();
-
-            // Create object from text
-            SidecarJson = SidecarFileJsonSchema.FromJson(json);
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
+            Log.Logger.Error("{FileName} is not a valid JSON file", SidecarFileInfo.Name);
             return false;
         }
 
