@@ -143,19 +143,23 @@ public class MkvMergeTool : MediaTool
         try
         {
             // Deserialize
-            MkvToolJsonSchema.MkvMerge mkvmerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
+            MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
+            if (mkvMerge == null)
+            {
+                return false;
+            }
 
             // No tracks
-            if (mkvmerge.Tracks.Count == 0)
+            if (mkvMerge.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (MkvToolJsonSchema.Track track in mkvmerge.Tracks)
+            foreach (MkvToolJsonSchema.Track track in mkvMerge.Tracks)
             {
                 // If the container is not a MKV, ignore missing CodecId's
-                if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase) &&
+                if (!mkvMerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase) &&
                     string.IsNullOrEmpty(track.Properties.CodecId))
                 {
                     track.Properties.CodecId = "Unknown";
@@ -187,13 +191,13 @@ public class MkvMergeTool : MediaTool
             MediaInfo.RemoveCoverArt(mediaInfo);
 
             // Container type
-            mediaInfo.Container = mkvmerge.Container.Type;
+            mediaInfo.Container = mkvMerge.Container.Type;
 
             // Attachments
-            mediaInfo.Attachments = mkvmerge.Attachments.Count;
+            mediaInfo.Attachments = mkvMerge.Attachments.Count;
 
             // Chapters
-            mediaInfo.Chapters = mkvmerge.Chapters.Count;
+            mediaInfo.Chapters = mkvMerge.Chapters.Count;
 
             // Track errors
             mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
@@ -201,22 +205,22 @@ public class MkvMergeTool : MediaTool
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
             // Tags in container or any tracks
-            mediaInfo.HasTags = mkvmerge.GlobalTags.Count > 0 ||
-                                mkvmerge.TrackTags.Count > 0 ||
+            mediaInfo.HasTags = mkvMerge.GlobalTags.Count > 0 ||
+                                mkvMerge.TrackTags.Count > 0 ||
                                 mediaInfo.Attachments > 0 ||
-                                !string.IsNullOrEmpty(mkvmerge.Container.Properties.Title) ||
+                                !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title) ||
                                 mediaInfo.Video.Any(item => item.HasTags) ||
                                 mediaInfo.Audio.Any(item => item.HasTags) ||
                                 mediaInfo.Subtitle.Any(item => item.HasTags);
 
             // Duration in nanoseconds
-            mediaInfo.Duration = TimeSpan.FromSeconds(mkvmerge.Container.Properties.Duration / 1000000.0);
+            mediaInfo.Duration = TimeSpan.FromSeconds(mkvMerge.Container.Properties.Duration / 1000000.0);
 
             // Must be Matroska type
-            if (!mkvmerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+            if (!mkvMerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
             {
                 mediaInfo.HasErrors = true;
-                Log.Logger.Warning("MKV container type is not Matroska : {Type}", mkvmerge.Container.Type);
+                Log.Logger.Warning("MKV container type is not Matroska : {Type}", mkvMerge.Container.Type);
             }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))

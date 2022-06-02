@@ -312,14 +312,21 @@ internal class Program
 
     private static Program Create(CommandLineOptions options, bool verifyTools)
     {
-        // Load config from JSON
+        // Does the file exist
         if (!File.Exists(options.SettingsFile))
         {
             Log.Logger.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
             return null;
         }
+
+        // Load config from JSON
         Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
+        if (config == null)
+        {
+            Log.Logger.Error("{FileName} is not a valid JSON file", options.SettingsFile);
+            return null;
+        }
 
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)

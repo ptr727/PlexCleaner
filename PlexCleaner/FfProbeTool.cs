@@ -119,16 +119,20 @@ public class FfProbeTool : FfMpegTool
         try
         {
             // Deserialize
-            FfProbe ffprobe = FfProbe.FromJson(json);
+            FfProbe ffProbe = FfProbe.FromJson(json);
+            if (ffProbe == null)
+            {
+                return false;
+            }
 
             // No tracks
-            if (ffprobe.Streams.Count == 0)
+            if (ffProbe.Streams.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (FfMpegToolJsonSchema.Stream stream in ffprobe.Streams)
+            foreach (FfMpegToolJsonSchema.Stream stream in ffProbe.Streams)
             {
                 // Process by track type
                 if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
@@ -173,16 +177,16 @@ public class FfProbeTool : FfMpegTool
                                   mediaInfo.Subtitle.Any(item => item.HasErrors);
 
             // Tags in container or any tracks
-            mediaInfo.HasTags = HasTags(ffprobe.Format.Tags) ||
+            mediaInfo.HasTags = HasTags(ffProbe.Format.Tags) ||
                 mediaInfo.Video.Any(item => item.HasTags) ||
                 mediaInfo.Audio.Any(item => item.HasTags) ||
                 mediaInfo.Subtitle.Any(item => item.HasTags);
 
             // Duration in seconds
-            mediaInfo.Duration = TimeSpan.FromSeconds(ffprobe.Format.Duration);
+            mediaInfo.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
 
             // Container type
-            mediaInfo.Container = ffprobe.Format.FormatName;
+            mediaInfo.Container = ffProbe.Format.FormatName;
 
             // TODO: Chapters
             // TODO: Attachments
