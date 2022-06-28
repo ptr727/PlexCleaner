@@ -1,5 +1,5 @@
 # Test in docker shell:
-# docker run -it --rm ubuntu:focal /bin/bash
+# docker run -it --rm ubuntu:latest /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 # Test Docker build:
@@ -8,8 +8,8 @@
 # Ignore docker layer cache
 # docker build --no-cache ./Docker
 
-# Build from Ubuntu Focal LTS as base image
-FROM ubuntu:focal
+# Build from Ubuntu LTS as base image
+FROM ubuntu:latest
 
 # Update the version at build time
 ARG LABEL_VERSION="1.0.0.0"
