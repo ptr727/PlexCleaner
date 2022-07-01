@@ -5,13 +5,20 @@
 # Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 # docker build ./Docker
-# Ignore docker layer cache
+
+# Ignore docker layer cache:
 # docker build --no-cache ./Docker
+
+# Set arguments:
+# docker build --build-arg DBGTOOL_INSTALL=True ./Docker
+
+# Pass container output instead of buildkit suppressing it:
+# docker build --progress=plain --build-arg DBGTOOL_INSTALL=True ./Docker
 
 # Build from Ubuntu LTS as base image
 FROM ubuntu:latest
 
-# Update the version at build time
+# Set the version at build time
 ARG LABEL_VERSION="1.0.0.0"
 
 LABEL name="PlexCleaner" \
@@ -28,7 +35,15 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Install prerequisites
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y apt-utils wget apt-transport-https lsb-release software-properties-common p7zip-full locales locales-all \
+    && apt-get install -y \
+        apt-transport-https \
+        apt-utils \
+        locales \
+        locales-all \
+        lsb-release \
+        p7zip-full \
+        software-properties-common \
+        wget \
     && locale-gen --no-purge en_US en_US.UTF-8
 
 # Set locale to UTF-8 after running locale-gen
@@ -37,6 +52,10 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
 # TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
+
+
+# Conditionally install SDK and Debug tools, else just runtime
+ARG DBGTOOL_INSTALL=""
 
 # Install .NET 6 Runtime
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
@@ -51,8 +70,19 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
-    && apt-get install -y dotnet-runtime-6.0 \
+    && if [[ -n "$DBGTOOL_INSTALL" ]] ; then \
+         apt-get install -y dotnet-sdk-6.0 ; \
+       else \
+         apt-get install -y dotnet-runtime-6.0 ; \
+       fi \
     && dotnet --info
+
+# Install remote debug tools
+RUN if [[ -n "$DBGTOOL_INSTALL" ]] ; then \
+      wget https://aka.ms/getvsdbgsh \
+      && sh getvsdbgsh -v latest -l /vsdbg ; \
+    fi
+
 
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
@@ -62,6 +92,7 @@ RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
     && mediainfo --version
+
 
 # Install MKVToolNix
 # https://mkvtoolnix.download/downloads.html#ubuntu
@@ -75,6 +106,7 @@ RUN wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key 
     && apt-get install -y mkvtoolnix \
     && mkvmerge --version
 
+
 # Install FfMpeg
 # https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5
 RUN add-apt-repository -y ppa:savoury1/graphics \
@@ -85,6 +117,7 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
     && apt-get install -y ffmpeg \
     && ffmpeg -version
 
+
 # Install HandBrake
 # Depends on FfMpeg, install FfMpeg first
 # https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
@@ -93,10 +126,12 @@ RUN add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get install -y handbrake-cli \
     && HandBrakeCLI --version
 
+
 # Cleanup
 RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Copy PlexCleaner
 # Build externally

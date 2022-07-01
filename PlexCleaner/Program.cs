@@ -29,8 +29,7 @@ internal class Program
         keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        int ret = rootCommand.Invoke(Environment.CommandLine);
+        int ret = CommandLineOptions.Invoke();
 
         // Stop the timer
         keepAwakeTimer.Stop();

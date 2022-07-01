@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
+using System.CommandLine.Parsing;
+using System.Linq;
 
 namespace PlexCleaner;
 
@@ -16,6 +18,13 @@ public class CommandLineOptions
     public int ReProcess { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
+
+    public static int Invoke()
+    {
+        // TODO: https://github.com/dotnet/command-line-api/issues/1781
+        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+        return rootCommand.Invoke(CommandLineStringSplitter.Instance.Split(Environment.CommandLine).ToArray()[1..]);
+    }
 
     public static RootCommand CreateRootCommand()
     {
