@@ -1,10 +1,10 @@
 # Test in docker shell:
-# docker run -it --rm --pull always ubuntu:latest /bin/bash
+# docker run -it --rm --pull always --name Testing ubuntu:latest /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 
 # Test in develop shell:
-# docker run -it --rm --pull always --volume /data/media:/media:rw ptr727/plexcleaner:develop /bin/bash
+# docker run -it --rm --pull always --name Testing --volume /data/media:/media:rw ptr727/plexcleaner:develop /bin/bash
 
 
 # Test Docker build:

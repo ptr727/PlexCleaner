@@ -24,7 +24,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.9:
-  - Added `--debug` option that will launch and wait for a debugger to be attached.
+  - Added `--debug` option that will wait for a debugger to be attached on launch.
+  - `develop` docker builds will install the .NET SDK and the VsDbg .NET Debugger.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -89,6 +90,7 @@ docker run \
   -it \
   --rm \
   --pull always \
+  --name PlexCleaner \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
   /bin/bash
@@ -129,6 +131,7 @@ docker run \
   -it \
   --rm \
   --pull always \
+  --name PlexCleaner \
   --user nobody:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \

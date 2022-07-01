@@ -45,8 +45,8 @@ internal class Program
 
     private static void WaitForDebugger()
     {
-        // Use the raw commandline and look for --debugger
-        if (Environment.CommandLine.Contains("--debugger"))
+        // Use the raw commandline and look for --debug
+        if (Environment.CommandLine.Contains("--debug"))
         {
             // Wait for a debugger to be attached
             Console.WriteLine("Waiting for debugger to attach...");
