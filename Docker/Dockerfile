@@ -70,7 +70,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
-    && if [[ -n "$DBGTOOL_INSTALL" ]] ; then \
+    && if [ -n "$DBGTOOL_INSTALL" ] ; then \
          apt-get install -y dotnet-sdk-6.0 ; \
        else \
          apt-get install -y dotnet-runtime-6.0 ; \
@@ -78,7 +78,7 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
     && dotnet --info
 
 # Install remote debug tools
-RUN if [[ -n "$DBGTOOL_INSTALL" ]] ; then \
+RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
       wget https://aka.ms/getvsdbgsh \
       && sh getvsdbgsh -v latest -l /vsdbg ; \
     fi
