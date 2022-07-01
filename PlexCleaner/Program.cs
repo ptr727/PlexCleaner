@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,13 +16,15 @@ internal class Program
 {
     private static int Main()
     {
+        // Wait for debugger to attach
+        WaitForDebugger();
+
         // Create default logger
         CreateLogger(null);
 
-        // Create a 15s timer to keep the system from going to sleep
-        // TODO: The system occasionally still goes to sleep when debugging, why?
+        // Create a timer to keep the system from going to sleep
         KeepAwake.PreventSleep();
-        using System.Timers.Timer keepAwakeTimer = new(15 * 1000);
+        using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
@@ -40,6 +41,23 @@ internal class Program
         Log.CloseAndFlush();
 
         return ret;
+    }
+
+    private static void WaitForDebugger()
+    {
+        // Use the raw commandline and look for --debugger
+        if (Environment.CommandLine.Contains("--debugger"))
+        {
+            // Wait for a debugger to be attached
+            Console.WriteLine("Waiting for debugger to attach...");
+            while (!System.Diagnostics.Debugger.IsAttached)
+            {
+                Thread.Sleep(100);
+            }
+
+            // Break into the debugger
+            System.Diagnostics.Debugger.Break();
+        }
     }
 
     private static void CreateLogger(string logfile)

@@ -23,15 +23,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.8:
-  - Added parallel file processing support:
-    - Greatly improves throughput on high core count systems, where a single instance of FFmpeg or HandBrake can't utilize all available processing power.
-    - Enable parallel processing by using the `--parallel` command line option.
-    - The default thread count is equal to half the number of system cores.
-    - Override the default thread count by using the `--threadcount` option, e.g. `PlexCleaner --parallel --threadcount 2`.
-    - The executing ThreadId is logged to output, this helps with correlating between sequential and logical operations.
-    - Interactive console output from tools are disabled when parallel processing is enabled, this avoids console overwrites.
-  - General refactoring, bug fixes, and upstream package updates.
+- Version 2.9:
+  - Added `--debug` option that will launch and wait for a debugger to be attached.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -430,6 +423,7 @@ Options:
   --logappend                               Append to the log file vs. default overwrite
   --parallel                                Enable parallel processing
   --threadcount <threadcount>               Number of threads to use for parallel processing
+  --debug                                   Wait for debugger to attach
   --version                                 Show version information
   -?, -h, --help                            Show help and usage information
 
@@ -474,6 +468,7 @@ Options:
   --logappend                               Append to the log file vs. default overwrite
   --parallel                                Enable parallel processing
   --threadcount <threadcount>               Number of threads to use for parallel processing
+  --debug                                   Wait for debugger to attach
   -?, -h, --help                            Show help and usage information
 ```
 

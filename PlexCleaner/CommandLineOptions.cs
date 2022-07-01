@@ -18,6 +18,7 @@ public class CommandLineOptions
     public int ReProcess { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
+    public bool Debug { get; set; }
 
     public static int Invoke()
     {
@@ -119,6 +120,14 @@ public class CommandLineOptions
             new Option<int>("--threadcount")
             {
                 Description = "Number of threads to use for parallel processing",
+                IsRequired = false
+            });
+
+        // Wait for debugger to attach, optional
+        command.AddGlobalOption(
+            new Option<bool>("--debug")
+            {
+                Description = "Wait for debugger to attach",
                 IsRequired = false
             });
     }
