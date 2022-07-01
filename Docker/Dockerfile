@@ -1,6 +1,11 @@
 # Test in docker shell:
-# docker run -it --rm ubuntu:latest /bin/bash
+# docker run -it --rm --pull always ubuntu:latest /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
+
+
+# Test in develop shell:
+# docker run -it --rm --pull always --volume /data/media:/media:rw ptr727/plexcleaner:develop /bin/bash
+
 
 # Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
@@ -67,7 +72,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
 
-RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
+RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
     && if [ -n "$DBGTOOL_INSTALL" ] ; then \
@@ -75,22 +80,25 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/pack
        else \
          apt-get install -y dotnet-runtime-6.0 ; \
        fi \
+    && rm packages-microsoft-prod.deb \
     && dotnet --info
 
 # Install remote debug tools
 RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
       wget https://aka.ms/getvsdbgsh \
-      && sh getvsdbgsh -v latest -l /vsdbg ; \
+      && sh getvsdbgsh -v latest -l /vsdbg \
+      && rm getvsdbgsh ; \
     fi
 
 
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
+RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
     && dpkg -i repo-mediaarea_1.0-19_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
+    && rm repo-mediaarea_1.0-19_all.deb \
     && mediainfo --version
 
 
@@ -100,7 +108,7 @@ RUN wget -q https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
 # Avoid apt-key output should not be parsed warning
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 
-RUN wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key add - \
+RUN wget -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key add - \
     && sh -c 'echo "deb https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/bunkus.org.list' \
     && apt-get update \
     && apt-get install -y mkvtoolnix \

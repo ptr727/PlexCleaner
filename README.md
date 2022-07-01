@@ -91,11 +91,14 @@ Example, run in an interactive shell:
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
-# Pull the latest container version
-docker pull ptr727/plexcleaner
-
 # Run the bash shell in an interactive session
-docker run -it --rm --volume /data/media:/media:rw ptr727/plexcleaner /bin/bash
+docker run \
+  -it \
+  --rm \
+  --pull always \
+  --volume /data/media:/media:rw \
+  ptr727/plexcleaner \
+  /bin/bash
 
 # Create default settings file
 # Edit the settings file to suit your needs
@@ -128,13 +131,11 @@ screen -r
 sudo chown -R nobody:users /data/media
 sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
 
-# Pull the latest container version
-docker pull ptr727/plexcleaner
-
 # Run the process command in an interactive session
 docker run \
   -it \
   --rm \
+  --pull always \
   --user nobody:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
