@@ -59,9 +59,6 @@ ENV LANG=en_US.UTF-8 \
 # TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
 
 
-# Conditionally install SDK and Debug tools, else just runtime
-ARG DBGTOOL_INSTALL=""
-
 # Install .NET 6 Runtime
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
 # TODO: Substitute ubuntu with $(lsb_release -si | tr '[:upper:]' '[:lower:]')
@@ -72,23 +69,23 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
 
+# Conditionally install SDK and Debug tools, else just runtime
+# Test for empty or not empty string using -z or -n
+ARG DBGTOOL_INSTALL=""
+
 RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update \
     && if [ -n "$DBGTOOL_INSTALL" ] ; then \
-         apt-get install -y dotnet-sdk-6.0 ; \
+         apt-get install -y dotnet-sdk-6.0 \
+         && wget https://aka.ms/getvsdbgsh \
+         && sh getvsdbgsh -v latest -l /vsdbg \
+         && rm getvsdbgsh ; \
        else \
          apt-get install -y dotnet-runtime-6.0 ; \
        fi \
     && rm packages-microsoft-prod.deb \
     && dotnet --info
-
-# Install remote debug tools
-RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
-      wget https://aka.ms/getvsdbgsh \
-      && sh getvsdbgsh -v latest -l /vsdbg \
-      && rm getvsdbgsh ; \
-    fi
 
 
 # Install MediaInfo

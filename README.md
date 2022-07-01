@@ -24,8 +24,10 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.9:
-  - Added `--debug` option that will wait for a debugger to be attached on launch.
-  - `develop` docker builds will install the .NET SDK and the VsDbg .NET Debugger.
+  - Added remote docker container debug support.  
+    - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.
+    - Added a `--debug` commandline option that will wait for a debugger to be attached on launch.
+    - Remote debugging in docker over SSH can be done using [VSCode](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes) or [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/attach-to-process-running-in-docker-container?view=vs-2022).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues

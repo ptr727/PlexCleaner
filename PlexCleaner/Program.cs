@@ -54,6 +54,7 @@ internal class Program
             {
                 Thread.Sleep(100);
             }
+            Console.WriteLine("Debugger attached.");
 
             // Break into the debugger
             System.Diagnostics.Debugger.Break();
