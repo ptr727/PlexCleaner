@@ -91,11 +91,11 @@ RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/package
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
-    && dpkg -i repo-mediaarea_1.0-19_all.deb \
+RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-20_all.deb \
+    && dpkg -i repo-mediaarea_1.0-20_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
-    && rm repo-mediaarea_1.0-19_all.deb \
+    && rm repo-mediaarea_1.0-20_all.deb \
     && mediainfo --version
 
 
