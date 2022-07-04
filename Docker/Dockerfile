@@ -45,7 +45,7 @@ RUN apt-get update \
         apt-utils \
         locales \
         locales-all \
-        lsb-release \
+        lsb-core \
         p7zip-full \
         software-properties-common \
         wget \
@@ -101,12 +101,8 @@ RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb \
 
 # Install MKVToolNix
 # https://mkvtoolnix.download/downloads.html#ubuntu
-
-# Avoid apt-key output should not be parsed warning
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-
-RUN wget -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | apt-key add - \
-    && sh -c 'echo "deb https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/bunkus.org.list' \
+RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.download/gpg-pub-moritzbunkus.gpg \
+    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gpg-pub-moritzbunkus.gpg] https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/mkvtoolnix.list' \
     && apt-get update \
     && apt-get install -y mkvtoolnix \
     && mkvmerge --version
