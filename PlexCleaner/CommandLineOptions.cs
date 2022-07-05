@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
+using System.CommandLine.Parsing;
+using System.Linq;
 
 namespace PlexCleaner;
 
@@ -16,6 +18,14 @@ public class CommandLineOptions
     public int ReProcess { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
+    public bool Debug { get; set; }
+
+    public static int Invoke()
+    {
+        // TODO: https://github.com/dotnet/command-line-api/issues/1781
+        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+        return rootCommand.Invoke(CommandLineStringSplitter.Instance.Split(Environment.CommandLine).ToArray()[1..]);
+    }
 
     public static RootCommand CreateRootCommand()
     {
@@ -110,6 +120,14 @@ public class CommandLineOptions
             new Option<int>("--threadcount")
             {
                 Description = "Number of threads to use for parallel processing",
+                IsRequired = false
+            });
+
+        // Wait for debugger to attach, optional
+        command.AddGlobalOption(
+            new Option<bool>("--debug")
+            {
+                Description = "Wait for debugger to attach",
                 IsRequired = false
             });
     }

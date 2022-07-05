@@ -21,6 +21,13 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
-        }
+        },
+        {
+            "name": "Docker .NET Core Attach",
+            "type": "docker",
+            "request": "attach",
+            "platform": "netCore",
+            "processId": "${command:pickRemoteProcess}"
+        }        
     ]
 }

@@ -4,6 +4,15 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 2.8:
+  - Added parallel file processing support:
+    - Greatly improves throughput on high core count systems, where a single instance of FFmpeg or HandBrake can't utilize all available processing power.
+    - Enable parallel processing by using the `--parallel` command line option.
+    - The default thread count is equal to half the number of system cores.
+    - Override the default thread count by using the `--threadcount` option, e.g. `PlexCleaner --parallel --threadcount 2`.
+    - The executing ThreadId is logged to output, this helps with correlating between sequential and logical operations.
+    - Interactive console output from tools are disabled when parallel processing is enabled, this avoids console overwrites.
+  - General refactoring, bug fixes, and upstream package updates.
 - Version 2.7:
   - Log names of all processed files that are in `VerifyFailed` state at the end of the `process` command.
   - Prevent duplicate entries in `ProcessOptions:FileIgnoreList` setting when `VerifyOptions:RegisterInvalidFiles` is set, could happen when using `--reprocess 2`.

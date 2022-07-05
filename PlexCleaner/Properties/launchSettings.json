@@ -86,6 +86,10 @@
     "Process Snippets Parallel": {
       "commandName": "Project",
       "commandLineArgs": "--parallel --settingsfile \"PlexCleaner.json\" --logfile \"PlexCleaner.log\" process --testsnippets --mediafiles \"D:\\Test\""
+    },
+    "Debugger": {
+      "commandName": "Project",
+      "commandLineArgs": "--debugger"
     }
   }
 }
