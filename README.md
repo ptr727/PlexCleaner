@@ -77,7 +77,7 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 ### Docker
 
 - Builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-- Images are updated weekly with the latest upstream PPA and OS updates included.
+- Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
@@ -153,7 +153,7 @@ docker run \
 
 - Install the [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
 - Create a default JSON settings file using the `defaultsettings` command:
   - `PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
   - Modify the settings to suit your needs.
@@ -166,48 +166,18 @@ docker run \
 ### Linux
 
 - Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](#docker) build instead.
-- Listed steps are for Ubuntu, adjust as appropriate for your distribution.
-- Install prerequisites:
-  - `sudo apt update`
-  - `sudo apt upgrade -y`
-  - `sudo apt install -y wget git apt-transport-https lsb-release software-properties-common p7zip-full`
-- Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux):
-  - `wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb`
-  - `sudo dpkg -i packages-microsoft-prod.deb`
-  - `sudo apt update`
-  - `sudo apt install -y dotnet-runtime-6.0`
-  - `dotnet --info`
-- Install the required 3rd Party tools:
-  - Install [FFmpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5):
-    - `sudo add-apt-repository -y ppa:savoury1/graphics`
-    - `sudo add-apt-repository -y ppa:savoury1/multimedia`
-    - `sudo add-apt-repository -y ppa:savoury1/ffmpeg4`
-    - `sudo add-apt-repository -y ppa:savoury1/ffmpeg5`
-    - `sudo apt update`
-    - `sudo apt install -y ffmpeg`
-    - `ffmpeg -version`
-  - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu):
-    - `wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-19_all.deb`
-    - `sudo dpkg -i repo-mediaarea_1.0-19_all.deb`
-    - `sudo apt update`
-    - `sudo apt install -y mediainfo`
-    - `mediainfo --version`
-  - Install [HandBrake](https://handbrake.fr/docs/en/latest/get-handbrake/download-and-install.html):
-    - `sudo add-apt-repository -y ppa:stebbins/handbrake-releases`
-    - `sudo apt update`
-    - `sudo apt install -y handbrake-cli`
-    - `HandBrakeCLI --version`
-  - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html):
-    - `wget -q -O - https://mkvtoolnix.download/gpg-pub-moritzbunkus.txt | sudo apt-key add -`
-    - `sudo sh -c 'echo "deb https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/bunkus.org.list'`
-    - `sudo apt update`
-    - `sudo apt install -y mkvtoolnix`
-    - `mkvmerge --version`
-  - Keep the 3rd party tools updated by periodically running `sudo apt update` and `sudo apt upgrade`.
+- Manually install the 3rd party tools by following steps similar to the [Docker](./Docker/Dockerfile) file `RUN` commands. (Note, steps are for Ubuntu, adjust as appropriate for your distribution.)
+  - Install prerequisites.
+  - Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+  - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
+  - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
+  - Install [FFmpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5).
+  - Install [HandBrake](https://launchpad.net/~savoury1/+archive/ubuntu/handbrake).
+- Keep the 3rd party tools updated by periodically running `sudo apt update && sudo apt upgrade -y`.
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
 - Create a default JSON settings file using the `defaultsettings` command:
-  - `./PlexCleaner --settingsfile "PlexCleaner.json" defaultsettings`
+  - `./PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
   - Modify the settings to suit your needs.
 
 ## Configuration
