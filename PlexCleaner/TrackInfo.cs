@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -171,9 +171,16 @@ public class TrackInfo
             Language = "chi";
         }
 
-        // ID can be an integer or an integer-type, e.g. 3-CC1
+        // ID can be in a variety of formats:
+        // 1
+        // 3-CC1
+        // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
         // https://github.com/MediaArea/MediaInfo/issues/201
-        Id = int.Parse(track.Id.All(char.IsDigit) ? track.Id : track.Id[..track.Id.IndexOf('-', StringComparison.OrdinalIgnoreCase)], CultureInfo.InvariantCulture);
+        const string pattern = @"(?<id>\d)";
+        Regex regex = new(pattern);
+        Match match = regex.Match(track.Id);
+        Debug.Assert(match.Success);
+        Id = int.Parse(match.Groups["id"].Value);
 
         // Use streamorder for number
         Number = track.StreamOrder;

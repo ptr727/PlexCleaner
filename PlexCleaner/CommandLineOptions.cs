@@ -23,7 +23,7 @@ public class CommandLineOptions
     public static int Invoke()
     {
         // TODO: https://github.com/dotnet/command-line-api/issues/1781
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+        RootCommand rootCommand = CreateRootCommand();
         return rootCommand.Invoke(CommandLineStringSplitter.Instance.Split(Environment.CommandLine).ToArray()[1..]);
     }
 
