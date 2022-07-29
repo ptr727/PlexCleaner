@@ -156,10 +156,11 @@ internal class Process
     public bool ProcessFiles(List<string> fileList)
     {
         // Log active options
-        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}, FileIgnoreList: {FileIgnoreList}",
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}, ReVerifyFailed: {ReVerifyFailed}, FileIgnoreList: {FileIgnoreList}",
                                Program.Options.TestSnippets,
                                Program.Options.TestNoModify,
                                Program.Options.ReProcess,
+                               Program.Options.ReVerifyFailed,
                                Program.Config.ProcessOptions.FileIgnoreList.Count);
 
         // Ignore count before
@@ -342,6 +343,14 @@ internal class Process
             if (!processFile.GetMediaInfo() ||
                 Program.IsCancelled())
             {
+                result = false;
+                break;
+            }
+
+            // Conditionally re-verify and repair
+            if (!processFile.ReVerifyFailed() ||
+                Program.IsCancelled())
+            { 
                 result = false;
                 break;
             }

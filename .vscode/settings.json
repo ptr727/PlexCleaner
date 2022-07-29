@@ -1,8 +1,16 @@
 {
     "cSpell.words": [
+        "checkfornewtools",
+        "defaultsettings",
+        "deinterlace",
         "Emby",
         "Jellyfin",
+        "mediafiles",
         "Plex",
+        "plexcleaner",
+        "printmediainfo",
+        "settingsfile",
+        "threadcount",
         "Vorbis"
     ]
 }
