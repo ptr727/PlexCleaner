@@ -113,7 +113,7 @@ internal class Process
         return ProcessFiles(fileList);
     }
 
-    public static bool DeleteEmptyFolders(List<string> folderList)
+    public static bool DeleteEmptyFolders(IEnumerable<string> folderList)
     {
         if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
         {
@@ -687,7 +687,7 @@ internal class Process
         });
     }
 
-    private static bool ProcessFilesDriver(List<string> fileList, string taskName, Func<string, bool> taskFunc)
+    private static bool ProcessFilesDriver(IReadOnlyCollection<string> fileList, string taskName, Func<string, bool> taskFunc)
     {
         // Start
         Log.Logger.Information("Starting {TaskName}, processing {Count} files ...", taskName, fileList.Count);
