@@ -1330,13 +1330,13 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool ReVerifyFailed()
+    public bool SetReVerifyState()
     {
         // Conditionally remove the VerifyFailed flag if set
-        if (Program.Options.ReVerifyFailed &&
+        if (Program.Options.ReVerify &&
             State.HasFlag(SidecarFile.States.VerifyFailed))
         {
-            Log.Logger.Information("Re-verifying : {FileName}", FileInfo.Name);
+            Log.Logger.Information("Re-verifying and repairing : {FileName}", FileInfo.Name);
 
             // Remove VerifyFailed and RepairFailed flags
             Debug.Assert(!State.HasFlag(SidecarFile.States.Verified));

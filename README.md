@@ -24,7 +24,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 2.10:
-  - Added the `--reverifyfailed` option, to allow verification and repair of media that previously failed to verify or failed to repair.
+  - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
     - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
     - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
     - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
@@ -438,7 +438,7 @@ Options:
   --testsnippets                            Create short video clips, useful during testing
   --testnomodify                            Do not make any modifications, useful during testing
   --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = metadata, 2 = streams
-  --reverifyfailed                          Re-verify or repair media in VerifyFailed state
+  --reverify                                Re-verify and repair media in VerifyFailed state
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
@@ -472,7 +472,7 @@ The `--reprocess [level]` option is used to override sidecar and conditional pro
 `1`: Re-process metadata operations, e.g. tag detection, closed caption detection, etc.  
 `2`: Re-process metadata and stream operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
 
-The `--reverifyfailed` option is used to re-verify and repair media files that are currently in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
+The `--reverify` option is used to re-verify and repair media files that are in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
 
 Add the `--parallel` option to process multiple files concurrently. When parallel processing is enabled, the default thread count is half the number of cores, override the thread count using the `--threadcount` option.
 

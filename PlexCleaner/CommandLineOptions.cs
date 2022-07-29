@@ -16,7 +16,7 @@ public class CommandLineOptions
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
     public int ReProcess { get; set; }
-    public bool ReVerifyFailed { get; set; }
+    public bool ReVerify { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
     public bool Debug { get; set; }
@@ -191,9 +191,9 @@ public class CommandLineOptions
 
         //  Re-verify, optional
         command.AddOption(
-            new Option<bool>("--reverifyfailed")
+            new Option<bool>("--reverify")
             {
-                Description = "Re-verify or repair media in VerifyFailed state",
+                Description = "Re-verify and repair media in VerifyFailed state",
                 IsRequired = false
             });
 
