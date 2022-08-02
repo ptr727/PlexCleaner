@@ -1330,6 +1330,28 @@ public class ProcessFile
         return Refresh(true);
     }
 
+    public bool SetReVerifyState()
+    {
+        // Conditionally remove the VerifyFailed flag if set
+        if (Program.Options.ReVerify &&
+            State.HasFlag(SidecarFile.States.VerifyFailed))
+        {
+            Log.Logger.Information("Re-verifying and repairing : {FileName}", FileInfo.Name);
+
+            // Remove VerifyFailed and RepairFailed flags
+            Debug.Assert(!State.HasFlag(SidecarFile.States.Verified));
+            Debug.Assert(!State.HasFlag(SidecarFile.States.Repaired));
+            SidecarFile.State &= ~SidecarFile.States.VerifyFailed;
+            SidecarFile.State &= ~SidecarFile.States.RepairFailed;
+
+            // Refresh sidecar info
+            return Refresh(true);
+        }
+
+        // Done
+        return true;
+    }
+
     private bool Refresh(string filename)
     {
         // Media filename changed

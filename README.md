@@ -23,13 +23,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.9:
-  - Added remote docker container debug support.  
-    - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.
-    - Added a `--debug` command line option that will wait for a debugger to be attached on launch.
-    - Remote debugging in docker over SSH can be done using [VSCode](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes) or [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/attach-to-process-running-in-docker-container?view=vs-2022).
-  - Updated Dockerfile with latest Linux install steps for MediaInfo and MKVToolNix.
-  - Updated System.CommandLine usage to accommodate Beta 4 breaking changes.
+- Version 2.10:
+  - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
+    - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
+    - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
+    - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -387,7 +385,7 @@ Create a default configuration file by running:
 ## Usage
 
 ```console
-> ./PlexCleaner --help
+PlexCleaner --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
@@ -428,7 +426,7 @@ The `--logfile` output is optional, the file will be overwritten unless `--logap
 ### Process Media Files
 
 ```console
-> ./PlexCleaner process --help
+PlexCleaner process --help
 Description:
   Process media files
 
@@ -439,7 +437,8 @@ Options:
   --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
   --testsnippets                            Create short video clips, useful during testing
   --testnomodify                            Do not make any modifications, useful during testing
-  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = some, 2 = all
+  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = metadata, 2 = streams
+  --reverify                                Re-verify and repair media in VerifyFailed state
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite
@@ -470,8 +469,10 @@ Paths with spaces should be double quoted.
 
 The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.  
 `0`: Default behavior, do not do any reprocessing.  
-`1`: Re-process low cost operations, e.g. tag detection, closed caption detection, etc.  
-`2`: Re-process all operations including expensive operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+`1`: Re-process metadata operations, e.g. tag detection, closed caption detection, etc.  
+`2`: Re-process metadata and stream operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+
+The `--reverify` option is used to re-verify and repair media files that are in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
 
 Add the `--parallel` option to process multiple files concurrently. When parallel processing is enabled, the default thread count is half the number of cores, override the thread count using the `--threadcount` option.
 

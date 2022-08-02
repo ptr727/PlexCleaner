@@ -16,6 +16,7 @@ public class CommandLineOptions
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
     public int ReProcess { get; set; }
+    public bool ReVerify { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
     public bool Debug { get; set; }
@@ -184,7 +185,15 @@ public class CommandLineOptions
         command.AddOption(
             new Option<int>("--reprocess")
             {
-                Description = "Re-process level, 0 = none (default), 1 = some, 2 = all",
+                Description = "Re-process level, 0 = none (default), 1 = metadata, 2 = streams",
+                IsRequired = false
+            });
+
+        //  Re-verify, optional
+        command.AddOption(
+            new Option<bool>("--reverify")
+            {
+                Description = "Re-verify and repair media in VerifyFailed state",
                 IsRequired = false
             });
 

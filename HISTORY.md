@@ -4,6 +4,13 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 2.9:
+  - Added remote docker container debug support.  
+    - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.
+    - Added a `--debug` command line option that will wait for a debugger to be attached on launch.
+    - Remote debugging in docker over SSH can be done using [VSCode](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes) or [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/attach-to-process-running-in-docker-container?view=vs-2022).
+  - Updated Dockerfile with latest Linux install steps for MediaInfo and MKVToolNix.
+  - Updated System.CommandLine usage to accommodate Beta 4 breaking changes.
 - Version 2.8:
   - Added parallel file processing support:
     - Greatly improves throughput on high core count systems, where a single instance of FFmpeg or HandBrake can't utilize all available processing power.
