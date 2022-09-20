@@ -27,7 +27,7 @@ jobs:
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: 'Checkout Code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Get all history for version calculation
           fetch-depth: 0
