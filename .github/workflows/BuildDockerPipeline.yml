@@ -15,7 +15,7 @@ on:
 
 jobs:
 
-  build:
+  buildpublish:
     name: 'Build and Push Docker Image Pipeline'
     runs-on: ubuntu-latest
 
