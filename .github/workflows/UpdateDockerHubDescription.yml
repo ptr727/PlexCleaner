@@ -16,11 +16,11 @@ jobs:
     steps:
 
       - name: 'Checkout Code'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # https://github.com/peter-evans/dockerhub-description
+      # https://github.com/marketplace/actions/docker-hub-description
       - name: 'Update Docker Hub Description'
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}

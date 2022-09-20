@@ -60,8 +60,9 @@ ENV LANG=en_US.UTF-8 \
 
 
 # Install .NET 6 Runtime
+# Ubuntu 22.04 / Jammy includes .NET 6, do not install packages-microsoft-prod.deb
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
-# TODO: Substitute ubuntu with $(lsb_release -si | tr '[:upper:]' '[:lower:]')
+# https://github.com/dotnet/core/issues/7699
 
 # Follow pattern used in .NET Dockerfile
 # https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/6.0/focal/amd64/Dockerfile
@@ -73,18 +74,14 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 # Test for empty or not empty string using -z or -n
 ARG DBGTOOL_INSTALL=""
 
-RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && apt-get update \
-    && if [ -n "$DBGTOOL_INSTALL" ] ; then \
-         apt-get install -y dotnet-sdk-6.0 \
-         && wget https://aka.ms/getvsdbgsh \
-         && sh getvsdbgsh -v latest -l /vsdbg \
-         && rm getvsdbgsh ; \
-       else \
-         apt-get install -y dotnet-runtime-6.0 ; \
-       fi \
-    && rm packages-microsoft-prod.deb \
+RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
+        apt-get install -y dotnet-sdk-6.0 \
+        && wget https://aka.ms/getvsdbgsh \
+        && sh getvsdbgsh -v latest -l /vsdbg \
+        && rm getvsdbgsh ; \
+    else \
+        apt-get install -y dotnet-runtime-6.0 ; \
+    fi \
     && dotnet --info
 
 
