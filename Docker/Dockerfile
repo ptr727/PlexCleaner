@@ -79,7 +79,7 @@ RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/package
     && cat /etc/apt/preferences \
     && apt-get update \
     && apt-get install -y dotnet-runtime-6.0 \
-    && dotnet --info \
+    && dotnet --info
 
 
 # Conditionally install .NET SDK and Debug tools
@@ -91,7 +91,7 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
         && wget https://aka.ms/getvsdbgsh \
         && sh getvsdbgsh -v latest -l /vsdbg \
         && rm getvsdbgsh ; \
-        && dotnet --info \
+        && dotnet --info
 
 
 # Install MediaInfo
@@ -144,5 +144,4 @@ RUN apt-get autoremove -y \
 # Build externally
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 COPY PlexCleaner /PlexCleaner
-RUN dotnet --info \
-    && /PlexCleaner/PlexCleaner --version
+RUN /PlexCleaner/PlexCleaner --version
