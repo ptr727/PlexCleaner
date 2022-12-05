@@ -86,7 +86,9 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
     else \
         apt-get install -y dotnet-runtime-6.0 ; \
     fi \
-    && dotnet --info
+    && dotnet --info \
+    && dotnet --list-sdks \
+    && dotnet --list-runtimes
 
 
 # Install MediaInfo
@@ -139,4 +141,5 @@ RUN apt-get autoremove -y \
 # Build externally
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 COPY PlexCleaner /PlexCleaner
-RUN /PlexCleaner/PlexCleaner --version
+RUN dotnet --info \
+    && /PlexCleaner/PlexCleaner --version
