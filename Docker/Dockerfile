@@ -59,13 +59,17 @@ ENV LANG=en_US.UTF-8 \
 # TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
 
 
-# Install .NET 6 Runtime
-# Ubuntu 22.04 / Jammy includes .NET 6, do not install packages-microsoft-prod.deb
+# Install .NET Runtime
+# Ubuntu 22.04 / Jammy includes .NET, do not install packages-microsoft-prod.deb
 # https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
 # https://github.com/dotnet/core/issues/7699
 
+# .NET 7 released but not yet available on Ubuntu
+# https://github.com/dotnet/core/issues/7939
+
 # Follow pattern used in .NET Dockerfile
 # https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/6.0/focal/amd64/Dockerfile
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/7.0/jammy/amd64/Dockerfile
 ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
