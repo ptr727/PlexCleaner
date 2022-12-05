@@ -91,8 +91,8 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
         apt-get install -y dotnet-sdk-6.0 \
         && wget https://aka.ms/getvsdbgsh \
         && sh getvsdbgsh -v latest -l /vsdbg \
-        && rm getvsdbgsh ; \
-        && dotnet --info \
+        && rm getvsdbgsh \
+        && dotnet --info ; \
     fi
 
 # Install MediaInfo
