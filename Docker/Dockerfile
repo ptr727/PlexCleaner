@@ -59,14 +59,6 @@ ENV LANG=en_US.UTF-8 \
 # TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
 
 
-# Install .NET Runtime
-# Ubuntu 22.04 / Jammy includes .NET, do not install packages-microsoft-prod.deb
-# https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
-# https://github.com/dotnet/core/issues/7699
-
-# .NET 7 released but not yet available on Ubuntu
-# https://github.com/dotnet/core/issues/7939
-
 # Follow pattern used in .NET Dockerfile
 # https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/6.0/focal/amd64/Dockerfile
 # https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/7.0/jammy/amd64/Dockerfile
@@ -74,7 +66,23 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
     NUGET_XMLDOC_MODE=skip
 
-# Conditionally install SDK and Debug tools, else just runtime
+# Install .NET runtime using PMC
+# Ubuntu 22.04 / Jammy includes .NET, set correct order when using packages-microsoft-prod.deb
+# https://github.com/dotnet/core/issues/7699
+RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && touch /etc/apt/preferences \
+    && echo "Package: *" >> /etc/apt/preferences \
+    && echo "Pin: origin \"packages.microsoft.com\"" >> /etc/apt/preferences \
+    && echo Pin-Priority: 1001 >> /etc/apt/preferences \
+    && cat /etc/apt/preferences \
+    && apt-get update \
+    && apt-get install -y dotnet-runtime-6.0 \
+    && dotnet --info \
+
+
+# Conditionally install .NET SDK and Debug tools
 # Test for empty or not empty string using -z or -n
 ARG DBGTOOL_INSTALL=""
 
@@ -83,12 +91,7 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
         && wget https://aka.ms/getvsdbgsh \
         && sh getvsdbgsh -v latest -l /vsdbg \
         && rm getvsdbgsh ; \
-    else \
-        apt-get install -y dotnet-runtime-6.0 ; \
-    fi \
-    && dotnet --info \
-    && dotnet --list-sdks \
-    && dotnet --list-runtimes
+        && dotnet --info \
 
 
 # Install MediaInfo
