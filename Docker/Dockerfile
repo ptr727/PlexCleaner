@@ -77,6 +77,7 @@ RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/package
     && echo "Pin: origin \"packages.microsoft.com\"" >> /etc/apt/preferences \
     && echo Pin-Priority: 1001 >> /etc/apt/preferences \
     && cat /etc/apt/preferences \
+    && cat /etc/apt/sources.list.d/microsoft-prod.list \
     && apt-get update \
     && apt-get install -y dotnet-runtime-6.0 \
     && dotnet --info
@@ -91,8 +92,8 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
         && wget https://aka.ms/getvsdbgsh \
         && sh getvsdbgsh -v latest -l /vsdbg \
         && rm getvsdbgsh ; \
-        && dotnet --info
-
+        && dotnet --info \
+    fi
 
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
