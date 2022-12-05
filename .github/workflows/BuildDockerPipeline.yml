@@ -107,7 +107,7 @@ jobs:
   # Create a custom badge to report the build date
   # Run this job at the end of the pipeline
   datebadge:
-    needs: buildpublish
+    needs: buildpush
     name: "Build Date Badge"
     runs-on: ubuntu-latest
     steps:
