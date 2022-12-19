@@ -13,7 +13,7 @@ Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
 Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)](https://github.com/ptr727/PlexCleaner/commits/main)  
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/workflows/BuilPublishPipeline.yml?branch=main&logo=github)](https://github.com/ptr727/PlexCleaner/actions)  
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildPublishPipeline.yml?branch=main&logo=github)](https://github.com/ptr727/PlexCleaner/actions)  
 [![GitHub Actions Last Build](https://byob.yarr.is/ptr727/PlexCleaner/lastbuild)](https://github.com/ptr727/PlexCleaner/actions)
 
 ## Releases
