@@ -21,6 +21,8 @@
 # docker build --progress=plain --build-arg DBGTOOL_INSTALL=True ./Docker
 
 # Build from Ubuntu LTS as base image
+# TODO: Build from .NET Ubuntu base image mcr.microsoft.com/dotnet/sdk:7.0-jammy
+# https://hub.docker.com/_/microsoft-dotnet-sdk/
 FROM ubuntu:latest
 
 # Set the version at build time
@@ -75,7 +77,7 @@ RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/package
     && touch /etc/apt/preferences \
     && echo "Package: *" >> /etc/apt/preferences \
     && echo "Pin: origin \"packages.microsoft.com\"" >> /etc/apt/preferences \
-    && echo Pin-Priority: 1001 >> /etc/apt/preferences \
+    && echo "Pin-Priority: 1001" >> /etc/apt/preferences \
     && cat /etc/apt/preferences \
     && cat /etc/apt/sources.list.d/microsoft-prod.list \
     && apt-get update \
