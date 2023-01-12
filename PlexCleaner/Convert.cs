@@ -212,7 +212,7 @@ public static class Convert
 
         // Deinterlace video using handbrake
         Log.Logger.Information("DeInterlace using HandBrake : {FileName}", inputName);
-        if (!Tools.HandBrake.DeInterlaceToMkv(inputName, tempName))
+        if (!Tools.HandBrake.ConvertToMkv(inputName, tempName, true, true))
         {
             Log.Logger.Error("DeInterlace using HandBrake failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);
@@ -252,7 +252,7 @@ public static class Convert
 
         // Re-encode audio and video using handbrake
         Log.Logger.Information("ReEncode using HandBrake : {FileName}", inputName);
-        if (!Tools.HandBrake.ConvertToMkv(inputName, tempName))
+        if (!Tools.HandBrake.ConvertToMkv(inputName, tempName, true, false))
         {
             Log.Logger.Error("ReEncode using HandBrake failed : {FileName}", inputName);
             FileEx.DeleteFile(tempName);

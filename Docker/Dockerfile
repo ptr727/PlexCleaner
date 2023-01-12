@@ -1,5 +1,5 @@
 # Test in docker shell:
-# docker run -it --rm --pull always --name Testing ubuntu:latest /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 
@@ -9,21 +9,14 @@
 
 # Test Docker build:
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
-# docker build ./Docker
+# docker build --progress=plain ./Docker
 
 # Ignore docker layer cache:
-# docker build --no-cache ./Docker
+# docker build --no-cache --progress=plain ./Docker
 
-# Set arguments:
-# docker build --build-arg DBGTOOL_INSTALL=True ./Docker
-
-# Pass container output instead of buildkit suppressing it:
-# docker build --progress=plain --build-arg DBGTOOL_INSTALL=True ./Docker
-
-# Build from Ubuntu LTS as base image
-# TODO: Build from .NET Ubuntu base image mcr.microsoft.com/dotnet/sdk:7.0-jammy
-# https://hub.docker.com/_/microsoft-dotnet-sdk/
-FROM ubuntu:latest
+# Build from .NET Ubuntu Jammy base image mcr.microsoft.com/dotnet/sdk:7.0-jammy
+# https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
+FROM mcr.microsoft.com/dotnet/sdk:7.0-jammy
 
 # Set the version at build time
 ARG LABEL_VERSION="1.0.0.0"
@@ -58,55 +51,23 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# TODO: Build could be optimized by combining RUN layers, but that makes troubleshooting more difficult
+# Verify .NET version
+RUN dotnet --info
 
-
-# Follow pattern used in .NET Dockerfile
-# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/6.0/focal/amd64/Dockerfile
-# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/7.0/jammy/amd64/Dockerfile
-ENV DOTNET_RUNNING_IN_CONTAINER=true \
-    DOTNET_USE_POLLING_FILE_WATCHER=true \
-    NUGET_XMLDOC_MODE=skip
-
-# Install .NET runtime using PMC
-# Ubuntu 22.04 / Jammy includes .NET, set correct order when using packages-microsoft-prod.deb
-# https://github.com/dotnet/core/issues/7699
-RUN wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -sr)/packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && touch /etc/apt/preferences \
-    && echo "Package: *" >> /etc/apt/preferences \
-    && echo "Pin: origin \"packages.microsoft.com\"" >> /etc/apt/preferences \
-    && echo "Pin-Priority: 1001" >> /etc/apt/preferences \
-    && cat /etc/apt/preferences \
-    && cat /etc/apt/sources.list.d/microsoft-prod.list \
-    && apt-get update \
-    && apt-get install -y dotnet-runtime-6.0 \
-    && dotnet --info
-
-
-# Conditionally install .NET SDK and Debug tools
-# Test for empty or not empty string using -z or -n
-ARG DBGTOOL_INSTALL=""
-
-RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
-        apt-get install -y dotnet-sdk-6.0 \
-        && wget https://aka.ms/getvsdbgsh \
-        && sh getvsdbgsh -v latest -l /vsdbg \
-        && rm getvsdbgsh \
-        && dotnet --info ; \
-    fi
+# Install VS debug tools
+RUN wget https://aka.ms/getvsdbgsh \
+    && sh getvsdbgsh -v latest -l /vsdbg \
+    && rm getvsdbgsh
 
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-20_all.deb \
-    && dpkg -i repo-mediaarea_1.0-20_all.deb \
+RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-21_all.deb \
+    && dpkg -i repo-mediaarea_1.0-21_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
-    && rm repo-mediaarea_1.0-20_all.deb \
+    && rm repo-mediaarea_1.0-21_all.deb \
     && mediainfo --version
-
 
 # Install MKVToolNix
 # https://mkvtoolnix.download/downloads.html#ubuntu
@@ -115,7 +76,6 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && apt-get update \
     && apt-get install -y mkvtoolnix \
     && mkvmerge --version
-
 
 # Install FfMpeg
 # https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5
@@ -127,7 +87,6 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
     && apt-get install -y ffmpeg \
     && ffmpeg -version
 
-
 # Install HandBrake
 # Depends on FfMpeg, install FfMpeg first
 # https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
@@ -136,12 +95,10 @@ RUN add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get install -y handbrake-cli \
     && HandBrakeCLI --version
 
-
 # Cleanup
 RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
 
 # Copy PlexCleaner
 # Build externally

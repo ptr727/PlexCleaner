@@ -25,11 +25,24 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
-- Version 2.10:
-  - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
-    - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
-    - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
-    - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
+- Version 3.0:
+  - Switched from .NET 6 to .NET 7.
+  - Switched docker base image from `ubuntu:latest` to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` alleviating the need to manually install .NET.
+  - Modified the settings schema to allow custom FFmpeg and HandBrake CLI command parameters.
+    - Removed the old `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
+    - Added `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions`, see the Configuration section for usage details.
+    - Custom CLI options allows for e.g. AV1 video codec use, Intel QuickSync or NVidia NVENC hardware encoding, custom encoding parameters, etc. See the [Custom FFmpeg and HandBrake CLI Parameters](foo) section for usage details.
+    - Schema will automatically be upgraded with compatible settings to v3 on first run.
+  - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
+  - [Breaking Change] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+    - `createschema` does not require `--settingsfile` but `--settingsfile` was marked as required and set as a global option.
+    - The following global options have been removed and added to their respective commands:
+      - `--settingsfile` used by several commands.
+      - `--parallel` used by the `process` command.
+      - `--threadcount` used by the `process` command.
+    - Move the option from the global options to follow the specific command.
+      - E.g. `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...` -> `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`.
+      - E.g. `PlexCleaner process ...` -> `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -102,14 +115,14 @@ docker run \
 # Create default settings file
 # Edit the settings file to suit your needs
 /PlexCleaner/PlexCleaner \
-  --settingsfile /media/PlexCleaner/PlexCleaner.json \
-  defaultsettings
+  defaultsettings \
+  --settingsfile /media/PlexCleaner/PlexCleaner.json
 
 # Process media files
 /PlexCleaner/PlexCleaner \
-  --settingsfile /media/PlexCleaner/PlexCleaner.json \
   --logfile /media/PlexCleaner/PlexCleaner.log \
   process \
+  --settingsfile /media/PlexCleaner/PlexCleaner.json \
   --mediafiles /media/Movies \
   --mediafiles /media/Series
 
@@ -141,24 +154,24 @@ docker run \
   --volume /data/media:/media:rw \
   ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \
-    --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --logfile /media/PlexCleaner/PlexCleaner.log \
-    --parallel \
     process \
+    --settingsfile /media/PlexCleaner/PlexCleaner.json \
+    --parallel \
     --mediafiles /media/Movies \
     --mediafiles /media/Series
 ```
 
 ### Windows
 
-- Install the [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
+- Install the [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) or the [.NET 6 SDK](https://dotnet.microsoft.com/download).
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) or the [.NET SDK](https://dotnet.microsoft.com/download).
 - Create a default JSON settings file using the `defaultsettings` command:
-  - `PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
+  - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
 - Download the required 3rd party tools using the `checkfornewtools` command:
-  - `PlexCleaner --settingsfile PlexCleaner.json checkfornewtools`
+  - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
   - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
   - The tool version information will be stored in `Tools\Tools.json`.
   - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or enabling the `ToolsOptions:AutoUpdate` setting.
@@ -168,29 +181,31 @@ docker run \
 - Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](#docker) build instead.
 - Manually install the 3rd party tools by following steps similar to the [Docker](./Docker/Dockerfile) file `RUN` commands. (Note, steps are for Ubuntu, adjust as appropriate for your distribution.)
   - Install prerequisites.
-  - Install [.NET 6 Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+  - Install [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
   - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
   - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
   - Install [FFmpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5).
   - Install [HandBrake](https://launchpad.net/~savoury1/+archive/ubuntu/handbrake).
 - Keep the 3rd party tools updated by periodically running `sudo apt update && sudo apt upgrade -y`.
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
 - Create a default JSON settings file using the `defaultsettings` command:
-  - `./PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
+  - `./PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
 
 ## Configuration
 
-Create a default configuration file by running:  
-`PlexCleaner --settingsfile PlexCleaner.json defaultsettings`
+Create a default JSON configuration file by running:  
+`PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
+
+Following is the [default JSON settings](./PlexCleaner.json) with usage comments:
 
 ```jsonc
 {
   // JSON Schema
   "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
   // JSON Schema version
-  "SchemaVersion": 2,
+  "SchemaVersion": 3,
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
@@ -205,12 +220,24 @@ Create a default configuration file by running:
   },
   // Convert options
   "ConvertOptions": {
-    // Enable H.265 encoding, else use H.264
-    "EnableH265Encoder": true,
-    // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
-    "VideoEncodeQuality": 20,
-    // Audio encoding codec
-    "AudioEncodeCodec": "ac3"
+    // FFmpeg commandline options
+    "FfMpegOptions": {
+      // Video encoding option following -c:v
+      "Video": "libx264 -crf 20 -preset medium",
+      // Audio encoding option following -c:a
+      "Audio": "ac3",
+      // Global options
+      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
+      // Output options
+      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+    },
+    // HandBrake commandline options
+    "HandBrakeOptions": {
+      // Video encoding options following --encode
+      "Video": "x264 --quality 20 --encoder-preset medium",
+      // Audio encoding option following --aencode
+      "Audio": "copy --audio-fallback ac3"
+    }
   },
   // Process options
   "ProcessOptions": {
@@ -384,10 +411,85 @@ Create a default configuration file by running:
 }
 ```
 
+## Custom FFmpeg and HandBrake CLI Parameters
+
+The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` allows for custom CLI parameters to be used during processing.
+
+Note that the hardware assisted encoding options are operating system, hardware, and tool version specific, e.g. see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
+Listed examples are from documentation and minimal testing with Intel QuickSync on Windows only.  
+Please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
+
+### FFmpeg Options
+
+See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.  
+The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.
+
+Settings allows for custom configuration of:
+
+- `FfMpegOptions:Global`: Global options, e.g. `-analyzeduration 2147483647 -probesize 2147483647`
+- `FfMpegOptions:Output`: Output options, e.g. `-max_muxing_queue_size 1024 -abort_on empty_output`
+- `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 20 -preset medium`
+- `FfMpegOptions:Audio`: Audio encoder options following the `-c:a` parameter, e.g. `ac3`
+
+Example video encoder options:
+
+- List all supported encoders: `ffmpeg -encoders`
+- List options supported by an encoder: e.g. `ffmpeg -h encoder=libaom-av1`
+- [H.264](https://trac.ffmpeg.org/wiki/Encode/H.264): `libx264 -crf 22 -preset medium`
+- [H.265](https://trac.ffmpeg.org/wiki/Encode/H.265): `libx265 -crf 26 -preset medium`
+- [AV1](https://trac.ffmpeg.org/wiki/Encode/AV1): `libaom-av1 -crf 30`
+
+Example hardware assisted video encoding options:
+
+- NVidia NVENC:
+  - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
+  - NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
+  - `FfMpegOptions:Global`: Add `-hwaccel cuda -hwaccel_output_format cuda` to the defaults.
+  - `FfMpegOptions:Video`: `h264_nvenc`
+- Intel QuickSync:
+  - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
+  - QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
+  - `FfMpegOptions:Global`: Add `-hwaccel qsv -hwaccel_output_format qsv` to the defaults.
+  - `FfMpegOptions:Video`: `h264_qsv`
+
+### HandBrake Options
+
+See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.  
+The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.
+
+Settings allows for custom configuration of:
+
+- `HandBrakeOptions:Video`: Video encoder options following the `--encode` parameter, e.g. `x264 --quality 20 --encoder-preset medium`
+- `HandBrakeOptions:Audio`: Audio encoder options following the `--aencode` parameter, e.g. `copy --audio-fallback ac3`
+
+Example video encoder options:
+
+- List all supported encoders: `HandBrakeCLI.exe --help`
+- List presets supported by an encoder: e.g. `HandBrakeCLI --encoder-preset-list x264`
+- H.264: `x264 --quality 22 --encoder-preset medium`
+- H.265: `x265 --quality 26 --encoder-preset medium`
+- AV1: `svt_av1 --quality 26 --encoder-preset 8`
+
+Example hardware assisted video encoding options:
+
+- NVidia NVENC:
+  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
+  - `HandBrakeOptions:Video`: `nvenc_h264`
+- Intel QuickSync:
+  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
+  - `HandBrakeOptions:Video`: `qsv_h264`
+
+Note that HandBrake is predominantly used for video deinterlacing, or in rare cases where encoding with FFmpeg fails.  
+As such the default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
+
 ## Usage
 
+Use the `--help` commandline option to get a list of commands and options.  
+One of the commands must be specified, and some commands have additional required options.  
+To get more help for a specific command run `PlexCleaner <command> --help`.
+
 ```console
-PlexCleaner --help
+> ./PlexCleaner --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
 
@@ -395,14 +497,11 @@ Usage:
   PlexCleaner [command] [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to the log file vs. default overwrite
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
-  --debug                                   Wait for debugger to attach
-  --version                                 Show version information
-  -?, -h, --help                            Show help and usage information
+  --logfile <logfile>  Path to log file
+  --logappend          Append to the log file vs. default overwrite
+  --debug              Wait for debugger to attach
+  --version            Show version information
+  -?, -h, --help       Show help and usage information
 
 Commands:
   defaultsettings   Write default values to settings file
@@ -411,46 +510,19 @@ Commands:
   monitor           Monitor and process media file changes in folders
   remux             Re-Multiplex media files
   reencode          Re-Encode media files
-  deinterlace       Deinterlace media files
+  deinterlace       De-Interlace media files
   createsidecar     Create new sidecar files
   getsidecarinfo    Print sidecar file attribute information
   gettagmap         Print attribute tag-map created from media files
   getmediainfo      Print media file attribute information
   gettoolinfo       Print tool file attribute information
   removesubtitles   Remove all subtitles
+  createschema      Write settings JSON schema to file
 ```
-
-One of the commands must be specified, some commands have more options.  
-To get more help for a specific command run `PlexCleaner <command> --help`.  
-The `--settingsfile` JSON settings file is required. A default settings file can be created using the `defaultsettings` command.  
-The `--logfile` output is optional, the file will be overwritten unless `--logappend` is set.
 
 ### Process Media Files
 
-```console
-PlexCleaner process --help
-Description:
-  Process media files
-
-Usage:
-  PlexCleaner process [options]
-
-Options:
-  --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
-  --testsnippets                            Create short video clips, useful during testing
-  --testnomodify                            Do not make any modifications, useful during testing
-  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = metadata, 2 = streams
-  --reverify                                Re-verify and repair media in VerifyFailed state
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to the log file vs. default overwrite
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
-```
-
-The `process` command will process the media content using options as defined in the settings file:
+The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
@@ -469,25 +541,51 @@ The `process` command will process the media content using options as defined in
 The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
 Paths with spaces should be double quoted.
 
-The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.  
-`0`: Default behavior, do not do any reprocessing.  
-`1`: Re-process metadata operations, e.g. tag detection, closed caption detection, etc.  
-`2`: Re-process metadata and stream operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
+The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.
+
+- `0`: Default behavior, do not do any reprocessing.
+- `1`: Re-process metadata operations, e.g. tag detection, closed caption detection, etc.
+- `2`: Re-process metadata and stream operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
 
 The `--reverify` option is used to re-verify and repair media files that are in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
 
 Add the `--parallel` option to process multiple files concurrently. When parallel processing is enabled, the default thread count is half the number of cores, override the thread count using the `--threadcount` option.
 
 Example:  
-`PlexCleaner --parallel --settingsfile PlexCleaner.json --logfile PlexCleaner.log process --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
+`PlexCleaner --logfile PlexCleaner.log process --settingsfile PlexCleaner.json --parallel --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
 
-### Re-Multiplex, Re-Encode, Deinterlace
+Run `PlexCleaner process --help` for a list of all commandline options.
+
+```console
+> ./PlexCleaner process --help
+Description:
+  Process media files
+
+Usage:
+  PlexCleaner process [options]
+
+Options:
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
+  --parallel                                Enable parallel processing
+  --threadcount <threadcount>               Number of threads to use for parallel processing
+  --testsnippets                            Create short video clips, useful during testing
+  --testnomodify                            Do not make any modifications, useful during testing
+  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = metadata, 2 = streams
+  --reverify                                Re-verify and repair media in VerifyFailed state
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to the log file vs. default overwrite
+  --debug                                   Wait for debugger to attach
+  -?, -h, --help                            Show help and usage information
+```
+
+### Re-Multiplex, Re-Encode, De-Interlace
 
 The `remux` command will re-multiplex the media files using `MkvMerge`.
 
-The `reencode` command will re-encode the media files using FFmpeg to H.264/5 based on `EnableH265Encoder` at `VideoEncodeQuality` for video, and `AudioEncodeCodec` for audio.
+The `reencode` command will re-encode the media files using FFmpeg and the `ConvertOptions:FfMpegOptions` settings.
 
-The `deinterlace` command will deinterlace interlaced media files using HandBrake and the `--comb-detect --decomb` filters.
+The `deinterlace` command will re-encode and de-interlace interlaced media files using HandBrake and the `ConvertOptions:HandBrakeOptions` settings with `--comb-detect --decomb` enabled.
 
 ### Monitor
 
@@ -514,7 +612,7 @@ The `getsidecarinfo` command will print sidecar attribute information.
 ## Remove Subtitles
 
 The `removesubtitles` command will remove all subtitle tracks from the media files.  
-This is useful when the subtitles are forced and offensive or contain advertising.
+This is useful when the subtitles are forced or contains offensive language or advertising.
 
 ## 3rd Party Tools
 

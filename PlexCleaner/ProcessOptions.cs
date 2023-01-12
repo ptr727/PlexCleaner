@@ -247,7 +247,7 @@ public class ProcessOptions
 
     public void AddIgnoreEntry(string fileName)
     {
-        // Case insensite conditional add
+        // Case insensitive conditional add
         if (!FileIgnoreList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
         {
             FileIgnoreList.Add(fileName);
@@ -256,7 +256,7 @@ public class ProcessOptions
 
     public void RemoveIgnoreDuplicates()
     {
-        // Remove duplicates using case insensite hashset
+        // Remove duplicates using case insensitive hashset
         var ignoreList = new HashSet<string>(FileIgnoreList, StringComparer.OrdinalIgnoreCase);
         FileIgnoreList = ignoreList.ToList();
         FileIgnoreList.Sort();

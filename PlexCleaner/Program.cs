@@ -105,6 +105,16 @@ internal class Program
         return 0;
     }
 
+    internal static int CreateJsonSchemaCommand(CommandLineOptions options)
+    {
+        Log.Logger.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
+
+        // Write schema
+        ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
+
+        return 0;
+    }
+
     internal static int CheckForNewToolsCommand(CommandLineOptions options)
     {
         // Do not verify tools

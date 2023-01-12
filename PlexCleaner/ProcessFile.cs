@@ -625,7 +625,7 @@ public class ProcessFile
 
         // Deinterlace using HandBrake and ignore subtitles and closed captions
         FileEx.DeleteFile(deintName);
-        if (!Tools.HandBrake.DeInterlaceToMkv(FileInfo.FullName, deintName, false))
+        if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, deintName, false, true))
         {
             // Error
             FileEx.DeleteFile(deintName);
@@ -1250,7 +1250,7 @@ public class ProcessFile
 
             // Try again using handbrake
             Log.Logger.Information("Attempting media repair by ReEncoding using HandBrake : {FileName}", FileInfo.Name);
-            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempname))
+            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempname, true, false))
             {
                 // Failed, delete temp file
                 FileEx.DeleteFile(tempname);

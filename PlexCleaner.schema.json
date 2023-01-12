@@ -6,22 +6,54 @@
     "ConvertOptions": {
       "type": "object",
       "properties": {
-        "EnableH265Encoder": {
-          "type": "boolean"
+        "FfMpegOptions": {
+          "$ref": "#/definitions/FfMpegOptions"
         },
-        "VideoEncodeQuality": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 51.0
+        "HandBrakeOptions": {
+          "$ref": "#/definitions/HandBrakeOptions"
+        }
+      },
+      "required": [
+        "FfMpegOptions",
+        "HandBrakeOptions"
+      ]
+    },
+    "FfMpegOptions": {
+      "type": "object",
+      "properties": {
+        "Video": {
+          "type": "string"
         },
-        "AudioEncodeCodec": {
+        "Audio": {
+          "type": "string"
+        },
+        "Global": {
+          "type": "string"
+        },
+        "Output": {
           "type": "string"
         }
       },
       "required": [
-        "EnableH265Encoder",
-        "VideoEncodeQuality",
-        "AudioEncodeCodec"
+        "Video",
+        "Audio",
+        "Global",
+        "Output"
+      ]
+    },
+    "HandBrakeOptions": {
+      "type": "object",
+      "properties": {
+        "Video": {
+          "type": "string"
+        },
+        "Audio": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "Video",
+        "Audio"
       ]
     },
     "MonitorOptions": {

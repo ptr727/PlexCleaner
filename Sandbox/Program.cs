@@ -1,11 +1,11 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Collections.Concurrent;
+using Sandbox;
 
 // Generate JSON schema
-// SchemaGenerator.GenerateSchema();
+SchemaGenerator.GenerateSchema();
 
-var fileList = new List<string>()
+var fileList = new List<string>
 {
     "/path/file1.ext",
     "/path/file2.ext",

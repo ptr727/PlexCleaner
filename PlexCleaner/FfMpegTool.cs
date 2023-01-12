@@ -247,40 +247,43 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(filename, commandline);
+
+        // Test snippets
         if (!Program.Options.TestSnippets &&
             Program.Config.VerifyOptions.VerifyDuration != 0)
         {
             commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration} ");
         }
+
+        // Null muxer and exit on error
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
 
-        // Verify media stream using null filter
-        // Limit captured output to 5 lines
+        // Execute and limit captured output to last 5 lines
         int exitCode = Command(commandline.ToString(), 5, out string _, out error);
 
         // Test exitCode and stderr errors
         return exitCode == 0 && error.Length == 0;
     }
 
-    public bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
+    public bool ReMuxToMkv(string inputName, MediaInfo keepTracks, string outputName)
     {
-        if (keep == null)
-        {
-            return ReMuxToMkv(inputName, outputName);
-        }
-
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Create an input and output map
-        CreateFfMpegMap(keep, out string input, out string output);
+        // Create input and output map
+        CreateFfMpegMap(keepTracks, out string inputMap, out string outputMap);
 
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
-        commandline.Append($"{input} {output} -f matroska \"{outputName}\"");
 
-        // Remux using map
+        // Map input and output streams
+        commandline.Append($"{inputMap}   {outputMap} ");
+
+        // Output to MKV
+        commandline.Append($"-f matroska \"{outputName}\"");
+
+        // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
@@ -293,42 +296,44 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
+
+        // Remux and copy all streams to MKV
         commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
 
-        // Remux and copy all streams
+        // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
-    private static void CreateFfMpegMap(MediaInfo keep, out string input, out string output)
+    private static void CreateFfMpegMap(MediaInfo keepTracks, out string inputMap, out string outputMap)
     {
-        // Remux only
-        MediaInfo reEncode = new(ToolType.FfProbe);
-        CreateFfMpegMap("", 0, "", keep, reEncode, out input, out output);
+        // Remux and copy keep tracks
+        MediaInfo encodeTracks = new(ToolType.FfProbe);
+        CreateFfMpegMap(keepTracks, encodeTracks, out inputMap, out outputMap);
     }
 
-    private static void CreateFfMpegMap(string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reEncode, out string input, out string output)
+    private static void CreateFfMpegMap(MediaInfo keepTracks, MediaInfo encodeTracks, out string inputMap, out string outputMap)
     {
         // Verify correct data type
-        Debug.Assert(keep.Parser == ToolType.FfProbe);
-        Debug.Assert(reEncode.Parser == ToolType.FfProbe);
+        Debug.Assert(keepTracks.Parser == ToolType.FfProbe);
+        Debug.Assert(encodeTracks.Parser == ToolType.FfProbe);
 
         // Create an input and output map
         // Order by video, audio, and subtitle
         // Each ordered by id, to keep the original order
         List<TrackInfo> videoList = new();
-        videoList.AddRange(keep.Video);
-        videoList.AddRange(reEncode.Video);
+        videoList.AddRange(keepTracks.Video);
+        videoList.AddRange(encodeTracks.Video);
         videoList = videoList.OrderBy(item => item.Id).ToList();
 
         List<TrackInfo> audioList = new();
-        audioList.AddRange(keep.Audio);
-        videoList.AddRange(reEncode.Audio);
+        audioList.AddRange(keepTracks.Audio);
+        videoList.AddRange(encodeTracks.Audio);
         audioList = audioList.OrderBy(item => item.Id).ToList();
 
         List<TrackInfo> subtitleList = new();
-        subtitleList.AddRange(keep.Subtitle);
-        videoList.AddRange(reEncode.Subtitle);
+        subtitleList.AddRange(keepTracks.Subtitle);
+        videoList.AddRange(encodeTracks.Subtitle);
         subtitleList = subtitleList.OrderBy(item => item.Id).ToList();
 
         // Create a map list of all the input streams we want in the output
@@ -338,8 +343,8 @@ public class FfMpegTool : MediaTool
         trackList.AddRange(subtitleList);
         StringBuilder sb = new();
         trackList.ForEach(item => sb.Append($"-map 0:{item.Id} "));
-        input = sb.ToString();
-        input = input.Trim();
+        inputMap = sb.ToString();
+        inputMap = inputMap.Trim();
 
         // Set the output stream types for each input map item
         // The order has to match the input order
@@ -354,13 +359,13 @@ public class FfMpegTool : MediaTool
             {
                 sb.Append(info.State == TrackInfo.StateType.Keep
                     ? $"-c:v:{videoIndex++} copy "
-                    : $"-c:v:{videoIndex++} {videoCodec} -crf {videoQuality} -preset medium ");
+                    : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
             }
             else if (info.GetType() == typeof(AudioInfo))
             {
                 sb.Append(info.State == TrackInfo.StateType.Keep
                     ? $"-c:a:{audioIndex++} copy "
-                    : $"-c:a:{audioIndex++} {audioCodec} ");
+                    : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
             }
             else if (info.GetType() == typeof(SubtitleInfo))
             {
@@ -368,23 +373,17 @@ public class FfMpegTool : MediaTool
                 sb.Append($"-c:s:{subtitleIndex++} copy ");
             }
         }
-        output = sb.ToString();
-        output = output.Trim();
+        outputMap = sb.ToString();
+        outputMap = outputMap.Trim();
     }
 
-    private bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, MediaInfo keep, MediaInfo reEncode, string outputName)
+    public bool ConvertToMkv(string inputName, MediaInfo keepTracks, MediaInfo encodeTracks, string outputName)
     {
-        // Simple encoding of audio and video and passthrough of other tracks
-        if (keep == null || reEncode == null)
-        {
-            return ConvertToMkv(inputName, videoCodec, videoQuality, audioCodec, outputName);
-        }
-
         // Delete output file
         FileEx.DeleteFile(outputName);
 
-        // Create an input and output map
-        CreateFfMpegMap(videoCodec, videoQuality, audioCodec, keep, reEncode, out string input, out string output);
+        // Create an input and output ignore or copy or convert track map
+        CreateFfMpegMap(keepTracks, encodeTracks, out string inputMap, out string outputMap);
 
         // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
@@ -394,62 +393,48 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
-        commandline.Append($"{input} {output} -f matroska \"{outputName}\"");
 
-        // Convert using map
-        int exitCode = Command(commandline.ToString());
-        return exitCode == 0;
-    }
-    public bool ConvertToMkv(string inputName, MediaInfo keep, MediaInfo reEncode, string outputName)
-    {
-        // Use defaults
-        return ConvertToMkv(inputName,
-            Program.Config.ConvertOptions.EnableH265Encoder ? H265Codec : H264Codec,
-            Program.Config.ConvertOptions.VideoEncodeQuality,
-            Program.Config.ConvertOptions.AudioEncodeCodec,
-            keep,
-            reEncode,
-            outputName);
-    }
+        // Input and output map
+        commandline.Append($"{inputMap} {outputMap} ");
 
-    private bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string audioCodec, string outputName)
-    {
-        // Delete output file
-        FileEx.DeleteFile(outputName);
+        // Output to MKV
+        commandline.Append($"-f matroska \"{outputName}\"");
 
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
-        commandline.Append($"-map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a {audioCodec} -c:s copy -f matroska \"{outputName}\"");
-
-        // Encode video and audio, copy subtitle streams
+        // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
-    public bool ConvertToMkv(string inputName, string videoCodec, int videoQuality, string outputName)
-    {
-        // Delete output file
-        FileEx.DeleteFile(outputName);
-
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
-        commandline.Append($"-map 0 -c:v {videoCodec} -crf {videoQuality} -preset medium -c:a copy -c:s copy -f matroska \"{outputName}\"");
-
-        // Encode video, copy audio and subtitle streams
-        int exitCode = Command(commandline.ToString());
-        return exitCode == 0;
-    }
 
     public bool ConvertToMkv(string inputName, string outputName)
     {
-        // Use defaults
-        return ConvertToMkv(inputName,
-            Program.Config.ConvertOptions.EnableH265Encoder ? H265Codec : H264Codec,
-            Program.Config.ConvertOptions.VideoEncodeQuality,
-            Program.Config.ConvertOptions.AudioEncodeCodec,
-            outputName);
+        // Delete output file
+        FileEx.DeleteFile(outputName);
+
+        // Build commandline
+        StringBuilder commandline = new();
+        DefaultArgs(inputName, commandline);
+
+        // Process all tracks
+        commandline.Append("-map 0 ");
+
+        // Convert video
+        // E.g. -c:v libx264 -crf 20 -preset medium
+        commandline.Append($"-c:v {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
+
+        // Convert audio
+        // E.g. -c:a ac3
+        commandline.Append($"-c:a {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
+
+        // Copy subtitles
+        commandline.Append("-c:s copy ");
+
+        // Output to MKV
+        commandline.Append($"-f matroska \"{outputName}\"");
+
+        // Execute
+        int exitCode = Command(commandline.ToString());
+        return exitCode == 0;
     }
 
     public bool RemoveClosedCaptions(string inputName, string outputName)
@@ -460,10 +445,12 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
-        commandline.Append($"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");
 
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
+        commandline.Append($"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");
+
+        // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
@@ -476,15 +463,18 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
-        commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
 
         // Remove all metadata using -map_metadata -1
+        commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
+
+        // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
     public bool GetIdetInfo(string filename, out FfMpegIdetInfo idetInfo)
     {
+        // Get idet output and parse
         idetInfo = null;
         return GetIdetInfoText(filename, out string text) &&
                GetIdetInfoFromText(text, out idetInfo);
@@ -503,15 +493,18 @@ public class FfMpegTool : MediaTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(inputName, commandline);
-        if (!Program.Options.TestSnippets && 
+
+        // Limit idet filter run duration
+        if (!Program.Options.TestSnippets &&
             Program.Config.VerifyOptions.IdetDuration != 0)
         {
             commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.IdetDuration} ");
         }
-        commandline.Append($"-hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}");
 
         // Run idet filter
-        // Limit captured output to 5 lines
+        commandline.Append($"-hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}");
+
+        // Execute and limit captured output to 5 lines to just get stats
         int exitCode = Command(commandline.ToString(), 5, out string _, out text);
         return exitCode == 0;
     }
@@ -574,24 +567,29 @@ public class FfMpegTool : MediaTool
 
     private static void DefaultArgs(string inputName, StringBuilder commandline)
     {
-        commandline.Append($"{GlobalOptions} ");
+        // Global options
+        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+
+        // Test snippets
         if (Program.Options.TestSnippets)
         {
             // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
             commandline.Append($"{Snippet} ");
         }
-        commandline.Append($"-i \"{inputName}\" {OutputOptions} ");
+
+        // Input filename
+        commandline.Append($"-i \"{inputName}\" ");
+
+        // Output options
+        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Output} ");
+
+        // Minimize output when running in parallel mode
         if (Program.Options.Parallel)
         {
-            // Limit console output
-            // TODO: Verify no issues with duplicates when also added by other commands
             commandline.Append("-hide_banner -nostats ");
         }
     }
 
-    private const string H264Codec = "libx264";
-    private const string H265Codec = "libx265";
+    // Short processing snippet
     private const string Snippet = "-ss 0 -t 180";
-    private const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
-    private const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
 }

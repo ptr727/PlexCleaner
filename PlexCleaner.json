@@ -2,7 +2,7 @@
   // JSON Schema
   "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
   // JSON Schema version
-  "SchemaVersion": 2,
+  "SchemaVersion": 3,
   // Tools options
   "ToolsOptions": {
     // Use system installed tools
@@ -17,12 +17,24 @@
   },
   // Convert options
   "ConvertOptions": {
-    // Enable H.265 encoding, else use H.264
-    "EnableH265Encoder": true,
-    // Video encoding CRF quality, H.264 default is 23, H.265 default is 28
-    "VideoEncodeQuality": 20,
-    // Audio encoding codec
-    "AudioEncodeCodec": "ac3"
+    // FFmpeg commandline options
+    "FfMpegOptions": {
+      // Video encoding option following -c:v
+      "Video": "libx264 -crf 20 -preset medium",
+      // Audio encoding option following -c:a
+      "Audio": "ac3",
+      // Global options
+      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
+      // Output options
+      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+    },
+    // HandBrake commandline options
+    "HandBrakeOptions": {
+      // Video encoding options following --encode
+      "Video": "x264 --quality 20 --encoder-preset medium",
+      // Audio encoding option following --aencode
+      "Audio": "copy --audio-fallback ac3"
+    }
   },
   // Process options
   "ProcessOptions": {

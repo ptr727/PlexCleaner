@@ -570,9 +570,6 @@ public class SidecarFile
     {
         try
         {
-            // Create SHA256 hash calculator
-            using var hashCalculator = SHA256.Create();
-
             // Create a buffer to hold the file data being hashed
             byte[] buffer = new byte[2 * HashWindowLength];
 
@@ -613,7 +610,7 @@ public class SidecarFile
             fileStream.Close();
 
             // Calculate the hash 
-            byte[] hash = hashCalculator.ComputeHash(buffer);
+            byte[] hash = SHA256.HashData(buffer);
 
             // Convert to string
             return System.Convert.ToBase64String(hash);
