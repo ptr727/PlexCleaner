@@ -114,7 +114,7 @@ jobs:
       # Get date from environment as a variable
       - id: date
         run: |
-          echo "::set-output name=date::$(date)"
+          echo "date=$(date)" >> $GITHUB_OUTPUT
       # Create badge
       # https://github.com/marketplace/actions/bring-your-own-badge
       - name: "Build Date Badge"

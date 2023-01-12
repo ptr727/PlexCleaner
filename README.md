@@ -29,10 +29,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Switched from .NET 6 to .NET 7.
   - Switched docker base image from `ubuntu:latest` to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` alleviating the need to manually install .NET.
   - Modified the settings schema to allow custom FFmpeg and HandBrake CLI command parameters.
-    - Removed the old `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
-    - Added `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions`, see the Configuration section for usage details.
-    - Custom CLI options allows for e.g. AV1 video codec use, Intel QuickSync or NVidia NVENC hardware encoding, custom encoding parameters, etc. See the [Custom FFmpeg and HandBrake CLI Parameters](foo) section for usage details.
-    - Schema will automatically be upgraded with compatible settings to v3 on first run.
+    - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
+    - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
+    - Custom CLI options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, and custom encoding parameters.
+    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
+    - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - [Breaking Change] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - `createschema` does not require `--settingsfile` but `--settingsfile` was marked as required and set as a global option.
@@ -40,9 +41,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - `--settingsfile` used by several commands.
       - `--parallel` used by the `process` command.
       - `--threadcount` used by the `process` command.
-    - Move the option from the global options to follow the specific command.
-      - E.g. `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...` -> `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`.
-      - E.g. `PlexCleaner process ...` -> `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`.
+    - Move the option from the global options to follow the specific command, e.g.:
+      - From: `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...`
+      - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
+      - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
+      - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -413,10 +416,10 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
 
 ## Custom FFmpeg and HandBrake CLI Parameters
 
-The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` allows for custom CLI parameters to be used during processing.
+The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that the hardware assisted encoding options are operating system, hardware, and tool version specific, e.g. see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
-Listed examples are from documentation and minimal testing with Intel QuickSync on Windows only.  
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific, e.g. see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
+Listed example configurations are from documentation and based on minimal testing with Intel QuickSync on Windows only.  
 Please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
 
 ### FFmpeg Options
@@ -479,12 +482,12 @@ Example hardware assisted video encoding options:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
   - `HandBrakeOptions:Video`: `qsv_h264`
 
-Note that HandBrake is predominantly used for video deinterlacing, or in rare cases where encoding with FFmpeg fails.  
-As such the default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
+Note that HandBrake is predominantly used for video deinterlacing and as backup where encoding with FFmpeg fails.  
+The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
 ## Usage
 
-Use the `--help` commandline option to get a list of commands and options.  
+Use the `PlexCleaner --help` commandline option to get a list of commands and options.  
 One of the commands must be specified, and some commands have additional required options.  
 To get more help for a specific command run `PlexCleaner <command> --help`.
 
