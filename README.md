@@ -45,7 +45,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - From: `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...`
       - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
       - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
-      - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`.
+      - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
