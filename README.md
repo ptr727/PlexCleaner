@@ -25,6 +25,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 ## Release Notes
 
+- Version 3.0 Beta
+  - Added support for custom Ffmpeg and HandBrake CLI parameters, supporting e.g. AV1 codec and hardware assisted encoding.
+  - See the [release notes](https://github.com/ptr727/PlexCleaner/tree/develop) for details.
 - Version 2.10:
   - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
     - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
