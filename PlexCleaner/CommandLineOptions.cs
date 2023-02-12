@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace PlexCleaner;
 
@@ -154,48 +153,42 @@ public class CommandLineOptions
         command.AddOption(
             new Option<bool>("--parallel")
             {
-                Description = "Enable parallel processing",
-                IsRequired = false
+                Description = "Enable parallel processing"
             });
 
         // Parallel processing thread count
         command.AddOption(
             new Option<int>("--threadcount")
         {
-            Description = "Number of threads to use for parallel processing",
-            IsRequired = false
+            Description = "Number of threads to use for parallel processing"
         });
 
         // Create short video clips, optional
         command.AddOption(
             new Option<bool>("--testsnippets")
             {
-                Description = "Create short video clips, useful during testing",
-                IsRequired = false
+                Description = "Create short video clips, useful during testing"
             });
 
         //  Do not make any modifications, optional
         command.AddOption(
             new Option<bool>("--testnomodify")
             {
-                Description = "Do not make any modifications, useful during testing",
-                IsRequired = false
+                Description = "Do not make any modifications, useful during testing"
             });
 
         //  Re-process level, optional
         command.AddOption(
             new Option<int>("--reprocess")
             {
-                Description = "Re-process level, 0 = none (default), 1 = metadata, 2 = streams",
-                IsRequired = false
+                Description = "Re-process level, 0 = none (default), 1 = metadata, 2 = streams"
             });
 
         //  Re-verify, optional
         command.AddOption(
             new Option<bool>("--reverify")
             {
-                Description = "Re-verify and repair media in VerifyFailed state",
-                IsRequired = false
+                Description = "Re-verify and repair media in VerifyFailed state"
             });
 
         return command;
@@ -403,8 +396,7 @@ public class CommandLineOptions
         // Path to the log file
         return new Option<string>("--logfile")
         {
-            Description = "Path to log file",
-            IsRequired = false
+            Description = "Path to log file"
         };
     }
 
@@ -413,8 +405,7 @@ public class CommandLineOptions
         // Append to log vs. overwrite
         return new Option<bool>("--logappend")
         {
-            Description = "Append to the log file vs. default overwrite",
-            IsRequired = false
+            Description = "Append to the log file vs. default overwrite"
         };
     }
 
@@ -423,8 +414,7 @@ public class CommandLineOptions
         // Wait for debugger to attach
         return new Option<bool>("--debug")
         {
-            Description = "Wait for debugger to attach",
-            IsRequired = false
+            Description = "Wait for debugger to attach"
         };
     }
 }

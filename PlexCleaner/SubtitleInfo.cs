@@ -5,7 +5,6 @@ namespace PlexCleaner;
 
 public class SubtitleInfo : TrackInfo
 {
-    public SubtitleInfo() { }
     internal SubtitleInfo(MkvToolJsonSchema.Track track) : base(track)
     {
         Forced = track.Properties.Forced;

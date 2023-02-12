@@ -12,7 +12,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class HandBrakeTool : MediaTool
+public partial class HandBrakeTool : MediaTool
 {
     public override ToolFamily GetToolFamily()
     {
@@ -41,7 +41,7 @@ public class HandBrakeTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitCode = Command(commandline, out string output);
+        var exitCode = Command(commandline, out var output);
         if (exitCode != 0)
         {
             return false;
@@ -50,12 +50,10 @@ public class HandBrakeTool : MediaTool
         // First line as version
         // E.g. Windows : "HandBrake 1.3.3"
         // E.g. Linux : "HandBrake 1.3.3"
-        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        const string pattern = @"HandBrake\ (?<version>.*)";
-        Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Match match = regex.Match(lines[0]);
+        var match = VersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -82,14 +80,14 @@ public class HandBrakeTool : MediaTool
         {
             // Get the latest release version number from github releases
             // https://api.github.com/repos/handbrake/handbrake/releases/latest
-            if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out string json))
+            if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out var json))
             {
                 return false;
             }
 
-            JObject releases = JObject.Parse(json);
+            var releases = JObject.Parse(json);
             // "tag_name": "1.2.2",
-            JToken versiontag = releases["tag_name"];
+            var versiontag = releases["tag_name"];
             Debug.Assert(versiontag != null);
             mediaToolInfo.Version = versiontag.ToString();
 
@@ -150,10 +148,14 @@ public class HandBrakeTool : MediaTool
         commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
     // Short processing snippet
     private const string Snippet = "--start-at seconds:00 --stop-at seconds:180";
+
+    const string VersionPattern = @"HandBrake\ (?<version>.*)";
+    [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex VersionRegex();
 }

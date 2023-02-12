@@ -27,7 +27,8 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>    
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

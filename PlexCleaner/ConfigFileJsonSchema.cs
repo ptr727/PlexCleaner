@@ -187,12 +187,12 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         var generator = new JSchemaGenerator
         {
             // TODO: How can I make the default schema required, and just mark individual items as not required?
-            DefaultRequired = Newtonsoft.Json.Required.Default
+            DefaultRequired = Required.Default
         };
         var schema = generator.Generate(typeof(ConfigFileJsonSchema));
         schema.Title = "PlexCleaner Configuration Schema";
-        schema.SchemaVersion = new Uri("http://json-schema.org/draft-06/schema");
-        schema.Id = new Uri("https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json");
+        schema.SchemaVersion = new Uri(@"http://json-schema.org/draft-06/schema");
+        schema.Id = new Uri(@"https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json");
         
         // Write to file
         File.WriteAllText(path, schema.ToString());

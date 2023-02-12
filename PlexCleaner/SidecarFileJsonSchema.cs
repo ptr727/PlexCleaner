@@ -40,11 +40,6 @@ public class SidecarFileJsonSchema
         return FromJson(File.ReadAllText(path));
     }
 
-    public static void ToFile(string path, SidecarFileJsonSchema json)
-    {
-        File.WriteAllText(path, ToJson(json));
-    }
-
     public static string ToJson(SidecarFileJsonSchema json)
     {
         return JsonConvert.SerializeObject(json, Settings);

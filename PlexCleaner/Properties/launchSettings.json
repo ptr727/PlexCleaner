@@ -2,7 +2,7 @@
   "profiles": {
     "Check For New Tools": {
       "commandName": "Project",
-      "commandLineArgs": "--settingsfile \"PlexCleaner.json\" checkfornewtools"
+      "commandLineArgs": "checkfornewtools --settingsfile \"PlexCleaner.json\""
     },
     "Process": {
       "commandName": "Project",

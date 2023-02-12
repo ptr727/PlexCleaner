@@ -427,8 +427,9 @@ internal class Process
             }
 
             // Verify media streams, and repair if possible
-            if (!processFile.Verify(ref modified) ||
-                Program.IsCancelled())
+            // Save the state but do not break yet, if file was modified cleanup could still happen
+            bool verified = processFile.Verify(ref modified);
+            if (Program.IsCancelled())
             {
                 result = false;
                 break;
@@ -466,7 +467,7 @@ internal class Process
             }
 
             // Done
-            result = true;
+            result = verified;
             break;
         }
 

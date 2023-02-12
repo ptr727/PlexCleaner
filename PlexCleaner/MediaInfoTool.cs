@@ -11,7 +11,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class MediaInfoTool : MediaTool
+public partial class MediaInfoTool : MediaTool
 {
     public override ToolFamily GetToolFamily()
     {
@@ -40,7 +40,7 @@ public class MediaInfoTool : MediaTool
 
         // Get version
         const string commandline = "--version";
-        int exitCode = Command(commandline, out string output);
+        var exitCode = Command(commandline, out var output);
         if (exitCode != 0)
         {
             return false;
@@ -49,12 +49,10 @@ public class MediaInfoTool : MediaTool
         // Second line as version
         // E.g. Windows : "MediaInfoLib - v20.09"
         // E.g. Linux : "MediaInfoLib - v20.09"
-        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        const string pattern = @"MediaInfoLib\ -\ v(?<version>.*)";
-        Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Match match = regex.Match(lines[1]);
+        var match = InstalledVersionRegex().Match(lines[1]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -82,7 +80,7 @@ public class MediaInfoTool : MediaTool
             // Load the release history page
             // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
             using HttpClient httpClient = new();
-            string historyPage = httpClient.GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
+            var historyPage = httpClient.GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
 
             // Read each line until we find the first version line
             // E.g. Version 17.10, 2017-11-02
@@ -111,9 +109,7 @@ public class MediaInfoTool : MediaTool
 
             // Extract the version number from the line
             // E.g. Version 17.10, 2017-11-02
-            const string pattern = @"Version\ (?<version>.*?),";
-            Regex regex = new(pattern);
-            Match match = regex.Match(line);
+            var match = LatestVersionRegex().Match(line);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -141,15 +137,15 @@ public class MediaInfoTool : MediaTool
     public bool GetMediaInfo(string filename, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(filename, out string xml) &&
+        return GetMediaInfoXml(filename, out var xml) &&
                GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
     public bool GetMediaInfoXml(string filename, out string xml)
     {
         // Get media info as XML
-        string commandline = $"--Output=XML \"{filename}\"";
-        int exitCode = Command(commandline, out xml);
+        var commandline = $"--Output=XML \"{filename}\"";
+        var exitCode = Command(commandline, out xml);
 
         // TODO: No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
@@ -167,8 +163,8 @@ public class MediaInfoTool : MediaTool
         try
         {
             // Deserialize
-            MediaInfoToolXmlSchema.MediaInfo xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
-            MediaInfoToolXmlSchema.MediaElement xmlmedia = xmlinfo.Media;
+            var xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
+            var xmlmedia = xmlinfo.Media;
 
             // No tracks
             if (xmlmedia.Track.Count == 0)
@@ -177,7 +173,7 @@ public class MediaInfoTool : MediaTool
             }
 
             // Tracks
-            foreach (MediaInfoToolXmlSchema.Track track in xmlmedia.Track)
+            foreach (var track in xmlmedia.Track)
             {
                 if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                 {
@@ -230,4 +226,12 @@ public class MediaInfoTool : MediaTool
         }
         return true;
     }
+
+    private const string InstalledVersionPattern = @"MediaInfoLib\ -\ v(?<version>.*)";
+    [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex InstalledVersionRegex();
+
+    private const string LatestVersionPattern = @"Version\ (?<version>.*?),";
+    [GeneratedRegex(LatestVersionPattern)]
+    private static partial Regex LatestVersionRegex();
 }

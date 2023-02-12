@@ -4,7 +4,7 @@ using System.Timers;
 
 namespace PlexCleaner;
 
-public static class KeepAwake
+public static partial class KeepAwake
 {
     public static void PreventSleep()
     {
@@ -30,8 +30,8 @@ public static class KeepAwake
     }
 
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
+    [LibraryImport("kernel32.dll")]
+    private static partial ExecutionState SetThreadExecutionState(ExecutionState esFlags);
 
     [Flags]
     private enum ExecutionState : uint

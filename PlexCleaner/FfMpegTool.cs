@@ -28,7 +28,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class FfMpegTool : MediaTool
+public partial class FfMpegTool : MediaTool
 {
     public override ToolFamily GetToolFamily()
     {
@@ -66,13 +66,11 @@ public class FfMpegTool : MediaTool
         // First line as version
         // E.g. Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
         // E.g. Linux : "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
-        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
         // Match word for ffmpeg or ffprobe
-        const string pattern = @"([^\s]+)\ version\ (?<version>.*?)-";
-        Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        Match match = regex.Match(lines[0]);
+        var match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -129,7 +127,7 @@ public class FfMpegTool : MediaTool
             // Load the release version page
             // https://johnvansickle.com/ffmpeg/release-readme.txt
             using HttpClient httpClient = new();
-            string readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
+            var readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
 
             // Read each line until we find the build and version lines
             // build: ffmpeg-5.0-amd64-static.tar.xz
@@ -139,7 +137,7 @@ public class FfMpegTool : MediaTool
             while (true)
             {
                 // Read the line and trim whitespace
-                string line = sr.ReadLine();
+                var line = sr.ReadLine();
                 if (line == null)
                 {
                     // No more lines to read
@@ -174,14 +172,10 @@ public class FfMpegTool : MediaTool
             }
 
             // Extract the build and version number from the lines
-            const string versionPattern = @"version:\ (?<version>.*?)";
-            const string buildPattern = @"build:\ (?<build>.*?)";
-            Regex regex = new(versionPattern);
-            Match match = regex.Match(versionLine);
+            var match = LinuxVersionRegex().Match(versionLine);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
-            regex = new Regex(buildPattern);
-            match = regex.Match(buildLine);
+            match = LinuxBuildRegex().Match(buildLine);
             Debug.Assert(match.Success);
             mediaToolInfo.FileName = match.Groups["build"].Value;
 
@@ -205,7 +199,7 @@ public class FfMpegTool : MediaTool
         // The 7Zip -spe option does not work for zip files
         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/
         // We need to extract to the root tools folder, that will create a subdir, then rename to the destination folder
-        string extractPath = Tools.GetToolsRoot();
+        var extractPath = Tools.GetToolsRoot();
 
         // Extract the update file
         Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
@@ -215,7 +209,7 @@ public class FfMpegTool : MediaTool
         }
 
         // Delete the tool destination directory
-        string toolPath = GetToolFolder();
+        var toolPath = GetToolFolder();
         if (!FileEx.DeleteDirectory(toolPath, true))
         {
             return false;
@@ -259,7 +253,7 @@ public class FfMpegTool : MediaTool
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
 
         // Execute and limit captured output to last 5 lines
-        int exitCode = Command(commandline.ToString(), 5, out string _, out error);
+        var exitCode = Command(commandline.ToString(), 5, out _, out error);
 
         // Test exitCode and stderr errors
         return exitCode == 0 && error.Length == 0;
@@ -271,7 +265,7 @@ public class FfMpegTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Create input and output map
-        CreateFfMpegMap(keepTracks, out string inputMap, out string outputMap);
+        CreateFfMpegMap(keepTracks, out var inputMap, out var outputMap);
 
         // Build commandline
         StringBuilder commandline = new();
@@ -284,7 +278,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -301,7 +295,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -352,7 +346,7 @@ public class FfMpegTool : MediaTool
         int videoIndex = 0;
         int audioIndex = 0;
         int subtitleIndex = 0;
-        foreach (TrackInfo info in trackList)
+        foreach (var info in trackList)
         {
             // Copy or encode
             if (info.GetType() == typeof(VideoInfo))
@@ -383,7 +377,7 @@ public class FfMpegTool : MediaTool
         FileEx.DeleteFile(outputName);
 
         // Create an input and output ignore or copy or convert track map
-        CreateFfMpegMap(keepTracks, encodeTracks, out string inputMap, out string outputMap);
+        CreateFfMpegMap(keepTracks, encodeTracks, out var inputMap, out var outputMap);
 
         // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
@@ -401,7 +395,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -433,7 +427,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -451,7 +445,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -468,7 +462,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        var exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
@@ -476,7 +470,7 @@ public class FfMpegTool : MediaTool
     {
         // Get idet output and parse
         idetInfo = null;
-        return GetIdetInfoText(filename, out string text) &&
+        return GetIdetInfoText(filename, out var text) &&
                GetIdetInfoFromText(text, out idetInfo);
     }
 
@@ -488,7 +482,7 @@ public class FfMpegTool : MediaTool
 
         // Null output is platform specific
         // https://trac.ffmpeg.org/wiki/Null
-        string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null";
+        var nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null";
 
         // Build commandline
         StringBuilder commandline = new();
@@ -505,7 +499,7 @@ public class FfMpegTool : MediaTool
         commandline.Append($"-hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}");
 
         // Execute and limit captured output to 5 lines to just get stats
-        int exitCode = Command(commandline.ToString(), 5, out string _, out text);
+        var exitCode = Command(commandline.ToString(), 5, out _, out text);
         return exitCode == 0;
     }
 
@@ -529,18 +523,11 @@ public class FfMpegTool : MediaTool
             // [Parsed_idet_0 @ 00000234e42d0440] Single frame detection: TFF:     0 BFF:     0 Progressive:  1745 Undetermined:   304
             // [Parsed_idet_0 @ 00000234e42d0440] Multi frame detection: TFF:     0 BFF:     0 Progressive:  2021 Undetermined:    28
 
-            // Pattern
-            const string repeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
-            const string singleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
-            const string multiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
-
             // We need to match in LF not CRLF mode else $ does not work as expected
-            const string pattern = $"{repeatedFields}\n{singleFrame}\n{multiFrame}";
-            string textLf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
+            var textLf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
 
             // Match
-            Regex regex = new(pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            Match match = regex.Match(textLf);
+            var match = IdetRegex().Match(textLf);
             Debug.Assert(match.Success);
 
             // Get the frame counts
@@ -592,4 +579,23 @@ public class FfMpegTool : MediaTool
 
     // Short processing snippet
     private const string Snippet = "-ss 0 -t 180";
+
+    private const string InstalledVersionPattern = @"([^\s]+)\ version\ (?<version>.*?)-";
+    [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex InstalledVersionRegex();
+
+    private const string LinuxVersionPattern = @"version:\ (?<version>.*?)";
+    [GeneratedRegex(LinuxVersionPattern)]
+    private static partial Regex LinuxVersionRegex();
+
+    private const string LinuxBuildPattern = @"build:\ (?<build>.*?)";
+    [GeneratedRegex(LinuxBuildPattern)]
+    private static partial Regex LinuxBuildRegex();
+
+    private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
+    private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
+    private const string IdetMultiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
+    private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
+    [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex IdetRegex();
 }

@@ -189,11 +189,6 @@ public static class Tools
         return Path.GetFullPath(Path.Combine(GetToolsRoot(), filename));
     }
 
-    public static string CombineToolPath(string path, string filename)
-    {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, filename));
-    }
-
     public static string CombineToolPath(string path, string subPath, string filename)
     {
         return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, filename));

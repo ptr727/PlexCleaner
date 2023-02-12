@@ -2,12 +2,11 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
 
-public class TrackInfo
+public partial class TrackInfo
 {
     protected TrackInfo() { }
 
@@ -42,7 +41,7 @@ public class TrackInfo
         {
             // MkvMerge normally sets the language to und or 3 letter ISO 639-2 code
             // Try to lookup the language to make sure it is correct
-            Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Properties.Language);
+            var lang = PlexCleaner.Language.GetIso6393(track.Properties.Language);
             if (lang != null)
             {
                 Language = lang.Part2B;
@@ -104,7 +103,7 @@ public class TrackInfo
         {
             // FfProbe normally sets a 3 letter ISO 639-2 code, but some samples have 2 letter codes
             // Try to lookup the language to make sure it is correct
-            Iso6393 lang = PlexCleaner.Language.GetIso6393(Language);
+            var lang = PlexCleaner.Language.GetIso6393(Language);
             if (lang != null)
             {
                 Language = lang.Part2B;
@@ -151,7 +150,7 @@ public class TrackInfo
             // MediaInfo uses ab or abc or ab-cd tags, we need to convert to ISO 639-2
             // https://github.com/MediaArea/MediaAreaXml/issues/33
             // Try to lookup the language to make sure it is correct
-            Iso6393 lang = PlexCleaner.Language.GetIso6393(track.Language);
+            var lang = PlexCleaner.Language.GetIso6393(track.Language);
             if (lang != null)
             {
                 Language = lang.Part2B;
@@ -176,9 +175,7 @@ public class TrackInfo
         // 3-CC1
         // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
         // https://github.com/MediaArea/MediaInfo/issues/201
-        const string pattern = @"(?<id>\d)";
-        Regex regex = new(pattern);
-        Match match = regex.Match(track.Id);
+        var match = TrackRegex().Match(track.Id);
         Debug.Assert(match.Success);
         Id = int.Parse(match.Groups["id"].Value);
 
@@ -229,4 +226,7 @@ public class TrackInfo
             HasErrors,
             HasTags);
     }
+
+    [GeneratedRegex(@"(?<id>\d)")]
+    private static partial Regex TrackRegex();
 }

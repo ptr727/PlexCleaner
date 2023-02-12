@@ -27,7 +27,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 3.0:
   - Switched from .NET 6 to .NET 7.
-  - Switched docker base image from `ubuntu:latest` to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` alleviating the need to manually install .NET.
+    - Switched from `ubuntu:latest` to `mcr.microsoft.com/dotnet/sdk:7.0-jammy`.
+    - Switched from `Regex` to `GeneratedRegex`.
+    - Switched from `DllImport` to `LibraryImport`.
   - Modified the settings schema to allow custom FFmpeg and HandBrake CLI command parameters.
     - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
     - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
@@ -36,7 +38,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - [Breaking Change] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
-    - `createschema` does not require `--settingsfile` but `--settingsfile` was marked as required and set as a global option.
+    - Maintaining commandline backwards compatibility was [excessively](https://github.com/dotnet/command-line-api/issues/2023) complicated, and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
       - `--settingsfile` used by several commands.
       - `--parallel` used by the `process` command.
@@ -46,6 +48,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
       - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
       - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`
+- Fixed the file process logic to continue cleanup even if verify failed.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -437,7 +440,7 @@ Settings allows for custom configuration of:
 Example video encoder options:
 
 - List all supported encoders: `ffmpeg -encoders`
-- List options supported by an encoder: e.g. `ffmpeg -h encoder=libaom-av1`
+- List options supported by an encoder: `ffmpeg -h encoder=libaom-av1`
 - [H.264](https://trac.ffmpeg.org/wiki/Encode/H.264): `libx264 -crf 22 -preset medium`
 - [H.265](https://trac.ffmpeg.org/wiki/Encode/H.265): `libx265 -crf 26 -preset medium`
 - [AV1](https://trac.ffmpeg.org/wiki/Encode/AV1): `libaom-av1 -crf 30`
@@ -468,7 +471,7 @@ Settings allows for custom configuration of:
 Example video encoder options:
 
 - List all supported encoders: `HandBrakeCLI.exe --help`
-- List presets supported by an encoder: e.g. `HandBrakeCLI --encoder-preset-list x264`
+- List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list x264`
 - H.264: `x264 --quality 22 --encoder-preset medium`
 - H.265: `x265 --quality 26 --encoder-preset medium`
 - AV1: `svt_av1 --quality 26 --encoder-preset 8`
@@ -482,7 +485,7 @@ Example hardware assisted video encoding options:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
   - `HandBrakeOptions:Video`: `qsv_h264`
 
-Note that HandBrake is predominantly used for video deinterlacing and as backup where encoding with FFmpeg fails.  
+Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.  
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
 ## Usage

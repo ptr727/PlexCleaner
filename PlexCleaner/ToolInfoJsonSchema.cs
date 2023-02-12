@@ -25,12 +25,6 @@ public class ToolInfoJsonSchema
         return Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
     }
 
-    public MediaToolInfo GetToolInfo(MediaToolInfo mediaToolInfo)
-    {
-        // Match tool by family
-        return Tools.FirstOrDefault(t => t.ToolFamily == mediaToolInfo.ToolFamily);
-    }
-
     public static ToolInfoJsonSchema FromFile(string path)
     {
         return FromJson(File.ReadAllText(path));

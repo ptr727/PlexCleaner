@@ -88,7 +88,7 @@ jobs:
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: 'Docker Build and Push'
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: ./Docker
           file: ./Docker/Dockerfile
