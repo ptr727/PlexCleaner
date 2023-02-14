@@ -264,10 +264,10 @@ internal class Process
                 break;
             }
 
-            // Does the file still exist
+            // Does the file exist and have access permissions
             if (!File.Exists(fileName))
             {
-                Log.Logger.Warning("Skipping missing file : {FileName}", fileName);
+                Log.Logger.Warning("Skipping inaccessible file : {FileName}", fileName);
                 result = false;
                 break;
             }

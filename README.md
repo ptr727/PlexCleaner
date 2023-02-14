@@ -37,8 +37,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
-  - [Breaking Change] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
-    - Maintaining commandline backwards compatibility was [excessively](https://github.com/dotnet/command-line-api/issues/2023) complicated, and the change is unfortunately a breaking change.
+  - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+    - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
       - `--settingsfile` used by several commands.
       - `--parallel` used by the `process` command.
@@ -95,7 +95,11 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 
 ### Docker
 
-- Builds are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+- Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+- Images are tagged with specific build numbers, or `latest` for current, or `develop` for beta or pre-release builds.
+  - E.g. `docker pull ptr727/plexcleaner:latest`
+  - E.g. `docker pull ptr727/plexcleaner:develop`
+  - E.g. `docker pull ptr727/plexcleaner:2.10.17`
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -421,14 +425,14 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific, e.g. see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
-Listed example configurations are from documentation and based on minimal testing with Intel QuickSync on Windows only.  
-Please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific, for example configurations see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
+The listed example configurations are from documentation and based on minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
 
 ### FFmpeg Options
 
 See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.  
-The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.
+The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.  
+E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 20 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
 
 Settings allows for custom configuration of:
 
@@ -461,7 +465,8 @@ Example hardware assisted video encoding options:
 ### HandBrake Options
 
 See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.  
-The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.
+The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.  
+E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format av_mkv --encoder x265 --quality 20 --encoder-preset medium --comb-detect --decomb --all-audio --aencoder copy --audio-fallback ac3`
 
 Settings allows for custom configuration of:
 
@@ -474,7 +479,7 @@ Example video encoder options:
 - List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list x264`
 - H.264: `x264 --quality 22 --encoder-preset medium`
 - H.265: `x265 --quality 26 --encoder-preset medium`
-- AV1: `svt_av1 --quality 26 --encoder-preset 8`
+- AV1: `svt_av1 --quality 30 --encoder-preset 8`
 
 Example hardware assisted video encoding options:
 
