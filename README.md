@@ -37,6 +37,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
+  - Fixed the file process logic to continue cleanup even if verify failed.
+  - Upgraded docker builds to use FFmpeg v6.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
@@ -48,7 +50,6 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
       - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
       - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`
-- Fixed the file process logic to continue cleanup even if verify failed.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -104,6 +105,7 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
+- If required set [docker logging](https://docs.docker.com/config/containers/logging/configure/) options to prevent excessive log file space utilization.
 - See examples below for instructions on getting started.
 
 Example, run in an interactive shell:
@@ -157,6 +159,7 @@ sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
 docker run \
   -it \
   --rm \
+  --log-driver json-file --log-opt max-size=10m \
   --pull always \
   --name PlexCleaner \
   --user nobody:users \
