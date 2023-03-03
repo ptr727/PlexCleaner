@@ -26,19 +26,19 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 3.0:
-  - Switched from .NET 6 to .NET 7.
-    - Switched from `ubuntu:latest` to `mcr.microsoft.com/dotnet/sdk:7.0-jammy`.
-    - Switched from `Regex` to `GeneratedRegex`.
-    - Switched from `DllImport` to `LibraryImport`.
-  - Modified the settings schema to allow custom FFmpeg and HandBrake CLI command parameters.
+  - Upgraded from .NET 6 to .NET 7.
+    - Switched docker base image from `ubuntu:latest` and then installing .NET, to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` that already includes .NET.
+    - Switched from `Regex` to `GeneratedRegex` for a performance improvement.
+    - Switched from `DllImport` to `LibraryImport` for platform compatibility.
+  - Modified the settings schema to allow for custom FFmpeg and HandBrake command line arguments.
+    - Custom command line arguments allows for using e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, etc.
+    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
     - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
-    - Custom CLI options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, and custom encoding parameters.
-    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
-  - Fixed the file process logic to continue cleanup even if verify failed.
-  - Upgraded docker builds to use FFmpeg v6.
+  - Fixed the file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
+  - Upgraded docker builds from FFmpeg v5 to v6.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
@@ -84,10 +84,11 @@ Below are examples of issues that can be resolved using the primary `process` co
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
 - On systems with high core counts the `--parallel` option can be used to process files concurrently.
-- Parallel processing is useful when a single instance of FFmpeg or Handbrake does not saturate the CPU resources of the system.
+- Parallel processing is useful when a single instance of FFmpeg or HandBrake does not saturate the CPU resources of the system.
 - When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
 - The initial `process` run on a large collection can take a long time to complete.
-- Interrupt processing using `Ctl-C` and resume processing by re-running the same command.
+- Processing can be interrupted using `Ctl-C`, re-running the same command will resume processing.
+- Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
 
@@ -105,7 +106,6 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
-- If required set [docker logging](https://docs.docker.com/config/containers/logging/configure/) options to prevent excessive log file space utilization.
 - See examples below for instructions on getting started.
 
 Example, run in an interactive shell:
@@ -159,7 +159,6 @@ sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
 docker run \
   -it \
   --rm \
-  --log-driver json-file --log-opt max-size=10m \
   --pull always \
   --name PlexCleaner \
   --user nobody:users \
@@ -444,10 +443,13 @@ Settings allows for custom configuration of:
 - `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 20 -preset medium`
 - `FfMpegOptions:Audio`: Audio encoder options following the `-c:a` parameter, e.g. `ac3`
 
-Example video encoder options:
+Get encoder options:
 
 - List all supported encoders: `ffmpeg -encoders`
 - List options supported by an encoder: `ffmpeg -h encoder=libaom-av1`
+
+Example video encoder options:
+
 - [H.264](https://trac.ffmpeg.org/wiki/Encode/H.264): `libx264 -crf 22 -preset medium`
 - [H.265](https://trac.ffmpeg.org/wiki/Encode/H.265): `libx265 -crf 26 -preset medium`
 - [AV1](https://trac.ffmpeg.org/wiki/Encode/AV1): `libaom-av1 -crf 30`
@@ -476,10 +478,13 @@ Settings allows for custom configuration of:
 - `HandBrakeOptions:Video`: Video encoder options following the `--encode` parameter, e.g. `x264 --quality 20 --encoder-preset medium`
 - `HandBrakeOptions:Audio`: Audio encoder options following the `--aencode` parameter, e.g. `copy --audio-fallback ac3`
 
-Example video encoder options:
+Get encoder options:
 
 - List all supported encoders: `HandBrakeCLI.exe --help`
 - List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list x264`
+
+Example video encoder options:
+
 - H.264: `x264 --quality 22 --encoder-preset medium`
 - H.265: `x265 --quality 26 --encoder-preset medium`
 - AV1: `svt_av1 --quality 30 --encoder-preset 8`
