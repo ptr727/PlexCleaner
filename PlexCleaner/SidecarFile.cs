@@ -396,6 +396,7 @@ public class SidecarFile
             }
         }
         string hash = ComputeHash();
+        Debug.Assert(hash != null);
         if (!string.Equals(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
@@ -513,6 +514,7 @@ public class SidecarFile
         SidecarJson.MediaLastWriteTimeUtc = MediaFileInfo.LastWriteTimeUtc;
         SidecarJson.MediaLength = MediaFileInfo.Length;
         SidecarJson.MediaHash = ComputeHash();
+        Debug.Assert(SidecarJson.MediaHash != null);
 
         // Tool version info
         SidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
@@ -574,7 +576,7 @@ public class SidecarFile
             byte[] buffer = new byte[2 * HashWindowLength];
 
             // Open file
-            using FileStream fileStream = MediaFileInfo.Open(FileMode.Open);
+            using FileStream fileStream = MediaFileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
 
             // Small files read entire file, big files read front and back
             if (MediaFileInfo.Length <= buffer.Length)

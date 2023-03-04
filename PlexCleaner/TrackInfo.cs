@@ -22,6 +22,9 @@ public partial class TrackInfo
         Title = track.Properties.TrackName;
         Default = track.Properties.DefaultTrack;
 
+        // TODO: Add support for new BCP 47 language tag support
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix
+
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
         if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&

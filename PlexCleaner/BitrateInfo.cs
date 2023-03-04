@@ -16,7 +16,9 @@ public class BitrateInfo
             throw new ArgumentNullException(nameof(packetList));
         }
 
-        // Calculating duration from timestamp values
+        // ShouldCompute() must not allow any Assert() to fail
+
+        // Calculate the media playback duration from timestamps
         Duration = 0;
         foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
@@ -25,14 +27,13 @@ public class BitrateInfo
             {
                 packet.PtsTime = packet.DtsTime;
             }
+
+            // Timestamp must be set, and not be zero, and not negative
             Debug.Assert(!double.IsNaN(packet.PtsTime));
+            Debug.Assert(packet.PtsTime != 0.0);
+            Debug.Assert(!double.IsNegative(packet.PtsTime));
 
-            // Packet duration can't be longer than the 1s sample interval
-            Debug.Assert(double.IsNaN(packet.DurationTime) || packet.DurationTime <= 1.0);
-
-            // Size must be valid
-            Debug.Assert(packet.Size > 0);
-
+            // Update duration
             int packetTime = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
             if (packetTime > Duration)
             {
@@ -48,36 +49,34 @@ public class BitrateInfo
         AudioBitrate = new Bitrate(Duration);
         CombinedBitrate = new Bitrate(Duration);
 
-        // Iterate through all the packets
+        // Iterate through all the packets and calculate the bitrate
         long videoPackets = 0;
         long audioPackets = 0;
-        foreach (Packet packet in packetList)
+        foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
-            if (!ShouldCompute(packet, videoStream, audioStream))
-            {
-                continue;
-            }
-
-            // Round down when calculating index
+            // Find packet timestamp index entry, round down
             int index = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
+            Debug.Assert(index >= 0 && index < VideoBitrate.Rate.Length);
 
-            // Calculate values
+            // Stream must match expected types
+            Debug.Assert(packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) ||
+                         packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase));
+
+            // Update byte count at packet index
             if (packet.StreamIndex == videoStream)
             {
                 videoPackets++;
                 VideoBitrate.Rate[index] += packet.Size;
-                CombinedBitrate.Rate[index] += packet.Size;
             }
             if (packet.StreamIndex == audioStream)
             {
                 audioPackets++;
                 AudioBitrate.Rate[index] += packet.Size;
-                CombinedBitrate.Rate[index] += packet.Size;
             }
+            CombinedBitrate.Rate[index] += packet.Size;
         }
 
-        // If there are no packets the stream is empty?
-        // MkvMerge and HandBrake do not like empty streams
+        // If there are no packets the stream is empty
         if (videoPackets == 0 || audioPackets == 0)
         {
             Log.Logger.Error("Empty stream detected : VideoPackets: {VideoPackets}, AudioPackets: {AudioPackets}", videoPackets, audioPackets);
@@ -104,21 +103,32 @@ public class BitrateInfo
 
     private static bool ShouldCompute(Packet packet, int videoStream, int audioStream)
     {
-        // Must match the audio or video stream index
+        // Stream index must match the audio or video stream index
         if (packet.StreamIndex != videoStream &&
             packet.StreamIndex != audioStream)
         {
             return false;
         }
 
-        // Must have PTS or DTS
-        if (double.IsNaN(packet.PtsTime) &&
-            double.IsNaN(packet.DtsTime))
+        // Must have PTS or DTS timestamps
+        if (double.IsNaN(packet.PtsTime) && double.IsNaN(packet.DtsTime))
         {
             return false;
         }
 
-        // If duration is set it must be less than 1.0
+        // If PTS or DTS is set, it must not be zero and not negative
+        if (!double.IsNaN(packet.PtsTime) &&
+            (double.IsNegative(packet.PtsTime) || packet.PtsTime == 0.0))
+        {
+            return false;
+        }
+        if (!double.IsNaN(packet.DtsTime) &&
+            (double.IsNegative(packet.DtsTime) || packet.DtsTime == 0.0))
+        {
+            return false;
+        }
+
+        // If duration is set it must not be more than 1 second
         if (!double.IsNaN(packet.DurationTime) &&
             packet.DurationTime > 1.0)
         {
@@ -130,10 +140,6 @@ public class BitrateInfo
         {
             return false;
         }
-
-        // Verify streams match expected type
-        Debug.Assert(packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) ||
-                     packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase));
 
         return true;
     }

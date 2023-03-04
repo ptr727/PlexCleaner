@@ -55,6 +55,7 @@ ENV LANG=en_US.UTF-8 \
 RUN dotnet --info
 
 # Install VS debug tools
+# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh

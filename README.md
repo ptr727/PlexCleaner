@@ -28,17 +28,20 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 - Version 3.0:
   - Upgraded from .NET 6 to .NET 7.
     - Switched docker base image from `ubuntu:latest` and then installing .NET, to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` that already includes .NET.
-    - Switched from `Regex` to `GeneratedRegex` for a performance improvement.
-    - Switched from `DllImport` to `LibraryImport` for platform compatibility.
+    - Switched from `Regex` to `GeneratedRegex` for a slight performance improvement.
+    - Switched from `DllImport` to `LibraryImport` for cross platform compatibility.
   - Modified the settings schema to allow for custom FFmpeg and HandBrake command line arguments.
-    - Custom command line arguments allows for using e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, etc.
+    - Custom command line arguments allows for using e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
     - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
     - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
-  - Fixed the file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
-  - Upgraded docker builds from FFmpeg v5 to v6.
+  - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
+  - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
+  - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
+  - Updated the docker build from FFmpeg v5 to v6.
+  - Updated the [ISO 639-3](https://github.com/ptr727/Utilities) language mapping logic to account for new languages and long form languages, e.g. `yue`, `cmn-Hans`, etc. Note that [Matroska BCP 47](https://github.com/ptr727/PlexCleaner/issues/145) language tags are not yet supported.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
