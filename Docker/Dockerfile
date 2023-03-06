@@ -122,7 +122,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 RUN add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    && add-apt-repository -y ppa:savoury1/ffmpeg5 \
+    && add-apt-repository -y ppa:savoury1/ffmpeg6 \
     && apt-get update \
     && apt-get install -y ffmpeg \
     && ffmpeg -version
