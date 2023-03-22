@@ -108,7 +108,7 @@ public partial class HandBrakeTool : MediaTool
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
 
-        // TODO
+        // TODO:
         return false;
     }
 

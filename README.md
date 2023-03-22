@@ -30,18 +30,30 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Switched docker base image from `ubuntu:latest` and then installing .NET, to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` that already includes .NET.
     - Switched from `Regex` to `GeneratedRegex` for a slight performance improvement.
     - Switched from `DllImport` to `LibraryImport` for cross platform compatibility.
-  - Modified the settings schema to allow for custom FFmpeg and HandBrake command line arguments.
-    - Custom command line arguments allows for using e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
-    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
-    - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
-    - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
+  - Settings JSON schema updated from v2 to v3:
+    - Added support for custom FFmpeg and HandBrake command line arguments, e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
+      - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
+      - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
+      - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
+      - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
+    - Added `ProcessOptions:KeepOriginalLanguage` to not remove tracks marked as being in the [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
+      - On v3 schema upgrade the `ProcessOptions:KeepOriginalLanguage` value will be set to `true`.
+    - Language tags now support [RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) format.
+      - See the [Language Matching](#language-matching) section for matching details.
+      - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
+      - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
+      - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
+      - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format.
+      - On v3 schema upgrade old ISO 639-3-2 3 letter tags will be replaced with generic RFC 5646 tags.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
-  - Updated the docker build from FFmpeg v5 to v6.
-  - Updated the [ISO 639-3](https://github.com/ptr727/Utilities) language mapping logic to account for new languages and long form languages, e.g. `yue`, `cmn-Hans`, etc. Note that [Matroska BCP 47](https://github.com/ptr727/PlexCleaner/issues/145) language tags are not yet supported.
+  - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
+  - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
+  - Refactored JSON schema versioning logic logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
+  - Refactored track selection logic to simplify containment and use with lambda filters.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
@@ -230,7 +242,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
     "RootRelative": true,
-    // Automatically check for new tools
+    // Automatically check for and update new tool versions
     "AutoUpdate": false
   },
   // Convert options
@@ -286,8 +298,8 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
       ".wmv",
       ".dv"
     ],
-    // Enable deinterlace
-    // Note deinterlace detection is not absolute
+    // Enable deinterlace of interlaced media
+    // Interlace detection is not absolute and uses interlaced frame counting
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
@@ -331,7 +343,6 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
       }
     ],
     // Re-encode matching audio codecs
-    // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": [
       "flac",
@@ -347,24 +358,23 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
-    "DefaultLanguage": "eng",
+    // Use RFC 5646 format
+    "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
-    // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
+    // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
     "KeepLanguages": [
-      "eng",
-      "afr",
-      "chi",
-      "ind"
+      "en",
+      "af",
+      "zh-Hans",
+      "id"
     ],
+    // Keep all tracks flagged as original language
+    "KeepOriginalLanguage": true,
     // Enable removing of duplicate tracks of the same type and language
-    // Priority is given to tracks marked as Default
-    // Forced subtitle tracks are prioritized
-    // Subtitle tracks containing "SDH" in the title are de-prioritized
-    // Audio tracks containing "Commentary" in the title are de-prioritized
-    "RemoveDuplicateTracks": true,
-    // If no Default audio tracks are found, tracks are prioritized by codec type
+    "RemoveDuplicateTracks": false,
+    // Prioritized audio tracks by by codec type
     // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": [
       "truehd atmos",
@@ -503,6 +513,18 @@ Example hardware assisted video encoding options:
 
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.  
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
+
+## Language Matching
+
+Language tag matching now supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats.  
+In cases where [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix) does not emit an IETF language tag, the ISO639-3-2 tag will be converted to an IETF tag.
+
+Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
+E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  
+E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
+E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.
+E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage
 

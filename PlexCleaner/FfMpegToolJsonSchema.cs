@@ -88,8 +88,24 @@ public class Disposition
 {
     [JsonProperty("default")]
     public bool Default { get; set; }
+
     [JsonProperty("forced")]
     public bool Forced { get; set; }
+
+    [JsonProperty("original")]
+    public bool Original { get; set; }
+
+    [JsonProperty("comment")]
+    public bool Comment { get; set; }
+
+    [JsonProperty("hearing_impaired")]
+    public bool HearingImpaired { get; set; }
+
+    [JsonProperty("visual_impaired")]
+    public bool VisualImpaired { get; set; }
+
+    [JsonProperty("descriptions")]
+    public bool Descriptions { get; set; }
 }
 
 public class PacketInfo

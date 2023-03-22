@@ -7,17 +7,13 @@ public class SubtitleInfo : TrackInfo
 {
     internal SubtitleInfo(MkvToolJsonSchema.Track track) : base(track)
     {
-        Forced = track.Properties.Forced;
     }
     internal SubtitleInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
     {
-        Forced = stream.Disposition.Forced;
     }
 
     internal SubtitleInfo(MediaInfoToolXmlSchema.Track track) : base(track)
     {
-        Forced = track.Forced;
-
         // We need MuxingMode for VOBSUB else Plex on Nvidia Shield TV will hang on play start
         // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
         // https://github.com/mbunkus/mkvtoolnix/issues/2131
@@ -25,31 +21,9 @@ public class SubtitleInfo : TrackInfo
         if (track.CodecId.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) &&
             string.IsNullOrEmpty(track.MuxingMode))
         {
+            // TODO: Not fixed by remuxing
+            Log.Logger.Warning("MediaInfoToolXmlSchema : MuxingMode not specified for S_VOBSUB Codec");
             HasErrors = true;
-            Log.Logger.Warning("MuxingMode not specified for S_VOBSUB Codec");
         }
-    }
-
-    public bool Forced { get; set; }
-
-    public override void WriteLine(string prefix)
-    {
-        // Add Forced
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, " +
-                               "Language: {Language}, Id: {Id}, Number: {Number}, Title: {Title}, Default: {Default}, " +
-                               "Forced: {Forced}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
-            prefix,
-            GetType().Name,
-            Format,
-            Codec,
-            Language,
-            Id,
-            Number,
-            Title,
-            Default,
-            Forced,
-            State,
-            HasErrors,
-            HasTags);
     }
 }

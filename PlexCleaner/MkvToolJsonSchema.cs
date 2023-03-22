@@ -120,6 +120,20 @@ public class TrackProperties
 
     [JsonProperty("default_track")]
     public bool DefaultTrack { get; set; }
+
+    [JsonProperty("flag_original")]
+    public bool Original { get; set; }
+    [JsonProperty("flag_commentary")]
+    public bool Commentary { get; set; }
+
+    [JsonProperty("flag_visual_impaired")]
+    public bool VisualImpaired { get; set; }
+
+    [JsonProperty("flag_hearing_impaired")]
+    public bool HearingImpaired { get; set; }
+
+    [JsonProperty("flag_text_descriptions")]
+    public bool TextDescriptions { get; set; }
 }
 
 public class Attachment

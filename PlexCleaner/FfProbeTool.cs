@@ -96,7 +96,6 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfoJson(string filename, out string json)
     {
         // Get media info as JSON
-        // TODO: Add format to JSON
         string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{filename}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
@@ -169,7 +168,7 @@ public class FfProbeTool : FfMpegTool
             }
 
             // Remove cover art
-            MediaInfo.RemoveCoverArt(mediaInfo);
+            mediaInfo.RemoveCoverArt();
 
             // Errors
             mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
@@ -216,7 +215,7 @@ public class FfProbeTool : FfMpegTool
 
         // Language and title are expected tags
         // Look for any key containing "statistics"
-        // TODO: Find a more relaible method for determining what tags are expected or not
+        // TODO: Find a more reliable method for determining what tags are expected or not
         return tags.Keys.FirstOrDefault(item => item.Contains("statistics", StringComparison.OrdinalIgnoreCase)) != null;
     }
 

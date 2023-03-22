@@ -11,6 +11,18 @@
         },
         "HandBrakeOptions": {
           "$ref": "#/definitions/HandBrakeOptions"
+        },
+        "EnableH265Encoder": {
+          "type": "boolean"
+        },
+        "VideoEncodeQuality": {
+          "type": "integer"
+        },
+        "AudioEncodeCodec": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
@@ -84,10 +96,7 @@
     "ProcessOptions": {
       "type": "object",
       "properties": {
-        "DeleteEmptyFolders": {
-          "type": "boolean"
-        },
-        "DeleteUnwantedExtensions": {
+        "KeepOriginalLanguage": {
           "type": "boolean"
         },
         "KeepExtensions": {
@@ -99,9 +108,6 @@
             ]
           }
         },
-        "ReMux": {
-          "type": "boolean"
-        },
         "ReMuxExtensions": {
           "type": "array",
           "items": {
@@ -110,12 +116,6 @@
               "null"
             ]
           }
-        },
-        "DeInterlace": {
-          "type": "boolean"
-        },
-        "ReEncode": {
-          "type": "boolean"
         },
         "ReEncodeVideo": {
           "type": "array",
@@ -132,15 +132,6 @@
             ]
           }
         },
-        "SetUnknownLanguage": {
-          "type": "boolean"
-        },
-        "DefaultLanguage": {
-          "type": "string"
-        },
-        "RemoveUnwantedLanguageTracks": {
-          "type": "boolean"
-        },
         "KeepLanguages": {
           "type": "array",
           "items": {
@@ -150,9 +141,6 @@
             ]
           }
         },
-        "RemoveDuplicateTracks": {
-          "type": "boolean"
-        },
         "PreferredAudioFormats": {
           "type": "array",
           "items": {
@@ -161,6 +149,60 @@
               "null"
             ]
           }
+        },
+        "FileIgnoreList": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "ReEncodeVideoFormats": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ReEncodeVideoCodecs": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ReEncodeVideoProfiles": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "DeleteEmptyFolders": {
+          "type": "boolean"
+        },
+        "DeleteUnwantedExtensions": {
+          "type": "boolean"
+        },
+        "ReMux": {
+          "type": "boolean"
+        },
+        "DeInterlace": {
+          "type": "boolean"
+        },
+        "ReEncode": {
+          "type": "boolean"
+        },
+        "SetUnknownLanguage": {
+          "type": "boolean"
+        },
+        "DefaultLanguage": {
+          "type": "string"
+        },
+        "RemoveUnwantedLanguageTracks": {
+          "type": "boolean"
+        },
+        "RemoveDuplicateTracks": {
+          "type": "boolean"
         },
         "RemoveTags": {
           "type": "boolean"
@@ -176,39 +218,31 @@
         },
         "RestoreFileTimestamp": {
           "type": "boolean"
-        },
-        "FileIgnoreList": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
         }
       },
       "required": [
-        "DeleteEmptyFolders",
-        "DeleteUnwantedExtensions",
+        "KeepOriginalLanguage",
         "KeepExtensions",
-        "ReMux",
         "ReMuxExtensions",
-        "DeInterlace",
-        "ReEncode",
         "ReEncodeVideo",
         "ReEncodeAudioFormats",
+        "KeepLanguages",
+        "PreferredAudioFormats",
+        "FileIgnoreList",
+        "DeleteEmptyFolders",
+        "DeleteUnwantedExtensions",
+        "ReMux",
+        "DeInterlace",
+        "ReEncode",
         "SetUnknownLanguage",
         "DefaultLanguage",
         "RemoveUnwantedLanguageTracks",
-        "KeepLanguages",
         "RemoveDuplicateTracks",
-        "PreferredAudioFormats",
         "RemoveTags",
         "UseSidecarFiles",
         "SidecarUpdateOnToolChange",
         "Verify",
-        "RestoreFileTimestamp",
-        "FileIgnoreList"
+        "RestoreFileTimestamp"
       ]
     },
     "ToolsOptions": {
@@ -322,14 +356,14 @@
       "type": "integer",
       "default": 0
     },
-    "ToolsOptions": {
-      "$ref": "#/definitions/ToolsOptions"
-    },
     "ConvertOptions": {
       "$ref": "#/definitions/ConvertOptions"
     },
     "ProcessOptions": {
       "$ref": "#/definitions/ProcessOptions"
+    },
+    "ToolsOptions": {
+      "$ref": "#/definitions/ToolsOptions"
     },
     "MonitorOptions": {
       "$ref": "#/definitions/MonitorOptions"
@@ -339,9 +373,9 @@
     }
   },
   "required": [
-    "ToolsOptions",
     "ConvertOptions",
     "ProcessOptions",
+    "ToolsOptions",
     "MonitorOptions",
     "VerifyOptions"
   ]

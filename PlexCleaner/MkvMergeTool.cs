@@ -186,7 +186,7 @@ public partial class MkvMergeTool : MediaTool
             }
 
             // Remove cover art
-            MediaInfo.RemoveCoverArt(mediaInfo);
+            mediaInfo.RemoveCoverArt();
 
             // Container type
             mediaInfo.Container = mkvMerge.Container.Type;

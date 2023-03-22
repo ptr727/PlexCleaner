@@ -22,6 +22,12 @@ public class VideoInfo : TrackInfo
         // Missing: Interlaced
         // Missing: HDR
         // Missing: ClosedCaptions
+
+        // Cover art
+        if (MatchCoverArt(Codec))
+        {
+            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+        }
     }
 
     internal VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
@@ -53,6 +59,12 @@ public class VideoInfo : TrackInfo
         ClosedCaptions = stream.ClosedCaptions;
 
         // Missing: HDR
+
+        // Cover art
+        if (MatchCoverArt(Codec))
+        {
+            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+        }
     }
 
     internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
@@ -77,6 +89,12 @@ public class VideoInfo : TrackInfo
         FormatHdr = track.HdrFormat;
 
         // Missing: ClosedCaptions
+
+        // Cover art
+        if (MatchCoverArt(Codec))
+        {
+            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+        }
     }
 
     public string Profile { get; set; } = "";
@@ -87,7 +105,7 @@ public class VideoInfo : TrackInfo
 
     public bool ClosedCaptions { get; set; }
 
-    public bool CompareVideo(VideoInfo compare)
+    public bool CompareVideo(VideoFormat compare)
     {
         if (compare == null)
         {
@@ -106,8 +124,9 @@ public class VideoInfo : TrackInfo
     public override void WriteLine(string prefix)
     {
         // Add Profile and Interlaced
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, " +
-                               "Id: {Id}, Number: {Number}, Title: {Title}, Default: {Default}, Profile: {Profile}, Interlaced: {Interlaced}, " +
+        // Keep in sync with TrackInfo::WriteLine
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, " +
+                               "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, " +
                                "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
@@ -115,10 +134,11 @@ public class VideoInfo : TrackInfo
             FormatHdr,
             Codec,
             Language,
+            LanguageIetf,
             Id,
             Number,
             Title,
-            Default,
+            Flags,
             Profile,
             Interlaced,
             ClosedCaptions,

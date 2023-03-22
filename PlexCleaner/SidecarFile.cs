@@ -11,7 +11,7 @@ namespace PlexCleaner;
 public class SidecarFile
 {
     [Flags]
-    public enum States
+    public enum StatesType
     {
         None = 0,
         SetLanguage = 1,
@@ -106,7 +106,7 @@ public class SidecarFile
             // The media file has been changed
             current = false;
             Log.Logger.Warning("Sidecar out of sync with media file, clearing state : {FileName}", SidecarFileInfo.Name);
-            State = States.FileModified;
+            State = StatesType.FileModified;
         }
 
         // Verify the tools matches the json info
@@ -116,10 +116,10 @@ public class SidecarFile
         {
             // Remove the verified state flag if set
             current = false;
-            if (State.HasFlag(States.Verified))
+            if (State.HasFlag(StatesType.Verified))
             {
                 Log.Logger.Warning("Sidecar out of sync with tools, clearing Verified flag : {FileName}", SidecarFileInfo.Name);
-                State &= ~States.Verified;
+                State &= ~StatesType.Verified;
             }
         }
 
@@ -178,7 +178,7 @@ public class SidecarFile
 
         // Reset
         SidecarJson = null;
-        State = States.None;
+        State = StatesType.None;
         FfProbeInfo = null;
         MkvMergeInfo = null;
         MediaInfoInfo = null;
@@ -321,7 +321,7 @@ public class SidecarFile
 
     private bool IsSchemaCurrent()
     {
-        return SidecarJson.SchemaVersion == SidecarFileJsonSchema.CurrentSchemaVersion;
+        return SidecarJson.SchemaVersion == SidecarFileJsonSchema.Version;
     }
 
     public bool IsWriteable()
@@ -456,28 +456,12 @@ public class SidecarFile
     private bool ReadJson()
     {
         // Deserialize
-        SidecarJson = SidecarFileJsonSchema.FromFile(SidecarFileInfo.FullName);
+        SidecarJson = SidecarFileJsonSchema.FromJson(File.ReadAllText(SidecarFileInfo.FullName));
         if (SidecarJson == null)
         {
-            Log.Logger.Error("{FileName} is not a valid JSON file", SidecarFileInfo.Name);
+            Log.Logger.Error("Failed to read JSON from file : {FileName}", SidecarFileInfo.Name);
             return false;
         }
-
-        // Compare the schema version
-        if (SidecarJson.SchemaVersion != SidecarFileJsonSchema.CurrentSchemaVersion)
-        {
-            Log.Logger.Warning("Sidecar JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
-                SidecarJson.SchemaVersion,
-                SidecarFileJsonSchema.CurrentSchemaVersion,
-                SidecarFileInfo.Name);
-
-            // Upgrade schema
-            if (!SidecarFileJsonSchema.Upgrade(SidecarJson))
-            {
-                return false;
-            }
-        }
-
         return true;
     }
 
@@ -507,7 +491,7 @@ public class SidecarFile
         SidecarJson ??= new SidecarFileJsonSchema();
 
         // Schema version
-        SidecarJson.SchemaVersion = SidecarFileJsonSchema.CurrentSchemaVersion;
+        SidecarJson.SchemaVersion = SidecarFileJsonSchema.Version;
 
         // Media file info
         MediaFileInfo.Refresh();
@@ -686,7 +670,7 @@ public class SidecarFile
     public MediaInfo FfProbeInfo { get; private set; }
     public MediaInfo MkvMergeInfo { get; private set; }
     public MediaInfo MediaInfoInfo { get; private set; }
-    public States State { get; set; }
+    public StatesType State { get; set; }
 
     private readonly FileInfo MediaFileInfo;
     private readonly FileInfo SidecarFileInfo;

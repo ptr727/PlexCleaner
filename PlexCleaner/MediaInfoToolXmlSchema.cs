@@ -4,6 +4,9 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
+// https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd
+// https://mediaarea.net/en/MediaInfo/Support/Tags
+
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
 // Do not use XSD, https://mediaarea.net/mediainfo/mediainfo.xsd
 

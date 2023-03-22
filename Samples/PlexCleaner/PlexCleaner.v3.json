@@ -101,6 +101,7 @@
       "chi",
       "ind"
     ],
+    "KeepOriginalLanguage": true,
     "RemoveDuplicateTracks": true,
     "PreferredAudioFormats": [
       "truehd atmos",

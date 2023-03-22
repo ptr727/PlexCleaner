@@ -1,9 +1,15 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using Sandbox;
+using System.Globalization;
+
+var cultureInfo1 = new CultureInfo("ger");
+var cultureInfo2 = CultureInfo.CreateSpecificCulture("ger");
+var cultureInfo3 = CultureInfo.GetCultureInfo("deu", true);
+
+var tag1 = PlexCleaner.Language.GetIetfTag("xxx", false);
 
 // Generate JSON schema
-SchemaGenerator.GenerateSchema();
+// SchemaGenerator.GenerateSchema();
 
 var fileList = new List<string>
 {

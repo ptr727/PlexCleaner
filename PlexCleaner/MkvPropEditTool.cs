@@ -86,7 +86,7 @@ public class MkvPropEditTool : MkvMergeTool
 
         // Delete all track titles if the title is not considered "useful"
         // TODO: Consider using HasTags() or other methods to be more consistent
-        var trackList = info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) && !MediaInfo.IsUsefulTrackTitle(track.Title));
+        var trackList = info.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) && !TrackInfo.IsUsefulTrackTitle(track.Title));
         trackList.ToList().ForEach(track => commandline.Append($"--edit track:@{track.Number} --delete name "));
 
         // Clear all tags and main title and track titles
@@ -103,6 +103,7 @@ public class MkvPropEditTool : MkvMergeTool
 
         // Verify correct data type
         Debug.Assert(info.Parser == ToolType.MkvMerge);
+        Debug.Assert(info.Attachments > 0);
 
         // Build commandline
         StringBuilder commandline = new();

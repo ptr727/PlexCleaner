@@ -33,21 +33,21 @@ public class TagMapDictionary
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
 
         // Video
-        Add(MediaInfo.GetTrackList(prime.Video), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Video), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Video), sec2.Parser,
+        Add(prime.Video, prime.Parser,
+            sec1.Video, sec1.Parser,
+            sec2.Video, sec2.Parser,
             Video);
 
         // Audio
-        Add(MediaInfo.GetTrackList(prime.Audio), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Audio), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Audio), sec2.Parser,
+        Add(prime.Audio, prime.Parser,
+            sec1.Audio, sec1.Parser,
+            sec2.Audio, sec2.Parser,
             Audio);
 
         // Subtitle
-        Add(MediaInfo.GetTrackList(prime.Subtitle), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Subtitle), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Subtitle), sec2.Parser,
+        Add(prime.Subtitle, prime.Parser,
+            sec1.Subtitle, sec1.Parser,
+            sec2.Subtitle, sec2.Parser,
             Subtitle);
     }
 

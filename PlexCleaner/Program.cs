@@ -144,8 +144,7 @@ internal class Program
         }
 
         // Process all files
-        Process process = new();
-        if (!process.ProcessFiles(program.FileList) || 
+        if (!Process.ProcessFiles(program.FileList) || 
             IsCancelledError())
         {
             return -1;
@@ -178,8 +177,7 @@ internal class Program
             return -1;
         }
 
-        Process process = new();
-        return process.ReMuxFiles(program.FileList) ? 0 : -1;
+        return Process.ReMuxFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int ReEncodeCommand(CommandLineOptions options)

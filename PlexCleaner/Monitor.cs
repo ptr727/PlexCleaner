@@ -66,9 +66,9 @@ internal class Monitor
                 if (WatchFolders.Any())
                 {
                     // Remove root folders from the watchlist
-                    //TODO : Maybe we need a way to not process sub-directories?
-                    //foreach (string folder in folders)
-                    //    WatchFolders.Remove(folder);
+                    // TODO : Should we not process sub-directories?
+                    // foreach (string folder in folders)
+                    //     WatchFolders.Remove(folder);
 
                     // Find folders that have settled down, i.e. not modified in last wait time
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);

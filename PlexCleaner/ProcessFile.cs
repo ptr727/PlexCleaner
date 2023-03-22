@@ -29,10 +29,10 @@ public class ProcessFile
         }
 
         // Get the matching MKV file
-        string mediafile = Path.ChangeExtension(FileInfo.FullName, ".mkv");
+        string mediaFile = Path.ChangeExtension(FileInfo.FullName, ".mkv");
 
         // Does the media file exist
-        if (File.Exists(mediafile))
+        if (File.Exists(mediaFile))
         {
             // File exists, nothing more to do
             return true;
@@ -82,7 +82,7 @@ public class ProcessFile
 
         // File deleted, do not continue processing
         modified = true;
-        SidecarFile.State |= SidecarFile.States.FileDeleted;
+        SidecarFile.State |= SidecarFile.StatesType.FileDeleted;
         return false;
     }
 
@@ -132,13 +132,8 @@ public class ProcessFile
         return SidecarFile.IsWriteable();
     }
 
-    public bool RemuxByExtensions(HashSet<string> remuxExtensions, ref bool modified)
+    public bool RemuxByExtensions(ref bool modified)
     {
-        if (remuxExtensions == null)
-        {
-            throw new ArgumentNullException(nameof(remuxExtensions));
-        }
-
         // Optional
         if (!Program.Config.ProcessOptions.ReMux)
         {
@@ -146,7 +141,7 @@ public class ProcessFile
         }
 
         // Does the extension match
-        if (!remuxExtensions.Contains(FileInfo.Extension))
+        if (!Program.Config.ProcessOptions.ReMuxExtensions.Contains(FileInfo.Extension))
         {
             // Nothing to do
             return true;
@@ -156,8 +151,7 @@ public class ProcessFile
         Log.Logger.Information("ReMux file matched by extension : {FileName}", FileInfo.Name);
 
         // Remux the file, use the new filename
-        // Convert will test for Options.TestNoModify
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputname))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
             return false;
@@ -170,12 +164,12 @@ public class ProcessFile
         }
 
         // Set remuxed state
-        SidecarFile.State |= SidecarFile.States.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
 
         // Extension may have changed
         // Refresh
         modified = true;
-        return Refresh(outputname);
+        return Refresh(outputName);
     }
 
     public bool RemuxNonMkvContainer(ref bool modified)
@@ -197,8 +191,7 @@ public class ProcessFile
         Log.Logger.Information("ReMux {Container} container : {FileName}", MkvMergeInfo.Container, FileInfo.Name);
 
         // Remux the file, use the new filename
-        // Convert will test for Options.TestNoModify
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputname))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
             return false;
@@ -211,26 +204,30 @@ public class ProcessFile
         }
 
         // Set remuxed state
-        SidecarFile.State |= SidecarFile.States.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
 
         // Extension may have changed
         // Refresh
         modified = true;
-        return Refresh(outputname);
+        return Refresh(outputName);
+    }
+
+    public bool HasMediaInfoErrors()
+    {
+        // TODO: Improve error granularity
+        return FfProbeInfo.HasErrors || MkvMergeInfo.HasErrors || MediaInfoInfo.HasErrors;
     }
 
     public bool ReMuxMediaInfoErrors(ref bool modified)
     {
         // Do we have any errors
-        if (!FfProbeInfo.HasErrors &&
-            !MkvMergeInfo.HasErrors &&
-            !MediaInfoInfo.HasErrors)
+        if (!HasMediaInfoErrors())
         {
             return true;
         }
 
         // Already ReMuxed, something is wrong with detection or removal
-        if (SidecarFile.State.HasFlag(SidecarFile.States.ReMuxed))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ReMuxed))
         {
             Log.Logger.Error("Errors re-detected after remuxing : {FileName}", FileInfo.Name);
             return true;
@@ -240,7 +237,7 @@ public class ProcessFile
         Log.Logger.Information("ReMux to repair metadata errors : {FileName}", FileInfo.Name);
 
         // Remux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputname))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
             return false;
@@ -253,27 +250,16 @@ public class ProcessFile
         }
 
         // Set remuxed state
-        SidecarFile.State |= SidecarFile.States.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
 
         // Refresh
         modified = true;
-        bool result = Refresh(outputname);
+        return Refresh(outputName);
+    }
 
-        // Do we still have errors after remuxing
-        if (FfProbeInfo.HasErrors ||
-            MkvMergeInfo.HasErrors ||
-            MediaInfoInfo.HasErrors)
-        {
-            // Ignore error
-            Log.Logger.Warning("ReMux failed to clear metadata errors : {FileName}", FileInfo.Name);
-        }
-        else
-        {
-            Log.Logger.Information("ReMux cleared metadata errors : {FileName}", FileInfo.Name);
-        }
-
-        // Extension may have changed
-        return result;
+    public bool HasTags()
+    {
+        return MkvMergeInfo.HasTags || FfProbeInfo.HasTags || MediaInfoInfo.HasTags;
     }
 
     public bool RemoveTags(ref bool modified)
@@ -285,16 +271,14 @@ public class ProcessFile
         }
 
         // Does the file have tags
-        if (!MkvMergeInfo.HasTags &&
-            !FfProbeInfo.HasTags &&
-            !MediaInfoInfo.HasTags)
+        if (!HasTags())
         {
             // No tags
             return true;
         }
 
         // Something is wrong with tag detection or removal
-        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedTags))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedTags))
         {
             Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
 
@@ -318,11 +302,17 @@ public class ProcessFile
         }
 
         // Set modified state
-        SidecarFile.State |= SidecarFile.States.ClearedTags;
+        SidecarFile.State |= SidecarFile.StatesType.ClearedTags;
 
         // Refresh
         modified = true;
         return Refresh(true);
+    }
+
+    public bool HasAttachments()
+    {
+        // Use MkvMerge info
+        return MkvMergeInfo.Attachments > 0;
     }
 
     public bool RemoveAttachments(ref bool modified)
@@ -334,15 +324,14 @@ public class ProcessFile
         }
 
         // Does the file have attachments
-        // Use MkvMerge info
-        if (MkvMergeInfo.Attachments == 0)
+        if (!HasAttachments())
         {
             // No attachments
             return true;
         }
 
         // Something is wrong with attachment detection or removal
-        if (SidecarFile.State.HasFlag(SidecarFile.States.ClearedAttachments))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedAttachments))
         {
             Log.Logger.Error("Attachments re-detected after clearing : {FileName}", FileInfo.Name);
 
@@ -354,7 +343,7 @@ public class ProcessFile
             }
         }
 
-        // Remove tags
+        // Remove attachments
         Log.Logger.Information("Clearing all attachments from media file : {FileName}", FileInfo.Name);
 
         // Delete the attachments
@@ -366,14 +355,14 @@ public class ProcessFile
         }
 
         // Set modified state
-        SidecarFile.State |= SidecarFile.States.ClearedAttachments;
+        SidecarFile.State |= SidecarFile.StatesType.ClearedAttachments;
 
         // Refresh
         modified = true;
         return Refresh(true);
     }
 
-    public bool SetUnknownLanguage(ref bool modified)
+    public bool SetUnknownLanguageTracks(ref bool modified)
     {
         // Optional
         if (!Program.Config.ProcessOptions.SetUnknownLanguage)
@@ -381,119 +370,137 @@ public class ProcessFile
             return true;
         }
 
-        // Find unknown languages
-        if (!MkvMergeInfo.FindUnknownLanguage(out MediaInfo known, out MediaInfo unknown))
+        // Select all tracks with unknown languages
+        // Use MkvMerge for IETF language tags
+        // Selected is Unknown
+        // NotSelected is Known
+        var selectMediaInfo = FindUnknownLanguageTracks();
+        if (selectMediaInfo.Selected.Count == 0)
         {
             // Nothing to do
             return true;
         }
 
-        Log.Logger.Information("Setting unknown language tracks to {DefaultLanguage} : {FileName}",
-            Program.Config.ProcessOptions.DefaultLanguage,
-            FileInfo.Name);
-        known.WriteLine("Known");
-        unknown.WriteLine("Unknown");
+        Log.Logger.Information("Setting unknown language tracks to {DefaultLanguage} : {FileName}", Program.Config.ProcessOptions.DefaultLanguage, FileInfo.Name);
+        selectMediaInfo.WriteLine("Unknown", "Known");
 
         // Set the track language to the default language
         if (!Program.Options.TestNoModify &&
-            !Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, unknown, Program.Config.ProcessOptions.DefaultLanguage))
+            !Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, selectMediaInfo.Selected, Program.Config.ProcessOptions.DefaultLanguage))
         {
             // Error
             return false;
         }
 
         // Set modified state
-        SidecarFile.State |= SidecarFile.States.SetLanguage;
+        SidecarFile.State |= SidecarFile.StatesType.SetLanguage;
 
         // Refresh
         modified = true;
         return Refresh(true);
     }
 
-    public bool ReMux(HashSet<string> keepLanguages, List<string> preferredAudioFormats, ref bool modified)
+    public bool RemoveUnwantedLanguageTracks(ref bool modified)
     {
-        // Start out with keeping all the tracks
-        MediaInfo keepTracks = MkvMergeInfo;
-        MediaInfo removeTracks = new(MediaTool.ToolType.MkvMerge);
-
-        // Get all unwanted language tracks
-        // Use MkvMerge logic
-        bool remux = false;
-        if (Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks &&
-            MkvMergeInfo.FindUnwantedLanguage(keepLanguages, preferredAudioFormats, out MediaInfo keep, out MediaInfo remove))
+        // Optional
+        if (!Program.Config.ProcessOptions.RemoveUnwantedLanguageTracks)
         {
-            Log.Logger.Information("Removing unwanted language tracks : {FileName}", FileInfo.Name);
-            keep.WriteLine("Keep");
-            remove.WriteLine("Remove");
-
-            // Remove the unwanted language tracks
-            keepTracks.RemoveTracks(remove);
-            removeTracks.AddTracks(remove);
-            remux = true;
+            return true;
         }
 
-        // Get all duplicate tracks  
-        // Use MkvMerge logic
-        if (Program.Config.ProcessOptions.RemoveDuplicateTracks &&
-            MkvMergeInfo.FindDuplicateTracks(preferredAudioFormats, out keep, out remove))
-        {
-            Log.Logger.Information("Removing duplicate tracks : {FileName}", FileInfo.Name);
-            keep.WriteLine("Keep");
-            remove.WriteLine("Remove");
-
-            // Remove the duplicate tracks
-            keepTracks.RemoveTracks(remove);
-            removeTracks.AddTracks(remove);
-            remux = true;
-        }
-
-        // Any remuxing to do
-        if (!remux)
+        // Use MkvMerge for IETF language tags
+        // Selected is Keep
+        // NotSelected is Remove
+        var selectMediaInfo = FindUnwantedLanguageTracks();
+        if (selectMediaInfo.NotSelected.Count == 0)
         {
             // Done
             return true;
         }
 
-        Log.Logger.Information("Re-muxing union of tracks : {FileName}", FileInfo.Name);
-        keepTracks.WriteLine("Keep");
-        removeTracks.WriteLine("Remove");
+        // There must be something left to keep
+        Debug.Assert(selectMediaInfo.Selected.Count > 0);
+
+        Log.Logger.Information("Removing unwanted language tracks : {FileName}", FileInfo.Name);
+        selectMediaInfo.WriteLine("Keep", "Remove");
 
         // ReMux and only keep the specified tracks
-        // Convert will test for Options.TestNoModify
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, keepTracks, out string outputname))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
         {
             // Error
             return false;
         }
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
 
-        // Extension may have changed
         // Refresh
         modified = true;
-        return Refresh(outputname);
+        return Refresh(outputName);
     }
 
-    private bool FindInterlaced(out VideoInfo interlacedVideo)
+    public bool RemoveDuplicateTracks(ref bool modified)
     {
+        // Optional
+        if (!Program.Config.ProcessOptions.RemoveDuplicateTracks)
+        {
+            return true;
+        }
+
+        // Use MkvMerge logic
+        // Selected is Keep
+        // NotSelected is Remove
+        var selectMediaInfo = FindDuplicateTracks();
+        if (selectMediaInfo.NotSelected.Count == 0)
+        {
+            // Done
+            return true;
+        }
+
+        // There must be something left to keep
+        Debug.Assert(selectMediaInfo.Selected.Count > 0);
+
+        Log.Logger.Information("Removing duplicate tracks : {FileName}", FileInfo.Name);
+        selectMediaInfo.WriteLine("Keep", "Remove");
+
+        // ReMux and only keep the specified tracks
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
+        {
+            // Error
+            return false;
+        }
+
+        // Update state
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+
+        // Refresh
+        modified = true;
+        return Refresh(outputName);
+    }
+
+    private bool FindInterlacedTracks(out VideoInfo videoInfo)
+    {
+        // Using FfProbeInfo logic
+        // Only works with 1 video track
+        Debug.Assert(FfProbeInfo.Video.Count <= 1);
+
         // Init
-        interlacedVideo = null;
+        videoInfo = null;
 
         // Are any interlaced attributes set
-        interlacedVideo ??= FfProbeInfo.Video.Find(item => item.Interlaced);
-        interlacedVideo ??= MediaInfoInfo.Video.Find(item => item.Interlaced);
-        interlacedVideo ??= MkvMergeInfo.Video.Find(item => item.Interlaced);
-        if (interlacedVideo != null)
+        videoInfo ??= FfProbeInfo.Video.Find(item => item.Interlaced);
+        videoInfo ??= MediaInfoInfo.Video.Find(item => item.Interlaced);
+        videoInfo ??= MkvMergeInfo.Video.Find(item => item.Interlaced);
+        if (videoInfo != null)
         {
             // Interlaced attribute set
             return true;
         }
 
         // Running idet is expensive, skip if already verified or already deinterlaced
-        if (State.HasFlag(SidecarFile.States.Verified) ||
-            State.HasFlag(SidecarFile.States.VerifyFailed) ||
-            State.HasFlag(SidecarFile.States.DeInterlaced))
+        if (State.HasFlag(SidecarFile.StatesType.Verified) ||
+            State.HasFlag(SidecarFile.StatesType.VerifyFailed) ||
+            State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
             // Conditional re-process
             if (!Process.CanReProcess(Process.Tasks.IdetFilter))
@@ -520,22 +527,26 @@ public class ProcessFile
         // Idet says yes metadata said no
         Log.Logger.Warning("Idet reported interlaced, metadata reported not interlaced : {FileName}", FileInfo.Name);
 
-        // Use the first video track from FfPprobe
-        interlacedVideo = FfProbeInfo.Video.First();
-        interlacedVideo.Interlaced = true;
+        // Use the first video track from FfProbe
+        videoInfo = FfProbeInfo.Video.First();
+        videoInfo.Interlaced = true;
         return true;
     }
 
-    private bool FindClosedCaptions(out VideoInfo ccVideo)
+    private bool FindClosedCaptionTracks(out VideoInfo videoInfo)
     {
+        // Using FfProbeInfo logic
+        // Only works with 1 video track
+        Debug.Assert(FfProbeInfo.Video.Count <= 1);
+
         // Init
-        ccVideo = null;
+        videoInfo = null;
 
         // Are any CC attributes set
-        ccVideo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
-        ccVideo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
-        ccVideo ??= MkvMergeInfo.Video.Find(item => item.ClosedCaptions);
-        if (ccVideo != null)
+        videoInfo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
+        videoInfo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
+        videoInfo ??= MkvMergeInfo.Video.Find(item => item.ClosedCaptions);
+        if (videoInfo != null)
         {
             // CC attribute set
             return true;
@@ -545,9 +556,9 @@ public class ProcessFile
         // https://github.com/ptr727/PlexCleaner/issues/94
 
         // Running ffprobe is not free, skip if already verified or CC's already removed
-        if (State.HasFlag(SidecarFile.States.Verified) ||
-            State.HasFlag(SidecarFile.States.VerifyFailed) ||
-            State.HasFlag(SidecarFile.States.ClearedCaptions))
+        if (State.HasFlag(SidecarFile.StatesType.Verified) ||
+            State.HasFlag(SidecarFile.StatesType.VerifyFailed) ||
+            State.HasFlag(SidecarFile.StatesType.ClearedCaptions))
         {
             // Conditional re-process
             if (!Process.CanReProcess(Process.Tasks.FindClosedCaptions))
@@ -559,7 +570,7 @@ public class ProcessFile
 
         // Get ffprobe text output
         Log.Logger.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.Name);
-        if (!Tools.FfProbe.GetFfProbeInfoText(FileInfo.FullName, out string ffprobe))
+        if (!Tools.FfProbe.GetFfProbeInfoText(FileInfo.FullName, out string ffProbe))
         {
             // Error
             return false;
@@ -567,7 +578,7 @@ public class ProcessFile
 
         // Look for the "Closed Captions" in the video stream line
         // Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1280x720, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
-        using StringReader lineReader = new(ffprobe);
+        using StringReader lineReader = new(ffProbe);
         while (lineReader.ReadLine() is { } line)
         {
             // Line should start with "Stream #", and contain "Video" and contain "Closed Captions"
@@ -576,9 +587,9 @@ public class ProcessFile
                 line.Contains("Video", StringComparison.OrdinalIgnoreCase) &&
                 line.Contains("Closed Captions", StringComparison.OrdinalIgnoreCase))
             {
-                // Use the first video track from FfPprobe
-                ccVideo = FfProbeInfo.Video.First();
-                ccVideo.ClosedCaptions = true;
+                // Use the first video track from FfProbe
+                videoInfo = FfProbeInfo.Video.First();
+                videoInfo.ClosedCaptions = true;
                 return true;
             }
         }
@@ -596,19 +607,19 @@ public class ProcessFile
         }
 
         // Do we have any interlaced video
-        if (!FindInterlaced(out VideoInfo interlacedVideo))
+        if (!FindInterlacedTracks(out VideoInfo videoInfo))
         {
             return true;
         }
 
         // Already deinterlaced and still interlaced
-        if (State.HasFlag(SidecarFile.States.DeInterlaced))
+        if (State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
             Log.Logger.Error("Interlacing re-detected after deinterlacing : {FileName}", FileInfo.Name);
         }
 
         Log.Logger.Information("Deinterlacing interlaced video : {FileName}", FileInfo.Name);
-        interlacedVideo.WriteLine("Interlaced");
+        videoInfo.WriteLine("Interlaced");
 
         // TODO: HandBrake will convert closed captions and subtitle tracks to ASS format
         // To work around this we will deinterlace without subtitles then add the subtitles back
@@ -632,7 +643,8 @@ public class ProcessFile
             return false;
         }
 
-        // If there are subtitles merge them back
+        // If there are subtitles in the original file merge them back
+        // Deinterlacing used ffProbe, remuxing use MkvMerge
         if (MkvMergeInfo.Subtitle.Count == 0)
         {
             // Delete the temp file and rename the output
@@ -673,7 +685,7 @@ public class ProcessFile
         }
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.DeInterlaced;
+        SidecarFile.State |= SidecarFile.StatesType.DeInterlaced;
 
         // Refresh
         modified = true;
@@ -682,52 +694,50 @@ public class ProcessFile
 
     public bool RemoveSubtitles(ref bool modified)
     {
-        // Start out with keeping all the tracks
-        MediaInfo keepTracks = MkvMergeInfo;
-        MediaInfo removeTracks = new(MediaTool.ToolType.MkvMerge);
-
-        // Remove all the subtitle tracks
-        removeTracks.Subtitle.AddRange(keepTracks.Subtitle);
-        keepTracks.Subtitle.Clear();
-
-        // Any remuxing to do
-        if (removeTracks.Subtitle.Count == 0)
+        // Any subtitle tracks
+        // Use MkvMerge
+        if (MkvMergeInfo.Subtitle.Count == 0)
         {
             // Done
             return true;
         }
 
+        // Start out with keeping all the tracks
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
+
+        // Remove all the subtitle tracks
+        // Selected keep
+        // NotSelected remove
+        selectMediaInfo.Move(MkvMergeInfo.Subtitle, false);
+
         Log.Logger.Information("Re-muxing tracks : {FileName}", FileInfo.Name);
-        keepTracks.WriteLine("Keep");
-        removeTracks.WriteLine("Remove");
+        selectMediaInfo.WriteLine("Keep", "Remove");
 
         // ReMux and only keep the specified tracks
-        // Convert will test for Options.TestNoModify
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, keepTracks, out string outputname))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
         {
             // Error
             return false;
         }
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
 
-        // Extension may have changed
         // Refresh
         modified = true;
-        return Refresh(outputname);
+        return Refresh(outputName);
     }
 
     public bool RemoveClosedCaptions(ref bool modified)
     {
         // Do we have any closed captions
-        if (!FindClosedCaptions(out VideoInfo ccVideo))
+        if (!FindClosedCaptionTracks(out VideoInfo videoInfo))
         {
             return true;
         }
 
         Log.Logger.Information("Removing Closed Captions from video stream : {FileName}", FileInfo.Name);
-        ccVideo.WriteLine("Closed Captions");
+        videoInfo.WriteLine("Closed Captions");
 
         // Test
         if (Program.Options.TestNoModify)
@@ -757,14 +767,14 @@ public class ProcessFile
         }
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.ClearedCaptions;
+        SidecarFile.State |= SidecarFile.StatesType.ClearedCaptions;
 
         // Refresh
         modified = true;
         return Refresh(true);
     }
 
-    public bool ReEncode(List<VideoInfo> reencodeVideoInfos, HashSet<string> reencodeAudioFormats, ref bool modified)
+    public bool ReEncode(ref bool modified)
     {
         // Optional
         if (!Program.Config.ProcessOptions.ReEncode)
@@ -774,19 +784,20 @@ public class ProcessFile
 
         // Find all tracks that need re-encoding
         // Use FfProbeInfo because the video matching logic uses FfProbe attributes
-        if (!FfProbeInfo.FindNeedReEncode(reencodeVideoInfos, reencodeAudioFormats, out MediaInfo keep, out MediaInfo reencode))
+        // Selected is reencode required
+        // NotSelected is no reencode required
+        var selectMediaInfo = FindNeedReEncode();
+        if (selectMediaInfo.Selected.Count == 0)
         {
-            // Nothing to do
+            // Done
             return true;
         }
 
         Log.Logger.Information("ReEncoding required tracks : {FileName}", FileInfo.Name);
-        keep.WriteLine("Passthrough");
-        reencode.WriteLine("ReEncode");
+        selectMediaInfo.WriteLine("ReEncode", "Passthrough");
 
         // Reencode selected tracks
-        // Convert will test for Options.TestNoModify
-        if (!Convert.ConvertToMkv(FileInfo.FullName, keep, reencode, out string outputname))
+        if (!Convert.ConvertToMkv(FileInfo.FullName, selectMediaInfo.NotSelected, selectMediaInfo.Selected, out string outputName))
         {
             // Convert will log error
             // Error
@@ -794,34 +805,33 @@ public class ProcessFile
         }
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.ReEncoded;
+        SidecarFile.State |= SidecarFile.StatesType.ReEncoded;
 
-        // Extension may have changed
         // Refresh
         modified = true;
-        return Refresh(outputname);
+        return Refresh(outputName);
     }
 
     private bool ShouldVerify(Process.Tasks task)
     {
         // Verified, nothing more to do
-        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
         {
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed));
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
             return false;
         }
 
         // VerifyFailed
-        if (SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
         {
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Verified));
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Repaired));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
             // If repair is enabled but repair has not failed then re-verify
             // Possible when a verify or repair is interrupted
             if (Program.Config.VerifyOptions.AutoRepair &&
-                !SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+                !SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed))
             {
                 return true;
             }
@@ -837,19 +847,19 @@ public class ProcessFile
     private bool ShouldRepair()
     {
         // Verified or Repaired, nothing more to do
-        if (SidecarFile.State.HasFlag(SidecarFile.States.Verified) ||
-            SidecarFile.State.HasFlag(SidecarFile.States.Repaired))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified) ||
+            SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired))
         {
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.VerifyFailed));
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
             return false;
         }
 
         // RepairFailed
-        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed))
         {
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Verified));
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.States.Repaired));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
             
             // Conditional repair
             return Process.CanReProcess(Process.Tasks.Repair);
@@ -861,7 +871,7 @@ public class ProcessFile
 
     public bool Verify(ref bool modified)
     {
-        // TODO: Refactor
+        // TODO: Refactor, got too complicated
 
         // Verify if enabled
         if (!Program.Config.ProcessOptions.Verify)
@@ -934,7 +944,7 @@ public class ProcessFile
             }
 
             // Verify HDR, cheap
-            if (!VerifyHdr())
+            if (!VerifyHdrProfile())
             {
                 // Cancel requested
                 if (Program.IsCancelledError())
@@ -1029,15 +1039,15 @@ public class ProcessFile
                 Log.Logger.Information("Deleting media file due to failed verification : {FileName}", FileInfo.FullName);
                 FileEx.DeleteFile(FileInfo.FullName);
                 FileEx.DeleteFile(SidecarFile.GetSidecarName(FileInfo));
-                SidecarFile.State |= SidecarFile.States.FileDeleted;
+                SidecarFile.State |= SidecarFile.StatesType.FileDeleted;
 
                 // Done
                 return false;
             }
 
             // Update state
-            SidecarFile.State |= SidecarFile.States.VerifyFailed;
-            SidecarFile.State &= ~SidecarFile.States.Verified;
+            SidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
+            SidecarFile.State &= ~SidecarFile.StatesType.Verified;
             Refresh(false);
 
             // Failed
@@ -1045,8 +1055,8 @@ public class ProcessFile
         }
 
         // All ok
-        SidecarFile.State |= SidecarFile.States.Verified;
-        SidecarFile.State &= ~SidecarFile.States.VerifyFailed;
+        SidecarFile.State |= SidecarFile.StatesType.Verified;
+        SidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         return Refresh(false);
     }
 
@@ -1090,7 +1100,7 @@ public class ProcessFile
 
             // Update state
             // Caller will Refresh()
-            SidecarFile.State |= SidecarFile.States.BitrateExceeded;
+            SidecarFile.State |= SidecarFile.StatesType.BitrateExceeded;
         }
 
         // Audio bitrate exceeds video bitrate, may indicate an error with the video track
@@ -1106,7 +1116,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool VerifyHdr()
+    private bool VerifyHdrProfile()
     {
         // Verify that HDR profiles are HDR or Dolby Vision Profile 7+
         // If HDR10 compatibility is not reported the video can't play (without funky colors) on non-DV hardware
@@ -1151,6 +1161,7 @@ public class ProcessFile
         */
 
         // Use first video track, if any
+        // TODO: Only supports one video track
         if (MediaInfoInfo.Video.Count == 0)
         {
             return true;
@@ -1176,6 +1187,8 @@ public class ProcessFile
 
     private bool VerifyRepair(ref bool modified)
     {
+        // TODO: Refactor, got too complicated
+
         // Test
         if (Program.Options.TestNoModify)
         {
@@ -1190,7 +1203,7 @@ public class ProcessFile
         }
 
         // Trying again may not succeed unless tools changed
-        if (SidecarFile.State.HasFlag(SidecarFile.States.RepairFailed))
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed))
         {
             Log.Logger.Warning("Repairing again after previous attempt failed : {FileName}", FileInfo.Name);
         }
@@ -1230,14 +1243,14 @@ public class ProcessFile
         // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
         // Do not repair in-place, repair to temp file, if successful replace original file
-        string tempname = Path.ChangeExtension(FileInfo.FullName, ".tmp");
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
 
         // Convert using ffmpeg
         Log.Logger.Information("Attempting media repair by ReEncoding using FfMpeg : {FileName}", FileInfo.Name);
-        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempname))
+        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName))
         {
             // Failed, delete temp file
-            FileEx.DeleteFile(tempname);
+            FileEx.DeleteFile(tempName);
 
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1250,10 +1263,10 @@ public class ProcessFile
 
             // Try again using handbrake
             Log.Logger.Information("Attempting media repair by ReEncoding using HandBrake : {FileName}", FileInfo.Name);
-            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempname, true, false))
+            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false))
             {
                 // Failed, delete temp file
-                FileEx.DeleteFile(tempname);
+                FileEx.DeleteFile(tempName);
 
                 // Cancel requested
                 if (Program.IsCancelledError())
@@ -1266,7 +1279,7 @@ public class ProcessFile
 
                 // Update state
                 // Caller will Refresh()
-                SidecarFile.State |= SidecarFile.States.RepairFailed;
+                SidecarFile.State |= SidecarFile.StatesType.RepairFailed;
 
                 return false;
             }
@@ -1274,10 +1287,10 @@ public class ProcessFile
 
         // Re-encoding succeeded, re-verify the temp file
         Log.Logger.Information("Re-verifying media streams : {FileName}", FileInfo.Name);
-        if (!Tools.FfMpeg.VerifyMedia(tempname, out string error))
+        if (!Tools.FfMpeg.VerifyMedia(tempName, out string error))
         {
             // Failed, delete temp file
-            FileEx.DeleteFile(tempname);
+            FileEx.DeleteFile(tempName);
 
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1291,13 +1304,13 @@ public class ProcessFile
 
             // Update state
             // Caller will Refresh()
-            SidecarFile.State |= SidecarFile.States.RepairFailed;
+            SidecarFile.State |= SidecarFile.StatesType.RepairFailed;
 
             return false;
         }
 
         // Rename the temp file to the original file
-        if (!FileEx.RenameFile(tempname, FileInfo.FullName))
+        if (!FileEx.RenameFile(tempName, FileInfo.FullName))
         {
             return false;
         }
@@ -1306,8 +1319,8 @@ public class ProcessFile
         Log.Logger.Information("Repair succeeded : {FileName}", FileInfo.Name);
 
         // Update state
-        SidecarFile.State |= SidecarFile.States.Repaired;
-        SidecarFile.State &= ~SidecarFile.States.RepairFailed;
+        SidecarFile.State |= SidecarFile.StatesType.Repaired;
+        SidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
 
         // Caller will Refresh()
         modified = true;
@@ -1334,15 +1347,15 @@ public class ProcessFile
     {
         // Conditionally remove the VerifyFailed flag if set
         if (Program.Options.ReVerify &&
-            State.HasFlag(SidecarFile.States.VerifyFailed))
+            State.HasFlag(SidecarFile.StatesType.VerifyFailed))
         {
-            Log.Logger.Information("Re-verifying and repairing : {FileName}", FileInfo.Name);
+            Log.Logger.Information("Resetting verify and repair state : {FileName}", FileInfo.Name);
 
             // Remove VerifyFailed and RepairFailed flags
-            Debug.Assert(!State.HasFlag(SidecarFile.States.Verified));
-            Debug.Assert(!State.HasFlag(SidecarFile.States.Repaired));
-            SidecarFile.State &= ~SidecarFile.States.VerifyFailed;
-            SidecarFile.State &= ~SidecarFile.States.RepairFailed;
+            Debug.Assert(!State.HasFlag(SidecarFile.StatesType.Verified));
+            Debug.Assert(!State.HasFlag(SidecarFile.StatesType.Repaired));
+            SidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+            SidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
 
             // Refresh sidecar info
             return Refresh(true);
@@ -1361,7 +1374,7 @@ public class ProcessFile
         {
             // Refresh sidecar file info but preserve existing state, mark as renamed
             FileInfo = new FileInfo(filename);
-            SidecarFile.States state = SidecarFile.State | SidecarFile.States.FileReNamed;
+            SidecarFile.StatesType state = SidecarFile.State | SidecarFile.StatesType.FileReNamed;
             SidecarFile = new SidecarFile(FileInfo)
             {
                 State = state
@@ -1376,7 +1389,7 @@ public class ProcessFile
     {
         // Call Refresh() at each processing function exit
         // Set modified to true if the media file has been modified
-        // Set modifed to false if only the state has been modified
+        // Set modified to false if only the state has been modified
 
         // If the file was modified wait for a little to let the IO complete
         // E.g. MkvPropEdit changes are not visible when immediately re-reading the file
@@ -1423,6 +1436,8 @@ public class ProcessFile
 
     public bool VerifyMediaInfo()
     {
+        // TODO: Mixing anything other than MvMerge to MkvMerge requires the track id's to be the same
+
         // Make sure the track counts match
         if (FfProbeInfo.Audio.Count != MkvMergeInfo.Audio.Count ||
             MkvMergeInfo.Audio.Count != MediaInfoInfo.Audio.Count ||
@@ -1432,7 +1447,7 @@ public class ProcessFile
             MkvMergeInfo.Subtitle.Count != MediaInfoInfo.Subtitle.Count)
         {
             // Something is wrong; bad logic, bad media, bad tools?
-            Log.Logger.Error("Tool track count discrepency : {File}", FileInfo.Name);
+            Log.Logger.Error("Tool track count discrepancy : {File}", FileInfo.Name);
             MediaInfoInfo.WriteLine("MediaInfo");
             MkvMergeInfo.WriteLine("MkvMerge");
             FfProbeInfo.WriteLine("FfProbe");
@@ -1520,7 +1535,7 @@ public class ProcessFile
         }
 
         // Log result
-        Log.Logger.Information("FfMpeg Idet: Interlaced: {IdetInterlaced} ({Percentage:P} > {Threshold:P}), Interlaced: {Interlaced}, Progressive: {Progressive}, Undetermined: {Undetermined}, Total: {Total} : {FileName}",
+        Log.Logger.Information("FfMpeg Idet : Interlaced: {IdetInterlaced} ({Percentage:P} > {Threshold:P}), Interlaced: {Interlaced}, Progressive: {Progressive}, Undetermined: {Undetermined}, Total: {Total} : {FileName}",
             idetInfo.IsInterlaced(),
             idetInfo.InterlacedPercentage,
             FfMpegIdetInfo.InterlacedThreshold,
@@ -1533,11 +1548,160 @@ public class ProcessFile
         return true;
     }
 
+    public SelectMediaInfo FindUnknownLanguageTracks()
+    {
+        // IETF languages will only be set for MkvMerge
+        // Select all tracks with undefined languages
+        // Selected is Unknown
+        // NotSelected is Known
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, item => Language.IsUndefined(item.LanguageIetf));
+        return selectMediaInfo;
+    }
+
+    public SelectMediaInfo FindNeedReEncode()
+    {
+        // Filter logic values are based on FfProbe attributes
+        // Start with empty selection
+        // Selected is ReEncode
+        // NotSelected is Keep
+        SelectMediaInfo selectMediaInfo = new(MediaTool.ToolType.FfProbe);
+
+        // Add audio and video tracks
+        // Select tracks matching the reencode lists
+        FfProbeInfo.Video.ForEach(item => selectMediaInfo.Add(item, Program.Config.ProcessOptions.ReEncodeVideo.Any(item.CompareVideo)));
+        FfProbeInfo.Audio.ForEach(item => selectMediaInfo.Add(item, Program.Config.ProcessOptions.ReEncodeAudioFormats.Contains(item.Format)));
+
+        // Keep all subtitles
+        selectMediaInfo.Add(FfProbeInfo.Subtitle, false);
+
+        // TODO: If we are encoding audio, the video track may need to be reencode
+        // [matroska @ 00000195b3585c80] Timestamps are unset in a packet for stream 0.
+        // [matroska @ 00000195b3585c80] Can't write packet with unknown timestamp
+        // av_interleaved_write_frame(): Invalid argument
+
+        // Selected is ReEncode
+        // NotSelected is Keep
+        selectMediaInfo.SetState(TrackInfo.StateType.ReEncode, TrackInfo.StateType.Keep);
+        return selectMediaInfo;
+    }
+
+    public SelectMediaInfo FindDuplicateTracks()
+    {
+        // IETF languages will only be set for MkvMerge
+        // Start with all tracks as NotSelected
+        // Selected is Keep
+        // NotSelected is Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, false);
+
+        // Get a track list
+        var trackList = MkvMergeInfo.GetTrackList();
+
+        // Get a list of all the IETF track languages
+        var languageList = Language.GetLanguageList(trackList);
+        foreach (var language in languageList)
+        {
+            // Get a list of all tracks matching this language
+            var trackLanguageList = trackList.FindAll(item => Language.IsEqual(language, item.LanguageIetf));
+
+            // Keep all tracks with flags
+            selectMediaInfo.Move(trackLanguageList.FindAll(item => item.Flags != TrackInfo.FlagsType.None), true);
+
+            // Keep all tracks with useful "flag" titles
+            // TODO: Eventually titles should not be used but track flags should be used for e.g. "SDH" or "Commentary"
+            selectMediaInfo.Move(trackLanguageList.FindAll(item => TrackInfo.IsUsefulTrackTitle(item.Title)), true);
+
+            // If multiple audio tracks exist for this language, find the preferred audio codec track
+            var audioTrackList = trackLanguageList.FindAll(item => item.GetType() == typeof(AudioInfo));
+            if (audioTrackList.Count > 1)
+            {
+                var audioInfo = FindPreferredAudio(audioTrackList);
+                selectMediaInfo.Move(audioInfo, true);
+            }
+        }
+
+        // Keep at least one of each track type
+        if (selectMediaInfo.Selected.Video.Count == 0 && MkvMergeInfo.Video.Count > 0)
+        {
+            selectMediaInfo.Move(MkvMergeInfo.Video.First(), true);
+        }
+        if (selectMediaInfo.Selected.Audio.Count == 0 && MkvMergeInfo.Audio.Count > 0)
+        {
+            selectMediaInfo.Move(MkvMergeInfo.Audio.First(), true);
+        }
+        if (selectMediaInfo.Selected.Subtitle.Count == 0 && MkvMergeInfo.Subtitle.Count > 0)
+        {
+            selectMediaInfo.Move(MkvMergeInfo.Subtitle.First(), true);
+        }
+
+        // Selected is Keep
+        // NotSelected is Remove
+        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
+        return selectMediaInfo;
+    }
+
+    public SelectMediaInfo FindUnwantedLanguageTracks()
+    {
+        // IETF language field will only be set for MkvMerge
+        // Select tracks with wanted languages, or the original language if set to keep
+        // Selected is Keep
+        // NotSelected is Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, item => Language.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages) ||
+                                                                    (Program.Config.ProcessOptions.KeepOriginalLanguage && item.Flags.HasFlag(TrackInfo.FlagsType.Original)));
+
+        // Keep at least one video track if any
+        if (selectMediaInfo.Selected.Video.Count == 0 && MkvMergeInfo.Video.Count > 0)
+        {
+            // Use the first track
+            var videoInfo = MkvMergeInfo.Video.First();
+            selectMediaInfo.Move(videoInfo, true);
+            Log.Logger.Warning("No video track matching requested language : {Available} != {Languages}, Using: {Selected}", Language.GetLanguageList(MkvMergeInfo.Video), Program.Config.ProcessOptions.KeepLanguages, videoInfo.LanguageIetf);
+        }
+
+        // Keep at least one audio track if any
+        if (selectMediaInfo.Selected.Audio.Count == 0 && MkvMergeInfo.Audio.Count > 0)
+        {
+            // Use the preferred audio codec track from the unselected tracks
+            var audioInfo = FindPreferredAudio(selectMediaInfo.NotSelected.Audio);
+            selectMediaInfo.Move(audioInfo, true);
+            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, Using: {Selected}", Language.GetLanguageList(MkvMergeInfo.Audio), Program.Config.ProcessOptions.KeepLanguages, audioInfo.LanguageIetf);
+        }
+
+        // No language matching subtitle tracks
+        if (selectMediaInfo.Selected.Subtitle.Count == 0 && MkvMergeInfo.Subtitle.Count > 0)
+        {
+            Log.Logger.Warning("No subtitle track matching requested language : {Available} != {Languages}", Language.GetLanguageList(MkvMergeInfo.Subtitle), Program.Config.ProcessOptions.KeepLanguages);
+        }
+
+        // Selected is Keep
+        // NotSelected is Remove
+        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
+        return selectMediaInfo;
+    }
+
+    static AudioInfo FindPreferredAudio(IEnumerable<TrackInfo> trackInfoList)
+    {
+        // Iterate through the preferred codecs in order
+        var audioInfoList = trackInfoList.OfType<AudioInfo>().ToList();
+        foreach (var codec in Program.Config.ProcessOptions.PreferredAudioFormats)
+        {
+            // Return on first match
+            var audioInfo = audioInfoList.Find(item => item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
+            if (audioInfo != null)
+            {
+                // Done
+                return audioInfo;
+            }
+        }
+
+        // Return first item
+        return audioInfoList.First();
+    }
+
     public bool Modified { get; set; }
     public MediaInfo FfProbeInfo { get; private set; }
     public MediaInfo MkvMergeInfo { get; private set; }
     public MediaInfo MediaInfoInfo { get; private set; }
-    public SidecarFile.States State => SidecarFile.State;
+    public SidecarFile.StatesType State => SidecarFile.State;
     public FileInfo FileInfo { get; private set; }
 
     private SidecarFile SidecarFile;

@@ -201,7 +201,7 @@ public partial class MediaInfoTool : MediaTool
             }
 
             // Remove cover art
-            MediaInfo.RemoveCoverArt(mediaInfo);
+            mediaInfo.RemoveCoverArt();
 
             // Errors
             mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||

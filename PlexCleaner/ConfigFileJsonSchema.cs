@@ -4,12 +4,16 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Schema.Generation;
+using Serilog;
 
 namespace PlexCleaner;
 
-public class ConfigFileJsonSchemaBase
+// Base
+public record ConfigFileJsonSchemaBase
 {
-    // TODO: How to set the $schema throug e.g. attributes on the class?
+    public ConfigFileJsonSchemaBase() { }
+
+    // TODO: How to set the $schema through e.g. attributes on the class?
     // https://stackoverflow.com/questions/71625019/how-to-inject-the-json-schema-value-during-newtonsoft-jsonconvert-serializeobje
     // Schema reference
     [JsonProperty(PropertyName = "$schema", Order = -3)]
@@ -20,83 +24,96 @@ public class ConfigFileJsonSchemaBase
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
 
+    // Schema
     private const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.schema.json";
 }
 
-[Obsolete("Replaced in Schema v2", false)]
-public class ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
+// v1
+public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    public ToolsOptions ToolsOptions { get; set; } = new();
-    public ConvertOptions1 ConvertOptions { get; set; } = new();
-    public ProcessOptions1 ProcessOptions { get; set; } = new();
-    public MonitorOptions MonitorOptions { get; set; } = new();
-    public VerifyOptions VerifyOptions { get; set; } = new();
+    public ConfigFileJsonSchema1() { }
 
+    // Deprecated
+    [Obsolete]
+    public ConvertOptions1 ConvertOptions { get; protected set; } = new();
+    [Obsolete]
+    public ProcessOptions1 ProcessOptions { get; protected set; } = new();
+
+    [Required]
+    public ToolsOptions ToolsOptions { get; protected set; } = new();
+
+    [Required]
+    public MonitorOptions MonitorOptions { get; protected set; } = new();
+
+    [Required]
+    public VerifyOptions VerifyOptions { get; protected set; } = new();
+
+    // v1
     public const int Version = 1;
 }
 
-[Obsolete("Replaced in Schema v3", false)]
-public class ConfigFileJsonSchema2 : ConfigFileJsonSchemaBase
+// v2
+public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 {
-    public ToolsOptions ToolsOptions { get; set; } = new();
-    public ConvertOptions1 ConvertOptions { get; set; } = new();
-    public ProcessOptions ProcessOptions { get; set; } = new();
-    public MonitorOptions MonitorOptions { get; set; } = new();
-    public VerifyOptions VerifyOptions { get; set; } = new();
+    public ConfigFileJsonSchema2() { }
 
-    public const int Version = 2;
+    // Copy from v1
+    [Obsolete]
+    public ConfigFileJsonSchema2(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
+    {
+        Upgrade(configFileJsonSchema1);
+    }
+
+    [Obsolete]
+    protected void Upgrade(ConfigFileJsonSchema1 configFileJsonSchema1)
+    {
+        // Upgrade v1 to v2
+        ProcessOptions = new ProcessOptions2(configFileJsonSchema1.ProcessOptions);
+    }
+
+    [Obsolete] 
+    public new ProcessOptions2 ProcessOptions { get; protected set; } = new();
+
+    // v2
+    public new const int Version = 2;
 }
 
-public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
+// v3
+public record ConfigFileJsonSchema : ConfigFileJsonSchema2
 {
     public ConfigFileJsonSchema() { }
 
-#pragma warning disable CS0618 // Type or member is obsolete
-    public ConfigFileJsonSchema(ConfigFileJsonSchema1 configFileJsonSchema1)
-#pragma warning restore CS0618 // Type or member is obsolete
+    [Obsolete]
+    public ConfigFileJsonSchema(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
     {
-        // Keep the original schema version
-        SchemaVersion = configFileJsonSchema1.SchemaVersion;
-
-        // Assign same values
-        ToolsOptions = configFileJsonSchema1.ToolsOptions;
-        MonitorOptions = configFileJsonSchema1.MonitorOptions;
-        VerifyOptions = configFileJsonSchema1.VerifyOptions;
-
-        // Create current version from old version
-        ConvertOptions = new ConvertOptions(configFileJsonSchema1.ConvertOptions);
-        ProcessOptions = new ProcessOptions(configFileJsonSchema1.ProcessOptions);
+        Upgrade(configFileJsonSchema1);
     }
 
-#pragma warning disable CS0618 // Type or member is obsolete
-    public ConfigFileJsonSchema(ConfigFileJsonSchema2 configFileJsonSchema2)
-#pragma warning restore CS0618 // Type or member is obsolete
+    [Obsolete]
+    public ConfigFileJsonSchema(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
     {
-        // Keep the original schema version
-        SchemaVersion = configFileJsonSchema2.SchemaVersion;
+        Upgrade(configFileJsonSchema2);
+    }
 
-        // Assign same values
-        ToolsOptions = configFileJsonSchema2.ToolsOptions;
-        ProcessOptions = configFileJsonSchema2.ProcessOptions;
-        MonitorOptions = configFileJsonSchema2.MonitorOptions;
-        VerifyOptions = configFileJsonSchema2.VerifyOptions;
+    [Obsolete]
+    protected void Upgrade(ConfigFileJsonSchema2 configFileJsonSchema2)
+    {
+        // Upgrade v1 to v2
+        Upgrade((ConfigFileJsonSchema1)configFileJsonSchema2);
 
-        // Create current version from old version
+        // Upgrade v2 to v3
         ConvertOptions = new ConvertOptions(configFileJsonSchema2.ConvertOptions);
+        ProcessOptions = new ProcessOptions(configFileJsonSchema2.ProcessOptions);
     }
 
     [Required]
-    public ToolsOptions ToolsOptions { get; set; } = new();
-    [Required]
-    public ConvertOptions ConvertOptions { get; set; } = new();
-    [Required]
-    public ProcessOptions ProcessOptions { get; set; } = new();
-    [Required]
-    public MonitorOptions MonitorOptions { get; set; } = new();
-    [Required]
-    public VerifyOptions VerifyOptions { get; set; } = new();
+    public new ConvertOptions ConvertOptions { get; protected set; } = new();
 
-    public const int Version = 3;
+    [Required]
+    public new ProcessOptions ProcessOptions { get; protected set; } = new();
+
+    // v3
+    public new const int Version = 3;
 
     public void SetDefaults()
     {
@@ -145,27 +162,28 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
             return null;
         }
 
-        int schemaVersion = configFileJsonSchemaBase.SchemaVersion;
+        if (configFileJsonSchemaBase.SchemaVersion != Version)
+        {
+            Log.Logger.Warning("Upgrading ConfigFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", configFileJsonSchemaBase.SchemaVersion, Version);
+        }
 
         // Deserialize the correct version
-        switch (schemaVersion)
+        switch (configFileJsonSchemaBase.SchemaVersion)
         {
-#pragma warning disable CS0618 // Type or member is obsolete
             // Version 1
             case ConfigFileJsonSchema1.Version:
-                // Create current version from old version
+#pragma warning disable CS0612 // Type or member is obsolete
                 return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings));
             // Version 2
             case ConfigFileJsonSchema2.Version:
-                // Create current version from old version
                 return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema2>(json, Settings));
-#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore CS0612 // Type or member is obsolete
             // Current version
             case Version:
                 return JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
             // Unknown version
             default:
-                throw new NotSupportedException(nameof(schemaVersion));
+                throw new NotSupportedException(nameof(configFileJsonSchemaBase.SchemaVersion));
         }
     }
 
@@ -174,10 +192,8 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         Formatting = Formatting.Indented,
         StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
         NullValueHandling = NullValueHandling.Ignore,
-        // We expect containers to be cleared before deserializing
-        // Make sure that collections are not read-only (get; set;) else deserialized values will be appended
-        // https://stackoverflow.com/questions/35482896/clear-collections-before-adding-items-when-populating-existing-objects
-        ObjectCreationHandling = ObjectCreationHandling.Replace
+        // Reuse the already created objects, required for HashSet() case insensitive comparison operator
+        ObjectCreationHandling = ObjectCreationHandling.Reuse
         // TODO: Add TraceWriter to log to Serilog
     };
 
@@ -186,7 +202,7 @@ public class ConfigFileJsonSchema : ConfigFileJsonSchemaBase
         // Create JSON schema
         var generator = new JSchemaGenerator
         {
-            // TODO: How can I make the default schema required, and just mark individual items as not required?
+            // TODO: How to make the default as required, and just mark individual items as not required?
             DefaultRequired = Required.Default
         };
         var schema = generator.Generate(typeof(ConfigFileJsonSchema));

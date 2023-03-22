@@ -12,7 +12,7 @@
     "RootPath": ".\\Tools\\",
     // Tools directory relative to binary location
     "RootRelative": true,
-    // Automatically check for new tools
+    // Automatically check for and update new tool versions
     "AutoUpdate": false
   },
   // Convert options
@@ -68,8 +68,8 @@
       ".wmv",
       ".dv"
     ],
-    // Enable deinterlace
-    // Note deinterlace detection is not absolute
+    // Enable deinterlace of interlaced media
+    // Interlace detection is not absolute and uses interlaced frame counting
     "DeInterlace": true,
     // Enable re-encode
     "ReEncode": true,
@@ -83,6 +83,10 @@
       {
         "Format": "mpeg4",
         "Codec": "dx50"
+      },
+      {
+        "Format": "mpeg4",
+        "Codec": "xvid"
       },
       {
         "Format": "msmpeg4v3",
@@ -113,7 +117,6 @@
       }
     ],
     // Re-encode matching audio codecs
-    // If the video format is not H264/5, video will automatically be converted to H264/5 to avoid audio sync issues
     // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": [
       "flac",
@@ -129,24 +132,23 @@
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
     // Default track language
-    "DefaultLanguage": "eng",
+    // Use RFC 5646 format
+    "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
     // Track languages to keep
-    // Use ISO 639-2 3 letter short form, see https://www.loc.gov/standards/iso639-2/php/code_list.php
+    // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
     "KeepLanguages": [
-      "eng",
-      "afr",
-      "chi",
-      "ind"
+      "en",
+      "af",
+      "zh-Hans",
+      "id"
     ],
+    // Keep all tracks flagged as original language
+    "KeepOriginalLanguage": true,
     // Enable removing of duplicate tracks of the same type and language
-    // Priority is given to tracks marked as Default
-    // Forced subtitle tracks are prioritized
-    // Subtitle tracks containing "SDH" in the title are de-prioritized
-    // Audio tracks containing "Commentary" in the title are de-prioritized
-    "RemoveDuplicateTracks": true,
-    // If no Default audio tracks are found, tracks are prioritized by codec type
+    "RemoveDuplicateTracks": false,
+    // Prioritized audio tracks by by codec type
     // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": [
       "truehd atmos",
