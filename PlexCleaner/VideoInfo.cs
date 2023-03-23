@@ -26,7 +26,7 @@ public class VideoInfo : TrackInfo
         // Cover art
         if (MatchCoverArt(Codec))
         {
-            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Codec}", Codec);
         }
     }
 
@@ -63,7 +63,7 @@ public class VideoInfo : TrackInfo
         // Cover art
         if (MatchCoverArt(Codec))
         {
-            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Codec}", Codec);
         }
     }
 
@@ -93,7 +93,7 @@ public class VideoInfo : TrackInfo
         // Cover art
         if (MatchCoverArt(Codec))
         {
-            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Id}:{Codec}", Id, Codec);
+            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Codec}", Codec);
         }
     }
 

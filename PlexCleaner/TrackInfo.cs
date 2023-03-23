@@ -82,6 +82,8 @@ public partial class TrackInfo
         // https://r12a.github.io/app-subtags/
         LanguageIetf = track.Properties.LanguageIetf;
 
+        // Setting HasErrors will force a remux and MkvMerge will correct track languages errors
+
         // Convert the ISO 639-3 tag to RFC 5646
         if (string.IsNullOrEmpty(track.Properties.LanguageIetf) &&
             !string.IsNullOrEmpty(track.Properties.Language))
@@ -89,14 +91,14 @@ public partial class TrackInfo
             var lookupLanguage = PlexCleaner.Language.GetIetfTag(Language, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
-                // TODO: Will remux fix this?
                 Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup IETF language from ISO639-3 language : {Language}", Language);
                 HasErrors = true;
             }
             else 
             {
-                Log.Logger.Information("MkvToolJsonSchema : Assigning IETF Language from ISO639-3 Language : {Language} -> {IETFLanguage}", Language, lookupLanguage);
+                Log.Logger.Information("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IETFLanguage}", Language, lookupLanguage);
                 LanguageIetf = lookupLanguage;
+                HasErrors = true;
             }
         }
 
