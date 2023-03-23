@@ -52,7 +52,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
   - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
   - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
-  - Refactored JSON schema versioning logic logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
+  - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
   - Refactored track selection logic to simplify containment and use with lambda filters.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
@@ -315,6 +315,10 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
         "Codec": "dx50"
       },
       {
+        "Format": "mpeg4",
+        "Codec": "xvid"
+      },
+      {
         "Format": "msmpeg4v3",
         "Codec": "div3"
       },
@@ -522,8 +526,8 @@ In cases where [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Language
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
 E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  
 E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
-E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.
-E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
+E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.  
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage
