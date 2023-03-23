@@ -4,18 +4,21 @@ using System.ComponentModel.DataAnnotations;
 namespace PlexCleaner;
 
 // v1, v2
+[Obsolete]
 public record ConvertOptions1
 {
     [Obsolete]
-    public bool EnableH265Encoder { get; set; }
+    internal bool EnableH265Encoder { get; set; }
     [Obsolete]
-    public int VideoEncodeQuality { get; set; }
+    internal int VideoEncodeQuality { get; set; }
     [Obsolete]
-    public string AudioEncodeCodec { get; set; } = "";
+    internal string AudioEncodeCodec { get; set; } = "";
 }
 
 // v3
+#pragma warning disable CS0612 // Type or member is obsolete
 public record ConvertOptions : ConvertOptions1
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     public ConvertOptions() { }
 

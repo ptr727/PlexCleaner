@@ -13,22 +13,23 @@ public class VideoFormat
 }
 
 // v1
+[Obsolete]
 public record ProcessOptions1
 {
     [Obsolete]
-    public string ReEncodeVideoFormats { get; set; } = "";
+    internal string ReEncodeVideoFormats { get; set; } = "";
     [Obsolete]
-    public string ReEncodeVideoCodecs { get; set; } = "";
+    internal string ReEncodeVideoCodecs { get; set; } = "";
     [Obsolete]
-    public string ReEncodeVideoProfiles { get; set; } = "";
+    internal string ReEncodeVideoProfiles { get; set; } = "";
     [Obsolete]
-    public string ReEncodeAudioFormats { get; set; } = "";
+    internal string ReEncodeAudioFormats { get; set; } = "";
     [Obsolete]
-    public string KeepExtensions { get; set; } = "";
+    internal string KeepExtensions { get; set; } = "";
     [Obsolete]
-    public string KeepLanguages { get; set; } = "";
+    internal string KeepLanguages { get; set; } = "";
     [Obsolete]
-    public string PreferredAudioFormats { get; set; } = "";
+    internal string PreferredAudioFormats { get; set; } = "";
 
     [Required]
     public bool DeleteEmptyFolders { get; set; }
@@ -80,6 +81,7 @@ public record ProcessOptions1
 }
 
 // v2
+[Obsolete]
 public record ProcessOptions2 : ProcessOptions1
 {
     public ProcessOptions2() { }
@@ -182,7 +184,9 @@ public record ProcessOptions2 : ProcessOptions1
 }
 
 // v3
+#pragma warning disable CS0612 // Type or member is obsolete
 public record ProcessOptions : ProcessOptions2
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     public ProcessOptions() { }
 

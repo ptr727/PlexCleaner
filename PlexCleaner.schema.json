@@ -11,18 +11,6 @@
         },
         "HandBrakeOptions": {
           "$ref": "#/definitions/HandBrakeOptions"
-        },
-        "EnableH265Encoder": {
-          "type": "boolean"
-        },
-        "VideoEncodeQuality": {
-          "type": "integer"
-        },
-        "AudioEncodeCodec": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       },
       "required": [
@@ -158,24 +146,6 @@
               "null"
             ]
           }
-        },
-        "ReEncodeVideoFormats": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ReEncodeVideoCodecs": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ReEncodeVideoProfiles": {
-          "type": [
-            "string",
-            "null"
-          ]
         },
         "DeleteEmptyFolders": {
           "type": "boolean"
@@ -356,27 +326,27 @@
       "type": "integer",
       "default": 0
     },
-    "ConvertOptions": {
-      "$ref": "#/definitions/ConvertOptions"
+    "ToolsOptions": {
+      "$ref": "#/definitions/ToolsOptions"
     },
     "ProcessOptions": {
       "$ref": "#/definitions/ProcessOptions"
     },
-    "ToolsOptions": {
-      "$ref": "#/definitions/ToolsOptions"
-    },
-    "MonitorOptions": {
-      "$ref": "#/definitions/MonitorOptions"
+    "ConvertOptions": {
+      "$ref": "#/definitions/ConvertOptions"
     },
     "VerifyOptions": {
       "$ref": "#/definitions/VerifyOptions"
+    },
+    "MonitorOptions": {
+      "$ref": "#/definitions/MonitorOptions"
     }
   },
   "required": [
-    "ConvertOptions",
-    "ProcessOptions",
     "ToolsOptions",
-    "MonitorOptions",
-    "VerifyOptions"
+    "ProcessOptions",
+    "ConvertOptions",
+    "VerifyOptions",
+    "MonitorOptions"
   ]
 }

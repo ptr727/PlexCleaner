@@ -29,23 +29,27 @@ public record ConfigFileJsonSchemaBase
 }
 
 // v1
+[Obsolete]
 public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
     public ConfigFileJsonSchema1() { }
 
     // Deprecated
     [Obsolete]
-    public ConvertOptions1 ConvertOptions { get; protected set; } = new();
+    internal ConvertOptions1 ConvertOptions { get; set; } = new();
     [Obsolete]
-    public ProcessOptions1 ProcessOptions { get; protected set; } = new();
+    internal ProcessOptions1 ProcessOptions { get; set; } = new();
 
     [Required]
+    [JsonProperty(Order = 1)]
     public ToolsOptions ToolsOptions { get; protected set; } = new();
 
     [Required]
+    [JsonProperty(Order = 5)]
     public MonitorOptions MonitorOptions { get; protected set; } = new();
 
     [Required]
+    [JsonProperty(Order = 4)]
     public VerifyOptions VerifyOptions { get; protected set; } = new();
 
     // v1
@@ -53,6 +57,7 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 }
 
 // v2
+[Obsolete]
 public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 {
     public ConfigFileJsonSchema2() { }
@@ -72,14 +77,16 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     }
 
     [Obsolete] 
-    public new ProcessOptions2 ProcessOptions { get; protected set; } = new();
+    internal new ProcessOptions2 ProcessOptions { get; set; } = new();
 
     // v2
     public new const int Version = 2;
 }
 
 // v3
+#pragma warning disable CS0612 // Type or member is obsolete
 public record ConfigFileJsonSchema : ConfigFileJsonSchema2
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     public ConfigFileJsonSchema() { }
 
@@ -107,9 +114,11 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
     }
 
     [Required]
+    [JsonProperty(Order = 3)]
     public new ConvertOptions ConvertOptions { get; protected set; } = new();
 
     [Required]
+    [JsonProperty(Order = 2)]
     public new ProcessOptions ProcessOptions { get; protected set; } = new();
 
     // v3
@@ -170,9 +179,9 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         // Deserialize the correct version
         switch (configFileJsonSchemaBase.SchemaVersion)
         {
+#pragma warning disable CS0612 // Type or member is obsolete
             // Version 1
             case ConfigFileJsonSchema1.Version:
-#pragma warning disable CS0612 // Type or member is obsolete
                 return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings));
             // Version 2
             case ConfigFileJsonSchema2.Version:
@@ -195,6 +204,8 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         // Reuse the already created objects, required for HashSet() case insensitive comparison operator
         ObjectCreationHandling = ObjectCreationHandling.Reuse
         // TODO: Add TraceWriter to log to Serilog
+        // TODO: Add a custom resolver to control serialization od deprecated attributes, vs. using internal
+        // https://stackoverflow.com/questions/11564091/making-a-property-deserialize-but-not-serialize-with-json-net
     };
 
     public static void WriteSchemaToFile(string path)

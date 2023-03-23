@@ -22,16 +22,17 @@ public record SidecarFileJsonSchemaBase
 }
 
 // v1
+[Obsolete]
 public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 {
     public SidecarFileJsonSchema1() { }
 
     [Obsolete]
-    public string FfMpegToolVersion { get; set; }
+    internal string FfMpegToolVersion { get; set; }
     [Obsolete]
-    public string MkvToolVersion { get; set; }
+    internal string MkvToolVersion { get; set; }
     [Obsolete]
-    public string FfIdetInfoData { get; set; }
+    internal string FfIdetInfoData { get; set; }
 
     [Required]
     public DateTime MediaLastWriteTimeUtc { get; set; }
@@ -57,6 +58,7 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 }
 
 // v2
+[Obsolete]
 public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
 {
     public SidecarFileJsonSchema2() { }
@@ -76,13 +78,14 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     }
 
     [Obsolete]
-    public bool Verified { get; set; }
+    internal bool Verified { get; set; }
 
     // v2
     public new const int Version = 2;
 }
 
 // v3
+[Obsolete]
 public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 {
     public SidecarFileJsonSchema3() { }
@@ -125,7 +128,9 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 }
 
 // v4
+#pragma warning disable CS0612 // Type or member is obsolete
 public record SidecarFileJsonSchema : SidecarFileJsonSchema3
+#pragma warning restore CS0612 // Type or member is obsolete
 {
     public SidecarFileJsonSchema() { }
 
@@ -185,9 +190,9 @@ public record SidecarFileJsonSchema : SidecarFileJsonSchema3
         // Deserialize the correct version
         switch (sidecarFileJsonSchemaBase.SchemaVersion)
         {
+#pragma warning disable CS0612 // Type or member is obsolete
             // Version 1
             case SidecarFileJsonSchema1.Version:
-#pragma warning disable CS0612 // Type or member is obsolete
                 return new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema1>(json, Settings));
             // Version 2
             case SidecarFileJsonSchema2.Version:

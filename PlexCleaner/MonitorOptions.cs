@@ -7,9 +7,11 @@ public class MonitorOptions
     [Required]
     [Range(0, int.MaxValue)]
     public int MonitorWaitTime { get; set; }
+
     [Required]
     [Range(0, int.MaxValue)]
     public int FileRetryWaitTime { get; set; }
+
     [Required]
     [Range(0, int.MaxValue)]
     public int FileRetryCount { get; set; }
