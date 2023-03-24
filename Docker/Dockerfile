@@ -30,6 +30,7 @@ RUN pacman-key --init \
     && echo 'LANG=en_US.UTF-8' | tee /etc/locale.conf \
     && pacman --sync --noconfirm --refresh --sysupgrade \
     && pacman --sync --noconfirm \
+        p7zip \
         wget
 
 # Set locale to UTF-8 after running locale-gen
@@ -37,21 +38,18 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Hardware encoding
-# intel-media-sdk
-# nvidia-utils
-
 # https://bugs.archlinux.org/task/77662
 # boost-libs
 
-# Install .NET and media tools
-RUN pacman -S --noconfirm \
-        dotnet-sdk \
-        mediainfo \
+# Install .NET and media processing tools
+RUN pacman --sync --noconfirm \
         boost-libs \
-        mkvtoolnix-cli \
+        dotnet-sdk \
         ffmpeg \
-        handbrake-cli
+        handbrake-cli \
+        intel-media-sdk \
+        mediainfo \
+        mkvtoolnix-cli
 
 # Verify installed versions
 RUN dotnet --info \
