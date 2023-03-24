@@ -21,9 +21,11 @@ public class SubtitleInfo : TrackInfo
         if (track.CodecId.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase) &&
             string.IsNullOrEmpty(track.MuxingMode))
         {
-            // TODO: Not fixed by remuxing
             Log.Logger.Warning("MediaInfoToolXmlSchema : MuxingMode not specified for S_VOBSUB Codec");
+
+            // Set track error and recommend remove, remux does not fix this error
             HasErrors = true;
+            State = StateType.Remove;
         }
     }
 }

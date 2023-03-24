@@ -192,7 +192,7 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
                 return JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
             // Unknown version
             default:
-                throw new NotSupportedException(nameof(configFileJsonSchemaBase.SchemaVersion));
+                throw new NotImplementedException();
         }
     }
 

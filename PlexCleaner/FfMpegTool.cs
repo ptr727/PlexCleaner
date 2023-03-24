@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -240,7 +239,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(filename, commandline);
+        CreateDefaultArgs(filename, commandline);
 
         // Test snippets
         if (!Program.Options.TestSnippets &&
@@ -259,29 +258,6 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0 && error.Length == 0;
     }
 
-    public bool ReMuxToMkv(string inputName, MediaInfo keepTracks, string outputName)
-    {
-        // Delete output file
-        FileEx.DeleteFile(outputName);
-
-        // Create input and output map
-        CreateFfMpegMap(keepTracks, out var inputMap, out var outputMap);
-
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
-
-        // Map input and output streams
-        commandline.Append($"{inputMap}   {outputMap} ");
-
-        // Output to MKV
-        commandline.Append($"-f matroska \"{outputName}\"");
-
-        // Execute
-        var exitCode = Command(commandline.ToString());
-        return exitCode == 0;
-    }
-
     public bool ReMuxToMkv(string inputName, string outputName)
     {
         // Delete output file
@@ -289,7 +265,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Remux and copy all streams to MKV
         commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
@@ -299,85 +275,67 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0;
     }
 
-    private static void CreateFfMpegMap(MediaInfo keepTracks, out string inputMap, out string outputMap)
+    private static void CreateTrackArgs(SelectMediaInfo selectMediaInfo, out string inputMap, out string outputMap)
     {
-        // Remux and copy keep tracks
-        MediaInfo encodeTracks = new(ToolType.FfProbe);
-        CreateFfMpegMap(keepTracks, encodeTracks, out inputMap, out outputMap);
-    }
+        // Verify correct media type
+        Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.FfProbe);
+        Debug.Assert(selectMediaInfo.NotSelected.Parser == ToolType.FfProbe);
 
-    private static void CreateFfMpegMap(MediaInfo keepTracks, MediaInfo encodeTracks, out string inputMap, out string outputMap)
-    {
-        // Verify correct data type
-        Debug.Assert(keepTracks.Parser == ToolType.FfProbe);
-        Debug.Assert(encodeTracks.Parser == ToolType.FfProbe);
+        // Create a list of all the tracks ordered by Id
+        // Selected is ReEncode, state is expected to be ReEncode
+        // NotSelected is Keep, state is expected to be Keep
+        List<TrackInfo> trackList = selectMediaInfo.GetTrackList();
 
-        // Create an input and output map
-        // Order by video, audio, and subtitle
-        // Each ordered by id, to keep the original order
-        List<TrackInfo> videoList = new();
-        videoList.AddRange(keepTracks.Video);
-        videoList.AddRange(encodeTracks.Video);
-        videoList = videoList.OrderBy(item => item.Id).ToList();
-
-        List<TrackInfo> audioList = new();
-        audioList.AddRange(keepTracks.Audio);
-        videoList.AddRange(encodeTracks.Audio);
-        audioList = audioList.OrderBy(item => item.Id).ToList();
-
-        List<TrackInfo> subtitleList = new();
-        subtitleList.AddRange(keepTracks.Subtitle);
-        videoList.AddRange(encodeTracks.Subtitle);
-        subtitleList = subtitleList.OrderBy(item => item.Id).ToList();
-
-        // Create a map list of all the input streams we want in the output
-        List<TrackInfo> trackList = new();
-        trackList.AddRange(videoList);
-        trackList.AddRange(audioList);
-        trackList.AddRange(subtitleList);
+        // Create the input map using all tracks referenced by id
+        // https://trac.ffmpeg.org/wiki/Map
         StringBuilder sb = new();
         trackList.ForEach(item => sb.Append($"-map 0:{item.Id} "));
         inputMap = sb.ToString();
         inputMap = inputMap.Trim();
 
-        // Set the output stream types for each input map item
-        // The order has to match the input order
+        // Create the output map using the same order as the input map
+        // Output tracks are referenced by the track type relative index
+        // http://ffmpeg.org/ffmpeg.html#Stream-specifiers
         sb.Clear();
         int videoIndex = 0;
         int audioIndex = 0;
         int subtitleIndex = 0;
-        foreach (var info in trackList)
+        foreach (var trackInfo in trackList)
         {
             // Copy or encode
-            if (info.GetType() == typeof(VideoInfo))
+            switch (trackInfo)
             {
-                sb.Append(info.State == TrackInfo.StateType.Keep
-                    ? $"-c:v:{videoIndex++} copy "
-                    : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
-            }
-            else if (info.GetType() == typeof(AudioInfo))
-            {
-                sb.Append(info.State == TrackInfo.StateType.Keep
-                    ? $"-c:a:{audioIndex++} copy "
-                    : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
-            }
-            else if (info.GetType() == typeof(SubtitleInfo))
-            {
-                // No re-encoding of subtitles, just copy
-                sb.Append($"-c:s:{subtitleIndex++} copy ");
+                case VideoInfo info:
+                    sb.Append(info.State == TrackInfo.StateType.Keep
+                        ? $"-c:v:{videoIndex++} copy "
+                        : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
+                    break;
+                case AudioInfo info:
+                    sb.Append(info.State == TrackInfo.StateType.Keep
+                        ? $"-c:a:{audioIndex++} copy "
+                        : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
+                    break;
+                case SubtitleInfo info:
+                    // No re-encoding of subtitles, just copy
+                    sb.Append($"-c:s:{subtitleIndex++} copy ");
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
         }
         outputMap = sb.ToString();
         outputMap = outputMap.Trim();
     }
 
-    public bool ConvertToMkv(string inputName, MediaInfo keepTracks, MediaInfo encodeTracks, string outputName)
+    public bool ConvertToMkv(string inputName, SelectMediaInfo selectMediaInfo, string outputName)
     {
         // Delete output file
         FileEx.DeleteFile(outputName);
 
         // Create an input and output ignore or copy or convert track map
-        CreateFfMpegMap(keepTracks, encodeTracks, out var inputMap, out var outputMap);
+        // Selected is ReEncode
+        // NotSelected is Keep
+        CreateTrackArgs(selectMediaInfo, out var inputMap, out var outputMap);
 
         // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
@@ -386,7 +344,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Input and output map
         commandline.Append($"{inputMap} {outputMap} ");
@@ -407,7 +365,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Process all tracks
         commandline.Append("-map 0 ");
@@ -438,7 +396,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
@@ -456,7 +414,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Remove all metadata using -map_metadata -1
         commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
@@ -486,7 +444,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline);
 
         // Limit idet filter run duration
         if (!Program.Options.TestSnippets &&
@@ -505,11 +463,6 @@ public partial class FfMpegTool : MediaTool
 
     private static bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetInfo)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            throw new ArgumentNullException(nameof(text));
-        }
-
         // Init
         idetInfo = new FfMpegIdetInfo();
 
@@ -552,7 +505,7 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void DefaultArgs(string inputName, StringBuilder commandline)
+    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
     {
         // Global options
         commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Global} ");

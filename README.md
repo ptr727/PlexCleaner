@@ -36,8 +36,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
       - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
       - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
-    - Added `ProcessOptions:KeepOriginalLanguage` to not remove tracks marked as being in the [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
-      - On v3 schema upgrade the `ProcessOptions:KeepOriginalLanguage` value will be set to `true`.
+    - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
+    - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
     - Language tags now support [RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) format.
       - See the [Language Matching](#language-matching) section for matching details.
       - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
@@ -284,7 +284,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
       ".ass",
       ".vtt"
     ],
-    // Enable re-mux
+    // Enable re-mux to MKV of non-MKV files
     "ReMux": true,
     // File extensions to remux to MKV
     "ReMuxExtensions": [
@@ -301,7 +301,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     // Enable deinterlace of interlaced media
     // Interlace detection is not absolute and uses interlaced frame counting
     "DeInterlace": true,
-    // Enable re-encode
+    // Enable re-encode of audio or video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
     "ReEncode": true,
     // Re-encode the video if the Format, Codec, and Profile values match
     // Empty fields will match with any value
@@ -366,7 +366,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
-    // Track languages to keep
+    // Track language matched tags to keep
     // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
     "KeepLanguages": [
       "en",
@@ -392,11 +392,13 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
+    // Enable removing of EIA-608 Closed Captions embedded in video streams
+    "RemoveClosedCaptions": true,
     // Speedup media re-processing by saving media info and processed state in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
-    // Enable verify
+    // Enable verification of media stream content
     "Verify": true,
     // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
@@ -520,14 +522,16 @@ The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallb
 
 ## Language Matching
 
-Language tag matching now supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats.  
-In cases where [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix) does not emit an IETF language tag, the ISO639-3-2 tag will be converted to an IETF tag.
+Language tag matching now supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
+During processing the absence of IETF language tags will treated as a track warning, and an IETF language will be assigned using from ISO639-3-2 tag.  
+On remediation MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html#:~:text=%2D%2Dnormalize%2Dlanguage%2Dietf%20mode) for more details.
 
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
 E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  
 E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
 E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
-E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.  
+E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage

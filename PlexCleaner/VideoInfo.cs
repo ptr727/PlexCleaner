@@ -107,11 +107,6 @@ public class VideoInfo : TrackInfo
 
     public bool CompareVideo(VideoFormat compare)
     {
-        if (compare == null)
-        {
-            throw new ArgumentNullException(nameof(compare));
-        }
-
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match
         bool formatMatch = string.IsNullOrEmpty(compare.Format) || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);

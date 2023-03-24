@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -99,11 +98,6 @@ public abstract class MediaTool
 
     protected int Command(string parameters)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
@@ -115,11 +109,6 @@ public abstract class MediaTool
 
     protected int Command(string parameters, out string output)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
@@ -130,11 +119,6 @@ public abstract class MediaTool
 
     protected int Command(string parameters, out string output, out string error)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 
@@ -145,11 +129,6 @@ public abstract class MediaTool
 
     protected int Command(string parameters, int limit, out string output, out string error)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
-
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
 

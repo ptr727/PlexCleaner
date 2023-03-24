@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -215,10 +214,13 @@ public partial class MkvMergeTool : MediaTool
             mediaInfo.Duration = TimeSpan.FromSeconds(mkvMerge.Container.Properties.Duration / 1000000.0);
 
             // Must be Matroska type
-            if (!mkvMerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+            if (!IsMkvContainer(mediaInfo))
             {
-                mediaInfo.HasErrors = true;
                 Log.Logger.Warning("MKV container type is not Matroska : {Type}", mkvMerge.Container.Type);
+
+                // Remux to convert to MKV
+                mediaInfo.HasErrors = true;
+                mediaInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
             }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
@@ -235,42 +237,34 @@ public partial class MkvMergeTool : MediaTool
 
     public static bool IsMkvFile(FileInfo fileInfo)
     {
-        if (fileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(fileInfo));
-        }
-
         return IsMkvExtension(fileInfo.Extension);
     }
 
     public static bool IsMkvExtension(string extension)
     {
-        if (extension == null)
-        {
-            throw new ArgumentNullException(nameof(extension));
-        }
-
         // Case insensitive match, .mkv or .MKV
         return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
     }
 
-    public bool ReMuxToMkv(string inputName, MediaInfo keep, string outputName)
+    public static bool IsMkvContainer(MediaInfo mediaInfo)
     {
-        if (keep == null)
-        {
-            return ReMuxToMkv(inputName, outputName);
-        }
+        return mediaInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
+    }
 
-        // Verify correct data type
-        Debug.Assert(keep.Parser == ToolType.MkvMerge);
+    public bool ReMuxToMkv(string inputName, SelectMediaInfo selectMediaInfo, string outputName)
+    {
+        // Verify correct media type
+        Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.MkvMerge);
 
         // Delete output file
         FileEx.DeleteFile(outputName);
 
         // Build commandline
+        // Selected is Keep
+        // NotSelected is Remove
         StringBuilder commandline = new();
-        DefaultArgs(outputName, commandline);
-        TracksArgs(keep, commandline);
+        CreateDefaultArgs(outputName, commandline);
+        CreateTrackArgs(selectMediaInfo.Selected, commandline);
         commandline.Append($"\"{inputName}\"");
 
         // Remux tracks
@@ -285,7 +279,7 @@ public partial class MkvMergeTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(outputName, commandline);
+        CreateDefaultArgs(outputName, commandline);
         commandline.Append($"\"{inputName}\"");
 
         // Remux all
@@ -305,8 +299,8 @@ public partial class MkvMergeTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        DefaultArgs(outputName, commandline);
-        TracksArgs(keepOne, commandline);
+        CreateDefaultArgs(outputName, commandline);
+        CreateTrackArgs(keepOne, commandline);
         commandline.Append($"--no-chapters \"{sourceOne}\" \"{sourceTwo}\"");
 
         // Remux tracks
@@ -314,7 +308,7 @@ public partial class MkvMergeTool : MediaTool
         return exitCode is 0 or 1;
     }
 
-    private static void DefaultArgs(string outputName, StringBuilder commandline)
+    private static void CreateDefaultArgs(string outputName, StringBuilder commandline)
     {
         commandline.Append($"{MergeOptions} ");
         if (Program.Options.Parallel)
@@ -329,13 +323,16 @@ public partial class MkvMergeTool : MediaTool
         commandline.Append($"--output \"{outputName}\" ");
     }
 
-    private static void TracksArgs(MediaInfo mediaInfo, StringBuilder commandline)
+    private static void CreateTrackArgs(MediaInfo mediaInfo, StringBuilder commandline)
     {
+        // Verify correct media type
+        Debug.Assert(mediaInfo.Parser == ToolType.MkvMerge);
+
         // Create the track number filters
         // The track numbers are reported by MkvMerge --identify, use the track.id values
         if (mediaInfo.Video.Count > 0)
         {
-            commandline.Append($"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+            commandline.Append($"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => $"{info.Id}"))} ");
         }
         else
         {
@@ -343,7 +340,7 @@ public partial class MkvMergeTool : MediaTool
         }
         if (mediaInfo.Audio.Count > 0)
         {
-            commandline.Append($"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+            commandline.Append($"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => $"{info.Id}"))} ");
         }
         else
         {
@@ -351,7 +348,7 @@ public partial class MkvMergeTool : MediaTool
         }
         if (mediaInfo.Subtitle.Count > 0)
         {
-            commandline.Append($"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => info.Id.ToString(CultureInfo.InvariantCulture)))} ");
+            commandline.Append($"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => $"{info.Id}"))} ");
         }
         else
         {
@@ -360,7 +357,7 @@ public partial class MkvMergeTool : MediaTool
     }
 
     private const string Snippet = "--split parts:00:00:00-00:03:00";
-    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close";
+    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close --normalize-language-ietf extlang";
 
     const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
 

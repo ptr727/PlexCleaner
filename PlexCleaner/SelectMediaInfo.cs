@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace PlexCleaner;
 
@@ -87,7 +88,7 @@ public class SelectMediaInfo
                 Select(select).Subtitle.Add(info);
                 break;
             default:
-                throw new ArgumentException(null, nameof(trackInfo));
+                throw new NotImplementedException();
         }
     }
 
@@ -141,7 +142,7 @@ public class SelectMediaInfo
                 Select(select).Subtitle.Add(info);
                 break;
             default:
-                throw new ArgumentException(null, nameof(trackInfo));
+                throw new NotImplementedException();
         }
     }
 
@@ -154,6 +155,19 @@ public class SelectMediaInfo
         NotSelected.Video.ForEach(item => item.State = notSelectState);
         NotSelected.Audio.ForEach(item => item.State = notSelectState);
         NotSelected.Subtitle.ForEach(item => item.State = notSelectState);
+    }
+
+    public List<TrackInfo> GetTrackList()
+    {
+        // Add all tracks to list
+        List<TrackInfo> trackLick = new();
+        trackLick.AddRange(Selected.GetTrackList());
+        trackLick.AddRange(NotSelected.GetTrackList());
+
+        // There should be no track id duplicates
+        Debug.Assert(trackLick.GroupBy(item => item.Id).All(group => group.Count() == 1));
+
+        return trackLick.OrderBy(item => item.Id).ToList();
     }
 
     public void WriteLine(string selected, string notSelected)

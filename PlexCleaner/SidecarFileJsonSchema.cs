@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -206,7 +205,7 @@ public record SidecarFileJsonSchema : SidecarFileJsonSchema3
                 return JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
             // Unknown version
             default:
-                throw new NotSupportedException(nameof(sidecarFileJsonSchemaBase.SchemaVersion));
+                throw new NotImplementedException();
         }
     }
 

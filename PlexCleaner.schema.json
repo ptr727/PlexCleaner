@@ -87,6 +87,9 @@
         "KeepOriginalLanguage": {
           "type": "boolean"
         },
+        "RemoveClosedCaptions": {
+          "type": "boolean"
+        },
         "KeepExtensions": {
           "type": "array",
           "items": {
@@ -192,6 +195,7 @@
       },
       "required": [
         "KeepOriginalLanguage",
+        "RemoveClosedCaptions",
         "KeepExtensions",
         "ReMuxExtensions",
         "ReEncodeVideo",

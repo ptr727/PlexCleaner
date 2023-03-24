@@ -54,7 +54,7 @@
       ".ass",
       ".vtt"
     ],
-    // Enable re-mux
+    // Enable re-mux to MKV of non-MKV files
     "ReMux": true,
     // File extensions to remux to MKV
     "ReMuxExtensions": [
@@ -71,7 +71,7 @@
     // Enable deinterlace of interlaced media
     // Interlace detection is not absolute and uses interlaced frame counting
     "DeInterlace": true,
-    // Enable re-encode
+    // Enable re-encode of audio or video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
     "ReEncode": true,
     // Re-encode the video if the Format, Codec, and Profile values match
     // Empty fields will match with any value
@@ -136,7 +136,7 @@
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": true,
-    // Track languages to keep
+    // Track language matched tags to keep
     // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
     "KeepLanguages": [
       "en",
@@ -162,11 +162,13 @@
     // Enable removing of all tags from the media file
     // Track title information is not removed
     "RemoveTags": true,
+    // Enable removing of EIA-608 Closed Captions embedded in video streams
+    "RemoveClosedCaptions": true,
     // Speedup media re-processing by saving media info and processed state in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
     "SidecarUpdateOnToolChange": false,
-    // Enable verify
+    // Enable verification of media stream content
     "Verify": true,
     // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,

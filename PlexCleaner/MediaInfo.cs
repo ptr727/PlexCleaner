@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Serilog;
@@ -63,11 +64,6 @@ public class MediaInfo
 
     public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
     {
-        if (fileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(fileInfo));
-        }
-
         // Use the specified stream parser tool
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         return parser switch
@@ -103,8 +99,27 @@ public class MediaInfo
         // Remove all cover art tracks
         foreach (var item in coverArtTracks)
         {
-            Log.Logger.Warning("Removing cover art video track : {Codec}", item.Codec);
+            Log.Logger.Warning("Ignoring cover art video track : {Codec}", item.Codec);
             Video.Remove(item);
         }
+    }
+
+    public List<TrackInfo> MatchMediaInfoToMkvMerge(List<TrackInfo> mediaInfoTrackList)
+    {
+        // This only works for MkvMerge
+        // TODO: Convert to more generic function, but for now only MediaInfo to MkvMerge is required
+        Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
+
+        // Get a MkvMerge track list
+        var mkvMergeTrackList = GetTrackList();
+
+        // Match by MediaInfo.Number == MkvMerge.Number
+        List<TrackInfo> matchedTrackList = new();
+        mediaInfoTrackList.ForEach(mediaInfoItem => matchedTrackList.Add(mkvMergeTrackList.Find(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)));
+
+        // Make sure all items matched
+        Debug.Assert(mediaInfoTrackList.Count == matchedTrackList.Count);
+
+        return matchedTrackList;
     }
 }

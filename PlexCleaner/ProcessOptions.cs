@@ -214,6 +214,7 @@ public record ProcessOptions : ProcessOptions2
 
         // Default
         KeepOriginalLanguage = true;
+        RemoveClosedCaptions = true;
 
         // Convert ISO 639-2 to RFC 5646 language tags
         if (!string.IsNullOrEmpty(DefaultLanguage))
@@ -236,6 +237,9 @@ public record ProcessOptions : ProcessOptions2
     [Required]
     public bool KeepOriginalLanguage { get; set; }
 
+    [Required]
+    public bool RemoveClosedCaptions { get; set; }
+
     public void SetDefaults()
     {
         DeleteEmptyFolders = true;
@@ -251,6 +255,7 @@ public record ProcessOptions : ProcessOptions2
         Verify = true;
         RestoreFileTimestamp = false;
         RemoveDuplicateTracks = false;
+        RemoveClosedCaptions = true;
         FileIgnoreList.Clear();
         DefaultLanguage = "en";
         KeepExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

@@ -181,7 +181,7 @@ public class ProcessFile
         }
 
         // Make sure that MKV named files are Matroska containers
-        if (MkvMergeInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase))
+        if (MkvMergeTool.IsMkvContainer(MkvMergeInfo))
         {
             // Nothing to do
             return true;
@@ -214,30 +214,98 @@ public class ProcessFile
 
     public bool HasMediaInfoErrors()
     {
-        // TODO: Improve error granularity
         return FfProbeInfo.HasErrors || MkvMergeInfo.HasErrors || MediaInfoInfo.HasErrors;
     }
 
-    public bool ReMuxMediaInfoErrors(ref bool modified)
+    public bool HasRemuxMediaInfoErrors()
     {
-        // Do we have any errors
+        return FfProbeInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.ReMux) ||
+               MkvMergeInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.ReMux) ||
+               MediaInfoInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.ReMux);
+    }
+
+    public bool HasRemoveMediaInfoErrors()
+    {
+        return FfProbeInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.Remove) ||
+               MkvMergeInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.Remove) ||
+               MediaInfoInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.Remove);
+    }
+
+    public void ClearMediaInfoErrors()
+    {
+        // Clear all the error flags
+        FfProbeInfo.HasErrors = false;
+        MkvMergeInfo.HasErrors = false;
+        MediaInfoInfo.HasErrors = false;
+        FfProbeInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.None);
+        MkvMergeInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.None);
+        MediaInfoInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.None);
+    }
+
+    public bool RepairMediaInfoErrors(ref bool modified)
+    {
+        // Any errors
         if (!HasMediaInfoErrors())
         {
             return true;
         }
 
-        // Already ReMuxed, something is wrong with detection or removal
+        // Already ReMuxed, something is wrong with detection or removal logic
         if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ReMuxed))
         {
-            Log.Logger.Error("Errors re-detected after remuxing : {FileName}", FileInfo.Name);
+            Log.Logger.Warning("Media errors re-detected after remuxing : {FileName}", FileInfo.Name);
+
+            // TODO: FfMpeg does not honor IETF language tags and removes them, always repeat cleanup
+            /*
+            // Conditional re-process
+            if (!Process.CanReProcess(Process.Tasks.ClearTags))
+            {
+                // Done
+                return true;
+            }
+            */
+        }
+
+        // Conditional
+        if (!Program.Config.VerifyOptions.AutoRepair)
+        {
+            // If repair is not enabled jsut clear error state
+            ClearMediaInfoErrors();
             return true;
         }
 
-        // Try to ReMux the file
-        Log.Logger.Information("ReMux to repair metadata errors : {FileName}", FileInfo.Name);
+        // Start with keeping all tracks
+        // Selected is Keep
+        // NotSelected is Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
 
-        // Remux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        // Any tracks to remove
+        if (HasRemoveMediaInfoErrors())
+        { 
+            // TODO: Remove is currently only set by MediaInfo for subtitle tracks that need to be removed
+
+            // Get a list of all the MediaInfo tracks to be removed
+            var mediaInfoRemoveList = MediaInfoInfo.GetTrackList().FindAll(item => item.State == TrackInfo.StateType.Remove);
+            Debug.Assert(mediaInfoRemoveList.Count > 0);
+
+            // Mapping of track Id's are non-trivial, use the Matroska header track number to find the corresponding tracks
+            var mkvMergeRemoveList = MkvMergeInfo.MatchMediaInfoToMkvMerge(mediaInfoRemoveList);
+            Debug.Assert(mediaInfoRemoveList.Count == mkvMergeRemoveList.Count);
+
+            // Unselect the to be removed tracks
+            selectMediaInfo.Move(mkvMergeRemoveList, false);
+        }
+        Debug.Assert(selectMediaInfo.Selected.Count > 0);
+        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
+
+        // ReMux the file
+        Log.Logger.Information("ReMux to repair metadata errors : {FileName}", FileInfo.Name);
+        selectMediaInfo.WriteLine("Keep", "Remove");
+
+        // Conditional with tracks or all tracks
+        if (!Convert.ReMuxToMkv(FileInfo.FullName,
+                selectMediaInfo.NotSelected.Count > 0 ? selectMediaInfo : null, 
+                out string outputName))
         {
             // Error
             return false;
@@ -280,7 +348,7 @@ public class ProcessFile
         // Something is wrong with tag detection or removal
         if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedTags))
         {
-            Log.Logger.Error("Tags re-detected after clearing : {FileName}", FileInfo.Name);
+            Log.Logger.Warning("Tags re-detected after clearing : {FileName}", FileInfo.Name);
 
             // Conditional re-process
             if (!Process.CanReProcess(Process.Tasks.ClearTags))
@@ -424,8 +492,8 @@ public class ProcessFile
         Log.Logger.Information("Removing unwanted language tracks : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("Keep", "Remove");
 
-        // ReMux and only keep the specified tracks
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
+        // ReMux and only keep the selected tracks
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Error
             return false;
@@ -464,7 +532,7 @@ public class ProcessFile
         selectMediaInfo.WriteLine("Keep", "Remove");
 
         // ReMux and only keep the specified tracks
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Error
             return false;
@@ -702,19 +770,18 @@ public class ProcessFile
             return true;
         }
 
-        // Start out with keeping all the tracks
-        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
-
         // Remove all the subtitle tracks
-        // Selected keep
-        // NotSelected remove
+        // Selected Keep
+        // NotSelected Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
         selectMediaInfo.Move(MkvMergeInfo.Subtitle, false);
+        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
 
-        Log.Logger.Information("Re-muxing tracks : {FileName}", FileInfo.Name);
+        Log.Logger.Information("Removing subtitle tracks : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("Keep", "Remove");
 
         // ReMux and only keep the specified tracks
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo.Selected, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Error
             return false;
@@ -730,6 +797,12 @@ public class ProcessFile
 
     public bool RemoveClosedCaptions(ref bool modified)
     {
+        // Conditional
+        if (!Program.Config.ProcessOptions.RemoveClosedCaptions)
+        {
+            return true;
+        }
+
         // Do we have any closed captions
         if (!FindClosedCaptionTracks(out VideoInfo videoInfo))
         {
@@ -783,9 +856,9 @@ public class ProcessFile
         }
 
         // Find all tracks that need re-encoding
-        // Use FfProbeInfo because the video matching logic uses FfProbe attributes
-        // Selected is reencode required
-        // NotSelected is no reencode required
+        // Use FfProbeInfo for matching logic
+        // Selected is ReEncode
+        // NotSelected is Keep
         var selectMediaInfo = FindNeedReEncode();
         if (selectMediaInfo.Selected.Count == 0)
         {
@@ -797,7 +870,7 @@ public class ProcessFile
         selectMediaInfo.WriteLine("ReEncode", "Passthrough");
 
         // Reencode selected tracks
-        if (!Convert.ConvertToMkv(FileInfo.FullName, selectMediaInfo.NotSelected, selectMediaInfo.Selected, out string outputName))
+        if (!Convert.ConvertToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Convert will log error
             // Error

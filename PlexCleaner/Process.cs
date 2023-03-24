@@ -346,8 +346,8 @@ internal class Process
                 break;
             }
 
-            // ReMux to repair metadata errors
-            if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
+            // Repair tracks with metadata errors
+            if (!processFile.RepairMediaInfoErrors(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
@@ -386,6 +386,8 @@ internal class Process
                 break;
             }
 
+            // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux, are logically separate, but could be combined
+
             // Remove all the duplicate tracks
             if (!processFile.RemoveDuplicateTracks(ref modified) ||
                 Program.IsCancelled())
@@ -411,16 +413,11 @@ internal class Process
                 break;
             }
 
-            // Repair may have modified track tags, reset the default language again
-            if (!processFile.SetUnknownLanguageTracks(ref modified) ||
-                Program.IsCancelled())
-            {
-                result = false;
-                break;
-            }
-
-            // Remove tags and titles
-            if (!processFile.RemoveTags(ref modified) ||
+            // FfMpeg or HandBrake could undo prior cleanup, repeat
+            // TODO: FfMpeg removes IETF language tags?
+            if (!processFile.RepairMediaInfoErrors(ref modified) ||
+                !processFile.SetUnknownLanguageTracks(ref modified) ||
+                !processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;

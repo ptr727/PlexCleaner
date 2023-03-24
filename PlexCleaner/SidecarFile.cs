@@ -633,22 +633,12 @@ public class SidecarFile
 
     public static string GetMediaName(FileInfo sidecarFileInfo)
     {
-        if (sidecarFileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(sidecarFileInfo));
-        }
-
         // Change extension of media file
         return Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
     }
 
     public static bool CreateSidecarFile(FileInfo mediaFileInfo)
     {
-        if (mediaFileInfo == null)
-        {
-            throw new ArgumentNullException(nameof(mediaFileInfo));
-        }
-
         // Create new sidecar for media file
         SidecarFile sidecarFile = new(mediaFileInfo);
         return sidecarFile.Create();

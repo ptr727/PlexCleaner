@@ -11,7 +11,7 @@ public partial class TrackInfo
     public enum StateType 
     { 
         None, 
-        Keep, 
+        Keep, // PassThrough
         Remove, 
         ReMux, 
         ReEncode, 
@@ -34,87 +34,94 @@ public partial class TrackInfo
 
     protected TrackInfo() { }
 
-    internal TrackInfo(MkvToolJsonSchema.Track track)
+    internal TrackInfo(MkvToolJsonSchema.Track trackJson)
     {
-        if (track == null)
-        {
-            throw new ArgumentNullException(nameof(track));
-        }
-
-        Format = track.Codec;
-        Codec = track.Properties.CodecId;
-        Title = track.Properties.TrackName;
+        Format = trackJson.Codec;
+        Codec = trackJson.Properties.CodecId;
+        Title = trackJson.Properties.TrackName;
         
-        if (track.Properties.DefaultTrack)
+        if (trackJson.Properties.DefaultTrack)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Properties.Original)
+        if (trackJson.Properties.Original)
         {
             Flags |= FlagsType.Original;
         }
-        if (track.Properties.Commentary)
+        if (trackJson.Properties.Commentary)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (track.Properties.VisualImpaired)
+        if (trackJson.Properties.VisualImpaired)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (track.Properties.HearingImpaired)
+        if (trackJson.Properties.HearingImpaired)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (track.Properties.TextDescriptions)
+        if (trackJson.Properties.TextDescriptions)
         {
             Flags |= FlagsType.Descriptions;
         }
-        if (track.Properties.Forced)
+        if (trackJson.Properties.Forced)
         {
             Flags |= FlagsType.Forced;
         }
 
         // ISO 639-3 tag
-        Language = track.Properties.Language;
+        Language = trackJson.Properties.Language;
         
         // IETF / BCP 47 / RFC 5646 tag
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix
         // https://r12a.github.io/app-subtags/
-        LanguageIetf = track.Properties.LanguageIetf;
+        LanguageIetf = trackJson.Properties.LanguageIetf;
 
         // Setting HasErrors will force a remux and MkvMerge will correct track languages errors
 
         // Convert the ISO 639-3 tag to RFC 5646
-        if (string.IsNullOrEmpty(track.Properties.LanguageIetf) &&
-            !string.IsNullOrEmpty(track.Properties.Language))
+        if (string.IsNullOrEmpty(trackJson.Properties.LanguageIetf) &&
+            !string.IsNullOrEmpty(trackJson.Properties.Language))
         {
             var lookupLanguage = PlexCleaner.Language.GetIetfTag(Language, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
                 Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup IETF language from ISO639-3 language : {Language}", Language);
+
+                // Set track error and recommend remux
                 HasErrors = true;
+                State = StateType.ReMux;
             }
             else 
             {
-                Log.Logger.Information("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IETFLanguage}", Language, lookupLanguage);
+                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IETFLanguage}", Language, lookupLanguage);
                 LanguageIetf = lookupLanguage;
+
+                // Set track error and recommend remux
                 HasErrors = true;
+                State = StateType.ReMux;
             }
         }
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
-        if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
-            !string.IsNullOrEmpty(track.Properties.Language) &&
-            !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(trackJson.Properties.TagLanguage) &&
+            !string.IsNullOrEmpty(trackJson.Properties.Language) &&
+            !trackJson.Properties.Language.Equals(trackJson.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
         {
-            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language}", track.Properties.TagLanguage, track.Properties.Language);
+            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language}", trackJson.Properties.TagLanguage, trackJson.Properties.Language);
+
+            // Set track error and recommend remux
             HasErrors = true;
+            State = StateType.ReMux;
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
-        Id = track.Id;
-        Number = track.Properties.Number;
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/About-track-UIDs,-track-numbers-and-track-IDs#track-numbers
+        // Id: 0-based track number internally assigned
+        Id = trackJson.Id;
+        // Number: 1-based track number from Matroska header
+        Number = trackJson.Properties.Number;
 
         // Has tags
         HasTags = IsTagTitle(Title);
@@ -124,47 +131,42 @@ public partial class TrackInfo
         Debug.Assert(!string.IsNullOrEmpty(Codec));
     }
 
-    internal TrackInfo(FfMpegToolJsonSchema.Stream stream)
+    internal TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
     {
-        if (stream == null)
-        {
-            throw new ArgumentNullException(nameof(stream));
-        }
+        Format = trackJson.CodecName;
+        Codec = trackJson.CodecLongName;
 
-        Format = stream.CodecName;
-        Codec = stream.CodecLongName;
-
-        if (stream.Disposition.Default)
+        if (trackJson.Disposition.Default)
         {
             Flags |= FlagsType.Default;
         }
-        if (stream.Disposition.Forced)
+        if (trackJson.Disposition.Forced)
         {
             Flags |= FlagsType.Forced;
         }
-        if (stream.Disposition.Original)
+        if (trackJson.Disposition.Original)
         {
             Flags |= FlagsType.Original;
         }
-        if (stream.Disposition.Comment)
+        if (trackJson.Disposition.Comment)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (stream.Disposition.HearingImpaired)
+        if (trackJson.Disposition.HearingImpaired)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (stream.Disposition.VisualImpaired)
+        if (trackJson.Disposition.VisualImpaired)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (stream.Disposition.Descriptions)
+        if (trackJson.Disposition.Descriptions)
         {
             Flags |= FlagsType.Descriptions;
         }
 
-        Title = stream.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
-        Language = stream.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Title = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Language = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
@@ -175,14 +177,18 @@ public partial class TrackInfo
             Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
             Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language}", Language);
+
+            // Set track error and recommend remux
             HasErrors = true;
+            State = StateType.ReMux;
         }
 
         // Leave the Language as is, no need to verify
 
-        // Use index for number
-        Id = stream.Index;
-        Number = stream.Index;
+        // Use stream index for id and number
+        // TODO: How to get Matroska TrackNumber from ffProbe?
+        Id = trackJson.Index;
+        Number = trackJson.Index;
 
         // Has tags
         HasTags = IsTagTitle(Title);
@@ -192,17 +198,12 @@ public partial class TrackInfo
         Debug.Assert(!string.IsNullOrEmpty(Codec));
     }
 
-    internal TrackInfo(MediaInfoToolXmlSchema.Track track)
+    internal TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
     {
-        if (track == null)
-        {
-            throw new ArgumentNullException(nameof(track));
-        }
-
-        Format = track.Format;
-        Codec = track.CodecId;
-        Title = track.Title;
-        Language = track.Language;
+        Format = trackXml.Format;
+        Codec = trackXml.CodecId;
+        Title = trackXml.Title;
+        Language = trackXml.Language;
 
         // TODO: Missing flags
         // Original
@@ -211,11 +212,11 @@ public partial class TrackInfo
         // HearingImpaired
         // Descriptions
 
-        if (track.Default)
+        if (trackXml.Default)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Forced)
+        if (trackXml.Forced)
         {
             Flags |= FlagsType.Forced;
         }
@@ -229,17 +230,20 @@ public partial class TrackInfo
 
         // Leave the Language as is, no need to verify
 
+        // https://github.com/MediaArea/MediaInfo/issues/201
+        // "For Matroska, the first part (before the dash) of the ID field is mapped to TrackNumber Matroska field,
+        // and the first part (before the dash) of the UniqueID field is mapped to TrackUID Matroska field"
         // ID can be in a variety of formats:
         // 1
         // 3-CC1
         // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
-        // https://github.com/MediaArea/MediaInfo/issues/201
-        var match = TrackRegex().Match(track.Id);
+        var match = TrackRegex().Match(trackXml.Id);
         Debug.Assert(match.Success);
-        Id = int.Parse(match.Groups["id"].Value);
+        // Use number before dash as Matroska TrackNumber
+        Number = int.Parse(match.Groups["id"].Value);
 
-        // Use streamorder for number
-        Number = track.StreamOrder;
+        // Use StreamOrder for Id
+        Id = trackXml.StreamOrder;
 
         // Has tags
         HasTags = IsTagTitle(Title);

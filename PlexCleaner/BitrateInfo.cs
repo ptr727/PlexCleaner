@@ -11,11 +11,6 @@ public class BitrateInfo
 {
     public void Calculate(List<Packet> packetList, int videoStream, int audioStream, int threshold)
     {
-        if (packetList == null)
-        {
-            throw new ArgumentNullException(nameof(packetList));
-        }
-
         // ShouldCompute() must not allow any Assert() to fail
 
         // Calculate the media playback duration from timestamps

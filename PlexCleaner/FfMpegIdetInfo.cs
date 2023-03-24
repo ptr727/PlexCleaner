@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace PlexCleaner;
 
@@ -56,11 +55,6 @@ public class FfMpegIdetInfo
 
     public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
     {
-        if (mediaFile == null)
-        {
-            throw new ArgumentNullException(nameof(mediaFile));
-        }
-
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }
 

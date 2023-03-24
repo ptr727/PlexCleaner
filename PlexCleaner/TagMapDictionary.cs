@@ -14,21 +14,6 @@ public class TagMapDictionary
 
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
-        if (prime == null)
-        {
-            throw new ArgumentNullException(nameof(prime));
-        }
-
-        if (sec1 == null)
-        {
-            throw new ArgumentNullException(nameof(sec1));
-        }
-
-        if (sec2 == null)
-        {
-            throw new ArgumentNullException(nameof(sec2));
-        }
-
         // Make sure we can do matching
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
 

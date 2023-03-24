@@ -142,7 +142,7 @@ internal class Monitor
             case WatcherChangeTypes.All:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(e));
+                throw new NotImplementedException();
         }
     }
 
@@ -172,7 +172,7 @@ internal class Monitor
             case WatcherChangeTypes.All:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(e));
+                throw new NotImplementedException();
         }
     }
 
