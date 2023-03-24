@@ -11,18 +11,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		HISTORY.md = HISTORY.md
+		HubREADME.md = HubREADME.md
 		LICENSE = LICENSE
 		PlexCleaner.json = PlexCleaner.json
 		PlexCleaner.schema.json = PlexCleaner.schema.json
-		HubREADME.md = HubREADME.md
 		README.md = README.md
 		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F57F-962E-4C71-8F27-939D06813302}"
 	ProjectSection(SolutionItems) = preProject
-		Docker\.dockerignore = Docker\.dockerignore
 		Docker\Dockerfile = Docker\Dockerfile
+		Docker\.dockerignore = Docker\.dockerignore
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785}"

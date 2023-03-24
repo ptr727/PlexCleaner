@@ -26,8 +26,13 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Release Notes
 
 - Version 3.0:
+  - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
+    - The Docker FFmpeg and HandBrake installations provided by Rob Savoury's PPA's are unfortunately [no longer available](https://launchpad.net/~savoury1), a big thank you to Rob, I hope you reach an amicable outcome.
+    - Alternate sources for up to date versions, and up to date library dependencies, and built with all (non-commercial) options enabled, are not readily available.
+    - I decided to switch to [Arch Linux](https://archlinux.org/), as it has a very well maintained and up to date application ecosystem.
+    - All the 3rd party tools are now installed using `pacman` and sourced from the [Arch Linux Package Repository](https://archlinux.org/packages/).
+    - Switching from Ubuntu to Arch is a very recent change, and will need some bake time.
   - Upgraded from .NET 6 to .NET 7.
-    - Switched docker base image from `ubuntu:latest` and then installing .NET, to `mcr.microsoft.com/dotnet/sdk:7.0-jammy` that already includes .NET.
     - Switched from `Regex` to `GeneratedRegex` for a slight performance improvement.
     - Switched from `DllImport` to `LibraryImport` for cross platform compatibility.
   - Settings JSON schema updated from v2 to v3:
