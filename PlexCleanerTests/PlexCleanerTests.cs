@@ -1,11 +1,24 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
 namespace PlexCleanerTests;
 
-public static class SampleFiles
+public class PlexCleanerTests : IDisposable
 {
+    public PlexCleanerTests()
+    {
+        // Create defaults for Program Options and Config
+        PlexCleaner.Program.Options = new();
+        PlexCleaner.Program.Config = new();
+        PlexCleaner.Program.Config.SetDefaults();
+    }
+
+    public void Dispose()
+    {
+    }
+
     public static FileInfo GetSampleFileInfo(string fileName)
     {
         return new FileInfo(GetSampleFilePath(fileName));

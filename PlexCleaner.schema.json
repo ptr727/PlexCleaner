@@ -90,6 +90,9 @@
         "RemoveClosedCaptions": {
           "type": "boolean"
         },
+        "SetIetfLanguageTags": {
+          "type": "boolean"
+        },
         "KeepExtensions": {
           "type": "array",
           "items": {
@@ -196,6 +199,7 @@
       "required": [
         "KeepOriginalLanguage",
         "RemoveClosedCaptions",
+        "SetIetfLanguageTags",
         "KeepExtensions",
         "ReMuxExtensions",
         "ReEncodeVideo",

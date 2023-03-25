@@ -212,26 +212,16 @@ public record ProcessOptions : ProcessOptions2
         // Upgrade from v1
         Upgrade(processOptions2 as ProcessOptions1);
 
-        // Default
-        KeepOriginalLanguage = true;
-        RemoveClosedCaptions = true;
-
         // Convert ISO 639-2 to RFC 5646 language tags
-        if (!string.IsNullOrEmpty(DefaultLanguage))
-        {
-            // Not found, default to English
-            DefaultLanguage = Language.GetIetfTag(DefaultLanguage, true) ?? Language.English;
-        }
+        DefaultLanguage = Language.GetIetfTag(DefaultLanguage, true) ?? Language.English;
         List<string> oldList = KeepLanguages.ToList();
         KeepLanguages.Clear();
-        oldList.ForEach(item => 
-        {
-            var ietfLanguage = Language.GetIetfTag(item, true);
-            if (ietfLanguage != null)
-            { 
-                KeepLanguages.Add(ietfLanguage); 
-            }
-        });
+        oldList.ForEach(item => KeepLanguages.Add(Language.GetIetfTag(item, true) ?? Language.English));
+
+        // Defaults
+        KeepOriginalLanguage = true;
+        RemoveClosedCaptions = true;
+        SetIetfLanguageTags = true;
     }
 
     [Required]
@@ -239,6 +229,9 @@ public record ProcessOptions : ProcessOptions2
 
     [Required]
     public bool RemoveClosedCaptions { get; set; }
+
+    [Required]
+    public bool SetIetfLanguageTags { get; set; }
 
     public void SetDefaults()
     {
@@ -249,6 +242,7 @@ public record ProcessOptions : ProcessOptions2
         ReEncode = true;
         SetUnknownLanguage = true;
         RemoveUnwantedLanguageTracks = true;
+        SetIetfLanguageTags = true;
         RemoveTags = true;
         UseSidecarFiles = true;
         SidecarUpdateOnToolChange = false;
@@ -292,7 +286,6 @@ public record ProcessOptions : ProcessOptions2
             new() { Format = "indeo5" },
             new() { Format = "h264", Profile = "Constrained Baseline@30" },
             new() { Format = "mpeg4", Codec = "dx50" },
-            new() { Format = "mpeg4", Codec = "xvid" },
             new() { Format = "msmpeg4v2", Codec = "mp42" },
             new() { Format = "msmpeg4v3", Codec = "div3" }
         };

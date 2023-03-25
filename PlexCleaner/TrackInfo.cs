@@ -97,9 +97,13 @@ public partial class TrackInfo
                 Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IetfLanguage}", Language, lookupLanguage);
                 LanguageIetf = lookupLanguage;
 
-                // Set track error and recommend remux
-                HasErrors = true;
-                State = StateType.ReMux;
+                // Conditionally flag as track error to be corrected with remuxing
+                if (Program.Config.ProcessOptions.SetIetfLanguageTags)
+                {
+                    // Set track error and recommend remux
+                    HasErrors = true;
+                    State = StateType.ReMux;
+                }
             }
         }
 

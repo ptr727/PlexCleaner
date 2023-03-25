@@ -537,8 +537,8 @@ internal class Program
         return CancelSource.Token;
     }
 
-    public static CommandLineOptions Options { get; private set; }
-    public static ConfigFileJsonSchema Config { get; private set; }
+    public static CommandLineOptions Options { get; internal set; }
+    public static ConfigFileJsonSchema Config { get; internal set; }
 
     private static readonly CancellationTokenSource CancelSource = new();
 

@@ -2,7 +2,7 @@
 
 namespace PlexCleanerTests;
 
-public class LanguageTests
+public class LanguageTests : IClassFixture<PlexCleanerTests>
 {
     [Theory]
     [InlineData("afr", "af")]

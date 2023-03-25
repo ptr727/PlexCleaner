@@ -3,7 +3,7 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class ConfigFileTests
+public class ConfigFileTests : IClassFixture<PlexCleanerTests>
 {
     [Theory]
     [InlineData("PlexCleaner.v1.json")]
@@ -11,7 +11,7 @@ public class ConfigFileTests
     [InlineData("PlexCleaner.v3.json")]
     public void Open_OldSchemas_Opens(string fileName)
     {
-        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(SampleFiles.GetSampleFilePath(fileName));
+        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
     }
 }

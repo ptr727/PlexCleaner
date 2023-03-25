@@ -43,6 +43,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
     - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
     - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
+    - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
     - Language tags now support [RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) format.
       - See the [Language Matching](#language-matching) section for matching details.
       - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
@@ -210,15 +211,8 @@ docker run \
 
 ### Linux
 
-- Automatic downloading of Linux 3rd party tools are not currently supported, consider using the [Docker](#docker) build instead.
-- Manually install the 3rd party tools by following steps similar to the [Docker](./Docker/Dockerfile) file `RUN` commands. (Note, steps are for Ubuntu, adjust as appropriate for your distribution.)
-  - Install prerequisites.
-  - Install [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
-  - Install [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
-  - Install [MKVToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
-  - Install [FFmpeg](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5).
-  - Install [HandBrake](https://launchpad.net/~savoury1/+archive/ubuntu/handbrake).
-- Keep the 3rd party tools updated by periodically running `sudo apt update && sudo apt upgrade -y`.
+- Automatic downloading of Linux 3rd party tools are not supported, consider using the [Docker](#docker) build instead.
+- Manually install the 3rd party tools, e.g. following steps similar to the [Docker](./Docker/Dockerfile) file commands.
 - Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
 - Create a default JSON settings file using the `defaultsettings` command:
@@ -320,10 +314,6 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
         "Codec": "dx50"
       },
       {
-        "Format": "mpeg4",
-        "Codec": "xvid"
-      },
-      {
         "Format": "msmpeg4v3",
         "Codec": "div3"
       },
@@ -399,6 +389,8 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     "RemoveTags": true,
     // Enable removing of EIA-608 Closed Captions embedded in video streams
     "RemoveClosedCaptions": true,
+    // Set IETF language tags when not present
+    "SetIetfLanguageTags": true,
     // Speedup media re-processing by saving media info and processed state in sidecar files
     "UseSidecarFiles": true,
     // Invalidate sidecar files when tool versions change
@@ -528,8 +520,8 @@ The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallb
 ## Language Matching
 
 Language tag matching now supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
-During processing the absence of IETF language tags will treated as a track warning, and an IETF language will be assigned using from ISO639-3-2 tag.  
-On remediation MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html#:~:text=%2D%2Dnormalize%2Dlanguage%2Dietf%20mode) for more details.
+During processing the absence of IETF language tags will treated as a track warning, and an IETF language will be assigned from the ISO639-3-2 tag.  
+If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html#:~:text=%2D%2Dnormalize%2Dlanguage%2Dietf%20mode) for more details.
 
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
 E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  

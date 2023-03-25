@@ -687,6 +687,7 @@ public class ProcessFile
         }
 
         Log.Logger.Information("Deinterlacing interlaced video : {FileName}", FileInfo.Name);
+        videoInfo.State = TrackInfo.StateType.DeInterlace;
         videoInfo.WriteLine("Interlaced");
 
         // TODO: HandBrake will convert closed captions and subtitle tracks to ASS format
@@ -1233,26 +1234,14 @@ public class ProcessFile
         <HDR_Format_Compatibility>Blu-ray / HDR10</HDR_Format_Compatibility>
         */
 
-        // Use first video track, if any
-        // TODO: Only supports one video track
-        if (MediaInfoInfo.Video.Count == 0)
+        // Find video tracks with HDR10 as format
+        var hdrVideoTracks = MediaInfoInfo.Video.FindAll(videoItem => 
+            Hdr10Format.Any(hdrFormat => 
+            videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
+        hdrVideoTracks.ForEach(videoItem =>
         {
-            return true;
-        }
-        VideoInfo videoInfo = MediaInfoInfo.Video.First();
-
-        // Test for HDR
-        if (string.IsNullOrEmpty(videoInfo.FormatHdr))
-        {
-            return true;
-        }
-
-        // Look for HDR10 format
-        bool hdr10 = Hdr10Format.Any(format => videoInfo.FormatHdr.Contains(format, StringComparison.OrdinalIgnoreCase));
-        if (!hdr10)
-        {
-            Log.Logger.Warning("Video lacks HDR10 compatibility : {Hdr} : {FileName}", videoInfo.FormatHdr, FileInfo.Name);
-        }
+            Log.Logger.Warning("Video lacks HDR10 compatibility : {Hdr} : {FileName}", videoItem.FormatHdr, FileInfo.Name);
+        });
 
         // Ignore the error
         return true;
@@ -1509,7 +1498,9 @@ public class ProcessFile
 
     public bool VerifyMediaInfo()
     {
-        // TODO: Mixing anything other than MvMerge to MkvMerge requires the track id's to be the same
+        // TODO: Mixing anything other than MvMerge to MkvMerge requires the track numbers to be the same
+        // Id's are unique to the tool, numbers come from the matroska header
+        // FfProbe does not report numbers, only id's
 
         // Make sure the track counts match
         if (FfProbeInfo.Audio.Count != MkvMergeInfo.Audio.Count ||
@@ -1578,13 +1569,17 @@ public class ProcessFile
             return false;
         }
 
+        // Use the default track, else the first track
+        var videoInfo = FfProbeInfo.Video.Find(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default));
+        videoInfo ??= FfProbeInfo.Video.First();
+        var audioInfo = FfProbeInfo.Audio.Find(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default));
+        audioInfo ??= FfProbeInfo.Audio.First();
+
         // Compute bitrate from packets
-        // Use the first video and audio track for calculation
-        // TODO: Use default tracks not the first track
         bitrateInfo = new BitrateInfo();
         bitrateInfo.Calculate(packetList,
-            FfProbeInfo.Video.Count > 0 ? FfProbeInfo.Video.First().Id : -1,
-            FfProbeInfo.Audio.Count > 0 ? FfProbeInfo.Audio.First().Id : -1,
+            videoInfo == null ? -1 : videoInfo.Id,
+            audioInfo == null ? -1 : audioInfo.Id,
             Program.Config.VerifyOptions.MaximumBitrate / 8);
 
         return true;
@@ -1647,10 +1642,17 @@ public class ProcessFile
         // Keep all subtitles
         selectMediaInfo.Add(FfProbeInfo.Subtitle, false);
 
-        // TODO: If we are encoding audio, the video track may need to be reencode
+        // If we are encoding audio, the video track may need to be reencoded at the same time
         // [matroska @ 00000195b3585c80] Timestamps are unset in a packet for stream 0.
         // [matroska @ 00000195b3585c80] Can't write packet with unknown timestamp
         // av_interleaved_write_frame(): Invalid argument
+        if (selectMediaInfo.Selected.Audio.Count > 0 &&
+            selectMediaInfo.Selected.Video.Count == 0)
+        {
+            // If the video is not H264 or H265 (by experimentation), then tag the video to also be reencoded
+            var reEncodevideo = selectMediaInfo.Selected.Video.FindAll(item => !ReEncodeVideoOnAudioReEncode.Contains(item.Codec));
+            selectMediaInfo.Move(reEncodevideo, true);
+        }
 
         // Selected is ReEncode
         // NotSelected is Keep
@@ -1790,4 +1792,5 @@ public class ProcessFile
 
     private const int RefreshWaitTime = 5;
     private static readonly string[] Hdr10Format = { "SMPTE ST 2086", "SMPTE ST 2094" };
+    private static readonly string[] ReEncodeVideoOnAudioReEncode = { "h264", "hevc" };
 }

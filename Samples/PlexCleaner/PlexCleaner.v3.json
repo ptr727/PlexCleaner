@@ -7,21 +7,10 @@
     "RootRelative": true,
     "AutoUpdate": true
   },
-  "ConvertOptions": {
-    "FfMpegOptions": {
-      "Video": "libx264 -crf 20 -preset medium",
-      "Audio": "ac3",
-      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
-      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
-    },
-    "HandBrakeOptions": {
-      "Video": "x264 --quality 20 --encoder-preset medium",
-      "Audio": "copy --audio-fallback ac3"
-    }
-  },
   "ProcessOptions": {
-    "DeleteEmptyFolders": true,
-    "DeleteUnwantedExtensions": true,
+    "KeepOriginalLanguage": true,
+    "RemoveClosedCaptions": true,
+    "SetIetfLanguageTags": true,
     "KeepExtensions": [
       ".partial~",
       ".nfo",
@@ -32,7 +21,6 @@
       ".ass",
       ".vtt"
     ],
-    "ReMux": true,
     "ReMuxExtensions": [
       ".avi",
       ".m2ts",
@@ -43,8 +31,6 @@
       ".asf",
       ".wmv"
     ],
-    "DeInterlace": true,
-    "ReEncode": true,
     "ReEncodeVideo": [
       {
         "Format": "mpeg2video"
@@ -92,17 +78,12 @@
       "pcm_u8",
       "pcm_s16le"
     ],
-    "SetUnknownLanguage": true,
-    "DefaultLanguage": "eng",
-    "RemoveUnwantedLanguageTracks": true,
     "KeepLanguages": [
-      "eng",
-      "afr",
-      "chi",
-      "ind"
+      "en",
+      "af",
+      "zh-Hans",
+      "in"
     ],
-    "KeepOriginalLanguage": true,
-    "RemoveDuplicateTracks": true,
     "PreferredAudioFormats": [
       "truehd atmos",
       "truehd",
@@ -112,17 +93,33 @@
       "e-ac-3",
       "ac-3"
     ],
+    "FileIgnoreList": [],
+    "DeleteEmptyFolders": true,
+    "DeleteUnwantedExtensions": true,
+    "ReMux": true,
+    "DeInterlace": true,
+    "ReEncode": true,
+    "SetUnknownLanguage": true,
+    "DefaultLanguage": "en",
+    "RemoveUnwantedLanguageTracks": true,
+    "RemoveDuplicateTracks": false,
     "RemoveTags": true,
     "UseSidecarFiles": true,
     "SidecarUpdateOnToolChange": false,
     "Verify": true,
-    "RestoreFileTimestamp": false,
-    "FileIgnoreList": []
+    "RestoreFileTimestamp": false
   },
-  "MonitorOptions": {
-    "MonitorWaitTime": 60,
-    "FileRetryWaitTime": 5,
-    "FileRetryCount": 2
+  "ConvertOptions": {
+    "FfMpegOptions": {
+      "Video": "libx264 -crf 20 -preset medium",
+      "Audio": "ac3",
+      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
+      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+    },
+    "HandBrakeOptions": {
+      "Video": "x264 --quality 20 --encoder-preset medium",
+      "Audio": "copy --audio-fallback ac3"
+    }
   },
   "VerifyOptions": {
     "AutoRepair": true,
@@ -133,5 +130,10 @@
     "IdetDuration": 0,
     "MaximumBitrate": 100000000,
     "MinimumFileAge": 0
+  },
+  "MonitorOptions": {
+    "MonitorWaitTime": 60,
+    "FileRetryWaitTime": 5,
+    "FileRetryCount": 2
   }
 }
