@@ -68,7 +68,7 @@ internal class Process
         Program.Config.ProcessOptions.KeepLanguages.Add(Program.Config.ProcessOptions.DefaultLanguage);
     }
 
-    public bool ProcessFolders(List<string> folderList)
+    public static bool ProcessFolders(List<string> folderList)
     {
         // Create the file and directory list
         if (!FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileInfoList, out _))

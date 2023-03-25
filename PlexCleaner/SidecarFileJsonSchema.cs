@@ -8,8 +8,6 @@ namespace PlexCleaner;
 
 public record SidecarFileJsonSchemaBase
 {
-    public SidecarFileJsonSchemaBase() { }
-
     // TODO: Add a schema
     // Schema reference
     // [JsonProperty(PropertyName = "$schema", Order = -3)]
@@ -24,8 +22,6 @@ public record SidecarFileJsonSchemaBase
 [Obsolete]
 public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 {
-    public SidecarFileJsonSchema1() { }
-
     [Obsolete]
     internal string FfMpegToolVersion { get; set; }
     [Obsolete]

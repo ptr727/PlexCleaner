@@ -91,10 +91,10 @@ public class MediaInfo
 
     public static MediaInfo FromXml(string xml)
     {
-        XmlSerializer xmlserializer = new(typeof(MediaInfo));
-        using TextReader textreader = new StringReader(xml);
-        using var xmlReader = XmlReader.Create(textreader);
-        return xmlserializer.Deserialize(xmlReader) as MediaInfo;
+        XmlSerializer xmlSerializer = new(typeof(MediaInfo));
+        using TextReader textReader = new StringReader(xml);
+        using var xmlReader = XmlReader.Create(textReader);
+        return xmlSerializer.Deserialize(xmlReader) as MediaInfo;
     }
 
     public static bool StringToBool(string value)

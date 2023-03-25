@@ -14,8 +14,6 @@ namespace PlexCleaner;
 
 public class VideoInfo : TrackInfo
 {
-    public VideoInfo() { }
-
     internal VideoInfo(MkvToolJsonSchema.Track track) : base(track)
     {
         // Missing: Profile

@@ -305,17 +305,17 @@ public partial class FfMpegTool : MediaTool
             // Copy or encode
             switch (trackInfo)
             {
-                case VideoInfo info:
-                    sb.Append(info.State == TrackInfo.StateType.Keep
+                case VideoInfo videoInfo:
+                    sb.Append(videoInfo.State == TrackInfo.StateType.Keep
                         ? $"-c:v:{videoIndex++} copy "
                         : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
                     break;
-                case AudioInfo info:
-                    sb.Append(info.State == TrackInfo.StateType.Keep
+                case AudioInfo audioInfo:
+                    sb.Append(audioInfo.State == TrackInfo.StateType.Keep
                         ? $"-c:a:{audioIndex++} copy "
                         : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
                     break;
-                case SubtitleInfo info:
+                case SubtitleInfo:
                     // No re-encoding of subtitles, just copy
                     sb.Append($"-c:s:{subtitleIndex++} copy ");
                     break;

@@ -182,7 +182,7 @@ public partial class SevenZipTool : MediaTool
             return false;
         }
 
-        // Download the lastest version in the tools root folder
+        // Download the latest version in the tools root folder
         Log.Logger.Information("Downloading \"{FileName}\" ...", mediaToolInfo.FileName);
         var updateFile = Tools.CombineToolPath(mediaToolInfo.FileName);
         if (!Download.DownloadFile(new Uri(mediaToolInfo.Url), updateFile))
@@ -215,8 +215,8 @@ public partial class SevenZipTool : MediaTool
         return FileEx.RenameFolder(extractPath, toolPath);
     }
 
-    private const string InstalledVeersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
-    [GeneratedRegex(InstalledVeersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private const string InstalledVersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
+    [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex InstalledVersionRegex();
 
     private const string LatestVersionPattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)\ for\ Windows";

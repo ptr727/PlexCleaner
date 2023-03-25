@@ -105,8 +105,7 @@ internal class Monitor
                 Log.Logger.Information("Monitored changes in : {Folder}", folder);
             }
 
-            Process process = new();
-            process.ProcessFolders(watchlist);
+            Process.ProcessFolders(watchlist);
             Process.DeleteEmptyFolders(watchlist);
         }
 

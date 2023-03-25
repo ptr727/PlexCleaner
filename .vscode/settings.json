@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "archlinux",
         "checkfornewtools",
         "commandline",
         "defaultsettings",
@@ -8,9 +9,12 @@
         "Jellyfin",
         "Matroska",
         "mediafiles",
+        "Nerdbank",
+        "Newtonsoft",
         "Plex",
         "plexcleaner",
         "printmediainfo",
+        "Serilog",
         "settingsfile",
         "threadcount",
         "Vorbis"

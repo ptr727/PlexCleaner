@@ -11,8 +11,6 @@ namespace PlexCleaner;
 // Base
 public record ConfigFileJsonSchemaBase
 {
-    public ConfigFileJsonSchemaBase() { }
-
     // TODO: How to set the $schema through e.g. attributes on the class?
     // https://stackoverflow.com/questions/71625019/how-to-inject-the-json-schema-value-during-newtonsoft-jsonconvert-serializeobje
     // Schema reference
@@ -32,8 +30,6 @@ public record ConfigFileJsonSchemaBase
 [Obsolete]
 public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    public ConfigFileJsonSchema1() { }
-
     // Deprecated
     [Obsolete]
     internal ConvertOptions1 ConvertOptions { get; set; } = new();

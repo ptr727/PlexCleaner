@@ -269,7 +269,7 @@ public class ProcessFile
         // Conditional
         if (!Program.Config.VerifyOptions.AutoRepair)
         {
-            // If repair is not enabled jsut clear error state
+            // If repair is not enabled just clear error state
             ClearMediaInfoErrors();
             return true;
         }
@@ -1727,7 +1727,7 @@ public class ProcessFile
             // Use the first track
             var videoInfo = MkvMergeInfo.Video.First();
             selectMediaInfo.Move(videoInfo, true);
-            Log.Logger.Warning("No video track matching requested language : {Available} != {Languages}, Using: {Selected}", Language.GetLanguageList(MkvMergeInfo.Video), Program.Config.ProcessOptions.KeepLanguages, videoInfo.LanguageIetf);
+            Log.Logger.Warning("No video track matching requested language : {Available} not in {Languages}, Selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Video), Program.Config.ProcessOptions.KeepLanguages, videoInfo.LanguageIetf);
         }
 
         // Keep at least one audio track if any
@@ -1736,13 +1736,13 @@ public class ProcessFile
             // Use the preferred audio codec track from the unselected tracks
             var audioInfo = FindPreferredAudio(selectMediaInfo.NotSelected.Audio);
             selectMediaInfo.Move(audioInfo, true);
-            Log.Logger.Warning("No audio track matching requested language : {Available} != {Languages}, Using: {Selected}", Language.GetLanguageList(MkvMergeInfo.Audio), Program.Config.ProcessOptions.KeepLanguages, audioInfo.LanguageIetf);
+            Log.Logger.Warning("No audio track matching requested language : {Available} not in {Languages}, Selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Audio), Program.Config.ProcessOptions.KeepLanguages, audioInfo.LanguageIetf);
         }
 
         // No language matching subtitle tracks
         if (selectMediaInfo.Selected.Subtitle.Count == 0 && MkvMergeInfo.Subtitle.Count > 0)
         {
-            Log.Logger.Warning("No subtitle track matching requested language : {Available} != {Languages}", Language.GetLanguageList(MkvMergeInfo.Subtitle), Program.Config.ProcessOptions.KeepLanguages);
+            Log.Logger.Warning("No subtitle track matching requested language : {Available} not in {Languages}", Language.GetLanguageList(MkvMergeInfo.Subtitle), Program.Config.ProcessOptions.KeepLanguages);
         }
 
         // Selected is Keep
@@ -1753,6 +1753,14 @@ public class ProcessFile
 
     static AudioInfo FindPreferredAudio(IEnumerable<TrackInfo> trackInfoList)
     {
+        // No preferred tracks, or only 1 track, use first track
+        Debug.Assert(trackInfoList.Count() > 0);
+        if (Program.Config.ProcessOptions.PreferredAudioFormats.Count == 0 ||
+            trackInfoList.Count() == 1)
+        {
+            return (AudioInfo)trackInfoList.First();
+        }
+
         // Iterate through the preferred codecs in order
         var audioInfoList = trackInfoList.OfType<AudioInfo>().ToList();
         foreach (var codec in Program.Config.ProcessOptions.PreferredAudioFormats)
@@ -1761,12 +1769,13 @@ public class ProcessFile
             var audioInfo = audioInfoList.Find(item => item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
             if (audioInfo != null)
             {
-                // Done
+                Log.Logger.Information("Preferred audio codec selected : {Preferred} in {Codecs}", audioInfo.Format, audioInfoList.Select(item => item.Format));
                 return audioInfo;
             }
         }
 
         // Return first item
+        Log.Logger.Information("No audio codec matching preferred codecs : {Preferred} not in {Codecs}, Selecting {Selected}", Program.Config.ProcessOptions.PreferredAudioFormats, audioInfoList.Select(item => item.Format), audioInfoList.First().Codec);
         return audioInfoList.First();
     }
 
