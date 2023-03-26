@@ -386,7 +386,8 @@ internal class Process
                 break;
             }
 
-            // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux, are logically separate, but could be combined
+            // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux, are logically separate,
+            // but could be combined to complete in one remux operation
 
             // Remove all the duplicate tracks
             if (!processFile.RemoveDuplicateTracks(ref modified) ||
@@ -405,7 +406,7 @@ internal class Process
             }
 
             // Verify media streams, and repair if possible
-            // Save the state but do not break yet, if file was modified cleanup could still happen
+            // Save the state but do not break yet, if file was modified further cleanup could still be required
             bool verified = processFile.Verify(ref modified);
             if (Program.IsCancelled())
             {

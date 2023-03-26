@@ -963,7 +963,7 @@ public class ProcessFile
             return true;
         }
 
-        // Conditional
+        // Conditional verify metadata
         if (!ShouldVerify(Process.Tasks.VerifyMetadata))
         {
             // Skip
@@ -987,7 +987,7 @@ public class ProcessFile
             // Warn if audio or video tracks are missing
             if (MediaInfoInfo.Video.Count == 0 || MediaInfoInfo.Audio.Count == 0)
             {
-                Log.Logger.Warning("File missing audio ({Audio}) or video ({Video}) track : {FileName}", MediaInfoInfo.Audio.Count, MediaInfoInfo.Video.Count, FileInfo.Name);
+                Log.Logger.Warning("File missing audio or video tracks : Audio: {Audio}, Video: {Video} : {FileName}", MediaInfoInfo.Audio.Count, MediaInfoInfo.Video.Count, FileInfo.Name);
                 MediaInfoInfo.WriteLine("Missing");
 
                 // Warning only, continue
@@ -996,7 +996,7 @@ public class ProcessFile
             // Warn if more than one video track
             if (MediaInfoInfo.Video.Count > 1)
             {
-                Log.Logger.Warning("File has more than one video ({Video}) track : {FileName}", MediaInfoInfo.Video.Count, FileInfo.Name);
+                Log.Logger.Warning("File has more than one video track : Video: {Video} : {FileName}", MediaInfoInfo.Video.Count, FileInfo.Name);
                 MediaInfoInfo.WriteLine("Extra");
 
                 // Warning only, continue
@@ -1571,9 +1571,9 @@ public class ProcessFile
 
         // Use the default track, else the first track
         var videoInfo = FfProbeInfo.Video.Find(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default));
-        videoInfo ??= FfProbeInfo.Video.First();
+        videoInfo ??= FfProbeInfo.Video.FirstOrDefault();
         var audioInfo = FfProbeInfo.Audio.Find(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default));
-        audioInfo ??= FfProbeInfo.Audio.First();
+        audioInfo ??= FfProbeInfo.Audio.FirstOrDefault();
 
         // Compute bitrate from packets
         bitrateInfo = new BitrateInfo();
@@ -1649,9 +1649,13 @@ public class ProcessFile
         if (selectMediaInfo.Selected.Audio.Count > 0 &&
             selectMediaInfo.Selected.Video.Count == 0)
         {
-            // If the video is not H264 or H265 (by experimentation), then tag the video to also be reencoded
-            var reEncodevideo = selectMediaInfo.Selected.Video.FindAll(item => !ReEncodeVideoOnAudioReEncode.Contains(item.Codec));
-            selectMediaInfo.Move(reEncodevideo, true);
+            // If the video is not H264, H265 or AV1 (by experimentation), then tag the video to also be reencoded
+            var reEncodeVideo = selectMediaInfo.NotSelected.Video.FindAll(item => !ReEncodeVideoOnAudioReEncode.Contains(item.Format, StringComparer.OrdinalIgnoreCase));
+            if (reEncodeVideo.Count > 0) 
+            {
+                selectMediaInfo.Move(reEncodeVideo, true);
+                Log.Logger.Warning("Including incompatible Video track for Audio only ReEncoding");
+            }
         }
 
         // Selected is ReEncode
@@ -1729,7 +1733,7 @@ public class ProcessFile
             // Use the first track
             var videoInfo = MkvMergeInfo.Video.First();
             selectMediaInfo.Move(videoInfo, true);
-            Log.Logger.Warning("No video track matching requested language : {Available} not in {Languages}, Selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Video), Program.Config.ProcessOptions.KeepLanguages, videoInfo.LanguageIetf);
+            Log.Logger.Warning("No video track matching requested language : {Available} not in {Languages}, selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Video), Program.Config.ProcessOptions.KeepLanguages, videoInfo.LanguageIetf);
         }
 
         // Keep at least one audio track if any
@@ -1738,7 +1742,7 @@ public class ProcessFile
             // Use the preferred audio codec track from the unselected tracks
             var audioInfo = FindPreferredAudio(selectMediaInfo.NotSelected.Audio);
             selectMediaInfo.Move(audioInfo, true);
-            Log.Logger.Warning("No audio track matching requested language : {Available} not in {Languages}, Selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Audio), Program.Config.ProcessOptions.KeepLanguages, audioInfo.LanguageIetf);
+            Log.Logger.Warning("No audio track matching requested language : {Available} not in {Languages}, selecting {Selected}", Language.GetLanguageList(MkvMergeInfo.Audio), Program.Config.ProcessOptions.KeepLanguages, audioInfo.LanguageIetf);
         }
 
         // No language matching subtitle tracks
@@ -1792,5 +1796,5 @@ public class ProcessFile
 
     private const int RefreshWaitTime = 5;
     private static readonly string[] Hdr10Format = { "SMPTE ST 2086", "SMPTE ST 2094" };
-    private static readonly string[] ReEncodeVideoOnAudioReEncode = { "h264", "hevc" };
+    private static readonly string[] ReEncodeVideoOnAudioReEncode = { "h264", "hevc", "av1" };
 }

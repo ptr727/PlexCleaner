@@ -69,11 +69,6 @@ public class SelectMediaInfo
         }
     }
 
-    public void Add(TrackInfo trackInfo, Func<TrackInfo, bool> selectFunc)
-    {
-        Add(trackInfo, selectFunc(trackInfo));
-    }
-
     public void Add(TrackInfo trackInfo, bool select)
     {
         switch (trackInfo)
@@ -92,34 +87,12 @@ public class SelectMediaInfo
         }
     }
 
-    public void Move(MediaInfo mediaInfo, bool select)
-    {
-        Debug.Assert(mediaInfo.Parser == Selected.Parser);
-        Debug.Assert(mediaInfo.Parser == NotSelected.Parser);
-        Move(mediaInfo.Video, select);
-        Move(mediaInfo.Audio, select);
-        Move(mediaInfo.Subtitle, select);
-    }
-
-    public void Move(IEnumerable<TrackInfo> trackList, Func<TrackInfo, bool> selectFunc)
-    {
-        foreach (var trackInfo in trackList)
-        {
-            Move(trackInfo, selectFunc(trackInfo));
-        }
-    }
-
     public void Move(IEnumerable<TrackInfo> trackList, bool select)
     {
         foreach (var trackInfo in trackList)
         {
             Move(trackInfo, select);
         }
-    }
-
-    public void Move(TrackInfo trackInfo, Func<TrackInfo, bool> selectFunc)
-    {
-        Move(trackInfo, selectFunc(trackInfo));
     }
 
     public void Move(TrackInfo trackInfo, bool select)

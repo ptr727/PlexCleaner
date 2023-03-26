@@ -76,30 +76,25 @@ public class MediaInfo
     }
     public void RemoveCoverArt()
     {
-        // Video tracks only
+        // No video tracks nothing to do
         if (Video.Count == 0)
         {
             return;
         }
 
-        // TODO: Find a more deterministic way to identify cover art and thumbnail clips
-        // Some media includes a thumbnail preview and main video tracks
-        // Some media includes static cover art
-
         // Find all tracks with cover art
-        var coverArtTracks = Video.FindAll(item => TrackInfo.MatchCoverArt(item.Codec));
+        var coverArtTracks = Video.FindAll(item => item.MatchCoverArt());
 
         // Are all tracks cover art
         if (Video.Count == coverArtTracks.Count)
         {
-            Log.Logger.Error("All video tracks are cover art");
-            return;
+            Log.Logger.Error("All video tracks are cover art : {Parser}", Parser);
         }
 
         // Remove all cover art tracks
         foreach (var item in coverArtTracks)
         {
-            Log.Logger.Warning("Ignoring cover art video track : {Codec}", item.Codec);
+            Log.Logger.Warning("Ignoring cover art video track : {Parser}:{Format}:{Codec}", Parser, item.Format, item.Codec);
             Video.Remove(item);
         }
     }

@@ -22,9 +22,9 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
-        if (MatchCoverArt(Codec))
+        if (MatchCoverArt())
         {
-            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Codec}", Codec);
+            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
     }
 
@@ -59,9 +59,9 @@ public class VideoInfo : TrackInfo
         // Missing: HDR
 
         // Cover art
-        if (MatchCoverArt(Codec))
+        if (MatchCoverArt())
         {
-            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Codec}", Codec);
+            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
     }
 
@@ -89,9 +89,9 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
-        if (MatchCoverArt(Codec))
+        if (MatchCoverArt())
         {
-            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Codec}", Codec);
+            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
     }
 

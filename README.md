@@ -462,13 +462,13 @@ Settings allows for custom configuration of:
 Get encoder options:
 
 - List all supported encoders: `ffmpeg -encoders`
-- List options supported by an encoder: `ffmpeg -h encoder=libaom-av1`
+- List options supported by an encoder: `ffmpeg -h encoder=libsvtav1`
 
 Example video encoder options:
 
 - [H.264](https://trac.ffmpeg.org/wiki/Encode/H.264): `libx264 -crf 22 -preset medium`
 - [H.265](https://trac.ffmpeg.org/wiki/Encode/H.265): `libx265 -crf 26 -preset medium`
-- [AV1](https://trac.ffmpeg.org/wiki/Encode/AV1): `libaom-av1 -crf 30`
+- [AV1](https://trac.ffmpeg.org/wiki/Encode/AV1): `libsvtav1 -crf 30 -preset 5`
 
 Example hardware assisted video encoding options:
 
@@ -497,13 +497,13 @@ Settings allows for custom configuration of:
 Get encoder options:
 
 - List all supported encoders: `HandBrakeCLI.exe --help`
-- List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list x264`
+- List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list svt_av1`
 
 Example video encoder options:
 
 - H.264: `x264 --quality 22 --encoder-preset medium`
 - H.265: `x265 --quality 26 --encoder-preset medium`
-- AV1: `svt_av1 --quality 30 --encoder-preset 8`
+- AV1: `svt_av1 --quality 30 --encoder-preset 5`
 
 Example hardware assisted video encoding options:
 

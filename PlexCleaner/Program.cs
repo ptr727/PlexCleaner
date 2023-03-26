@@ -423,7 +423,8 @@ internal class Program
             if (Config.ToolsOptions.AutoUpdate &&
                 !Tools.CheckForNewTools())
             {
-                return null;
+                // Ignore error, do not stop execution in case of e.g. a site being down
+                Log.Logger.Error("Checking for new tools failed, continuing with existing tools.");
             }
 
             // Verify tools

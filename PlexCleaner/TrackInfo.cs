@@ -307,6 +307,11 @@ public partial class TrackInfo
         return !IsUsefulTrackTitle(title);
     }
 
+    public bool MatchCoverArt()
+    {
+        return MatchCoverArt(Codec) || MatchCoverArt(Format);
+    }
+
     public static bool MatchCoverArt(string codec)
     {
         return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
@@ -316,7 +321,7 @@ public partial class TrackInfo
     private static partial Regex TrackRegex();
 
     // Cover art and thumbnail formats
-    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "mjpeg", "png" };
+    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
     // Not so useful track titles
     private static readonly string[] UsefulTitles = { "SDH", "Commentary", "Forced" };
 }
