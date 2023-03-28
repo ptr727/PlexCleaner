@@ -118,10 +118,10 @@ public static class Language
         return false;
     }
 
-    public static bool IsMatch(string prefix, IEnumerable<string> languages)
+    public static bool IsMatch(string language, IEnumerable<string> prefixList)
     {
-        // Match prefix with any of the languages
-        return languages.Any(item => IsMatch(prefix, item));
+        // Match language with any of the prefixes
+        return prefixList.Any(prefix => IsMatch(prefix, language));
     }
 
     public static List<string> GetLanguageList(IEnumerable<TrackInfo> tracks)

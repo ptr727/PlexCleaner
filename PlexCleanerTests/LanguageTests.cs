@@ -23,6 +23,9 @@ public class LanguageTests : IClassFixture<PlexCleanerTests>
 
     [Theory]
     [InlineData("en", "en")]
+    [InlineData("en", "en-US")]
+    [InlineData("en", "en-GB")]
+    [InlineData("en-GB", "en-GB")]
     [InlineData("zh", "zh-Hant")]
     public void Match_Language_Tags(string prefix, string tag)
     {
