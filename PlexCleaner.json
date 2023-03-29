@@ -54,7 +54,7 @@
       ".ass",
       ".vtt"
     ],
-    // Enable re-mux to MKV of non-MKV files
+    // Enable re-mux non-MKV files to MKV
     "ReMux": true,
     // File extensions to remux to MKV
     "ReMuxExtensions": [
@@ -131,13 +131,13 @@
     // Use RFC 5646 format
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
-    "RemoveUnwantedLanguageTracks": true,
+    "RemoveUnwantedLanguageTracks": false,
     // Track language matched tags to keep
     // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
     "KeepLanguages": [
       "en",
       "af",
-      "zh-Hans",
+      "zh",
       "id"
     ],
     // Keep all tracks flagged as original language

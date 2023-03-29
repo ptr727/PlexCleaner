@@ -63,8 +63,9 @@ internal class Process
             Program.Config.ProcessOptions.DefaultLanguage = Language.English;
         }
 
-        // Always keep zxx no linguistic content and the default language
+        // Always keep no linguistic content (zxx), undefined (und), and the default language
         Program.Config.ProcessOptions.KeepLanguages.Add(Language.None);
+        Program.Config.ProcessOptions.KeepLanguages.Add(Language.Undefined);
         Program.Config.ProcessOptions.KeepLanguages.Add(Program.Config.ProcessOptions.DefaultLanguage);
     }
 

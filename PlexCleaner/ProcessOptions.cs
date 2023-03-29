@@ -241,7 +241,7 @@ public record ProcessOptions : ProcessOptions2
         DeInterlace = true;
         ReEncode = true;
         SetUnknownLanguage = true;
-        RemoveUnwantedLanguageTracks = true;
+        RemoveUnwantedLanguageTracks = false;
         SetIetfLanguageTags = true;
         RemoveTags = true;
         UseSidecarFiles = true;
@@ -305,7 +305,7 @@ public record ProcessOptions : ProcessOptions2
         {
             "en",
             "af",
-            "zh-Hans",
+            "zh",
             "in"
         };
         KeepOriginalLanguage = true;

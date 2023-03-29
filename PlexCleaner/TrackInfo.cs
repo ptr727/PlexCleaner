@@ -127,8 +127,11 @@ public partial class TrackInfo
         // Number: 1-based track number from Matroska header
         Number = trackJson.Properties.Number;
 
-        // Has tags
-        HasTags = IsTagTitle(Title);
+        // TODO: Anything other than title for tags?
+        HasTags = NotTrackTitleFlag();
+
+        // Set flags from title
+        SetFlagsFromTitle("MkvToolJsonSchema");
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -194,8 +197,11 @@ public partial class TrackInfo
         Id = trackJson.Index;
         Number = trackJson.Index;
 
-        // Has tags
-        HasTags = IsTagTitle(Title);
+        // TODO: Anything other than title for tags?
+        HasTags = NotTrackTitleFlag();
+
+        // Set flags from title
+        SetFlagsFromTitle("FfMpegToolJsonSchema");
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -249,8 +255,11 @@ public partial class TrackInfo
         // Use StreamOrder for Id
         Id = trackXml.StreamOrder;
 
-        // Has tags
-        HasTags = IsTagTitle(Title);
+        // TODO: Anything other than title for tags?
+        HasTags = NotTrackTitleFlag();
+
+        // Set flags from title
+        SetFlagsFromTitle("MediaInfoToolXmlSchema");
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -289,22 +298,32 @@ public partial class TrackInfo
             HasTags);
     }
 
-    public static bool IsUsefulTrackTitle(string title)
+    public bool NotTrackTitleFlag()
     {
-        // Does the track have a useful title
-        return UsefulTitles.Any(useful => title.Equals(useful, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public static bool IsTagTitle(string title)
-    {
-        // Empty is not a tag
-        if (string.IsNullOrEmpty(title))
-        {
+        // NOT logic, i.e. title is not a flag
+        if (string.IsNullOrEmpty(Title))
+        { 
+            // Empty is NOT a flag
             return false;
         }
 
-        // Useful is not a tag
-        return !IsUsefulTrackTitle(title);
+        // NOT a flag is NOT a flag
+        return !TitleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public void SetFlagsFromTitle(string log)
+    {
+        // Add flags based on titles
+        foreach (var tuple in TitleFlags)
+        {
+            // Only log if flag not already set
+            if (Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase) &&
+                !Flags.HasFlag(tuple.Item2))
+            {
+                Flags |= tuple.Item2;
+                Log.Logger.Information("{Log} : Setting track Flag from Title : {Title} -> {Flag}", log, Title, tuple.Item2);
+            }
+        }
     }
 
     public bool MatchCoverArt()
@@ -322,6 +341,13 @@ public partial class TrackInfo
 
     // Cover art and thumbnail formats
     private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
-    // Not so useful track titles
-    private static readonly string[] UsefulTitles = { "SDH", "Commentary", "Forced" };
+
+    // Track title to flag mapping
+    private static readonly ValueTuple<string, FlagsType>[] TitleFlags = 
+    { 
+        new ("SDH", FlagsType.HearingImpaired),
+        new ("Commentary", FlagsType.Commentary),
+        new ("CC", FlagsType.Commentary),
+        new ("Forced", FlagsType.Forced)
+    };
 }

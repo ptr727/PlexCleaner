@@ -1679,38 +1679,44 @@ public class ProcessFile
         var languageList = Language.GetLanguageList(trackList);
         foreach (var language in languageList)
         {
-            // Get a list of all tracks matching this language
+            // Get all tracks matching this language
             var trackLanguageList = trackList.FindAll(item => Language.IsEqual(language, item.LanguageIetf));
 
-            // Keep all tracks with flags
-            selectMediaInfo.Move(trackLanguageList.FindAll(item => item.Flags != TrackInfo.FlagsType.None), true);
-
-            // Keep all tracks with useful "flag" titles
-            // TODO: Eventually titles should not be used but track flags should be used for e.g. "SDH" or "Commentary"
-            selectMediaInfo.Move(trackLanguageList.FindAll(item => TrackInfo.IsUsefulTrackTitle(item.Title)), true);
-
-            // If multiple audio tracks exist for this language, find the preferred audio codec track
+            // If multiple audio tracks exist for this language, keep the preferred audio codec track
             var audioTrackList = trackLanguageList.FindAll(item => item.GetType() == typeof(AudioInfo));
             if (audioTrackList.Count > 1)
             {
                 var audioInfo = FindPreferredAudio(audioTrackList);
                 selectMediaInfo.Move(audioInfo, true);
             }
+
+            // Keep all tracks with flags
+            var trackFlagList = trackLanguageList.FindAll(item => item.Flags != TrackInfo.FlagsType.None);
+            selectMediaInfo.Move(trackFlagList, true);
+
+            // Keep one non-flag track
+            // E.g. for subtitles it could be forced, hearingimpaired, and one normal
+            var videoNotFlagList = trackLanguageList.FindAll(item => item.Flags == TrackInfo.FlagsType.None && item.GetType() == typeof(VideoInfo));
+            if (videoNotFlagList.Count > 0)
+            {
+                selectMediaInfo.Move(videoNotFlagList.First(), true);
+            }
+            var audioNotFlagList = trackLanguageList.FindAll(item => item.Flags == TrackInfo.FlagsType.None && item.GetType() == typeof(AudioInfo));
+            if (audioNotFlagList.Count > 0)
+            {
+                selectMediaInfo.Move(audioNotFlagList.First(), true);
+            }
+            var subtitleNotFlagList = trackLanguageList.FindAll(item => item.Flags == TrackInfo.FlagsType.None && item.GetType() == typeof(SubtitleInfo));
+            if (subtitleNotFlagList.Count > 0)
+            {
+                selectMediaInfo.Move(subtitleNotFlagList.First(), true);
+            }
         }
 
-        // Keep at least one of each track type
-        if (selectMediaInfo.Selected.Video.Count == 0 && MkvMergeInfo.Video.Count > 0)
-        {
-            selectMediaInfo.Move(MkvMergeInfo.Video.First(), true);
-        }
-        if (selectMediaInfo.Selected.Audio.Count == 0 && MkvMergeInfo.Audio.Count > 0)
-        {
-            selectMediaInfo.Move(MkvMergeInfo.Audio.First(), true);
-        }
-        if (selectMediaInfo.Selected.Subtitle.Count == 0 && MkvMergeInfo.Subtitle.Count > 0)
-        {
-            selectMediaInfo.Move(MkvMergeInfo.Subtitle.First(), true);
-        }
+        // We should have at least one of each kind of track, if any exists
+        Debug.Assert(selectMediaInfo.Selected.Video.Count > 0 || MkvMergeInfo.Video.Count == 0);
+        Debug.Assert(selectMediaInfo.Selected.Audio.Count > 0 || MkvMergeInfo.Audio.Count == 0);
+        Debug.Assert(selectMediaInfo.Selected.Subtitle.Count > 0 || MkvMergeInfo.Subtitle.Count == 0);
 
         // Selected is Keep
         // NotSelected is Remove
@@ -1720,6 +1726,8 @@ public class ProcessFile
 
     public SelectMediaInfo FindUnwantedLanguageTracks()
     {
+        // Note that zxx, und, and the default language will always be added to Program.Config.ProcessOptions.KeepLanguages
+
         // IETF language field will only be set for MkvMerge
         // Select tracks with wanted languages, or the original language if set to keep
         // Selected is Keep

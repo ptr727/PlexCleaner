@@ -31,10 +31,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Alternate sources for up to date versions, and up to date library dependencies, and built with all (non-commercial) options enabled, are not readily available.
     - I decided to switch to [Arch Linux](https://archlinux.org/), as it has a very well maintained and up to date application ecosystem.
     - All the 3rd party tools are now installed using `pacman` and sourced from the [Arch Linux Package Repository](https://archlinux.org/packages/).
-    - Switching from Ubuntu to Arch is a very recent change, and will need some bake time.
-  - Upgraded from .NET 6 to .NET 7.
-    - Switched from `Regex` to `GeneratedRegex` for a slight performance improvement.
-    - Switched from `DllImport` to `LibraryImport` for cross platform compatibility.
+  - Upgraded from .NET 6 to .NET 7, utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
   - Settings JSON schema updated from v2 to v3:
     - Added support for custom FFmpeg and HandBrake command line arguments, e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
       - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
@@ -44,12 +41,14 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
     - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
     - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
-    - Language tags now support [RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) format.
+      - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
+      - FfMpeg and HandBrake removes IETF language tags, requiring remuxing again after reencoding or deinterlacing.
+    - Language tag matching now support [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats.
       - See the [Language Matching](#language-matching) section for matching details.
       - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
       - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
       - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
-      - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format.
+      - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format, e.g. `eng` to `en`.
       - On v3 schema upgrade old ISO 639-3-2 3 letter tags will be replaced with generic RFC 5646 tags.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
@@ -366,7 +365,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     "KeepLanguages": [
       "en",
       "af",
-      "zh-Hans",
+      "zh",
       "id"
     ],
     // Keep all tracks flagged as original language
@@ -684,6 +683,7 @@ This is useful when the subtitles are forced or contains offensive language or a
 - [Setup .NET Core SDK](https://github.com/marketplace/actions/setup-net-core-sdk)
 - [Build and push Docker images](https://github.com/marketplace/actions/build-and-push-docker-images)
 - [Rob Savoury PPA](https://launchpad.net/~savoury1)
+- [Arch Linux](https://archlinux.org/)
 
 ## Sample Media Files
 

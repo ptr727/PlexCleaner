@@ -74,9 +74,8 @@ public class MkvPropEditTool : MkvMergeTool
         DefaultArgs(fileName, commandline);
         commandline.Append("--tags all: --delete title ");
 
-        // Delete all track titles if the title is not considered "useful"
-        // TODO: Consider using HasTags() or other methods to be more consistent
-        var trackList = mediaInfo.GetTrackList().Where(track => !string.IsNullOrEmpty(track.Title) && !TrackInfo.IsUsefulTrackTitle(track.Title)).ToList();
+        // Delete all track titles if the title is not a flag substitute
+        var trackList = mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag()).ToList();
         trackList.ForEach(track => commandline.Append($"--edit track:@{track.Number} --delete name "));
 
         // Clear all tags and main title and track titles
