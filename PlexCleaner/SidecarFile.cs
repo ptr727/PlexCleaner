@@ -162,32 +162,6 @@ public class SidecarFile
         return true;
     }
 
-    public bool Delete()
-    {
-        try
-        {
-            if (SidecarFileInfo.Exists)
-            {
-                SidecarFileInfo.Delete();
-            }
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            return false;
-        }
-
-        // Reset
-        SidecarJson = null;
-        State = StatesType.None;
-        FfProbeInfo = null;
-        MkvMergeInfo = null;
-        MediaInfoInfo = null;
-
-        Log.Logger.Information("Sidecar deleted : {FileName}", SidecarFileInfo.Name);
-
-        return true;
-    }
-
     public bool Open(bool modified = false)
     {
         // Open will Read, Create, Update
@@ -233,68 +207,6 @@ public class SidecarFile
         return true;
     }
 
-    public bool Upgrade()
-    {
-        // Does the media and sidecar files exist
-        if (!SidecarFileInfo.Exists)
-        {
-            Log.Logger.Error("Sidecar file not found : {File}", SidecarFileInfo.FullName);
-            return false;
-        }
-        if (!MediaFileInfo.Exists)
-        {
-            Log.Logger.Error("Media file not found : {File}", MediaFileInfo.FullName);
-            return false;
-        }
-
-        // Read the JSON from file
-        // Get the info from JSON
-        if (!ReadJson() ||
-            !GetInfoFromJson())
-        {
-            return false;
-        }
-
-        // Check one by one to log all the mismatches
-        bool update = !IsSchemaCurrent();
-        // ReSharper disable once ConvertIfToOrExpression
-        if (!IsStateCurrent())
-        {
-            update = true;
-        }
-        if (!IsMediaCurrent(true))
-        {
-            update = true;
-        }
-        if (!IsToolsCurrent(true))
-        {
-            update = true;
-        }
-
-        if (!update)
-        {
-            Log.Logger.Information("Sidecar up to date : State: {State} : {FileName}", State, SidecarFileInfo.Name);
-            return true;
-        }
-
-        // Set the JSON info from tool info
-        // Write the JSON to file
-        if (!SetJsonInfo() ||
-            !WriteJson())
-        {
-            return false;
-        }
-
-        Log.Logger.Information("Sidecar upgraded : State: {State} : {FileName}", State, SidecarFileInfo.Name);
-
-        return true;
-    }
-
-    public bool IsCurrent()
-    {
-        return IsMediaAndToolsCurrent(true);
-    }
-
     private bool IsMediaAndToolsCurrent(bool log)
     {
         // Follow all steps to log all mismatches, do not jump out early
@@ -317,11 +229,6 @@ public class SidecarFile
     private bool IsStateCurrent()
     {
         return State == SidecarJson.State;
-    }
-
-    private bool IsSchemaCurrent()
-    {
-        return SidecarJson.SchemaVersion == SidecarFileJsonSchema.Version;
     }
 
     public bool IsWriteable()

@@ -35,7 +35,7 @@ public class FfMpegIdetInfo
 
     public bool IsInterlaced()
     {
-        // TODO: Based on experimentation this logic is not reliable
+        // TODO: Based on experimentation this logic is not completely reliable
         // E.g. When the interlaced frames are > 0, and running deinterlace, the interlaced frame count is still > 0
 
         // All undetermined

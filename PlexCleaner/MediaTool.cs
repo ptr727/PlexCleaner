@@ -68,7 +68,6 @@ public abstract class MediaTool
     private string GetToolName()
     {
         // Windows or Linux
-        // TODO: Mac may work the same as Linux, but untested
         return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
     }
 
@@ -92,7 +91,6 @@ public abstract class MediaTool
     public bool GetLatestVersion(out MediaToolInfo mediaToolInfo)
     {
         // Windows or Linux
-        // TODO: Mac may work the same as Linux, but untested
         return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
     }
 

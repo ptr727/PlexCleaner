@@ -270,7 +270,7 @@ public partial class TrackInfo
     public string Codec { get; set; } = "";
     public string Language { get; set; } = "";
     public string LanguageIetf { get; set; } = "";
-    public string AnyLanguage { get => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language; }
+    public string LanguageAny { get => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language; }
     public int Id { get; set; }
     public int Number { get; set; }
     public StateType State { get; set; } = StateType.None;

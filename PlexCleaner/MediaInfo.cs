@@ -14,12 +14,31 @@ public class MediaInfo
         Parser = parser;
     }
 
+    public MediaInfo Clone()
+    {
+        // Shallow copy
+        var clonedInfo = (MediaInfo)MemberwiseClone();
+
+        // Create new collections containing the old items
+        List<VideoInfo> newVideo = new();
+        newVideo.AddRange(Video);
+        clonedInfo.Video = newVideo;
+        List<AudioInfo> newAudio = new();
+        newAudio.AddRange(Audio);
+        clonedInfo.Audio = newAudio;
+        List<SubtitleInfo> newSubtitle = new();
+        newSubtitle.AddRange(Subtitle);
+        clonedInfo.Subtitle = newSubtitle;
+
+        return clonedInfo;
+    }
+
     // MkvMerge, FfProbe, MediaInfo
     public MediaTool.ToolType Parser { get; }
 
-    public List<VideoInfo> Video { get; } = new();
-    public List<AudioInfo> Audio { get; } = new();
-    public List<SubtitleInfo> Subtitle { get; } = new();
+    public List<VideoInfo> Video { get; private set; } = new();
+    public List<AudioInfo> Audio { get; private set; } = new();
+    public List<SubtitleInfo> Subtitle { get; private set; } = new();
 
     public bool HasTags { get; set; }
     public bool HasErrors { get; set; }
@@ -116,5 +135,50 @@ public class MediaInfo
         Debug.Assert(mediaInfoTrackList.Count == matchedTrackList.Count);
 
         return matchedTrackList;
+    }
+
+    public bool VerifyTrackOrder(MediaInfo mediaInfo)
+    {
+        // Verify that this MediaInfo matches the presented MediaInfo
+        // Used to verify that the track numbers for MkvMerge remains the same prior to and after ffmpeg and handbrake
+        // This logic works for MkvMerge only
+        Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
+        Debug.Assert(mediaInfo.Parser == MediaTool.ToolType.MkvMerge);
+
+        // Track counts
+        if (Count != mediaInfo.Count)
+        { 
+            return false;
+        }
+
+        // Get track items as list
+        var thisTrackList = GetTrackList();
+        var thatTrackList = mediaInfo.GetTrackList();
+        foreach (var thisItem in thisTrackList)
+        {
+            // Find the matching item by matroska header number
+            var thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
+            if (thatItem == null)
+            {
+                return false;
+            }
+
+            // The types have to match
+            if (thisItem.GetType() != thatItem.GetType())
+            {
+                return false;
+            }
+
+            // The ISO693-3 language has to match
+            if (!thisItem.Language.Equals(thatItem.Language))
+            {
+                return false;
+            }
+
+            // Other properties may have changed during encoding
+        }
+
+        // Done
+        return true;
     }
 }

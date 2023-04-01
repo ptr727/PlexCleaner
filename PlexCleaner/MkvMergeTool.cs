@@ -11,6 +11,7 @@ using InsaneGenius.Utilities;
 using Serilog;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
+// mkvmerge [global options] {-o out} [options1] {file1} [[options2] {file2}] [@options-file.json]
 
 namespace PlexCleaner;
 
@@ -287,22 +288,27 @@ public partial class MkvMergeTool : MediaTool
         return exitCode is 0 or 1;
     }
 
-    public bool MergeToMkv(string sourceOne, MediaInfo keepOne, string sourceTwo, string outputName)
+    public bool MergeToMkv(string sourceOne, string sourceTwo, MediaInfo keepTwo, string outputName)
     {
-        // Selectively merge tracks from sourceOne with all tracks in sourceTwo
+        // Merge all tracks from sourceOne with selected tracks in sourceTwo
 
-        // Verify correct data type
-        Debug.Assert(keepOne.Parser == ToolType.MkvMerge);
+        // Verify correct parser type
+        Debug.Assert(keepTwo.Parser == ToolType.MkvMerge);
 
         // Delete output file
         FileEx.DeleteFile(outputName);
 
         // Build commandline
         StringBuilder commandline = new();
+        // Default args
         CreateDefaultArgs(outputName, commandline);
-        CreateTrackArgs(keepOne, commandline);
-        commandline.Append($"--no-chapters \"{sourceOne}\" \"{sourceTwo}\"");
-
+        // Source one as is
+        commandline.Append($"\"{sourceOne}\" ");
+        // Source two track options
+        CreateTrackArgs(keepTwo, commandline);
+        // Source two
+        // TODO: Why did I use --no-chapters
+        commandline.Append($"\"{sourceTwo}\"");
         // Remux tracks
         var exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;

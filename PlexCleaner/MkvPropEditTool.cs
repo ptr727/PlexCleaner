@@ -3,7 +3,8 @@ using System.Linq;
 using System.Text;
 
 // https://mkvtoolnix.download/doc/mkvpropedit.html
-// Use @ designation for track number from matroska header, not mkvmerge track id
+// mkvpropedit [options] {source-filename} {actions}
+// Use @ designation for track number from matroska header as discovered with mkvmerge identify
 
 namespace PlexCleaner;
 
@@ -25,7 +26,7 @@ public class MkvPropEditTool : MkvMergeTool
         return "mkvpropedit";
     }
 
-    public bool SetTrackLanguage(string fileName, MediaInfo mediaInfo, string language)
+    public bool SetTrackLanguage(string fileName, MediaInfo mediaInfo)
     {
         // Verify correct data type
         Debug.Assert(mediaInfo.Parser == ToolType.MkvMerge);
@@ -33,33 +34,9 @@ public class MkvPropEditTool : MkvMergeTool
         // Build commandline
         StringBuilder commandline = new();
         DefaultArgs(fileName, commandline);
-        mediaInfo.GetTrackList().ForEach(item => commandline.Append($"--edit track:@{item.Number} --set language={language} "));
+        mediaInfo.GetTrackList().ForEach(item => commandline.Append($"--edit track:@{item.Number} --set language={item.LanguageAny} "));
 
         // Set language on all unknown tracks
-        int exitCode = Command(commandline.ToString());
-        return exitCode == 0;
-    }
-
-    public bool SetTrackLanguage(string fileName, int trackId, string language)
-    {
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
-        commandline.Append($"--edit track:@{trackId} --set language={language}");
-
-        // Set track language
-        int exitCode = Command(commandline.ToString());
-        return exitCode == 0;
-    }
-
-    public bool ClearTags(string fileName)
-    {
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
-        commandline.Append("--tags all: --delete title");
-
-        // Clear all tags and delete main title
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }

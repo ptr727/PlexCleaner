@@ -416,7 +416,6 @@ internal class Process
             }
 
             // FfMpeg or HandBrake could undo prior cleanup, repeat
-            // TODO: FfMpeg removes IETF language tags?
             if (!processFile.RepairMediaInfoErrors(ref modified) ||
                 !processFile.SetUnknownLanguageTracks(ref modified) ||
                 !processFile.RemoveTags(ref modified) ||

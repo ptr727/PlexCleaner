@@ -424,7 +424,7 @@ internal class Program
                 !Tools.CheckForNewTools())
             {
                 // Ignore error, do not stop execution in case of e.g. a site being down
-                Log.Logger.Error("Checking for new tools failed, continuing with existing tools.");
+                Log.Logger.Error("Checking for new tools failed but continuing with existing tool versions");
             }
 
             // Verify tools

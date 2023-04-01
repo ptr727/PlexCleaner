@@ -33,8 +33,7 @@ public class Bitrate
             {
                 Minimum = bitrate;
             }
-            // TODO: Chance of overflow
-            Average += bitrate;
+            Average = checked(Average + bitrate);
 
             // Thresholds
             if (threshold > 0)

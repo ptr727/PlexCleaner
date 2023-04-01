@@ -27,30 +27,28 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 3.0:
   - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
-    - The Docker FFmpeg and HandBrake installations provided by Rob Savoury's PPA's are unfortunately [no longer available](https://launchpad.net/~savoury1), a big thank you to Rob, I hope you reach an amicable outcome.
-    - Alternate sources for up to date versions, and up to date library dependencies, and built with all (non-commercial) options enabled, are not readily available.
-    - I decided to switch to [Arch Linux](https://archlinux.org/), as it has a very well maintained and up to date application ecosystem.
-    - All the 3rd party tools are now installed using `pacman` and sourced from the [Arch Linux Package Repository](https://archlinux.org/packages/).
-  - Upgraded from .NET 6 to .NET 7, utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
-  - Settings JSON schema updated from v2 to v3:
-    - Added support for custom FFmpeg and HandBrake command line arguments, e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
-      - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
-      - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
-      - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
-      - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
-    - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
-    - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
-    - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
-      - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
-      - FfMpeg and HandBrake removes IETF language tags, requiring remuxing again after reencoding or deinterlacing.
-    - Language tag matching now support [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats.
-      - See the [Language Matching](#language-matching) section for matching details.
-      - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
+    - The FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer freely available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
+    - Switched to [Arch Linux](https://archlinux.org/) with up to date media tools found in the [Arch Linux Package Repository](https://archlinux.org/packages/).
+  - Switched from .NET 6 to .NET 7.
+    - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
+  - Added support for custom FFmpeg and HandBrake command line arguments.
+    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
+    - Custom options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
+    - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
+    - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
+    - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
+  - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
+  - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
+  - Language tags now support [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) formats.
+    - See the [Language Matching](#language-matching) section usage for details.
+    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
       - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
       - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
-      - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format, e.g. `eng` to `en`.
+    - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format, e.g. `eng` to `en`.
       - On v3 schema upgrade old ISO 639-3-2 3 letter tags will be replaced with generic RFC 5646 tags.
-    - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
+    - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
+      - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
+    - FfMpeg and HandBrake [removes](https://github.com/ptr727/PlexCleaner/issues/148) IETF language tags, requiring special handling to restore the tags during reencoding or deinterlacing.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
@@ -59,6 +57,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
   - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
   - Refactored track selection logic to simplify containment and use with lambda filters.
+  - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
+    - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
@@ -455,7 +455,7 @@ Settings allows for custom configuration of:
 
 - `FfMpegOptions:Global`: Global options, e.g. `-analyzeduration 2147483647 -probesize 2147483647`
 - `FfMpegOptions:Output`: Output options, e.g. `-max_muxing_queue_size 1024 -abort_on empty_output`
-- `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 20 -preset medium`
+- `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 22 -preset medium`
 - `FfMpegOptions:Audio`: Audio encoder options following the `-c:a` parameter, e.g. `ac3`
 
 Get encoder options:
@@ -490,7 +490,7 @@ E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format a
 
 Settings allows for custom configuration of:
 
-- `HandBrakeOptions:Video`: Video encoder options following the `--encode` parameter, e.g. `x264 --quality 20 --encoder-preset medium`
+- `HandBrakeOptions:Video`: Video encoder options following the `--encode` parameter, e.g. `x264 --quality 22 --encoder-preset medium`
 - `HandBrakeOptions:Audio`: Audio encoder options following the `--aencode` parameter, e.g. `copy --audio-fallback ac3`
 
 Get encoder options:

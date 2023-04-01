@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using PlexCleaner;
 
 namespace PlexCleanerTests;
 
@@ -10,9 +11,9 @@ public class PlexCleanerTests : IDisposable
     public PlexCleanerTests()
     {
         // Create defaults for Program Options and Config
-        PlexCleaner.Program.Options = new();
-        PlexCleaner.Program.Config = new();
-        PlexCleaner.Program.Config.SetDefaults();
+        Program.Options = new CommandLineOptions();
+        Program.Config = new ConfigFileJsonSchema();
+        Program.Config.SetDefaults();
     }
 
     public void Dispose()

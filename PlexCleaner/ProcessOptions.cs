@@ -178,9 +178,6 @@ public record ProcessOptions2 : ProcessOptions1
 
     [Required]
     public new HashSet<string> PreferredAudioFormats { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
-
-    [Required]
-    public new HashSet<string> FileIgnoreList { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 // v3

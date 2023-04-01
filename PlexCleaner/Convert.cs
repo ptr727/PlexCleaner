@@ -165,6 +165,23 @@ public static class Convert
                FileEx.DeleteFile(inputName);
     }
 
+    public static bool ReMuxInPlace(string fileName)
+    {
+        // Create a temp output filename
+        string tempName = Path.ChangeExtension(fileName, ".tmprmx");
+        FileEx.DeleteFile(tempName);
+
+        // Remux
+        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
+        {
+            Log.Logger.Error("Failed to Remux the media file: {FileName}", fileName);
+            FileEx.DeleteFile(tempName);
+            return false;
+        }
+
+        return FileEx.RenameFile(tempName, fileName);
+    }
+
     public static bool DeInterlaceToMkv(string inputName, out string outputName)
     {
         // Match the logic in ConvertToMKV()

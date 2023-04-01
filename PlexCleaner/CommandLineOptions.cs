@@ -24,7 +24,7 @@ public class CommandLineOptions
 
     public static int Invoke()
     {
-        // TODO: Remove first argument
+        // TODO: Remove first argument for compatibility
         // https://github.com/dotnet/command-line-api/issues/1781
         RootCommand rootCommand = CreateRootCommand();
         return rootCommand.Invoke(CommandLineStringSplitter.Instance.Split(Environment.CommandLine).ToArray()[1..]);
