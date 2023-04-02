@@ -87,7 +87,10 @@ public partial class TrackInfo
             var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
-                // TODO: Using CultureInfo is not a reliable lookup tool, e.g. cmn-Hant !-> chi
+                // TODO: Using CultureInfo is not a reliable lookup tool, e.g.
+                // "cmn-Hant" !-> "chi"
+                // "yue-Hant"!-> "chi"
+                // "no-NO"!-> "nor"
                 Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup ISO639 Language from IETF LanguageIetf : {LanguageIetf} !-> {Language}", LanguageIetf, Language);
             }
             // Compare lookup language Language
@@ -396,8 +399,8 @@ public partial class TrackInfo
     private static readonly ValueTuple<string, FlagsType>[] TitleFlags = 
     { 
         new ("SDH", FlagsType.HearingImpaired),
+        new ("CC", FlagsType.HearingImpaired),
         new ("Commentary", FlagsType.Commentary),
-        new ("CC", FlagsType.Commentary),
         new ("Forced", FlagsType.Forced)
     };
 }
