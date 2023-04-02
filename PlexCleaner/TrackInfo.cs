@@ -81,8 +81,7 @@ public partial class TrackInfo
         LanguageIetf = trackJson.Properties.LanguageIetf;
 
         // Language but no IETF language
-        if (string.IsNullOrEmpty(Language) &&
-            !string.IsNullOrEmpty(LanguageIetf))
+        if (!string.IsNullOrEmpty(Language) && string.IsNullOrEmpty(LanguageIetf))
         {
             // Set track error and recommend SetLanguage
             HasErrors = true;
@@ -103,6 +102,16 @@ public partial class TrackInfo
             }
         }
 
+        // If either Language or LanguageIetf is undefined, the other has to be undefined as well
+        if (PlexCleaner.Language.IsEqual(Language, PlexCleaner.Language.Undefined) &&
+            !PlexCleaner.Language.IsEqual(LanguageIetf, PlexCleaner.Language.Undefined))
+        {
+            // Set track error and recommend ReMux
+            HasErrors = true;
+            State = StateType.ReMux;
+            Log.Logger.Warning("MkvToolJsonSchema : Undefined Language and LanguageIetf Mismatch : {Language} != {LanguageIetf} (Recommend: {State})", Language, LanguageIetf, State);
+        }
+
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
         if (!string.IsNullOrEmpty(trackJson.Properties.TagLanguage) &&
@@ -112,7 +121,8 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language} (Recommend: {State})", trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
+            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language} (Recommend: {State})", 
+                trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
