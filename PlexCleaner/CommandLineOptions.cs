@@ -15,7 +15,6 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
-    public int ReProcess { get; set; }
     public bool ReVerify { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
@@ -176,13 +175,6 @@ public class CommandLineOptions
             new Option<bool>("--testnomodify")
             {
                 Description = "Do not make any modifications, useful during testing"
-            });
-
-        //  Re-process level, optional
-        command.AddOption(
-            new Option<int>("--reprocess")
-            {
-                Description = "Re-process level, 0 = none (default), 1 = metadata, 2 = streams"
             });
 
         //  Re-verify, optional

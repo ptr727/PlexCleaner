@@ -127,13 +127,11 @@
     ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
-    // Default track language
-    // Use RFC 5646 format
+    // Default track language in RFC-5646 format
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": false,
-    // Track language matched tags to keep
-    // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
+    // Track language tags to keep in BCP-47 format
     "KeepLanguages": [
       "en",
       "af",
@@ -155,11 +153,12 @@
       "e-ac-3",
       "ac-3"
     ],
-    // Enable removing of all tags from the media file
-    // Track title information is not removed
+    // Enable removing of tags, titles, attachments, etc. from the media file
     "RemoveTags": true,
     // Enable removing of EIA-608 Closed Captions embedded in video streams
     "RemoveClosedCaptions": true,
+    // Set track flags based on track title keywords
+    "SetTrackFlags": true,
     // Set IETF language tags when not present
     "SetIetfLanguageTags": true,
     // Speedup media re-processing by saving media info and processed state in sidecar files

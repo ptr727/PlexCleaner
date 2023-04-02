@@ -93,6 +93,9 @@
         "SetIetfLanguageTags": {
           "type": "boolean"
         },
+        "SetTrackFlags": {
+          "type": "boolean"
+        },
         "KeepExtensions": {
           "type": "array",
           "items": {
@@ -144,15 +147,6 @@
             ]
           }
         },
-        "FileIgnoreList": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
         "DeleteEmptyFolders": {
           "type": "boolean"
         },
@@ -194,19 +188,28 @@
         },
         "RestoreFileTimestamp": {
           "type": "boolean"
+        },
+        "FileIgnoreList": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "required": [
         "KeepOriginalLanguage",
         "RemoveClosedCaptions",
         "SetIetfLanguageTags",
+        "SetTrackFlags",
         "KeepExtensions",
         "ReMuxExtensions",
         "ReEncodeVideo",
         "ReEncodeAudioFormats",
         "KeepLanguages",
         "PreferredAudioFormats",
-        "FileIgnoreList",
         "DeleteEmptyFolders",
         "DeleteUnwantedExtensions",
         "ReMux",
@@ -220,7 +223,8 @@
         "UseSidecarFiles",
         "SidecarUpdateOnToolChange",
         "Verify",
-        "RestoreFileTimestamp"
+        "RestoreFileTimestamp",
+        "FileIgnoreList"
       ]
     },
     "ToolsOptions": {

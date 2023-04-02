@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -203,17 +202,8 @@ public partial class MediaInfoTool : MediaTool
             // Remove cover art
             mediaInfo.RemoveCoverArt();
 
-            // Errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
-                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
-                                  mediaInfo.Subtitle.Any(item => item.HasErrors);
-
-            // Tags
-            // TODO: Look in the Extra field, but not reliable
-            mediaInfo.HasTags = mediaInfo.Video.Any(item => item.HasTags) ||
-                                mediaInfo.Audio.Any(item => item.HasTags) ||
-                                mediaInfo.Subtitle.Any(item => item.HasTags);
-
+            // TODO: Errors
+            // TODO: Tags, look in the Extra field, but not reliable
             // TODO: Duration, too many different formats to parse
             // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
             // TODO: ContainerType

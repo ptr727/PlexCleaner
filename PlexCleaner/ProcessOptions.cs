@@ -219,6 +219,7 @@ public record ProcessOptions : ProcessOptions2
         KeepOriginalLanguage = true;
         RemoveClosedCaptions = true;
         SetIetfLanguageTags = true;
+        SetTrackFlags = true;
     }
 
     [Required]
@@ -230,6 +231,9 @@ public record ProcessOptions : ProcessOptions2
     [Required]
     public bool SetIetfLanguageTags { get; set; }
 
+    [Required]
+    public bool SetTrackFlags { get; set; }
+
     public void SetDefaults()
     {
         DeleteEmptyFolders = true;
@@ -240,6 +244,7 @@ public record ProcessOptions : ProcessOptions2
         SetUnknownLanguage = true;
         RemoveUnwantedLanguageTracks = false;
         SetIetfLanguageTags = true;
+        SetTrackFlags = true;
         RemoveTags = true;
         UseSidecarFiles = true;
         SidecarUpdateOnToolChange = false;

@@ -197,19 +197,13 @@ public partial class MkvMergeTool : MediaTool
             // Chapters
             mediaInfo.Chapters = mkvMerge.Chapters.Count;
 
-            // Track errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
-                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
-                                  mediaInfo.Subtitle.Any(item => item.HasErrors);
+            // TODO: Errors
 
-            // Tags in container or any tracks
+            // Unwanted tags
             mediaInfo.HasTags = mkvMerge.GlobalTags.Count > 0 ||
                                 mkvMerge.TrackTags.Count > 0 ||
                                 mediaInfo.Attachments > 0 ||
-                                !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title) ||
-                                mediaInfo.Video.Any(item => item.HasTags) ||
-                                mediaInfo.Audio.Any(item => item.HasTags) ||
-                                mediaInfo.Subtitle.Any(item => item.HasTags);
+                                !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title);
 
             // Duration in nanoseconds
             mediaInfo.Duration = TimeSpan.FromSeconds(mkvMerge.Container.Properties.Duration / 1000000.0);
@@ -224,7 +218,7 @@ public partial class MkvMergeTool : MediaTool
                 mediaInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }

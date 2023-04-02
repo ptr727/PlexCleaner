@@ -170,16 +170,10 @@ public class FfProbeTool : FfMpegTool
             // Remove cover art
             mediaInfo.RemoveCoverArt();
 
-            // Errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
-                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
-                                  mediaInfo.Subtitle.Any(item => item.HasErrors);
+            // TODO: Errors
 
-            // Tags in container or any tracks
-            mediaInfo.HasTags = HasTags(ffProbe.Format.Tags) ||
-                mediaInfo.Video.Any(item => item.HasTags) ||
-                mediaInfo.Audio.Any(item => item.HasTags) ||
-                mediaInfo.Subtitle.Any(item => item.HasTags);
+            // Unwanted tags
+            mediaInfo.HasTags = HasUnwantedTags(ffProbe.Format.Tags);
 
             // Duration in seconds
             mediaInfo.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
@@ -190,14 +184,14 @@ public class FfProbeTool : FfMpegTool
             // TODO: Chapters
             // TODO: Attachments
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
         return true;
     }
 
-    private static bool HasTags(Dictionary<string, string> tags)
+    private static bool HasUnwantedTags(Dictionary<string, string> tags)
     {
         // Format tags:
         // "encoder": "libebml v1.4.2 + libmatroska v1.6.4",
@@ -214,10 +208,13 @@ public class FfProbeTool : FfMpegTool
         // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
 
         // Language and title are expected tags
-        // Look for any key containing "statistics"
+
         // TODO: Find a more reliable method for determining what tags are expected or not
-        return tags.Keys.FirstOrDefault(item => item.Contains("statistics", StringComparison.OrdinalIgnoreCase)) != null;
+
+        // Look for undesirable Tags
+        return tags.Keys.Any(key => UndesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
     }
 
     private const string Snippet = "-read_intervals %03:00";
+    private static readonly string[] UndesirableTags = { "statistics" };
 }

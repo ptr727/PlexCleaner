@@ -71,14 +71,6 @@
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
     },
-    "Process Test ReProcess 1": {
-      "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --reprocess 1 --mediafiles \"D:\\Test\""
-    },
-    "Process Test ReProcess 2": {
-      "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --reprocess 2 --mediafiles \"D:\\Test\""
-    },
     "Process Parallel": {
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" process --parallel --threadcount 2 --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
@@ -94,6 +86,10 @@
     "CreateSchema": {
       "commandName": "Project",
       "commandLineArgs": "createschema --schemafile \"PlexCleaner.Schema.json\""
+    },
+    "ReVerify": {
+      "commandName": "Project",
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --reverify --settingsfile \"PlexCleaner.json\" --testsnippets --mediafiles \"D:\\Test\""
     }
   }
 }

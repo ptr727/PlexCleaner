@@ -41,7 +41,9 @@ public class MediaInfo
     public List<SubtitleInfo> Subtitle { get; private set; } = new();
 
     public bool HasTags { get; set; }
+    public bool AnyTags { get => HasTags || Video.Any(item => item.HasTags) || Audio.Any(item => item.HasTags) || Subtitle.Any(item => item.HasTags); }
     public bool HasErrors { get; set; }
+    public bool AnyErrors { get => HasErrors || Video.Any(item => item.HasErrors) || Audio.Any(item => item.HasErrors) || Subtitle.Any(item => item.HasErrors); }
     public TimeSpan Duration { get; set; }
     public string Container { get; set; }
     public int Attachments { get; set; }

@@ -39,6 +39,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
   - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
   - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
+  - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
   - Language tags now support [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) formats.
     - See the [Language Matching](#language-matching) section usage for details.
     - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
@@ -59,6 +60,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Refactored track selection logic to simplify containment and use with lambda filters.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
+  - Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
   - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
@@ -582,18 +584,12 @@ The `process` command will process the media content using options as defined in
 - Re-multiplex the media file if required.
 - Deinterlace the video track if interlaced.
 - Remove EIA-608 Closed Captions from video streams.
-- Re-encode video to H.264/5 if video format matches `ReEncodeVideo`.
-- Re-encode audio to `AudioEncodeCodec` if audio matches the `ReEncodeAudioFormats` list.
+- Re-encode video if video format matches `ReEncodeVideo`.
+- Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
 The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
 Paths with spaces should be double quoted.
-
-The `--reprocess [level]` option is used to override sidecar and conditional processing optimization logic.
-
-- `0`: Default behavior, do not do any reprocessing.
-- `1`: Re-process metadata operations, e.g. tag detection, closed caption detection, etc.
-- `2`: Re-process metadata and stream operations, e.g. deinterlace detection, bitrate calculation, stream verification, etc.
 
 The `--reverify` option is used to re-verify and repair media files that are in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
 
@@ -619,7 +615,6 @@ Options:
   --threadcount <threadcount>               Number of threads to use for parallel processing
   --testsnippets                            Create short video clips, useful during testing
   --testnomodify                            Do not make any modifications, useful during testing
-  --reprocess <reprocess>                   Re-process level, 0 = none (default), 1 = metadata, 2 = streams
   --reverify                                Re-verify and repair media in VerifyFailed state
   --logfile <logfile>                       Path to log file
   --logappend                               Append to the log file vs. default overwrite

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -15,7 +16,9 @@ public partial class TrackInfo
         Remove, 
         ReMux, 
         ReEncode, 
-        DeInterlace 
+        DeInterlace,
+        SetFlags,
+        SetLanguage
     }
 
     // https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags
@@ -77,33 +80,26 @@ public partial class TrackInfo
         // https://r12a.github.io/app-subtags/
         LanguageIetf = trackJson.Properties.LanguageIetf;
 
-        // Setting HasErrors will force a remux and MkvMerge will correct track languages errors
-
-        // Convert the ISO 639-3 tag to RFC 5646
-        if (string.IsNullOrEmpty(trackJson.Properties.LanguageIetf) &&
-            !string.IsNullOrEmpty(trackJson.Properties.Language))
+        // Language but no IETF language
+        if (string.IsNullOrEmpty(Language) &&
+            !string.IsNullOrEmpty(LanguageIetf))
         {
+            // Set track error and recommend SetLanguage
+            HasErrors = true;
+            State = StateType.SetLanguage;
+
+            // Convert the ISO-639-3 tag to RFC-5646
             var lookupLanguage = PlexCleaner.Language.GetIetfTag(Language, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
-                Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup IETF language from ISO639-3 language : {Language}", Language);
-
-                // Set track error and recommend remux
-                HasErrors = true;
-                State = StateType.ReMux;
+                // No matching language found
+                Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup IETF language from ISO639-3 language : {Language} (Recommend: {State})", Language, State);
             }
             else 
             {
-                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IetfLanguage}", Language, lookupLanguage);
+                // Set IETF from lookup
                 LanguageIetf = lookupLanguage;
-
-                // Conditionally flag as track error to be corrected with remuxing
-                if (Program.Config.ProcessOptions.SetIetfLanguageTags)
-                {
-                    // Set track error and recommend remux
-                    HasErrors = true;
-                    State = StateType.ReMux;
-                }
+                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IetfLanguage} (Recommend: {State})", Language, lookupLanguage, State);
             }
         }
 
@@ -113,11 +109,10 @@ public partial class TrackInfo
             !string.IsNullOrEmpty(trackJson.Properties.Language) &&
             !trackJson.Properties.Language.Equals(trackJson.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
         {
-            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language}", trackJson.Properties.TagLanguage, trackJson.Properties.Language);
-
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
+            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language} (Recommend: {State})", trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
@@ -183,11 +178,10 @@ public partial class TrackInfo
         if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
             Language.Equals("null", StringComparison.OrdinalIgnoreCase))
         {
-            Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language}", Language);
-
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
+            Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language} (Recommend: {State})", Language, State);
         }
 
         // Leave the Language as is, no need to verify
@@ -200,8 +194,9 @@ public partial class TrackInfo
         // TODO: Anything other than title for tags?
         HasTags = NotTrackTitleFlag();
 
-        // Set flags from title
-        SetFlagsFromTitle("FfMpegToolJsonSchema");
+        // TODO: Set flags from title
+        // Repair uses MkvPropEdit, only set for MkvMergeInfo
+        // SetFlagsFromTitle("FfMpegToolJsonSchema");
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -258,8 +253,8 @@ public partial class TrackInfo
         // TODO: Anything other than title for tags?
         HasTags = NotTrackTitleFlag();
 
-        // Set flags from title
-        SetFlagsFromTitle("MediaInfoToolXmlSchema");
+        // TODO: Set flags from title, flags are incomplete
+         // SetFlagsFromTitle("MediaInfoToolXmlSchema");
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -297,7 +292,7 @@ public partial class TrackInfo
             HasErrors,
             HasTags);
     }
-
+    
     public bool NotTrackTitleFlag()
     {
         // NOT logic, i.e. title is not a flag
@@ -316,12 +311,15 @@ public partial class TrackInfo
         // Add flags based on titles
         foreach (var tuple in TitleFlags)
         {
-            // Only log if flag not already set
+            // Only process if matching flag is not already set
             if (Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase) &&
                 !Flags.HasFlag(tuple.Item2))
             {
+                // Set track error state and recommend setting the track flags
+                HasErrors = true;
+                State = StateType.SetFlags;
                 Flags |= tuple.Item2;
-                Log.Logger.Information("{Log} : Setting track Flag from Title : {Title} -> {Flag}", log, Title, tuple.Item2);
+                Log.Logger.Warning("{Log} : Setting track Flag from Title : {Title} -> {Flag} (Recommend: {State})", log, Title, tuple.Item2, State);
             }
         }
     }
@@ -334,6 +332,16 @@ public partial class TrackInfo
     public static bool MatchCoverArt(string codec)
     {
         return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType)
+    {
+        return Enum.GetValues<FlagsType>().Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
+    }
+
+    public static IEnumerable<FlagsType> GetFlags()
+    {
+        return Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
     }
 
     [GeneratedRegex(@"(?<id>\d)")]
