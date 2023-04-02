@@ -6,6 +6,9 @@ var cultureInfo1 = new CultureInfo("ger");
 var cultureInfo2 = CultureInfo.CreateSpecificCulture("ger");
 var cultureInfo3 = CultureInfo.GetCultureInfo("deu", true);
 
+var cultureInfo4 = CultureInfo.GetCultureInfo("cmn-Hant", false);
+var cultureInfo5 = CultureInfo.GetCultureInfo("cmn-Hant", true);
+
 var tag1 = PlexCleaner.Language.GetIetfTag("xxx", false);
 
 // Generate JSON schema

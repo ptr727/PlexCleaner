@@ -83,10 +83,15 @@ public partial class TrackInfo
         // If both Language and LanguageIetf are set, verify they match
         if (!string.IsNullOrEmpty(Language) && !string.IsNullOrEmpty(LanguageIetf))
         {
-            // Lookup the ISO-639-2B from LanguageIetf and compare with Language
+            // Lookup the ISO-639-2B from LanguageIetf
             var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
-            if (string.IsNullOrEmpty(lookupLanguage) ||
-                !Language.Equals(lookupLanguage, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(lookupLanguage))
+            {
+                // TODO: Using CultureInfo is not a reliable lookup tool, e.g. cmn-Hant !-> chi
+                Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup ISO639 Language from IETF LanguageIetf : {LanguageIetf} !-> {Language}", LanguageIetf, Language);
+            }
+            // Compare lookup language Language
+            else if (!Language.Equals(lookupLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 // Set track error and recommend ReMux
                 HasErrors = true;

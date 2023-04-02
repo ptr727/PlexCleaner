@@ -1200,6 +1200,17 @@ public class ProcessFile
         // Verify
         if (Verify(out bool canRepair))
         {
+            // Set Verified state if not already set
+            if (!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
+            { 
+                SidecarFile.State |= SidecarFile.StatesType.Verified;
+                SidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+                Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
+
+                // Update state
+                return Refresh(false);
+            }
+
             // Done
             return true;
         }
