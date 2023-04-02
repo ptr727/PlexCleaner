@@ -56,6 +56,7 @@ public class ProcessFile
 
         // File deleted, do not continue processing
         modified = true;
+        SidecarFile.State |= SidecarFile.StatesType.FileDeleted;
         return false;
     }
 
@@ -283,6 +284,9 @@ public class ProcessFile
             // Done
             return true;
         }
+
+        // Per MkvToolNix docs remux is the recommended approach to correcting language tags
+        // Honor Program.Config.ProcessOptions.SetIetfLanguageTags as lots of older media does not have IETF tags set
 
         // Any tracks need remuxing
         if (!HasMetadataErrors(TrackInfo.StateType.Remove) &&
@@ -1787,7 +1791,7 @@ public class ProcessFile
         foreach (var language in languageList)
         {
             // Get all tracks matching this language
-            var trackLanguageList = trackList.FindAll(item => Language.IsEqual(language, item.LanguageIetf));
+            var trackLanguageList = trackList.FindAll(item => language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase));
 
             // If multiple audio tracks exist for this language, keep the preferred audio codec track
             var audioTrackList = trackLanguageList.FindAll(item => item.GetType() == typeof(AudioInfo));

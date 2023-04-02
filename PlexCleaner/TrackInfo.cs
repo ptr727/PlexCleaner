@@ -72,44 +72,71 @@ public partial class TrackInfo
             Flags |= FlagsType.Forced;
         }
 
-        // ISO 639-3 tag
+        // ISO 639-2B tag
         Language = trackJson.Properties.Language;
-        
-        // IETF / BCP 47 / RFC 5646 tag
+
+        // IETF / RFC 5646 BCP 47 tag
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix
         // https://r12a.github.io/app-subtags/
         LanguageIetf = trackJson.Properties.LanguageIetf;
 
-        // Language but no IETF language
+        // If both Language and LanguageIetf are set, verify they match
+        if (!string.IsNullOrEmpty(Language) && !string.IsNullOrEmpty(LanguageIetf))
+        {
+            // Lookup the ISO-639-2B from LanguageIetf and compare with Language
+            var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
+            if (string.IsNullOrEmpty(lookupLanguage) ||
+                !Language.Equals(lookupLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                // Set track error and recommend ReMux
+                HasErrors = true;
+                State = StateType.ReMux;
+                Log.Logger.Warning("MkvToolJsonSchema : LanguageIetf to Language Mismatch : {LanguageIetf} !-> {Language} : {State}", LanguageIetf, Language, State);
+            }
+        }
+
+        // Language is set but IETF language is not set
         if (!string.IsNullOrEmpty(Language) && string.IsNullOrEmpty(LanguageIetf))
         {
-            // Set track error and recommend SetLanguage
+            // Set track error and recommend SetLanguage (ReMux with check for SetIetfLanguageTags)
             HasErrors = true;
             State = StateType.SetLanguage;
 
-            // Convert the ISO-639-3 tag to RFC-5646
+            // Get the RFC-5646 tag from the ISO-639-2B tag
             var lookupLanguage = PlexCleaner.Language.GetIetfTag(Language, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
                 // No matching language found
-                Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup IETF language from ISO639-3 language : {Language} (Recommend: {State})", Language, State);
+                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, failed to lookup IETF language from ISO639 language : {Language} : {State}", Language, State);
             }
             else 
             {
                 // Set IETF from lookup
                 LanguageIetf = lookupLanguage;
-                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639-3 to IETF : {Language} -> {IetfLanguage} (Recommend: {State})", Language, lookupLanguage, State);
+                Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639 to IETF : {Language} -> {LanguageIetf} : {State}", Language, LanguageIetf, State);
             }
         }
 
-        // If either Language or LanguageIetf is undefined, the other has to be undefined as well
-        if (PlexCleaner.Language.IsEqual(Language, PlexCleaner.Language.Undefined) &&
-            !PlexCleaner.Language.IsEqual(LanguageIetf, PlexCleaner.Language.Undefined))
+        // Language is not set but IETF language is set
+        if (string.IsNullOrEmpty(Language) && !string.IsNullOrEmpty(LanguageIetf))
         {
-            // Set track error and recommend ReMux
+            // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("MkvToolJsonSchema : Undefined Language and LanguageIetf Mismatch : {Language} != {LanguageIetf} (Recommend: {State})", Language, LanguageIetf, State);
+
+            // Get the ISO-639-2B tag from the RFC-5646 tag
+            var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
+            if (string.IsNullOrEmpty(lookupLanguage))
+            {
+                // No matching language found
+                Log.Logger.Warning("MkvToolJsonSchema : ISO639 language not set, failed to lookup ISO639 language from IETF language : {Language} : {State}", LanguageIetf, State);
+            }
+            else
+            {
+                // Set ISO-639-2B from lookup
+                Language = lookupLanguage;
+                Log.Logger.Warning("MkvToolJsonSchema : ISO639 language not set, converting IETF to ISO639: {LanguageIetf} -> {Language} : {State}", LanguageIetf, Language, State);
+            }
         }
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
@@ -121,7 +148,7 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language} (Recommend: {State})", 
+            Log.Logger.Warning("MkvToolJsonSchema : Tag Language and Track Language Mismatch : {TagLanguage} != {Language} : {State}", 
                 trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
         }
 
@@ -191,7 +218,7 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language} (Recommend: {State})", Language, State);
+            Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language} : {State}", Language, State);
         }
 
         // Leave the Language as is, no need to verify
@@ -329,7 +356,7 @@ public partial class TrackInfo
                 HasErrors = true;
                 State = StateType.SetFlags;
                 Flags |= tuple.Item2;
-                Log.Logger.Warning("{Log} : Setting track Flag from Title : {Title} -> {Flag} (Recommend: {State})", log, Title, tuple.Item2, State);
+                Log.Logger.Warning("{Log} : Setting track Flag from Title : {Title} -> {Flag} : {State}", log, Title, tuple.Item2, State);
             }
         }
     }

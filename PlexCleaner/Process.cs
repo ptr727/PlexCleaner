@@ -53,7 +53,7 @@ internal class Process
         bool result;
 
         // Process in jump loop
-        for (; ; )
+        for (;;)
         {
             // Skip the file if it is in the ignore list
             if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileName))
@@ -254,7 +254,7 @@ internal class Process
                 break;
             }
 
-            // FfMpeg or HandBrake could undo the prrevious cleanup, repeat
+            // FfMpeg or HandBrake could undo the previous cleanup, repeat
             if (!processFile.RepairMetadataErrors(ref modified) ||
                 !processFile.SetUnknownLanguageTracks(ref modified) ||
                 !processFile.RemoveTags(ref modified) ||
@@ -284,7 +284,7 @@ internal class Process
             break;
         }
 
-        // Return current state and fileinfo
+        // Return current state and file info
         if (processFile != null)
         {
             state = processFile.State;

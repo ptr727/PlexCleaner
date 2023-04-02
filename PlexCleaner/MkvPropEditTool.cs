@@ -36,22 +36,13 @@ public class MkvPropEditTool : MkvMergeTool
         StringBuilder commandline = new();
         DefaultArgs(fileName, commandline);
 
+        // Set the language property not the language-ietf property
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
+
         // TODO: Should we be skipping und?
         // Only set tracks that are set and not undefined
-        var trackList = mediaInfo.GetTrackList().Where(item => !string.IsNullOrEmpty(item.LanguageAny) && !Language.IsEqual(item.LanguageAny, Language.Undefined));
-        foreach (var trackItem in trackList)
-        {
-            // Set language or language-ietf property
-            commandline.Append($"--edit track:@{trackItem.Number} ");
-            if (!string.IsNullOrEmpty(trackItem.LanguageIetf))
-            { 
-                commandline.Append($"--set language-ietf={trackItem.LanguageIetf} ");
-            }
-            else 
-            {
-                commandline.Append($"--set language={trackItem.Language} ");
-            }
-        }
+        var trackList = mediaInfo.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny)).ToList();
+        trackList.ForEach(item => commandline.Append($"--edit track:@{item.Number} --set language={item.LanguageAny} "));
 
         // Set language on all unknown tracks
         int exitCode = Command(commandline.ToString());
@@ -72,21 +63,17 @@ public class MkvPropEditTool : MkvMergeTool
         {
             // Setting a flag does not unset the counter flag, e.g. setting default on one track does not unset default on other tracks
             // TODO: Should we set all flags for all tracks, cli gets very long, or only set flags
+            // var flagList = TrackInfo.GetFlags().ToList();
 
-            // Iterate over all known flags
-            /*
-            foreach (var flagType in TrackInfo.GetFlags())
+            // Get flags list for this track
+            var flagList = TrackInfo.GetFlags(trackItem.Flags).ToList();
+            if (flagList.Count > 0)
             {
-                // Set flag
-                commandline.Append($"--edit track:@{trackItem.Number} --set {GetTrackFlag(flagType)}={(trackItem.Flags.HasFlag(flagType) ? 1 : 0)} ");
-            }
-            */
+                // Edit track
+                commandline.Append($"--edit track:@{trackItem.Number} ");
 
-            // Iterate over set flags
-            foreach (var flagType in TrackInfo.GetFlags(trackItem.Flags))
-            {
-                // Set flag
-                commandline.Append($"--edit track:@{trackItem.Number} --set {GetTrackFlag(flagType)}=1 ");
+                // Set flag by name
+                flagList.ForEach(item => commandline.Append($"--set {GetTrackFlag(item)}=1 "));
             }
         }
 

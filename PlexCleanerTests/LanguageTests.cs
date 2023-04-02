@@ -41,4 +41,19 @@ public class LanguageTests : IClassFixture<PlexCleanerTests>
     {
         Assert.False(PlexCleaner.Language.IsMatch(prefix, tag));
     }
+
+    [Theory]
+    [InlineData("af", "afr")]
+    [InlineData("de", "ger")]
+    [InlineData("fr", "fre")]
+    [InlineData("en", "eng")]
+    [InlineData("", "und")]
+    [InlineData("und", "und")]
+    [InlineData("zxx", "zxx")]
+    [InlineData("zh", "chi")]
+    [InlineData("xxx", "und")]
+    public void Convert_LanguageIetf_Tags(string ietf, string iso639)
+    {
+        Assert.Equal(iso639, PlexCleaner.Language.GetIso639Tag(ietf, false));
+    }
 }

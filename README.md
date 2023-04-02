@@ -27,7 +27,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 3.0:
   - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
-    - The FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer freely available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
+    - The up to date FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer freely available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
     - Switched to [Arch Linux](https://archlinux.org/) with up to date media tools found in the [Arch Linux Package Repository](https://archlinux.org/packages/).
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
@@ -37,21 +37,23 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
     - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
     - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
     - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
-  - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
-  - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
-  - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
-  - Language tags now support [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) formats.
+  - Added support for [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag formats.
     - See the [Language Matching](#language-matching) section usage for details.
     - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
       - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
       - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
-    - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` to RFC 5646 format, e.g. `eng` to `en`.
-      - On v3 schema upgrade old ISO 639-3-2 3 letter tags will be replaced with generic RFC 5646 tags.
+    - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` from ISO 639-2B to RFC 5646 format, e.g. `eng` to `en`.
+      - On v3 schema upgrade old ISO 639-2B 3 letter tags will be replaced with generic RFC 5646 tags.
     - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
       - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
-    - FfMpeg and HandBrake [removes](https://github.com/ptr727/PlexCleaner/issues/148) IETF language tags, requiring special handling to restore the tags during reencoding or deinterlacing.
+    - [FfMpeg](https://github.com/ptr727/PlexCleaner/issues/148) and [HandBrake](https://github.com/ptr727/PlexCleaner/issues/149) removes IETF language tags.
+      - As work around the IETF tags are restored after reencoding or deinterlacing.
+    - Added warnings and attempt to repair when the Language and LanguageIetf are set but do not match.
+  - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
+  - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
+  - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
-  - Added warning for multiple tracks with a default flag.
+  - Added warnings when multiple tracks of the same kind have a Default flag set.
   - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
@@ -59,10 +61,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
   - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
   - Refactored track selection logic to simplify containment and use with lambda filters.
+  - Refactored verify and repair logic, became too complicated.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
-  - Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
-  - [*Breaking Change*] Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+  - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
+  - *Breaking Change* Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
       - `--settingsfile` used by several commands.

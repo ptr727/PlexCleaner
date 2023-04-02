@@ -9,6 +9,7 @@ namespace PlexCleaner;
 
 public static class Language
 {
+    // Get the IETF/RFC-5646/BCP-47 tag from a ISO-639-2B or similar tag
     public static string GetIetfTag(string language, bool nullOnFailure)
     {
         if (string.IsNullOrEmpty(language))
@@ -28,22 +29,22 @@ public static class Language
             return None;
         }
 
-        // Handle "chi" as "zho"
+        // Handle "chi" as "zho" for Matroska
         // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
         if (language.Equals("chi", StringComparison.OrdinalIgnoreCase)) 
         {
             return Chinese;
         }
 
-        // Get ISO639-3 record
-        var iso6393 = GetIso6393(language);
+        // Get ISO639 record
+        var iso6393 = GetIso639(language);
         if (iso6393 == null)
         {
-            Log.Logger.Error("ISO639-3 language match not found : {Language}", language);
+            Log.Logger.Error("ISO639 language match not found : {Language}", language);
             return nullOnFailure ? null : Undefined;
         }
 
-        // Get a CultureInfo from the 639-3 3 letter code
+        // Get a CultureInfo from the ISO639-3 3 letter code
         // E.g. afr -> afr
         // E.g. ger -> deu
         // E.g. fre -> fra
@@ -52,12 +53,67 @@ public static class Language
         var cultureInfo = CreateCultureInfo(iso6393.Id) ?? CreateCultureInfo(iso6393.Part1);
         if (cultureInfo == null)
         {
-            Log.Logger.Error("CultureInfo match not found : {Language}", language);
+            Log.Logger.Warning("CultureInfo not found : {Language}", language);
             return nullOnFailure ? null : Undefined;
         }
 
-        // Return the IETF tag
+        // Return the IETF
         return cultureInfo.IetfLanguageTag;
+    }
+
+    // Get the ISO-639-2B tag from a IETF/RFC-5646/BCP-47 tag
+    public static string GetIso639Tag(string language, bool nullOnFailure)
+    {
+        if (string.IsNullOrEmpty(language))
+        {
+            return nullOnFailure ? null : Undefined;
+        }
+
+        // Undefined "und"
+        if (language.Equals(Undefined, StringComparison.OrdinalIgnoreCase))
+        {
+            return Undefined;
+        }
+
+        // No linguistic content "zxx"
+        if (language.Equals(None, StringComparison.OrdinalIgnoreCase))
+        {
+            return None;
+        }
+
+        // Handle "chi" as "zho" for Matroska
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
+        if (language.Equals(Chinese, StringComparison.OrdinalIgnoreCase))
+        {
+            return "chi";
+        }
+
+        // Get ISO639 record
+        var iso639 = GetIso639(language);
+        if (iso639 != null)
+        {
+            // Return the Part 2B code
+            return iso639.Part2B;
+        }
+
+        var cultureInfo = CreateCultureInfo(language);
+        if (cultureInfo == null)
+        {
+            Log.Logger.Warning("CultureInfo not found : {Language}", language);
+            return nullOnFailure ? null : Undefined;
+        }
+
+        // Get ISO639 record from cultureInfo ISO code
+        iso639 = GetIso639(cultureInfo.ThreeLetterISOLanguageName);
+        if (iso639 != null)
+        {
+            // Return the Part 2B code
+            return iso639.Part2B;
+        }
+
+        // Not found
+        Log.Logger.Warning("ISO639 not found : {Language}", cultureInfo.ThreeLetterISOLanguageName);
+        return nullOnFailure ? null : Undefined;
     }
 
     public static CultureInfo CreateCultureInfo(string language)
@@ -135,14 +191,9 @@ public static class Language
         return languages.ToList();
     }
 
-    public static bool IsEqual(string source, string target)
+    public static Iso6393 GetIso639(string language)
     {
-        // Case insensitive compare
-        return source.Equals(target, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static Iso6393 GetIso6393(string language)
-    {
+        // Match with any record
         return Iso6393.FromString(language, Iso6393List);
     }
 
