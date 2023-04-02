@@ -51,6 +51,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
     - FfMpeg and HandBrake [removes](https://github.com/ptr727/PlexCleaner/issues/148) IETF language tags, requiring special handling to restore the tags during reencoding or deinterlacing.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
+  - Added warning for multiple tracks with a default flag.
   - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
