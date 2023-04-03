@@ -87,10 +87,8 @@ public partial class TrackInfo
             var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
-                // TODO: Using CultureInfo is not a reliable lookup tool, e.g.
-                // "cmn-Hant" !-> "chi"
-                // "yue-Hant"!-> "chi"
-                // "no-NO"!-> "nor"
+                // TODO: Migrate to use data from subtag registry
+                // https://github.com/mattcg/language-subtag-registry/blob/master/data/json/registry.json
                 Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup ISO639 Language from IETF LanguageIetf : {LanguageIetf} !-> {Language}", LanguageIetf, Language);
             }
             // Compare lookup language Language

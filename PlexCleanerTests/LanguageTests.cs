@@ -51,6 +51,8 @@ public class LanguageTests : IClassFixture<PlexCleanerTests>
     [InlineData("und", "und")]
     [InlineData("zxx", "zxx")]
     [InlineData("zh", "chi")]
+    [InlineData("zh-cmn-Hant", "chi")]
+    [InlineData("no-NO", "nor")]
     [InlineData("xxx", "und")]
     public void Convert_LanguageIetf_Tags(string ietf, string iso639)
     {

@@ -83,32 +83,26 @@ public partial class MediaInfoTool : MediaTool
 
             // Read each line until we find the first version line
             // E.g. Version 17.10, 2017-11-02
-            using StringReader sr = new(historyPage);
-            string line;
-            while (true)
+            using StringReader lineReader = new(historyPage);
+            string version = null;
+            while (lineReader.ReadLine() is { } line)
             {
-                // Read the line
-                line = sr.ReadLine();
-                if (line == null)
-                {
-                    break;
-                }
-
                 // See if the line starts with "Version"
                 line = line.Trim();
                 if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
                 {
+                    version = line;
                     break;
                 }
             }
-            if (string.IsNullOrEmpty(line))
+            if (string.IsNullOrEmpty(version))
             {
                 throw new NotImplementedException();
             }
 
             // Extract the version number from the line
             // E.g. Version 17.10, 2017-11-02
-            var match = LatestVersionRegex().Match(line);
+            var match = LatestVersionRegex().Match(version);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
 

@@ -127,8 +127,11 @@ public partial class MkvMergeTool : MediaTool
     public bool GetMkvInfoJson(string fileName, out string json)
     {
         // Get media info as JSON
-        var commandline = $"--identify \"{fileName}\" --identification-format json";
-        var exitCode = Command(commandline, out json);
+        StringBuilder commandline = new();
+        // Normalize IETF tags to extended format, e.g. zh-cmn-Hant vs. cmn-Hant
+        commandline.Append($"--normalize-language-ietf extlang ");
+        commandline.Append($"--identify \"{fileName}\" --identification-format json");
+        var exitCode = Command(commandline.ToString(), out json);
         return exitCode == 0;
     }
 

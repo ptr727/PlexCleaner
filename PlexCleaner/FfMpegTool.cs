@@ -131,17 +131,11 @@ public partial class FfMpegTool : MediaTool
             // Read each line until we find the build and version lines
             // build: ffmpeg-5.0-amd64-static.tar.xz
             // version: 5.0
-            using StringReader sr = new(readmePage);
+            using StringReader lineReader = new(readmePage);
             string buildLine = "", versionLine = "";
-            while (true)
+            while (lineReader.ReadLine() is { } line)
             {
-                // Read the line and trim whitespace
-                var line = sr.ReadLine();
-                if (line == null)
-                {
-                    // No more lines to read
-                    break;
-                }
+                // Trim whitespace
                 line = line.Trim();
 
                 // See if the line starts with "version:" or "build:"

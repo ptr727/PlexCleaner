@@ -51,6 +51,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - If you care and can, please do communicate the need for IETF language suport to the FFmpeg and HandBrake development teams.
     - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
       - ISO 639-2B lookup from RFC 5646 using `CultureInfo` is not complete, if the lookup fails repair is not mandated.
+    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to reported e.g. `zh-cmn-Hant` vs. teh normalized `cmn-Hant`.
+      - Old MkvMerge sidecar information will be out of data, recommend recreating sidecar files using `createsidecar` option.
   - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
   - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
   - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.

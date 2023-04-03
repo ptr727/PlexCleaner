@@ -81,6 +81,11 @@ public static class Language
             return None;
         }
 
+        // Split the parts and use the first part
+        // zh-cmn-Hant -> zh
+        var parts = language.Split('-');
+        language = parts[0];
+
         // Handle "chi" as "zho" for Matroska
         // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
         if (language.Equals(Chinese, StringComparison.OrdinalIgnoreCase))
@@ -152,7 +157,7 @@ public static class Language
         // https://r12a.github.io/app-subtags/
         // https://www.loc.gov/standards/iso639-2/php/langcodes-search.php
 
-        // zh match: zh: zh, zh-Hant, zh-Hans
+        // zh match: zh: zh, zh-Hant, zh-Hans, zh-cmn-Hant
         // zho not: zh
         // zho match: zho
         // zh-Hant match: zh-Hant, zh-Hant-foo
