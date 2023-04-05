@@ -1094,6 +1094,8 @@ public class ProcessFile
 
     public bool Verify(out bool canRepair)
     {
+        // Do not set any state, caller will set state
+
         // Init
         canRepair = false;
     
@@ -1104,12 +1106,20 @@ public class ProcessFile
             return true;
         }
 
-        // Skip if already verified
+        // Skip if Verified
         if (SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
         {
             Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed));
             Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
             return true;
+        }
+
+        // Skip if VerifyFailed
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
+        {
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
+            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
+            return false;
         }
 
         // Skip files that are older than the minimum age
@@ -1172,7 +1182,7 @@ public class ProcessFile
         return true;
     }
 
-    public bool DeleteFailedVerify()
+    public bool DeleteFailedFile()
     {
         // Conditional
         if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
@@ -1183,7 +1193,7 @@ public class ProcessFile
 
         // Delete the media file and sidecar file
         // Ignore delete errors
-        Log.Logger.Information("Deleting media file due to failed verification : {FileName}", FileInfo.FullName);
+        Log.Logger.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
         FileEx.DeleteFile(FileInfo.FullName);
         FileEx.DeleteFile(SidecarFile.GetSidecarName(FileInfo));
 
@@ -1197,7 +1207,7 @@ public class ProcessFile
 
     public bool VerifyAndRepair(ref bool modified)
     {
-        // Verify
+        // Verify (verify does not set any state, it just tests state)
         if (Verify(out bool canRepair))
         {
             // Set Verified state if not already set
@@ -1221,18 +1231,21 @@ public class ProcessFile
             return false;
         }
 
-        // Verify failed and can't repair or repair not enabled
-        if (canRepair == false || !Program.Config.VerifyOptions.AutoRepair)
+        // Verify failed and can't repair
+        // Or previous repair failed
+        // Or repair not enabled
+        if (canRepair == false ||
+            SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed) ||
+            !Program.Config.VerifyOptions.AutoRepair)
         {
-            // Verify failed state
-            SidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
-            SidecarFile.State &= ~SidecarFile.StatesType.Verified;
-            Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
-
-            // Conditionally delete media
-            if (!DeleteFailedVerify())
+            // Set VerifyFailed state if not already set
+            if (!SidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
             {
-                // Update state if media was not deleted
+                SidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
+                SidecarFile.State &= ~SidecarFile.StatesType.Verified;
+                Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
+
+                // Update state
                 Refresh(false);
             }
 
@@ -1244,8 +1257,7 @@ public class ProcessFile
         Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
-        // Attempt repair
-        // Repair will re-verify using temp repaired file
+        // Attempt repair, if repair fails the original file will not be modified
         bool repaired = RepairAndReVerify();
 
         // Cancel requested
@@ -1263,12 +1275,8 @@ public class ProcessFile
             SidecarFile.State |= SidecarFile.StatesType.RepairFailed;
             SidecarFile.State &= ~SidecarFile.StatesType.Repaired;
 
-            // Conditionally delete media
-            if (!DeleteFailedVerify())
-            {
-                // Update state if media was not deleted
-                Refresh(false);
-            }
+            // Update state
+            Refresh(false);
 
             // Error
             return false;
@@ -1470,7 +1478,7 @@ public class ProcessFile
         // https://ffmpeg.org/ffmpeg-filters.html#crop
         // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
-        // Repair to temp file, if successful replace original file
+        // Repair to temp file, only if verify is successful replace original file
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
 
         // Convert using ffmpeg
@@ -1518,7 +1526,7 @@ public class ProcessFile
             return false;
         }
 
-        // Rename the temp file to the original file
+        // Verify succeeded, rename the temp file to the original file
         if (!FileEx.RenameFile(tempName, FileInfo.FullName))
         {
             return false;

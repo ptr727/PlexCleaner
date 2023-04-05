@@ -20,7 +20,7 @@
     // FFmpeg commandline options
     "FfMpegOptions": {
       // Video encoding option following -c:v
-      "Video": "libx264 -crf 20 -preset medium",
+      "Video": "libx264 -crf 22 -preset medium",
       // Audio encoding option following -c:a
       "Audio": "ac3",
       // Global options
@@ -31,7 +31,7 @@
     // HandBrake commandline options
     "HandBrakeOptions": {
       // Video encoding options following --encode
-      "Video": "x264 --quality 20 --encoder-preset medium",
+      "Video": "x264 --quality 22 --encoder-preset medium",
       // Audio encoding option following --aencode
       "Audio": "copy --audio-fallback ac3"
     }
@@ -131,7 +131,7 @@
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
     "RemoveUnwantedLanguageTracks": false,
-    // Track language tags to keep in BCP-47 format
+    // Track language tags to keep in RFC-5646 format
     "KeepLanguages": [
       "en",
       "af",
@@ -190,9 +190,9 @@
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
-    // Delete media files that fail repair
+    // Delete media files that fail processing
     "DeleteInvalidFiles": false,
-    // Add media files that fail verify or repair to the FileIgnoreList setting
+    // Add media files that fail processing to the FileIgnoreList setting
     // Not required when using sidecar files
     "RegisterInvalidFiles": false,
     // Minimum required playback duration in seconds

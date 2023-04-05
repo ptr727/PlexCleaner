@@ -210,10 +210,10 @@ public record ProcessOptions : ProcessOptions2
         Upgrade(processOptions2 as ProcessOptions1);
 
         // Convert ISO 639-2 to RFC 5646 language tags
-        DefaultLanguage = Language.GetIetfTag(DefaultLanguage, true) ?? Language.English;
+        DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
         List<string> oldList = KeepLanguages.ToList();
         KeepLanguages.Clear();
-        oldList.ForEach(item => KeepLanguages.Add(Language.GetIetfTag(item, true) ?? Language.English));
+        oldList.ForEach(item => KeepLanguages.Add(Language.Singleton.GetIetfTag(item, true) ?? Language.English));
 
         // Defaults
         KeepOriginalLanguage = true;

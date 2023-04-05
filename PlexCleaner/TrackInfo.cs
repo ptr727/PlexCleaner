@@ -80,66 +80,85 @@ public partial class TrackInfo
         // https://r12a.github.io/app-subtags/
         LanguageIetf = trackJson.Properties.LanguageIetf;
 
+        // For verification logic save state before modification
+        var languageSet = !string.IsNullOrEmpty(Language);
+        var languageIetfSet = !string.IsNullOrEmpty(LanguageIetf);
+
         // If both Language and LanguageIetf are set, verify they match
-        if (!string.IsNullOrEmpty(Language) && !string.IsNullOrEmpty(LanguageIetf))
+        if (languageSet && languageIetfSet)
         {
-            // Lookup the ISO-639-2B from LanguageIetf
-            var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
+            // Lookup the ISO-639-2B tag from the LanguageIetf tag
+            var lookupLanguage = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
-                // TODO: Migrate to use data from subtag registry
-                // https://github.com/mattcg/language-subtag-registry/blob/master/data/json/registry.json
+                // Failed to lookup ISO from IETF
+
+                // Set track error and recommend ReMux
+                HasErrors = true;
+                State = StateType.ReMux;
                 Log.Logger.Warning("MkvToolJsonSchema : Failed to lookup ISO639 Language from IETF LanguageIetf : {LanguageIetf} !-> {Language}", LanguageIetf, Language);
             }
             // Compare lookup language Language
             else if (!Language.Equals(lookupLanguage, StringComparison.OrdinalIgnoreCase))
             {
+                // Lookup ISO from IETF good, but does not match
+
                 // Set track error and recommend ReMux
                 HasErrors = true;
                 State = StateType.ReMux;
                 Log.Logger.Warning("MkvToolJsonSchema : LanguageIetf to Language Mismatch : {LanguageIetf} !-> {Language} : {State}", LanguageIetf, Language, State);
             }
+            // Lookup good and matches
         }
 
         // Language is set but IETF language is not set
-        if (!string.IsNullOrEmpty(Language) && string.IsNullOrEmpty(LanguageIetf))
+        if (languageSet && !languageIetfSet)
         {
-            // Set track error and recommend SetLanguage (ReMux with check for SetIetfLanguageTags)
+            // Set track error and recommend SetLanguage
+            // ReMux will conditionally check for SetIetfLanguageTags
             HasErrors = true;
             State = StateType.SetLanguage;
 
             // Get the RFC-5646 tag from the ISO-639-2B tag
-            var lookupLanguage = PlexCleaner.Language.GetIetfTag(Language, true);
+            var lookupLanguage = PlexCleaner.Language.Singleton.GetIetfTag(Language, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
+                // Failed to lookup IETF from ISO
+
                 // No matching language found
                 Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, failed to lookup IETF language from ISO639 language : {Language} : {State}", Language, State);
             }
             else 
             {
-                // Set IETF from lookup
+                // IETF found
+
+                // Set IETF from lookup, ReMux to permanently correct
                 LanguageIetf = lookupLanguage;
                 Log.Logger.Warning("MkvToolJsonSchema : IETF language not set, converting ISO639 to IETF : {Language} -> {LanguageIetf} : {State}", Language, LanguageIetf, State);
             }
         }
 
         // Language is not set but IETF language is set
-        if (string.IsNullOrEmpty(Language) && !string.IsNullOrEmpty(LanguageIetf))
+        if (!languageSet && languageIetfSet)
         {
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
 
             // Get the ISO-639-2B tag from the RFC-5646 tag
-            var lookupLanguage = PlexCleaner.Language.GetIso639Tag(LanguageIetf, true);
+            var lookupLanguage = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
             if (string.IsNullOrEmpty(lookupLanguage))
             {
+                // Failed to lookup ISO from IETFF
+
                 // No matching language found
                 Log.Logger.Warning("MkvToolJsonSchema : ISO639 language not set, failed to lookup ISO639 language from IETF language : {Language} : {State}", LanguageIetf, State);
             }
             else
             {
-                // Set ISO-639-2B from lookup
+                // ISO found
+
+                // Set ISO from lookup, ReMux to permanently correct
                 Language = lookupLanguage;
                 Log.Logger.Warning("MkvToolJsonSchema : ISO639 language not set, converting IETF to ISO639: {LanguageIetf} -> {Language} : {State}", LanguageIetf, Language, State);
             }

@@ -246,9 +246,8 @@ internal class Process
 
             // Verify media streams, and repair if possible
             // Conditional on Verify and AutoRepair options
-            // Save the state but do not break yet, if file was modified further cleanup could still be required
-            bool verified = processFile.VerifyAndRepair(ref modified);
-            if (Program.IsCancelled())
+            if (!processFile.VerifyAndRepair(ref modified) ||
+                Program.IsCancelled())
             {
                 result = false;
                 break;
@@ -279,14 +278,22 @@ internal class Process
                 break;
             }
 
-            // Done
-            result = verified;
+            // Success
+            result = true;
             break;
         }
 
-        // Return current state and file info
+        // Update state if we opened a file for processing
         if (processFile != null)
         {
+            // Delete files that failed processing
+            // Conditional on DeleteInvalidFiles
+            if (result == false)
+            {
+                processFile.DeleteFailedFile();
+            }
+
+            // Return current state and file info
             state = processFile.State;
             processName = processFile.FileInfo.FullName;
         }

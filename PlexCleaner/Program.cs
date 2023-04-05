@@ -5,9 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using InsaneGenius.Utilities;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Debugging;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
@@ -83,16 +83,20 @@ internal class Program
         // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
         {
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
+            // Set log level
+            LogEventLevel logFileMinimumLevel = Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
+
+            // Write async to file
+            loggerConfiguration.WriteTo.Async(action => action.File(logfile, 
+                restrictedToMinimumLevel: logFileMinimumLevel, 
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
         }
 
         // Create static Serilog logger
         Log.Logger = loggerConfiguration.CreateLogger();
 
         // Set library logger to Serilog logger
-        LoggerFactory loggerFactory = new();
-        loggerFactory.AddSerilog(Log.Logger);
-        LogOptions.CreateLogger(loggerFactory);
+        LogOptions.Logger = Log.Logger;
     }
 
     internal static int WriteDefaultSettingsCommand(CommandLineOptions options)

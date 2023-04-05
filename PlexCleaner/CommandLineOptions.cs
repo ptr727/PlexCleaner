@@ -13,6 +13,7 @@ public class CommandLineOptions
     public List<string> MediaFiles { get; set; }
     public string LogFile { get; set; }
     public bool LogAppend { get; set; }
+    public bool LogWarning { get; set; }
     public bool TestSnippets { get; set; }
     public bool TestNoModify { get; set; }
     public bool ReVerify { get; set; }
@@ -37,6 +38,7 @@ public class CommandLineOptions
         // Global options applying to all commands
         command.AddGlobalOption(CreateLogFileOption());
         command.AddGlobalOption(CreateLogAppendOption());
+        command.AddGlobalOption(CreateLogWarningOption());
         command.AddGlobalOption(CreateDebugOption());
 
         // Create default settings
@@ -398,7 +400,16 @@ public class CommandLineOptions
         // Append to log vs. overwrite
         return new Option<bool>("--logappend")
         {
-            Description = "Append to the log file vs. default overwrite"
+            Description = "Append to log file vs. overwrite"
+        };
+    }
+
+    private static Option CreateLogWarningOption()
+    {
+        // Log warnings and errors
+        return new Option<bool>("--logwarning")
+        {
+            Description = "Log only warnings and errors to log file"
         };
     }
 

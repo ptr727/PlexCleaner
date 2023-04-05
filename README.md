@@ -48,19 +48,19 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
     - [FFmpeg](https://github.com/ptr727/PlexCleaner/issues/148) and [HandBrake](https://github.com/ptr727/PlexCleaner/issues/149) removes IETF language tags.
       - Files are remuxed using MkvMerge, and IETF tags are restored using MkvPropEdit, after any FFmpeg or HandBrake operation.
-      - If you care and can, please do communicate the need for IETF language suport to the FFmpeg and HandBrake development teams.
+      - If you care and can, please do communicate the need for IETF language support to the FFmpeg and HandBrake development teams.
     - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
-      - ISO 639-2B lookup from RFC 5646 using `CultureInfo` is not complete, if the lookup fails repair is not mandated.
-    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to reported e.g. `zh-cmn-Hant` vs. teh normalized `cmn-Hant`.
+    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to reported e.g. `zh-cmn-Hant` vs. the normalized `cmn-Hant`.
       - Old MkvMerge sidecar information will be out of data, recommend recreating sidecar files using `createsidecar` option.
   - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
   - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
   - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - Added warnings when multiple tracks of the same kind have a Default flag set.
-  - Fixed file process logic to continue attribute cleanup even if verify failed, alleviating need to run `process` command multiple times.
+  - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
+  - Updated `DeleteInvalidFiles` logic to delete any file that fails processing, not just files that fail verification.
   - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
   - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
   - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
@@ -189,7 +189,8 @@ sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
 docker run \
   -it \
   --rm \
-  --pull always \
+  --pull always
+  --log-driver json-file --log-opt max-size=10m \
   --name PlexCleaner \
   --user nobody:users \
   --env TZ=America/Los_Angeles \
@@ -197,6 +198,7 @@ docker run \
   ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \
     --logfile /media/PlexCleaner/PlexCleaner.log \
+    --logwarning \
     process \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --parallel \
@@ -258,7 +260,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     // FFmpeg commandline options
     "FfMpegOptions": {
       // Video encoding option following -c:v
-      "Video": "libx264 -crf 20 -preset medium",
+      "Video": "libx264 -crf 22 -preset medium",
       // Audio encoding option following -c:a
       "Audio": "ac3",
       // Global options
@@ -269,7 +271,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     // HandBrake commandline options
     "HandBrakeOptions": {
       // Video encoding options following --encode
-      "Video": "x264 --quality 20 --encoder-preset medium",
+      "Video": "x264 --quality 22 --encoder-preset medium",
       // Audio encoding option following --aencode
       "Audio": "copy --audio-fallback ac3"
     }
@@ -292,7 +294,7 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
       ".ass",
       ".vtt"
     ],
-    // Enable re-mux to MKV of non-MKV files
+    // Enable re-mux non-MKV files to MKV
     "ReMux": true,
     // File extensions to remux to MKV
     "ReMuxExtensions": [
@@ -365,13 +367,11 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
     ],
     // Set default language if tracks have an undefined language
     "SetUnknownLanguage": true,
-    // Default track language
-    // Use RFC 5646 format
+    // Default track language in RFC-5646 format
     "DefaultLanguage": "en",
     // Enable removing of unwanted language tracks
-    "RemoveUnwantedLanguageTracks": true,
-    // Track language matched tags to keep
-    // Use RFC 5646 format, see https://www.w3.org/International/articles/language-tags/
+    "RemoveUnwantedLanguageTracks": false,
+    // Track language tags to keep in RFC-5646 format
     "KeepLanguages": [
       "en",
       "af",
@@ -393,11 +393,12 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
       "e-ac-3",
       "ac-3"
     ],
-    // Enable removing of all tags from the media file
-    // Track title information is not removed
+    // Enable removing of tags, titles, attachments, etc. from the media file
     "RemoveTags": true,
     // Enable removing of EIA-608 Closed Captions embedded in video streams
     "RemoveClosedCaptions": true,
+    // Set track flags based on track title keywords
+    "SetTrackFlags": true,
     // Set IETF language tags when not present
     "SetIetfLanguageTags": true,
     // Speedup media re-processing by saving media info and processed state in sidecar files
@@ -429,9 +430,9 @@ Following is the [default JSON settings](./PlexCleaner.json) with usage comments
   "VerifyOptions": {
     // Attempt to repair media files that fail verification
     "AutoRepair": true,
-    // Delete media files that fail repair
+    // Delete media files that fail processing
     "DeleteInvalidFiles": false,
-    // Add media files that fail verify or repair to the FileIgnoreList setting
+    // Add media files that fail processing to the FileIgnoreList setting
     // Not required when using sidecar files
     "RegisterInvalidFiles": false,
     // Minimum required playback duration in seconds
@@ -556,7 +557,8 @@ Usage:
 
 Options:
   --logfile <logfile>  Path to log file
-  --logappend          Append to the log file vs. default overwrite
+  --logappend          Append to log file vs. overwrite
+  --logwarning         Log only warnings and errors to log file
   --debug              Wait for debugger to attach
   --version            Show version information
   -?, -h, --help       Show help and usage information
@@ -625,7 +627,8 @@ Options:
   --testnomodify                            Do not make any modifications, useful during testing
   --reverify                                Re-verify and repair media in VerifyFailed state
   --logfile <logfile>                       Path to log file
-  --logappend                               Append to the log file vs. default overwrite
+  --logappend                               Append to log file vs. overwrite
+  --logwarning                              Log only warnings and errors to log file
   --debug                                   Wait for debugger to attach
   -?, -h, --help                            Show help and usage information
 ```
