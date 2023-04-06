@@ -62,11 +62,14 @@ public class CommandLineOptions
         // De-Interlace files
         command.AddCommand(CreateDeInterlaceCommand());
 
-        // Write sidecar files
+        // Create sidecar files
         command.AddCommand(CreateCreateSidecarCommand());
 
-        // Read sidecar files
-        command.AddCommand(CreateGetSidecarInfoCommand());
+        // Print sidecar files
+        command.AddCommand(CreatePrintSidecarCommand());
+
+        // Update sidecar files
+        command.AddCommand(CreateUpdateSidecarCommand());
 
         // Create tag-map
         command.AddCommand(CreateGetTagMapCommand());
@@ -279,13 +282,31 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Command CreateGetSidecarInfoCommand()
+    private static Command CreatePrintSidecarCommand()
     {
         // Read sidecar files
-        Command command = new("getsidecarinfo")
+        Command command = new("printsidecar")
         {
-            Description = "Print sidecar file attribute information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarInfoCommand)
+            Description = "Print sidecar content",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.PrintSidecarCommand)
+        };
+
+        // Settings file name
+        command.AddOption(CreateSettingsFileOption());
+
+        // Media files or folders option
+        command.AddOption(CreateMediaFilesOption());
+
+        return command;
+    }
+
+    private static Command CreateUpdateSidecarCommand()
+    {
+        // Create sidecar files
+        Command command = new("updatesidecar")
+        {
+            Description = "Update existing sidecar files",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.UpdateSidecarCommand)
         };
 
         // Settings file name

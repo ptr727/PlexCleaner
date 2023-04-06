@@ -232,7 +232,7 @@ internal class Program
         return Process.CreateSidecarFiles(program.FileList) ? 0 : -1;
     }
 
-    internal static int GetSidecarInfoCommand(CommandLineOptions options)
+    internal static int PrintSidecarCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
         if (program == null)
@@ -245,7 +245,23 @@ internal class Program
             return -1;
         }
 
-        return Process.GetSidecarFiles(program.FileList) ? 0 : -1;
+        return Process.PrintSidecarFiles(program.FileList) ? 0 : -1;
+    }
+
+    internal static int UpdateSidecarCommand(CommandLineOptions options)
+    {
+        Program program = Create(options, true);
+        if (program == null)
+        {
+            return -1;
+        }
+
+        if (!program.CreateFileList(options.MediaFiles))
+        {
+            return -1;
+        }
+
+        return Process.UpdateSidecarFiles(program.FileList) ? 0 : -1;
     }
 
     internal static int GetTagMapCommand(CommandLineOptions options)

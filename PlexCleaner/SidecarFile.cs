@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -35,12 +36,16 @@ public class SidecarFile
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
+        Debug.Assert(MkvMergeTool.IsMkvFile(mediaFileInfo.FullName));
+
         MediaFileInfo = mediaFileInfo;
         SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
     }
 
     public SidecarFile(string mediaFileName)
     {
+        Debug.Assert(MkvMergeTool.IsMkvFile(mediaFileName));
+
         MediaFileInfo = new FileInfo(mediaFileName);
         SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
     }
@@ -535,6 +540,12 @@ public class SidecarFile
         return sidecarFileInfo.Extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
     }
 
+    public static string GetSidecarName(string fileName)
+    {
+        // Change extension of media file
+        return Path.ChangeExtension(fileName, SidecarExtension);
+    }
+
     public static string GetSidecarName(FileInfo mediaFileInfo)
     {
         // Change extension of media file
@@ -552,6 +563,51 @@ public class SidecarFile
         Log.Logger.Information("MediaInfoToolVersion: {MediaInfoToolVersion}", SidecarJson.MediaInfoToolVersion);
         Log.Logger.Information("MkvMergeToolVersion: {MkvMergeToolVersion}", SidecarJson.MkvMergeToolVersion);
         Log.Logger.Information("FfProbeToolVersion: {FfProbeToolVersion}", SidecarJson.FfProbeToolVersion);
+    }
+
+    public static bool PrintInformation(string fileName)
+    {
+        // Must be a MKV file
+        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+
+        // Does a sidecar exist
+        if (!File.Exists(GetSidecarName(fileName)))
+        {
+            // Skip if no sidecar for MKV file
+            return true;
+        }
+
+        // Read sidecar information
+        SidecarFile sidecarFile = new(fileName);
+        if (!sidecarFile.Read())
+        {
+            return false;
+        }
+
+        // Print info
+        sidecarFile.WriteLine();
+
+        return true;
+    }
+
+    public static bool Create(string fileName)
+    {
+        // Must be a MKV file
+        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+
+        // Create new or overwrite existing sidecar file
+        SidecarFile sidecarFile = new(fileName);
+        return sidecarFile.Create();
+    }
+
+    public static bool Update(string fileName)
+    {
+        // Must be a MKV file
+        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+
+        // Create new or udate existing sidecar file
+        SidecarFile sidecarFile = new(fileName);
+        return sidecarFile.Open(true);
     }
 
     public MediaInfo FfProbeInfo { get; private set; }

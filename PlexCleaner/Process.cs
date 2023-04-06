@@ -558,33 +558,38 @@ internal class Process
                 return true;
             }
 
-            // Create the sidecar file
-            SidecarFile sidecarFile = new(fileName);
-            return sidecarFile.Create();
+            // Create new or overwrite existing sidecar file
+            return SidecarFile.Create(fileName);
         });
     }
 
-    public static bool GetSidecarFiles(List<string> fileList)
+    public static bool PrintSidecarFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
+        return ProcessFilesDriver(fileList, "Print Sidecar Information", fileName =>
         {
-            // Handle only sidecar files
-            if (!SidecarFile.IsSidecarFile(fileName))
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
-            // Get sidecar information
-            SidecarFile sidecarFile = new(fileName);
-            if (!sidecarFile.Read())
+            // Print info
+            return SidecarFile.PrintInformation(fileName);
+        });
+    }
+
+    public static bool UpdateSidecarFiles(List<string> fileList)
+    {
+        return ProcessFilesDriver(fileList, "Update Sidecar Files", fileName =>
+        {
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
-                return false;
+                return true;
             }
 
-            // Print info
-            sidecarFile.WriteLine();
-
-            return true;
+            // Create new or update existing sidecar file
+            return SidecarFile.Update(fileName);
         });
     }
 

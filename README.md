@@ -57,6 +57,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
   - Added warnings when multiple tracks of the same kind have a Default flag set.
   - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
+  - Added `updatesidecar` commandline option to update sidecar files using current media tool information.
+  - Renamed `getsidecarinfo` commandline option to `printsidecar`.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
   - Updated `DeleteInvalidFiles` logic to delete any file that fails processing, not just files that fail verification.
@@ -575,13 +577,14 @@ Commands:
   reencode          Re-Encode media files
   deinterlace       De-Interlace media files
   createsidecar     Create new sidecar files
-  getsidecarinfo    Print sidecar file attribute information
+  printsidecar      Print sidecar content
+  updatesidecar     Update existing sidecar files
   gettagmap         Print attribute tag-map created from media files
   getmediainfo      Print media file attribute information
   gettoolinfo       Print tool file attribute information
   removesubtitles   Remove all subtitles
   createschema      Write settings JSON schema to file
-```
+  ```
 
 ### Process Media Files
 
@@ -652,12 +655,15 @@ The `monitor` command will watch the specified folders for changes, and process 
 Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
 Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-### Create Sidecar
+### Create and Update Sidecar
 
-The `createsidecar` command will create or re-create sidecar files.  
+The `createsidecar` command will create or re-create and overwrite sidecar files.  
 All existing state attributes will be deleted.
 
-### GetTagMap, GetMediaInfo, GetToolInfo, GetSidecarInfo
+The `updatesidecar` command will update the sidecar with current media tool information.  
+Existing state attributes will be retained unless the media file had been modified.
+
+### Get  TagMap, Get MediaInfo, Get ToolInfo, Print Sidecar
 
 The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
 
@@ -665,7 +671,7 @@ The `getmediainfo` command will print media attribute information.
 
 The `gettoolinfo` command will print tool attribute information.
 
-The `getsidecarinfo` command will print sidecar attribute information.
+The `printsidecar` command will print sidecar attribute information.
 
 ## Remove Subtitles
 

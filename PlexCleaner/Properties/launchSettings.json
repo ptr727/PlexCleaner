@@ -1,9 +1,5 @@
 {
   "profiles": {
-    "Check For New Tools": {
-      "commandName": "Project",
-      "commandLineArgs": "checkfornewtools --settingsfile \"PlexCleaner.json\""
-    },
     "Process": {
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
@@ -11,14 +7,6 @@
     "Monitor": {
       "commandName": "Project",
       "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Re-Mux": {
-      "commandName": "Project",
-      "commandLineArgs": "remux --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Re-Encode": {
-      "commandName": "Project",
-      "commandLineArgs": "reencode --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
     },
     "Version": {
       "commandName": "Project",
@@ -38,34 +26,6 @@
     },
     "Docker": {
       "commandName": "Docker"
-    },
-    "Print Tag Map": {
-      "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" gettagmap --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Create Sidecar": {
-      "commandName": "Project",
-      "commandLineArgs": "createsidecar --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Get Media Info": {
-      "commandName": "Project",
-      "commandLineArgs": "getmediainfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Get Sidecar Info": {
-      "commandName": "Project",
-      "commandLineArgs": "getsidecarinfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Get Tool Info": {
-      "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" gettoolinfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Remove Subtitles": {
-      "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" removesubtitles --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
-    },
-    "Defaults Settings": {
-      "commandName": "Project",
-      "commandLineArgs": "defaultsettings --settingsfile \"PlexCleaner.Defaults.json\""
     },
     "Process Test": {
       "commandName": "Project",
@@ -90,6 +50,50 @@
     "ReVerify": {
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" process --reverify --settingsfile \"PlexCleaner.json\" --testsnippets --mediafiles \"D:\\Test\""
+    },
+    "ReMux": {
+      "commandName": "Project",
+      "commandLineArgs": "remux --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "CheckForNewTools": {
+      "commandName": "Project",
+      "commandLineArgs": "checkfornewtools --settingsfile \"PlexCleaner.json\""
+    },
+    "ReEncode": {
+      "commandName": "Project",
+      "commandLineArgs": "reencode --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "PrintTagMap": {
+      "commandName": "Project",
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" gettagmap --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "CreateSidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "createsidecar --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "GetMediaInfo": {
+      "commandName": "Project",
+      "commandLineArgs": "getmediainfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "PrintSidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "printsidecar --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "UpdateSidecar": {
+      "commandName": "Project",
+      "commandLineArgs": "updatesidecar --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "DefaultsSettings": {
+      "commandName": "Project",
+      "commandLineArgs": "defaultsettings --settingsfile \"PlexCleaner.Defaults.json\""
+    },
+    "RemoveSubtitles": {
+      "commandName": "Project",
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" removesubtitles --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "GetToolInfo": {
+      "commandName": "Project",
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" gettoolinfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
     }
   }
 }

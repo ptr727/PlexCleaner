@@ -1465,6 +1465,11 @@ public class ProcessFile
 
         // Use MediaInfoInfo and find all HDR tracks
         var hdrTracks = MediaInfoInfo.Video.FindAll(videoItem => !string.IsNullOrEmpty(videoItem.FormatHdr));
+        if (hdrTracks.Count == 0)
+        {
+            // No HDR tracks
+            return true;
+        }
 
         // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
         var nonHdr10Tracks = hdrTracks.FindAll(videoItem => Hdr10Format.Any(hdrFormat => !videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
