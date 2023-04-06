@@ -11,6 +11,7 @@
     "KeepOriginalLanguage": true,
     "RemoveClosedCaptions": true,
     "SetIetfLanguageTags": true,
+    "SetTrackFlags": true,
     "KeepExtensions": [
       ".partial~",
       ".nfo",
@@ -81,7 +82,7 @@
     "KeepLanguages": [
       "en",
       "af",
-      "zh-Hans",
+      "zh",
       "in"
     ],
     "PreferredAudioFormats": [
@@ -93,7 +94,6 @@
       "e-ac-3",
       "ac-3"
     ],
-    "FileIgnoreList": [],
     "DeleteEmptyFolders": true,
     "DeleteUnwantedExtensions": true,
     "ReMux": true,
@@ -101,13 +101,14 @@
     "ReEncode": true,
     "SetUnknownLanguage": true,
     "DefaultLanguage": "en",
-    "RemoveUnwantedLanguageTracks": true,
+    "RemoveUnwantedLanguageTracks": false,
     "RemoveDuplicateTracks": false,
     "RemoveTags": true,
     "UseSidecarFiles": true,
     "SidecarUpdateOnToolChange": false,
     "Verify": true,
-    "RestoreFileTimestamp": false
+    "RestoreFileTimestamp": false,
+    "FileIgnoreList": []
   },
   "ConvertOptions": {
     "FfMpegOptions": {

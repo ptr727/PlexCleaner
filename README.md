@@ -50,7 +50,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - Files are remuxed using MkvMerge, and IETF tags are restored using MkvPropEdit, after any FFmpeg or HandBrake operation.
       - If you care and can, please do communicate the need for IETF language support to the FFmpeg and HandBrake development teams.
     - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
-    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to reported e.g. `zh-cmn-Hant` vs. the normalized `cmn-Hant`.
+    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to report e.g. `zh-cmn-Hant` vs. `cmn-Hant`.
   - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
   - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
   - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
@@ -117,7 +117,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Parallel processing is useful when a single instance of FFmpeg or HandBrake does not saturate the CPU resources of the system.
 - When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
 - The initial `process` run on a large collection can take a long time to complete.
-- Processing can be interrupted using `Ctl-C`, re-running the same command will resume processing.
+- Processing can be interrupted using `Ctl-C` `Ctl-C`, re-running the same command will resume processing.
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
@@ -539,6 +539,9 @@ E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.
 E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
 E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
 
+Normalized tags will be expanded for matching.  
+E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
+
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage
@@ -586,7 +589,8 @@ The `process` command will process the media content using options as defined in
 
 - Delete files with extensions not in the `KeepExtensions` list.
 - Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
-- Remove all tags, titles, thumbnails, and attachments from the media file.
+- Remove all tags, titles, thumbnails, cover art, and attachments from the media file.
+- Set IETF language tags and Matroska track flags if missing.
 - Set the language to `DefaultLanguage` for any track with an undefined language.
 - If multiple audio tracks of the same language but different encoding formats are present, set the default track based on `PreferredAudioFormats`.
 - Remove tracks with languages not in the `KeepLanguages` list.

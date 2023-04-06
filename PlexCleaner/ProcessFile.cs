@@ -1463,15 +1463,14 @@ public class ProcessFile
         <HDR_Format_Compatibility>Blu-ray / HDR10</HDR_Format_Compatibility>
         */
 
-        // Use MediaInfoInfo
+        // Use MediaInfoInfo and find all HDR tracks
+        var hdrTracks = MediaInfoInfo.Video.FindAll(videoItem => !string.IsNullOrEmpty(videoItem.FormatHdr));
 
-        // Find video tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094)compatible
-        var hdrVideoTracks = MediaInfoInfo.Video.FindAll(videoItem => 
-            Hdr10Format.Any(hdrFormat => 
-                !videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
-        hdrVideoTracks.ForEach(videoItem =>
+        // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
+        var nonHdr10Tracks = hdrTracks.FindAll(videoItem => Hdr10Format.Any(hdrFormat => !videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
+        nonHdr10Tracks.ForEach(videoItem =>
         {
-            Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} : {FileName}", videoItem.FormatHdr, FileInfo.Name);
+            Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, Hdr10Format, FileInfo.Name);
 
             // Warning only
         });
