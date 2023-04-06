@@ -1910,7 +1910,7 @@ public class ProcessFile
         // Select tracks with wanted languages, or the original language if set to keep
         // Selected is Keep
         // NotSelected is Remove
-        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, item => Language.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages) ||
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, item => Language.Singleton.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages) ||
                                                                     (Program.Config.ProcessOptions.KeepOriginalLanguage && item.Flags.HasFlag(TrackInfo.FlagsType.Original)));
 
         // Keep at least one video track if any

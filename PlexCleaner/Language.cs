@@ -152,11 +152,9 @@ public class Language
         return string.IsNullOrEmpty(language) || language.Equals(Undefined, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static bool IsMatch(string prefix, string language)
+    public bool IsMatch(string prefix, string language)
     {
-        // TODO: Is there an easy to use C# BCP 47 matcher?
         // https://r12a.github.io/app-subtags/
-        // https://www.loc.gov/standards/iso639-2/php/langcodes-search.php
 
         // zh match: zh: zh, zh-Hant, zh-Hans, zh-cmn-Hant
         // zho not: zh
@@ -176,11 +174,25 @@ public class Language
             return true;
         }
 
+        // Get the extended format of the language
+        // E.g. cmn-Hant should be expanded to zh-cmn-Hant else zh will not match
+
+        // Find a matching RFC 5646 record
+        var rfc5646 = Rfc5646.Find(language, false);
+        if (rfc5646 != null)
+        {
+            // If the lookup is different then rematch
+            if (!string.Equals(language, rfc5646.TagAny, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsMatch(prefix, rfc5646.TagAny);
+            }
+        }
+
         // No match
         return false;
     }
 
-    public static bool IsMatch(string language, IEnumerable<string> prefixList)
+    public bool IsMatch(string language, IEnumerable<string> prefixList)
     {
         // Match language with any of the prefixes
         return prefixList.Any(prefix => IsMatch(prefix, language));

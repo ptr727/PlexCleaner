@@ -27,7 +27,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 
 - Version 3.0:
   - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
-    - The up to date FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer freely available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
+    - The always up to date FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer generally available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
     - Switched to [Arch Linux](https://archlinux.org/) with up to date media tools found in the [Arch Linux Package Repository](https://archlinux.org/packages/).
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
@@ -51,7 +51,6 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
       - If you care and can, please do communicate the need for IETF language support to the FFmpeg and HandBrake development teams.
     - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
     - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to reported e.g. `zh-cmn-Hant` vs. the normalized `cmn-Hant`.
-      - Old MkvMerge sidecar information will be out of data, recommend recreating sidecar files using `createsidecar` option.
   - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
   - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
   - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.

@@ -27,11 +27,12 @@ public class LanguageTests : IClassFixture<PlexCleanerTests>
     [InlineData("en", "en-US")]
     [InlineData("en", "en-GB")]
     [InlineData("en-GB", "en-GB")]
-    [InlineData("zh", "zh-Hant")]
+    [InlineData("zh", "zh-cmn-Hant")]
+    [InlineData("zh", "cmn-Hant")]
     [InlineData("sr-Latn", "sr-Latn-RS")]
     public void Match_Language_Tags(string prefix, string tag)
     {
-        Assert.True(Language.IsMatch(prefix, tag));
+        Assert.True(Language.Singleton.IsMatch(prefix, tag));
     }
 
     [Theory]
@@ -40,7 +41,7 @@ public class LanguageTests : IClassFixture<PlexCleanerTests>
     [InlineData("zh-Hant", "zh-Hans")]
     public void NotMatch_Language_Tags(string prefix, string tag)
     {
-        Assert.False(Language.IsMatch(prefix, tag));
+        Assert.False(Language.Singleton.IsMatch(prefix, tag));
     }
 
     [Theory]
