@@ -37,7 +37,7 @@ internal class Program
         keepAwakeTimer.Dispose();
         KeepAwake.AllowSleep();
 
-        // Flush the logs
+        // Flush the logs on close
         Log.CloseAndFlush();
 
         return ret;

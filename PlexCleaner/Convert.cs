@@ -106,11 +106,20 @@ public static class Convert
                 Log.Logger.Error("ReMux using FfMpeg failed : {FileName}", inputName);
                 return false;
             }
+
+            // Remux using MkvMerge after FfMpeg or HandBrake encoding
+            Log.Logger.Information("ReMux using MkvMerge : {FileName}", inputName);
+            if (!ReMuxInPlace(tempName))
+            {
+                FileEx.DeleteFile(tempName);
+                return false;
+            }
         }
 
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempName, outputName))
         {
+            FileEx.DeleteFile(tempName);
             return false;
         }
 

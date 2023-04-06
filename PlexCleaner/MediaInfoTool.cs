@@ -193,9 +193,6 @@ public partial class MediaInfoTool : MediaTool
                 }
             }
 
-            // Remove cover art
-            mediaInfo.RemoveCoverArt();
-
             // TODO: Errors
             // TODO: Tags, look in the Extra field, but not reliable
             // TODO: Duration, too many different formats to parse

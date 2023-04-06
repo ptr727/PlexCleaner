@@ -48,7 +48,7 @@ public class MediaInfo
     public string Container { get; set; }
     public int Attachments { get; set; }
     public int Chapters { get; set; }
-
+    public bool HasCovertArt { get => Video.Any(item => item.IsCoverArt); }
 
     public void WriteLine(string prefix)
     {
@@ -104,7 +104,7 @@ public class MediaInfo
         }
 
         // Find all tracks with cover art
-        var coverArtTracks = Video.FindAll(item => item.MatchCoverArt());
+        var coverArtTracks = Video.FindAll(item => item.IsCoverArt);
 
         // Are all tracks cover art
         if (Video.Count == coverArtTracks.Count)

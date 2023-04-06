@@ -187,9 +187,6 @@ public partial class MkvMergeTool : MediaTool
                 }
             }
 
-            // Remove cover art
-            mediaInfo.RemoveCoverArt();
-
             // Container type
             mediaInfo.Container = mkvMerge.Container.Type;
 
@@ -359,7 +356,8 @@ public partial class MkvMergeTool : MediaTool
     }
 
     private const string Snippet = "--split parts:00:00:00-00:03:00";
-    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close --normalize-language-ietf extlang";
+    // private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close --normalize-language-ietf extlang";
+    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
 
     const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
 

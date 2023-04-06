@@ -386,16 +386,6 @@ public partial class TrackInfo
         }
     }
 
-    public bool MatchCoverArt()
-    {
-        return MatchCoverArt(Codec) || MatchCoverArt(Format);
-    }
-
-    public static bool MatchCoverArt(string codec)
-    {
-        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
-    }
-
     public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType)
     {
         return Enum.GetValues<FlagsType>().Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
@@ -408,9 +398,6 @@ public partial class TrackInfo
 
     [GeneratedRegex(@"(?<id>\d)")]
     private static partial Regex TrackRegex();
-
-    // Cover art and thumbnail formats
-    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
 
     // Track title to flag mapping
     private static readonly ValueTuple<string, FlagsType>[] TitleFlags = 

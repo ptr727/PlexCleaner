@@ -29,7 +29,8 @@ public class SidecarFile
         FileModified = 1 << 12,
         ClearedCaptions = 1 << 13,
         RemovedAttachments = 1 << 14,
-        SetFlags = 1 << 15
+        SetFlags = 1 << 15,
+        RemovedCoverArt = 1 << 16
     }
 
     public SidecarFile(FileInfo mediaFileInfo)
@@ -363,11 +364,21 @@ public class SidecarFile
 
     private bool ReadJson()
     {
-        // Deserialize
-        SidecarJson = SidecarFileJsonSchema.FromJson(File.ReadAllText(SidecarFileInfo.FullName));
-        if (SidecarJson == null)
+        try
         {
-            Log.Logger.Error("Failed to read JSON from file : {FileName}", SidecarFileInfo.Name);
+            // Get json file
+            var json = File.ReadAllText(SidecarFileInfo.FullName);
+
+            // Create the object from json
+            SidecarJson = SidecarFileJsonSchema.FromJson(json);
+            if (SidecarJson == null)
+            {
+                Log.Logger.Error("Failed to read JSON from file : {FileName}", SidecarFileInfo.Name);
+                return false;
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
             return false;
         }
         return true;
@@ -377,14 +388,11 @@ public class SidecarFile
     {
         try
         {
-            // Get json text from object
-            string json = SidecarFileJsonSchema.ToJson(SidecarJson);
+            // Get json from object
+            var json = SidecarFileJsonSchema.ToJson(SidecarJson);
 
             // Write the text to the sidecar file
-            using StreamWriter streamWriter = SidecarFileInfo.CreateText();
-            streamWriter.Write(json);
-            streamWriter.Flush();
-            streamWriter.Close();
+            File.WriteAllText(SidecarFileInfo.FullName, json);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {

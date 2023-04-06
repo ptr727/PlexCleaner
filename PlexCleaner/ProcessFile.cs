@@ -483,6 +483,55 @@ public class ProcessFile
         return Refresh(true);
     }
 
+    public bool RemoveCoverArt(ref bool modified)
+    {
+        // Any cover art, use MkvMergeInfo
+        if (!MkvMergeInfo.HasCovertArt)
+        {
+            // No cover art
+            return true;
+        }
+
+        // Already removed?
+        if (SidecarFile.State.HasFlag(SidecarFile.StatesType.RemovedCoverArt))
+        {
+            Log.Logger.Warning("Cover Art re-detected after removing : {FileName}", FileInfo.Name);
+        }
+
+        // Test
+        if (Program.Options.TestNoModify)
+        {
+            return false;
+        }
+
+        // Select all tracks with cover art
+        // Use MkvMerge for cover art logic
+        // Selected is Keep
+        // NotSelected is Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
+        selectMediaInfo.Move(MkvMergeInfo.Video.Find(item => item.IsCoverArt), false);
+
+        // There must be something left to keep
+        Debug.Assert(selectMediaInfo.Selected.Count> 0);
+        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
+
+        Log.Logger.Information("Removing Cover Art from media file : {FileName}", FileInfo.Name);
+        selectMediaInfo.WriteLine("Keep", "Remove");
+
+        // ReMux and only keep the selected tracks
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
+        {
+            // Error
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        SidecarFile.State |= SidecarFile.StatesType.RemovedCoverArt;
+        return Refresh(outputName);
+    }
+
     public bool SetUnknownLanguageTracks(ref bool modified)
     {
         // Conditional
@@ -829,6 +878,7 @@ public class ProcessFile
         // Refresh
         modified = true;
         SidecarFile.State |= SidecarFile.StatesType.DeInterlaced;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         if (!Refresh(true))
         {
             return false;
@@ -915,6 +965,15 @@ public class ProcessFile
             return false;
         }
 
+        // Remux using MkvMerge after FfMpeg encoding
+        Log.Logger.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
+        if (!Convert.ReMuxInPlace(tempName))
+        {
+            // Error
+            FileEx.DeleteFile(tempName);
+            return false;
+        }
+
         // Rename the temp file to the original file
         if (!FileEx.RenameFile(tempName, FileInfo.FullName))
         {
@@ -922,17 +981,10 @@ public class ProcessFile
             return false;
         }
 
-        // Remux using MkvMerge after FfMpeg encoding
-        Log.Logger.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
-        if (!Convert.ReMuxInPlace(FileInfo.FullName))
-        {
-            // Error
-            return false;
-        }
-
         // Refresh
         modified = true;
         SidecarFile.State |= SidecarFile.StatesType.ClearedCaptions;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         return Refresh(true);
     }
 
@@ -1001,6 +1053,7 @@ public class ProcessFile
         // Refresh
         modified = true;
         SidecarFile.State |= SidecarFile.StatesType.ReEncoded;
+        SidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         if (!Refresh(outputName))
         {
             return false;
@@ -1518,6 +1571,15 @@ public class ProcessFile
             }
         }
 
+        // Remux using MkvMerge after FfMpeg or HandBrake encoding
+        Log.Logger.Information("ReMuxing repaired media : {FileName}", tempName);
+        if (!Convert.ReMuxInPlace(tempName))
+        {
+            // Failed
+            FileEx.DeleteFile(tempName);
+            return false;
+        }
+
         // Re-encoding succeeded, re-verify the temp file
         if (!VerifyMediaStreams(new FileInfo(tempName)))
         {
@@ -1528,12 +1590,6 @@ public class ProcessFile
 
         // Verify succeeded, rename the temp file to the original file
         if (!FileEx.RenameFile(tempName, FileInfo.FullName))
-        {
-            return false;
-        }
-
-        // Remux using MkvMerge
-        if (!Convert.ReMuxInPlace(FileInfo.FullName))
         {
             return false;
         }
@@ -1618,8 +1674,8 @@ public class ProcessFile
         // E.g. MkvPropEdit changes are not visible when immediately re-reading the file
         if (modified)
         {
-            Log.Logger.Information("Waiting for IO to flush : {RefreshWaitTime}s : {File}", RefreshWaitTime, FileInfo.Name);
-            Thread.Sleep(RefreshWaitTime * 1000);
+            // Log.Logger.Information("Waiting for IO to flush : {RefreshWaitTime}s : {File}", RefreshWaitTime, FileInfo.Name);
+            // Thread.Sleep(RefreshWaitTime * 1000);
         }
 
         // Load info from sidecar

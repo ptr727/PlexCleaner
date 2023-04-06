@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Serilog;
 
 // TODO: Find a better way to create profile levels
@@ -22,7 +23,7 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
-        if (MatchCoverArt())
+        if (IsCoverArt)
         {
             Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
@@ -59,7 +60,7 @@ public class VideoInfo : TrackInfo
         // Missing: HDR
 
         // Cover art
-        if (MatchCoverArt())
+        if (IsCoverArt)
         {
             Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
@@ -89,7 +90,7 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
-        if (MatchCoverArt())
+        if (IsCoverArt)
         {
             Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
         }
@@ -103,7 +104,14 @@ public class VideoInfo : TrackInfo
 
     public bool ClosedCaptions { get; set; }
 
-    public bool CompareVideo(VideoFormat compare)
+    public bool IsCoverArt { get => MatchCoverArt(Codec) || MatchCoverArt(Format); }
+
+    public static bool MatchCoverArt(string codec)
+    {
+        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
+    }
+
+public bool CompareVideo(VideoFormat compare)
     {
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match
@@ -139,4 +147,7 @@ public class VideoInfo : TrackInfo
             HasErrors,
             HasTags);
     }
+
+    // Cover art and thumbnail formats
+    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
 }

@@ -162,6 +162,15 @@ internal class Process
                 break;
             }
 
+            // Remove all cover art video tracks
+            // Cover art as video tracks, e.g. MJPEG is not supported
+            if (!processFile.RemoveCoverArt(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
             // Remove all attachments
             // Conditional on RemoveTags option
             if (!processFile.RemoveAttachments(ref modified) ||

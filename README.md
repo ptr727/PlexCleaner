@@ -66,6 +66,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
   - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
   - Refactored track selection logic to simplify containment and use with lambda filters.
   - Refactored verify and repair logic, became too complicated.
+  - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.

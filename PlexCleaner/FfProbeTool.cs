@@ -68,8 +68,10 @@ public class FfProbeTool : FfMpegTool
             return false;
         }
 
+        // Close and flush the output stream
+        process.OutputStream.Close();
+
         // Read JSON from stream
-        process.OutputStream.Flush();
         memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
         using StreamReader streamReader = new(decompressStream);
@@ -166,9 +168,6 @@ public class FfProbeTool : FfMpegTool
                     mediaInfo.Subtitle.Add(info);
                 }
             }
-
-            // Remove cover art
-            mediaInfo.RemoveCoverArt();
 
             // TODO: Errors
 
