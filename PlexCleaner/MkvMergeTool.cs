@@ -356,11 +356,9 @@ public partial class MkvMergeTool : MediaTool
     }
 
     private const string Snippet = "--split parts:00:00:00-00:03:00";
-    // private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --flush-on-close --normalize-language-ietf extlang";
     private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
 
     const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
-
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex InstalledVersionRegex();
 }

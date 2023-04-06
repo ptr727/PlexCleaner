@@ -1465,10 +1465,10 @@ public class ProcessFile
 
         // Use MediaInfoInfo
 
-        // Find video tracks with HDR10 as format
+        // Find video tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094)compatible
         var hdrVideoTracks = MediaInfoInfo.Video.FindAll(videoItem => 
             Hdr10Format.Any(hdrFormat => 
-            videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
+                !videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
         hdrVideoTracks.ForEach(videoItem =>
         {
             Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} : {FileName}", videoItem.FormatHdr, FileInfo.Name);
@@ -1669,14 +1669,6 @@ public class ProcessFile
         // Call Refresh() at each processing function exit
         // Set modified to true if the media file has been modified
         // Set modified to false if only the state has been modified
-
-        // If the file was modified wait for a little to let the IO complete
-        // E.g. MkvPropEdit changes are not visible when immediately re-reading the file
-        if (modified)
-        {
-            // Log.Logger.Information("Waiting for IO to flush : {RefreshWaitTime}s : {File}", RefreshWaitTime, FileInfo.Name);
-            // Thread.Sleep(RefreshWaitTime * 1000);
-        }
 
         // Load info from sidecar
         if (Program.Config.ProcessOptions.UseSidecarFiles)

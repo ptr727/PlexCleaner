@@ -541,25 +541,6 @@ public class SidecarFile
         return Path.ChangeExtension(mediaFileInfo.FullName, SidecarExtension);
     }
 
-    public static bool IsMediaFileName(FileInfo mediaFileInfo)
-    {
-        // Compare extension
-        return mediaFileInfo.Extension.Equals(MkvExtension, StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static string GetMediaName(FileInfo sidecarFileInfo)
-    {
-        // Change extension of media file
-        return Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
-    }
-
-    public static bool CreateSidecarFile(FileInfo mediaFileInfo)
-    {
-        // Create new sidecar for media file
-        SidecarFile sidecarFile = new(mediaFileInfo);
-        return sidecarFile.Create();
-    }
-
     public void WriteLine()
     {
         Log.Logger.Information("State: {State}", State);

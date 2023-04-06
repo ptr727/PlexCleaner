@@ -153,6 +153,5 @@ public class MkvPropEditTool : MkvMergeTool
         commandline.Append($"\"{fileName}\" {EditOptions} ");
     }
 
-    // private const string EditOptions = "--flush-on-close --delete-track-statistics-tags --normalize-language-ietf extlang";
     private const string EditOptions = "--delete-track-statistics-tags --normalize-language-ietf extlang";
 }

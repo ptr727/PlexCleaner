@@ -128,7 +128,7 @@ public bool CompareVideo(VideoFormat compare)
         // Keep in sync with TrackInfo::WriteLine
         Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, " +
                                "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, " +
-                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
             prefix,
             GetType().Name,
             Format,
@@ -145,7 +145,8 @@ public bool CompareVideo(VideoFormat compare)
             ClosedCaptions,
             State,
             HasErrors,
-            HasTags);
+            HasTags,
+            IsCoverArt);
     }
 
     // Cover art and thumbnail formats
