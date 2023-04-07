@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using InsaneGenius.Utilities;
 using PlexCleaner.FfMpegToolJsonSchema;
 using Serilog;
@@ -1472,7 +1471,7 @@ public class ProcessFile
         }
 
         // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
-        var nonHdr10Tracks = hdrTracks.FindAll(videoItem => Hdr10Format.Any(hdrFormat => !videoItem.FormatHdr.Contains(hdrFormat, StringComparison.OrdinalIgnoreCase)));
+        var nonHdr10Tracks = hdrTracks.FindAll(videoInfo => Hdr10Format.All(hdr10Format => !videoInfo.FormatHdr.Contains(hdr10Format, StringComparison.OrdinalIgnoreCase)));
         nonHdr10Tracks.ForEach(videoItem =>
         {
             Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, Hdr10Format, FileInfo.Name);

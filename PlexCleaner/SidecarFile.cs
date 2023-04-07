@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -36,16 +35,12 @@ public class SidecarFile
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
-        Debug.Assert(MkvMergeTool.IsMkvFile(mediaFileInfo.FullName));
-
         MediaFileInfo = mediaFileInfo;
         SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
     }
 
     public SidecarFile(string mediaFileName)
     {
-        Debug.Assert(MkvMergeTool.IsMkvFile(mediaFileName));
-
         MediaFileInfo = new FileInfo(mediaFileName);
         SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
     }
