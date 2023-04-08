@@ -1,13 +1,17 @@
 # Test in docker shell:
 # docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
+
+# Test in develop shell:
 # docker run -it --rm --pull always --name Testing --volume /data/media:/media:rw ptr727/plexcleaner:develop /bin/bash
 
 # Build PlexCleaner
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 
-# Test Docker build:
-# docker build --progress=plain ./Docker
-# docker build --no-cache --progress=plain ./Docker
+# Build Dockerfile
+# docker build --tag testing:latest --file=./Docker/Arch.Dockerfile .
+# --no-cache --progress=plain
+
+
 
 # https://hub.docker.com/_/archlinux
 FROM archlinux:latest
@@ -71,7 +75,5 @@ RUN wget https://aka.ms/getvsdbgsh \
 RUN echo "y\ny" | pacman --sync --noconfirm --clean --clean
 
 # Copy PlexCleaner
-# Build externally
-# dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
-COPY PlexCleaner /PlexCleaner
+COPY ./Docker/PlexCleaner /PlexCleaner
 RUN /PlexCleaner/PlexCleaner --version
