@@ -33,14 +33,14 @@
 # Builder layer
 # Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
 # FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview-alpine AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview AS builder
 WORKDIR /Builder
 
 # Architecture, injected from build
 ARG TARGETARCH
 
 # ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-ARG BUILD_CONFIGURATION="Release"
+ARG BUILD_CONFIGURATION="Debug"
 
 # ${{ steps.nbgv.outputs.AssemblyVersion }}
 ARG BUILD_VERSION="1.0.0.0"
@@ -55,16 +55,20 @@ ARG BUILD_INFORMATION_VERSION="1.0.0.0"
 # ${{ steps.nbgv.outputs.SemVer2 }}
 ARG BUILD_PACKAGE_VERSION="1.0.0.0"
 
-# Copy source
-COPY ./PlexCleaner/. .
+# Copy source and unit tests
+COPY ./Samples/. ./Samples/.
+COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
+COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# TODO: Examples restore explicitly, why, should not be required?
-# Restore dependencies for platform
-# RUN dotnet restore --arch $TARGETARCH
+# Running a .NET 7 target on .NET 8 preview
+ENV DOTNET_ROLL_FORWARD=Major
+ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+
+# Run unit tests
+RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
 # Build and publish
-RUN dotnet publish ./PlexCleaner.csproj \
-#    --no-restore \
+RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \
     --self-contained false \
     --output ./Publish \
@@ -75,9 +79,7 @@ RUN dotnet publish ./PlexCleaner.csproj \
     -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
     -property:PackageVersion=$BUILD_PACKAGE_VERSION
 
-# Running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major
-ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+# Verify it runs
 RUN ./Publish/PlexCleaner --version
 
 
@@ -87,7 +89,7 @@ RUN ./Publish/PlexCleaner --version
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM mcr.microsoft.com/dotnet/sdk:latest
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0
 
 # Set the version at build time
 ARG LABEL_VERSION="1.0.0.0"
@@ -177,7 +179,8 @@ RUN apt-get autoremove -y \
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/. /PlexCleaner
+RUN /PlexCleaner/PlexCleaner --version
 
-# TODO: Why is the file not found?
-# RUN /PlexCleaner/PlexCleaner --version
-
+# TODO: Resolve Qemu errors?
+# qemu-aarch64: Could not open '/lib/ld-linux-aarch64.so.1': No such file or directory
+# qemu-arm: Could not open '/lib/ld-linux-armhf.so.3': No such file or directory
