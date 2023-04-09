@@ -107,30 +107,31 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
 # https://launchpad.net/~savoury1
 # https://launchpad.net/~/+archivesubscriptions
 
+# Install FfMpeg and HandBrake
+# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
+# https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
+
 # TODO: How to apt-get that requires auth.conf without persisting the secret and then later deleting it?
 # https://docs.docker.com/build/ci/github-actions/secrets/
 # https://docs.docker.com/build/ci/github-actions/secrets/
 
+# Run in one step to avoid caching layers with secrets that are not deleted, exposure is unknown
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
-RUN --mount=type=secret,id=savoury_ppa_auth cat /run/secrets/savoury_ppa_auth >> /etc/apt/auth.conf.d/savoury.conf
-RUN touch /etc/apt/sources.list.d/savoury.list \
+RUN --mount=type=secret,id=savoury_ppa_auth cat /run/secrets/savoury_ppa_auth >> /etc/apt/auth.conf.d/savoury.conf \
+    && touch /etc/apt/sources.list.d/savoury.list \
     && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
-    && apt-get update
-
-# Install FfMpeg and HandBrake
-# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
-# https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
-RUN apt-get install -y \
+    && apt-get update \
+    && apt-get install -y \
         ffmpeg \
         handbrake-cli \
+    && rm /etc/apt/auth.conf.d/savoury.conf \
     && ffmpeg -version \
     && HandBrakeCLI --version
 
 # Cleanup
 RUN apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm /etc/apt/auth.conf.d/savoury.conf
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy PlexCleaner
 COPY ./Docker/PlexCleaner /PlexCleaner
