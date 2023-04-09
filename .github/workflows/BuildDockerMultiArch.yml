@@ -84,7 +84,7 @@ jobs:
       - name: 'Docker Build and Push'
         uses: docker/build-push-action@v4
         with:
-          context: ./Docker
+          context: .
           file: ./Docker/Ubuntu.Savoury.Dockerfile
           platforms: linux/amd64
           push: ${{ (github.event_name != 'pull_request') }}
