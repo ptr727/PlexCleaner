@@ -9,9 +9,8 @@
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 
 # Build Dockerfile
-# docker build --tag testing:latest --file=./Docker/Ubuntu.Savoury.Dockerfile .
+# docker build --progress=plain --secret id=savoury_ppa_auth,src=./Docker/auth.conf --tag testing:latest --file=./Docker/Ubuntu.Savoury.Dockerfile .
 # --no-cache --progress=plain
-
 
 
 # Build from Ubuntu LTS as base image
@@ -40,6 +39,7 @@ RUN apt-get update \
         locales \
         locales-all \
         lsb-core \
+        software-properties-common \
         p7zip-full \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
@@ -95,31 +95,42 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && apt-get install -y mkvtoolnix \
     && mkvmerge --version
 
-
-# TODO: Switch to the new private PPA
-
-# Install FfMpeg
-# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
+# Register Rob Savoury's public PPA's
 RUN add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
     && add-apt-repository -y ppa:savoury1/ffmpeg6 \
-    && apt-get update \
-    && apt-get install -y ffmpeg \
-    && ffmpeg -version
+    && add-apt-repository -y ppa:savoury1/handbrake \
+    && apt-get update
 
-# Install HandBrake
-# Depends on FfMpeg, install FfMpeg first
+# Register Rob Savoury's private PPA
+# https://launchpad.net/~savoury1
+# https://launchpad.net/~/+archivesubscriptions
+
+# TODO: How to apt-get that requires auth.conf without persisting the secret and then later deleting it?
+# https://docs.docker.com/build/ci/github-actions/secrets/
+# https://docs.docker.com/build/ci/github-actions/secrets/
+
+# auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
+RUN --mount=type=secret,id=savoury_ppa_auth cat /run/secrets/savoury_ppa_auth >> /etc/apt/auth.conf.d/savoury.conf
+RUN touch /etc/apt/sources.list.d/savoury.list \
+    && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
+    && apt-get update
+
+# Install FfMpeg and HandBrake
+# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
 # https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
-RUN add-apt-repository -y ppa:savoury1/handbrake \
-    && apt-get update \
-    && apt-get install -y handbrake-cli \
+RUN apt-get install -y \
+        ffmpeg \
+        handbrake-cli \
+    && ffmpeg -version \
     && HandBrakeCLI --version
 
 # Cleanup
 RUN apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm /etc/apt/auth.conf.d/savoury.conf
 
 # Copy PlexCleaner
 COPY ./Docker/PlexCleaner /PlexCleaner
