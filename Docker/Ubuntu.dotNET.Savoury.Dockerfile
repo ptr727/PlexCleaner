@@ -109,6 +109,12 @@ RUN add-apt-repository -y ppa:savoury1/graphics \
 # https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
 # https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
 
+# Github actions configuration:
+#     uses: docker/build-push-action@v4
+#     with:
+#       secrets: 
+#         "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
+
 # Use docker secrets and link the secret file to the filesystem auth.conf
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
 # https://docs.docker.com/build/ci/github-actions/secrets/

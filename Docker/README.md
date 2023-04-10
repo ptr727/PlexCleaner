@@ -13,9 +13,20 @@ PlexCleaner project is on [GitHub](https://github.com/ptr727/PlexCleaner/)
 
 ## Docker Builds and Tags
 
-- `[x-]latest`: `main` release branch build.
-- `[x-]develop`: `develop` testing or beta branch build.
-- `arch-`: Build using [Arch Linux](./Arch.Dockerfile). (default for `latest` and `develop` builds)
-- `debian-`: Build using [Microsoft .NET Debian](./Mcr.Debian.Dockerfile).
-- `savoury-`: Build using [Ubuntu](./Ubuntu.Savoury.Dockerfile) and includes [Rob Savoury's](https://launchpad.net/~savoury1) latest FFmpeg and HandBrake PPA builds.
-- `multi-`: Multi-architecture build using [Microsoft .NET Debian](./Mcr.Debian.Dockerfile) and includes `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `latest`: Builds from the [main](https://github.com/ptr727/PlexCleaner/tree/main) branch.
+  - `latest` uses the `savoury` build.
+- `develop`: Builds from the [develop](https://github.com/ptr727/PlexCleaner/tree/develop) branch.
+  - `develop` uses the `savoury-develop` build.
+  - Build variants can be tagged with `-develop`, e.g. `arch-develop`.
+- `savoury`: Builds using [Microsoft .NET pre-installed on Ubuntu](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
+  - Includes the latest [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
+  - includes the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
+  - Includes the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
+  - Only `linux/amd64` platforms are supported.
+- `arch`: Builds using [Arch Linux](https://hub.docker.com/_/archlinux) as base image.
+  - Media processing tools are installed from the standard repositories.
+  - New tool versions are typically near current.
+  - Only `linux/amd64` platforms are supported.
+- `debian-`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
+  - Media processing tools are installed from the standard repositories.
+  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
