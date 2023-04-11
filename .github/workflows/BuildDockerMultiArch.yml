@@ -20,6 +20,7 @@ jobs:
           # Debian: linux/amd64,linux/arm64,linux/arm/v7
           - file: ./Docker/Debian.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
+            secrets: ''
             tags: |
               docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
               ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
@@ -27,6 +28,7 @@ jobs:
           # Alpine: linux/amd64,linux/arm64
           - file: ./Docker/Alpine.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64
+            secrets: ''
             tags: |
               docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
               ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
