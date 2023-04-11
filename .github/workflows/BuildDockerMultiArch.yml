@@ -63,7 +63,7 @@ jobs:
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
-      - name: 'Docker Build and Push'
+      - name: 'Docker Build and Push - Debian.dotNET'
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -81,3 +81,22 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+
+      - name: 'Docker Build and Push - Ubuntu.dotNET.Savoury'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
+          platforms: linux/amd64
+          push: ${{ (github.event_name != 'pull_request') }}
+          build-args: |
+            LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
+            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
+            BUILD_VERSION=${{ steps.nbgv.outputs.AssemblyVersion }}
+            BUILD_FILE_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+            BUILD_ASSEMBLY_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
+            BUILD_INFORMATION_VERSION=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+            BUILD_PACKAGE_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
+          tags: |
+            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}

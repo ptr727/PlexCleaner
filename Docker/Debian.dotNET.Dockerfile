@@ -1,7 +1,14 @@
+# Multi-architecture and multi-stage docker build
 # https://devblogs.microsoft.com/dotnet/improving-multiplatform-container-support/
-# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 # https://docs.docker.com/build/building/multi-stage/
 
+# Only building is supported under QEMU, running .NET compiled bianries are not supported
+# qemu-aarch64: Could not open '/lib/ld-linux-aarch64.so.1': No such file or directory
+# qemu-arm: Could not open '/lib/ld-linux-armhf.so.3': No such file or directory
+# TODO: https://gitlab.com/qemu-project/qemu/-/issues/249
+
+# TODO: Try to conditionally run tests if the platform is natively supported
+# https://github.com/dotnet/dotnet-docker/discussions/4552
 
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
@@ -14,16 +21,17 @@
 # Build PlexCleaner
 # dotnet publish ./PlexCleaner/PlexCleaner.csproj --configuration debug --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
 
-# Build Dockerfile
+# Buildx preparation (optional)
 # docker buildx ls
 # docker buildx create --name plexcleaner
 # docker buildx use plexcleaner
 # docker buildx inspect --bootstrap
+
+# Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 # docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
-# docker buildx stop
 
-# Loading all targets are not supported, test one target
+# Loading all targets are not supported, test only linux/amd64 target
 # TODO: https://github.com/docker/buildx/issues/59
 # docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
@@ -32,7 +40,7 @@
 
 # Builder layer
 # Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
-# TODO: # https://github.com/dotnet/dotnet-docker/issues/4388
+# TODO: https://github.com/dotnet/dotnet-docker/issues/4388
 # FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview AS builder
 
@@ -62,10 +70,10 @@ ENV DOTNET_ROLL_FORWARD=Major
 ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
 # Run unit tests
-RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
+# RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
 # Verify dotnet run executes
-RUN dotnet run --project ./PlexCleaner/PlexCleaner.csproj --version
+# RUN dotnet run --project ./PlexCleaner/PlexCleaner.csproj --version
 
 # Build release and debug builds
 RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
@@ -101,8 +109,8 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
-# Verify built binay executes
-RUN ./Publish/PlexCleaner/PlexCleaner --version
+# Verify build binay executes
+# RUN ./Publish/PlexCleaner/PlexCleaner --version
 
 
 # Final layer
@@ -203,8 +211,4 @@ RUN apt-get autoremove -y \
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Verify PlexCleaner runs
-RUN /PlexCleaner/PlexCleaner --version
-
-# TODO: Resolve Qemu errors?
-# qemu-aarch64: Could not open '/lib/ld-linux-aarch64.so.1': No such file or directory
-# qemu-arm: Could not open '/lib/ld-linux-armhf.so.3': No such file or directory
+# RUN /PlexCleaner/PlexCleaner --version
