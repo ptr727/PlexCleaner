@@ -17,16 +17,15 @@ PlexCleaner project is on [GitHub](https://github.com/ptr727/PlexCleaner/)
   - `latest` uses the `savoury` build.
 - `develop`: Builds from the [develop](https://github.com/ptr727/PlexCleaner/tree/develop) branch.
   - `develop` uses the `savoury-develop` build.
-  - Build variants can be tagged with `-develop`, e.g. `arch-develop`.
+  - Build variants can be tagged with `-develop`, e.g. `alpine-develop`.
 - `savoury`: Builds using [Microsoft .NET pre-installed on Ubuntu](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
   - Includes the latest [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
   - includes the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
   - Includes the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
   - Only `linux/amd64` platforms are supported.
-- `arch`: Builds using [Arch Linux](https://hub.docker.com/_/archlinux) as base image.
-  - Media processing tools are installed from the standard repositories.
-  - New tool versions are typically near current.
-  - Only `linux/amd64` platforms are supported.
 - `debian-`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
+  - Media processing tools are installed from the standard repositories.
+  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `alpine-`: Builds using [Microsoft .NET pre-installed on Alpine](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
   - Media processing tools are installed from the standard repositories.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.

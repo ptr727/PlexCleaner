@@ -122,4 +122,6 @@ jobs:
             BUILD_PACKAGE_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
           tags: |
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
