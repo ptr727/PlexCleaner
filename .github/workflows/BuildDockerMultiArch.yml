@@ -138,6 +138,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # Checkout code
+      # https://github.com/marketplace/actions/checkout
+      - name: 'Checkout Code'
+        uses: actions/checkout@v3
+
       # https://github.com/marketplace/actions/docker-hub-description
       - name: 'Update Docker Hub Description'
         uses: peter-evans/dockerhub-description@v3
@@ -157,10 +163,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # Get date from environment as a variable
       - id: date
         run: |
           echo "date=$(date)" >> $GITHUB_OUTPUT
+
       # Create badge
       # https://github.com/marketplace/actions/bring-your-own-badge
       - name: 'Build Date Badge'
