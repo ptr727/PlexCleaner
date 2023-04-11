@@ -1,5 +1,8 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
+# There is not HandBrake package for arm/v7
+# https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
+
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-alpine /bin/sh
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview-alpine /bin/sh
@@ -8,8 +11,8 @@
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/bash
 
 # Build Dockerfile
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
-# docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
@@ -26,20 +29,33 @@ WORKDIR /Builder
 # Architecture, injected from build
 ARG TARGETARCH
 
-# Debug or Release
-ARG BUILD_CONFIGURATION="Debug"
+ARG \
+    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
+    TARGETPLATFORM \
+    # Architecture component of TARGETPLATFORM
+    TARGETARCH \
+    # Platform of the node performing the build
+    BUILDPLATFORM
 
-# Package versions
-ARG BUILD_VERSION="1.0.0.0"
-ARG BUILD_FILE_VERSION="1.0.0.0"
-ARG BUILD_ASSEMBLY_VERSION="1.0.0.0"
-ARG BUILD_INFORMATION_VERSION="1.0.0.0"
-ARG BUILD_PACKAGE_VERSION="1.0.0.0"
+# PlexCleaner build attribute configuration
+ARG BUILD_CONFIGURATION="Debug" \
+    BUILD_VERSION="1.0.0.0" \
+    BUILD_FILE_VERSION="1.0.0.0" \
+    BUILD_ASSEMBLY_VERSION="1.0.0.0" \
+    BUILD_INFORMATION_VERSION="1.0.0.0" \
+    BUILD_PACKAGE_VERSION="1.0.0.0"
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
+
+# Enable running a .NET 7 target on .NET 8 preview
+ENV DOTNET_ROLL_FORWARD=Major \
+    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+
+# Run unit tests
+RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
 
 # Build release and debug builds
 RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
@@ -75,12 +91,13 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
+
+
 # Final layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
+FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
 
-# Build version
+# Image label
 ARG LABEL_VERSION="1.0.0.0"
-
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
@@ -108,9 +125,6 @@ RUN apk update \
         tzdata \
         wget
         
-# Verify .NET version
-RUN dotnet --info
-
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 RUN wget https://aka.ms/getvsdbgsh \
@@ -126,11 +140,19 @@ RUN apk --no-cache add \
         ffmpeg \
         handbrake \
         mediainfo \
-        mkvtoolnix \
-    && ffmpeg -version \
-    && HandBrakeCLI --version \
-    && mediainfo --version \
-    && mkvmerge --version
+        mkvtoolnix
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
+
+# Print installed version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        dotnet --info; \
+        ffmpeg -version; \
+        HandBrakeCLI --version; \
+        mediainfo --version; \
+        mkvmerge --version; \
+        /PlexCleaner/PlexCleaner --version; \
+    fi

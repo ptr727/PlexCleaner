@@ -1,14 +1,13 @@
 # Multi-architecture and multi-stage docker build
+# https://www.docker.com/blog/faster-multi-platform-builds-dockerfile-cross-compilation-guide/
 # https://devblogs.microsoft.com/dotnet/improving-multiplatform-container-support/
 # https://docs.docker.com/build/building/multi-stage/
 
-# Only building is supported under QEMU, running .NET compiled bianries are not supported
+# .NET does not support QEMU
 # qemu-aarch64: Could not open '/lib/ld-linux-aarch64.so.1': No such file or directory
 # qemu-arm: Could not open '/lib/ld-linux-armhf.so.3': No such file or directory
-# TODO: https://gitlab.com/qemu-project/qemu/-/issues/249
-
-# TODO: Try to conditionally run tests if the platform is natively supported
-# https://github.com/dotnet/dotnet-docker/discussions/4552
+# https://gitlab.com/qemu-project/qemu/-/issues/249
+# Only run compiled code when BUILDPLATFORM == TARGETPLATFORM
 
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
@@ -17,15 +16,6 @@
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
-
-# Build PlexCleaner
-# dotnet publish ./PlexCleaner/PlexCleaner.csproj --configuration debug --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
-
-# Buildx preparation (optional)
-# docker buildx ls
-# docker buildx create --name plexcleaner
-# docker buildx use plexcleaner
-# docker buildx inspect --bootstrap
 
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
@@ -47,18 +37,24 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview 
 # Layer workdir
 WORKDIR /Builder
 
-# Architecture, injected from build
-ARG TARGETARCH
+# Global builder vriables
+# https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 
-# Debug or Release
-ARG BUILD_CONFIGURATION="Debug"
+ARG \
+    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
+    TARGETPLATFORM \
+    # Architecture component of TARGETPLATFORM
+    TARGETARCH \
+    # Platform of the node performing the build
+    BUILDPLATFORM
 
-# Package versions
-ARG BUILD_VERSION="1.0.0.0"
-ARG BUILD_FILE_VERSION="1.0.0.0"
-ARG BUILD_ASSEMBLY_VERSION="1.0.0.0"
-ARG BUILD_INFORMATION_VERSION="1.0.0.0"
-ARG BUILD_PACKAGE_VERSION="1.0.0.0"
+# PlexCleaner build attribute configuration
+ARG BUILD_CONFIGURATION="Debug" \
+    BUILD_VERSION="1.0.0.0" \
+    BUILD_FILE_VERSION="1.0.0.0" \
+    BUILD_ASSEMBLY_VERSION="1.0.0.0" \
+    BUILD_INFORMATION_VERSION="1.0.0.0" \
+    BUILD_PACKAGE_VERSION="1.0.0.0"
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -66,14 +62,11 @@ COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Enable running a .NET 7 target on .NET 8 preview
-# ENV DOTNET_ROLL_FORWARD=Major
-# ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+ENV DOTNET_ROLL_FORWARD=Major \
+    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
 # Run unit tests
-# RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-
-# Verify dotnet run executes
-# RUN dotnet run --project ./PlexCleaner/PlexCleaner.csproj --version
+RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
 
 # Build release and debug builds
 RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
@@ -109,8 +102,6 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
-# Verify build binay executes
-# RUN ./Publish/PlexCleaner/PlexCleaner --version
 
 
 # Final layer
@@ -119,21 +110,20 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 as final
+FROM mcr.microsoft.com/dotnet/sdk:7.0 as final
 
-# Build version
+# Image label
 ARG LABEL_VERSION="1.0.0.0"
-
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# Default timezone is UTC
-ENV TZ=Etc/UTC
-
-# Prevent EULA and confirmation prompts in installers
-ARG DEBIAN_FRONTEND=noninteractive
+ENV \
+    # Default timezone is UTC
+    TZ=Etc/UTC \
+    # Prevent EULA and confirmation prompts in installers
+    DEBIAN_FRONTEND=noninteractive
 
 # Register additional repos
 # https://serverfault.com/questions/22414/how-can-i-run-debian-stable-but-install-some-packages-from-testing
@@ -174,12 +164,10 @@ RUN apt-get update \
     && locale-gen --no-purge en_US en_US.UTF-8
 
 # Set locale to UTF-8 after running locale-gen
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
-
-# Verify .NET version
-RUN dotnet --info
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -196,11 +184,7 @@ RUN apt-get install -t testing -y \
         ffmpeg \
         handbrake-cli \
         mediainfo \
-        mkvtoolnix \
-    && ffmpeg -version \
-    && HandBrakeCLI --version \
-    && mediainfo --version \
-    && mkvmerge --version
+        mkvtoolnix
 
 # Cleanup
 RUN apt-get autoremove -y \
@@ -210,5 +194,14 @@ RUN apt-get autoremove -y \
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
-# Verify PlexCleaner runs
-# RUN /PlexCleaner/PlexCleaner --version
+# Print installed version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        dotnet --info; \
+        ffmpeg -version; \
+        HandBrakeCLI --version; \
+        mediainfo --version; \
+        mkvmerge --version; \
+        /PlexCleaner/PlexCleaner --version; \
+    fi

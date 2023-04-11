@@ -1,3 +1,5 @@
+# Refer to Debian.dotNET.Dockerfile for build plan
+
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
@@ -24,20 +26,33 @@ WORKDIR /Builder
 # Architecture, injected from build
 ARG TARGETARCH
 
-# Debug or Release
-ARG BUILD_CONFIGURATION="Debug"
+ARG \
+    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
+    TARGETPLATFORM \
+    # Architecture component of TARGETPLATFORM
+    TARGETARCH \
+    # Platform of the node performing the build
+    BUILDPLATFORM
 
-# Package versions
-ARG BUILD_VERSION="1.0.0.0"
-ARG BUILD_FILE_VERSION="1.0.0.0"
-ARG BUILD_ASSEMBLY_VERSION="1.0.0.0"
-ARG BUILD_INFORMATION_VERSION="1.0.0.0"
-ARG BUILD_PACKAGE_VERSION="1.0.0.0"
+# PlexCleaner build attribute configuration
+ARG BUILD_CONFIGURATION="Debug" \
+    BUILD_VERSION="1.0.0.0" \
+    BUILD_FILE_VERSION="1.0.0.0" \
+    BUILD_ASSEMBLY_VERSION="1.0.0.0" \
+    BUILD_INFORMATION_VERSION="1.0.0.0" \
+    BUILD_PACKAGE_VERSION="1.0.0.0"
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
+
+# Enable running a .NET 7 target on .NET 8 preview
+ENV DOTNET_ROLL_FORWARD=Major \
+    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+
+# Run unit tests
+RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
 
 # Build release and debug builds
 RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
@@ -73,22 +88,20 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
+
+
 # Final layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS final
+FROM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS final
 
-# Build version
+# Image label
 ARG LABEL_VERSION="1.0.0.0"
-
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# Default timezone is UTC
-ENV TZ=Etc/UTC
-
 # Prevent EULA and confirmation prompts in installers
-ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install prerequisites
 RUN apt-get update \
@@ -100,16 +113,16 @@ RUN apt-get update \
         lsb-core \
         software-properties-common \
         p7zip-full \
+        tzdata \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
 
 # Set locale to UTF-8 after running locale-gen
-ENV LANG=en_US.UTF-8 \
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
+ENV TZ=Etc/UTC \
+    LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
-
-# Verify .NET version
-RUN dotnet --info
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -124,8 +137,7 @@ RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-21_all.deb \
     && dpkg -i repo-mediaarea_1.0-21_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
-    && rm repo-mediaarea_1.0-21_all.deb \
-    && mediainfo --version
+    && rm repo-mediaarea_1.0-21_all.deb
 
 # Install MKVToolNix
 # https://mkvtoolnix.download/downloads.html#ubuntu
@@ -133,8 +145,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && touch /etc/apt/sources.list.d/mkvtoolnix.list \
     && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gpg-pub-moritzbunkus.gpg] https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/mkvtoolnix.list' \
     && apt-get update \
-    && apt-get install -y mkvtoolnix \
-    && mkvmerge --version
+    && apt-get install -y mkvtoolnix
 
 # Install FfMpeg and HandBrake from Rob Savoury's private PPA
 # https://launchpad.net/~savoury1
@@ -162,9 +173,7 @@ RUN --mount=type=secret,id=savoury_ppa_auth ln -s /run/secrets/savoury_ppa_auth 
     && apt-get update \
     && apt-get install -y \
         ffmpeg \
-        handbrake-cli \
-    && ffmpeg -version \
-    && HandBrakeCLI --version
+        handbrake-cli
 
 # Cleanup
 RUN apt-get autoremove -y \
@@ -173,3 +182,15 @@ RUN apt-get autoremove -y \
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
+
+# Print installed version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        dotnet --info; \
+        ffmpeg -version; \
+        HandBrakeCLI --version; \
+        mediainfo --version; \
+        mkvmerge --version; \
+        /PlexCleaner/PlexCleaner --version; \
+    fi

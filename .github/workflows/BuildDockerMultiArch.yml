@@ -82,14 +82,12 @@ jobs:
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
-      # Docker build and push
-      # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: 'Docker Build and Push - Alpine.dotNET'
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Docker/Alpine.dotNET.Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
             LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
@@ -125,3 +123,14 @@ jobs:
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+
+      # Update Docker Hub description
+      # https://github.com/marketplace/actions/docker-hub-description
+      - name: 'Update Docker Hub Description'
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          repository: ptr727/plexcleaner
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./Docker/README.md

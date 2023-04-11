@@ -26,9 +26,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 ## Release Notes
 
 - Version 3.0:
-  - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
-    - The always up to date FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer generally available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
-    - Switched to [Arch Linux](https://archlinux.org/) with up to date media tools found in the [Arch Linux Package Repository](https://archlinux.org/packages/).
+  - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, `linux/arm/v7`, Ubuntu, Debian, and Alpine.
+    - See the Docker [README](./Docker/README.md) for tag usage details.
+    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FfMpeg and HandBrake builds.
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
   - Added support for custom FFmpeg and HandBrake command line arguments.
