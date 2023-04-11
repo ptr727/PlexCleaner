@@ -1,4 +1,4 @@
-name: 'Build and Push Docker Image Pipeline'
+name: 'Build and Push Docker Images Pipeline'
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
 
   buildpush:
 
-    name: 'Build and Push Docker Image Pipeline'
+    name: 'Build and Push Docker Images'
     runs-on: ubuntu-latest
 
     steps:
@@ -63,6 +63,8 @@ jobs:
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
+
+      # Debian: linux/amd64,linux/arm64,linux/arm/v7
       - name: 'Docker Build and Push - Debian.dotNET'
         uses: docker/build-push-action@v4
         with:
@@ -82,6 +84,7 @@ jobs:
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
+      # Alpine: linux/amd64,linux/arm64
       - name: 'Docker Build and Push - Alpine.dotNET'
         uses: docker/build-push-action@v4
         with:
@@ -101,6 +104,7 @@ jobs:
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
+      # Ubuntu: linux/amd64
       - name: 'Docker Build and Push - Ubuntu.dotNET.Savoury'
         uses: docker/build-push-action@v4
         with:
@@ -121,10 +125,19 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+            ghcr.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
 
-      # Update Docker Hub description
+  # Update Docker Hub description
+  hubdescription:
+
+    needs: buildpush
+    name: 'Update Docker Hub Description'
+    runs-on: ubuntu-latest
+
+    steps:
       # https://github.com/marketplace/actions/docker-hub-description
       - name: 'Update Docker Hub Description'
         uses: peter-evans/dockerhub-description@v3
@@ -134,3 +147,28 @@ jobs:
           repository: ptr727/plexcleaner
           short-description: ${{ github.event.repository.description }}
           readme-filepath: ./Docker/README.md
+
+  # Create a custom badge to report the build date
+  # Run this job at the end of the pipeline
+  datebadge:
+
+    needs: hubdescription
+    name: 'Build Date Badge'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get date from environment as a variable
+      - id: date
+        run: |
+          echo "date=$(date)" >> $GITHUB_OUTPUT
+      # Create badge
+      # https://github.com/marketplace/actions/bring-your-own-badge
+      - name: 'Build Date Badge'
+        uses: RubbaBoy/BYOB@v1
+        with:
+          NAME: lastbuild
+          LABEL: "Last Build"
+          ICON: "github"
+          STATUS: ${{ steps.date.outputs.date }}
+          COLOR: "blue"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
