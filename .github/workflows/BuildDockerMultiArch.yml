@@ -13,6 +13,37 @@ jobs:
     name: 'Build and Push Docker Images'
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        include:
+
+          # Debian: linux/amd64,linux/arm64,linux/arm/v7
+          - file: ./Docker/Debian.dotNET.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            tags: |
+              docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+
+          # Alpine: linux/amd64,linux/arm64
+          - file: ./Docker/Alpine.dotNET.Dockerfile
+            platforms: linux/amd64,linux/arm64
+            tags: |
+              docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+
+          # Ubuntu: linux/amd64
+          - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
+            platforms: linux/amd64
+            secrets: |
+              "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
+            tags: |
+              docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
+              ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              ghcr.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
+
     steps:
 
       # Checkout code
@@ -64,14 +95,16 @@ jobs:
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
 
-      # Debian: linux/amd64,linux/arm64,linux/arm/v7
-      - name: 'Docker Build and Push - Debian.dotNET'
+      # Matrix build
+      - name: 'Docker Build and Push'
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./Docker/Debian.dotNET.Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
+          secrets: ${{ matrix.secrets }}
+          tags: ${{ matrix.tags }}
+          context: .
+          platforms: ${{ matrix.platforms }}
           build-args: |
             LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
             BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
@@ -80,55 +113,6 @@ jobs:
             BUILD_ASSEMBLY_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
             BUILD_INFORMATION_VERSION=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
             BUILD_PACKAGE_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-          tags: |
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-
-      # Alpine: linux/amd64,linux/arm64
-      - name: 'Docker Build and Push - Alpine.dotNET'
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Docker/Alpine.dotNET.Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ (github.event_name != 'pull_request') }}
-          build-args: |
-            LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-            BUILD_VERSION=${{ steps.nbgv.outputs.AssemblyVersion }}
-            BUILD_FILE_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
-            BUILD_ASSEMBLY_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
-            BUILD_INFORMATION_VERSION=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
-            BUILD_PACKAGE_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-          tags: |
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-
-      # Ubuntu: linux/amd64
-      - name: 'Docker Build and Push - Ubuntu.dotNET.Savoury'
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
-          platforms: linux/amd64
-          push: ${{ (github.event_name != 'pull_request') }}
-          secrets: |
-            "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
-          build-args: |
-            LABEL_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-            BUILD_VERSION=${{ steps.nbgv.outputs.AssemblyVersion }}
-            BUILD_FILE_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
-            BUILD_ASSEMBLY_VERSION=${{ steps.nbgv.outputs.AssemblyFileVersion }}
-            BUILD_INFORMATION_VERSION=${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
-            BUILD_PACKAGE_VERSION=${{ steps.nbgv.outputs.SemVer2 }}
-          tags: |
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-            ghcr.io/${{ github.repository_owner }}/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-            ghcr.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner:${{ steps.nbgv.outputs.SemVer2 }}
 
   # Update Docker Hub description
   hubdescription:
