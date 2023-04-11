@@ -7,9 +7,6 @@
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/bash
 
-# Build PlexCleaner
-# dotnet publish ./PlexCleaner/PlexCleaner.csproj --configuration debug --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
-
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 # docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
@@ -78,8 +75,6 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
-
-
 # Final layer
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
 
@@ -91,8 +86,13 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# Default timezone is UTC
-ENV TZ=Etc/UTC
+# Set locale to UTF-8 and timezone to UTC
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8 \
+    TZ=Etc/UTC
 
 # Update repository from 3.x to edge and add testing
 # https://wiki.alpinelinux.org/wiki/Repositories
@@ -102,16 +102,12 @@ RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
 # Install prerequisites
 RUN apk update \
     && apk --no-cache add \
+        icu-data-full \
+        icu-libs \
         p7zip \
+        tzdata \
         wget
-
-# TODO: Create locale
-
-# Set locale to UTF-8 after running locale-gen
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
-
+        
 # Verify .NET version
 RUN dotnet --info
 
@@ -121,12 +117,12 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools from edge repository
+# Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
-RUN apk add \
+RUN apk --no-cache add \
         ffmpeg \
         handbrake \
         mediainfo \

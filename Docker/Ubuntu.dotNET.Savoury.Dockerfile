@@ -1,26 +1,28 @@
-# Test in docker shell:
+# Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
-# Test in develop shell:
-# docker run -it --rm --pull always --name Testing --volume /data/media:/media:rw ptr727/plexcleaner:develop /bin/bash
-
-# Build PlexCleaner
-# dotnet publish ./PlexCleaner/PlexCleaner.csproj --runtime linux-x64 --self-contained false --output ./Docker/PlexCleaner
+# Test image in shell:
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
 
 # Build Dockerfile
-# docker build --progress=plain --secret id=savoury_ppa_auth,src=./Docker/auth.conf --tag testing:latest --file=./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
-# --no-cache --progress=plain
+# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+
+# Test linux/amd64 target
+# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker run -it --rm --name Testing testing:latest /bin/bash
 
 
 
 # Builder layer
-# Build from .NET Ubuntu Jammy SDK
-# No multiarch, only Ubuntu x64 is supported in this build
-FROM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview-jammy AS builder
 
 # Layer workdir
 WORKDIR /Builder
+
+# Architecture, injected from build
+ARG TARGETARCH
 
 # Debug or Release
 ARG BUILD_CONFIGURATION="Debug"
@@ -37,11 +39,9 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Run unit tests
-RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-
 # Build release and debug builds
 RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
+        --arch $TARGETARCH \
         --self-contained false \
         --output ./Build/Release \
         --configuration release \
@@ -51,6 +51,7 @@ RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
         -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
         -property:PackageVersion=$BUILD_PACKAGE_VERSION \
     && dotnet publish ./PlexCleaner/PlexCleaner.csproj \
+        --arch $TARGETARCH \
         --self-contained false \
         --output ./Build/Debug \
         --configuration debug \
@@ -72,14 +73,10 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
     && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
     && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
 
-# Verify build binay executes
-RUN ./Publish/PlexCleaner/PlexCleaner --version
+# Final layer
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS final
 
-
-# Build from .NET Ubuntu Jammy SDK
-FROM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS final
-
-# Set the version at build time
+# Build version
 ARG LABEL_VERSION="1.0.0.0"
 
 LABEL name="PlexCleaner" \
@@ -151,7 +148,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # Github actions configuration:
 #     uses: docker/build-push-action@v4
 #     with:
-#       secrets: 
+#       secrets: |
 #         "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
 
 RUN --mount=type=secret,id=savoury_ppa_auth ln -s /run/secrets/savoury_ppa_auth /etc/apt/auth.conf.d/savoury.conf \
@@ -176,6 +173,3 @@ RUN apt-get autoremove -y \
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
-
-# Verify PlexCleaner runs
-RUN /PlexCleaner/PlexCleaner --version

@@ -1,3 +1,5 @@
+# Abandoned in favor of Alpine
+
 # Test in docker shell:
 # docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
 

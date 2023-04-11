@@ -66,8 +66,8 @@ COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major
-ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
+# ENV DOTNET_ROLL_FORWARD=Major
+# ENV DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
 # Run unit tests
 # RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
@@ -187,7 +187,7 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools from testing repository
+# Install media tools
 # https://tracker.debian.org/pkg/ffmpeg
 # https://tracker.debian.org/pkg/handbrake
 # https://tracker.debian.org/pkg/mediainfo
