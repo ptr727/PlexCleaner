@@ -73,7 +73,7 @@ jobs:
             tags: |
               $docker-path:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
               $docker-path:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              $docker-path:${{ needs.versioninfo..outputs.SemVer2 }}
+              $docker-path:${{ needs.versioninfo.outputs.SemVer2 }}
               $ghcr-path:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
               $ghcr-path:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
               $ghcr-path:${{ needs.versioninfo.outputs.SemVer2 }}
