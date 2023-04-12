@@ -56,7 +56,7 @@ jobs:
           # Debian: linux/amd64,linux/arm64,linux/arm/v7
           - file: ./Docker/Debian.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
-            secrets: 'null'
+            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
               ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
@@ -64,7 +64,7 @@ jobs:
           # Alpine: linux/amd64,linux/arm64
           - file: ./Docker/Alpine.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64
-            secrets: 'null'
+            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
               ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
@@ -130,6 +130,7 @@ jobs:
         with:
           file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
+          # TODO: How to test for secret not null and avoid "null= is not a valid secret"
           secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
           tags: ${{ matrix.tags }}
           context: .
