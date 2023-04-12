@@ -13,13 +13,17 @@ jobs:
     name: 'Get Version Information'
     runs-on: ubuntu-latest
 
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+
     outputs:
       SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}
       AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
       AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
       # TODO: Why can't I get env to expand?
-      DockerPath: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner
+      # ${{ secrets.DOCKER_HUB_USERNAME }}
+      DockerPath: docker.io/${{ env.DOCKER_HUB_USERNAME }}/plexcleaner
       GhcrPath: ghcr.io/${{ github.repository_owner }}/plexcleaner
 
     steps:
@@ -45,6 +49,8 @@ jobs:
     needs: versioninfo
 
     strategy:
+
+      # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
         include:
 
