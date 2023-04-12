@@ -6,6 +6,10 @@ on:
     branches: [ multiarch ]
   workflow_dispatch:
 
+env:
+  dockerpath: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner
+  ghcrpath: ghcr.io/${{ github.repository_owner }}/plexcleaner
+
 jobs:
 
   versioninfo:
@@ -40,10 +44,6 @@ jobs:
     name: 'Build and Push Docker Images'
     runs-on: ubuntu-latest
     needs: versioninfo
-
-    env:
-      dockerpath: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner
-      ghcrpath: ghcr.io/${{ github.repository_owner }}/plexcleaner
 
     strategy:
       matrix:
