@@ -72,7 +72,7 @@ jobs:
           # Ubuntu: linux/amd64
           - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
             platforms: linux/amd64
-            # "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
+            # "SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}"
             secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
