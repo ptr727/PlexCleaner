@@ -23,8 +23,11 @@ jobs:
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
       # TODO: Why can't I get env to expand?
       # ${{ secrets.DOCKER_HUB_USERNAME }}
-      DockerPath: docker.io/${{ env.DOCKER_HUB_USERNAME }}/plexcleaner
-      GhcrPath: ghcr.io/${{ github.repository_owner }}/plexcleaner
+      # ${{ github.repository_owner }}
+      # Warning: Skip output 'DockerPath' since it may contain secret.
+      # Warning: Skip output 'GhcrPath' since it may contain secret.
+      DockerPath: docker.io/ptr727/plexcleaner
+      GhcrPath: ghcr.io/ptr727/plexcleaner
 
     steps:
 
