@@ -2,10 +2,13 @@ name: 'Build and Push Docker Images Pipeline'
 
 on:
   push:
-    # multiarch test branch only
-    branches: [ multiarch ]
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
-
+  schedule:
+    - cron: '0 2 * * MON'
+  
 jobs:
 
   versioninfo:
