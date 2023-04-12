@@ -11,7 +11,7 @@ Licensed under the [MIT License](./LICENSE)
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
+Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)](https://github.com/ptr727/PlexCleaner/commits/main)  
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildPublishPipeline.yml?branch=main&logo=github)](https://github.com/ptr727/PlexCleaner/actions)  
 [![GitHub Actions Last Build](https://byob.yarr.is/ptr727/PlexCleaner/lastbuild)](https://github.com/ptr727/PlexCleaner/actions)
@@ -19,16 +19,16 @@ Docker images are published on [Docker Hub](https://hub.docker.com/u/ptr727/plex
 ## Releases
 
 [![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
-[![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)](https://hub.docker.com/u/ptr727/plexcleaner)  
+[![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)](https://hub.docker.com/r/ptr727/plexcleaner)  
 [![GitHub Latest Pre-Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=pre-release&logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
-[![Docker Latest Pre-Release](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=develop&logo=docker&color=orange)](https://hub.docker.com/u/ptr727/plexcleaner)
+[![Docker Latest Pre-Release](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=develop&logo=docker&color=orange)](https://hub.docker.com/r/ptr727/plexcleaner)
 
 ## Release Notes
 
 - Version 3.0:
-  - Switched docker base image from `ubuntu:latest` to `archlinux:latest`.
-    - The always up to date FFmpeg and HandBrake PPA installations provided by Rob Savoury are [no longer generally available](https://launchpad.net/~savoury1), a big historic thank you to Rob.
-    - Switched to [Arch Linux](https://archlinux.org/) with up to date media tools found in the [Arch Linux Package Repository](https://archlinux.org/packages/).
+  - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
+    - See the Docker [README](./Docker/README.md) for tag usage details.
+    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FfMpeg and HandBrake builds.
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
   - Added support for custom FFmpeg and HandBrake command line arguments.

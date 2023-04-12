@@ -1,11 +1,8 @@
-# TODO : Consolidate BuildPublishPipeline.yml and BuildDockerPipeline.yml
-
 name: 'Build and Publish GitHub Release Pipeline'
 
 on:
   push:
     branches: [ main, develop ]
-    paths-ignore: [ 'README.md' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -13,6 +10,7 @@ on:
 jobs:
 
   buildpublish:
+
     name: 'Build and Publish GitHub Release Pipeline'
     runs-on: ubuntu-latest
 
