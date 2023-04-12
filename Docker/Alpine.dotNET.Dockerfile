@@ -21,7 +21,7 @@
 
 
 # Builder layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview-alpine AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine AS builder
 
 # Layer workdir
 WORKDIR /Builder
