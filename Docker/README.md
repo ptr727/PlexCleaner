@@ -25,10 +25,13 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - includes the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
   - Includes the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
   - Only `linux/amd64` platforms are supported.
-- `alpine-`: Builds using [Microsoft .NET pre-installed on Alpine](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
+- `alpine`: Builds using [Microsoft .NET pre-installed on Alpine](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
   - Media processing tools are installed from the standard repositories.
   - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
   - There is currently no `linux/arm/v7` package for [HandBrake](https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=).
-- `debian-`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
+- `debian`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
   - Media processing tools are installed from the standard repositories.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `arch`: Builds using [Arch Linux](https://hub.docker.com/_/archlinux) as base image.
+  - Media processing tools are installed from the standard repositories.
+  - Only `linux/amd64` platforms are supported.

@@ -159,7 +159,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # Github actions configuration:
 #     uses: docker/build-push-action@v4
 #     with:
-#       # SAVOURY_PPA_AUTH
+#       # SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
 #       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
 
 RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH /etc/apt/auth.conf.d/savoury.conf \
