@@ -54,16 +54,16 @@ jobs:
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             secrets: 'null'
             tags: |
-              ${{ env.dockerpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-              ${{ env.ghcrpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
           # Alpine: linux/amd64,linux/arm64
           - file: ./Docker/Alpine.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64
             secrets: 'null'
             tags: |
-              ${{ env.dockerpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-              ${{ env.ghcrpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
           # Ubuntu: linux/amd64
           - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
@@ -71,12 +71,12 @@ jobs:
             # "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              ${{ env.dockerpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              ${{ env.dockerpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              ${{ env.dockerpath }}:${{ needs.versioninfo.outputs.SemVer2 }}
-              ${{ env.ghcrpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              ${{ env.ghcrpath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              ${{ env.ghcrpath }}:${{ needs.versioninfo.outputs.SemVer2 }}
+              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              ${ dockerpath }:${{ needs.versioninfo.outputs.SemVer2 }}
+              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              ${ ghcrpath }:${{ needs.versioninfo.outputs.SemVer2 }}
 
     steps:
 
