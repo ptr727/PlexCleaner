@@ -13,21 +13,11 @@ jobs:
     name: 'Get Version Information'
     runs-on: ubuntu-latest
 
-    # env:
-    #  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-
     outputs:
       SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}
       AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
       AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
-      # TODO: Why can't I get env to expand?
-      # ${{ secrets.DOCKER_HUB_USERNAME }}
-      # ${{ github.repository_owner }}
-      # Warning: Skip output 'DockerPath' since it may contain secret.
-      # Warning: Skip output 'GhcrPath' since it may contain secret.
-      DockerPath: docker.io/ptr727/plexcleaner
-      GhcrPath: ghcr.io/ptr727/plexcleaner
 
     steps:
 
@@ -50,6 +40,12 @@ jobs:
     name: 'Build and Push Docker Images'
     runs-on: ubuntu-latest
     needs: versioninfo
+
+    # TODO: How do I use secrests in a matrix?
+    # ${{ secrets.DOCKER_HUB_USERNAME }}
+    # ${{ github.repository_owner }}
+    # Warning: Skip output 'DockerPath' since it may contain secret.
+    # Warning: Skip output 'GhcrPath' since it may contain secret.
 
     strategy:
 

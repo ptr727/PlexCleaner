@@ -159,10 +159,10 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # Github actions configuration:
 #     uses: docker/build-push-action@v4
 #     with:
-#       secrets: |
-#         "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
+#       # SAVOURY_PPA_AUTH
+#       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
 
-RUN --mount=type=secret,id=savoury_ppa_auth ln -s /run/secrets/savoury_ppa_auth /etc/apt/auth.conf.d/savoury.conf \
+RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/savoury_ppa_auth /etc/apt/auth.conf.d/savoury.conf \
     && touch /etc/apt/sources.list.d/savoury.list \
     && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
     && add-apt-repository -y ppa:savoury1/graphics \
