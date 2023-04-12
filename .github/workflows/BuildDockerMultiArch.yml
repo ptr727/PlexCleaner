@@ -6,10 +6,6 @@ on:
     branches: [ multiarch ]
   workflow_dispatch:
 
-env:
-  dockerpath: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner
-  ghcrpath: ghcr.io/${{ github.repository_owner }}/plexcleaner
-
 jobs:
 
   versioninfo:
@@ -22,6 +18,9 @@ jobs:
       AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
       AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+      # TODO: Why can't I get env to expand?
+      DockerPath: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/plexcleaner
+      GhcrPath: ghcr.io/${{ github.repository_owner }}/plexcleaner
 
     steps:
 
@@ -54,16 +53,16 @@ jobs:
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             secrets: 'null'
             tags: |
-              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              ${{ needs.versioninfo.outputs.DockerPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              ${{ needs.versioninfo.outputs.GhcrPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
           # Alpine: linux/amd64,linux/arm64
           - file: ./Docker/Alpine.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64
             secrets: 'null'
             tags: |
-              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              ${{ needs.versioninfo.outputs.DockerPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              ${{ needs.versioninfo.outputs.GhcrPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
           # Ubuntu: linux/amd64
           - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
@@ -71,12 +70,12 @@ jobs:
             # "savoury_ppa_auth=${{ secrets.SAVOURY_PPA_AUTH }}"
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              ${ dockerpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              ${ dockerpath }:${{ needs.versioninfo.outputs.SemVer2 }}
-              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              ${ ghcrpath }:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              ${ ghcrpath }:${{ needs.versioninfo.outputs.SemVer2 }}
+              ${{ needs.versioninfo.outputs.DockerPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              ${{ needs.versioninfo.outputs.DockerPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              ${{ needs.versioninfo.outputs.DockerPath }}:${{ needs.versioninfo.outputs.SemVer2 }}
+              ${{ needs.versioninfo.outputs.GhcrPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+              ${{ needs.versioninfo.outputs.GhcrPath }}:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              ${{ needs.versioninfo.outputs.GhcrPath }}:${{ needs.versioninfo.outputs.SemVer2 }}
 
     steps:
 
