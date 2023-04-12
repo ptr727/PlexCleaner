@@ -32,7 +32,7 @@
 # Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
 # TODO: https://github.com/dotnet/dotnet-docker/issues/4388
 # FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview AS builder
 
 # Layer workdir
 WORKDIR /Builder
