@@ -53,7 +53,7 @@ public partial class HandBrakeTool : MediaTool
         var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        var match = VersionRegex().Match(lines[0]);
+        var match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -157,5 +157,5 @@ public partial class HandBrakeTool : MediaTool
 
     const string VersionPattern = @"HandBrake\ (?<version>.*)";
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex VersionRegex();
+    internal static partial Regex InstalledVersionRegex();
 }

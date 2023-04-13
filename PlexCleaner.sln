@@ -7,11 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleaner", "PlexCleaner\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D8F3D73D-A71B-4B79-982F-8491CCFB893A}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		HISTORY.md = HISTORY.md
-		HubREADME.md = HubREADME.md
 		LICENSE = LICENSE
 		PlexCleaner.json = PlexCleaner.json
 		PlexCleaner.schema.json = PlexCleaner.schema.json
@@ -21,31 +21,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F57F-962E-4C71-8F27-939D06813302}"
 	ProjectSection(SolutionItems) = preProject
-		Docker\.dockerignore = Docker\.dockerignore
-		Docker\Mcr.Dockerfile = Docker\Mcr.Dockerfile
-		Docker\MultiArch.Dockerfile = Docker\MultiArch.Dockerfile
+		Docker\Alpine.dotNET.Dockerfile = Docker\Alpine.dotNET.Dockerfile
 		Docker\Arch.Dockerfile = Docker\Arch.Dockerfile
+		Docker\Debian.dotNET.Dockerfile = Docker\Debian.dotNET.Dockerfile
 		Docker\README.md = Docker\README.md
-		Docker\Ubuntu.Dockerfile = Docker\Ubuntu.Dockerfile
+		Docker\Ubuntu.dotNET.Savoury.Dockerfile = Docker\Ubuntu.dotNET.Savoury.Dockerfile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785}"
 	ProjectSection(SolutionItems) = preProject
-		.github\workflows\BuildDockerPipeline.yml = .github\workflows\BuildDockerPipeline.yml
-		.github\workflows\BuildPublishPipeline.yml = .github\workflows\BuildPublishPipeline.yml
-		.github\workflows\UpdateDockerHubDescription.yml = .github\workflows\UpdateDockerHubDescription.yml
+		.github\workflows\BuildDockerPush.yml = .github\workflows\BuildDockerPush.yml
+		.github\workflows\BuildGitHubRelease.yml = .github\workflows\BuildGitHubRelease.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerTests", "PlexCleanerTests\PlexCleanerTests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{344C9194-BA16-4776-9DDB-B9E776D5C0EF}"
-	ProjectSection(SolutionItems) = preProject
-		Test\PlexCleaner-Develop-Test.sh = Test\PlexCleaner-Develop-Test.sh
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{134B6EC9-E20F-4CDA-B079-755BEC15E8C5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Issue Templates", "Issue Templates", "{03A7B3AB-49DA-481B-AF3D-CF3D16BBFD0E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Issues", "Issues", "{03A7B3AB-49DA-481B-AF3D-CF3D16BBFD0E}"
 	ProjectSection(SolutionItems) = preProject
 		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
 		.github\ISSUE_TEMPLATE\config.yml = .github\ISSUE_TEMPLATE\config.yml
@@ -76,7 +69,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C560F57F-962E-4C71-8F27-939D06813302} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 		{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
-		{344C9194-BA16-4776-9DDB-B9E776D5C0EF} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 		{03A7B3AB-49DA-481B-AF3D-CF3D16BBFD0E} = {D8F3D73D-A71B-4B79-982F-8491CCFB893A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

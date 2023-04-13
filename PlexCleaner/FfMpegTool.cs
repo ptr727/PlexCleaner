@@ -63,8 +63,9 @@ public partial class FfMpegTool : MediaTool
         }
 
         // First line as version
-        // E.g. Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
-        // E.g. Linux : "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
+        // Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
+        // Ubuntu: "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
+        // Arch: "ffmpeg version n6.0 Copyright (c) 2000-2023 the FFmpeg developers"
         var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
@@ -527,22 +528,22 @@ public partial class FfMpegTool : MediaTool
     // Short processing snippet
     private const string Snippet = "-ss 0 -t 180";
 
-    private const string InstalledVersionPattern = @"([^\s]+)\ version\ (?<version>.*?)-";
+    private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex InstalledVersionRegex();
+    internal static partial Regex InstalledVersionRegex();
 
-    private const string LinuxVersionPattern = @"version:\ (?<version>.*?)";
+    private const string LinuxVersionPattern = @"version:\ (?<version>.*?)$";
     [GeneratedRegex(LinuxVersionPattern)]
-    private static partial Regex LinuxVersionRegex();
+    internal static partial Regex LinuxVersionRegex();
 
-    private const string LinuxBuildPattern = @"build:\ (?<build>.*?)";
+    private const string LinuxBuildPattern = @"build:\ (?<build>.*?)$";
     [GeneratedRegex(LinuxBuildPattern)]
-    private static partial Regex LinuxBuildRegex();
+    internal static partial Regex LinuxBuildRegex();
 
     private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
     private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
     private const string IdetMultiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
     private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
     [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex IdetRegex();
+    internal static partial Regex IdetRegex();
 }

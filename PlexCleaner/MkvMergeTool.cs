@@ -360,5 +360,5 @@ public partial class MkvMergeTool : MediaTool
 
     const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex InstalledVersionRegex();
+    internal static partial Regex InstalledVersionRegex();
 }

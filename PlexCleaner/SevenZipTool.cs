@@ -77,19 +77,19 @@ public partial class SevenZipTool : MediaTool
         try
         {
             // Load the download page
-            // TODO: Find a more reliable way of getting the last released version number
+            // TODO: Find a more reliable way of getting the latest release
             // https://www.7-zip.org/download.html
             using HttpClient httpClient = new();
             var downloadPage = httpClient.GetStringAsync("https://www.7-zip.org/download.html").Result;
 
             // Extract the version number from the page source
-            // E.g. "Download 7-Zip 18.05 (2018-04-30) for Windows"
+            // E.g. "Download 7-Zip 22.01 (2022-07-15):"
             var match = LatestVersionRegex().Match(downloadPage);
             Debug.Assert(match.Success);
             mediaToolInfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
 
             // Create download URL and the output filename using the version number
-            // E.g. https://www.7-zip.org/a/7z1805-extra.7z
+            // E.g. https://www.7-zip.org/a/7z2201-extra.7z
             mediaToolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
             mediaToolInfo.Url = $"https://www.7-zip.org/a/{mediaToolInfo.FileName}";
         }
@@ -217,9 +217,9 @@ public partial class SevenZipTool : MediaTool
 
     private const string InstalledVersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex InstalledVersionRegex();
+    internal static partial Regex InstalledVersionRegex();
 
-    private const string LatestVersionPattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)\ for\ Windows";
+    private const string LatestVersionPattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)";
     [GeneratedRegex(LatestVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    private static partial Regex LatestVersionRegex();
+    internal static partial Regex LatestVersionRegex();
 }
