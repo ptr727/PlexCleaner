@@ -44,7 +44,23 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 `ptr727/plexcleaner:savoury`
 
 ```
-include({{savoury}})
+include({{savoury.ver}})
 ```
 
+`ptr727/plexcleaner:debian`
 
+```
+include({{debian.ver}})
+```
+
+`ptr727/plexcleaner:alpine`
+
+```
+include({{alpine.ver}})
+```
+
+`ptr727/plexcleaner:arch`
+
+```
+include({{arch.ver}})
+```

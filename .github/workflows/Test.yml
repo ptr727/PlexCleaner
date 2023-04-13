@@ -18,9 +18,13 @@ jobs:
       matrix:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+            file: debian.vern
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+            file: alpine.vern
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+            file: savoury.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
+            file: arch.ver
 
     steps:
 
@@ -33,12 +37,12 @@ jobs:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ github.workspace }}:/workspace
         run: |
-          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /workspace/${{ matrix.tag }}
-          echo dotNET: $(dotnet --version) >> /workspace/${{ matrix.tag }}
-          echo HandBrakeCLI: $(HandBrakeCLI --version) >> /workspace/${{ matrix.tag }}
-          echo MediaInfo: $(mediainfo --version) >> /workspace/${{ matrix.tag }}
-          echo MkvMerge: $(mkvmerge --version) >> /workspace/${{ matrix.tag }}
-          echo FfMpeg: $(ffmpeg -version) >> /workspace/${{ matrix.tag }}
+          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /workspace/${{ matrix.file }}
+          echo dotNET: $(dotnet --version) >> /workspace/${{ matrix.file }}
+          echo HandBrakeCLI: $(HandBrakeCLI --version) >> /workspace/${{ matrix.file }}
+          echo MediaInfo: $(mediainfo --version) >> /workspace/${{ matrix.file }}
+          echo MkvMerge: $(mkvmerge --version) >> /workspace/${{ matrix.file }}
+          echo FfMpeg: $(ffmpeg -version) >> /workspace/${{ matrix.file }}
 
     - name: Print Versions
       run: cat ${{ github.workspace }}/${{ matrix.tag }}
