@@ -35,3 +35,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 - `arch`: Builds using [Arch Linux](https://hub.docker.com/_/archlinux) as base image.
   - Media processing tools are installed from the standard repositories.
   - Only `linux/amd64` platforms are supported.
+
+## Version Information
+
+Updated: &lt;nil&gt;
+
+

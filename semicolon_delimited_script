@@ -1,0 +1,7 @@
+echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /workspace/alpine-develop
+echo dotNET: $(dotnet --version) >> /workspace/alpine-develop
+echo HandBrakeCLI: $(HandBrakeCLI --version) >> /workspace/alpine-develop
+echo MediaInfo: $(mediainfo --version) >> /workspace/alpine-develop
+echo MkvMerge: $(mkvmerge --version) >> /workspace/alpine-develop
+echo FfMpeg: $(ffmpeg -version) >> /workspace/alpine-develop
+
