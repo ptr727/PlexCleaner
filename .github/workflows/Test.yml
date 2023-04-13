@@ -13,35 +13,32 @@ jobs:
     name: 'Get Image Tool Versions'
     runs-on: ubuntu-latest
 
+    strategy:
+
+      matrix:
+        include:
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
+
     steps:
 
     - name: Checkout 
       uses: actions/checkout@v2
   
-    - name: Docker Run
+    - name: Get Versions
       uses: addnab/docker-run-action@v3
       with:
-        image: docker.io/ptr727/plexcleaner:savoury-develop
+        image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
+        options: --volume ${{ github.workspace }}:/workspace
         run: |
-          /PlexCleaner/PlexCleaner --version
-          dotnet --version
-          ffmpeg -version
-          HandBrakeCLI --version
-          mediainfo --version
-          mkvmerge --version
+          echo /PlexCleaner/PlexCleaner --version > /workspace/${{ matrix.tag }}
+          echo dotnet --version >> /workspace/${{ matrix.tag }}
+          echo HandBrakeCLI --version >> /workspace/${{ matrix.tag }}
+          echo mediainfo --version >> /workspace/${{ matrix.tag }}
+          echo mkvmerge --version >> /workspace/${{ matrix.tag }}
+          echo ffmpeg -version >> /workspace/${{ matrix.tag }}
 
-        # "savoury=$(docker run -it --rm --pull always ptr727/plexcleaner:savoury /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
-        # "debian=$(docker run -it --rm --pull always ptr727/plexcleaner:debian /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
-        # "alpine=$(docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
-        # "arch=$(docker run -it --rm --pull always ptr727/plexcleaner:arch /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
-
-        # - id: versions
-        #   run: |
-        #     docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version
-
-    #   - name: 'Docker image versions'
-    #     run: |
-        #   echo ${{ steps.versions.outputs.savoury }}
-        #   echo ${{ steps.versions.outputs.debian }}
-        #   echo ${{ steps.versions.outputs.alpine }}
-        #   echo ${{ steps.versions.outputs.arch }}
+    - name: Print Versions
+      run: cat ${{ github.workspace }}/${{ matrix.tag }}
