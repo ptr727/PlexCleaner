@@ -15,14 +15,24 @@ jobs:
 
     steps:
 
+    - name: Checkout 
+      uses: actions/checkout@v2
+  
+    - name: Docker Run
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ptr727/plexcleaner:savoury
+        run: |
+          /PlexCleaner/PleaxCleaner --version
+
         # "savoury=$(docker run -it --rm --pull always ptr727/plexcleaner:savoury /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
         # "debian=$(docker run -it --rm --pull always ptr727/plexcleaner:debian /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
         # "alpine=$(docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
         # "arch=$(docker run -it --rm --pull always ptr727/plexcleaner:arch /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
 
-        - id: versions
-          run: |
-            docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version
+        # - id: versions
+        #   run: |
+        #     docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version
 
     #   - name: 'Docker image versions'
     #     run: |
