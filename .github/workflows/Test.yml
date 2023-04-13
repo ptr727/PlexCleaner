@@ -43,6 +43,15 @@ jobs:
     - name: Print Versions
       run: cat ${{ github.workspace }}/${{ matrix.tag }}
 
+  # Update Docker Hub description
+  updatereadme:
+
+    name: 'Update README.md'
+    runs-on: ubuntu-latest
+    needs: toolversions
+
+    steps:
+        
     # https://blog.ediri.io/how-to-automate-your-github-profile-readme
     # https://github.com/marketplace/actions/generate-update-markdown-content
 
