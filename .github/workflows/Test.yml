@@ -38,24 +38,24 @@ jobs:
       uses: addnab/docker-run-action@v3
       with:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
-        options: --volume ${{ github.workspace }}:/workspace
+        options: --volume ${{ runner.temp }}/versions:/versions
         run: |
-          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /workspace/${{ matrix.file }}
-          echo dotNET: $(dotnet --version) >> /workspace/${{ matrix.file }}
-          echo HandBrakeCLI: $(HandBrakeCLI --version) >> /workspace/${{ matrix.file }}
-          echo MediaInfo: $(mediainfo --version) >> /workspace/${{ matrix.file }}
-          echo MkvMerge: $(mkvmerge --version) >> /workspace/${{ matrix.file }}
-          echo FfMpeg: $(ffmpeg -version) >> /workspace/${{ matrix.file }}
+          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /versions/${{ matrix.file }}
+          echo dotNET: $(dotnet --version) >> /versions/${{ matrix.file }}
+          echo HandBrakeCLI: $(HandBrakeCLI --version) >> /versions/${{ matrix.file }}
+          echo MediaInfo: $(mediainfo --version) >> /versions/${{ matrix.file }}
+          echo MkvMerge: $(mkvmerge --version) >> /versions/${{ matrix.file }}
+          echo FfMpeg: $(ffmpeg -version) >> /versions/${{ matrix.file }}
 
     - name: Print versions
-      run: cat ${{ github.workspace }}/${{ matrix.file }}
+      run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
     # https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload version artifacts
       uses: actions/upload-artifact@v3
       with:
         name: versions
-        path: ${{ github.workspace }}/${{ matrix.file }}
+        path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
   # Update Docker README.md
   updatereadme:
@@ -75,10 +75,10 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: versions
-        path: ${{ github.workspace }}
+        path: ${{ runner.temp }}/versions
 
     - name: Create README.md from README.m4
-      run: m4 --include=${{ github.workspace }} ./Docker/README.m4 > ./Docker/README.md
+      run: m4 --include=${{ runner.temp }}/versions ./Docker/README.m4 > ./Docker/README.md
 
     # https://github.com/marketplace/actions/git-auto-commit
     - name: Commit generated README.md
@@ -86,4 +86,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        file_pattern: ./Docker/README.md
         commit_message: Update generated README.md
