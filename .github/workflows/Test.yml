@@ -61,7 +61,7 @@ jobs:
     # https://github.com/marketplace/actions/generate-update-markdown-content
     # https://github.com/muesli/markscribe
     - name: Update README.md from Template
-      run: m4 -I ${{ github.workspace }} README.m4 > README.md
+      run: m4 -I ${{ github.workspace }} ./Docker/README.m4 > ./Docker/README.md
 
     # https://github.com/marketplace/actions/git-auto-commit
     - name: Commit README.md
