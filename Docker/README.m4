@@ -39,26 +39,32 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Build Version Information
 
+### `ptr727/plexcleaner:latest`
+
+```text
+include({{savoury.ver}})
+```
+
 ### `ptr727/plexcleaner:savoury`
 
-```
+```text
 include({{savoury.ver}})
 ```
 
 ### `ptr727/plexcleaner:debian`
 
-```
+```text
 include({{debian.ver}})
 ```
 
 ### `ptr727/plexcleaner:alpine`
 
-```
+```text
 include({{alpine.ver}})
 ```
 
 ### `ptr727/plexcleaner:arch`
 
-```
+```text
 include({{arch.ver}})
 ```

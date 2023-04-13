@@ -143,7 +143,7 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 
 Example, run in an interactive shell:
 
-```console
+```text
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
@@ -177,7 +177,7 @@ exit
 
 Example, run in a screen session:
 
-```console
+```text
 # Start a new screen session
 screen
 
@@ -553,7 +553,7 @@ Use the `PlexCleaner --help` commandline option to get a list of commands and op
 One of the commands must be specified, and some commands have additional required options.  
 To get more help for a specific command run `PlexCleaner <command> --help`.
 
-```console
+```text
 > ./PlexCleaner --help
 Description:
   Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
@@ -618,7 +618,7 @@ Example:
 
 Run `PlexCleaner process --help` for a list of all commandline options.
 
-```console
+```text
 > ./PlexCleaner process --help
 Description:
   Process media files
