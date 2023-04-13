@@ -33,12 +33,36 @@ jobs:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ github.workspace }}:/workspace
         run: |
-          echo $(/PlexCleaner/PlexCleaner --version) > /workspace/${{ matrix.tag }}
-          echo $(dotnet --version) >> /workspace/${{ matrix.tag }}
-          echo $(HandBrakeCLI --version) >> /workspace/${{ matrix.tag }}
-          echo $(mediainfo --version) >> /workspace/${{ matrix.tag }}
-          echo $(mkvmerge --version) >> /workspace/${{ matrix.tag }}
-          echo $(ffmpeg -version) >> /workspace/${{ matrix.tag }}
+          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /workspace/${{ matrix.tag }}
+          echo dotNET: $(dotnet --version) >> /workspace/${{ matrix.tag }}
+          echo HandBrakeCLI: $(HandBrakeCLI --version) >> /workspace/${{ matrix.tag }}
+          echo MediaInfo: $(mediainfo --version) >> /workspace/${{ matrix.tag }}
+          echo MkvMerge: $(mkvmerge --version) >> /workspace/${{ matrix.tag }}
+          echo FfMpeg: $(ffmpeg -version) >> /workspace/${{ matrix.tag }}
 
     - name: Print Versions
       run: cat ${{ github.workspace }}/${{ matrix.tag }}
+
+    # https://blog.ediri.io/how-to-automate-your-github-profile-readme
+    # https://github.com/marketplace/actions/generate-update-markdown-content
+
+    # https://github.com/marketplace/actions/generate-update-markdown-content
+    # https://github.com/muesli/markscribe
+    - name: Update README.md from Template
+      uses: muesli/readme-scribe@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        template: "./Docker/README.md.tpl"
+        writeTo: "./Docker/README.md"
+
+    # https://github.com/marketplace/actions/git-auto-commit
+    - name: Commit README.md
+      uses: stefanzweifel/git-auto-commit-action@v4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        commit_message: Update generated README.md
+
+# TODO: How to include file content?
+# https://github.com/muesli/markscribe/issues/74
