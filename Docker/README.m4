@@ -1,6 +1,4 @@
-[//]: # Use M4 to include files
 changequote(`{{', `}}')
-
 # PlexCleaner
 
 Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
@@ -41,25 +39,25 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Build Version Information
 
-`ptr727/plexcleaner:savoury`
+### `ptr727/plexcleaner:savoury`
 
 ```
 include({{savoury.ver}})
 ```
 
-`ptr727/plexcleaner:debian`
+### `ptr727/plexcleaner:debian`
 
 ```
 include({{debian.ver}})
 ```
 
-`ptr727/plexcleaner:alpine`
+### `ptr727/plexcleaner:alpine`
 
 ```
 include({{alpine.ver}})
 ```
 
-`ptr727/plexcleaner:arch`
+### `ptr727/plexcleaner:arch`
 
 ```
 include({{arch.ver}})
