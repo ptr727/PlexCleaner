@@ -18,9 +18,9 @@ jobs:
       matrix:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-            file: debian.vern
+            file: debian.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-            file: alpine.vern
+            file: alpine.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             file: savoury.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
@@ -45,7 +45,7 @@ jobs:
           echo FfMpeg: $(ffmpeg -version) >> /workspace/${{ matrix.file }}
 
     - name: Print Versions
-      run: cat ${{ github.workspace }}/${{ matrix.tag }}
+      run: cat ${{ github.workspace }}/${{ matrix.file }}
 
   # Update Docker Hub description
   updatereadme:
