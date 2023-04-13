@@ -1,5 +1,3 @@
-[//]: # Use M4 to include files
-
 
 # PlexCleaner
 
@@ -41,7 +39,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Build Version Information
 
-`ptr727/plexcleaner:savoury`
+### `ptr727/plexcleaner:savoury`
 
 ```
 PlexCleaner: 3.0.78+64bf27791d
@@ -53,7 +51,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 
 ```
 
-`ptr727/plexcleaner:debian`
+### `ptr727/plexcleaner:debian`
 
 ```
 PlexCleaner: 3.0.77+fa3e936631
@@ -65,7 +63,7 @@ FfMpeg: ffmpeg version 5.1.2-3 Copyright (c) 2000-2022 the FFmpeg developers bui
 
 ```
 
-`ptr727/plexcleaner:alpine`
+### `ptr727/plexcleaner:alpine`
 
 ```
 PlexCleaner: 3.0.78+64bf27791d
@@ -77,7 +75,7 @@ FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built w
 
 ```
 
-`ptr727/plexcleaner:arch`
+### `ptr727/plexcleaner:arch`
 
 ```
 PlexCleaner: 3.0.78+64bf27791d
