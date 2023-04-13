@@ -27,7 +27,7 @@ jobs:
     - name: Checkout 
       uses: actions/checkout@v3
   
-    - name: Get Versions
+    - name: Get Tool Versions
       uses: addnab/docker-run-action@v3
       with:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
@@ -51,7 +51,10 @@ jobs:
     needs: toolversions
 
     steps:
-        
+
+    - name: Checkout 
+      uses: actions/checkout@v3
+
     # https://blog.ediri.io/how-to-automate-your-github-profile-readme
     # https://github.com/marketplace/actions/generate-update-markdown-content
 
