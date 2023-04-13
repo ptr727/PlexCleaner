@@ -154,42 +154,46 @@ public class Language
 
     public bool IsMatch(string prefix, string language)
     {
-        // https://r12a.github.io/app-subtags/
-
-        // zh match: zh: zh, zh-Hant, zh-Hans, zh-cmn-Hant
-        // zho not: zh
-        // zho match: zho
-        // zh-Hant match: zh-Hant, zh-Hant-foo
-
-        // The language matches the prefix exactly
-        if (language.Equals(prefix, StringComparison.OrdinalIgnoreCase)) 
+        while (true)
         {
-            return true;
-        }
+            // https://r12a.github.io/app-subtags/
 
-        // The language start with the prefix, and the the next character is a -
-        if (language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
-            language[prefix.Length..].StartsWith('-'))
-        {
-            return true;
-        }
+            // zh match: zh: zh, zh-Hant, zh-Hans, zh-cmn-Hant
+            // zho not: zh
+            // zho match: zho
+            // zh-Hant match: zh-Hant, zh-Hant-foo
 
-        // Get the extended format of the language
-        // E.g. cmn-Hant should be expanded to zh-cmn-Hant else zh will not match
-
-        // Find a matching RFC 5646 record
-        var rfc5646 = Rfc5646.Find(language, false);
-        if (rfc5646 != null)
-        {
-            // If the lookup is different then rematch
-            if (!string.Equals(language, rfc5646.TagAny, StringComparison.OrdinalIgnoreCase))
+            // The language matches the prefix exactly
+            if (language.Equals(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                return IsMatch(prefix, rfc5646.TagAny);
+                return true;
             }
-        }
 
-        // No match
-        return false;
+            // The language start with the prefix, and the the next character is a -
+            if (language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && language[prefix.Length..].StartsWith('-'))
+            {
+                return true;
+            }
+
+            // Get the extended format of the language
+            // E.g. cmn-Hant should be expanded to zh-cmn-Hant else zh will not match
+
+            // Find a matching RFC 5646 record
+            var rfc5646 = Rfc5646.Find(language, false);
+            if (rfc5646 != null)
+            {
+                // If the lookup is different then rematch
+                if (!string.Equals(language, rfc5646.TagAny, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Reiterate
+                    language = rfc5646.TagAny;
+                    continue;
+                }
+            }
+
+            // No match
+            return false;
+        }
     }
 
     public bool IsMatch(string language, IEnumerable<string> prefixList)

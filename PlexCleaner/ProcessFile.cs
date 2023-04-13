@@ -1982,9 +1982,6 @@ public class ProcessFile
 
     private SidecarFile SidecarFile;
 
-    // TODO: Make configurable
-    private const int RefreshWaitTime = 5;
-
     private static readonly string[] Hdr10Format = { "SMPTE ST 2086", "SMPTE ST 2094" };
     private static readonly string[] ReEncodeVideoOnAudioReEncode = { "h264", "hevc", "av1" };
 }
