@@ -61,12 +61,7 @@ jobs:
     # https://github.com/marketplace/actions/generate-update-markdown-content
     # https://github.com/muesli/markscribe
     - name: Update README.md from Template
-      uses: muesli/readme-scribe@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        template: "./Docker/README.md.tpl"
-        writeTo: "./Docker/README.md"
+      run: m4 -I ${{ github.workspace }} README.m4 > README.md
 
     # https://github.com/marketplace/actions/git-auto-commit
     - name: Commit README.md

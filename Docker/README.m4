@@ -36,8 +36,12 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Media processing tools are installed from the standard repositories.
   - Only `linux/amd64` platforms are supported.
 
-## Version Information
+## Build Version Information
 
-Updated: {{humanize .Timestamp}}
+`ptr727/plexcleaner:savoury`
+
+```
+include({{savoury}})
+```
 
 
