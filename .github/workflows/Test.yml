@@ -21,6 +21,7 @@ jobs:
     - name: Docker Run
       uses: addnab/docker-run-action@v3
       with:
+        registry: docker.io
         image: ptr727/plexcleaner:savoury
         run: |
           /PlexCleaner/PleaxCleaner --version
