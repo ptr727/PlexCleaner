@@ -75,10 +75,10 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: versions
-        path: ./Docker
+        path: ${{ github.workspace }}
 
     - name: Create README.md from README.m4
-      run: m4 ./Docker/README.m4 > ./Docker/README.md
+      run: m4 --include=${{ github.workspace }} ./Docker/README.m4 > ./Docker/README.md
 
     # https://github.com/marketplace/actions/git-auto-commit
     - name: Commit generated README.md
