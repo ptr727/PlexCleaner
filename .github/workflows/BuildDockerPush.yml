@@ -156,31 +156,6 @@ jobs:
             BUILD_PACKAGE_VERSION=${{ needs.versioninfo.outputs.SemVer2 }}
 
   # Update Docker Hub description
-  toolversions:
-
-    name: 'Get Image Tool Versions'
-    runs-on: ubuntu-latest
-    needs: buildpush
-
-    steps:
-
-      # Get image tool version information
-      - id: versions
-        run: |
-          "savoury=$(docker run -it --rm --pull always ptr727/plexcleaner:savoury /PlexCleaner/PleaxCleaner -- version)" >> $GITHUB_OUTPUT
-          "debian=$(docker run -it --rm --pull always ptr727/plexcleaner:debian /PlexCleaner/PleaxCleaner -- version)" >> $GITHUB_OUTPUT
-          "alpine=$(docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner -- version)" >> $GITHUB_OUTPUT
-          "arch=$(docker run -it --rm --pull always ptr727/plexcleaner:arch /PlexCleaner/PleaxCleaner -- version)" >> $GITHUB_OUTPUT
-
-      # TODO: Write to file for inclusion in README
-      - name: 'Docker image versions'
-        run: |
-            echo ${{ steps.versions.outputs.savoury }}
-            echo ${{ steps.versions.outputs.debian }}
-            echo ${{ steps.versions.outputs.alpine }}
-            echo ${{ steps.versions.outputs.arch }}
-
-  # Update Docker Hub description
   hubdescription:
 
     name: 'Update Docker Hub Description'

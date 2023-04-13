@@ -1,0 +1,32 @@
+name: 'Test'
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+  
+jobs:
+
+  # Update Docker Hub description
+  toolversions:
+
+    name: 'Get Image Tool Versions'
+    runs-on: ubuntu-latest
+
+    steps:
+
+        # "savoury=$(docker run -it --rm --pull always ptr727/plexcleaner:savoury /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
+        # "debian=$(docker run -it --rm --pull always ptr727/plexcleaner:debian /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
+        # "alpine=$(docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
+        # "arch=$(docker run -it --rm --pull always ptr727/plexcleaner:arch /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
+
+        - id: versions
+          run: |
+            docker run -it --rm --pull always ptr727/plexcleaner:alpine /PlexCleaner/PleaxCleaner --version
+
+    #   - name: 'Docker image versions'
+    #     run: |
+        #   echo ${{ steps.versions.outputs.savoury }}
+        #   echo ${{ steps.versions.outputs.debian }}
+        #   echo ${{ steps.versions.outputs.alpine }}
+        #   echo ${{ steps.versions.outputs.arch }}
