@@ -2,7 +2,7 @@ name: 'Test'
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ toolversions ]
   workflow_dispatch:
   
 jobs:
@@ -23,7 +23,12 @@ jobs:
       with:
         image: docker.io/ptr727/plexcleaner:savoury-develop
         run: |
-          /PlexCleaner/PleaxCleaner --version
+          /PlexCleaner/PlexCleaner --version
+          dotnet --version
+          ffmpeg -version
+          HandBrakeCLI --version
+          mediainfo --version
+          mkvmerge --version
 
         # "savoury=$(docker run -it --rm --pull always ptr727/plexcleaner:savoury /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
         # "debian=$(docker run -it --rm --pull always ptr727/plexcleaner:debian /PlexCleaner/PleaxCleaner --version)" >> $GITHUB_OUTPUT
