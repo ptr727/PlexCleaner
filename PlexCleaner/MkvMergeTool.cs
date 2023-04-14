@@ -317,7 +317,7 @@ public partial class MkvMergeTool : MediaTool
         }
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"{Snippet} ");
+            commandline.Append($"--split parts:00:00:00-{Program.SnippetTimeSpan.ToString("hh:mm:ss")} ");
         }
         commandline.Append($"--output \"{outputName}\" ");
     }
@@ -355,7 +355,6 @@ public partial class MkvMergeTool : MediaTool
         }
     }
 
-    private const string Snippet = "--split parts:00:00:00-00:03:00";
     private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
 
     const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";

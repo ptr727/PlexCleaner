@@ -45,7 +45,7 @@
     },
     "CreateSchema": {
       "commandName": "Project",
-      "commandLineArgs": "createschema --schemafile \"PlexCleaner.Schema.json\""
+      "commandLineArgs": "createschema --schemafile \"PlexCleaner.schema.json\""
     },
     "ReVerify": {
       "commandName": "Project",
@@ -85,7 +85,7 @@
     },
     "DefaultsSettings": {
       "commandName": "Project",
-      "commandLineArgs": "defaultsettings --settingsfile \"PlexCleaner.Defaults.json\""
+      "commandLineArgs": "defaultsettings --settingsfile \"PlexCleaner.defaults.json\""
     },
     "RemoveSubtitles": {
       "commandName": "Project",

@@ -48,12 +48,12 @@ public record ConvertOptions : ConvertOptions1
 
     public void SetDefaults()
     {
-        FfMpegOptions.Video = "libx264 -crf 20 -preset medium";
+        FfMpegOptions.Video = "libx264 -crf 22 -preset medium";
         FfMpegOptions.Audio = "ac3";
         FfMpegOptions.Global = "-analyzeduration 2147483647 -probesize 2147483647";
         FfMpegOptions.Output = "-max_muxing_queue_size 1024 -abort_on empty_output";
 
-        HandBrakeOptions.Video = "x264 --quality 20 --encoder-preset medium";
+        HandBrakeOptions.Video = "x264 --quality 22 --encoder-preset medium";
         HandBrakeOptions.Audio = "copy --audio-fallback ac3";
     }
 }

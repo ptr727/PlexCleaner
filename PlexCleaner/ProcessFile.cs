@@ -1069,24 +1069,6 @@ public class ProcessFile
         return true;
     }
 
-    public bool VerifyAge()
-    {
-        // Skip files that are older than the minimum age
-        TimeSpan fileAge = DateTime.UtcNow - FileInfo.LastWriteTimeUtc;
-        TimeSpan testAge = TimeSpan.FromDays(Program.Config.VerifyOptions.MinimumFileAge);
-        if (Program.Config.VerifyOptions.MinimumFileAge > 0 &&
-            fileAge > testAge)
-        {
-            Log.Logger.Warning("Skipping file due to MinimumFileAge : {FileAge} > {TestAge} : {FileName}", fileAge, testAge, FileInfo.Name);
-
-            // Skip
-            return false;
-        }
-
-        // Do not skip
-        return true;
-    }
-
     public bool VerifyTrackCounts()
     {
         // Use MkvMergeInfo
@@ -1115,28 +1097,6 @@ public class ProcessFile
         {
             Log.Logger.Warning("File has more than one video track : Video: {Video} : {FileName}", MkvMergeInfo.Video.Count, FileInfo.Name);
             MkvMergeInfo.WriteLine("Extra");
-
-            // Warning only
-        }
-
-        return true;
-    }
-
-    public bool VerifyDuration()
-    {
-        // Use MkvMergeInfo
-
-        // Test playback duration
-        // Ignore when snippets are enabled
-        if (MkvMergeInfo.Duration < TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration) &&
-            !Program.Options.TestSnippets)
-        {
-            // Playback duration is too short
-            Log.Logger.Warning("File play duration is too short : {Duration} < {MinimumDuration} : {FileName}",
-                MkvMergeInfo.Duration,
-                TimeSpan.FromMinutes(Program.Config.VerifyOptions.MinimumDuration),
-                FileInfo.Name);
-            MkvMergeInfo.WriteLine("Short");
 
             // Warning only
         }
@@ -1174,13 +1134,6 @@ public class ProcessFile
             return false;
         }
 
-        // Skip files that are older than the minimum age
-        if (!VerifyAge())
-        {
-            // Skip
-            return true;
-        }
-
         // Verify track counts
         if (!VerifyTrackCounts())
         {
@@ -1191,10 +1144,6 @@ public class ProcessFile
         // Veriy track flags
         // Warning only
         VerifyTrackFlags();
-
-        // Verify playback duration
-        // Warning only
-        VerifyDuration();
 
         // Verify HDR profile
         // Warning only
@@ -1787,7 +1736,7 @@ public class ProcessFile
         Log.Logger.Information("FfMpeg Idet : Interlaced: {IdetInterlaced} ({Percentage:P} > {Threshold:P}), Interlaced: {Interlaced}, Progressive: {Progressive}, Undetermined: {Undetermined}, Total: {Total} : {FileName}",
             idetInfo.IsInterlaced(),
             idetInfo.InterlacedPercentage,
-            FfMpegIdetInfo.InterlacedThreshold,
+            Program.InterlacedThreshold,
             idetInfo.Interlaced,
             idetInfo.Progressive,
             idetInfo.Undetermined,
@@ -1958,19 +1907,19 @@ public class ProcessFile
         }
 
         // Iterate through the preferred codecs in order
-        foreach (var codec in Program.Config.ProcessOptions.PreferredAudioFormats)
+        foreach (var format in Program.Config.ProcessOptions.PreferredAudioFormats)
         {
             // Return on first match
-            var audioInfo = audioInfoList.Find(item => item.Format.Equals(codec, StringComparison.OrdinalIgnoreCase));
+            var audioInfo = audioInfoList.Find(item => item.Format.Equals(format, StringComparison.OrdinalIgnoreCase));
             if (audioInfo != null)
             {
-                Log.Logger.Information("Preferred audio codec selected : {Preferred} in {Codecs}", audioInfo.Format, audioInfoList.Select(item => item.Format));
+                Log.Logger.Information("Preferred audio format selected : {Preferred} in {Formats}", audioInfo.Format, audioInfoList.Select(item => item.Format));
                 return audioInfo;
             }
         }
 
         // Return first item
-        Log.Logger.Information("No audio codec matching preferred codecs : {Preferred} not in {Codecs}, Selecting {Selected}", Program.Config.ProcessOptions.PreferredAudioFormats, audioInfoList.Select(item => item.Format), audioInfoList.First().Codec);
+        Log.Logger.Information("No audio format matching preferred formats : {Preferred} not in {formats}, Selecting {Selected}", Program.Config.ProcessOptions.PreferredAudioFormats, audioInfoList.Select(item => item.Format), audioInfoList.First().Format);
         return audioInfoList.First();
     }
 

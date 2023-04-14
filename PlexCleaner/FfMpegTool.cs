@@ -236,13 +236,6 @@ public partial class FfMpegTool : MediaTool
         StringBuilder commandline = new();
         CreateDefaultArgs(filename, commandline);
 
-        // Test snippets
-        if (!Program.Options.TestSnippets &&
-            Program.Config.VerifyOptions.VerifyDuration != 0)
-        {
-            commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.VerifyDuration} ");
-        }
-
         // Null muxer and exit on error
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
 
@@ -441,13 +434,6 @@ public partial class FfMpegTool : MediaTool
         StringBuilder commandline = new();
         CreateDefaultArgs(inputName, commandline);
 
-        // Limit idet filter run duration
-        if (!Program.Options.TestSnippets &&
-            Program.Config.VerifyOptions.IdetDuration != 0)
-        {
-            commandline.Append($"-ss 0 -t {Program.Config.VerifyOptions.IdetDuration} ");
-        }
-
         // Run idet filter
         commandline.Append($"-hide_banner -nostats -xerror -filter:v idet -an -f rawvideo {nullOut}");
 
@@ -509,7 +495,7 @@ public partial class FfMpegTool : MediaTool
         if (Program.Options.TestSnippets)
         {
             // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
-            commandline.Append($"{Snippet} ");
+            commandline.Append($"-ss 0 -t {(int)Program.SnippetTimeSpan.TotalSeconds} ");
         }
 
         // Input filename
@@ -524,9 +510,6 @@ public partial class FfMpegTool : MediaTool
             commandline.Append("-hide_banner -nostats ");
         }
     }
-
-    // Short processing snippet
-    private const string Snippet = "-ss 0 -t 180";
 
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]

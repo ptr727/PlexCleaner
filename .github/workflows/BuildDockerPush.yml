@@ -184,7 +184,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
   
-    # https://github.com/marketplace/actions/docker-run-action      
+    # https://github.com/marketplace/actions/docker-run-action
     - name: Write image tool versions to file
       uses: addnab/docker-run-action@v3
       with:

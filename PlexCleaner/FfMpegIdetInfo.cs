@@ -50,14 +50,11 @@ public class FfMpegIdetInfo
             return false;
         }
 
-        return InterlacedPercentage > InterlacedThreshold;
+        return InterlacedPercentage > Program.InterlacedThreshold;
     }
 
     public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
     {
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }
-
-    // TODO: Figure out what reliable threshold would be, use 5% for now
-    public const double InterlacedThreshold = 5.0 / 100.0;
 }

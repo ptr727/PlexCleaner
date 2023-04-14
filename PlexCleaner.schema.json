@@ -262,27 +262,7 @@
         "RegisterInvalidFiles": {
           "type": "boolean"
         },
-        "MinimumDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "VerifyDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "IdetDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
         "MaximumBitrate": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "MinimumFileAge": {
           "type": "integer",
           "minimum": 0.0,
           "maximum": 2147483647.0
@@ -292,11 +272,7 @@
         "AutoRepair",
         "DeleteInvalidFiles",
         "RegisterInvalidFiles",
-        "MinimumDuration",
-        "VerifyDuration",
-        "IdetDuration",
-        "MaximumBitrate",
-        "MinimumFileAge"
+        "MaximumBitrate"
       ]
     },
     "VideoFormat": {

@@ -23,7 +23,7 @@ public record ConfigFileJsonSchemaBase
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
 
     // Schema
-    private const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.schema.json";
+    public const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
 }
 
 // v1
@@ -215,7 +215,7 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         var schema = generator.Generate(typeof(ConfigFileJsonSchema));
         schema.Title = "PlexCleaner Configuration Schema";
         schema.SchemaVersion = new Uri(@"http://json-schema.org/draft-06/schema");
-        schema.Id = new Uri(@"https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json");
+        schema.Id = new Uri(SchemaUri);
         
         // Write to file
         File.WriteAllText(path, schema.ToString());

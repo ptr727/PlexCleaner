@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.schema.json",
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.Schema.json",
   "SchemaVersion": 3,
   "ToolsOptions": {
     "UseSystem": false,
@@ -112,13 +112,13 @@
   },
   "ConvertOptions": {
     "FfMpegOptions": {
-      "Video": "libx264 -crf 20 -preset medium",
+      "Video": "libx264 -crf 22 -preset medium",
       "Audio": "ac3",
       "Global": "-analyzeduration 2147483647 -probesize 2147483647",
       "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
     },
     "HandBrakeOptions": {
-      "Video": "x264 --quality 20 --encoder-preset medium",
+      "Video": "x264 --quality 22 --encoder-preset medium",
       "Audio": "copy --audio-fallback ac3"
     }
   },
@@ -126,11 +126,7 @@
     "AutoRepair": true,
     "DeleteInvalidFiles": false,
     "RegisterInvalidFiles": false,
-    "MinimumDuration": 300,
-    "VerifyDuration": 0,
-    "IdetDuration": 0,
-    "MaximumBitrate": 100000000,
-    "MinimumFileAge": 0
+    "MaximumBitrate": 100000000
   },
   "MonitorOptions": {
     "MonitorWaitTime": 60,

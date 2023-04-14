@@ -122,11 +122,7 @@ public partial class HandBrakeTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        commandline.Append($"--input \"{inputName}\" ");
-        if (Program.Options.TestSnippets)
-        {
-            commandline.Append($"{Snippet} ");
-        }
+        CreateDefaultArgs(inputName, commandline);
         commandline.Append($"--output \"{outputName}\" ");
         commandline.Append("--format av_mkv ");
 
@@ -152,8 +148,14 @@ public partial class HandBrakeTool : MediaTool
         return exitCode == 0;
     }
 
-    // Short processing snippet
-    private const string Snippet = "--start-at seconds:00 --stop-at seconds:180";
+    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
+    {
+        commandline.Append($"--input \"{inputName}\" ");
+        if (Program.Options.TestSnippets)
+        {
+            commandline.Append($"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} ");
+        }
+    }
 
     const string VersionPattern = @"HandBrake\ (?<version>.*)";
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]

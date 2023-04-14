@@ -27,10 +27,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 - Version 3.0:
   - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
-    - See the Docker [README](./Docker/README.md) for tag usage details.
-    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FfMpeg and HandBrake builds.
+    - See the Docker [README](./Docker/README.md) for image and tag usage details.
+    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FFmpeg and HandBrake builds.
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
+  - Added additional architectures to the published releases, including `win-x64`, `linux-x64`, `linux-musl-x64`, `linux-arm`, `linux-arm64`, and `osx-x64`.
   - Added support for custom FFmpeg and HandBrake command line arguments.
     - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
     - Custom options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
@@ -69,6 +70,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Refactored track selection logic to simplify containment and use with lambda filters.
   - Refactored verify and repair logic, became too complicated.
   - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
+  - Removed `VerifyOptions:VerifyDuration`, `VerifyOptions:IdetDuration`, `VerifyOptions:MinimumDuration`, and `VerifyOptions:MinimumFileAge` configuration options.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
@@ -107,34 +109,29 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Duplicate audio or subtitle tracks of the same language cause issues with player track selection, delete duplicate tracks, and keep the best quality audio tracks.
 - Corrupt media streams cause playback issues, verify stream integrity, and try to automatically repair by re-encoding.
 - Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
-- Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10 displays.
-- EIA-608 Closed Captions embedded in video streams can't be disable or managed from the player, remove embedded closed captions from video streams.
+- Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10/HDR10+ displays.
+- EIA-608 Closed Captions embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
 
 ## Performance Considerations
 
-- To improve processing performance of large media collections, the media file attributes and processing state is stored in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
+- To improve processing performance of large media collections, the media file attributes and processing state is cached in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
 - Sidecar files allow re-processing of the same files to be very fast as the state will be read from the sidecar vs. re-computed from the media file.
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
-- On systems with high core counts the `--parallel` option can be used to process files concurrently.
-- Parallel processing is useful when a single instance of FFmpeg or HandBrake does not saturate the CPU resources of the system.
+- Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
 - When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
-- The initial `process` run on a large collection can take a long time to complete.
-- Processing can be interrupted using `Ctl-C` `Ctl-C`, re-running the same command will resume processing.
+- Processing can be interrupted using `Ctl-C`, if using sidecar files restarting will skip previously verified files.
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `x86-64` images.  
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.  
 Alternatively, install directly on [Windows](#windows) or [Linux](#linux) following the provided instructions.
 
 ### Docker
 
 - Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
-- Images are tagged with specific build numbers, or `latest` for current, or `develop` for beta or pre-release builds.
-  - E.g. `docker pull ptr727/plexcleaner:latest`
-  - E.g. `docker pull ptr727/plexcleaner:develop`
-  - E.g. `docker pull ptr727/plexcleaner:2.10.17`
+- See the Docker [README](./Docker/README.md) for image and tag details.
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -226,8 +223,8 @@ docker run \
 ### Linux
 
 - Automatic downloading of Linux 3rd party tools are not supported, consider using the [Docker](#docker) build instead.
-- Manually install the 3rd party tools, e.g. following steps similar to the [Docker](./Docker/Dockerfile) file commands.
-- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
+- Manually install the 3rd party tools, e.g. following steps similar to the [Docker](./Docker) file commands.
+- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries matching your platform.
 - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
 - Create a default JSON settings file using the `defaultsettings` command:
   - `./PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
@@ -238,225 +235,13 @@ docker run \
 Create a default JSON configuration file by running:  
 `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
 
-Following is the [default JSON settings](./PlexCleaner.json) with usage comments:
-
-```jsonc
-{
-  // JSON Schema
-  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
-  // JSON Schema version
-  "SchemaVersion": 3,
-  // Tools options
-  "ToolsOptions": {
-    // Use system installed tools
-    // Default true on Linux
-    "UseSystem": false,
-    // Tools folder, ignored when UseSystem is true
-    "RootPath": ".\\Tools\\",
-    // Tools directory relative to binary location
-    "RootRelative": true,
-    // Automatically check for and update new tool versions
-    "AutoUpdate": false
-  },
-  // Convert options
-  "ConvertOptions": {
-    // FFmpeg commandline options
-    "FfMpegOptions": {
-      // Video encoding option following -c:v
-      "Video": "libx264 -crf 22 -preset medium",
-      // Audio encoding option following -c:a
-      "Audio": "ac3",
-      // Global options
-      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
-      // Output options
-      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
-    },
-    // HandBrake commandline options
-    "HandBrakeOptions": {
-      // Video encoding options following --encode
-      "Video": "x264 --quality 22 --encoder-preset medium",
-      // Audio encoding option following --aencode
-      "Audio": "copy --audio-fallback ac3"
-    }
-  },
-  // Process options
-  "ProcessOptions": {
-    // Delete empty folders
-    "DeleteEmptyFolders": true,
-    // Delete non-media files
-    // Any file that is not in KeepExtensions or in ReMuxExtensions or MKV will be deleted
-    "DeleteUnwantedExtensions": true,
-    // File extensions to keep but not process, e.g. subtitles, cover art, info, partial, etc.
-    "KeepExtensions": [
-      ".partial~",
-      ".nfo",
-      ".jpg",
-      ".srt",
-      ".smi",
-      ".ssa",
-      ".ass",
-      ".vtt"
-    ],
-    // Enable re-mux non-MKV files to MKV
-    "ReMux": true,
-    // File extensions to remux to MKV
-    "ReMuxExtensions": [
-      ".avi",
-      ".m2ts",
-      ".ts",
-      ".vob",
-      ".mp4",
-      ".m4v",
-      ".asf",
-      ".wmv",
-      ".dv"
-    ],
-    // Enable deinterlace of interlaced media
-    // Interlace detection is not absolute and uses interlaced frame counting
-    "DeInterlace": true,
-    // Enable re-encode of audio or video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
-    "ReEncode": true,
-    // Re-encode the video if the Format, Codec, and Profile values match
-    // Empty fields will match with any value
-    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeVideo": [
-      {
-        "Format": "mpeg2video"
-      },
-      {
-        "Format": "mpeg4",
-        "Codec": "dx50"
-      },
-      {
-        "Format": "msmpeg4v3",
-        "Codec": "div3"
-      },
-      {
-        "Format": "msmpeg4v2",
-        "Codec": "mp42"
-      },
-      {
-        "Format": "vc1"
-      },
-      {
-        "Format": "h264",
-        "Profile": "Constrained Baseline@30"
-      },
-      {
-        "Format": "wmv3"
-      },
-      {
-        "Format": "msrle"
-      },
-      {
-        "Format": "rawvideo"
-      },
-      {
-        "Format": "indeo5"
-      }
-    ],
-    // Re-encode matching audio codecs
-    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
-    "ReEncodeAudioFormats": [
-      "flac",
-      "mp2",
-      "vorbis",
-      "wmapro",
-      "pcm_s16le",
-      "opus",
-      "wmav2",
-      "pcm_u8",
-      "adpcm_ms"
-    ],
-    // Set default language if tracks have an undefined language
-    "SetUnknownLanguage": true,
-    // Default track language in RFC-5646 format
-    "DefaultLanguage": "en",
-    // Enable removing of unwanted language tracks
-    "RemoveUnwantedLanguageTracks": false,
-    // Track language tags to keep in RFC-5646 format
-    "KeepLanguages": [
-      "en",
-      "af",
-      "zh",
-      "id"
-    ],
-    // Keep all tracks flagged as original language
-    "KeepOriginalLanguage": true,
-    // Enable removing of duplicate tracks of the same type and language
-    "RemoveDuplicateTracks": false,
-    // Prioritized audio tracks by by codec type
-    // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
-    "PreferredAudioFormats": [
-      "truehd atmos",
-      "truehd",
-      "dts-hd master audio",
-      "dts-hd high resolution audio",
-      "dts",
-      "e-ac-3",
-      "ac-3"
-    ],
-    // Enable removing of tags, titles, attachments, etc. from the media file
-    "RemoveTags": true,
-    // Enable removing of EIA-608 Closed Captions embedded in video streams
-    "RemoveClosedCaptions": true,
-    // Set track flags based on track title keywords
-    "SetTrackFlags": true,
-    // Set IETF language tags when not present
-    "SetIetfLanguageTags": true,
-    // Speedup media re-processing by saving media info and processed state in sidecar files
-    "UseSidecarFiles": true,
-    // Invalidate sidecar files when tool versions change
-    "SidecarUpdateOnToolChange": false,
-    // Enable verification of media stream content
-    "Verify": true,
-    // Restore media file modified timestamp to original pre-processed value
-    "RestoreFileTimestamp": false,
-    // List of files to skip during processing
-    // Files that previously failed verify or repair will automatically be skipped
-    // Non-ascii characters must be JSON escaped, e.g. "Fiancé" into "Fianc\u00e9"
-    "FileIgnoreList": [
-      "\\\\server\\share1\\path1\\file1.mkv",
-      "\\\\server\\share2\\path2\\file2.mkv"
-    ]
-  },
-  // Monitor options
-  "MonitorOptions": {
-    // Time to wait after detecting a file change
-    "MonitorWaitTime": 60,
-    // Time to wait between file retry operations
-    "FileRetryWaitTime": 5,
-    // Number of times to retry a file operation
-    "FileRetryCount": 2
-  },
-  // Verify options
-  "VerifyOptions": {
-    // Attempt to repair media files that fail verification
-    "AutoRepair": true,
-    // Delete media files that fail processing
-    "DeleteInvalidFiles": false,
-    // Add media files that fail processing to the FileIgnoreList setting
-    // Not required when using sidecar files
-    "RegisterInvalidFiles": false,
-    // Minimum required playback duration in seconds
-    "MinimumDuration": 300,
-    // Time in seconds to verify media streams, 0 will verify entire file
-    "VerifyDuration": 0,
-    // Time in seconds to find interlaced frames, 0 will process entire file
-    "IdetDuration": 0,
-    // Maximum bitrate in bits per second, 0 will skip computation
-    "MaximumBitrate": 100000000,
-    // Skip files older than the minimum file age in days, 0 will process all files
-    "MinimumFileAge": 0
-  }
-}
-```
+Refer to the default JSON [settings file](./PlexCleaner.defaults.json) containing usage comments.
 
 ## Custom FFmpeg and HandBrake CLI Parameters
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific, for example configurations see the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) documentation.  
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific. (See the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) docs for hints).  
 The listed example configurations are from documentation and based on minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
 
 ### FFmpeg Options
@@ -686,20 +471,21 @@ This is useful when the subtitles are forced or contains offensive language or a
 - [HandBrake](https://handbrake.fr/)
 - [MKVToolNix](https://mkvtoolnix.download/)
 - [FFmpeg](https://www.ffmpeg.org/)
-- [ISO language codes](http://www-01.sil.org/iso639-3/download.asp)
+- [ISO 639-3 language codes](http://www-01.sil.org/iso639-3/download.asp)
+- [RFC 5646 language tags](https://www.w3.org/International/articles/language-tags/)
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
-- [HtmlAgilityPack](https://html-agility-pack.net/)
 - [Newtonsoft.Json](https://www.newtonsoft.com/json)
 - [System.CommandLine](https://github.com/dotnet/command-line-api)
 - [Serilog](https://serilog.net/)
 - [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
-- [Docker Login](https://github.com/marketplace/actions/docker-login)
-- [Docker Setup Buildx](https://github.com/marketplace/actions/docker-setup-buildx)
-- [Setup .NET Core SDK](https://github.com/marketplace/actions/setup-net-core-sdk)
-- [Build and push Docker images](https://github.com/marketplace/actions/build-and-push-docker-images)
-- [Rob Savoury PPA](https://launchpad.net/~savoury1)
+- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
+- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
+- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
+- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
+- [Microsoft .NET Linux Docker Images](https://hub.docker.com/_/microsoft-dotnet)
+- [Rob Savoury's PPA](https://launchpad.net/~savoury1)
 - [Arch Linux](https://archlinux.org/)
 
 ## Sample Media Files

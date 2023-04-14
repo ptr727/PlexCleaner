@@ -55,7 +55,7 @@ public class FfProbeTool : FfMpegTool
         commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"{Snippet} ");
+            commandline.Append($"-read_intervals %{Program.SnippetTimeSpan.ToString("mm:ss")} ");
         }
         commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"");
 
@@ -214,6 +214,6 @@ public class FfProbeTool : FfMpegTool
         return tags.Keys.Any(key => UndesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private const string Snippet = "-read_intervals %03:00";
+    // "Undesirable" tags
     private static readonly string[] UndesirableTags = { "statistics" };
 }

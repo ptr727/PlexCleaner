@@ -565,4 +565,10 @@ internal class Program
 
     private readonly List<string> DirectoryList = new();
     private readonly List<string> FileList = new();
+
+    // Snippet runtime in seconds
+    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
+
+    // Interlaced detection threshold as percentage
+    public const double InterlacedThreshold = 5.0 / 100.0;
 }
