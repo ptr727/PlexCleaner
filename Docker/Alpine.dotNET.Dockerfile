@@ -5,10 +5,10 @@
 
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-alpine /bin/sh
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview-alpine /bin/sh
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine /bin/sh
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/sh
 
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
@@ -112,6 +112,7 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     TZ=Etc/UTC
 
 # Update repository from 3.x to edge and add testing
+# HandBrake is only in testing repository
 # https://wiki.alpinelinux.org/wiki/Repositories
 RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
     && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
@@ -134,6 +135,8 @@ RUN wget https://aka.ms/getvsdbgsh \
 # Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
+# TODO: 23.03-r0 segfault
+# https://github.com/MediaArea/MediaInfo/issues/707
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 RUN apk --no-cache add \

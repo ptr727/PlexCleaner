@@ -11,7 +11,7 @@
 
 # Test base image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/nightly/sdk:8.0-preview /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 # Test image in shell:
