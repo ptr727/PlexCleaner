@@ -55,7 +55,7 @@ public class FfProbeTool : FfMpegTool
         commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"-read_intervals %{Program.SnippetTimeSpan.ToString("mm:ss")} ");
+            commandline.Append($"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
         }
         commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"");
 

@@ -1919,7 +1919,7 @@ public class ProcessFile
         }
 
         // Return first item
-        Log.Logger.Information("No audio format matching preferred formats : {Preferred} not in {formats}, Selecting {Selected}", Program.Config.ProcessOptions.PreferredAudioFormats, audioInfoList.Select(item => item.Format), audioInfoList.First().Format);
+        Log.Logger.Information("No audio format matching preferred formats : {Preferred} not in {Formats}, Selecting {Selected}", Program.Config.ProcessOptions.PreferredAudioFormats, audioInfoList.Select(item => item.Format), audioInfoList.First().Format);
         return audioInfoList.First();
     }
 

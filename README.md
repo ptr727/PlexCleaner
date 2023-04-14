@@ -235,20 +235,21 @@ docker run \
 Create a default JSON configuration file by running:  
 `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
 
-Refer to the default JSON [settings file](./PlexCleaner.defaults.json) containing usage comments.
+Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for usage.
 
 ## Custom FFmpeg and HandBrake CLI Parameters
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific. (See the [Jellyfin](https://jellyfin.org/docs/general/administration/hardware-acceleration/) docs for hints).  
-The listed example configurations are from documentation and based on minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific.  
+Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.  
+The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
 
 ### FFmpeg Options
 
 See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.  
 The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.  
-E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 20 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
+E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 26 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
 
 Settings allows for custom configuration of:
 
@@ -272,20 +273,20 @@ Example hardware assisted video encoding options:
 
 - NVidia NVENC:
   - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
-  - NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
-  - `FfMpegOptions:Global`: Add `-hwaccel cuda -hwaccel_output_format cuda` to the defaults.
-  - `FfMpegOptions:Video`: `h264_nvenc`
+  - View NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
+  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda`
+  - `FfMpegOptions:Video`: `h264_nvenc -crf 22 -preset medium`
 - Intel QuickSync:
   - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
-  - QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
-  - `FfMpegOptions:Global`: Add `-hwaccel qsv -hwaccel_output_format qsv` to the defaults.
-  - `FfMpegOptions:Video`: `h264_qsv`
+  - View QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
+  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel qsv -hwaccel_output_format qsv`
+  - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
 
 ### HandBrake Options
 
 See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.  
 The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.  
-E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format av_mkv --encoder x265 --quality 20 --encoder-preset medium --comb-detect --decomb --all-audio --aencoder copy --audio-fallback ac3`
+E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format av_mkv --encoder x265 --quality 26 --encoder-preset medium --comb-detect --decomb --all-audio --aencoder copy --audio-fallback ac3`
 
 Settings allows for custom configuration of:
 
@@ -307,18 +308,18 @@ Example hardware assisted video encoding options:
 
 - NVidia NVENC:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
-  - `HandBrakeOptions:Video`: `nvenc_h264`
+  - `HandBrakeOptions:Video`: `nvenc_h264 --quality 22 --encoder-preset medium`
 - Intel QuickSync:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
-  - `HandBrakeOptions:Video`: `qsv_h264`
+  - `HandBrakeOptions:Video`: `qsv_h264 --quality 22 --encoder-preset medium`
 
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.  
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
 ## Language Matching
 
-Language tag matching now supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
-During processing the absence of IETF language tags will treated as a track warning, and an IETF language will be assigned from the ISO639-3-2 tag.  
+Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
+During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-3-2 tag.  
 If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html#:~:text=%2D%2Dnormalize%2Dlanguage%2Dietf%20mode) for more details.
 
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  

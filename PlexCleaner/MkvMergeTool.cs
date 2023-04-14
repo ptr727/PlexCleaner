@@ -317,7 +317,7 @@ public partial class MkvMergeTool : MediaTool
         }
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"--split parts:00:00:00-{Program.SnippetTimeSpan.ToString("hh:mm:ss")} ");
+            commandline.Append($"--split parts:00:00:00-{Program.SnippetTimeSpan:hh\\:mm\\:ss} ");
         }
         commandline.Append($"--output \"{outputName}\" ");
     }
