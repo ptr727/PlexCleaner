@@ -12,7 +12,7 @@ jobs:
   # Test
   test:
 
-    name: Build
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +37,7 @@ jobs:
   # Get version information
   version:
 
-    name: Get version information
+    name: Version
     runs-on: ubuntu-latest
     needs: test
 
@@ -117,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: publish
-          path: ${{ runner.temp }}/publish/${{ matrix.runtime }}
+          path: ${{ runner.temp }}/publish
 
   # Publish
   publish:
