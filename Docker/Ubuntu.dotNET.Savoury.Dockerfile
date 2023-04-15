@@ -23,9 +23,6 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-jammy AS
 # Layer workdir
 WORKDIR /Builder
 
-# Architecture, injected from build
-ARG TARGETARCH
-
 ARG \
     # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \

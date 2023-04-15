@@ -7,21 +7,25 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 Licensed under the [MIT License](./LICENSE)  
 ![GitHub License](https://img.shields.io/github/license/ptr727/PlexCleaner)
 
-## Build Status
+## Build
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
 Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github)](https://github.com/ptr727/PlexCleaner/commits/main)  
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildPublishPipeline.yml?branch=main&logo=github)](https://github.com/ptr727/PlexCleaner/actions)  
-[![GitHub Actions Last Build](https://byob.yarr.is/ptr727/PlexCleaner/lastbuild)](https://github.com/ptr727/PlexCleaner/actions)
+
+## Status
+
+[![Release Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build)](https://github.com/ptr727/PlexCleaner/actions)  
+[![Docker Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildDockerPush.yml?logo=github&label=Docker%20Build)](https://github.com/ptr727/PlexCleaner/actions)  
+[![Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit)](https://github.com/ptr727/PlexCleaner/commits/main)  
+[![Last Build](https://byob.yarr.is/ptr727/PlexCleaner/lastbuild)](https://github.com/ptr727/PlexCleaner/actions)
 
 ## Releases
 
-[![GitHub Latest Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
-[![Docker Latest Release](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=latest&logo=docker)](https://hub.docker.com/r/ptr727/plexcleaner)  
-[![GitHub Latest Pre-Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=pre-release&logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
-[![Docker Latest Pre-Release](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=develop&logo=docker&color=orange)](https://hub.docker.com/r/ptr727/plexcleaner)
+[![GitHub Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release)](https://github.com/ptr727/PlexCleaner/releases)  
+[![GitHub Pre-Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
+[![Docker Latest](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker)](https://hub.docker.com/r/ptr727/plexcleaner)  
+[![Docker Develop](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange)](https://hub.docker.com/r/ptr727/plexcleaner)
 
 ## Release Notes
 
@@ -89,8 +93,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Questions or Issues
 
-Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.  
-Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
+- Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.
+- Refer to the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker for known problems.
+- Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
 
 ## Use Cases
 

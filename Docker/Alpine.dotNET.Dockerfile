@@ -16,7 +16,7 @@
 
 # Test linux/amd64 target
 # docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
-# docker run -it --rm --name Testing testing:latest /bin/bash
+# docker run -it --rm --name Testing testing:latest /bin/sh
 
 
 
@@ -25,9 +25,6 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine A
 
 # Layer workdir
 WORKDIR /Builder
-
-# Architecture, injected from build
-ARG TARGETARCH
 
 ARG \
     # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
