@@ -38,7 +38,17 @@ Images are updated weekly with the latest upstream updates.
   - Media processing tools are installed from the standard repositories.
   - Only `linux/amd64` platforms are supported.
 
-## Build Version Information
+## Platform Support
+
+| Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
+| --- | --- | --- | --- | --- |
+| `latest` | &#9745; | &#9744; | &#9744; | ~791MB |
+| `savoury` | &#9745; | &#9744; | &#9744; | ~791MB |
+| `alpine` | &#9745; | &#9745; | &#9744; | ~360MB |
+| `debian` | &#9745; | &#9745; | &#9745; | ~780MB |
+| `arch` | &#9745; | &#9744; | &#9744; | ~987MB |
+
+## Media Tool Versions
 
 ### `ptr727/plexcleaner:latest`
 
