@@ -11,7 +11,7 @@ Licensed under the [MIT License](./LICENSE)
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
+Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
 
 ## Status
 
@@ -75,6 +75,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Refactored verify and repair logic, became too complicated.
   - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
   - Removed `VerifyOptions:VerifyDuration`, `VerifyOptions:IdetDuration`, `VerifyOptions:MinimumDuration`, and `VerifyOptions:MinimumFileAge` configuration options.
+  - Removed docker image publishing to GHCR, `broken pipe` errors too frequently break the build.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
@@ -135,7 +136,7 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 
 ### Docker
 
-- Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).
+- Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
 - See the Docker [README](./Docker/README.md) for image and tag details.
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.

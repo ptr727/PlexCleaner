@@ -48,6 +48,8 @@ jobs:
       AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
       AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+      # TODO: How to use env.foo in matrix?
+      MainBranch: ${{ endsWith(github.ref, 'refs/heads/main') }}
 
     steps:
 
@@ -72,12 +74,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: version
 
-    # TODO: How do I use secrests in a matrix?
-    # ${{ secrets.DOCKER_HUB_USERNAME }}
-    # ${{ github.repository_owner }}
-    # Warning: Skip output 'DockerPath' since it may contain secret.
-    # Warning: Skip output 'GhcrPath' since it may contain secret.
-
     strategy:
 
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
@@ -89,37 +85,30 @@ jobs:
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-              ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.MainBranch && 'debian' || 'debian-develop' }}
 
           # Alpine: linux/amd64,linux/arm64
           - file: ./Docker/Alpine.dotNET.Dockerfile
             platforms: linux/amd64,linux/arm64
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-              ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.MainBranch && 'alpine' || 'alpine-develop' }}
 
           # Ubuntu: linux/amd64
           - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
             platforms: linux/amd64
-            # "SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}"
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.MainBranch && 'savoury' || 'savoury-develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.MainBranch && 'latest' || 'develop' }}
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
-              ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-              ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              ghcr.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
 
           # Arch: linux/amd64
           - file: ./Docker/Arch.Dockerfile
             platforms: linux/amd64
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
-              ghcr.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.MainBranch && 'arch' || 'arch-develop' }}
 
     steps:
 
@@ -150,15 +139,6 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      # Login to GitHub Container Registry
-      # https://github.com/marketplace/actions/docker-login
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
