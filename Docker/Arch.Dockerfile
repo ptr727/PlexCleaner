@@ -113,6 +113,11 @@ RUN wget https://aka.ms/getvsdbgsh \
     && rm getvsdbgsh
 
 # Install .NET and media processing tools
+# https://archlinux.org/packages/community/x86_64/dotnet-sdk/
+# https://archlinux.org/packages/extra/x86_64/ffmpeg/
+# https://archlinux.org/packages/community/x86_64/mediainfo/
+# https://archlinux.org/packages/community/x86_64/handbrake-cli/
+# https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
 RUN pacman --sync --noconfirm \
         # https://bugs.archlinux.org/task/77662
         boost-libs \

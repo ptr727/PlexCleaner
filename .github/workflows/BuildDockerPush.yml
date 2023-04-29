@@ -153,12 +153,14 @@ jobs:
       - name: Docker build and push
         uses: docker/build-push-action@v4
         with:
+          context: .
+          cache-from: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache
+          cache-to: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache,mode=max
           file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
           secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
           tags: ${{ matrix.tags }}
-          context: .
           platforms: ${{ matrix.platforms }}
           build-args: |
             LABEL_VERSION=${{ needs.version.outputs.SemVer2 }}
