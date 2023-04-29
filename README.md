@@ -157,7 +157,7 @@ docker run \
   --pull always \
   --name PlexCleaner \
   --volume /data/media:/media:rw \
-  ptr727/plexcleaner \
+  docker.io/ptr727/plexcleaner \
   /bin/bash
 
 # Create default settings file
@@ -201,7 +201,7 @@ docker run \
   --user nobody:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
-  ptr727/plexcleaner \
+  docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner \
     --logfile /media/PlexCleaner/PlexCleaner.log \
     --logwarning \
