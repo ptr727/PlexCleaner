@@ -93,6 +93,7 @@ jobs:
           context: ./Docker
           file: ./Docker/Dockerfile
           platforms: linux/amd64
+          secrets: SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
           # Do not push on pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           build-args: |
@@ -120,9 +121,9 @@ jobs:
       - name: "Build Date Badge"
         uses: RubbaBoy/BYOB@v1
         with:
-          NAME: lastbuild
-          LABEL: "Last Build"
-          ICON: "github"
-          STATUS: ${{ steps.date.outputs.date }}
-          COLOR: "blue"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: lastbuild
+          label: "Last Build"
+          icon: "github"
+          status: ${{ steps.date.outputs.date }}
+          color: "blue"
+          github_token: ${{ secrets.GITHUB_TOKEN }}

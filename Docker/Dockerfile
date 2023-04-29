@@ -100,11 +100,11 @@ RUN if [ -n "$DBGTOOL_INSTALL" ] ; then \
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-20_all.deb \
-    && dpkg -i repo-mediaarea_1.0-20_all.deb \
+RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-21_all.deb \
+    && dpkg -i repo-mediaarea_1.0-21_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
-    && rm repo-mediaarea_1.0-20_all.deb \
+    && rm repo-mediaarea_1.0-21_all.deb \
     && mediainfo --version
 
 
@@ -117,24 +117,22 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && mkvmerge --version
 
 
-# Install FfMpeg
-# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg5
-RUN add-apt-repository -y ppa:savoury1/graphics \
+# Install FfMpeg and HandBrake
+RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH /etc/apt/auth.conf.d/savoury.conf \
+    && touch /etc/apt/sources.list.d/savoury.list \
+    && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
+    && add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
     && add-apt-repository -y ppa:savoury1/ffmpeg6 \
+    && add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get update \
-    && apt-get install -y ffmpeg \
-    && ffmpeg -version
-
-
-# Install HandBrake
-# Depends on FfMpeg, install FfMpeg first
-# https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
-RUN add-apt-repository -y ppa:savoury1/handbrake \
-    && apt-get update \
-    && apt-get install -y handbrake-cli \
+    && apt-get install -y \
+        ffmpeg \
+        handbrake-cli \
+    && ffmpeg -version \
     && HandBrakeCLI --version
+
 
 
 # Cleanup
