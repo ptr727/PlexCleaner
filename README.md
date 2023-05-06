@@ -64,9 +64,11 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Added warnings when multiple tracks of the same kind have a Default flag set.
   - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
   - Added `updatesidecar` commandline option to update sidecar files using current media tool information.
+  - Added settings file correctness verification to detect missing but required values.
   - Renamed `getsidecarinfo` commandline option to `printsidecar`.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
+  - Updated cover art detection and removal logic to not be dependent on `RemoveTags` setting.
   - Updated `DeleteInvalidFiles` logic to delete any file that fails processing, not just files that fail verification.
   - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
   - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
@@ -76,6 +78,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
   - Removed `VerifyOptions:VerifyDuration`, `VerifyOptions:IdetDuration`, `VerifyOptions:MinimumDuration`, and `VerifyOptions:MinimumFileAge` configuration options.
   - Removed docker image publishing to GHCR, `broken pipe` errors too frequently break the build.
+  - Changed the process exit code to return `1` vs. `-1` in case of error, more conformant with standard exit codes, `0` remains success.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
   - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.

@@ -14,6 +14,17 @@ namespace PlexCleaner;
 
 internal class Program
 {
+    enum ExitCode { Success = 0, Error = 1 }
+
+    static int MakeExitCode(ExitCode exitCode)
+    {
+        return (int)exitCode;
+    }
+    static int MakeExitCode(bool success)
+    {
+        return success ? (int)ExitCode.Success : (int)ExitCode.Error;
+    }
+
     private static int Main()
     {
         // Wait for debugger to attach
@@ -106,7 +117,7 @@ internal class Program
         // Save default config
         ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
 
-        return 0;
+        return MakeExitCode(ExitCode.Success);
     }
 
     internal static int CreateJsonSchemaCommand(CommandLineOptions options)
@@ -116,7 +127,7 @@ internal class Program
         // Write schema
         ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
 
-        return 0;
+        return MakeExitCode(ExitCode.Success);
     }
 
     internal static int CheckForNewToolsCommand(CommandLineOptions options)
@@ -125,12 +136,12 @@ internal class Program
         Program program = Create(options, false);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         // Update tools
         // Make sure that the tools exist
-        return Tools.CheckForNewTools() && Tools.VerifyTools() ? 0 : -1;
+        return MakeExitCode(Tools.CheckForNewTools() && Tools.VerifyTools());
     }
 
     internal static int ProcessCommand(CommandLineOptions options)
@@ -138,22 +149,22 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         // Get file list
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         // Process all files
         if (!Process.ProcessFiles(program.FileList) || 
             IsCancelledError())
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
-        return Process.DeleteEmptyFolders(program.DirectoryList) ? 0 : -1;
+        return MakeExitCode(Process.DeleteEmptyFolders(program.DirectoryList));
     }
 
     internal static int MonitorCommand(CommandLineOptions options)
@@ -161,11 +172,11 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         Monitor monitor = new();
-        return monitor.MonitorFolders(options.MediaFiles) ? 0 : -1;
+        return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
     }
 
     internal static int ReMuxCommand(CommandLineOptions options)
@@ -173,15 +184,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.ReMuxFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.ReMuxFiles(program.FileList));
     }
 
     internal static int ReEncodeCommand(CommandLineOptions options)
@@ -189,15 +200,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.ReEncodeFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.ReEncodeFiles(program.FileList));
     }
 
     internal static int DeInterlaceCommand(CommandLineOptions options)
@@ -205,15 +216,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.DeInterlaceFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
     }
 
     internal static int CreateSidecarCommand(CommandLineOptions options)
@@ -221,15 +232,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.CreateSidecarFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
     }
 
     internal static int PrintSidecarCommand(CommandLineOptions options)
@@ -237,15 +248,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.PrintSidecarFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.PrintSidecarFiles(program.FileList));
     }
 
     internal static int UpdateSidecarCommand(CommandLineOptions options)
@@ -253,15 +264,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.UpdateSidecarFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.UpdateSidecarFiles(program.FileList));
     }
 
     internal static int GetTagMapCommand(CommandLineOptions options)
@@ -269,15 +280,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.GetTagMapFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.GetTagMapFiles(program.FileList));
     }
 
     internal static int GetMediaInfoCommand(CommandLineOptions options)
@@ -285,15 +296,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.GetMediaInfoFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.GetMediaInfoFiles(program.FileList));
     }
 
     internal static int GetToolInfoCommand(CommandLineOptions options)
@@ -301,15 +312,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.GetToolInfoFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.GetToolInfoFiles(program.FileList));
     }
 
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
@@ -317,15 +328,15 @@ internal class Program
         Program program = Create(options, true);
         if (program == null)
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
         if (!program.CreateFileList(options.MediaFiles))
         {
-            return -1;
+            return MakeExitCode(ExitCode.Error);
         }
 
-        return Process.RemoveSubtitlesFiles(program.FileList) ? 0 : -1;
+        return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
     }
 
     // Add a reference to this class in the event handler arguments
@@ -370,14 +381,14 @@ internal class Program
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
         if (config == null)
         {
-            Log.Logger.Error("{FileName} is not a valid JSON file", options.SettingsFile);
+            Log.Logger.Error("Failed to load settings : {FileName}", options.SettingsFile);
             return null;
         }
 
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema mismatch : {SchemaVersion} != {Version}, {FileName}",
+            Log.Logger.Warning("Settings JSON schema version mismatch : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
                 options.SettingsFile);
@@ -385,6 +396,13 @@ internal class Program
             // Upgrade the file schema
             Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
             ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
+        }
+
+        // Verify the settings
+        if (!config.VerifyValues())
+        {
+            Log.Logger.Error("Settings file contains incorrect or missing values : {FileName}", options.SettingsFile);
+            return null;
         }
 
         // Set the static options from the loaded settings and options

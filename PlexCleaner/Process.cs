@@ -162,8 +162,7 @@ internal class Process
                 break;
             }
 
-            // Remove all cover art video tracks
-            // Cover art as video tracks, e.g. MJPEG is not supported
+            // Remove all cover art attachments or video tracks that interfere with processing logic
             if (!processFile.RemoveCoverArt(ref modified) ||
                 Program.IsCancelled())
             {
@@ -171,9 +170,9 @@ internal class Process
                 break;
             }
 
-            // Remove all attachments
+            // Remove tags, titles, and attachments
             // Conditional on RemoveTags option
-            if (!processFile.RemoveAttachments(ref modified) ||
+            if (!processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;

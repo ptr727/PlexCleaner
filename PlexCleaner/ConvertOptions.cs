@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -55,6 +56,34 @@ public record ConvertOptions : ConvertOptions1
 
         HandBrakeOptions.Video = "x264 --quality 22 --encoder-preset medium";
         HandBrakeOptions.Audio = "copy --audio-fallback ac3";
+    }
+
+    public bool VerifyValues()
+    {
+        // All values must be set
+        if (string.IsNullOrEmpty(FfMpegOptions.Video) ||
+            string.IsNullOrEmpty(FfMpegOptions.Audio) ||
+            string.IsNullOrEmpty(FfMpegOptions.Global) ||
+            string.IsNullOrEmpty(FfMpegOptions.Output))
+        {
+            Log.Logger.Error("ConvertOptions:FfMpegOptions all values must be set");
+            return false;
+        }
+        if (string.IsNullOrEmpty(HandBrakeOptions.Video) ||
+            string.IsNullOrEmpty(HandBrakeOptions.Audio))
+        {
+            Log.Logger.Error("ConvertOptions:HandBrakeOptions all values must be set");
+            return false;
+        }
+
+        // Required parameters
+        if (!FfMpegOptions.Output.Contains("-abort_on empty_output"))
+        {
+            Log.Logger.Error("ConvertOptions:FfMpegOptions.Output must contain '-abort_on empty_output'");
+            return false;
+        }
+
+        return true;
     }
 }
 

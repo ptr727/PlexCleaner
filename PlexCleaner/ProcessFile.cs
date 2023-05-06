@@ -404,6 +404,13 @@ public class ProcessFile
             return true;
         }
 
+        // Remove attachments
+        if (!RemoveAttachments(ref modified))
+        {
+            // Error
+            return false;
+        }
+
         // Does the file have tags
         if (!AnyTags())
         {
@@ -441,12 +448,6 @@ public class ProcessFile
         
     public bool RemoveAttachments(ref bool modified)
     {
-        // Conditional
-        if (!Program.Config.ProcessOptions.RemoveTags)
-        {
-            return true;
-        }
-
         // Any attachments, use MkvMergeInfo
         if (MkvMergeInfo.Attachments == 0)
         {
@@ -484,7 +485,61 @@ public class ProcessFile
 
     public bool RemoveCoverArt(ref bool modified)
     {
-        // Any cover art, use MkvMergeInfo
+        // Any cover art
+        if (MkvMergeInfo.HasCovertArt == false &&
+            FfProbeInfo.HasCovertArt == false &&
+            MediaInfoInfo.HasCovertArt == false)
+        {
+            return true;
+        }
+
+
+        // Cover art can be detected by MediaInfo or FfMpeg or MkvMerge
+        // E.g. FfProbe can detect attachments as cover art video tracks
+        // TODO: No known cases of only MediaInfo detecting cover art
+
+        // Any FfProbe cover art
+        if (FfProbeInfo.HasCovertArt)
+        {
+            // Remove attachments
+            if (!RemoveCoverArtFfProbe(ref modified))
+            {
+                // Error
+                return false;
+            }
+
+            // Continue
+        }
+
+
+        // Any MkvMergeInfo cover art
+        if (MkvMergeInfo.HasCovertArt)
+        {
+            // Remove cover art tracks
+            return RemoveCoverArtMkvMerge(ref modified);
+        }
+
+        // Done
+        return true;
+    }
+
+    public bool RemoveCoverArtFfProbe(ref bool modified)
+    {
+        // Any FfProbeInfo cover art
+        if (!FfProbeInfo.HasCovertArt)
+        {
+            // No cover art
+            return true;
+        }
+
+        // FfProbe covert art is removed by removing attachments
+        Debug.Assert(MkvMergeInfo.Attachments > 0);
+        return RemoveAttachments(ref modified);
+    }
+
+    public bool RemoveCoverArtMkvMerge(ref bool modified)
+    {
+        // Any MkvMergeInfo cover art
         if (!MkvMergeInfo.HasCovertArt)
         {
             // No cover art
@@ -1654,13 +1709,18 @@ public class ProcessFile
         MkvMergeInfo = mkvmergeInfo;
         MediaInfoInfo = mediainfoInfo;
 
+        // Print info
+        MediaInfoInfo.WriteLine("MediaInfo");
+        MkvMergeInfo.WriteLine("MkvMerge");
+        FfProbeInfo.WriteLine("FfProbe");
+
         return true;
     }
 
     public bool VerifyMediaInfo()
     {
         // TODO: Mixing anything other than MvMerge to MkvMerge requires the track numbers to be the same
-        // Id's are unique to the tool, numbers come from the matroska header
+        // Id's are unique to the tool, numbers come from the Matroska header
         // FfProbe does not report numbers, only id's
 
         // Make sure the track counts match

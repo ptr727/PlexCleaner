@@ -25,4 +25,10 @@ public class VerifyOptions
         RegisterInvalidFiles = false;
         MaximumBitrate = 100 * Format.MB;
     }
+
+    public bool VerifyValues()
+    {
+        // Nothing to do
+        return true;
+    }
 }

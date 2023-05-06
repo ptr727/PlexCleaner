@@ -129,6 +129,11 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         VerifyOptions.SetDefaults();
     }
 
+    public bool VerifyValues()
+    {
+        return ToolsOptions.VerifyValues() && ConvertOptions.VerifyValues() && ProcessOptions.VerifyValues() && MonitorOptions.VerifyValues() && VerifyOptions.VerifyValues();
+    }
+
     public static void WriteDefaultsToFile(string path)
     {
         // Set defaults

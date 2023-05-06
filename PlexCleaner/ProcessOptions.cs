@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Serilog;
 
 namespace PlexCleaner;
 
@@ -321,5 +322,17 @@ public record ProcessOptions : ProcessOptions2
             "e-ac-3",
             "ac-3"
         };
+    }
+
+    public bool VerifyValues()
+    {
+        // Some values must be set
+        if (string.IsNullOrEmpty(DefaultLanguage))
+        {
+            Log.Logger.Error("ProcessOptions:DefaultLanguage must be set");
+            return false;
+        }
+
+        return true;
     }
 }

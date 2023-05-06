@@ -22,4 +22,10 @@ public class MonitorOptions
         FileRetryWaitTime = 5;
         FileRetryCount = 2;
     }
+
+    public bool VerifyValues()
+    {
+        // Nothing to do
+        return true;
+    }
 }
