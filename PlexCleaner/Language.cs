@@ -10,6 +10,8 @@ public class Language
 {
     public Language()
     {
+        Iso6392 = new Iso6392();
+        Iso6392.Create();
         Iso6393 = new Iso6393();
         Iso6393.Create();
         Rfc5646 = new Rfc5646();
@@ -25,7 +27,7 @@ public class Language
         if (language.Equals(None, StringComparison.OrdinalIgnoreCase)) return None;
 
         // Handle "chi" as "zho" for Matroska
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
         if (language.Equals("chi", StringComparison.OrdinalIgnoreCase)) 
         {
             return Chinese;
@@ -51,6 +53,19 @@ public class Language
             }
         }
 
+        // Find a matching ISO-639-2 record
+        var iso6392 = Iso6392.Find(language, false);
+        if (iso6392 != null)
+        {
+            // Find a matching RFC 5646 record from the ISO-639-2 or ISO-639-1 tag
+            rfc5646 = Rfc5646.Find(iso6392.Id, false);
+            rfc5646 ??= Rfc5646.Find(iso6392.Part1, false);
+            if (rfc5646 != null)
+            {
+                return rfc5646.TagAny;
+            }
+        }
+
         // Try CultureInfo
         var cultureInfo = CreateCultureInfo(language);
         if (cultureInfo == null)
@@ -69,7 +84,7 @@ public class Language
         if (language.Equals(None, StringComparison.OrdinalIgnoreCase)) return None;
 
         // Handle "chi" as "zho" for Matroska
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
+        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
         if (language.Equals(Chinese, StringComparison.OrdinalIgnoreCase))
         {
             return "chi";
@@ -101,6 +116,14 @@ public class Language
         {
             // Return the Part 2B code
             return iso6393.Part2B;
+        }
+
+        // Get ISO-639-2 record
+        var iso6392 = Iso6392.Find(language, false);
+        if (iso6392 != null)
+        {
+            // Return the Part 2B code
+            return iso6392.Part2B;
         }
 
         // Try cultureInfo
@@ -219,6 +242,7 @@ public class Language
     public const string Chinese = "zh";
     public const string English = "en";
 
+    private Iso6392 Iso6392;
     private Iso6393 Iso6393;
     private Rfc5646 Rfc5646;
 
