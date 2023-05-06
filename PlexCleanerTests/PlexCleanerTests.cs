@@ -33,9 +33,7 @@ public class PlexCleanerTests : IDisposable
         string? assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
         Debug.Assert(assemblyDirectory != null);
 
-        // Get the Samples directory 4 levels up
-        // C:\Users\piete\source\repos\ptr727\PlexCleaner\PlexCleanerTests\bin\Debug\net6.0
-        // C:\Users\piete\source\repos\ptr727\PlexCleaner\Samples\PlexCleaner
+        // Get the Samples directory
         string samplesDirectory = Path.GetFullPath(Path.Combine(assemblyDirectory, SamplesDirectory));
 
         // Create the file path
