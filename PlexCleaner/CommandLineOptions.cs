@@ -62,16 +62,22 @@ public class CommandLineOptions
         // De-Interlace files
         command.AddCommand(CreateDeInterlaceCommand());
 
+        // Remove subtitles
+        command.AddCommand(CreateRemoveSubtitlesCommand());
+
         // Create sidecar files
         command.AddCommand(CreateCreateSidecarCommand());
-
-        // Print sidecar files
-        command.AddCommand(CreatePrintSidecarCommand());
 
         // Update sidecar files
         command.AddCommand(CreateUpdateSidecarCommand());
 
-        // Create tag-map
+        // Print version information
+        command.AddCommand(CreateGetVersionInfoCommand());
+
+        // Print sidecar files
+        command.AddCommand(CreateGetSidecarCommand());
+
+        // Print tag-map
         command.AddCommand(CreateGetTagMapCommand());
 
         // Print media info
@@ -79,9 +85,6 @@ public class CommandLineOptions
 
         // Print tool info
         command.AddCommand(CreateGetToolInfoCommand());
-
-        // Remove subtitles
-        command.AddCommand(CreateRemoveSubtitlesCommand());
 
         // Create JSON schema
         command.AddCommand(CreateJsonSchemaCommand());
@@ -94,7 +97,7 @@ public class CommandLineOptions
         // Create settings JSON schema file
         Command command = new Command("createschema")
         {
-            Description = "Write settings JSON schema to file",
+            Description = "Write settings schema to file",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateJsonSchemaCommand)
         };
 
@@ -102,7 +105,7 @@ public class CommandLineOptions
         command.AddOption(
             new Option<string>("--schemafile")
             {
-                Description = "Output JSON schema file name",
+                Description = "Path to schema file",
                 IsRequired = true
             });
 
@@ -129,7 +132,7 @@ public class CommandLineOptions
         // Check for new tools
         Command command = new Command("checkfornewtools")
         {
-            Description = "Check for and download new tools",
+            Description = "Check for new tool versions and download if newer",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CheckForNewToolsCommand)
         };
 
@@ -172,21 +175,21 @@ public class CommandLineOptions
         command.AddOption(
             new Option<bool>("--testsnippets")
             {
-                Description = "Create short video clips, useful during testing"
+                Description = "Create short media file clips"
             });
 
         //  Do not make any modifications, optional
         command.AddOption(
             new Option<bool>("--testnomodify")
             {
-                Description = "Do not make any modifications, useful during testing"
+                Description = "Do not make any media file modifications"
             });
 
         //  Re-verify, optional
         command.AddOption(
             new Option<bool>("--reverify")
             {
-                Description = "Re-verify and repair media in VerifyFailed state"
+                Description = "Re-verify and repair media files in the VerifyFailed state"
             });
 
         return command;
@@ -197,7 +200,7 @@ public class CommandLineOptions
         // Monitor and process files
         Command command = new("monitor")
         {
-            Description = "Monitor and process media file changes in folders",
+            Description = "Monitor for file changes and process changed media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.MonitorCommand)
         };
 
@@ -282,13 +285,13 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Command CreatePrintSidecarCommand()
+    private static Command CreateGetSidecarCommand()
     {
         // Read sidecar files
-        Command command = new("printsidecar")
+        Command command = new("getsidecarinfo")
         {
-            Description = "Print sidecar content",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.PrintSidecarCommand)
+            Description = "Print sidecar file information",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarCommand)
         };
 
         // Settings file name
@@ -323,7 +326,7 @@ public class CommandLineOptions
         // Create tag-map
         Command command = new("gettagmap")
         {
-            Description = "Print attribute tag-map created from media files",
+            Description = "Print media information tag-map",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetTagMapCommand)
         };
 
@@ -341,7 +344,7 @@ public class CommandLineOptions
         // Print media info
         Command command = new("getmediainfo")
         {
-            Description = "Print media file attribute information",
+            Description = "Print media information using sidecar files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetMediaInfoCommand)
         };
 
@@ -359,12 +362,15 @@ public class CommandLineOptions
         // Print tool info
         Command command = new("gettoolinfo")
         {
-            Description = "Print tool file attribute information",
+            Description = "Print media information using media tools",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.GetToolInfoCommand)
         };
 
         // Settings file name
         command.AddOption(CreateSettingsFileOption());
+
+        // Media files or folders option
+        command.AddOption(CreateMediaFilesOption());
 
         return command;
     }
@@ -374,7 +380,7 @@ public class CommandLineOptions
         // Remove subtitles
         Command command = new("removesubtitles")
         {
-            Description = "Remove all subtitles",
+            Description = "Remove subtitles from media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand)
         };
 
@@ -387,12 +393,27 @@ public class CommandLineOptions
         return command;
     }
 
+    private static Command CreateGetVersionInfoCommand()
+    {
+        // Remove subtitles
+        Command command = new("getversioninfo")
+        {
+            Description = "Print application and tools version information",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetVersionInfoCommand)
+        };
+
+        // Settings file name
+        command.AddOption(CreateSettingsFileOption());
+
+        return command;
+    }
+
     private static Option CreateMediaFilesOption()
     {
         // Media files or folders option
         return new Option<List<string>>("--mediafiles")
         {
-            Description = "Media file or folder to process, repeat for multiples",
+            Description = "Path to media file or folder",
             IsRequired = true
         };
     }
@@ -421,7 +442,7 @@ public class CommandLineOptions
         // Append to log vs. overwrite
         return new Option<bool>("--logappend")
         {
-            Description = "Append to log file vs. overwrite"
+            Description = "Append to existing log file"
         };
     }
 
@@ -430,7 +451,7 @@ public class CommandLineOptions
         // Log warnings and errors
         return new Option<bool>("--logwarning")
         {
-            Description = "Log only warnings and errors to log file"
+            Description = "Log warnings and errors only"
         };
     }
 

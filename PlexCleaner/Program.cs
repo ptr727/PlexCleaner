@@ -243,7 +243,7 @@ internal class Program
         return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
     }
 
-    internal static int PrintSidecarCommand(CommandLineOptions options)
+    internal static int GetSidecarCommand(CommandLineOptions options)
     {
         Program program = Create(options, true);
         if (program == null)
@@ -256,7 +256,7 @@ internal class Program
             return MakeExitCode(ExitCode.Error);
         }
 
-        return MakeExitCode(Process.PrintSidecarFiles(program.FileList));
+        return MakeExitCode(Process.GetSidecarFiles(program.FileList));
     }
 
     internal static int UpdateSidecarCommand(CommandLineOptions options)
@@ -337,6 +337,20 @@ internal class Program
         }
 
         return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
+    }
+
+    internal static int GetVersionInfoCommand(CommandLineOptions options)
+    {
+        // Creating the program object will report all version information
+        // Do not verify the tools during create
+        Program program = Create(options, false);
+        if (program == null)
+        {
+            MakeExitCode(ExitCode.Error);
+        }
+
+        // Verify tools to get tool version information
+        return MakeExitCode(Tools.VerifyTools());
     }
 
     // Add a reference to this class in the event handler arguments

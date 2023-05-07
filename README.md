@@ -64,8 +64,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Added warnings when multiple tracks of the same kind have a Default flag set.
   - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
   - Added `updatesidecar` commandline option to update sidecar files using current media tool information.
+  - Added `getversioninfo` commandline option to print app, runtime, and media tool versions.
   - Added settings file correctness verification to detect missing but required values.
-  - Renamed `getsidecarinfo` commandline option to `printsidecar`.
   - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
   - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
   - Updated cover art detection and removal logic to not be dependent on `RemoveTags` setting.
@@ -129,7 +129,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
 - Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
 - When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
-- Processing can be interrupted using `Ctl-C`, if using sidecar files restarting will skip previously verified files.
+- Processing can be interrupted using `Ctrl-C`, if using sidecar files restarting will skip previously verified files.
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
@@ -329,7 +329,7 @@ The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallb
 
 Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
 During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.  
-If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html#:~:text=%2D%2Dnormalize%2Dlanguage%2Dietf%20mode) for more details.
+If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
 
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
 E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  
@@ -345,8 +345,7 @@ See the [W3C Language tags in HTML and XML](https://www.w3.org/International/art
 ## Usage
 
 Use the `PlexCleaner --help` commandline option to get a list of commands and options.  
-One of the commands must be specified, and some commands have additional required options.  
-To get more help for a specific command run `PlexCleaner <command> --help`.
+To get help for a specific command run `PlexCleaner <command> --help`.
 
 ```text
 > ./PlexCleaner --help
@@ -358,31 +357,68 @@ Usage:
 
 Options:
   --logfile <logfile>  Path to log file
-  --logappend          Append to log file vs. overwrite
-  --logwarning         Log only warnings and errors to log file
+  --logappend          Append to existing log file
+  --logwarning         Log warnings and errors only
   --debug              Wait for debugger to attach
   --version            Show version information
   -?, -h, --help       Show help and usage information
 
 Commands:
   defaultsettings   Write default values to settings file
-  checkfornewtools  Check for and download new tools
+  checkfornewtools  Check for new tool versions and download if newer
   process           Process media files
-  monitor           Monitor and process media file changes in folders
+  monitor           Monitor for file changes and process changed media files
   remux             Re-Multiplex media files
   reencode          Re-Encode media files
   deinterlace       De-Interlace media files
+  removesubtitles   Remove subtitles from media files
   createsidecar     Create new sidecar files
-  printsidecar      Print sidecar content
   updatesidecar     Update existing sidecar files
-  gettagmap         Print attribute tag-map created from media files
-  getmediainfo      Print media file attribute information
-  gettoolinfo       Print tool file attribute information
-  removesubtitles   Remove all subtitles
-  createschema      Write settings JSON schema to file
+  getversioninfo    Print application and tools version information
+  getsidecarinfo    Print sidecar file information
+  gettagmap         Print media information tag-map
+  getmediainfo      Print media information using sidecar files
+  gettoolinfo       Print media information using media tools
+  createschema      Write settings schema to file
   ```
 
-### Process Media Files
+### Global Options
+
+Global options apply to all commands.
+
+- `--logfile`:
+  - Path to the log file.
+- `--logappend`:
+  - Append to the existing log file, default will overwrite the log file.
+- `--logwarning`:
+  - Only log errors and warnings to the log file, default will log all information.
+- `--debug`:
+  - Launch and wait for a debugger to attach.
+
+### Process Command
+
+```text
+> ./PlexCleaner process --help
+Description:
+  Process media files
+
+Usage:
+  PlexCleaner process [options]
+
+Options:
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
+  --parallel                                Enable parallel processing
+  --threadcount <threadcount>               Number of threads to use for parallel processing
+  --testsnippets                            Create short media clips
+  --testnomodify                            Do not make any file modifications
+  --reverify                                Re-verify and repair media files in the VerifyFailed state
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to existing log file
+  --logwarning                              Log warnings and errors only
+  --debug                                   Wait for debugger to attach
+  -?, -h, --help                            Show help and usage information
+```
 
 The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
 
@@ -401,78 +437,83 @@ The `process` command will process the media content using options as defined in
 - Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
 
-The `--mediafiles` option can include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.  
-Paths with spaces should be double quoted.
+Options:
 
-The `--reverify` option is used to re-verify and repair media files that are in the `VerifyFailed` state, and by default would be skipped due to processing optimization logic.
+- `--settingsfile`: (required)
+  - Path to the settings file.
+- `--mediafiles`: (required)
+  - Path to file or folder containing files to process.
+  - Paths with spaces should be double quoted.
+  - Repeat the option to include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.
+- `--reverify`:
+  - Re-verify and repair media files that are in the `VerifyFailed` state.
+  - By default files would be skipped due to processing optimization logic when using sidecar files.
+- `--parallel`:
+  - Process multiple files concurrently.
+  - When parallel processing is enabled, the default thread count is half the number of system cores.
+- `--threadcount`:
+  - Override the thread count when the `--parallel` option is enabled.
+- `--testsnippets`:
+  - Create short media clips that limit the processing time required, useful during testing.
+- `--testnomodify`:
+  - Process files but do not make any file modifications, useful during testing.
 
-Add the `--parallel` option to process multiple files concurrently. When parallel processing is enabled, the default thread count is half the number of cores, override the thread count using the `--threadcount` option.
-
-Example:  
-`PlexCleaner --logfile PlexCleaner.log process --settingsfile PlexCleaner.json --parallel --mediafiles "C:\Foo With Space\Test.mkv" --mediafiles D:\Media`
-
-Run `PlexCleaner process --help` for a list of all commandline options.
+Example:
 
 ```text
-> ./PlexCleaner process --help
-Description:
-  Process media files
-
-Usage:
-  PlexCleaner process [options]
-
-Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --mediafiles <mediafiles> (REQUIRED)      Media file or folder to process, repeat for multiples
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
-  --testsnippets                            Create short video clips, useful during testing
-  --testnomodify                            Do not make any modifications, useful during testing
-  --reverify                                Re-verify and repair media in VerifyFailed state
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to log file vs. overwrite
-  --logwarning                              Log only warnings and errors to log file
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
+./PlexCleaner \
+  --logfile PlexCleaner.log \
+  process \
+  --settingsfile PlexCleaner.json \
+  --parallel \
+  --mediafiles "C:\Foo With Space\Test.mkv" \
+  --mediafiles D:\Media
 ```
 
-### Re-Multiplex, Re-Encode, De-Interlace
+### Re-Multiplex, Re-Encode, De-Interlace, Remove Subtitles Commands
 
-The `remux` command will re-multiplex the media files using `MkvMerge`.
+These commands have no conditional logic and will process all specified media files.
 
-The `reencode` command will re-encode the media files using FFmpeg and the `ConvertOptions:FfMpegOptions` settings.
-
-The `deinterlace` command will re-encode and de-interlace interlaced media files using HandBrake and the `ConvertOptions:HandBrakeOptions` settings with `--comb-detect --decomb` enabled.
+- `remux`:
+  - Re-multiplex the media files using MkvMerge.
+  - Useful to update the file with the latest multiplexer.
+- `reencode`:
+  - Re-encode the media files using FFmpeg.
+- `deinterlace`:
+  - De-interlace interlaced media files using HandBrake.
+- `removesubtitles`:
+  - Remove all subtitle tracks from the media files.
+  - Useful when subtitles are forced and contains offensive language or advertising.
 
 ### Monitor
 
-The `monitor` command will watch the specified folders for changes, and process the directories with changes.
+- `monitor`:
+  - Watch the specified folders for changes, and process the directories with changes.
+  - The [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.
+  - Changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
 
-Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.  
-Also note that changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
+### Create and Update Sidecar Files
 
-### Create and Update Sidecar
+- `createsidecar`:
+  - Create or overwrite and re-create sidecar files.  
+  - All existing state attributes will be deleted.
+- `updatesidecar`:
+  - Update the existing sidecar with current media tool information.
+  - Existing state attributes will be retained unless the media file had been modified.
 
-The `createsidecar` command will create or re-create and overwrite sidecar files.  
-All existing state attributes will be deleted.
+### Get Information
 
-The `updatesidecar` command will update the sidecar with current media tool information.  
-Existing state attributes will be retained unless the media file had been modified.
-
-### Get  TagMap, Get MediaInfo, Get ToolInfo, Print Sidecar
-
-The `gettagmap` command will calculate and print attribute mappings between between different media information tools.
-
-The `getmediainfo` command will print media attribute information.
-
-The `gettoolinfo` command will print tool attribute information.
-
-The `printsidecar` command will print sidecar attribute information.
-
-## Remove Subtitles
-
-The `removesubtitles` command will remove all subtitle tracks from the media files.  
-This is useful when the subtitles are forced or contains offensive language or advertising.
+- `gettagmap`:
+  - Calculate and print media file attribute mappings between between different media tools.
+- `getmediainfo`:
+  - Print media attribute information using the Sidecar file if present.
+  - If sidecar is not present or out of date media tools will be used.
+- `gettoolinfo`:
+  - Print media attribute information using the current media tools.
+- `getsidecarinfo`:
+  - Print sidecar file attribute information.
+- `getversioninfo`:
+  - Print application version, runtime version, and media tools version information.
 
 ## 3rd Party Tools
 

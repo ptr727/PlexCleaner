@@ -562,7 +562,7 @@ internal class Process
         });
     }
 
-    public static bool PrintSidecarFiles(List<string> fileList)
+    public static bool GetSidecarFiles(List<string> fileList)
     {
         return ProcessFilesDriver(fileList, "Print Sidecar Information", fileName =>
         {

@@ -19,6 +19,7 @@
         "getsidecarinfo",
         "gettagmap",
         "gettoolinfo",
+        "getversioninfo",
         "hwaccel",
         "Idet",
         "Jellyfin",
@@ -47,6 +48,7 @@
         "removesubtitles",
         "remux",
         "remuxed",
+        "schemafile",
         "Serilog",
         "settingsfile",
         "SMPTE",
@@ -56,5 +58,8 @@
         "threadcount",
         "updatesidecar",
         "Vorbis"
-    ]
+    ],
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-issue-config.json": "file:///c%3A/Users/piete/source/repos/ptr727/PlexCleaner/.github/ISSUE_TEMPLATE/config.yml"
+    }
 }

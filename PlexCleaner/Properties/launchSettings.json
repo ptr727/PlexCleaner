@@ -94,6 +94,10 @@
     "GetToolInfo": {
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" gettoolinfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "GetVersionInfo": {
+      "commandName": "Project",
+      "commandLineArgs": "getversioninfo --settingsfile \"PlexCleaner.json\""
     }
   }
 }
