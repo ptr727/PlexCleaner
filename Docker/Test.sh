@@ -54,7 +54,9 @@ fi
 
 # Basic commands (settings file required)
 $PlexCleanerApp getversioninfo --settingsfile $SettingsFile
-$PlexCleanerApp checkfornewtools  --settingsfile $SettingsFile
+
+# Not supported on Linux
+# $PlexCleanerApp checkfornewtools --settingsfile $SettingsFile
 
 # Not readily testable
 # $PlexCleanerApp monitor --settingsfile $SettingsFile --mediafiles $MediaPath

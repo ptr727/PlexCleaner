@@ -12,7 +12,7 @@ Licensed under the [MIT License](./LICENSE)
 
 Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
 Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner) and [GitHub Container Registry](https://github.com/ptr727/PlexCleaner/pkgs/container/plexcleaner).  
+Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).  
 Images are updated weekly with the latest upstream updates.
 
 ## Docker Builds and Tags
@@ -42,11 +42,11 @@ Images are updated weekly with the latest upstream updates.
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `latest` | &#9745; | &#9744; | &#9744; | ~791MB |
-| `savoury` | &#9745; | &#9744; | &#9744; | ~791MB |
-| `alpine` | &#9745; | &#9745; | &#9744; | ~360MB |
+| `latest` | &#9745; | &#9744; | &#9744; | ~797MB |
+| `savoury` | &#9745; | &#9744; | &#9744; | ~797MB |
+| `alpine` | &#9745; | &#9745; | &#9744; | ~371MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~780MB |
-| `arch` | &#9745; | &#9744; | &#9744; | ~987MB |
+| `arch` | &#9745; | &#9744; | &#9744; | ~1.1GB |
 
 ## Media Tool Versions
 

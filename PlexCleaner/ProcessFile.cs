@@ -495,28 +495,22 @@ public class ProcessFile
 
 
         // Cover art can be detected by MediaInfo or FfMpeg or MkvMerge
-        // E.g. FfProbe can detect attachments as cover art video tracks
-        // TODO: No known cases of only MediaInfo detecting cover art
-
-        // Any FfProbe cover art
-        if (FfProbeInfo.HasCovertArt)
-        {
-            // Remove attachments
-            if (!RemoveCoverArtFfProbe(ref modified))
-            {
-                // Error
-                return false;
-            }
-
-            // Continue
-        }
-
+        // Process MkvMerge first, sometimes FfProbe detects attachments, and sometimes it detects video streams
 
         // Any MkvMergeInfo cover art
-        if (MkvMergeInfo.HasCovertArt)
+        if (MkvMergeInfo.HasCovertArt &&
+            !RemoveCoverArtMkvMerge(ref modified))
         {
-            // Remove cover art tracks
-            return RemoveCoverArtMkvMerge(ref modified);
+            // Error
+            return false;
+        }
+
+        // Any FfProbe cover art
+        if (FfProbeInfo.HasCovertArt &&
+            !RemoveCoverArtFfProbe(ref modified))
+        {
+            // Error
+            return false;
         }
 
         // Done
