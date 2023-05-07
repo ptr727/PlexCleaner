@@ -8,11 +8,12 @@
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
 
 # Build Dockerfile
-# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
-# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --secret id=savoury_ppa_auth,src=./Docker/auth.conf --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
@@ -111,6 +112,7 @@ RUN apt-get update \
         software-properties-common \
         p7zip-full \
         tzdata \
+        unzip \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
 
@@ -191,3 +193,12 @@ RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
         mkvmerge --version; \
         /PlexCleaner/PlexCleaner --version; \
     fi
+
+# Copy test script
+COPY /Docker/Test/. /Test
+
+# Download test media
+RUN wget --progress=bar:force -O matroska-test-files.zip https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip \
+    && unzip -o matroska-test-files.zip \
+    && rm matroska-test-files.zip \
+    && mv ./matroska-test-files-master/test_files/ /Test/Media
