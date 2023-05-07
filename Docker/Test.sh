@@ -6,6 +6,7 @@
 #   -it \
 #   --rm \
 #   --pull always \
+#   --user nobody:users \
 #   --name PlexCleaner-Test \
 #   --env TZ=America/Los_Angeles \
 #   --volume /data/media/test:/Test/Media:rw \
@@ -62,7 +63,8 @@ $PlexCleanerApp checkfornewtools  --settingsfile $SettingsFile
 # Take care of order of commands to not interfere with sidecar logic
 
 # Run process first as it is the most prominent command to test
-$PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath
+# Use --testsnippets to truncate large media files to speed up this step and subsequent steps
+$PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets
 
 $PlexCleanerApp updatesidecar --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp getsidecarinfo --settingsfile $SettingsFile --mediafiles $MediaPath
@@ -77,5 +79,5 @@ $PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $Media
 # Run createsidecar after sidecar state is no longer required
 $PlexCleanerApp createsidecar --settingsfile $SettingsFile --mediafiles $MediaPath
 
-# Echo the process command log for easy inspection
+# Echo the process command log for easy inspection at end of test run
 cat $TestPath/PlexCleaner.log
