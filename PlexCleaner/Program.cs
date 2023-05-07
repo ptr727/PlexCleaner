@@ -41,17 +41,19 @@ internal class Program
         keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
-        int ret = CommandLineOptions.Invoke();
+        var exitCode = CommandLineOptions.Invoke();
 
         // Stop the timer
         keepAwakeTimer.Stop();
         keepAwakeTimer.Dispose();
         KeepAwake.AllowSleep();
 
+        Log.Logger.Information("Exit Code : {ExitCode}", exitCode);
+
         // Close and flush on process exit
         Log.CloseAndFlush();
 
-        return ret;
+        return exitCode;
     }
 
     private static void WaitForDebugger()
@@ -146,196 +148,170 @@ internal class Program
 
     internal static int ProcessCommand(CommandLineOptions options)
     {
-        Program program = Create(options, true);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Create program
         // Get file list
-        if (!program.CreateFileList(options.MediaFiles))
+        Program program = Create(options, true);
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
         // Process all files
-        if (!Process.ProcessFiles(program.FileList) || 
-            IsCancelledError())
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-        return MakeExitCode(Process.DeleteEmptyFolders(program.DirectoryList));
+        // Delete empty folders
+        return MakeExitCode(Process.ProcessFiles(program.FileList) && Process.DeleteEmptyFolders(program.DirectoryList));
     }
 
     internal static int MonitorCommand(CommandLineOptions options)
     {
+        // Create program
         Program program = Create(options, true);
         if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
 
+        // Monitor
         Monitor monitor = new();
         return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
     }
 
     internal static int ReMuxCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // ReMux
         return MakeExitCode(Process.ReMuxFiles(program.FileList));
     }
 
     internal static int ReEncodeCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // ReEncode
         return MakeExitCode(Process.ReEncodeFiles(program.FileList));
     }
 
     internal static int DeInterlaceCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // DeInterlace
         return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
     }
 
     internal static int CreateSidecarCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Create sidecar files
         return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
     }
 
     internal static int GetSidecarCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Get sidecar files info
         return MakeExitCode(Process.GetSidecarFiles(program.FileList));
     }
 
     internal static int UpdateSidecarCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Update sidecar files
         return MakeExitCode(Process.UpdateSidecarFiles(program.FileList));
     }
 
     internal static int GetTagMapCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Get tag map
         return MakeExitCode(Process.GetTagMapFiles(program.FileList));
     }
 
     internal static int GetMediaInfoCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Get media info
         return MakeExitCode(Process.GetMediaInfoFiles(program.FileList));
     }
 
     internal static int GetToolInfoCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Get tool info
         return MakeExitCode(Process.GetToolInfoFiles(program.FileList));
     }
 
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
     {
+        // Create program
+        // Get file list
         Program program = Create(options, true);
-        if (program == null)
+        if (program == null || !program.CreateFileList(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        if (!program.CreateFileList(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
+        // Remove subtitles
         return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
     }
 
@@ -486,6 +462,7 @@ internal class Program
             // Verify tools
             if (!Tools.VerifyTools())
             {
+                // Error
                 return null;
             }
         }

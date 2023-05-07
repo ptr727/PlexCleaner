@@ -564,7 +564,7 @@ internal class Process
 
     public static bool GetSidecarFiles(List<string> fileList)
     {
-        return ProcessFilesDriver(fileList, "Print Sidecar Information", fileName =>
+        return ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
         {
             // Handle only MKV files
             if (!MkvMergeTool.IsMkvFile(fileName))
@@ -686,6 +686,7 @@ internal class Process
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
+        bool fatalError = false;
         try
         {
             // Group files by path ignoring extensions
@@ -729,10 +730,12 @@ internal class Process
         catch (OperationCanceledException)
         {
             // Cancelled
+            fatalError = true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             // Error
+            fatalError = true;
         }
 
         // Stop the timer
@@ -744,7 +747,7 @@ internal class Process
         Log.Logger.Information("Total files : {Count}", totalCount);
         Log.Logger.Information("Error files : {Count}", errorCount);
 
-        return errorCount == 0;
+        return fatalError;
     }
 
     private static double GetPercentage(int dividend, int divisor)
