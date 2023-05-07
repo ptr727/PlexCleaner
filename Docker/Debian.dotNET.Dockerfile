@@ -209,4 +209,4 @@ RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
 
 # Copy test script
 COPY /Docker/Test.sh /Test/
-RUN chmod -R u=rwx,g=rwx+s,o=rx /Test
+RUN chmod -R ugo+rwx /Test
