@@ -9,21 +9,22 @@
 # https://gitlab.com/qemu-project/qemu/-/issues/249
 # Only run compiled code when BUILDPLATFORM == TARGETPLATFORM
 
-# Test base image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview /bin/bash
-# export DEBIAN_FRONTEND=noninteractive
+# Loading all targets are not supported, test only linux/amd64 target
+# https://github.com/docker/buildx/issues/59
+
+# Troublshooting, add "build --progress plain --no-cache"
 
 # Test image in shell:
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
+# export DEBIAN_FRONTEND=noninteractive
 
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
-# docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 
-# Loading all targets are not supported, test only linux/amd64 target
-# TODO: https://github.com/docker/buildx/issues/59
-# docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
+# Test linux/amd64 target
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
@@ -205,3 +206,6 @@ RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
         mkvmerge --version; \
         /PlexCleaner/PlexCleaner --version; \
     fi
+
+# Copy test script
+COPY /Docker/Test.sh /Test/

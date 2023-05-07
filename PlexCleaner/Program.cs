@@ -346,7 +346,7 @@ internal class Program
         Program program = Create(options, false);
         if (program == null)
         {
-            MakeExitCode(ExitCode.Error);
+            return MakeExitCode(ExitCode.Error);
         }
 
         // Verify tools to get tool version information
@@ -448,9 +448,13 @@ internal class Program
         }
 
         // Log app and runtime version
+        bool debugBuild = false;
+        #if DEBUG
+            debugBuild = true;
+        #endif
         string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
-        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", appVersion, runtimeVersion);
+        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", appVersion, runtimeVersion, debugBuild);
 
         // Parallel processing config
         if (Options.Parallel)

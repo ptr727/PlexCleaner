@@ -1,21 +1,18 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
-# There is not HandBrake package for arm/v7
+# There is no HandBrake package for arm/v7
 # https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
 
-# Test base image in shell:
+# Test image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-alpine /bin/sh
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine /bin/sh
-
-# Test image in shell:
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/sh
 
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
-# docker buildx build --progress plain --no-cache --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
 
 
@@ -132,8 +129,6 @@ RUN wget https://aka.ms/getvsdbgsh \
 # Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
-# TODO: 23.03-r0 segfault
-# https://github.com/MediaArea/MediaInfo/issues/707
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 RUN apk --no-cache add \
@@ -156,3 +151,6 @@ RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
         mkvmerge --version; \
         /PlexCleaner/PlexCleaner --version; \
     fi
+
+# Copy test script
+COPY /Docker/Test.sh /Test/

@@ -1,19 +1,16 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
-# Test base image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
-# export DEBIAN_FRONTEND=noninteractive
-
 # Test image in shell:
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview-jammy  /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
+# export DEBIAN_FRONTEND=noninteractive
 
 # Build Dockerfile
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
@@ -112,7 +109,6 @@ RUN apt-get update \
         software-properties-common \
         p7zip-full \
         tzdata \
-        unzip \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
 
@@ -195,10 +191,4 @@ RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
     fi
 
 # Copy test script
-COPY /Docker/Test/. /Test
-
-# Download test media
-RUN wget --progress=bar:force -O matroska-test-files.zip https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip \
-    && unzip -o matroska-test-files.zip \
-    && rm matroska-test-files.zip \
-    && mv ./matroska-test-files-master/test_files/ /Test/Media
+COPY /Docker/Test.sh /Test/

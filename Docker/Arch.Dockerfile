@@ -1,17 +1,16 @@
+# Refer to Debian.dotNET.Dockerfile for build plan
+
 # Arch is x64 only and there is no MCR with .NET preinstalled
 
-# Test base image in shell:
-# docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
-
 # Test image in shell:
+# docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:arch-develop /bin/bash
 
 # Build Dockerfile
 # docker buildx build --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
-# docker buildx build --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --progress plain --no-cache --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
@@ -144,3 +143,6 @@ RUN dotnet --info \
     && mkvmerge --version \
     && ffmpeg -version \
     && /PlexCleaner/PlexCleaner --version
+
+# Copy test script
+COPY /Docker/Test.sh /Test/
