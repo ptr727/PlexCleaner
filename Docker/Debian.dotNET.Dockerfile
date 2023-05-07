@@ -33,7 +33,7 @@
 # Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
 # TODO: https://github.com/dotnet/dotnet-docker/issues/4388
 # FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-bookworm-slim AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -111,7 +111,7 @@ RUN mkdir -p ./Publish/PlexCleaner\Debug \
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM mcr.microsoft.com/dotnet/sdk:7.0 as final
+FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
