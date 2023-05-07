@@ -553,8 +553,10 @@ public class SidecarFile
         Log.Logger.Information("MediaInfoXml: {MediaInfoXml}", MediaInfoXml);
         Log.Logger.Information("MkvMergeInfoJson: {MkvMergeInfoJson}", MkvMergeInfoJson);
         Log.Logger.Information("FfProbeInfoJson: {FfProbeInfoJson}", FfProbeInfoJson);
+        Log.Logger.Information("SchemaVersion: {SchemaVersion}", SidecarJson.SchemaVersion);
         Log.Logger.Information("MediaLastWriteTimeUtc: {MediaLastWriteTimeUtc}", SidecarJson.MediaLastWriteTimeUtc);
         Log.Logger.Information("MediaLength: {MediaLength}", SidecarJson.MediaLength);
+        Log.Logger.Information("MediaHash: {MediaHash}", SidecarJson.MediaHash);
         Log.Logger.Information("MediaInfoToolVersion: {MediaInfoToolVersion}", SidecarJson.MediaInfoToolVersion);
         Log.Logger.Information("MkvMergeToolVersion: {MkvMergeToolVersion}", SidecarJson.MkvMergeToolVersion);
         Log.Logger.Information("FfProbeToolVersion: {FfProbeToolVersion}", SidecarJson.FfProbeToolVersion);

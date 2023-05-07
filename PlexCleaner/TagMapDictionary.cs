@@ -83,28 +83,7 @@ public class TagMapDictionary
             return false;
         }
 
-        // Verify the track languages match
-        // FfProbe has bugs with language vs. tag_language, try removing the tags
-        if (ffProbe.Video.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
-
-        if (ffProbe.Audio.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
-
-        if (ffProbe.Subtitle.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
+        // TODO: Verify the track languages match
 
         return true;
     }
