@@ -148,16 +148,14 @@ internal class Program
 
     internal static int ProcessCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Process all files
-        // Delete empty folders
+        // Process all files and delete empty folders
         return MakeExitCode(Process.ProcessFiles(program.FileList) && Process.DeleteEmptyFolders(program.DirectoryList));
     }
 
@@ -170,17 +168,16 @@ internal class Program
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Monitor
+        // Monitor and process changes
         Monitor monitor = new();
         return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
     }
 
     internal static int ReMuxCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -191,10 +188,9 @@ internal class Program
 
     internal static int ReEncodeCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -205,10 +201,9 @@ internal class Program
 
     internal static int DeInterlaceCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -219,10 +214,9 @@ internal class Program
 
     internal static int CreateSidecarCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -233,10 +227,9 @@ internal class Program
 
     internal static int GetSidecarCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -247,10 +240,9 @@ internal class Program
 
     internal static int UpdateSidecarCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -261,10 +253,9 @@ internal class Program
 
     internal static int GetTagMapCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -275,10 +266,9 @@ internal class Program
 
     internal static int GetMediaInfoCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -289,10 +279,9 @@ internal class Program
 
     internal static int GetToolInfoCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -303,10 +292,9 @@ internal class Program
 
     internal static int RemoveSubtitlesCommand(CommandLineOptions options)
     {
-        // Create program
-        // Get file list
-        Program program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -355,6 +343,17 @@ internal class Program
     {
         // Unregister cancel handler
         Console.CancelKeyPress -= CancelHandlerEx;
+    }
+
+    private static Program CreateFileList(CommandLineOptions options)
+    {
+        // Create program and enumerate files
+        var program = Create(options, true);
+        if (program == null || !program.CreateFileList(options.MediaFiles))
+        {
+            return null;
+        }
+        return program;
     }
 
     private static Program Create(CommandLineOptions options, bool verifyTools)
@@ -484,6 +483,7 @@ internal class Program
         // Trim quotes from input paths
         mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
 
+        bool fatalError =false;
         try
         {
             // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
@@ -507,7 +507,6 @@ internal class Program
 
                     // Create the file list from the directory
                     Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                    // TODO: Create a variant that returns strings
                     if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
                     {
                         // Abort
@@ -534,18 +533,18 @@ internal class Program
         catch (OperationCanceledException)
         {
             // Cancelled
-            return false;
+            fatalError = true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             // Error
-            return false;
+            fatalError = true;
         }
 
         // Report
         Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", FileList.Count, DirectoryList.Count);
 
-        return true;
+        return !fatalError;
     }
 
     public static bool IsCancelledError()

@@ -333,6 +333,7 @@ internal class Process
         Log.Logger.Information("Deleting empty folders ...");
 
         // Delete all empty folders
+        bool fatalError = false;
         int totalDeleted = 0;
         try
         { 
@@ -351,16 +352,17 @@ internal class Process
         catch (OperationCanceledException)
         {
             // Cancelled
+            fatalError = true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             // Error
-            return false;
+            fatalError = true;
         }
 
         Log.Logger.Information("Deleted folders : {Deleted}", totalDeleted);
 
-        return true;
+        return !fatalError;
     }
 
     public static bool ProcessFiles(List<string> fileList)
@@ -747,7 +749,7 @@ internal class Process
         Log.Logger.Information("Total files : {Count}", totalCount);
         Log.Logger.Information("Error files : {Count}", errorCount);
 
-        return fatalError;
+        return !fatalError;
     }
 
     private static double GetPercentage(int dividend, int divisor)
