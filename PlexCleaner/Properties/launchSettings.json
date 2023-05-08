@@ -18,7 +18,7 @@
     },
     "DeInterlace Test": {
       "commandName": "Project",
-      "commandLineArgs": "deinterlace --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+      "commandLineArgs": "deinterlace --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --testsnippets"
     },
     "Process Snippets Test": {
       "commandName": "Project",
@@ -53,7 +53,7 @@
     },
     "ReMux Test": {
       "commandName": "Project",
-      "commandLineArgs": "remux --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+      "commandLineArgs": "remux --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --testsnippets"
     },
     "CheckForNewTools": {
       "commandName": "Project",
@@ -61,7 +61,7 @@
     },
     "ReEncode Test": {
       "commandName": "Project",
-      "commandLineArgs": "reencode --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+      "commandLineArgs": "reencode --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --testsnippets"
     },
     "GetTagMap Test": {
       "commandName": "Project",

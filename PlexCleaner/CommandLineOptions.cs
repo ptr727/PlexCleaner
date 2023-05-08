@@ -157,6 +157,12 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
+        //  Do not make any modifications
+        command.AddOption(CreateTestNoModifyOption());
+
         // Parallel processing
         command.AddOption(
             new Option<bool>("--parallel")
@@ -171,21 +177,7 @@ public class CommandLineOptions
             Description = "Number of threads to use for parallel processing"
         });
 
-        // Create short video clips, optional
-        command.AddOption(
-            new Option<bool>("--testsnippets")
-            {
-                Description = "Create short media file clips"
-            });
-
-        //  Do not make any modifications, optional
-        command.AddOption(
-            new Option<bool>("--testnomodify")
-            {
-                Description = "Do not make any media file modifications"
-            });
-
-        //  Re-verify, optional
+        //  Re-verify
         command.AddOption(
             new Option<bool>("--reverify")
             {
@@ -228,6 +220,12 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
+        //  Do not make any modifications
+        command.AddOption(CreateTestNoModifyOption());
+
         return command;
     }
 
@@ -246,6 +244,12 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
+        //  Do not make any modifications
+        command.AddOption(CreateTestNoModifyOption());
+
         return command;
     }
 
@@ -263,6 +267,12 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
+
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
+        //  Do not make any modifications
+        command.AddOption(CreateTestNoModifyOption());
 
         return command;
     }
@@ -461,6 +471,24 @@ public class CommandLineOptions
         return new Option<bool>("--debug")
         {
             Description = "Wait for debugger to attach"
+        };
+    }
+
+    private static Option CreateTestSnippetsOption()
+    {
+        // Create short video clips
+        return  new Option<bool>("--testsnippets")
+        {
+            Description = "Create short media file clips"
+        };
+    }
+
+    private static  Option CreateTestNoModifyOption()
+    {
+        //  Do not make any modifications
+        return new Option<bool>("--testnomodify")
+        {
+            Description = "Do not make any media file modifications"
         };
     }
 }

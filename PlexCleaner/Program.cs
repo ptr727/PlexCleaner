@@ -329,8 +329,7 @@ internal class Program
         e.Cancel = true;
 
         // Signal the cancel event
-        // We could signal Cancel directly now that it is static
-        Break();
+        Cancel();
     }
 
     private Program()
@@ -469,13 +468,7 @@ internal class Program
         // Create program instance
         return new Program();
     }
-
-    private static void Break()
-    {
-        // Signal the cancel event
-        Cancel();
-    }
-
+        
     private bool CreateFileList(List<string> mediaFiles)
     {
         Log.Logger.Information("Creating file and folder list ...");
@@ -495,6 +488,9 @@ internal class Program
                 .WithCancellation(CancelToken())
                 .ForAll(fileOrFolder =>
             {
+                // Handle cancel request
+                Program.CancelToken().ThrowIfCancellationRequested();
+
                 // Test for file or a directory
                 var fileAttributes = File.GetAttributes(fileOrFolder);
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
@@ -511,7 +507,8 @@ internal class Program
                     {
                         // Abort
                         Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
-                        throw new OperationCanceledException();
+                        Cancel();
+                        Program.CancelToken().ThrowIfCancellationRequested();
                     }
 
                     // Add file list
@@ -549,14 +546,25 @@ internal class Program
 
     public static bool IsCancelledError()
     {
+        // Test immediately
+        if (CancelSource.IsCancellationRequested)
+        {
+            return true;
+        }
+
         // There is a race condition between tools exiting on Ctrl-C and reporting an error, and our app's Ctrl-C handler being called
         // In case of a suspected Ctrl-C, yield some time for this handler to be called before testing the state
-        return IsCancelled(100);
+        return WaitForCancel(100);
     }
 
-    public static bool IsCancelled(int milliseconds = 0)
+    public static bool WaitForCancel(int millisecond)
     {
-        return CancelSource.Token.WaitHandle.WaitOne(milliseconds);
+        return CancelSource.Token.WaitHandle.WaitOne(millisecond);
+    }
+
+    public static bool IsCancelled()
+    {
+        return CancelSource.IsCancellationRequested;
     }
 
     public static void Cancel()

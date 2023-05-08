@@ -342,9 +342,12 @@ internal class Process
                 .WithCancellation(Program.CancelToken())
                 .ForAll(folder =>
                 {
+                    // Handle cancel request
+                    Program.CancelToken().ThrowIfCancellationRequested();
+
+                    // Delete empty folders
                     int deleted = 0;
                     Log.Logger.Information("Looking for empty folders in {Folder}", folder);
-                    // Ignore errors
                     FileEx.DeleteEmptyDirectories(folder, ref deleted);
                     Interlocked.Add(ref totalDeleted, deleted);
                 });
@@ -386,10 +389,10 @@ internal class Process
         {
             // Process the file
             bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.StatesType state, out string processName);
-            if (!processResult &&
-                Program.IsCancelled())
+
+            // Cancelled
+            if (Program.IsCancelled())
             {
-                // Cancelled
                 return false;
             }
 
@@ -693,7 +696,7 @@ internal class Process
         {
             // Group files by path ignoring extensions
             // This prevents files with the same name being modified by different threads
-            // E.g. when remuxing from AVI to MKV, or when testing for existence of MKV for SideCar files
+            // E.g. when remuxing from AVI to MKV, or when testing for existence of MKV for Sidecar files
             var groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
 
             // Use a single item partitioner
@@ -709,14 +712,19 @@ internal class Process
             {
                 // Process all files in the group in this thread
                 foreach (string fileName in keyPair)
-                { 
+                {
                     // Log completion % before task starts
                     double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
                     Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
 
                     // Perform the task
-                    if (!taskFunc(fileName) &&
-                        !Program.IsCancelled())
+                    bool taskResult = taskFunc(fileName);
+
+                    // Handle cancel request
+                    Program.CancelToken().ThrowIfCancellationRequested();
+
+                    // Handle result
+                    if (!taskResult)
                     {
                         // Error
                         Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);

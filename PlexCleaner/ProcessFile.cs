@@ -1276,7 +1276,7 @@ public class ProcessFile
         }
 
         // Cancel requested
-        if (Program.IsCancelledError())
+        if (Program.IsCancelled())
         {
             return false;
         }
@@ -1311,7 +1311,7 @@ public class ProcessFile
         bool repaired = RepairAndReVerify();
 
         // Cancel requested
-        if (Program.IsCancelledError())
+        if (Program.IsCancelled())
         {
             return false;
         }

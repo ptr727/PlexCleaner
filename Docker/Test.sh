@@ -65,17 +65,22 @@ $PlexCleanerApp getversioninfo --settingsfile $SettingsFile
 # Take care of order of commands to not interfere with sidecar logic
 
 # Run process first as it is the most prominent command to test
-# Use --testsnippets to truncate large media files to speed up this step and subsequent steps
+# Use --testsnippets to truncate large media files to speed processing
 $PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets
 
+# Info commands
 $PlexCleanerApp updatesidecar --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp getsidecarinfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp gettagmap --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp getmediainfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp gettoolinfo --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath
+
+# Processing commands
+$PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
+$PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
+$PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
+
+# cleanup commands
 $PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $MediaPath
 
 # Run createsidecar after sidecar state is no longer required

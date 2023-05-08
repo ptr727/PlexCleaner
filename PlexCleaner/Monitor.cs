@@ -56,8 +56,8 @@ internal class Monitor
         // Enable event watching
         Watcher.ForEach(item => item.EnableRaisingEvents = true);
 
-        // Wait for exit to be signalled
-        while (!Program.IsCancelled(1000))
+        // Wait for exit to be signaled
+        while (!Program.WaitForCancel(1000))
         {
             // Lock and process the list of folders
             List<string> watchlist = new();
