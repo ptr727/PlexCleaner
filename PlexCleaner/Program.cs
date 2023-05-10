@@ -489,7 +489,7 @@ internal class Program
                 .ForAll(fileOrFolder =>
             {
                 // Handle cancel request
-                Program.CancelToken().ThrowIfCancellationRequested();
+                CancelToken().ThrowIfCancellationRequested();
 
                 // Test for file or a directory
                 var fileAttributes = File.GetAttributes(fileOrFolder);
@@ -508,7 +508,7 @@ internal class Program
                         // Abort
                         Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
                         Cancel();
-                        Program.CancelToken().ThrowIfCancellationRequested();
+                        CancelToken().ThrowIfCancellationRequested();
                     }
 
                     // Add file list

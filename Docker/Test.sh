@@ -58,14 +58,10 @@ $PlexCleanerApp getversioninfo --settingsfile $SettingsFile
 # Not supported on Linux
 # $PlexCleanerApp checkfornewtools --settingsfile $SettingsFile
 
-# Not readily testable
-# $PlexCleanerApp monitor --settingsfile $SettingsFile --mediafiles $MediaPath
-
 # File processing commands (settings file required, media files required)
 # Take care of order of commands to not interfere with sidecar logic
 
-# Run process first as it is the most prominent command to test
-# Use --testsnippets to truncate large media files to speed processing
+# Run process command first
 $PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets
 
 # Info commands
@@ -75,16 +71,14 @@ $PlexCleanerApp gettagmap --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp getmediainfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp gettoolinfo --settingsfile $SettingsFile --mediafiles $MediaPath
 
+# Run createsidecar after sidecar state is no longer required
+$PlexCleanerApp createsidecar --settingsfile $SettingsFile --mediafiles $MediaPath
+
 # Processing commands
 $PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
 $PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
 $PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
-
-# cleanup commands
 $PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $MediaPath
 
-# Run createsidecar after sidecar state is no longer required
-$PlexCleanerApp createsidecar --settingsfile $SettingsFile --mediafiles $MediaPath
-
-# Echo the process command log for easy inspection at end of test run
-cat $TestPath/PlexCleaner.log
+# Not readily testable
+# $PlexCleanerApp monitor --settingsfile $SettingsFile --mediafiles $MediaPath

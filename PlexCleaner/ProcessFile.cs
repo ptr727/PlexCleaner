@@ -43,6 +43,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -80,6 +81,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -170,6 +172,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -208,6 +211,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -335,6 +339,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -372,6 +377,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -396,10 +402,10 @@ public class ProcessFile
         return MkvMergeInfo.AnyTags || FfProbeInfo.AnyTags || MediaInfoInfo.AnyTags;
     }
 
-    public bool RemoveTags(ref bool modified)
+    public bool RemoveTags(ref bool modified, bool ignoreConfig = false)
     {
         // Optional
-        if (!Program.Config.ProcessOptions.RemoveTags)
+        if (!ignoreConfig && !Program.Config.ProcessOptions.RemoveTags)
         {
             return true;
         }
@@ -419,6 +425,7 @@ public class ProcessFile
         }
 
         // Already cleared?
+        // Tags can re-appear after running FfMpeg or HandBrake
         if (SidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedTags))
         {
             Log.Logger.Warning("Tags re-detected after clearing : {FileName}", FileInfo.Name);
@@ -430,6 +437,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -467,6 +475,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -493,7 +502,6 @@ public class ProcessFile
             return true;
         }
 
-
         // Cover art can be detected by MediaInfo or FfMpeg or MkvMerge
         // Process MkvMerge first, sometimes FfProbe detects attachments, and sometimes it detects video streams
 
@@ -513,6 +521,9 @@ public class ProcessFile
             return false;
         }
 
+        // Did we get it all?
+        Debug.Assert(!MkvMergeInfo.HasCovertArt && !FfProbeInfo.HasCovertArt && !MediaInfoInfo.HasCovertArt);
+
         // Done
         return true;
     }
@@ -526,9 +537,29 @@ public class ProcessFile
             return true;
         }
 
-        // FfProbe covert art is removed by removing attachments
-        Debug.Assert(MkvMergeInfo.Attachments > 0);
-        return RemoveAttachments(ref modified);
+        // Remove attachments, if any
+        if (!RemoveAttachments(ref modified))
+        {
+            // Error
+            return false;
+        }
+
+        // Any FfProbeInfo cover art
+        if (!FfProbeInfo.HasCovertArt)
+        {
+            // No cover art
+            return true;
+        }
+
+        // Remove tags, if any
+        if (!RemoveTags(ref modified, true))
+        {
+            // Error
+            return false;
+        }
+
+        // Done
+        return true;
     }
 
     public bool RemoveCoverArtMkvMerge(ref bool modified)
@@ -549,6 +580,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -608,6 +640,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -700,6 +733,9 @@ public class ProcessFile
 
     private bool FindInterlacedTracks(out VideoInfo videoInfo)
     {
+        // Return false on error
+        // Set videoInfo if interlaced
+
         // Init
         videoInfo = null;
 
@@ -719,7 +755,7 @@ public class ProcessFile
             State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
             // Assume not interlaced
-            return false;
+            return true;
         }
 
         // Count the frame types using the idet filter, expensive
@@ -733,7 +769,7 @@ public class ProcessFile
         if (!idetInfo.IsInterlaced())
         {
             // Not interlaced
-            return false;
+            return true;
         }
 
         // Idet said yes metadata said no
@@ -813,7 +849,14 @@ public class ProcessFile
         // Do we have any interlaced video
         if (!FindInterlacedTracks(out VideoInfo videoInfo))
         {
-            // Nothing to do
+            // Error
+            return false;
+        }
+
+        // Interlaced
+        if (videoInfo == null || !videoInfo.Interlaced)
+        {
+            // Not interlaced
             return true;
         }
 
@@ -834,6 +877,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is safe
             return true;
         }
 
@@ -912,6 +956,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -996,6 +1041,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is safe
             return true;
         }
 
@@ -1087,6 +1133,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -1485,6 +1532,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is not safe
             return false;
         }
 
@@ -1607,6 +1655,7 @@ public class ProcessFile
         // Test
         if (Program.Options.TestNoModify)
         {
+            // Continuing is safe
             return true;
         }
 
