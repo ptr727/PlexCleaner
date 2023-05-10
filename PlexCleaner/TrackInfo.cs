@@ -99,7 +99,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup ISO tag from IETF tag
-                Log.Logger.Error("MkvToolJsonSchema : ISO639 as set: {Language}, IETF as set: {LanguageIetf} : Failed to lookup ISO639 from IETF : State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
             }
             else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
             {
@@ -108,7 +108,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
-                Log.Logger.Error("MkvToolJsonSchema : ISO639 as set: {Language}, IETF as set: {LanguageIetf}, ISO639 lookup from IETF: {Lookup} : Lookup ISO639 does not match set ISO639 : State: {State}", Language, LanguageIetf, isoLookup, State);
+                Log.Logger.Error("MkvToolJsonSchema : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}", Language, LanguageIetf, isoLookup, State);
             }
             // Lookup good and matches
         }
@@ -126,7 +126,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup IETF tag from ISO tag
-                Log.Logger.Error("MkvToolJsonSchema : ISO639 as set: {Language} : Failed to lookup IETF from ISO639: State: {State}", Language, State);
+                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO6393: {Language}, State: {State}", Language, State);
             }
             else 
             {
@@ -137,7 +137,7 @@ public partial class TrackInfo
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
-                Log.Logger.Information("MkvToolJsonSchema : ISO639 as set: {Language}, IETF lookup from ISO639: {LanguageIetf} : State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Information("MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO6393: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
             }
         }
 
@@ -156,13 +156,13 @@ public partial class TrackInfo
             if (string.IsNullOrEmpty(isoLookup))
             {
                 // Failed to lookup ISO from IETF
-                Log.Logger.Error("MkvToolJsonSchema : IETF as set: {LanguageIetf} : Failed to lookup ISO639 from IETF : State: {State}", LanguageIetf, State);
+                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}", LanguageIetf, State);
             }
             else
             {
                 // Set ISO from lookup
                 Language = isoLookup;
-                Log.Logger.Warning("MkvToolJsonSchema : IETF as set: {LanguageIetf}, ISO639 lookup from IETF: {Language} : State: {State}", LanguageIetf, Language, State);
+                Log.Logger.Warning("MkvToolJsonSchema : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
             }
         }
 
@@ -175,7 +175,7 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("MkvToolJsonSchema : Tag Language: {TagLanguage}, Track Language: {Language} : Language mismatch : State: {State}", trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
+            Log.Logger.Warning("MkvToolJsonSchema : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
 
-// Use mkvinfo example output:
+// Use mkvmerge example output:
 // mkvmerge --identify file.mkv --identification-format json
 
 // Convert array[] to List<>
