@@ -2,91 +2,136 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Serilog;
 
 namespace PlexCleaner;
 
-[Obsolete("Replaced in Schema v2", false)]
-public class ProcessOptions1
+public class VideoFormat
 {
-    public bool DeleteEmptyFolders { get; set; }
-    public bool DeleteUnwantedExtensions { get; set; }
-    public string KeepExtensions { get; set; } = "";
-    public bool ReMux { get; set; }
-    public string ReMuxExtensions { get; set; } = "";
-    public bool DeInterlace { get; set; }
-    public bool ReEncode { get; set; }
-    public string ReEncodeVideoFormats { get; set; } = "";
-    public string ReEncodeVideoCodecs { get; set; } = "";
-    public string ReEncodeVideoProfiles { get; set; } = "";
-    public string ReEncodeAudioFormats { get; set; } = "";
-    public bool SetUnknownLanguage { get; set; }
-    public string DefaultLanguage { get; set; } = "";
-    public bool RemoveUnwantedLanguageTracks { get; set; }
-    public string KeepLanguages { get; set; } = "";
-    public bool RemoveDuplicateTracks { get; set; }
-    public string PreferredAudioFormats { get; set; } = "";
-    public bool RemoveTags { get; set; }
-    public bool UseSidecarFiles { get; set; }
-    public bool SidecarUpdateOnToolChange { get; set; }
-    public bool Verify { get; set; }
-    public bool RestoreFileTimestamp { get; set; }
-    public List<string> FileIgnoreList { get; set; } = new();
+    public string Format;
+    public string Codec;
+    public string Profile;
 }
 
-public class ProcessOptions
+// v1
+[Obsolete]
+public record ProcessOptions1
 {
-    public class VideoFormat
+    [Obsolete]
+    internal string ReEncodeVideoFormats { get; set; } = "";
+    [Obsolete]
+    internal string ReEncodeVideoCodecs { get; set; } = "";
+    [Obsolete]
+    internal string ReEncodeVideoProfiles { get; set; } = "";
+    [Obsolete]
+    internal string ReEncodeAudioFormats { get; set; } = "";
+    [Obsolete]
+    internal string KeepExtensions { get; set; } = "";
+    [Obsolete]
+    internal string KeepLanguages { get; set; } = "";
+    [Obsolete]
+    internal string PreferredAudioFormats { get; set; } = "";
+
+    [Required]
+    public bool DeleteEmptyFolders { get; set; }
+
+    [Required]
+    public bool DeleteUnwantedExtensions { get; set; }
+
+    [Required]
+    public bool ReMux { get; set; }
+
+    [Required]
+    public string ReMuxExtensions { get; set; } = "";
+
+    [Required]
+    public bool DeInterlace { get; set; }
+
+    [Required]
+    public bool ReEncode { get; set; }
+
+    [Required]
+    public bool SetUnknownLanguage { get; set; }
+
+    [Required]
+    public string DefaultLanguage { get; set; } = "";
+
+    [Required]
+    public bool RemoveUnwantedLanguageTracks { get; set; }
+
+    [Required]
+    public bool RemoveDuplicateTracks { get; set; }
+
+    [Required]
+    public bool RemoveTags { get; set; }
+
+    [Required]
+    public bool UseSidecarFiles { get; set; }
+
+    [Required]
+    public bool SidecarUpdateOnToolChange { get; set; }
+
+    [Required]
+    public bool Verify { get; set; }
+
+    [Required]
+    public bool RestoreFileTimestamp { get; set; }
+
+    [Required]
+    public HashSet<string> FileIgnoreList { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+// v2
+[Obsolete]
+public record ProcessOptions2 : ProcessOptions1
+{
+    public ProcessOptions2() { }
+
+    // Copy from v1
+    [Obsolete]
+    public ProcessOptions2(ProcessOptions1 processOptions1) : base(processOptions1)
     {
-        // Not required
-        public string Format;
-        public string Codec;
-        public string Profile;
+        // Upgrade from v1
+        Upgrade(processOptions1);
     }
 
-    public ProcessOptions() { }
-
-#pragma warning disable CS0618 // Type or member is obsolete
-    public ProcessOptions(ProcessOptions1 processOptions1)
-#pragma warning restore CS0618 // Type or member is obsolete
+    [Obsolete]
+    protected void Upgrade(ProcessOptions1 processOptions1)
     {
-        // Assign same values
-        DeleteEmptyFolders = processOptions1.DeleteEmptyFolders;
-        DeleteUnwantedExtensions = processOptions1.DeleteUnwantedExtensions;
-        ReMux = processOptions1.ReMux;
-        DeInterlace = processOptions1.DeInterlace;
-        ReEncode = processOptions1.ReEncode;
-        SetUnknownLanguage = processOptions1.SetUnknownLanguage;
-        RemoveUnwantedLanguageTracks = processOptions1.RemoveUnwantedLanguageTracks;
-        RemoveDuplicateTracks = processOptions1.RemoveDuplicateTracks;
-        RemoveTags = processOptions1.RemoveTags;
-        UseSidecarFiles = processOptions1.UseSidecarFiles;
-        SidecarUpdateOnToolChange = processOptions1.SidecarUpdateOnToolChange;
-        Verify = processOptions1.Verify;
-        RestoreFileTimestamp = processOptions1.RestoreFileTimestamp;
+        // Convert CSV to HashSet<string>
+        if (!string.IsNullOrEmpty(processOptions1.KeepExtensions))
+        {
+            KeepExtensions.UnionWith(processOptions1.KeepExtensions.Split(','));
+        }
+        if (!string.IsNullOrEmpty(processOptions1.ReMuxExtensions))
+        {
+            ReMuxExtensions.UnionWith(processOptions1.ReMuxExtensions.Split(','));
+        }
+        if (!string.IsNullOrEmpty(processOptions1.ReEncodeAudioFormats))
+        {
+            ReEncodeAudioFormats.UnionWith(processOptions1.ReEncodeAudioFormats.Split(','));
+        }
+        if (!string.IsNullOrEmpty(processOptions1.KeepLanguages))
+        {
+            KeepLanguages.UnionWith(processOptions1.KeepLanguages.Split(','));
+        }
+        if (!string.IsNullOrEmpty(processOptions1.PreferredAudioFormats))
+        {
+            PreferredAudioFormats.UnionWith(processOptions1.PreferredAudioFormats.Split(','));
+        }
 
-        DefaultLanguage = processOptions1.DefaultLanguage ?? "";
-        FileIgnoreList = processOptions1.FileIgnoreList ?? new List<string>();
-
-        // Convert CSV to List<string>
-        KeepExtensions = !string.IsNullOrEmpty(processOptions1.KeepExtensions) ? processOptions1.KeepExtensions.Split(',').ToList() : new List<string>();
-        ReMuxExtensions = !string.IsNullOrEmpty(processOptions1.ReMuxExtensions) ? processOptions1.ReMuxExtensions.Split(',').ToList() : new List<string>();
-        ReEncodeAudioFormats = !string.IsNullOrEmpty(processOptions1.ReEncodeAudioFormats) ? processOptions1.ReEncodeAudioFormats.Split(',').ToList() : new List<string>();
-        KeepLanguages = !string.IsNullOrEmpty(processOptions1.KeepLanguages) ? processOptions1.KeepLanguages.Split(',').ToList() : new List<string>();
-        PreferredAudioFormats = !string.IsNullOrEmpty(processOptions1.PreferredAudioFormats) ? processOptions1.PreferredAudioFormats.Split(',').ToList() : new List<string>();
-
-        // Convert to List<VideoFormat>
-        ReEncodeVideo = new List<VideoFormat>();
+        // Convert CSV to List<VideoFormat>
         if (!string.IsNullOrEmpty(processOptions1.ReEncodeVideoCodecs) &&
             !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats) &&
             !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles))
         {
-            List<string> codecList = processOptions1.ReEncodeVideoCodecs.Split(',').ToList();
-            List<string> formatList = processOptions1.ReEncodeVideoFormats.Split(',').ToList();
-            List<string> profileList = processOptions1.ReEncodeVideoProfiles.Split(',').ToList();
+            var codecList = processOptions1.ReEncodeVideoCodecs.Split(',').ToList();
+            var formatList = processOptions1.ReEncodeVideoFormats.Split(',').ToList();
+            var profileList = processOptions1.ReEncodeVideoProfiles.Split(',').ToList();
             if (codecList.Count != formatList.Count || formatList.Count != profileList.Count)
             {
                 // The number of arguments has to match
-                throw new ArgumentException("ReEncodeVideo argument count mismath");
+                throw new ArgumentException("ReEncodeVideo argument count mismatch");
             }
 
             for (int i = 0; i < codecList.Count; i++)
@@ -97,17 +142,16 @@ public class ProcessOptions
                     Format = formatList.ElementAt(i),
                     Profile = profileList.ElementAt(i)
                 };
+
                 // Convert the * as wildcard to a null as any match
                 if (videoFormat.Codec.Equals("*", StringComparison.OrdinalIgnoreCase))
                 {
                     videoFormat.Codec = null;
                 }
-
                 if (videoFormat.Format.Equals("*", StringComparison.OrdinalIgnoreCase))
                 {
                     videoFormat.Format = null;
                 }
-
                 if (videoFormat.Profile.Equals("*", StringComparison.OrdinalIgnoreCase))
                 {
                     videoFormat.Profile = null;
@@ -119,47 +163,77 @@ public class ProcessOptions
     }
 
     [Required]
-    public bool DeleteEmptyFolders { get; set; }
+    public new HashSet<string> KeepExtensions { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+
     [Required]
-    public bool DeleteUnwantedExtensions { get; set; }
+    public new HashSet<string> ReMuxExtensions { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+
     [Required]
-    public List<string> KeepExtensions { get; set; } = new();
+    public List<VideoFormat> ReEncodeVideo { get; protected set; } = new();
+
     [Required]
-    public bool ReMux { get; set; }
+    public new HashSet<string> ReEncodeAudioFormats { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+
     [Required]
-    public List<string> ReMuxExtensions { get; set; } = new();
+    public new HashSet<string> KeepLanguages { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+
     [Required]
-    public bool DeInterlace { get; set; }
+    public new HashSet<string> PreferredAudioFormats { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+// v3
+#pragma warning disable CS0612 // Type or member is obsolete
+public record ProcessOptions : ProcessOptions2
+#pragma warning restore CS0612 // Type or member is obsolete
+{
+    public ProcessOptions() { }
+
+    // Copy from v1
+    [Obsolete]
+    public ProcessOptions(ProcessOptions1 processOptions1) : base(processOptions1)
+    {
+        // Upgrade from v1
+        Upgrade(processOptions1);
+    }
+
+    // Copy from v2
+    [Obsolete]
+    public ProcessOptions(ProcessOptions2 processOptions2) : base(processOptions2)
+    {
+        // Upgrade from v2
+        Upgrade(processOptions2);
+    }
+
+    [Obsolete]
+    protected void Upgrade(ProcessOptions2 processOptions2)
+    {
+        // Upgrade from v1
+        Upgrade(processOptions2 as ProcessOptions1);
+
+        // Convert ISO 639-2 to RFC 5646 language tags
+        DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
+        List<string> oldList = KeepLanguages.ToList();
+        KeepLanguages.Clear();
+        oldList.ForEach(item => KeepLanguages.Add(Language.Singleton.GetIetfTag(item, true) ?? Language.English));
+
+        // Defaults
+        KeepOriginalLanguage = true;
+        RemoveClosedCaptions = true;
+        SetIetfLanguageTags = true;
+        SetTrackFlags = true;
+    }
+
     [Required]
-    public bool ReEncode { get; set; }
+    public bool KeepOriginalLanguage { get; set; }
+
     [Required]
-    public List<VideoFormat> ReEncodeVideo { get; set; } = new();
+    public bool RemoveClosedCaptions { get; set; }
+
     [Required]
-    public List<string> ReEncodeAudioFormats { get; set; } = new();
+    public bool SetIetfLanguageTags { get; set; }
+
     [Required]
-    public bool SetUnknownLanguage { get; set; }
-    [Required]
-    public string DefaultLanguage { get; set; } = "";
-    [Required]
-    public bool RemoveUnwantedLanguageTracks { get; set; }
-    [Required]
-    public List<string> KeepLanguages { get; set; } = new();
-    [Required]
-    public bool RemoveDuplicateTracks { get; set; }
-    [Required]
-    public List<string> PreferredAudioFormats { get; set; } = new();
-    [Required]
-    public bool RemoveTags { get; set; }
-    [Required]
-    public bool UseSidecarFiles { get; set; }
-    [Required]
-    public bool SidecarUpdateOnToolChange { get; set; }
-    [Required]
-    public bool Verify { get; set; }
-    [Required]
-    public bool RestoreFileTimestamp { get; set; }
-    [Required]
-    public List<string> FileIgnoreList { get; set; } = new();
+    public bool SetTrackFlags { get; set; }
 
     public void SetDefaults()
     {
@@ -169,16 +243,19 @@ public class ProcessOptions
         DeInterlace = true;
         ReEncode = true;
         SetUnknownLanguage = true;
-        RemoveUnwantedLanguageTracks = true;
+        RemoveUnwantedLanguageTracks = false;
+        SetIetfLanguageTags = true;
+        SetTrackFlags = true;
         RemoveTags = true;
         UseSidecarFiles = true;
         SidecarUpdateOnToolChange = false;
         Verify = true;
         RestoreFileTimestamp = false;
-        RemoveDuplicateTracks = true;
-        FileIgnoreList = new List<string>();
-        DefaultLanguage = "eng";
-        KeepExtensions = new List<string>
+        RemoveDuplicateTracks = false;
+        RemoveClosedCaptions = true;
+        FileIgnoreList.Clear();
+        DefaultLanguage = "en";
+        KeepExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // TODO: Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
             ".partial~",
@@ -190,8 +267,9 @@ public class ProcessOptions
             ".ass",
             ".vtt"
         };
-        ReMuxExtensions = new List<string>
+        ReMuxExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
+            // TODO: Just a few, but many more
             ".avi",
             ".m2ts",
             ".ts",
@@ -214,7 +292,7 @@ public class ProcessOptions
             new() { Format = "msmpeg4v2", Codec = "mp42" },
             new() { Format = "msmpeg4v3", Codec = "div3" }
         };
-        ReEncodeAudioFormats = new List<string>
+        ReEncodeAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "flac",
             "mp2",
@@ -226,14 +304,15 @@ public class ProcessOptions
             "pcm_u8",
             "pcm_s16le"
         };
-        KeepLanguages = new List<string>
+        KeepLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "eng",
-            "afr",
-            "chi",
-            "ind"
+            "en",
+            "af",
+            "zh",
+            "in"
         };
-        PreferredAudioFormats = new List<string>
+        KeepOriginalLanguage = true;
+        PreferredAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "truehd atmos",
             "truehd",
@@ -245,20 +324,15 @@ public class ProcessOptions
         };
     }
 
-    public void AddIgnoreEntry(string fileName)
+    public bool VerifyValues()
     {
-        // Case insensite conditional add
-        if (!FileIgnoreList.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+        // Some values must be set
+        if (string.IsNullOrEmpty(DefaultLanguage))
         {
-            FileIgnoreList.Add(fileName);
+            Log.Logger.Error("ProcessOptions:DefaultLanguage must be set");
+            return false;
         }
-    }
 
-    public void RemoveIgnoreDuplicates()
-    {
-        // Remove duplicates using case insensite hashset
-        var ignoreList = new HashSet<string>(FileIgnoreList, StringComparer.OrdinalIgnoreCase);
-        FileIgnoreList = ignoreList.ToList();
-        FileIgnoreList.Sort();
+        return true;
     }
 }

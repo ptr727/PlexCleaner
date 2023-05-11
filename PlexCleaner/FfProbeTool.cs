@@ -55,7 +55,7 @@ public class FfProbeTool : FfMpegTool
         commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"{Snippet} ");
+            commandline.Append($"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
         }
         commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"");
 
@@ -68,8 +68,10 @@ public class FfProbeTool : FfMpegTool
             return false;
         }
 
+        // Close and flush the output stream
+        process.OutputStream.Close();
+
         // Read JSON from stream
-        process.OutputStream.Flush();
         memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
         using StreamReader streamReader = new(decompressStream);
@@ -96,7 +98,6 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfoJson(string filename, out string json)
     {
         // Get media info as JSON
-        // TODO: Add format to JSON
         string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{filename}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
@@ -168,19 +169,10 @@ public class FfProbeTool : FfMpegTool
                 }
             }
 
-            // Remove cover art
-            MediaInfo.RemoveCoverArt(mediaInfo);
+            // TODO: Errors
 
-            // Errors
-            mediaInfo.HasErrors = mediaInfo.Video.Any(item => item.HasErrors) ||
-                                  mediaInfo.Audio.Any(item => item.HasErrors) ||
-                                  mediaInfo.Subtitle.Any(item => item.HasErrors);
-
-            // Tags in container or any tracks
-            mediaInfo.HasTags = HasTags(ffProbe.Format.Tags) ||
-                mediaInfo.Video.Any(item => item.HasTags) ||
-                mediaInfo.Audio.Any(item => item.HasTags) ||
-                mediaInfo.Subtitle.Any(item => item.HasTags);
+            // Unwanted tags
+            mediaInfo.HasTags = HasUnwantedTags(ffProbe.Format.Tags);
 
             // Duration in seconds
             mediaInfo.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
@@ -191,14 +183,14 @@ public class FfProbeTool : FfMpegTool
             // TODO: Chapters
             // TODO: Attachments
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod().Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
         return true;
     }
 
-    private static bool HasTags(Dictionary<string, string> tags)
+    private static bool HasUnwantedTags(Dictionary<string, string> tags)
     {
         // Format tags:
         // "encoder": "libebml v1.4.2 + libmatroska v1.6.4",
@@ -215,10 +207,13 @@ public class FfProbeTool : FfMpegTool
         // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
 
         // Language and title are expected tags
-        // Look for any key containing "statistics"
-        // TODO: Find a more relaible method for determining what tags are expected or not
-        return tags.Keys.FirstOrDefault(item => item.Contains("statistics", StringComparison.OrdinalIgnoreCase)) != null;
+
+        // TODO: Find a more reliable method for determining what tags are expected or not
+
+        // Look for undesirable Tags
+        return tags.Keys.Any(key => UndesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private const string Snippet = "-read_intervals %03:00";
+    // "Undesirable" tags
+    private static readonly string[] UndesirableTags = { "statistics" };
 }

@@ -12,7 +12,7 @@ using Serilog;
 namespace PlexCleaner;
 
 // Filename, State
-using ProcessTuple = ValueTuple<string, SidecarFile.States>;
+using ProcessTuple = ValueTuple<string, SidecarFile.StatesType>;
 
 internal class Process
 {
@@ -20,254 +20,53 @@ internal class Process
     public enum Tasks
     {
         ClearTags,
-        ClearAttachments,
+        RemoveAttachments,
         IdetFilter,
         FindClosedCaptions,
-        Repair,
+        RepairMedia,
         VerifyMetadata,
-        VerifyStream
-    }
-
-    public static bool CanReProcess(Tasks task)
-    {
-        // 0: No re-processing
-        if (Program.Options.ReProcess == 0)
-        {
-            return false;
-        }
-
-        // Compare type of task with level of re-processing
-        switch (task)
-        {
-            // 1+: Metadata processing
-            case Tasks.ClearTags:
-            case Tasks.ClearAttachments:
-            case Tasks.FindClosedCaptions:
-            case Tasks.VerifyMetadata:
-                return Program.Options.ReProcess >= 1;
-            // 2+: Stream processing
-            case Tasks.IdetFilter:
-            case Tasks.VerifyStream:
-            case Tasks.Repair:
-                return Program.Options.ReProcess >= 2;
-            default:
-                return false;
-        }
+        VerifyMedia,
+        RepairMetadata
     }
 
     public Process()
     {
-        // Convert List<string> to HashSet<string>
-        // Case insensitive, duplicates with different case is not supported
-        KeepExtensions = new HashSet<string>(Program.Config.ProcessOptions.KeepExtensions, StringComparer.OrdinalIgnoreCase);
-        ReMuxExtensions = new HashSet<string>(Program.Config.ProcessOptions.ReMuxExtensions, StringComparer.OrdinalIgnoreCase);
-        ReEncodeAudioFormats = new HashSet<string>(Program.Config.ProcessOptions.ReEncodeAudioFormats, StringComparer.OrdinalIgnoreCase);
-        FileIgnoreList = new HashSet<string>(Program.Config.ProcessOptions.FileIgnoreList, StringComparer.OrdinalIgnoreCase);
-        if (FileIgnoreList.Count != Program.Config.ProcessOptions.FileIgnoreList.Count)
-        {
-            Log.Logger.Warning("FileIgnoreList contains duplicates, {Set} != {List}", FileIgnoreList.Count, Program.Config.ProcessOptions.FileIgnoreList.Count);
-            Program.Config.ProcessOptions.RemoveIgnoreDuplicates();
-        }
-
-        // Maintain order, keep in List<string>
-        PreferredAudioFormats = Program.Config.ProcessOptions.PreferredAudioFormats;
-
-        // Default to eng if language not set
+        // Default to English if language not set
         if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
         {
-            Program.Config.ProcessOptions.DefaultLanguage = "eng";
+            Program.Config.ProcessOptions.DefaultLanguage = Language.English;
         }
 
-        // Always keep zxx no linguistic content and the default language
-        KeepLanguages = new HashSet<string>(Program.Config.ProcessOptions.KeepLanguages, StringComparer.OrdinalIgnoreCase)
-        {
-            "zxx",
-            Program.Config.ProcessOptions.DefaultLanguage
-        };
-
-        // Convert VideoFormat to VideoInfo
-        ReEncodeVideoInfos = new List<VideoInfo>();
-        foreach (VideoInfo videoInfo in Program.Config.ProcessOptions.ReEncodeVideo.Select(format =>
-            new VideoInfo
-            {
-                Codec = format.Codec,
-                Format = format.Format,
-                Profile = format.Profile
-            }))
-        {
-            ReEncodeVideoInfos.Add(videoInfo);
-        }
+        // Always keep no linguistic content (zxx), undefined (und), and the default language
+        Program.Config.ProcessOptions.KeepLanguages.Add(Language.None);
+        Program.Config.ProcessOptions.KeepLanguages.Add(Language.Undefined);
+        Program.Config.ProcessOptions.KeepLanguages.Add(Program.Config.ProcessOptions.DefaultLanguage);
     }
 
-    public bool ProcessFolders(List<string> folderList)
-    {
-        // Create the file and directory list
-        if (!FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileInfoList, out _))
-        { 
-            return false;
-        }
-
-        // Process the files
-        List<string> fileList = new();
-        fileInfoList.ForEach(item => fileList.Add(item.FullName));
-        return ProcessFiles(fileList);
-    }
-
-    public static bool DeleteEmptyFolders(IEnumerable<string> folderList)
-    {
-        if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
-        {
-            return true;
-        }
-
-        Log.Logger.Information("Deleting empty folders ...");
-
-        // Delete all empty folders
-        int totalDeleted = 0;
-        try
-        { 
-            folderList.AsParallel()
-                .WithDegreeOfParallelism(Program.Options.ThreadCount)
-                .WithCancellation(Program.CancelToken())
-                .ForAll(folder =>
-                {
-                    int deleted = 0;
-                    Log.Logger.Information("Looking for empty folders in {Folder}", folder);
-                    // Ignore errors
-                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
-                    Interlocked.Add(ref totalDeleted, deleted);
-                });
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancelled
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            // Error
-            return false;
-        }
-
-        Log.Logger.Information("Deleted folders : {Deleted}", totalDeleted);
-
-        return true;
-    }
-
-    public bool ProcessFiles(List<string> fileList)
-    {
-        // Log active options
-        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReProcess: {ReProcess}, ReVerify: {ReVerify}, FileIgnoreList: {FileIgnoreList}",
-                               Program.Options.TestSnippets,
-                               Program.Options.TestNoModify,
-                               Program.Options.ReProcess,
-                               Program.Options.ReVerify,
-                               Program.Config.ProcessOptions.FileIgnoreList.Count);
-
-        // Ignore count before
-        int ignoreCount = FileIgnoreList.Count;
-
-        // Process all the files
-        List<ProcessTuple> errorInfo = new();
-        List<ProcessTuple> modifiedInfo = new();
-        List<ProcessTuple> failedInfo = new();
-        var lockObject = new Object();
-        bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
-        {
-            // Process the file
-            bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.States state, out string processName);
-            if (!processResult &&
-                Program.IsCancelled())
-            {
-                // Cancelled
-                return false;
-            }
-
-            // Error
-            if (!processResult)
-            { 
-                lock (lockObject)
-                { 
-                    errorInfo.Add(new ProcessTuple(processName, state));
-                }
-            }
-
-            // Modified
-            if (modified)
-            {
-                lock (lockObject)
-                { 
-                    modifiedInfo.Add(new ProcessTuple(processName, state));
-                }
-            }
-            
-            // Verify failed
-            if (state.HasFlag(SidecarFile.States.VerifyFailed))
-            {
-                lock (lockObject)
-                { 
-                    failedInfo.Add(new ProcessTuple(processName, state));
-                }
-
-                // Add the failed file to the ignore list
-                if (Program.Config.VerifyOptions.RegisterInvalidFiles)
-                {
-                    lock (lockObject)
-                    { 
-                        Program.Config.ProcessOptions.AddIgnoreEntry(processName);
-                    }
-                }
-            }
-
-            return processResult;
-        });
-
-        // Summary
-        // Log.Logger.Information("Error files : {Count}", errorCount);
-        errorInfo.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.Item2, item.Item1));
-
-        Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
-        modifiedInfo.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.Item2, item.Item1));
-
-        Log.Logger.Information("VerifyFailed files : {Count}", failedInfo.Count);
-        failedInfo.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.Item2, item.Item1));
-
-        // Write the updated ignore file list
-        if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-            Program.Config.ProcessOptions.FileIgnoreList.Count != ignoreCount)
-        {
-            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}", 
-                                    Program.Config.ProcessOptions.FileIgnoreList.Count, 
-                                    Program.Options.SettingsFile);
-            Program.Config.ProcessOptions.FileIgnoreList.Sort();
-            ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
-        }
-
-        return ret;
-    }
-    private bool ProcessFile(string fileName, out bool modified, out SidecarFile.States state, out string processName)
+    private static bool ProcessFile(string fileName, out bool modified, out SidecarFile.StatesType state, out string processName)
     {
         // Init
         modified = false;
-        state = SidecarFile.States.None;
+        state = SidecarFile.StatesType.None;
         processName = fileName;
         ProcessFile processFile = null;
         bool result;
 
         // Process in jump loop
-        for (; ; )
+        for (;;)
         {
             // Skip the file if it is in the ignore list
-            if (FileIgnoreList.Contains(fileName))
+            if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileName))
             {
                 Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
                 result = true;
                 break;
             }
 
-            // Does the file still exist
+            // Does the file exist and have access permissions
             if (!File.Exists(fileName))
             {
-                Log.Logger.Warning("Skipping missing file : {FileName}", fileName);
+                Log.Logger.Warning("Skipping inaccessible file : {FileName}", fileName);
                 result = false;
                 break;
             }
@@ -277,7 +76,7 @@ internal class Process
             DateTime lastWriteTime = processFile.FileInfo.LastWriteTimeUtc;
 
             // Skip the file if the extension is in the keep extensions list
-            if (KeepExtensions.Contains(processFile.FileInfo.Extension))
+            if (Program.Config.ProcessOptions.KeepExtensions.Contains(processFile.FileInfo.Extension))
             {
                 Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileName);
                 result = true;
@@ -307,7 +106,7 @@ internal class Process
             }
 
             // ReMux non-MKV containers matched by extension
-            if (!processFile.RemuxByExtensions(ReMuxExtensions, ref modified) ||
+            if (!processFile.RemuxByExtensions(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
@@ -347,10 +146,10 @@ internal class Process
                 break;
             }
 
-            // Re-verify and repair media in VerifyFailed state
+            // If ReVerify is set reset the VerifyFailed and RepairFailed states
             if (!processFile.SetReVerifyState() ||
                 Program.IsCancelled())
-            { 
+            {
                 result = false;
                 break;
             }
@@ -363,30 +162,41 @@ internal class Process
                 break;
             }
 
-            // Remove all attachments, they can interfere and show up as video streams
-            if (!processFile.RemoveAttachments(ref modified) ||
+            // Remove all cover art attachments or video tracks that interfere with processing logic
+            if (!processFile.RemoveCoverArt(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
                 break;
             }
 
-            // The file extension and container type is MKV and all media info should be valid
+            // Remove tags, titles, and attachments
+            // Conditional on RemoveTags option
+            if (!processFile.RemoveTags(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // Test that the file extension and container type is MKV and all media info should be valid
             if (!processFile.VerifyMediaInfo())
             {
                 result = false;
                 break;
             }
 
-            // ReMux to repair metadata errors
-            if (!processFile.ReMuxMediaInfoErrors(ref modified) ||
+            // Repair tracks with metadata errors
+            // Conditional on AutoRepair option
+            if (!processFile.RepairMetadataErrors(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
                 break;
             }
 
-            // Remove EIA-608 / Closed Captions from the video stream
+            // Remove EIA-608 Closed Captions from the video stream
+            // Conditional on RemoveClosedCaptions option
             if (!processFile.RemoveClosedCaptions(ref modified) ||
                 Program.IsCancelled())
             {
@@ -395,6 +205,7 @@ internal class Process
             }
 
             // Deinterlace interlaced content
+            // Conditional on DeInterlace option
             if (!processFile.DeInterlace(ref modified) ||
                 Program.IsCancelled())
             {
@@ -403,15 +214,29 @@ internal class Process
             }
 
             // Change all tracks with an unknown language to the default language
-            if (!processFile.SetUnknownLanguage(ref modified) ||
+            // Conditional on SetUnknownLanguage option
+            if (!processFile.SetUnknownLanguageTracks(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
                 break;
             }
 
-            // Remove all the unwanted and duplicate language tracks
-            if (!processFile.ReMux(KeepLanguages, PreferredAudioFormats, ref modified) ||
+            // Remove all the unwanted language tracks
+            // Conditional on RemoveUnwantedLanguageTracks option
+            if (!processFile.RemoveUnwantedLanguageTracks(ref modified) ||
+                Program.IsCancelled())
+            {
+                result = false;
+                break;
+            }
+
+            // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux, are logically separate,
+            // but could be combined to complete in one remux operation
+
+            // Remove all the duplicate tracks
+            // Conditional on RemoveDuplicateTracks option
+            if (!processFile.RemoveDuplicateTracks(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
@@ -419,7 +244,8 @@ internal class Process
             }
 
             // Re-Encode formats that cannot be direct-played
-            if (!processFile.ReEncode(ReEncodeVideoInfos, ReEncodeAudioFormats, ref modified) ||
+            // Conditional on ReEncode option
+            if (!processFile.ReEncode(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
@@ -427,23 +253,18 @@ internal class Process
             }
 
             // Verify media streams, and repair if possible
-            if (!processFile.Verify(ref modified) ||
+            // Conditional on Verify and AutoRepair options
+            if (!processFile.VerifyAndRepair(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
                 break;
             }
 
-            // Repair may have modified track tags, reset the default language again
-            if (!processFile.SetUnknownLanguage(ref modified) ||
-                Program.IsCancelled())
-            {
-                result = false;
-                break;
-            }
-
-            // Remove tags and titles
-            if (!processFile.RemoveTags(ref modified) ||
+            // FfMpeg or HandBrake could undo the previous cleanup, repeat
+            if (!processFile.RepairMetadataErrors(ref modified) ||
+                !processFile.SetUnknownLanguageTracks(ref modified) ||
+                !processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
             {
                 result = false;
@@ -465,27 +286,185 @@ internal class Process
                 break;
             }
 
-            // Done
+            // Success
             result = true;
             break;
         }
 
-        // Return current state and fileinfo
+        // Update state if we opened a file for processing
         if (processFile != null)
         {
+            // Delete files that failed processing
+            // Conditional on DeleteInvalidFiles
+            if (result == false)
+            {
+                processFile.DeleteFailedFile();
+            }
+
+            // Return current state and file info
             state = processFile.State;
             processName = processFile.FileInfo.FullName;
         }
         return result;
     }
 
-    public bool ReMuxFiles(List<string> fileList)
+    public static bool ProcessFolders(List<string> folderList)
+    {
+        // Create the file and directory list
+        if (!FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileInfoList, out _))
+        { 
+            return false;
+        }
+
+        // Process the files
+        List<string> fileList = new();
+        fileInfoList.ForEach(item => fileList.Add(item.FullName));
+        return ProcessFiles(fileList);
+    }
+
+    public static bool DeleteEmptyFolders(IEnumerable<string> folderList)
+    {
+        // Conditional
+        if (!Program.Config.ProcessOptions.DeleteEmptyFolders)
+        {
+            return true;
+        }
+
+        Log.Logger.Information("Deleting empty folders ...");
+
+        // Delete all empty folders
+        bool fatalError = false;
+        int totalDeleted = 0;
+        try
+        { 
+            folderList.AsParallel()
+                .WithDegreeOfParallelism(Program.Options.ThreadCount)
+                .WithCancellation(Program.CancelToken())
+                .ForAll(folder =>
+                {
+                    // Handle cancel request
+                    Program.CancelToken().ThrowIfCancellationRequested();
+
+                    // Delete empty folders
+                    int deleted = 0;
+                    Log.Logger.Information("Looking for empty folders in {Folder}", folder);
+                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    Interlocked.Add(ref totalDeleted, deleted);
+                });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled
+            fatalError = true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Error
+            fatalError = true;
+        }
+
+        Log.Logger.Information("Deleted folders : {Deleted}", totalDeleted);
+
+        return !fatalError;
+    }
+
+    public static bool ProcessFiles(List<string> fileList)
+    {
+        // Log active options
+        Log.Logger.Information("Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReVerify: {ReVerify}, FileIgnoreList: {FileIgnoreList}",
+                               Program.Options.TestSnippets,
+                               Program.Options.TestNoModify,
+                               Program.Options.ReVerify,
+                               Program.Config.ProcessOptions.FileIgnoreList.Count);
+
+        // Ignore count before
+        int ignoreCount = Program.Config.ProcessOptions.FileIgnoreList.Count;
+
+        // Process all the files
+        List<ProcessTuple> errorInfo = new();
+        List<ProcessTuple> modifiedInfo = new();
+        List<ProcessTuple> failedInfo = new();
+        var lockObject = new Object();
+        bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
+        {
+            // Process the file
+            bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.StatesType state, out string processName);
+
+            // Cancelled
+            if (Program.IsCancelled())
+            {
+                return false;
+            }
+
+            // Error
+            if (!processResult)
+            { 
+                lock (lockObject)
+                { 
+                    errorInfo.Add(new ProcessTuple(processName, state));
+                }
+            }
+
+            // Modified
+            if (modified)
+            {
+                lock (lockObject)
+                { 
+                    modifiedInfo.Add(new ProcessTuple(processName, state));
+                }
+            }
+            
+            // Verify failed
+            if (state.HasFlag(SidecarFile.StatesType.VerifyFailed))
+            {
+                lock (lockObject)
+                { 
+                    failedInfo.Add(new ProcessTuple(processName, state));
+                }
+
+                // Add the failed file to the ignore list
+                if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+                {
+                    lock (lockObject)
+                    { 
+                        Program.Config.ProcessOptions.FileIgnoreList.Add(processName);
+                    }
+                }
+            }
+
+            return processResult;
+        });
+
+        // Summary
+        // Log.Logger.Information("Error files : {Count}", errorCount);
+        errorInfo.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.Item2, item.Item1));
+
+        Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
+        modifiedInfo.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.Item2, item.Item1));
+
+        Log.Logger.Information("VerifyFailed files : {Count}", failedInfo.Count);
+        failedInfo.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.Item2, item.Item1));
+
+        // Write the updated ignore file list
+        if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
+            Program.Config.ProcessOptions.FileIgnoreList.Count != ignoreCount)
+        {
+            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}", 
+                                    Program.Config.ProcessOptions.FileIgnoreList.Count, 
+                                    Program.Options.SettingsFile);
+            ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+        }
+
+        return ret;
+    }
+
+    public static bool ReMuxFiles(List<string> fileList)
     {
         return ProcessFilesDriver(fileList, "ReMux", fileName =>
         {
             // Handle only MKV files, and files in the remux extension list
             if (!MkvMergeTool.IsMkvFile(fileName) &&
-                !ReMuxExtensions.Contains(Path.GetExtension(fileName)))
+                !Program.Config.ProcessOptions.ReMuxExtensions.Contains(Path.GetExtension(fileName)))
             {
                 return true;
             }
@@ -529,9 +508,9 @@ internal class Process
     public static bool GetTagMapFiles(List<string> fileList)
     {
         // Create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
-        TagMapDictionary fftags = new();
-        TagMapDictionary mktags = new();
-        TagMapDictionary mitags = new();
+        TagMapDictionary ffTags = new();
+        TagMapDictionary mkTags = new();
+        TagMapDictionary miTags = new();
         var lockObject = new Object();
         if (!ProcessFilesDriver(fileList, "Create Tag Map", fileName =>
             {
@@ -551,9 +530,9 @@ internal class Process
                 // Add all the tags
                 lock (lockObject)
                 { 
-                    fftags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
-                    mktags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
-                    mitags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
+                    ffTags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
+                    mkTags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
+                    miTags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
                 }
 
                 return true;
@@ -564,11 +543,11 @@ internal class Process
 
         // Print the tags
         Log.Logger.Information("FfProbe:");
-        fftags.WriteLine();
+        ffTags.WriteLine();
         Log.Logger.Information("MkvMerge:");
-        mktags.WriteLine();
+        mkTags.WriteLine();
         Log.Logger.Information("MediaInfo:");
-        mitags.WriteLine();
+        miTags.WriteLine();
 
         return true;
     }
@@ -583,9 +562,8 @@ internal class Process
                 return true;
             }
 
-            // Create the sidecar file
-            SidecarFile sidecarfile = new(fileName);
-            return sidecarfile.Create();
+            // Create new or overwrite existing sidecar file
+            return SidecarFile.Create(fileName);
         });
     }
 
@@ -593,23 +571,29 @@ internal class Process
     {
         return ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
         {
-            // Handle only sidecar files
-            if (!SidecarFile.IsSidecarFile(fileName))
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
                 return true;
             }
 
-            // Get sidecar information
-            SidecarFile sidecarfile = new(fileName);
-            if (!sidecarfile.Read())
+            // Print info
+            return SidecarFile.PrintInformation(fileName);
+        });
+    }
+
+    public static bool UpdateSidecarFiles(List<string> fileList)
+    {
+        return ProcessFilesDriver(fileList, "Update Sidecar Files", fileName =>
+        {
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileName))
             {
-                return false;
+                return true;
             }
 
-            // Print info
-            sidecarfile.WriteLine();
-
-            return true;
+            // Create new or update existing sidecar file
+            return SidecarFile.Update(fileName);
         });
     }
 
@@ -707,11 +691,12 @@ internal class Process
         int totalCount = fileList.Count;
         int processedCount = 0;
         int errorCount = 0;
+        bool fatalError = false;
         try
         {
             // Group files by path ignoring extensions
             // This prevents files with the same name being modified by different threads
-            // E.g. when remuxing from AVI to MKV, or when testing for existance of MKV for SideCar files
+            // E.g. when remuxing from AVI to MKV, or when testing for existence of MKV for Sidecar files
             var groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
 
             // Use a single item partitioner
@@ -727,14 +712,19 @@ internal class Process
             {
                 // Process all files in the group in this thread
                 foreach (string fileName in keyPair)
-                { 
+                {
                     // Log completion % before task starts
                     double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
                     Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
 
                     // Perform the task
-                    if (!taskFunc(fileName) &&
-                        !Program.IsCancelled())
+                    bool taskResult = taskFunc(fileName);
+
+                    // Handle cancel request
+                    Program.CancelToken().ThrowIfCancellationRequested();
+
+                    // Handle result
+                    if (!taskResult)
                     {
                         // Error
                         Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);
@@ -750,10 +740,12 @@ internal class Process
         catch (OperationCanceledException)
         {
             // Cancelled
+            fatalError = true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             // Error
+            fatalError = true;
         }
 
         // Stop the timer
@@ -765,7 +757,7 @@ internal class Process
         Log.Logger.Information("Total files : {Count}", totalCount);
         Log.Logger.Information("Error files : {Count}", errorCount);
 
-        return errorCount == 0;
+        return !fatalError;
     }
 
     private static double GetPercentage(int dividend, int divisor)
@@ -787,12 +779,4 @@ internal class Process
         }
         return percentage;
     }
-
-    private readonly HashSet<string> FileIgnoreList;
-    private readonly HashSet<string> KeepExtensions;
-    private readonly HashSet<string> ReMuxExtensions;
-    private readonly HashSet<string> ReEncodeAudioFormats;
-    private readonly HashSet<string> KeepLanguages;
-    private readonly List<string> PreferredAudioFormats;
-    private readonly List<VideoInfo> ReEncodeVideoInfos;
 }

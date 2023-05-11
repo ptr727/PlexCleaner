@@ -1,49 +1,167 @@
 ﻿using System;
 using System.ComponentModel;
-using System.IO;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Serilog;
 
 namespace PlexCleaner;
 
-public class SidecarFileJsonSchema
+public record SidecarFileJsonSchemaBase
 {
+    // TODO: Add a schema
+    // Schema reference
+    // [JsonProperty(PropertyName = "$schema", Order = -3)]
+    // public string Schema { get; } = SchemaUri;
+
     [DefaultValue(0)]
-    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
-    public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-    public const int CurrentSchemaVersion = 4;
+    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
+    public int SchemaVersion { get; set; } = SidecarFileJsonSchema.Version;
+}
 
+// v1
+[Obsolete]
+public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
+{
+    [Obsolete]
+    internal string FfMpegToolVersion { get; set; }
+    [Obsolete]
+    internal string MkvToolVersion { get; set; }
+    [Obsolete]
+    internal string FfIdetInfoData { get; set; }
+
+    [Required]
     public DateTime MediaLastWriteTimeUtc { get; set; }
-    public long MediaLength { get; set; }
-    public string MediaHash { get; set; }
 
-    public string FfProbeToolVersion { get; set; }
+    [Required]
+    public long MediaLength { get; set; }
+
+    [Required]
     public string FfProbeInfoData { get; set; }
 
-    public string MkvMergeToolVersion { get; set; }
+
+    [Required]
     public string MkvMergeInfoData { get; set; }
 
+    [Required]
     public string MediaInfoToolVersion { get; set; }
+
+    [Required]
     public string MediaInfoData { get; set; }
 
-    public SidecarFile.States State { get; set; }
+    // v1
+    public const int Version = 1;
+}
 
-    [Obsolete("Replaced with State in v4", false)]
-    private bool Verified { get; set; }
-    [Obsolete("Replaced with FfProbeToolVersion in v3", false)]
-    private string FfMpegToolVersion { get; set; }
-    [Obsolete("Replaced with MkvMergeToolVersion in v3", false)]
-    private string MkvToolVersion { get; set; }
+// v2
+[Obsolete]
+public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
+{
+    public SidecarFileJsonSchema2() { }
 
-    public static SidecarFileJsonSchema FromFile(string path)
+    // Copy from v1
+    [Obsolete]
+    public SidecarFileJsonSchema2(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1)
     {
-        return FromJson(File.ReadAllText(path));
+        Upgrade(sidecarFileJsonSchema1);
     }
 
-    public static void ToFile(string path, SidecarFileJsonSchema json)
+    [Obsolete]
+    protected void Upgrade(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
     {
-        File.WriteAllText(path, ToJson(json));
+        // Upgrade v1 to v2
+        Verified = false;
     }
+
+    [Obsolete]
+    internal bool Verified { get; set; }
+
+    // v2
+    public new const int Version = 2;
+}
+
+// v3
+[Obsolete]
+public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
+{
+    public SidecarFileJsonSchema3() { }
+
+    [Obsolete]
+    public SidecarFileJsonSchema3(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1)
+    {
+        Upgrade(sidecarFileJsonSchema1);
+    }
+
+    [Obsolete]
+    public SidecarFileJsonSchema3(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2)
+    {
+        Upgrade(sidecarFileJsonSchema2);
+    }
+
+    [Obsolete]
+    protected void Upgrade(SidecarFileJsonSchema2 sidecarFileJsonSchema2)
+    {
+        // Upgrade v1 to v2
+        Upgrade((SidecarFileJsonSchema1)sidecarFileJsonSchema2);
+
+        // Upgrade v2 to v3
+        State = Verified ? SidecarFile.StatesType.Verified : SidecarFile.StatesType.None;
+        FfProbeToolVersion = FfMpegToolVersion;
+        MkvMergeToolVersion = MkvToolVersion;
+    }
+
+    [Required]
+    public string FfProbeToolVersion { get; set; }
+
+    [Required]
+    public string MkvMergeToolVersion { get; set; }
+
+    [Required]
+    public SidecarFile.StatesType State { get; set; }
+
+    // v3
+    public new const int Version = 3;
+}
+
+// v4
+#pragma warning disable CS0612 // Type or member is obsolete
+public record SidecarFileJsonSchema : SidecarFileJsonSchema3
+#pragma warning restore CS0612 // Type or member is obsolete
+{
+    public SidecarFileJsonSchema() { }
+
+    [Obsolete]
+    public SidecarFileJsonSchema(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1)
+    {
+        Upgrade(sidecarFileJsonSchema1);
+    }
+
+    [Obsolete]
+    public SidecarFileJsonSchema(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2)
+    {
+        Upgrade(sidecarFileJsonSchema2);
+    }
+
+    [Obsolete]
+    public SidecarFileJsonSchema(SidecarFileJsonSchema3 sidecarFileJsonSchema3) : base(sidecarFileJsonSchema3)
+    {
+        Upgrade(sidecarFileJsonSchema3);
+    }
+
+    [Obsolete]
+    protected void Upgrade(SidecarFileJsonSchema3 sidecarFileJsonSchema3)
+    {
+        // Upgrade v2 to v3
+        Upgrade((SidecarFileJsonSchema2)sidecarFileJsonSchema3);
+
+        // Upgrade v3 to v4
+        MediaHash = "";
+    }
+
+    [Required]
+    public string MediaHash { get; set; }
+
+    // v4
+    public new const int Version = 4;
 
     public static string ToJson(SidecarFileJsonSchema json)
     {
@@ -52,72 +170,43 @@ public class SidecarFileJsonSchema
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
-    }
+        // Deserialize the base class to get the schema version
+        var sidecarFileJsonSchemaBase = JsonConvert.DeserializeObject<SidecarFileJsonSchemaBase>(json, Settings);
+        if (sidecarFileJsonSchemaBase == null)
+        {
+            return null;
+        }
 
-    public static SidecarFileJsonSchema FromJson(JsonTextReader reader)
-    {
-        var serializer = JsonSerializer.Create(Settings);
-        return (SidecarFileJsonSchema)serializer.Deserialize(reader, typeof(SidecarFileJsonSchema));
+        if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
+        {
+            Log.Logger.Warning("Upgrading SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
+        }
+
+        // Deserialize the correct version
+        switch (sidecarFileJsonSchemaBase.SchemaVersion)
+        {
+#pragma warning disable CS0612 // Type or member is obsolete
+            // Version 1
+            case SidecarFileJsonSchema1.Version:
+                return new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema1>(json, Settings));
+            // Version 2
+            case SidecarFileJsonSchema2.Version:
+                return new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema2>(json, Settings));
+            // Version 3
+            case SidecarFileJsonSchema3.Version:
+                return new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema3>(json, Settings));
+#pragma warning restore CS0612 // Type or member is obsolete
+            // Current version
+            case Version:
+                return JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, Settings);
+            // Unknown version
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     private static readonly JsonSerializerSettings Settings = new()
     {
         Formatting = Formatting.Indented
     };
-
-    public static bool Upgrade(SidecarFileJsonSchema json)
-    {
-        // Current version
-        if (json.SchemaVersion == CurrentSchemaVersion)
-        {
-            return true;
-        }
-
-        // Version 0 in undetermined
-        if (json.SchemaVersion == 0)
-        {
-            Log.Logger.Error("Sidecar schema not upgradeable : {SchemaVersion} < 1", json.SchemaVersion);
-            return false;
-        }
-
-        // v1 Schema
-        // FfIdetInfoData was todo in v1, removed in v2
-        // Verify was added in v2, missing in v1
-        if (json.SchemaVersion == 1)
-        {
-            json.State = SidecarFile.States.None;
-        }
-
-        // v2 Schema
-        // FfMpegToolVersion was replaced with FfProbeToolVersion in v3
-        // MkvToolVersion was replaced with MkvMergeToolVersion in v3
-        // Migrating the versions is not really useful as the version format changed
-        // TODO: Convert the version format from longform to shortform
-        if (json.SchemaVersion < 3)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            json.FfProbeToolVersion = json.FfMpegToolVersion;
-            json.MkvMergeToolVersion = json.MkvToolVersion;
-#pragma warning restore CS0618 // Type or member is obsolete
-        }
-
-        // v3 Schema
-        // Verified was replaced with State in v4
-        if (json.SchemaVersion < 4)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (json.Verified)
-            {
-#pragma warning restore CS0618 // Type or member is obsolete
-                json.State |= SidecarFile.States.Verified;
-            }
-        }
-
-        // v4 Schema
-        // MediaHash was added
-        // Will always require a recomputation if missing
-
-        return true;
-    }
 }

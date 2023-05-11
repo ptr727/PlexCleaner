@@ -74,5 +74,5 @@ public class MkvExtractTool : MkvMergeTool
         return exitCode is 0 or 1;
     }
 
-    private const string ExtractOptions = "--flush-on-close";
+    private const string ExtractOptions = "";
 }

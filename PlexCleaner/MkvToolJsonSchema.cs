@@ -2,9 +2,9 @@
 using Newtonsoft.Json;
 
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v14.json
+// JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
 
-// Use mkvinfo example output:
+// Use mkvmerge example output:
 // mkvmerge --identify file.mkv --identification-format json
 
 // Convert array[] to List<>
@@ -103,6 +103,9 @@ public class TrackProperties
     [JsonProperty("language")]
     public string Language { get; set; } = "";
 
+    [JsonProperty("language_ietf")]
+    public string LanguageIetf { get; set; }
+
     [JsonProperty("forced_track")]
     public bool Forced { get; set; }
 
@@ -117,6 +120,20 @@ public class TrackProperties
 
     [JsonProperty("default_track")]
     public bool DefaultTrack { get; set; }
+
+    [JsonProperty("flag_original")]
+    public bool Original { get; set; }
+    [JsonProperty("flag_commentary")]
+    public bool Commentary { get; set; }
+
+    [JsonProperty("flag_visual_impaired")]
+    public bool VisualImpaired { get; set; }
+
+    [JsonProperty("flag_hearing_impaired")]
+    public bool HearingImpaired { get; set; }
+
+    [JsonProperty("flag_text_descriptions")]
+    public bool TextDescriptions { get; set; }
 }
 
 public class Attachment

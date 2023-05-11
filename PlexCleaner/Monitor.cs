@@ -56,8 +56,8 @@ internal class Monitor
         // Enable event watching
         Watcher.ForEach(item => item.EnableRaisingEvents = true);
 
-        // Wait for exit to be signalled
-        while (!Program.IsCancelled(1000))
+        // Wait for exit to be signaled
+        while (!Program.WaitForCancel(1000))
         {
             // Lock and process the list of folders
             List<string> watchlist = new();
@@ -66,9 +66,9 @@ internal class Monitor
                 if (WatchFolders.Any())
                 {
                     // Remove root folders from the watchlist
-                    //TODO : Maybe we need a way to not process sub-directories?
-                    //foreach (string folder in folders)
-                    //    WatchFolders.Remove(folder);
+                    // TODO : Should we not process sub-directories?
+                    // foreach (string folder in folders)
+                    //     WatchFolders.Remove(folder);
 
                     // Find folders that have settled down, i.e. not modified in last wait time
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
@@ -105,8 +105,7 @@ internal class Monitor
                 Log.Logger.Information("Monitored changes in : {Folder}", folder);
             }
 
-            Process process = new();
-            process.ProcessFolders(watchlist);
+            Process.ProcessFolders(watchlist);
             Process.DeleteEmptyFolders(watchlist);
         }
 
@@ -142,7 +141,7 @@ internal class Monitor
             case WatcherChangeTypes.All:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(e));
+                throw new NotImplementedException();
         }
     }
 
@@ -172,7 +171,7 @@ internal class Monitor
             case WatcherChangeTypes.All:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(e));
+                throw new NotImplementedException();
         }
     }
 

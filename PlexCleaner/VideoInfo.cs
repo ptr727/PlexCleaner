@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Serilog;
 
 // TODO: Find a better way to create profile levels
@@ -14,14 +15,18 @@ namespace PlexCleaner;
 
 public class VideoInfo : TrackInfo
 {
-    public VideoInfo() { }
-
     internal VideoInfo(MkvToolJsonSchema.Track track) : base(track)
     {
         // Missing: Profile
         // Missing: Interlaced
         // Missing: HDR
         // Missing: ClosedCaptions
+
+        // Cover art
+        if (IsCoverArt)
+        {
+            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+        }
     }
 
     internal VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
@@ -53,6 +58,12 @@ public class VideoInfo : TrackInfo
         ClosedCaptions = stream.ClosedCaptions;
 
         // Missing: HDR
+
+        // Cover art
+        if (IsCoverArt)
+        {
+            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+        }
     }
 
     internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
@@ -77,6 +88,12 @@ public class VideoInfo : TrackInfo
         FormatHdr = track.HdrFormat;
 
         // Missing: ClosedCaptions
+
+        // Cover art
+        if (IsCoverArt)
+        {
+            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+        }
     }
 
     public string Profile { get; set; } = "";
@@ -87,13 +104,15 @@ public class VideoInfo : TrackInfo
 
     public bool ClosedCaptions { get; set; }
 
-    public bool CompareVideo(VideoInfo compare)
-    {
-        if (compare == null)
-        {
-            throw new ArgumentNullException(nameof(compare));
-        }
+    public bool IsCoverArt { get => MatchCoverArt(Codec) || MatchCoverArt(Format); }
 
+    public static bool MatchCoverArt(string codec)
+    {
+        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
+    }
+
+public bool CompareVideo(VideoFormat compare)
+    {
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match
         bool formatMatch = string.IsNullOrEmpty(compare.Format) || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);
@@ -106,24 +125,30 @@ public class VideoInfo : TrackInfo
     public override void WriteLine(string prefix)
     {
         // Add Profile and Interlaced
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, " +
-                               "Id: {Id}, Number: {Number}, Title: {Title}, Default: {Default}, Profile: {Profile}, Interlaced: {Interlaced}, " +
-                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+        // Keep in sync with TrackInfo::WriteLine
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, " +
+                               "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, " +
+                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
             prefix,
             GetType().Name,
             Format,
             FormatHdr,
             Codec,
             Language,
+            LanguageIetf,
             Id,
             Number,
             Title,
-            Default,
+            Flags,
             Profile,
             Interlaced,
             ClosedCaptions,
             State,
             HasErrors,
-            HasTags);
+            HasTags,
+            IsCoverArt);
     }
+
+    // Cover art and thumbnail formats
+    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
 }

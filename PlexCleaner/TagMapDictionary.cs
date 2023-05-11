@@ -14,40 +14,25 @@ public class TagMapDictionary
 
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
-        if (prime == null)
-        {
-            throw new ArgumentNullException(nameof(prime));
-        }
-
-        if (sec1 == null)
-        {
-            throw new ArgumentNullException(nameof(sec1));
-        }
-
-        if (sec2 == null)
-        {
-            throw new ArgumentNullException(nameof(sec2));
-        }
-
         // Make sure we can do matching
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
 
         // Video
-        Add(MediaInfo.GetTrackList(prime.Video), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Video), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Video), sec2.Parser,
+        Add(prime.Video, prime.Parser,
+            sec1.Video, sec1.Parser,
+            sec2.Video, sec2.Parser,
             Video);
 
         // Audio
-        Add(MediaInfo.GetTrackList(prime.Audio), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Audio), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Audio), sec2.Parser,
+        Add(prime.Audio, prime.Parser,
+            sec1.Audio, sec1.Parser,
+            sec2.Audio, sec2.Parser,
             Audio);
 
         // Subtitle
-        Add(MediaInfo.GetTrackList(prime.Subtitle), prime.Parser,
-            MediaInfo.GetTrackList(sec1.Subtitle), sec1.Parser,
-            MediaInfo.GetTrackList(sec2.Subtitle), sec2.Parser,
+        Add(prime.Subtitle, prime.Parser,
+            sec1.Subtitle, sec1.Parser,
+            sec2.Subtitle, sec2.Parser,
             Subtitle);
     }
 
@@ -98,28 +83,7 @@ public class TagMapDictionary
             return false;
         }
 
-        // Verify the track languages match
-        // FfProbe has bugs with language vs. tag_language, try removing the tags
-        if (ffProbe.Video.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Video[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Video[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
-
-        if (ffProbe.Audio.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Audio[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Audio[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
-
-        if (ffProbe.Subtitle.Where((t, i) =>
-                !t.Language.Equals(mediaInfo.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase) ||
-                !t.Language.Equals(mkvMerge.Subtitle[i].Language, StringComparison.OrdinalIgnoreCase)).Any())
-        {
-            return false;
-        }
+        // TODO: Verify the track languages match
 
         return true;
     }

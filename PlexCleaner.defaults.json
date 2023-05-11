@@ -1,0 +1,185 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "SchemaVersion": 3,
+  "ToolsOptions": {
+    // Use system installed tools or tools directory
+    "UseSystem": false,
+    // Tools directory
+    "RootPath": ".\\Tools\\",
+    // Tools directory is relative to PlexCleaner binary locations
+    "RootRelative": true,
+    // Automatically check for and update new tool versions on launch
+    "AutoUpdate": true
+  },
+  "ProcessOptions": {
+    // Keep all tracks flagged as original language
+    "KeepOriginalLanguage": true,
+    // Remove EIA-608 Closed Captions embedded in video streams
+    "RemoveClosedCaptions": true,
+    // Set IETF language tags when not set
+    "SetIetfLanguageTags": true,
+    // Set track flags based on track title keywords
+    "SetTrackFlags": true,
+    // Files to keep but not process
+    "KeepExtensions": [
+      ".partial~",
+      ".nfo",
+      ".jpg",
+      ".srt",
+      ".smi",
+      ".ssa",
+      ".ass",
+      ".vtt"
+    ],
+    // Files to remux to MKV
+    "ReMuxExtensions": [
+      ".avi",
+      ".m2ts",
+      ".ts",
+      ".vob",
+      ".mp4",
+      ".m4v",
+      ".asf",
+      ".wmv"
+    ],
+    // Re-encode video if the Format, Codec, and Profile values match
+    // Empty fields will match with any value
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
+    "ReEncodeVideo": [
+      {
+        "Format": "mpeg2video"
+      },
+      {
+        "Format": "vc1"
+      },
+      {
+        "Format": "wmv3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "indeo5"
+      },
+      {
+        "Format": "h264",
+        "Profile": "Constrained Baseline@30"
+      },
+      {
+        "Format": "mpeg4",
+        "Codec": "dx50"
+      },
+      {
+        "Format": "msmpeg4v2",
+        "Codec": "mp42"
+      },
+      {
+        "Format": "msmpeg4v3",
+        "Codec": "div3"
+      }
+    ],
+    // Re-encode audio if the Format matches
+    // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
+    "ReEncodeAudioFormats": [
+      "flac",
+      "mp2",
+      "vorbis",
+      "wmapro",
+      "opus",
+      "wmav2",
+      "adpcm_ms",
+      "pcm_u8",
+      "pcm_s16le"
+    ],
+    // Keep tracks if the language tags match, use RFC-5646 format
+    "KeepLanguages": [
+      "en",
+      "af",
+      "zh",
+      "in"
+    ],
+    // Preferred audio tracks in order and by Format
+    // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
+    "PreferredAudioFormats": [
+      "truehd atmos",
+      "truehd",
+      "dts-hd master audio",
+      "dts-hd high resolution audio",
+      "dts",
+      "e-ac-3",
+      "ac-3"
+    ],
+    // Delete empty folders
+    "DeleteEmptyFolders": true,
+    // Delete non-MKV files not in KeepExtensions or ReMuxExtensions lists
+    "DeleteUnwantedExtensions": true,
+    // Re-mux files in ReMuxExtensions list to MKV
+    "ReMux": true,
+    // De-interlace interlaced media
+    "DeInterlace": true,
+    // Re-encode audio and video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
+    "ReEncode": true,
+    // Set tracks with undefined language to DefaultLanguage
+    "SetUnknownLanguage": true,
+    // Default track language in RFC-5646 format
+    "DefaultLanguage": "en",
+    // Remove tracks if track language is not in KeepLanguages
+    "RemoveUnwantedLanguageTracks": false,
+    // Remove duplicate tracks of the same type, language, and attributes
+    // Audio tracks will use PreferredAudioFormats to select the preferred audio track
+    "RemoveDuplicateTracks": false,
+    // Remove tags, titles, and attachments
+    "RemoveTags": true,
+    // Speedup re-processing by caching state in sidecar files
+    "UseSidecarFiles": true,
+    // Invalidate sidecar cache when tool versions change
+    "SidecarUpdateOnToolChange": false,
+    // Verify containers and media streams
+    "Verify": true,
+    // Restore media file modified timestamp to original pre-processed value
+    "RestoreFileTimestamp": false,
+    // List of files to skip, non-ascii characters must be JSON escaped
+    "FileIgnoreList": []
+  },
+  "ConvertOptions": {
+    // FFmpeg commandline options
+    "FfMpegOptions": {
+      // Video encoding option following -c:v
+      "Video": "libx264 -crf 22 -preset medium",
+      // Audio encoding option following -c:a
+      "Audio": "ac3",
+      // Global options
+      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
+      // Output options
+      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+    },
+    // HandBrake commandline options
+    "HandBrakeOptions": {
+      // Video encoding options following --encode
+      "Video": "x264 --quality 22 --encoder-preset medium",
+      // Audio encoding option following --aencode
+      "Audio": "copy --audio-fallback ac3"
+    }
+  },
+  "VerifyOptions": {
+    // If verify fails attempt media repair by re-encoding
+    "AutoRepair": true,
+    // Delete files that fail verification
+    "DeleteInvalidFiles": false,
+    // Add media files that fail verification to the FileIgnoreList
+    "RegisterInvalidFiles": false,
+    // Warn when bitrate in bits per second is exceeded
+    "MaximumBitrate": 100000000
+  },
+  "MonitorOptions": {
+    // Time to wait in seconds after detecting a file change
+    "MonitorWaitTime": 60,
+    // Time to wait in seconds between file retry operations
+    "FileRetryWaitTime": 5,
+    // Maximum number of file retry operations
+    "FileRetryCount": 2
+  }
+}

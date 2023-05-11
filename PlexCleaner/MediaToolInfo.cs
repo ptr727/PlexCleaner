@@ -41,11 +41,6 @@ public class MediaToolInfo : IComparable
 
     public int CompareTo(MediaToolInfo toolInfo)
     {
-        if (toolInfo == null)
-        {
-            throw new ArgumentNullException(nameof(toolInfo));
-        }
-
         int result = string.Compare(FileName, toolInfo.FileName, StringComparison.OrdinalIgnoreCase);
         if (result != 0)
         {

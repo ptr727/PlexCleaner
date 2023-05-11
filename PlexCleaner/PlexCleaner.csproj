@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ApplicationIcon>Mario.ico</ApplicationIcon>
     <StartupObject>PlexCleaner.Program</StartupObject>
     <AssemblyName>PlexCleaner</AssemblyName>
@@ -27,7 +27,8 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>    
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,9 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="2.6.5" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.0.12" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15" />
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
@@ -51,4 +53,8 @@
     <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PlexCleanerTests" />
+  </ItemGroup>
+  
 </Project>

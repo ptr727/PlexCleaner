@@ -33,8 +33,7 @@ public class Bitrate
             {
                 Minimum = bitrate;
             }
-            // TODO: Chance of overflow
-            Average += bitrate;
+            Average = checked(Average + bitrate);
 
             // Thresholds
             if (threshold > 0)
@@ -73,9 +72,9 @@ public class Bitrate
             TimeSpan.FromSeconds(Duration));
     }
 
-    public static string ToBitsPerSecond(long byterate)
+    public static string ToBitsPerSecond(long byteRate)
     {
-        return Format.BytesToKilo(byterate * 8, "bps");
+        return Format.BytesToKilo(byteRate * 8, "bps");
     }
 
     // Array of bytes per second

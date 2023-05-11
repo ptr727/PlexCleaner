@@ -6,22 +6,54 @@
     "ConvertOptions": {
       "type": "object",
       "properties": {
-        "EnableH265Encoder": {
-          "type": "boolean"
+        "FfMpegOptions": {
+          "$ref": "#/definitions/FfMpegOptions"
         },
-        "VideoEncodeQuality": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 51.0
+        "HandBrakeOptions": {
+          "$ref": "#/definitions/HandBrakeOptions"
+        }
+      },
+      "required": [
+        "FfMpegOptions",
+        "HandBrakeOptions"
+      ]
+    },
+    "FfMpegOptions": {
+      "type": "object",
+      "properties": {
+        "Video": {
+          "type": "string"
         },
-        "AudioEncodeCodec": {
+        "Audio": {
+          "type": "string"
+        },
+        "Global": {
+          "type": "string"
+        },
+        "Output": {
           "type": "string"
         }
       },
       "required": [
-        "EnableH265Encoder",
-        "VideoEncodeQuality",
-        "AudioEncodeCodec"
+        "Video",
+        "Audio",
+        "Global",
+        "Output"
+      ]
+    },
+    "HandBrakeOptions": {
+      "type": "object",
+      "properties": {
+        "Video": {
+          "type": "string"
+        },
+        "Audio": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "Video",
+        "Audio"
       ]
     },
     "MonitorOptions": {
@@ -52,10 +84,16 @@
     "ProcessOptions": {
       "type": "object",
       "properties": {
-        "DeleteEmptyFolders": {
+        "KeepOriginalLanguage": {
           "type": "boolean"
         },
-        "DeleteUnwantedExtensions": {
+        "RemoveClosedCaptions": {
+          "type": "boolean"
+        },
+        "SetIetfLanguageTags": {
+          "type": "boolean"
+        },
+        "SetTrackFlags": {
           "type": "boolean"
         },
         "KeepExtensions": {
@@ -67,9 +105,6 @@
             ]
           }
         },
-        "ReMux": {
-          "type": "boolean"
-        },
         "ReMuxExtensions": {
           "type": "array",
           "items": {
@@ -78,12 +113,6 @@
               "null"
             ]
           }
-        },
-        "DeInterlace": {
-          "type": "boolean"
-        },
-        "ReEncode": {
-          "type": "boolean"
         },
         "ReEncodeVideo": {
           "type": "array",
@@ -100,15 +129,6 @@
             ]
           }
         },
-        "SetUnknownLanguage": {
-          "type": "boolean"
-        },
-        "DefaultLanguage": {
-          "type": "string"
-        },
-        "RemoveUnwantedLanguageTracks": {
-          "type": "boolean"
-        },
         "KeepLanguages": {
           "type": "array",
           "items": {
@@ -118,9 +138,6 @@
             ]
           }
         },
-        "RemoveDuplicateTracks": {
-          "type": "boolean"
-        },
         "PreferredAudioFormats": {
           "type": "array",
           "items": {
@@ -129,6 +146,33 @@
               "null"
             ]
           }
+        },
+        "DeleteEmptyFolders": {
+          "type": "boolean"
+        },
+        "DeleteUnwantedExtensions": {
+          "type": "boolean"
+        },
+        "ReMux": {
+          "type": "boolean"
+        },
+        "DeInterlace": {
+          "type": "boolean"
+        },
+        "ReEncode": {
+          "type": "boolean"
+        },
+        "SetUnknownLanguage": {
+          "type": "boolean"
+        },
+        "DefaultLanguage": {
+          "type": "string"
+        },
+        "RemoveUnwantedLanguageTracks": {
+          "type": "boolean"
+        },
+        "RemoveDuplicateTracks": {
+          "type": "boolean"
         },
         "RemoveTags": {
           "type": "boolean"
@@ -156,21 +200,25 @@
         }
       },
       "required": [
-        "DeleteEmptyFolders",
-        "DeleteUnwantedExtensions",
+        "KeepOriginalLanguage",
+        "RemoveClosedCaptions",
+        "SetIetfLanguageTags",
+        "SetTrackFlags",
         "KeepExtensions",
-        "ReMux",
         "ReMuxExtensions",
-        "DeInterlace",
-        "ReEncode",
         "ReEncodeVideo",
         "ReEncodeAudioFormats",
+        "KeepLanguages",
+        "PreferredAudioFormats",
+        "DeleteEmptyFolders",
+        "DeleteUnwantedExtensions",
+        "ReMux",
+        "DeInterlace",
+        "ReEncode",
         "SetUnknownLanguage",
         "DefaultLanguage",
         "RemoveUnwantedLanguageTracks",
-        "KeepLanguages",
         "RemoveDuplicateTracks",
-        "PreferredAudioFormats",
         "RemoveTags",
         "UseSidecarFiles",
         "SidecarUpdateOnToolChange",
@@ -214,27 +262,7 @@
         "RegisterInvalidFiles": {
           "type": "boolean"
         },
-        "MinimumDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "VerifyDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "IdetDuration": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
         "MaximumBitrate": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        },
-        "MinimumFileAge": {
           "type": "integer",
           "minimum": 0.0,
           "maximum": 2147483647.0
@@ -244,11 +272,7 @@
         "AutoRepair",
         "DeleteInvalidFiles",
         "RegisterInvalidFiles",
-        "MinimumDuration",
-        "VerifyDuration",
-        "IdetDuration",
-        "MaximumBitrate",
-        "MinimumFileAge"
+        "MaximumBitrate"
       ]
     },
     "VideoFormat": {
@@ -293,24 +317,24 @@
     "ToolsOptions": {
       "$ref": "#/definitions/ToolsOptions"
     },
-    "ConvertOptions": {
-      "$ref": "#/definitions/ConvertOptions"
-    },
     "ProcessOptions": {
       "$ref": "#/definitions/ProcessOptions"
     },
-    "MonitorOptions": {
-      "$ref": "#/definitions/MonitorOptions"
+    "ConvertOptions": {
+      "$ref": "#/definitions/ConvertOptions"
     },
     "VerifyOptions": {
       "$ref": "#/definitions/VerifyOptions"
+    },
+    "MonitorOptions": {
+      "$ref": "#/definitions/MonitorOptions"
     }
   },
   "required": [
     "ToolsOptions",
-    "ConvertOptions",
     "ProcessOptions",
-    "MonitorOptions",
-    "VerifyOptions"
+    "ConvertOptions",
+    "VerifyOptions",
+    "MonitorOptions"
   ]
 }

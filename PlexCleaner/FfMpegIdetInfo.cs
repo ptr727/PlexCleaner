@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace PlexCleaner;
 
@@ -36,7 +35,7 @@ public class FfMpegIdetInfo
 
     public bool IsInterlaced()
     {
-        // TODO: Based on experimentation this logic is not reliable
+        // TODO: Based on experimentation this logic is not completely reliable
         // E.g. When the interlaced frames are > 0, and running deinterlace, the interlaced frame count is still > 0
 
         // All undetermined
@@ -51,19 +50,11 @@ public class FfMpegIdetInfo
             return false;
         }
 
-        return InterlacedPercentage > InterlacedThreshold;
+        return InterlacedPercentage > Program.InterlacedThreshold;
     }
 
     public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
     {
-        if (mediaFile == null)
-        {
-            throw new ArgumentNullException(nameof(mediaFile));
-        }
-
         return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
     }
-
-    // TODO: Figure out what reliable threshold would be
-    public const double InterlacedThreshold = 5.0 / 100.0;
 }

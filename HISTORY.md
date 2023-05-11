@@ -4,6 +4,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 2.10:
+  - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
+    - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
+    - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
+    - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
 - Version 2.9:
   - Added remote docker container debug support.  
     - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.

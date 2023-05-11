@@ -1,0 +1,85 @@
+name: Bug Report
+description: File a bug or issue report
+title: "<Use a descriptive title>"
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to submit a 🐞 bug 🐞 report!  
+        Please use [Discussions](https://github.com/ptr727/PlexCleaner/discussions) for general questions.  
+        Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.
+  - type: checkboxes
+    attributes:
+      label: Is this a new issue that can be reproduced?
+      description: Search [Discussions](https://github.com/ptr727/PlexCleaner/discussions) and [Issues](https://github.com/ptr727/PlexCleaner/issues) for similar problems.
+      options:
+        - label: This is a new issue that can be reproduced.
+          required: true
+  - type: checkboxes
+    attributes:
+      label: Which operating systems reproduce the issue?
+      description: You may select more than one.
+      options:
+        - label: Windows
+        - label: Docker
+        - label: Other
+  - type: textarea
+    attributes:
+      label: Version information.
+      description: OS and app and tool version information.
+      value: |
+        OS Version: E.g. Windows 11 Pro 22H2.
+        Docker Version: Run `docker --version`.
+        Docker Image: E.g. `latest`, `latest-debian`.
+        `PlexCleaner getversioninfo`: Run `PlexCleaner getversioninfo`.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce?
+      description: What happened and what did you expect to happen.
+      value: |
+        Steps to reproduce:
+        - I did this.
+        - Then I did that.
+        - And this happened.
+        Expectation:
+        - I expected this to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Commandline.
+      description: Full commandline used to run the app (no code block ticks required).
+      render: Text
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Relevant log output.
+      description: Copy and paste any relevant log output (no code block ticks required).
+      render: Text
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Settings file.
+      description: Attach or [Gist](https://gist.github.com/) full settings file.
+      placeholder: Attach settings file or Gist link.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Log file.
+      description: Attach or [Gist](https://gist.github.com/) full log file.
+      placeholder: Attach log file or Gist link.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Media file information.
+      description: Output from `PlexCleaner getmediainfo` (no code block ticks required).
+      render: Text
+    validations:
+      required: false

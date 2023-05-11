@@ -4,6 +4,9 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
+// https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd
+// https://mediaarea.net/en/MediaInfo/Support/Tags
+
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
 // Do not use XSD, https://mediaarea.net/mediainfo/mediainfo.xsd
 
@@ -88,10 +91,10 @@ public class MediaInfo
 
     public static MediaInfo FromXml(string xml)
     {
-        XmlSerializer xmlserializer = new(typeof(MediaInfo));
-        using TextReader textreader = new StringReader(xml);
-        using var xmlReader = XmlReader.Create(textreader);
-        return xmlserializer.Deserialize(xmlReader) as MediaInfo;
+        XmlSerializer xmlSerializer = new(typeof(MediaInfo));
+        using TextReader textReader = new StringReader(xml);
+        using var xmlReader = XmlReader.Create(textReader);
+        return xmlSerializer.Deserialize(xmlReader) as MediaInfo;
     }
 
     public static bool StringToBool(string value)
