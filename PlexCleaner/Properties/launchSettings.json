@@ -6,7 +6,7 @@
     },
     "Monitor Test": {
       "commandName": "Project",
-      "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+      "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --preprocess"
     },
     "Version": {
       "commandName": "Project",

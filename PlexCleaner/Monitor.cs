@@ -56,6 +56,16 @@ internal class Monitor
         // Enable event watching
         Watcher.ForEach(item => item.EnableRaisingEvents = true);
 
+        // Add monitor folders to the processing list
+        if (Program.Options.PreProcess)
+        {
+            Log.Logger.Information("Pre-processing all monitored folders");
+            foreach (string folder in folders)
+            {
+                OnChanged(folder);
+            }
+        }
+
         // Wait for exit to be signaled
         while (!Program.WaitForCancel(1000))
         {
@@ -107,6 +117,8 @@ internal class Monitor
 
             Process.ProcessFolders(watchlist);
             Process.DeleteEmptyFolders(watchlist);
+
+            Log.Logger.Information("Monitoring folders ...");
         }
 
         // Disable event watching

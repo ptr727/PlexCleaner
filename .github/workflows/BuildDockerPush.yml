@@ -152,17 +152,16 @@ jobs:
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
+      # https://docs.docker.com/build/ci/github-actions/cache/
+      # https://github.com/moby/buildkit#github-actions-cache-experimental
 
       # Matrix build
       - name: Docker build and push
         uses: docker/build-push-action@v4
         with:
           context: .
-          # cache-from: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache
-          # cache-to: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache,mode=max
-          # https://github.com/moby/buildkit#github-actions-cache-experimental
           cache-from: type=gha,scope=${{ matrix.cache-scope }}
-          cache-to: type=gha,scope=${{ matrix.cache-scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
