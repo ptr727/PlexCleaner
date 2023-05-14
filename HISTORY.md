@@ -4,6 +4,70 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## Release History
 
+- Version 3.0:
+  - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
+    - See the Docker [README](./Docker/README.md) for image and tag usage details.
+    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FFmpeg and HandBrake builds.
+  - Switched from .NET 6 to .NET 7.
+    - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
+  - Added additional architectures to the published releases, including `win-x64`, `linux-x64`, `linux-musl-x64`, `linux-arm`, `linux-arm64`, and `osx-x64`.
+  - Added support for custom FFmpeg and HandBrake command line arguments.
+    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
+    - Custom options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
+    - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
+    - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
+    - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
+  - Added support for [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag formats.
+    - See the [Language Matching](#language-matching) section usage for details.
+    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
+      - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
+      - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
+    - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` from ISO 639-2B to RFC 5646 format, e.g. `eng` to `en`.
+      - On v3 schema upgrade old ISO 639-2B 3 letter tags will be replaced with generic RFC 5646 tags.
+    - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
+      - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
+    - [FFmpeg](https://github.com/ptr727/PlexCleaner/issues/148) and [HandBrake](https://github.com/ptr727/PlexCleaner/issues/149) removes IETF language tags.
+      - Files are remuxed using MkvMerge, and IETF tags are restored using MkvPropEdit, after any FFmpeg or HandBrake operation.
+      - If you care and can, please do communicate the need for IETF language support to the FFmpeg and HandBrake development teams.
+    - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
+    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to report e.g. `zh-cmn-Hant` vs. `cmn-Hant`.
+      - Existing sidecar metadata can be updated using the `updatesidecar` command.
+  - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
+  - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
+  - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
+  - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
+  - Added warnings when multiple tracks of the same kind have a Default flag set.
+  - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
+  - Added `updatesidecar` commandline option to update sidecar files using current media tool information.
+  - Added `getversioninfo` commandline option to print app, runtime, and media tool versions.
+  - Added settings file correctness verification to detect missing but required values.
+  - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
+  - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
+  - Updated cover art detection and removal logic to not be dependent on `RemoveTags` setting.
+  - Updated `DeleteInvalidFiles` logic to delete any file that fails processing, not just files that fail verification.
+  - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
+  - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
+  - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
+  - Refactored track selection logic to simplify containment and use with lambda filters.
+  - Refactored verify and repair logic, became too complicated.
+  - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
+  - Removed `VerifyOptions:VerifyDuration`, `VerifyOptions:IdetDuration`, `VerifyOptions:MinimumDuration`, and `VerifyOptions:MinimumFileAge` configuration options.
+  - Removed docker image publishing to GHCR, `broken pipe` errors too frequently break the build.
+  - Changed the process exit code to return `1` vs. `-1` in case of error, more conformant with standard exit codes, `0` remains success.
+  - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
+    - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
+  - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
+  - *Breaking Change* Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+    - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
+    - The following global options have been removed and added to their respective commands:
+      - `--settingsfile` used by several commands.
+      - `--parallel` used by the `process` command.
+      - `--threadcount` used by the `process` command.
+    - Move the option from the global options to follow the specific command, e.g.:
+      - From: `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...`
+      - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
+      - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
+      - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`
 - Version 2.10:
   - Added the `--reverify` option, to allow verification and repair of media that previously failed to verify or failed to repair.
     - When enabled the `VerifyFailed` and `RepairFailed` states will be removed before processing starts, allowing media to be re-processed.
