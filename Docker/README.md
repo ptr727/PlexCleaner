@@ -53,7 +53,7 @@ Images are updated weekly with the latest upstream updates.
 ### `ptr727/plexcleaner:latest`
 
 ```text
-PlexCleaner: 3.0.162+4cee41de14 17:15:43 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.1+6e4905328c 17:40:42 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -65,7 +65,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:savoury`
 
 ```text
-PlexCleaner: 3.0.162+4cee41de14 17:15:43 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.1+6e4905328c 17:40:42 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -77,7 +77,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:debian`
 
 ```text
-PlexCleaner: 3.0.162+4cee41de14 17:15:47 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.1+6e4905328c 17:40:39 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v22.12
@@ -89,7 +89,7 @@ FfMpeg: ffmpeg version 5.1.2-3 Copyright (c) 2000-2022 the FFmpeg developers bui
 ### `ptr727/plexcleaner:alpine`
 
 ```text
-PlexCleaner: 3.0.162+4cee41de14 17:15:28 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.1+6e4905328c 17:40:18 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -101,7 +101,7 @@ FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built w
 ### `ptr727/plexcleaner:arch`
 
 ```text
-PlexCleaner: 3.0.162+4cee41de14 17:15:45 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.1+6e4905328c 17:40:40 [INF] <1> Exit Code : 0
 dotNET: 7.0.103
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
