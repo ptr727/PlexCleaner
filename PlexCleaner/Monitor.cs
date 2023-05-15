@@ -20,16 +20,15 @@ internal class Monitor
     {
         Log.Logger.Information("Monitoring folders ...");
 
+        // Change handlers
         void ChangeHandler(object s, FileSystemEventArgs e)
         {
             OnChanged(e, this);
         }
-
         void RenameHandler(object s, RenamedEventArgs e)
         {
             OnRenamed(e, this);
         }
-
         void ErrorHandler(object s, ErrorEventArgs e)
         {
             OnError(e);
@@ -38,6 +37,13 @@ internal class Monitor
         // Create file system watcher for each folder
         foreach (string folder in folders)
         {
+            // Must be a directory
+            if (!Directory.Exists(folder))
+            {
+                Log.Logger.Error("Media path is not a valid directory : {Folder}", folder);
+                return false;
+            }
+
             // Create a file system watcher for the folder
             Log.Logger.Information("Monitoring : {Folder}", folder);
             FileSystemWatcher watch = new();
@@ -75,11 +81,6 @@ internal class Monitor
             {
                 if (WatchFolders.Any())
                 {
-                    // Remove root folders from the watchlist
-                    // TODO : Should we not process sub-directories?
-                    // foreach (string folder in folders)
-                    //     WatchFolders.Remove(folder);
-
                     // Find folders that have settled down, i.e. not modified in last wait time
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
                     foreach ((string key, DateTime value) in WatchFolders)
@@ -112,11 +113,13 @@ internal class Monitor
             // Process changes in the watched folders
             foreach (string folder in watchlist)
             {
-                Log.Logger.Information("Monitored changes in : {Folder}", folder);
+                Log.Logger.Information("Processing changes in : {Folder}", folder);
             }
-
-            Process.ProcessFolders(watchlist);
-            Process.DeleteEmptyFolders(watchlist);
+            if (!Process.ProcessFolders(watchlist) || !Process.DeleteEmptyFolders(watchlist))
+            { 
+                // Fatal error
+                return false;
+            }
 
             Log.Logger.Information("Monitoring folders ...");
         }
@@ -125,6 +128,7 @@ internal class Monitor
         Watcher.ForEach(item => item.EnableRaisingEvents = false);
         Watcher.Clear();
 
+        // Done
         return true;
     }
 
@@ -209,8 +213,8 @@ internal class Monitor
             // Get the file details
             FileInfo fileInfo = new(pathname);
 
-            // Ignore our own sidecar and *.tmp files being created
-            if (!fileInfo.Extension.Equals(".tmp", StringComparison.OrdinalIgnoreCase) &&
+            // Ignore our own sidecar and *.tmp, *.tmpint, *.tmprmx files being created
+            if (!fileInfo.Extension.StartsWith(".tmp", StringComparison.OrdinalIgnoreCase) &&
                 !SidecarFile.IsSidecarFile(fileInfo))
             {
                 folderName = fileInfo.DirectoryName;

@@ -854,7 +854,7 @@ public class ProcessFile
         }
 
         // Interlaced
-        if (videoInfo == null || !videoInfo.Interlaced)
+        if (videoInfo is not { Interlaced: true })
         {
             // Not interlaced
             return true;

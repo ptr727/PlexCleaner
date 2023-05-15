@@ -4,10 +4,6 @@
       "commandName": "Project",
       "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
     },
-    "Monitor Test": {
-      "commandName": "Project",
-      "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --preprocess"
-    },
     "Version": {
       "commandName": "Project",
       "commandLineArgs": "--version"
@@ -98,6 +94,10 @@
     "GetVersionInfo": {
       "commandName": "Project",
       "commandLineArgs": "getversioninfo --settingsfile \"PlexCleaner.json\""
+    },
+    "Monitor Snippets Test": {
+      "commandName": "Project",
+      "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --preprocess --testsnippets"
     }
   }
 }

@@ -369,7 +369,7 @@ public partial class TrackInfo
         return !TitleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
     }
 
-    public void SetFlagsFromTitle(string log)
+    public void SetFlagsFromTitle(string parser)
     {
         // Add flags based on titles
         foreach (var tuple in TitleFlags)
@@ -382,7 +382,7 @@ public partial class TrackInfo
                 HasErrors = true;
                 State = StateType.SetFlags;
                 Flags |= tuple.Item2;
-                Log.Logger.Warning("{Log} : Setting track Flag from Title : {Title} -> {Flag} : {State}", log, Title, tuple.Item2, State);
+                Log.Logger.Information("{Parser} : Setting track Flag from Title : {Title} -> {Flag} : {State}", parser, Title, tuple.Item2, State);
             }
         }
     }
