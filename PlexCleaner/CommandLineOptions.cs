@@ -21,6 +21,7 @@ public class CommandLineOptions
     public int ThreadCount { get; set; }
     public bool Debug { get; set; }
     public string SchemaFile { get; set; }
+    public bool PreProcess { get; set; }
 
     public static int Invoke()
     {
@@ -201,6 +202,19 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
+
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
+        //  Do not make any modifications
+        command.AddOption(CreateTestNoModifyOption());
+
+        //  Process
+        command.AddOption(
+            new Option<bool>("--preprocess")
+            {
+                Description = "Pre-process all monitored folders"
+            });
 
         return command;
     }

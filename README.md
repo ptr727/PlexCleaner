@@ -29,6 +29,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Release Notes
 
+- Version 3.1:
+  - Added `--preprocess` option to the `monitor` command, that will pre-process all monitored folders.
 - Version 3.0:
   - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
     - See the Docker [README](./Docker/README.md) for image and tag usage details.
