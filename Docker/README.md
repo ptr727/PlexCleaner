@@ -53,7 +53,7 @@ Images are updated weekly with the latest upstream updates.
 ### `ptr727/plexcleaner:latest`
 
 ```text
-PlexCleaner: 3.1.3+9c50cd6bb5 19:06:12 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.5+e5cc64fc15 03:18:20 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -65,7 +65,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:savoury`
 
 ```text
-PlexCleaner: 3.1.3+9c50cd6bb5 19:06:12 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.5+e5cc64fc15 03:18:20 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -77,7 +77,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:debian`
 
 ```text
-PlexCleaner: 3.1.3+9c50cd6bb5 19:06:11 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.5+e5cc64fc15 03:18:06 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v22.12
@@ -89,19 +89,19 @@ FfMpeg: ffmpeg version 5.1.2-3 Copyright (c) 2000-2022 the FFmpeg developers bui
 ### `ptr727/plexcleaner:alpine`
 
 ```text
-PlexCleaner: 3.1.3+9c50cd6bb5 19:05:52 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.5+e5cc64fc15 03:17:44 [INF] <1> Exit Code : 0
 dotNET: 7.0.203
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
 MkvMerge: mkvmerge v76.0 ('Celebration') 64-bit
-FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built with gcc 12.2.1 (Alpine 12.2.1_git20220924-r10) 20220924 configuration: --prefix=/usr --disable-librtmp --disable-lzma --disable-static --disable-stripping --enable-avfilter --enable-gnutls --enable-gpl --enable-libaom --enable-libass --enable-libbluray --enable-libdav1d --enable-libdrm --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libmp3lame --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-libpulse --enable-librist --enable-libsoxr --enable-libsrt --enable-libssh --enable-libtheora --enable-libv4l2 --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-lto --enable-pic --enable-postproc --enable-pthreads --enable-shared --enable-vaapi --enable-vdpau --enable-vulkan --optflags=-O3 --enable-libjxl --enable-libsvtav1 --enable-libvpl libavutil 58. 2.100 / 58. 2.100 libavcodec 60. 3.100 / 60. 3.100 libavformat 60. 3.100 / 60. 3.100 libavdevice 60. 1.100 / 60. 1.100 libavfilter 9. 3.100 / 9. 3.100 libswscale 7. 1.100 / 7. 1.100 libswresample 5. 0.100 / 5. 0.100 libpostproc 57. 1.100 / 57. 1.100
+FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built with gcc 13.1.1 (Alpine 13.1.1_git20230513) 20230513 configuration: --prefix=/usr --disable-librtmp --disable-lzma --disable-static --disable-stripping --enable-avfilter --enable-gnutls --enable-gpl --enable-libaom --enable-libass --enable-libbluray --enable-libdav1d --enable-libdrm --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libmp3lame --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-libpulse --enable-librist --enable-libsoxr --enable-libsrt --enable-libssh --enable-libtheora --enable-libv4l2 --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-lto --enable-pic --enable-postproc --enable-pthreads --enable-shared --enable-vaapi --enable-vdpau --enable-vulkan --optflags=-O3 --enable-libjxl --enable-libsvtav1 --enable-libvpl libavutil 58. 2.100 / 58. 2.100 libavcodec 60. 3.100 / 60. 3.100 libavformat 60. 3.100 / 60. 3.100 libavdevice 60. 1.100 / 60. 1.100 libavfilter 9. 3.100 / 9. 3.100 libswscale 7. 1.100 / 7. 1.100 libswresample 5. 0.100 / 5. 0.100 libpostproc 57. 1.100 / 57. 1.100
 
 ```
 
 ### `ptr727/plexcleaner:arch`
 
 ```text
-PlexCleaner: 3.1.3+9c50cd6bb5 19:06:19 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.5+e5cc64fc15 03:18:02 [INF] <1> Exit Code : 0
 dotNET: 7.0.103
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
