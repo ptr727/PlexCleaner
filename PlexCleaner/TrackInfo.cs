@@ -126,7 +126,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup IETF tag from ISO tag
-                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO6393: {Language}, State: {State}", Language, State);
+                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}", Language, State);
             }
             else 
             {
@@ -137,7 +137,7 @@ public partial class TrackInfo
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
-                Log.Logger.Information("MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO6393: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Information("MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
             }
         }
 

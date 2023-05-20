@@ -372,7 +372,7 @@ public class ProcessFile
         }
 
         // Setting flags
-        Log.Logger.Information("Settings track flags on media file : {FileName}", FileInfo.Name);
+        Log.Logger.Information("Setting track flags on media file : {FileName}", FileInfo.Name);
 
         // Test
         if (Program.Options.TestNoModify)
