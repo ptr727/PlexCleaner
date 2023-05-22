@@ -39,6 +39,7 @@ public partial class TrackInfo
 
     internal TrackInfo(MkvToolJsonSchema.Track trackJson)
     {
+        const string parser = "MkvToolJsonSchema";
         Format = trackJson.Codec;
         Codec = trackJson.Properties.CodecId;
         Title = trackJson.Properties.TrackName;
@@ -99,7 +100,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup ISO tag from IETF tag
-                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Error("{Parser} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
             }
             else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
             {
@@ -108,7 +109,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
-                Log.Logger.Error("MkvToolJsonSchema : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}", Language, LanguageIetf, isoLookup, State);
+                Log.Logger.Error("{Parser} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}", parser, Language, LanguageIetf, isoLookup, State);
             }
             // Lookup good and matches
         }
@@ -126,7 +127,7 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup IETF tag from ISO tag
-                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}", Language, State);
+                Log.Logger.Error("{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}", parser, Language, State);
             }
             else 
             {
@@ -137,7 +138,7 @@ public partial class TrackInfo
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
-                Log.Logger.Information("MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Information("{Parser} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
             }
         }
 
@@ -156,13 +157,13 @@ public partial class TrackInfo
             if (string.IsNullOrEmpty(isoLookup))
             {
                 // Failed to lookup ISO from IETF
-                Log.Logger.Error("MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}", LanguageIetf, State);
+                Log.Logger.Error("{Parser} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}", parser, LanguageIetf, State);
             }
             else
             {
                 // Set ISO from lookup
                 Language = isoLookup;
-                Log.Logger.Warning("MkvToolJsonSchema : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", Language, LanguageIetf, State);
+                Log.Logger.Warning("{Parser} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
             }
         }
 
@@ -175,7 +176,7 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("MkvToolJsonSchema : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
+            Log.Logger.Warning("{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", parser, trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
@@ -189,7 +190,7 @@ public partial class TrackInfo
         HasTags = NotTrackTitleFlag();
 
         // Set flags from title
-        SetFlagsFromTitle("MkvToolJsonSchema");
+        SetFlagsFromTitle(parser);
 
         // Verify required info
         Debug.Assert(!string.IsNullOrEmpty(Format));
@@ -198,6 +199,7 @@ public partial class TrackInfo
 
     internal TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
     {
+        const string parser = "FfMpegToolJsonSchema";
         Format = trackJson.CodecName;
         Codec = trackJson.CodecLongName;
 
@@ -244,7 +246,7 @@ public partial class TrackInfo
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("FfMpegToolJsonSchema : Invalid Language : {Language} : {State}", Language, State);
+            Log.Logger.Warning("{Parser} : Invalid Language : {Language} : {State}", parser, Language, State);
         }
 
         // Leave the Language as is, no need to verify
@@ -358,14 +360,14 @@ public partial class TrackInfo
     
     public bool NotTrackTitleFlag()
     {
-        // NOT logic, i.e. title is not a flag
+        // Not logic, i.e. title is not a flag
         if (string.IsNullOrEmpty(Title))
         { 
-            // Empty is NOT a flag
+            // Empty is not a flag
             return false;
         }
 
-        // NOT a flag is NOT a flag
+        // Not a flag is not a flag
         return !TitleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
     }
 
