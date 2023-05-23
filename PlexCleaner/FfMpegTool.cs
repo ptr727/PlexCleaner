@@ -236,7 +236,7 @@ public partial class FfMpegTool : MediaTool
         StringBuilder commandline = new();
         CreateDefaultArgs(filename, commandline);
 
-        // Null muxer and exit on error
+        // Null muxer and exit immediately on error (-xerror)
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
 
         // Execute and limit captured output to last 5 lines
@@ -435,6 +435,7 @@ public partial class FfMpegTool : MediaTool
         CreateDefaultArgs(inputName, commandline);
 
         // Counting can report a failure if there are any stream errors
+        // Do not exit on error (-xerror)
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
         // [h264 @ 0x55ec750529c0] Error splitting the input into NAL units.
         // Error while decoding stream #0:0: Invalid data found when processing input
@@ -445,31 +446,11 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
         // Run idet filter
-        // Do not exit on error (-xerror)
         commandline.Append($"-hide_banner -nostats -filter:v idet -an -f rawvideo {nullOut}");
 
         // Execute and limit captured output to 5 lines to just get stats
         var exitCode = Command(commandline.ToString(), 5, out _, out text);
-        if (exitCode == 0)
-        { 
-            // Ok
-            return true;
-        }
-
-        // Verify output can be matched even if an error was reported
-        if (string.IsNullOrEmpty(text) ||
-            !text.Contains("Repeated Fields", StringComparison.OrdinalIgnoreCase) &&
-            !text.Contains("Single frame detection", StringComparison.OrdinalIgnoreCase) &&
-            !text.Contains("Multi frame detection", StringComparison.OrdinalIgnoreCase))
-        {
-            // Error
-            Log.Logger.Error("FfMpeg Idet Error : ExitCode: {ExitCode}, Error: {Error}", exitCode, text);
-            return false;
-        }
-
-        // Returning success but results may not be reliable
-        Log.Logger.Warning("FfMpeg Idet Error : ExitCode: {ExitCode}, Error: {Error}", exitCode, text);
-        return true;
+        return exitCode == 0;
     }
 
     private static bool GetIdetInfoFromText(string text, out FfMpegIdetInfo idetInfo)
