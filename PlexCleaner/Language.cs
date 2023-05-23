@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using InsaneGenius.Utilities;
@@ -155,6 +156,7 @@ public class Language
             var cultureInfo = CultureInfo.GetCultureInfo(language, true);
 
             // Make sure the culture was not custom created
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (cultureInfo == null ||
                 cultureInfo.ThreeLetterWindowsLanguageName.Equals(Missing, StringComparison.OrdinalIgnoreCase) ||
                 (cultureInfo.CultureTypes & CultureTypes.UserCustomCulture) == CultureTypes.UserCustomCulture)
@@ -177,6 +179,8 @@ public class Language
 
     public bool IsMatch(string prefix, string language)
     {
+        Debug.Assert(!string.IsNullOrEmpty(prefix));
+        Debug.Assert(!string.IsNullOrEmpty(language));
         while (true)
         {
             // https://r12a.github.io/app-subtags/

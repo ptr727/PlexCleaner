@@ -422,12 +422,14 @@ internal class Program
         }
 
         // Log app and runtime version
+        // ReSharper disable once RedundantAssignment
         bool debugBuild = false;
         #if DEBUG
             debugBuild = true;
         #endif
         string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", appVersion, runtimeVersion, debugBuild);
 
         // Parallel processing config
