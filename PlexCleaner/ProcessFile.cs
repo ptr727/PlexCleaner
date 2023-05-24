@@ -2026,6 +2026,12 @@ public class ProcessFile
         return audioInfoList.First();
     }
 
+    public static bool IsTempFile(FileInfo fileInfo)
+    {
+        // *.tmp, *.tmpint, *.tmprmx
+        return fileInfo.Extension.StartsWith(".tmp", StringComparison.OrdinalIgnoreCase);
+    }
+
     public MediaInfo FfProbeInfo { get; private set; }
     public MediaInfo MkvMergeInfo { get; private set; }
     public MediaInfo MediaInfoInfo { get; private set; }

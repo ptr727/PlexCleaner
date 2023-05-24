@@ -88,8 +88,17 @@ internal class Program
         // Need to explicitly add thread id formatting to file and console output
         loggerConfiguration.Enrich.WithThreadId();
 
+        // Default minimum log level
+        #if DEBUG
+            LogEventLevel logLevelDefault = LogEventLevel.Debug;
+        #else
+            LogEventLevel logLevelDefault = LogEventLevel.Information;
+        #endif
+
         // Log to console
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
+        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, 
+            restrictedToMinimumLevel: logLevelDefault,
+            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
@@ -97,11 +106,14 @@ internal class Program
         if (!string.IsNullOrEmpty(logfile))
         {
             // Set log level
-            LogEventLevel logFileMinimumLevel = Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
+            if (Options.LogWarning)
+            {
+                logLevelDefault = LogEventLevel.Warning;
+            }
 
             // Write async to file
             loggerConfiguration.WriteTo.Async(action => action.File(logfile, 
-                restrictedToMinimumLevel: logFileMinimumLevel, 
+                restrictedToMinimumLevel: logLevelDefault, 
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
         }
 
@@ -422,14 +434,13 @@ internal class Program
         }
 
         // Log app and runtime version
-        // ReSharper disable once RedundantAssignment
-        bool debugBuild = false;
         #if DEBUG
-            debugBuild = true;
+            const bool debugBuild = true;
+        #else
+            const bool debugBuild = false;
         #endif
         string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         string runtimeVersion = Environment.Version.ToString();
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", appVersion, runtimeVersion, debugBuild);
 
         // Parallel processing config
