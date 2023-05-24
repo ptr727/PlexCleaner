@@ -140,7 +140,7 @@ internal class Monitor
 
     private void OnChangedEx(FileSystemEventArgs e)
     {
-        Log.Logger.Information("OnChanged : {ChangeType} : {FullPath}", e.ChangeType, e.FullPath);
+        Log.Logger.Verbose("OnChanged : {ChangeType} : {FullPath}", e.ChangeType, e.FullPath);
         switch (e.ChangeType)
         {
             case WatcherChangeTypes.Changed:
@@ -169,7 +169,7 @@ internal class Monitor
 
     private void OnRenamedEx(RenamedEventArgs e)
     {
-        Log.Logger.Information("OnRenamed : {ChangeType} : {OldFullPath} to {FullPath}", e.ChangeType, e.OldFullPath, e.FullPath);
+        Log.Logger.Verbose("OnRenamed : {ChangeType} : {OldFullPath} to {FullPath}", e.ChangeType, e.OldFullPath, e.FullPath);
         switch (e.ChangeType)
         {
             case WatcherChangeTypes.Renamed:
@@ -213,8 +213,8 @@ internal class Monitor
             // Get the file details
             FileInfo fileInfo = new(pathname);
 
-            // Ignore our own sidecar and *.tmp, *.tmpint, *.tmprmx files being created
-            if (!fileInfo.Extension.StartsWith(".tmp", StringComparison.OrdinalIgnoreCase) &&
+            // Ignore sidecar and temp files
+            if (!ProcessFile.IsTempFile(fileInfo) &&
                 !SidecarFile.IsSidecarFile(fileInfo))
             {
                 folderName = fileInfo.DirectoryName;
@@ -239,13 +239,13 @@ internal class Monitor
             if (WatchFolders.ContainsKey(folderName))
             {
                 // Update the modified time
-                Log.Logger.Information("Updating folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), folderName);
+                Log.Logger.Verbose("Updating timestamp for folder in queue : {Folder}", folderName);
                 WatchFolders[folderName] = DateTime.UtcNow;
             }
             else
             {
                 // Add the folder
-                Log.Logger.Information("Adding folder for processing by {MonitorWaitTime} : {Folder}", DateTime.Now.AddSeconds(Program.Config.MonitorOptions.MonitorWaitTime), folderName);
+                Log.Logger.Information("Adding folder to processing queue : {Folder}", folderName);
                 WatchFolders.Add(folderName, DateTime.UtcNow);
             }
         }
