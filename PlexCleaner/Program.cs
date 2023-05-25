@@ -112,8 +112,10 @@ internal class Program
             }
 
             // Write async to file
+            // Default max size is 1GB, roll when max size is reached
             loggerConfiguration.WriteTo.Async(action => action.File(logfile, 
-                restrictedToMinimumLevel: logLevelDefault, 
+                restrictedToMinimumLevel: logLevelDefault,
+                rollOnFileSizeLimit: true,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
         }
 

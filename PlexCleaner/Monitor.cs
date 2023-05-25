@@ -76,46 +76,64 @@ internal class Monitor
         while (!Program.WaitForCancel(1000))
         {
             // Lock and process the list of folders
-            List<string> watchlist = new();
+            List<string> watchList = new();
+            List<string> removeList = new();
             lock (WatchLock)
             {
+                // Anything to process
                 if (WatchFolders.Any())
                 {
-                    // Find folders that have settled down, i.e. not modified in last wait time
+                    // Evaluate all folders in the watch list
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
-                    foreach ((string key, DateTime value) in WatchFolders)
+                    foreach ((string folder, DateTime timeStamp) in WatchFolders)
                     {
-                        // If not recently modified and all files in the folder are readable
-                        if (value < settleTime)
+                        // Settled down, i.e. not modified in last wait time
+                        if (timeStamp >= settleTime)
                         {
-                            if (!FileEx.AreFilesInDirectoryReadable(key))
-                            {
-                                Log.Logger.Information("Folder not readable : {Folder}", key);
-                            }
-                            else
-                            {
-                                watchlist.Add(key);
-                            }
+                            // Not yet
+                            continue;
                         }
+
+                        // Directory must still exist, e.g. not deleted
+                        if (!Directory.Exists(folder))
+                        {
+                            Log.Logger.Information("Folder deleted, removing from processing queue : {Folder}", folder);
+                            removeList.Add(folder);
+                            continue;
+                        }
+
+                        // All files in folder must be readable, e.g. not being written to
+                        if (!FileEx.AreFilesInDirectoryReadable(folder))
+                        {
+                            Log.Logger.Information("Files in folder are not readable, delaying processing : {Folder}", folder);
+                            WatchFolders[folder] = DateTime.UtcNow;
+                            continue;
+                        }
+
+                        // Add to processing list
+                        watchList.Add(folder);
                     }
 
+                    // Remove deleted folders from watchlist
+                    removeList.ForEach(item => WatchFolders.Remove(item));
+
                     // Remove watched folders from the watchlist
-                    watchlist.ForEach(item => WatchFolders.Remove(item));
+                    watchList.ForEach(item => WatchFolders.Remove(item));
                 }
             }
 
             // Any work to do
-            if (!watchlist.Any())
+            if (!watchList.Any())
             {
                 continue;
             }
 
             // Process changes in the watched folders
-            foreach (string folder in watchlist)
+            foreach (string folder in watchList)
             {
                 Log.Logger.Information("Processing changes in : {Folder}", folder);
             }
-            if (!Process.ProcessFolders(watchlist) || !Process.DeleteEmptyFolders(watchlist))
+            if (!Process.ProcessFolders(watchList) || !Process.DeleteEmptyFolders(watchList))
             { 
                 // Fatal error
                 return false;
@@ -239,7 +257,7 @@ internal class Monitor
             if (WatchFolders.ContainsKey(folderName))
             {
                 // Update the modified time
-                Log.Logger.Verbose("Updating timestamp for folder in queue : {Folder}", folderName);
+                Log.Logger.Verbose("Updating timestamp for folder in processing queue : {Folder}", folderName);
                 WatchFolders[folderName] = DateTime.UtcNow;
             }
             else
