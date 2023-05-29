@@ -260,15 +260,16 @@ public static class Tools
             List<MediaTool> toolList = GetToolFamilyList();
             foreach (MediaTool mediaTool in toolList)
             {
-                // Get the latest version of each tool
-                Log.Logger.Information("Getting latest version of {Tool} ...", mediaTool.GetToolFamily());
+                // Get the latest version of the tool
+                Log.Logger.Information("{Tool} : Getting latest version ...", mediaTool.GetToolFamily());
                 if (!mediaTool.GetLatestVersion(out MediaToolInfo latestToolInfo))
                 {
                     Log.Logger.Error("{Tool} : Failed to get latest version", mediaTool.GetToolFamily());
                     return false;
                 }
-                
+
                 // Get the URL details
+                Log.Logger.Information("{Tool} : Getting download URI details : {Uri}", mediaTool.GetToolFamily(), latestToolInfo.Url);
                 if (!GetUrlDetails(latestToolInfo))
                 {
                     Log.Logger.Error("{Tool} : Failed to get download URI details : {Uri}", mediaTool.GetToolFamily(), latestToolInfo.Url);
@@ -346,6 +347,7 @@ public static class Tools
             return false;
         }
 
+        // Set retrieved values
         mediaToolInfo.Size = size;
         mediaToolInfo.ModifiedTime = modified;
 

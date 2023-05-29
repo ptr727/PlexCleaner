@@ -77,8 +77,9 @@ public partial class MediaInfoTool : MediaTool
         try
         {
             // Load the release history page
-            // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
-            var historyPage = Download.GetHttpClient().GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
+            const string uri = "https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt";
+            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+            var historyPage = Download.GetHttpClient().GetStringAsync(uri).Result;
 
             // Read each line until we find the first version line
             // E.g. Version 17.10, 2017-11-02

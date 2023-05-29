@@ -82,12 +82,13 @@ public partial class MkvMergeTool : MediaTool
         try
         {
             // Download latest release file
-            // https://mkvtoolnix.download/latest-release.xml.gz
-            var releaseStream = Download.GetHttpClient().GetStreamAsync("https://mkvtoolnix.download/latest-release.xml.gz").Result;
+            const string uri = "https://mkvtoolnix.download/latest-release.xml.gz";
+            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+            var releaseStream = Download.GetHttpClient().GetStreamAsync(uri).Result;
 
             // Get XML from Gzip
-            using GZipStream gzstream = new(releaseStream, CompressionMode.Decompress);
-            using StreamReader sr = new(gzstream);
+            using GZipStream gzStream = new(releaseStream, CompressionMode.Decompress);
+            using StreamReader sr = new(gzStream);
             var xml = sr.ReadToEnd();
 
             // Get the version number from XML

@@ -98,8 +98,9 @@ public partial class FfMpegTool : MediaTool
             // https://www.gyan.dev/ffmpeg/builds/packages/
 
             // Load the release version page
-            // https://www.gyan.dev/ffmpeg/builds/release-version
-            mediaToolInfo.Version = Download.GetHttpClient().GetStringAsync("https://www.gyan.dev/ffmpeg/builds/release-version").Result;
+            const string uri = "https://www.gyan.dev/ffmpeg/builds/release-version";
+            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+            mediaToolInfo.Version = Download.GetHttpClient().GetStringAsync(uri).Result;
 
             // Create download URL and the output filename using the version number
             // https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-6.0-full_build.7z
@@ -124,8 +125,9 @@ public partial class FfMpegTool : MediaTool
             // https://johnvansickle.com/ffmpeg/
 
             // Load the release version page
-            // https://johnvansickle.com/ffmpeg/release-readme.txt
-            var readmePage = Download.GetHttpClient().GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
+            const string uri = "https://johnvansickle.com/ffmpeg/release-readme.txt";
+            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+            var readmePage = Download.GetHttpClient().GetStringAsync(uri).Result;
 
             // Read each line until we find the build and version lines
             // build: ffmpeg-5.0-amd64-static.tar.xz
