@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -100,10 +99,10 @@ public partial class FfMpegTool : MediaTool
 
             // Load the release version page
             // https://www.gyan.dev/ffmpeg/builds/release-version
-            using HttpClient httpClient = new();
-            mediaToolInfo.Version = httpClient.GetStringAsync("https://www.gyan.dev/ffmpeg/builds/release-version").Result;
+            mediaToolInfo.Version = Download.GetHttpClient().GetStringAsync("https://www.gyan.dev/ffmpeg/builds/release-version").Result;
 
             // Create download URL and the output filename using the version number
+            // https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-6.0-full_build.7z
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
             mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
         }
@@ -126,8 +125,7 @@ public partial class FfMpegTool : MediaTool
 
             // Load the release version page
             // https://johnvansickle.com/ffmpeg/release-readme.txt
-            using HttpClient httpClient = new();
-            var readmePage = httpClient.GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
+            var readmePage = Download.GetHttpClient().GetStringAsync("https://johnvansickle.com/ffmpeg/release-readme.txt").Result;
 
             // Read each line until we find the build and version lines
             // build: ffmpeg-5.0-amd64-static.tar.xz

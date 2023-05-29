@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using InsaneGenius.Utilities;
 using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
@@ -78,8 +78,7 @@ public partial class MediaInfoTool : MediaTool
         {
             // Load the release history page
             // https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt
-            using HttpClient httpClient = new();
-            var historyPage = httpClient.GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
+            var historyPage = Download.GetHttpClient().GetStringAsync("https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt").Result;
 
             // Read each line until we find the first version line
             // E.g. Version 17.10, 2017-11-02

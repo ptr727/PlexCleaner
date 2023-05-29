@@ -262,11 +262,16 @@ public static class Tools
             {
                 // Get the latest version of each tool
                 Log.Logger.Information("Getting latest version of {Tool} ...", mediaTool.GetToolFamily());
-                if (!mediaTool.GetLatestVersion(out MediaToolInfo latestToolInfo) ||
-                    // Get the URL details
-                    !GetUrlDetails(latestToolInfo))
+                if (!mediaTool.GetLatestVersion(out MediaToolInfo latestToolInfo))
                 {
                     Log.Logger.Error("{Tool} : Failed to get latest version", mediaTool.GetToolFamily());
+                    return false;
+                }
+                
+                // Get the URL details
+                if (!GetUrlDetails(latestToolInfo))
+                {
+                    Log.Logger.Error("{Tool} : Failed to get download URI details : {Uri}", mediaTool.GetToolFamily(), latestToolInfo.Url);
                     return false;
                 }
 

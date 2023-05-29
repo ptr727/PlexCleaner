@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -84,8 +83,7 @@ public partial class MkvMergeTool : MediaTool
         {
             // Download latest release file
             // https://mkvtoolnix.download/latest-release.xml.gz
-            using HttpClient httpClient = new();
-            var releaseStream = httpClient.GetStreamAsync("https://mkvtoolnix.download/latest-release.xml.gz").Result;
+            var releaseStream = Download.GetHttpClient().GetStreamAsync("https://mkvtoolnix.download/latest-release.xml.gz").Result;
 
             // Get XML from Gzip
             using GZipStream gzstream = new(releaseStream, CompressionMode.Decompress);

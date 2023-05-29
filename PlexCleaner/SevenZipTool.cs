@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -79,8 +78,7 @@ public partial class SevenZipTool : MediaTool
             // Load the download page
             // TODO: Find a more reliable way of getting the latest release
             // https://www.7-zip.org/download.html
-            using HttpClient httpClient = new();
-            var downloadPage = httpClient.GetStringAsync("https://www.7-zip.org/download.html").Result;
+            var downloadPage = Download.GetHttpClient().GetStringAsync("https://www.7-zip.org/download.html").Result;
 
             // Extract the version number from the page source
             // E.g. "Download 7-Zip 22.01 (2022-07-15):"
