@@ -593,17 +593,22 @@ internal class Program
         return CancelSource.Token;
     }
 
+    // Commandline options
     public static CommandLineOptions Options { get; internal set; }
+
+    // Config file options
     public static ConfigFileJsonSchema Config { get; internal set; }
-
-    private static readonly CancellationTokenSource CancelSource = new();
-
-    private readonly List<string> DirectoryList = new();
-    private readonly List<string> FileList = new();
 
     // Snippet runtime in seconds
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
 
     // Interlaced detection threshold as percentage
     public const double InterlacedThreshold = 5.0 / 100.0;
+
+    // Cancellation token
+    private static readonly CancellationTokenSource CancelSource = new();
+
+    // File and directory lists
+    private readonly List<string> DirectoryList = new();
+    private readonly List<string> FileList = new();
 }

@@ -65,10 +65,15 @@ internal class Monitor
         // Add monitor folders to the processing list
         if (Program.Options.PreProcess)
         {
-            Log.Logger.Information("Pre-processing all monitored folders");
-            foreach (string folder in folders)
+            // Lock
+            lock (WatchLock)
             {
-                OnChanged(folder);
+                Log.Logger.Information("Pre-processing all monitored folders");
+                foreach (string folder in folders)
+                {
+                    Log.Logger.Information("Adding folder to processing queue : {Folder}", folder);
+                    WatchFolders.Add(folder, DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime));
+                }
             }
         }
 
