@@ -340,6 +340,8 @@ internal class Program
     private static void CancelHandler(ConsoleCancelEventArgs e)
     {
         Log.Logger.Warning("Cancel key pressed");
+
+        // Keep running and do graceful exit
         e.Cancel = true;
 
         // Signal the cancel event

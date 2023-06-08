@@ -118,8 +118,6 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
 RUN pacman --sync --noconfirm \
-        # https://bugs.archlinux.org/task/77662
-        boost-libs \
         dotnet-sdk \
         ffmpeg \
         handbrake-cli \
