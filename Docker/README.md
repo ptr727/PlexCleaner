@@ -53,7 +53,7 @@ Images are updated weekly with the latest upstream updates.
 ### `ptr727/plexcleaner:latest`
 
 ```text
-PlexCleaner: 3.1.31+1b5657e201 03:06:04 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.31+bcbdd834d7 15:03:43 [INF] <1> Exit Code : 0
 dotNET: 7.0.302
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -65,7 +65,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:savoury`
 
 ```text
-PlexCleaner: 3.1.31+1b5657e201 03:06:04 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.31+bcbdd834d7 15:03:43 [INF] <1> Exit Code : 0
 dotNET: 7.0.302
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -77,7 +77,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:debian`
 
 ```text
-PlexCleaner: 3.1.31+1b5657e201 03:05:52 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.31+bcbdd834d7 15:03:32 [INF] <1> Exit Code : 0
 dotNET: 7.0.302
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -89,7 +89,7 @@ FfMpeg: ffmpeg version 5.1.3-1 Copyright (c) 2000-2022 the FFmpeg developers bui
 ### `ptr727/plexcleaner:alpine`
 
 ```text
-PlexCleaner: 3.1.31+1b5657e201 03:05:32 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.31+bcbdd834d7 15:03:25 [INF] <1> Exit Code : 0
 dotNET: 7.0.302
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -101,11 +101,11 @@ FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built w
 ### `ptr727/plexcleaner:arch`
 
 ```text
-PlexCleaner: 3.1.31+1b5657e201 03:05:55 [INF] <1> Exit Code : 0
+PlexCleaner: 3.1.31+bcbdd834d7 15:03:47 [INF] <1> Exit Code : 0
 dotNET: 7.0.105
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
-MkvMerge: mkvmerge v76.0 ('Celebration') 64-bit
+MkvMerge: mkvmerge v77.0 ('Elemental') 64-bit
 FfMpeg: ffmpeg version n6.0 Copyright (c) 2000-2023 the FFmpeg developers built with gcc 13.1.1 (GCC) 20230429 configuration: --prefix=/usr --disable-debug --disable-static --disable-stripping --enable-amf --enable-avisynth --enable-cuda-llvm --enable-lto --enable-fontconfig --enable-gmp --enable-gnutls --enable-gpl --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libdav1d --enable-libdrm --enable-libfreetype --enable-libfribidi --enable-libgsm --enable-libiec61883 --enable-libjack --enable-libjxl --enable-libmfx --enable-libmodplug --enable-libmp3lame --enable-libopencore_amrnb --enable-libopencore_amrwb --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librav1e --enable-librsvg --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libv4l2 --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-nvdec --enable-nvenc --enable-opencl --enable-opengl --enable-shared --enable-version3 --enable-vulkan libavutil 58. 2.100 / 58. 2.100 libavcodec 60. 3.100 / 60. 3.100 libavformat 60. 3.100 / 60. 3.100 libavdevice 60. 1.100 / 60. 1.100 libavfilter 9. 3.100 / 9. 3.100 libswscale 7. 1.100 / 7. 1.100 libswresample 4. 10.100 / 4. 10.100 libpostproc 57. 1.100 / 57. 1.100
 
 ```

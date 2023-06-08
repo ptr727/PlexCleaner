@@ -122,6 +122,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
 - Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10/HDR10+ displays.
 - EIA-608 Closed Captions embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
+- See the `process` [command](#process-command) for more details.
 
 ## Performance Considerations
 
@@ -490,9 +491,9 @@ These commands have no conditional logic and will process all specified media fi
 ### Monitor
 
 - `monitor`:
-  - Watch the specified folders for changes, and process the directories with changes.
-  - The [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) is not always reliable on Linux or NAS Samba shares.
-  - Changes made directly to the underlying filesystem will not trigger when watching the SMB shares, e.g. when a Docker container writes to a mapped volume, the SMB view of that volume will not trigger.
+  - Watch the specified folders for file changes, and periodically run the `process` command on the changed folders.
+  - The `monitor` command honors the `process` options.
+  - Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
 
 ### Create and Update Sidecar Files
 
@@ -524,8 +525,9 @@ These commands have no conditional logic and will process all specified media fi
 - [HandBrake](https://handbrake.fr/)
 - [MKVToolNix](https://mkvtoolnix.download/)
 - [FFmpeg](https://www.ffmpeg.org/)
-- [ISO 639-3 language codes](http://www-01.sil.org/iso639-3/download.asp)
-- [RFC 5646 language tags](https://www.w3.org/International/articles/language-tags/)
+- [ISO 639-2 language tags](https://www.loc.gov/standards/iso639-2/langhome.html)
+- [ISO 639-3 language tags](https://iso639-3.sil.org/)
+- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
@@ -547,3 +549,4 @@ These commands have no conditional logic and will process all specified media fi
 - [JellyFish](http://jell.yfish.us/)
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
 - [MPlayer](https://samples.mplayerhq.hu/)
+- [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
