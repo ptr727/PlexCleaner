@@ -13,10 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# TODO: How to use env.foo in matrix?
-env:
-  MainBranch: ${{ endsWith(github.ref, 'refs/heads/main') }}
-
 jobs:
 
   # Test
@@ -144,6 +140,8 @@ jobs:
       # Login to Docker Hub
       # https://github.com/marketplace/actions/docker-login
       - name: Login to Docker Hub
+        # No need to login if not pushing
+        if: ${{ (github.event_name != 'pull_request') }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
@@ -163,6 +161,7 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.cache-scope }}
           cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
+          # Don't push pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
           secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
@@ -183,7 +182,8 @@ jobs:
     name: Tool versions
     runs-on: ubuntu-latest
     needs: buildpush
-
+    if: ${{ (github.event_name != 'pull_request') }}
+   
     strategy:
 
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
@@ -234,6 +234,7 @@ jobs:
     name: Create README.md
     runs-on: ubuntu-latest
     needs: toolversions
+    if: ${{ (github.event_name != 'pull_request') }}
 
     steps:
 
@@ -266,6 +267,7 @@ jobs:
     name: Update README.md
     runs-on: ubuntu-latest
     needs: updatereadme
+    if: ${{ (github.event_name != 'pull_request') }}
 
     steps:
 
@@ -290,6 +292,7 @@ jobs:
     name: Date badge
     runs-on: ubuntu-latest
     needs: buildpush
+    if: ${{ (github.event_name != 'pull_request') }}
 
     steps:
 
