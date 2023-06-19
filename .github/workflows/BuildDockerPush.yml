@@ -151,8 +151,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: docker.io
-          username: ${{ env.dopush && secrets.DOCKER_HUB_USERNAME || "foo" }}
-          password: ${{ env.dopush && secrets.DOCKER_HUB_ACCESS_TOKEN || "foo" }}
+          username: ${{ env.dopush && secrets.DOCKER_HUB_USERNAME || 'foo' }}
+          password: ${{ env.dopush && secrets.DOCKER_HUB_ACCESS_TOKEN || 'foo' }}
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
