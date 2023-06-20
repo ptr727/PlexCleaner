@@ -164,8 +164,9 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          cache-from: type=gha,scope=${{ matrix.cache-scope }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
+          # GitHub cache as unreliable as posting to GHCR, broken pipe errors
+          # cache-from: type=gha,scope=${{ matrix.cache-scope }}
+          # cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
