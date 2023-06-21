@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using Serilog;
 using Serilog.Debugging;
@@ -30,6 +31,11 @@ internal class Program
         // Wait for debugger to attach
         WaitForDebugger();
 
+        // Register cancel and keyboard handlers
+        Console.CancelKeyPress += CancelEventHandler;
+        var consoleKeyTask = Task.Run(KeyPressHandler);
+        Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+
         // Create default logger
         CreateLogger(null);
 
@@ -42,6 +48,10 @@ internal class Program
 
         // Create the commandline and execute commands
         var exitCode = CommandLineOptions.Invoke();
+
+        // Cancel background operations
+        Cancel();
+        consoleKeyTask.Wait();
 
         // Stop the timer
         keepAwakeTimer.Stop();
@@ -56,8 +66,54 @@ internal class Program
         return exitCode;
     }
 
+    private static void KeyPressHandler()
+    {
+        for(;;)
+        {
+            // Wait on key available or cancelled
+            while (!Console.KeyAvailable)
+            {
+                if (WaitForCancel(100))
+                {
+                    // Done
+                    return;
+                }
+            }
+
+            // Read key and hide from console display
+            var keyInfo = Console.ReadKey(true);
+
+            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C handled in cancel handler
+            if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
+                && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {
+                Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", keyInfo.Modifiers, keyInfo.Key);
+
+                // Signal the cancel event
+                Cancel();
+
+                // Done
+                return;
+            }
+        }
+    }
+
+    private static void CancelEventHandler(object sender, ConsoleCancelEventArgs eventArgs)
+    {
+        Log.Logger.Warning("Operation interrupted : {SpecialKey}", eventArgs.SpecialKey);
+
+        // Keep running and do graceful exit
+        eventArgs.Cancel = true;
+
+        // Signal the cancel event
+        Cancel();
+    }
+
+
     private static void WaitForDebugger()
     {
+        // Do not use any dependencies as this code gets called very early in launch
+
         // Use the raw commandline and look for --debug
         if (Environment.CommandLine.Contains("--debug"))
         {
@@ -65,6 +121,7 @@ internal class Program
             Console.WriteLine("Waiting for debugger to attach...");
             while (!System.Diagnostics.Debugger.IsAttached)
             {
+                // Wait a bit and try again
                 Thread.Sleep(100);
             }
             Console.WriteLine("Debugger attached.");
@@ -329,35 +386,6 @@ internal class Program
 
         // Verify tools to get tool version information
         return MakeExitCode(Tools.VerifyTools());
-    }
-
-    // Add a reference to this class in the event handler arguments
-    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e)
-    {
-        CancelHandler(e);
-    }
-
-    private static void CancelHandler(ConsoleCancelEventArgs e)
-    {
-        Log.Logger.Warning("Cancel key pressed");
-
-        // Keep running and do graceful exit
-        e.Cancel = true;
-
-        // Signal the cancel event
-        Cancel();
-    }
-
-    private Program()
-    {
-        // Register cancel handler
-        Console.CancelKeyPress += CancelHandlerEx;
-    }
-
-    ~Program()
-    {
-        // Unregister cancel handler
-        Console.CancelKeyPress -= CancelHandlerEx;
     }
 
     private static Program CreateFileList(CommandLineOptions options)

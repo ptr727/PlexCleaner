@@ -131,7 +131,27 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
 
     public bool VerifyValues()
     {
-        return ToolsOptions.VerifyValues() && ConvertOptions.VerifyValues() && ProcessOptions.VerifyValues() && MonitorOptions.VerifyValues() && VerifyOptions.VerifyValues();
+        if (!ToolsOptions.VerifyValues() ||
+            !ConvertOptions.VerifyValues() ||
+            !ProcessOptions.VerifyValues() ||
+            !MonitorOptions.VerifyValues() || 
+            !VerifyOptions.VerifyValues())
+        { 
+            return false;
+        }
+
+        // Default to English if language not set
+        if (string.IsNullOrEmpty(ProcessOptions.DefaultLanguage))
+        {
+            ProcessOptions.DefaultLanguage = Language.English;
+        }
+
+        // Always keep no linguistic content (zxx), undefined (und), and the default language
+        ProcessOptions.KeepLanguages.Add(Language.None);
+        ProcessOptions.KeepLanguages.Add(Language.Undefined);
+        ProcessOptions.KeepLanguages.Add(ProcessOptions.DefaultLanguage);
+
+        return true;
     }
 
     public static void WriteDefaultsToFile(string path)
