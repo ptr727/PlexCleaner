@@ -38,10 +38,16 @@ internal class Program
             return 0;
         }
 
-        // Register cancel and keyboard handlers
+        // Register cancel handler
         Console.CancelKeyPress += CancelEventHandler;
-        var consoleKeyTask = Task.Run(KeyPressHandler);
-        Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+
+        // Only register keyboard handler if input is not redirected
+        Task consoleKeyTask = null;
+        if (!Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+            consoleKeyTask = Task.Run(KeyPressHandler);
+        }
 
         // Create default logger
         CreateLogger(null);
@@ -58,7 +64,8 @@ internal class Program
 
         // Cancel background operations
         Cancel();
-        consoleKeyTask.Wait();
+        consoleKeyTask?.Wait();
+        Console.CancelKeyPress -= CancelEventHandler;
 
         // Stop the timer
         keepAwakeTimer.Stop();
@@ -87,7 +94,13 @@ internal class Program
         string name = assembly.GetName()?.Name;
         name ??= "?";
 
-        return versionOnly ? version : $"{name} : {version}";
+        #if DEBUG
+        const string build = "Debug";
+        #else
+        const string build = "Release";
+        #endif
+
+        return versionOnly ? version : $"{name} : {version} ({build})";
     }
 
     private static bool ShowVersionInformation()
@@ -103,12 +116,6 @@ internal class Program
 
     private static void KeyPressHandler()
     {
-        // Skip if input is redirected
-        if (Console.IsInputRedirected)
-        {
-            return;
-        }
-
         for (;;)
         {
             // Wait on key available or cancelled
@@ -507,12 +514,7 @@ internal class Program
         }
 
         // Log app and runtime version
-        #if DEBUG
-            const bool debugBuild = true;
-        #else
-            const bool debugBuild = false;
-        #endif
-        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", GetVersion(true), Environment.Version.ToString(), debugBuild);
+        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", GetVersion(false), Environment.Version.ToString());
 
         // Parallel processing config
         if (Options.Parallel)
