@@ -73,13 +73,29 @@ internal class Program
         return exitCode;
     }
 
+    public static string GetVersion(bool versionOnly)
+    {
+        var assembly = Assembly.GetEntryAssembly();
+        assembly ??= Assembly.GetExecutingAssembly();
+
+        var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+
+        string version = versionAttribute?.InformationalVersion;
+        version ??= assembly.GetName()?.Version?.ToString();
+        version ??= "?";
+
+        string name = assembly.GetName()?.Name;
+        name ??= "?";
+
+        return versionOnly ? version : $"{name} : {version}";
+    }
+
     private static bool ShowVersionInformation()
     {
         // Use the raw commandline and look for --version
         if (Environment.CommandLine.Contains("--version"))
         {
-            string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            Console.WriteLine(appVersion);
+            Console.WriteLine(GetVersion(false));
             return true;
         }
         return false;
@@ -496,9 +512,7 @@ internal class Program
         #else
             const bool debugBuild = false;
         #endif
-        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        string runtimeVersion = Environment.Version.ToString();
-        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", appVersion, runtimeVersion, debugBuild);
+        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", GetVersion(true), Environment.Version.ToString(), debugBuild);
 
         // Parallel processing config
         if (Options.Parallel)
