@@ -32,9 +32,13 @@ internal class Program
         WaitForDebugger();
 
         // Register cancel and keyboard handlers
-        Console.CancelKeyPress += CancelEventHandler;
-        var consoleKeyTask = Task.Run(KeyPressHandler);
-        Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+        Task consoleKeyTask = null;
+        if (Environment.UserInteractive)
+        { 
+            Console.CancelKeyPress += CancelEventHandler;
+            consoleKeyTask = Task.Run(KeyPressHandler);
+            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+        }
 
         // Create default logger
         CreateLogger(null);
@@ -51,7 +55,7 @@ internal class Program
 
         // Cancel background operations
         Cancel();
-        consoleKeyTask.Wait();
+        consoleKeyTask?.Wait();
 
         // Stop the timer
         keepAwakeTimer.Stop();
