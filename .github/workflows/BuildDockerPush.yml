@@ -175,7 +175,7 @@ jobs:
           platforms: ${{ matrix.platforms }}
           build-args: |
             LABEL_VERSION=${{ needs.version.outputs.SemVer2 }}
-            BUILD_CONFIGURATION=${{ env.mainbranch && 'Release' || 'Debug' }}
+            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
             BUILD_VERSION=${{ needs.version.outputs.AssemblyVersion }}
             BUILD_FILE_VERSION=${{ needs.version.outputs.AssemblyFileVersion }}
             BUILD_ASSEMBLY_VERSION=${{ needs.version.outputs.AssemblyFileVersion }}

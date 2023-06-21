@@ -116,7 +116,7 @@ jobs:
             --runtime ${{ matrix.runtime }}
             --self-contained false
             --output ${{ runner.temp }}/publish/${{ matrix.runtime }}
-            --configuration ${{ env.mainbranch && 'Release' || 'Debug' }}
+            --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
             -property:Version=${{ needs.version.outputs.AssemblyVersion }}
             -property:FileVersion=${{ needs.version.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ needs.version.outputs.AssemblyVersion }}
@@ -160,5 +160,5 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         automatic_release_tag: ${{ needs.version.outputs.SemVer2 }}
         # Only main branch is not a pre-release
-        prerelease: ${{ !env.mainbranch }}
+        prerelease: env.mainbranch != 'true'
         files: ${{ runner.temp }}/publish/PlexCleaner.7z
