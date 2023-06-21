@@ -31,14 +31,17 @@ internal class Program
         // Wait for debugger to attach
         WaitForDebugger();
 
-        // Register cancel and keyboard handlers
-        Task consoleKeyTask = null;
-        if (Environment.UserInteractive)
-        { 
-            Console.CancelKeyPress += CancelEventHandler;
-            consoleKeyTask = Task.Run(KeyPressHandler);
-            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+        // Display version information only
+        if (ShowVersionInformation())
+        {
+            // Exit immediately to not print anything else
+            return 0;
         }
+
+        // Register cancel and keyboard handlers
+        Console.CancelKeyPress += CancelEventHandler;
+        var consoleKeyTask = Task.Run(KeyPressHandler);
+        Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
 
         // Create default logger
         CreateLogger(null);
@@ -55,7 +58,7 @@ internal class Program
 
         // Cancel background operations
         Cancel();
-        consoleKeyTask?.Wait();
+        consoleKeyTask.Wait();
 
         // Stop the timer
         keepAwakeTimer.Stop();
@@ -70,9 +73,27 @@ internal class Program
         return exitCode;
     }
 
+    private static bool ShowVersionInformation()
+    {
+        // Use the raw commandline and look for --version
+        if (Environment.CommandLine.Contains("--version"))
+        {
+            string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            Console.WriteLine(appVersion);
+            return true;
+        }
+        return false;
+    }
+
     private static void KeyPressHandler()
     {
-        for(;;)
+        // Skip if input is redirected
+        if (Console.IsInputRedirected)
+        {
+            return;
+        }
+
+        for (;;)
         {
             // Wait on key available or cancelled
             while (!Console.KeyAvailable)
