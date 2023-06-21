@@ -14,35 +14,8 @@ namespace PlexCleaner;
 // Filename, State
 using ProcessTuple = ValueTuple<string, SidecarFile.StatesType>;
 
-internal class Process
+internal static class Process
 {
-    // Processing tasks
-    public enum Tasks
-    {
-        ClearTags,
-        RemoveAttachments,
-        IdetFilter,
-        FindClosedCaptions,
-        RepairMedia,
-        VerifyMetadata,
-        VerifyMedia,
-        RepairMetadata
-    }
-
-    public Process()
-    {
-        // Default to English if language not set
-        if (string.IsNullOrEmpty(Program.Config.ProcessOptions.DefaultLanguage))
-        {
-            Program.Config.ProcessOptions.DefaultLanguage = Language.English;
-        }
-
-        // Always keep no linguistic content (zxx), undefined (und), and the default language
-        Program.Config.ProcessOptions.KeepLanguages.Add(Language.None);
-        Program.Config.ProcessOptions.KeepLanguages.Add(Language.Undefined);
-        Program.Config.ProcessOptions.KeepLanguages.Add(Program.Config.ProcessOptions.DefaultLanguage);
-    }
-
     private static bool ProcessFile(string fileName, out bool modified, out SidecarFile.StatesType state, out string processName)
     {
         // Init
