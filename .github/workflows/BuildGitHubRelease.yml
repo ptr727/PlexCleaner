@@ -125,7 +125,7 @@ jobs:
 
       # https://github.com/marketplace/actions/upload-a-build-artifact
       - name: Upload build artifacts
-        if: ${{ env.dopush }}
+        if: env.dopush == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: publish
