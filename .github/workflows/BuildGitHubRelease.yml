@@ -11,13 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# env is not supported in matrix operations or job if :(
-env:
-  # Do not push on pull_request events
-  dopush: ${{ github.event_name != 'pull_request' }}
-  # main branch
-  mainbranch: ${{ endsWith(github.ref, 'refs/heads/main') }}
-
 jobs:
 
   # Test
@@ -125,7 +118,7 @@ jobs:
 
       # https://github.com/marketplace/actions/upload-a-build-artifact
       - name: Upload build artifacts
-        if: env.dopush == 'true'
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v3
         with:
           name: publish
