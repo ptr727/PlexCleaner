@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using Serilog;
 using Serilog.Debugging;
@@ -30,6 +31,24 @@ internal class Program
         // Wait for debugger to attach
         WaitForDebugger();
 
+        // Display version information only
+        if (ShowVersionInformation())
+        {
+            // Exit immediately to not print anything else
+            return 0;
+        }
+
+        // Register cancel handler
+        Console.CancelKeyPress += CancelEventHandler;
+
+        // Only register keyboard handler if input is not redirected
+        Task consoleKeyTask = null;
+        if (!Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+            consoleKeyTask = Task.Run(KeyPressHandler);
+        }
+
         // Create default logger
         CreateLogger(null);
 
@@ -42,6 +61,11 @@ internal class Program
 
         // Create the commandline and execute commands
         var exitCode = CommandLineOptions.Invoke();
+
+        // Cancel background operations
+        Cancel();
+        consoleKeyTask?.Wait();
+        Console.CancelKeyPress -= CancelEventHandler;
 
         // Stop the timer
         keepAwakeTimer.Stop();
@@ -56,8 +80,88 @@ internal class Program
         return exitCode;
     }
 
+    public static string GetVersion(bool versionOnly)
+    {
+        var assembly = Assembly.GetEntryAssembly();
+        assembly ??= Assembly.GetExecutingAssembly();
+
+        var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+
+        string version = versionAttribute?.InformationalVersion;
+        version ??= assembly.GetName()?.Version?.ToString();
+        version ??= "?";
+
+        string name = assembly.GetName()?.Name;
+        name ??= "?";
+
+        #if DEBUG
+        const string build = "Debug";
+        #else
+        const string build = "Release";
+        #endif
+
+        return versionOnly ? version : $"{name} : {version} ({build})";
+    }
+
+    private static bool ShowVersionInformation()
+    {
+        // Use the raw commandline and look for --version
+        if (Environment.CommandLine.Contains("--version"))
+        {
+            Console.WriteLine(GetVersion(false));
+            return true;
+        }
+        return false;
+    }
+
+    private static void KeyPressHandler()
+    {
+        for (;;)
+        {
+            // Wait on key available or cancelled
+            while (!Console.KeyAvailable)
+            {
+                if (WaitForCancel(100))
+                {
+                    // Done
+                    return;
+                }
+            }
+
+            // Read key and hide from console display
+            var keyInfo = Console.ReadKey(true);
+
+            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C handled in cancel handler
+            if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
+                && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {
+                Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", keyInfo.Modifiers, keyInfo.Key);
+
+                // Signal the cancel event
+                Cancel();
+
+                // Done
+                return;
+            }
+        }
+    }
+
+    private static void CancelEventHandler(object sender, ConsoleCancelEventArgs eventArgs)
+    {
+        Log.Logger.Warning("Operation interrupted : {SpecialKey}", eventArgs.SpecialKey);
+
+        // Keep running and do graceful exit
+        eventArgs.Cancel = true;
+
+        // Signal the cancel event
+        Cancel();
+    }
+
+
     private static void WaitForDebugger()
     {
+        // Do not use any dependencies as this code gets called very early in launch
+
         // Use the raw commandline and look for --debug
         if (Environment.CommandLine.Contains("--debug"))
         {
@@ -65,6 +169,7 @@ internal class Program
             Console.WriteLine("Waiting for debugger to attach...");
             while (!System.Diagnostics.Debugger.IsAttached)
             {
+                // Wait a bit and try again
                 Thread.Sleep(100);
             }
             Console.WriteLine("Debugger attached.");
@@ -331,35 +436,6 @@ internal class Program
         return MakeExitCode(Tools.VerifyTools());
     }
 
-    // Add a reference to this class in the event handler arguments
-    private static void CancelHandlerEx(object s, ConsoleCancelEventArgs e)
-    {
-        CancelHandler(e);
-    }
-
-    private static void CancelHandler(ConsoleCancelEventArgs e)
-    {
-        Log.Logger.Warning("Cancel key pressed");
-
-        // Keep running and do graceful exit
-        e.Cancel = true;
-
-        // Signal the cancel event
-        Cancel();
-    }
-
-    private Program()
-    {
-        // Register cancel handler
-        Console.CancelKeyPress += CancelHandlerEx;
-    }
-
-    ~Program()
-    {
-        // Unregister cancel handler
-        Console.CancelKeyPress -= CancelHandlerEx;
-    }
-
     private static Program CreateFileList(CommandLineOptions options)
     {
         // Create program and enumerate files
@@ -438,14 +514,7 @@ internal class Program
         }
 
         // Log app and runtime version
-        #if DEBUG
-            const bool debugBuild = true;
-        #else
-            const bool debugBuild = false;
-        #endif
-        string appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        string runtimeVersion = Environment.Version.ToString();
-        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}, Debug Build: {DebugBuild}", appVersion, runtimeVersion, debugBuild);
+        Log.Logger.Information("Application Version : {AppVersion}, Runtime Version : {RuntimeVersion}", GetVersion(false), Environment.Version.ToString());
 
         // Parallel processing config
         if (Options.Parallel)
