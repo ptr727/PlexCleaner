@@ -2,8 +2,15 @@
 version: 2
 updates:
 
-  # NuGet
+  # NuGet main
 - package-ecosystem: nuget
   directory: "/"
+  schedule:
+    interval: daily
+
+  # NuGet develop
+- package-ecosystem: nuget
+  directory: "/"
+  target-branch: "develop"
   schedule:
     interval: daily
