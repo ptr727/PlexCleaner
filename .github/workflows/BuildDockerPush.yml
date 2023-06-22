@@ -13,13 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# env is not supported in matrix operations or job if :(
-env:
-  # Do not push on pull_request events
-  dopush: ${{ github.event_name != 'pull_request' }}
-  # main branch
-  mainbranch: ${{ endsWith(github.ref, 'refs/heads/main') }}
-
 jobs:
 
   # Test
@@ -147,12 +140,12 @@ jobs:
       # Login to Docker Hub
       # https://github.com/marketplace/actions/docker-login
       - name: Login to Docker Hub
-        if: env.dopush == 'true'
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v2
         with:
           registry: docker.io
-          username: ${{ env.dopush && secrets.DOCKER_HUB_USERNAME || 'foo' }}
-          password: ${{ env.dopush && secrets.DOCKER_HUB_ACCESS_TOKEN || 'foo' }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
