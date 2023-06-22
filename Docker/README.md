@@ -53,7 +53,7 @@ Images are updated weekly with the latest upstream updates.
 ### `ptr727/plexcleaner:latest`
 
 ```text
-PlexCleaner: PlexCleaner : 3.2.4+28b84751f4 (Release)
+PlexCleaner: PlexCleaner : 3.2.9+e463d329f5 (Release)
 dotNET: 7.0.304
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -65,7 +65,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:savoury`
 
 ```text
-PlexCleaner: PlexCleaner : 3.2.4+28b84751f4 (Release)
+PlexCleaner: PlexCleaner : 3.2.9+e463d329f5 (Release)
 dotNET: 7.0.304
 HandBrakeCLI: HandBrake 20230223192356-5c2b5d2d0-1.6.x
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -77,7 +77,7 @@ FfMpeg: ffmpeg version 6.0-0ubuntu1~22.04.sav1.1 Copyright (c) 2000-2023 the FFm
 ### `ptr727/plexcleaner:debian`
 
 ```text
-PlexCleaner: PlexCleaner : 3.2.4+28b84751f4 (Release)
+PlexCleaner: PlexCleaner : 3.2.9+e463d329f5 (Release)
 dotNET: 7.0.304
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -89,7 +89,7 @@ FfMpeg: ffmpeg version 5.1.3-1 Copyright (c) 2000-2022 the FFmpeg developers bui
 ### `ptr727/plexcleaner:alpine`
 
 ```text
-PlexCleaner: PlexCleaner : 3.2.4+28b84751f4 (Release)
+PlexCleaner: PlexCleaner : 3.2.9+e463d329f5 (Release)
 dotNET: 7.0.304
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
@@ -101,8 +101,8 @@ FfMpeg: ffmpeg version 6.0 Copyright (c) 2000-2023 the FFmpeg developers built w
 ### `ptr727/plexcleaner:arch`
 
 ```text
-PlexCleaner: PlexCleaner : 3.2.4+28b84751f4 (Release)
-dotNET: 7.0.105
+PlexCleaner: PlexCleaner : 3.2.9+e463d329f5 (Release)
+dotNET: 7.0.107
 HandBrakeCLI: HandBrake 1.6.1
 MediaInfo: MediaInfo Command line, MediaInfoLib - v23.04
 MkvMerge: mkvmerge v77.0 ('Elemental') 64-bit
