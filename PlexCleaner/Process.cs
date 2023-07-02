@@ -26,7 +26,7 @@ internal static class Process
         bool result;
 
         // Process in jump loop
-        for (;;)
+        for (; ; )
         {
             // Skip the file if it is in the ignore list
             if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileName))
@@ -285,7 +285,7 @@ internal static class Process
     {
         // Create the file and directory list
         if (!FileEx.EnumerateDirectories(folderList, out List<FileInfo> fileInfoList, out _))
-        { 
+        {
             return false;
         }
 
@@ -309,7 +309,7 @@ internal static class Process
         bool fatalError = false;
         int totalDeleted = 0;
         try
-        { 
+        {
             folderList.AsParallel()
                 .WithDegreeOfParallelism(Program.Options.ThreadCount)
                 .WithCancellation(Program.CancelToken())
@@ -371,9 +371,9 @@ internal static class Process
 
             // Error
             if (!processResult)
-            { 
+            {
                 lock (lockObject)
-                { 
+                {
                     errorInfo.Add(new ProcessTuple(processName, state));
                 }
             }
@@ -382,16 +382,16 @@ internal static class Process
             if (modified)
             {
                 lock (lockObject)
-                { 
+                {
                     modifiedInfo.Add(new ProcessTuple(processName, state));
                 }
             }
-            
+
             // Verify failed
             if (state.HasFlag(SidecarFile.StatesType.VerifyFailed))
             {
                 lock (lockObject)
-                { 
+                {
                     failedInfo.Add(new ProcessTuple(processName, state));
                 }
 
@@ -399,7 +399,7 @@ internal static class Process
                 if (Program.Config.VerifyOptions.RegisterInvalidFiles)
                 {
                     lock (lockObject)
-                    { 
+                    {
                         Program.Config.ProcessOptions.FileIgnoreList.Add(processName);
                     }
                 }
@@ -422,8 +422,8 @@ internal static class Process
         if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
             Program.Config.ProcessOptions.FileIgnoreList.Count != ignoreCount)
         {
-            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}", 
-                                    Program.Config.ProcessOptions.FileIgnoreList.Count, 
+            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
+                                    Program.Config.ProcessOptions.FileIgnoreList.Count,
                                     Program.Options.SettingsFile);
             ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
         }
@@ -502,7 +502,7 @@ internal static class Process
 
                 // Add all the tags
                 lock (lockObject)
-                { 
+                {
                     ffTags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
                     mkTags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
                     miTags.Add(processFile.MediaInfoInfo, processFile.FfProbeInfo, processFile.MkvMergeInfo);
@@ -747,7 +747,7 @@ internal static class Process
         double percentage = System.Convert.ToDouble(dividend) / System.Convert.ToDouble(divisor) * 100.0;
         percentage = Math.Round(percentage, 2);
         if (percentage.Equals(100.0))
-        { 
+        {
             percentage = 99.99;
         }
         return percentage;

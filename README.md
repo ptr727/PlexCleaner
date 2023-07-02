@@ -30,7 +30,7 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 ## Release Notes
 
 - Version 3.2:
-  - Added `Ctrl-Q` and `Ctrl-Z` as additional break commands, `Ctrl+C` may terminate the shell command vs. cleanly exiting the process. 
+  - Added `Ctrl-Q` and `Ctrl-Z` as additional break commands, `Ctrl+C` may terminate the shell command vs. cleanly exiting the process.
 - Version 3.1:
   - Added `--preprocess` option to the `monitor` command, that will pre-process all monitored folders.
 - Version 3.0:

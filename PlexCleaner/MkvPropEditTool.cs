@@ -86,8 +86,8 @@ public class MkvPropEditTool : MkvMergeTool
     {
         // mkvpropedit --list-property-names
         // Enums must be single flag values, not combined flags
-        switch (flagType) 
-        { 
+        switch (flagType)
+        {
             case TrackInfo.FlagsType.Default:
                 return "flag-default";
             case TrackInfo.FlagsType.Forced:

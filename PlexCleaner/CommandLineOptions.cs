@@ -174,9 +174,9 @@ public class CommandLineOptions
         // Parallel processing thread count
         command.AddOption(
             new Option<int>("--threadcount")
-        {
-            Description = "Number of threads to use for parallel processing"
-        });
+            {
+                Description = "Number of threads to use for parallel processing"
+            });
 
         //  Re-verify
         command.AddOption(
@@ -491,13 +491,13 @@ public class CommandLineOptions
     private static Option CreateTestSnippetsOption()
     {
         // Create short video clips
-        return  new Option<bool>("--testsnippets")
+        return new Option<bool>("--testsnippets")
         {
             Description = "Create short media file clips"
         };
     }
 
-    private static  Option CreateTestNoModifyOption()
+    private static Option CreateTestNoModifyOption()
     {
         //  Do not make any modifications
         return new Option<bool>("--testnomodify")

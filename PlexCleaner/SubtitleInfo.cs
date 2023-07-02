@@ -24,7 +24,7 @@ public class SubtitleInfo : TrackInfo
             // Set track error and recommend remove, remux does not fix this error
             HasErrors = true;
             State = StateType.Remove;
-            Log.Logger.Warning("MediaInfoToolXmlSchema : MuxingMode not specified for S_VOBSUB Codec : {State}", State);
+            Log.Logger.Warning("MediaInfoToolXmlSchema : MuxingMode not specified for S_VOBSUB Codec : State: {State}", State);
         }
     }
 }

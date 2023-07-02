@@ -72,7 +72,7 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
         ProcessOptions = new ProcessOptions2(configFileJsonSchema1.ProcessOptions);
     }
 
-    [Obsolete] 
+    [Obsolete]
     internal new ProcessOptions2 ProcessOptions { get; set; } = new();
 
     // v2
@@ -134,9 +134,9 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         if (!ToolsOptions.VerifyValues() ||
             !ConvertOptions.VerifyValues() ||
             !ProcessOptions.VerifyValues() ||
-            !MonitorOptions.VerifyValues() || 
+            !MonitorOptions.VerifyValues() ||
             !VerifyOptions.VerifyValues())
-        { 
+        {
             return false;
         }
 
@@ -241,7 +241,7 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         schema.Title = "PlexCleaner Configuration Schema";
         schema.SchemaVersion = new Uri(@"http://json-schema.org/draft-06/schema");
         schema.Id = new Uri(SchemaUri);
-        
+
         // Write to file
         File.WriteAllText(path, schema.ToString());
     }

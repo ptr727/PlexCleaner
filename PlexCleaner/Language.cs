@@ -29,7 +29,7 @@ public class Language
 
         // Handle "chi" as "zho" for Matroska
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
-        if (language.Equals("chi", StringComparison.OrdinalIgnoreCase)) 
+        if (language.Equals("chi", StringComparison.OrdinalIgnoreCase))
         {
             return Chinese;
         }
@@ -233,7 +233,7 @@ public class Language
     {
         // Create case insensitive set
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (var item in tracks) 
+        foreach (var item in tracks)
         {
             languages.Add(item.LanguageIetf);
         }

@@ -111,7 +111,7 @@ public class VideoInfo : TrackInfo
         return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
     }
 
-public bool CompareVideo(VideoFormat compare)
+    public bool CompareVideo(VideoFormat compare)
     {
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match

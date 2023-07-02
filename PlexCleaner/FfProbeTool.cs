@@ -169,7 +169,8 @@ public class FfProbeTool : FfMpegTool
                 }
             }
 
-            // TODO: Errors
+            // Errors, any unsupported tracks
+            mediaInfo.HasErrors = mediaInfo.Unsupported;
 
             // Unwanted tags
             mediaInfo.HasTags = HasUnwantedTags(ffProbe.Format.Tags);

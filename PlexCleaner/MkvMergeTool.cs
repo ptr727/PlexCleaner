@@ -195,7 +195,8 @@ public partial class MkvMergeTool : MediaTool
             // Chapters
             mediaInfo.Chapters = mkvMerge.Chapters.Count;
 
-            // TODO: Errors
+            // Errors, any unsupported tracks
+            mediaInfo.HasErrors = mediaInfo.Unsupported;
 
             // Unwanted tags
             mediaInfo.HasTags = mkvMerge.GlobalTags.Count > 0 ||

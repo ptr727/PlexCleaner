@@ -129,10 +129,10 @@ public partial class HandBrakeTool : MediaTool
         // Video encoder options
         // E.g. --encoder x264 --quality 20 --encoder-preset medium
         commandline.Append($"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} ");
-        
+
         // Deinterlace using decomb filter
         if (deInterlace)
-        { 
+        {
             commandline.Append("--comb-detect --decomb ");
         }
 

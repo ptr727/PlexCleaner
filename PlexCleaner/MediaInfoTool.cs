@@ -156,17 +156,17 @@ public partial class MediaInfoTool : MediaTool
         try
         {
             // Deserialize
-            var xmlinfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
-            var xmlmedia = xmlinfo.Media;
+            var xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
+            var xmlMedia = xmInfo.Media;
 
             // No tracks
-            if (xmlmedia.Track.Count == 0)
+            if (xmlMedia.Track.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (var track in xmlmedia.Track)
+            foreach (var track in xmlMedia.Track)
             {
                 if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                 {
@@ -193,7 +193,9 @@ public partial class MediaInfoTool : MediaTool
                 }
             }
 
-            // TODO: Errors
+            // Errors, any unsupported tracks
+            mediaInfo.HasErrors = mediaInfo.Unsupported;
+
             // TODO: Tags, look in the Extra field, but not reliable
             // TODO: Duration, too many different formats to parse
             // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98

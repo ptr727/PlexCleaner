@@ -9,16 +9,17 @@ namespace PlexCleaner;
 
 public partial class TrackInfo
 {
-    public enum StateType 
-    { 
-        None, 
-        Keep, // PassThrough
-        Remove, 
-        ReMux, 
-        ReEncode, 
+    public enum StateType
+    {
+        None,
+        Keep,
+        Remove,
+        ReMux,
+        ReEncode,
         DeInterlace,
         SetFlags,
-        SetLanguage
+        SetLanguage,
+        Unsupported
     }
 
     // https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags
@@ -40,10 +41,19 @@ public partial class TrackInfo
     internal TrackInfo(MkvToolJsonSchema.Track trackJson)
     {
         const string parser = "MkvToolJsonSchema";
+
+        // Required
         Format = trackJson.Codec;
         Codec = trackJson.Properties.CodecId;
-        Title = trackJson.Properties.TrackName;
-        
+        if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
+        {
+            HasErrors = true;
+            State = StateType.Unsupported;
+            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            return;
+        }
+
+        // Flags
         if (trackJson.Properties.DefaultTrack)
         {
             Flags |= FlagsType.Default;
@@ -72,6 +82,9 @@ public partial class TrackInfo
         {
             Flags |= FlagsType.Forced;
         }
+
+        // Title
+        Title = trackJson.Properties.TrackName;
 
         // ISO 639-2B tag
         Language = trackJson.Properties.Language;
@@ -129,7 +142,7 @@ public partial class TrackInfo
                 // Failed to lookup IETF tag from ISO tag
                 Log.Logger.Error("{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}", parser, Language, State);
             }
-            else 
+            else
             {
                 // Set track error and recommend SetLanguage
                 // ReMux will conditionally check for SetIetfLanguageTags
@@ -191,18 +204,24 @@ public partial class TrackInfo
 
         // Set flags from title
         SetFlagsFromTitle(parser);
-
-        // Verify required info
-        Debug.Assert(!string.IsNullOrEmpty(Format));
-        Debug.Assert(!string.IsNullOrEmpty(Codec));
     }
 
     internal TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
     {
         const string parser = "FfMpegToolJsonSchema";
+
+        // Required
         Format = trackJson.CodecName;
         Codec = trackJson.CodecLongName;
+        if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
+        {
+            HasErrors = true;
+            State = StateType.Unsupported;
+            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            return;
+        }
 
+        // Flags
         if (trackJson.Disposition.Default)
         {
             Flags |= FlagsType.Default;
@@ -232,7 +251,10 @@ public partial class TrackInfo
             Flags |= FlagsType.Descriptions;
         }
 
+        // Title
         Title = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+
+        // Language
         Language = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
@@ -262,17 +284,27 @@ public partial class TrackInfo
         // TODO: Set flags from title
         // Repair uses MkvPropEdit, only set for MkvMergeInfo
         // SetFlagsFromTitle("FfMpegToolJsonSchema");
-
-        // Verify required info
-        Debug.Assert(!string.IsNullOrEmpty(Format));
-        Debug.Assert(!string.IsNullOrEmpty(Codec));
     }
 
     internal TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
     {
+        const string parser = "MediaInfoToolXmlSchema";
+
+        // Required
         Format = trackXml.Format;
         Codec = trackXml.CodecId;
+        if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
+        {
+            HasErrors = true;
+            State = StateType.Unsupported;
+            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            return;
+        }
+
+        // Title
         Title = trackXml.Title;
+
+        // Language
         Language = trackXml.Language;
 
         // TODO: Missing flags
@@ -319,11 +351,7 @@ public partial class TrackInfo
         HasTags = NotTrackTitleFlag();
 
         // TODO: Set flags from title, flags are incomplete
-         // SetFlagsFromTitle("MediaInfoToolXmlSchema");
-
-        // Verify required info
-        Debug.Assert(!string.IsNullOrEmpty(Format));
-        Debug.Assert(!string.IsNullOrEmpty(Codec));
+        // SetFlagsFromTitle("MediaInfoToolXmlSchema");
     }
 
     public string Format { get; set; } = "";
@@ -357,12 +385,12 @@ public partial class TrackInfo
             HasErrors,
             HasTags);
     }
-    
+
     public bool NotTrackTitleFlag()
     {
         // Not logic, i.e. title is not a flag
         if (string.IsNullOrEmpty(Title))
-        { 
+        {
             // Empty is not a flag
             return false;
         }
@@ -403,8 +431,8 @@ public partial class TrackInfo
     private static partial Regex TrackRegex();
 
     // Track title to flag mapping
-    private static readonly ValueTuple<string, FlagsType>[] TitleFlags = 
-    { 
+    private static readonly ValueTuple<string, FlagsType>[] TitleFlags =
+    {
         new ("SDH", FlagsType.HearingImpaired),
         new ("CC", FlagsType.HearingImpaired),
         new ("Commentary", FlagsType.Commentary),
