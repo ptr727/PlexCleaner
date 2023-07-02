@@ -44,6 +44,12 @@ public class MediaInfo
     public bool AnyTags { get => HasTags || Video.Any(item => item.HasTags) || Audio.Any(item => item.HasTags) || Subtitle.Any(item => item.HasTags); }
     public bool HasErrors { get; set; }
     public bool AnyErrors { get => HasErrors || Video.Any(item => item.HasErrors) || Audio.Any(item => item.HasErrors) || Subtitle.Any(item => item.HasErrors); }
+    public bool Unsupported
+    {
+        get => Video.Any(item => item.State == TrackInfo.StateType.Unsupported) ||
+            Audio.Any(item => item.State == TrackInfo.StateType.Unsupported) ||
+            Subtitle.Any(item => item.State == TrackInfo.StateType.Unsupported);
+    }
     public TimeSpan Duration { get; set; }
     public string Container { get; set; }
     public int Attachments { get; set; }
@@ -72,26 +78,26 @@ public class MediaInfo
     // Combined track count
     public int Count => Video.Count + Audio.Count + Subtitle.Count;
 
-    public static bool GetMediaInfo(FileInfo fileInfo, out MediaInfo ffprobe, out MediaInfo mkvmerge, out MediaInfo mediainfo)
+    public static bool GetMediaInfo(FileInfo fileInfo, out MediaInfo ffProbe, out MediaInfo mkvMerge, out MediaInfo mediaInfo)
     {
-        ffprobe = null;
-        mkvmerge = null;
-        mediainfo = null;
+        ffProbe = null;
+        mkvMerge = null;
+        mediaInfo = null;
 
-        return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffprobe) &&
-               GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvmerge) &&
-               GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediainfo);
+        return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffProbe) &&
+               GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvMerge) &&
+               GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
     }
 
-    public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediainfo)
+    public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediaInfo)
     {
         // Use the specified stream parser tool
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         return parser switch
         {
-            MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediainfo),
-            MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileInfo.FullName, out mediainfo),
-            MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileInfo.FullName, out mediainfo),
+            MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediaInfo),
+            MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileInfo.FullName, out mediaInfo),
+            MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileInfo.FullName, out mediaInfo),
             _ => throw new NotImplementedException()
         };
     }
@@ -149,7 +155,7 @@ public class MediaInfo
 
         // Track counts
         if (Count != mediaInfo.Count)
-        { 
+        {
             return false;
         }
 

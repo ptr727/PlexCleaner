@@ -77,7 +77,7 @@ public partial class SevenZipTool : MediaTool
         {
             // Load the download page
             // TODO: Find a more reliable way of getting the latest release
-            const string uri= "https://www.7-zip.org/download.html";
+            const string uri = "https://www.7-zip.org/download.html";
             Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
             var downloadPage = Download.GetHttpClient().GetStringAsync(uri).Result;
 

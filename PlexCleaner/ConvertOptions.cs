@@ -43,7 +43,7 @@ public record ConvertOptions : ConvertOptions1
 
     [Required]
     public FfMpegOptions FfMpegOptions { get; protected set; } = new();
-    
+
     [Required]
     public HandBrakeOptions HandBrakeOptions { get; protected set; } = new();
 
@@ -110,7 +110,7 @@ public class FfMpegOptions
 
     [Required]
     public string Global { get; set; } = "";
-    
+
     [Required]
     public string Output { get; set; } = "";
 }

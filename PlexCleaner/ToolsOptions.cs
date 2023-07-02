@@ -40,7 +40,7 @@ public class ToolsOptions
     public bool VerifyValues()
     {
         // Path must be set if not using system path
-        if (!UseSystem && string.IsNullOrEmpty(RootPath)) 
+        if (!UseSystem && string.IsNullOrEmpty(RootPath))
         {
             Log.Logger.Error("ToolsOptions:RootPath must be set if not UseSystem");
             return false;

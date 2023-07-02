@@ -139,7 +139,7 @@ internal class Monitor
                 Log.Logger.Information("Processing changes in : {Folder}", folder);
             }
             if (!Process.ProcessFolders(watchList) || !Process.DeleteEmptyFolders(watchList))
-            { 
+            {
                 // Fatal error
                 return false;
             }

@@ -33,8 +33,8 @@ public static class Convert
         // Selected is ReEncode
         // NotSelected is Keep
         Log.Logger.Information("ReEncode using FfMpeg : {FileName}", inputName);
-        var result = selectMediaInfo == null ? 
-            Tools.FfMpeg.ConvertToMkv(inputName, tempName) : 
+        var result = selectMediaInfo == null ?
+            Tools.FfMpeg.ConvertToMkv(inputName, tempName) :
             Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName);
         if (!result)
         {
@@ -130,8 +130,8 @@ public static class Convert
 
     public static bool ReMuxToMkv(string inputName, SelectMediaInfo selectMediaInfo, out string outputName)
     {
-        if (selectMediaInfo == null) 
-        { 
+        if (selectMediaInfo == null)
+        {
             return ReMuxToMkv(inputName, out outputName);
         }
 

@@ -88,17 +88,17 @@ internal class Program
         var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
 
         string version = versionAttribute?.InformationalVersion;
-        version ??= assembly.GetName()?.Version?.ToString();
+        version ??= assembly.GetName().Version?.ToString();
         version ??= "?";
 
-        string name = assembly.GetName()?.Name;
+        string name = assembly.GetName().Name;
         name ??= "?";
 
-        #if DEBUG
+#if DEBUG
         const string build = "Debug";
-        #else
+#else
         const string build = "Release";
-        #endif
+#endif
 
         return versionOnly ? version : $"{name} : {version} ({build})";
     }
@@ -116,7 +116,7 @@ internal class Program
 
     private static void KeyPressHandler()
     {
-        for (;;)
+        for (; ; )
         {
             // Wait on key available or cancelled
             while (!Console.KeyAvailable)
@@ -194,14 +194,14 @@ internal class Program
         loggerConfiguration.Enrich.WithThreadId();
 
         // Default minimum log level
-        #if DEBUG
-            LogEventLevel logLevelDefault = LogEventLevel.Debug;
-        #else
+#if DEBUG
+        LogEventLevel logLevelDefault = LogEventLevel.Debug;
+#else
             LogEventLevel logLevelDefault = LogEventLevel.Information;
-        #endif
+#endif
 
         // Log to console
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code, 
+        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code,
             restrictedToMinimumLevel: logLevelDefault,
             outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
 
@@ -218,7 +218,7 @@ internal class Program
 
             // Write async to file
             // Default max size is 1GB, roll when max size is reached
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile, 
+            loggerConfiguration.WriteTo.Async(action => action.File(logfile,
                 restrictedToMinimumLevel: logLevelDefault,
                 rollOnFileSizeLimit: true,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
@@ -521,7 +521,7 @@ internal class Program
         {
             // If threadcount is 0 (default) use half the number of processors
             if (Options.ThreadCount == 0)
-            { 
+            {
                 Options.ThreadCount = Math.Max(Environment.ProcessorCount / 2, 1);
             }
         }
@@ -554,7 +554,7 @@ internal class Program
         // Create program instance
         return new Program();
     }
-        
+
     private bool CreateFileList(List<string> mediaFiles)
     {
         Log.Logger.Information("Creating file and folder list ...");
@@ -562,7 +562,7 @@ internal class Program
         // Trim quotes from input paths
         mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
 
-        bool fatalError =false;
+        bool fatalError = false;
         try
         {
             // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
@@ -583,7 +583,7 @@ internal class Program
                 {
                     // Add this directory
                     lock (lockObject)
-                    { 
+                    {
                         DirectoryList.Add(fileOrFolder);
                     }
 

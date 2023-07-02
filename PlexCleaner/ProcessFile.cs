@@ -453,7 +453,7 @@ public class ProcessFile
         SidecarFile.State |= SidecarFile.StatesType.ClearedTags;
         return Refresh(true);
     }
-        
+
     public bool RemoveAttachments(ref bool modified)
     {
         // Any attachments, use MkvMergeInfo
@@ -592,7 +592,7 @@ public class ProcessFile
         selectMediaInfo.Move(MkvMergeInfo.Video.Find(item => item.IsCoverArt), false);
 
         // There must be something left to keep
-        Debug.Assert(selectMediaInfo.Selected.Count> 0);
+        Debug.Assert(selectMediaInfo.Selected.Count > 0);
         selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
 
         Log.Logger.Information("Removing Cover Art from media file : {FileName}", FileInfo.Name);
@@ -1206,7 +1206,7 @@ public class ProcessFile
 
         // Init
         canRepair = false;
-    
+
         // Conditional
         if (!Program.Config.ProcessOptions.Verify)
         {
@@ -1309,7 +1309,7 @@ public class ProcessFile
         {
             // Set Verified state if not already set
             if (!SidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
-            { 
+            {
                 SidecarFile.State |= SidecarFile.StatesType.Verified;
                 SidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 Debug.Assert(!SidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
@@ -1364,7 +1364,7 @@ public class ProcessFile
         }
 
         // Repair failed
-        if (!repaired) 
+        if (!repaired)
         {
             // Repair failed and verify failed state
             SidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
@@ -1454,7 +1454,7 @@ public class ProcessFile
             audioDefaults.Count > 1 ||
             subtitleDefaults.Count > 1)
         {
-            Log.Logger.Warning("Multiple Default flagged tracks : Video: {Video}, Audio: {Audio}, Subtitle: {Subtitle} : {FileName}", 
+            Log.Logger.Warning("Multiple Default flagged tracks : Video: {Video}, Audio: {Audio}, Subtitle: {Subtitle} : {FileName}",
                 videoDefaults.Count, audioDefaults.Count, subtitleDefaults.Count, FileInfo.Name);
 
             // Warning only
@@ -1740,17 +1740,17 @@ public class ProcessFile
 
         // Get info directly from tools
         if (!MediaInfo.GetMediaInfo(FileInfo,
-                out MediaInfo ffprobeInfo,
-                out MediaInfo mkvmergeInfo,
-                out MediaInfo mediainfoInfo))
+                out MediaInfo ffProbeInfo,
+                out MediaInfo mkvMergeInfo,
+                out MediaInfo mediaInfoInfo))
         {
             return false;
         }
 
         // Assign results
-        FfProbeInfo = ffprobeInfo;
-        MkvMergeInfo = mkvmergeInfo;
-        MediaInfoInfo = mediainfoInfo;
+        FfProbeInfo = ffProbeInfo;
+        MkvMergeInfo = mkvMergeInfo;
+        MediaInfoInfo = mediaInfoInfo;
 
         // Print info
         MediaInfoInfo.WriteLine("MediaInfo");
@@ -1792,7 +1792,18 @@ public class ProcessFile
         Debug.Assert(MkvMergeTool.IsMkvFile(FileInfo));
 
         // Get media info
-        return Refresh(false);
+        if (!Refresh(false))
+        {
+            return false;
+        }
+
+        // Verify that all codecs and tracks are supported
+        if (MediaInfoInfo.Unsupported || FfProbeInfo.Unsupported || MkvMergeInfo.Unsupported)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
@@ -1884,7 +1895,7 @@ public class ProcessFile
         {
             // If the video is not H264, H265 or AV1 (by experimentation), then tag the video to also be reencoded
             var reEncodeVideo = selectMediaInfo.NotSelected.Video.FindAll(item => !ReEncodeVideoOnAudioReEncode.Contains(item.Format, StringComparer.OrdinalIgnoreCase));
-            if (reEncodeVideo.Count > 0) 
+            if (reEncodeVideo.Count > 0)
             {
                 selectMediaInfo.Move(reEncodeVideo, true);
                 Log.Logger.Warning("Including incompatible Video track for Audio only ReEncoding");
