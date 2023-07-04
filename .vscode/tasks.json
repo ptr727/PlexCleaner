@@ -36,6 +36,16 @@
                 "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "format",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "format",
+                "--verbosity",
+                "diagnostic"
+            ]
         }
     ]
 }
