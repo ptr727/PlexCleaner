@@ -4,28 +4,28 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## License
 
-Licensed under the [MIT License](./LICENSE)  
-![GitHub License](https://img.shields.io/github/license/ptr727/PlexCleaner)
+Licensed under the [MIT License][license-link]  
+![GitHub License][license-shield]
 
 ## Build
 
-Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
+Code and Pipeline is on [GitHub][github-link].  
+Binary releases are published on [GitHub Releases][releases-link].  
+Docker images are published on [Docker Hub][docker-link].
 
 ## Status
 
-[![Release Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build)](https://github.com/ptr727/PlexCleaner/actions)  
-[![Docker Status](https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildDockerPush.yml?logo=github&label=Docker%20Build)](https://github.com/ptr727/PlexCleaner/actions)  
-[![Last Commit](https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit)](https://github.com/ptr727/PlexCleaner/commits/main)  
-[![Last Build](https://byob.yarr.is/ptr727/PlexCleaner/lastbuild)](https://github.com/ptr727/PlexCleaner/actions)
+[![Release Status][release-status-shield]][actions-link]  
+[![Docker Status][docker-status-shield]][actions-link]  
+[![Last Commit][last-commit-shield]][commit-link]  
+[![Last Build][last-build-shield]][actions-link]
 
 ## Releases
 
-[![GitHub Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release)](https://github.com/ptr727/PlexCleaner/releases)  
-[![GitHub Pre-Release)](https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github)](https://github.com/ptr727/PlexCleaner/releases)  
-[![Docker Latest](https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker)](https://hub.docker.com/r/ptr727/plexcleaner)  
-[![Docker Develop](https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange)](https://hub.docker.com/r/ptr727/plexcleaner)
+[![GitHub Release][release-version-shield]][releases-link]  
+[![GitHub Pre-Release][pre-release-version-shield]][releases-link]  
+[![Docker Latest][docker-latest-version-shield]][docker-link]  
+[![Docker Develop][docker-develop-version-shield]][docker-link]
 
 ## Release Notes
 
@@ -35,8 +35,8 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
   - Added `--preprocess` option to the `monitor` command, that will pre-process all monitored folders.
 - Version 3.0:
   - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
-    - See the Docker [README](./Docker/README.md) for image and tag usage details.
-    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA](https://launchpad.net/~savoury1) for up to date FFmpeg and HandBrake builds.
+    - See the Docker [README][docker-link] for image and tag usage details.
+    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA][savoury-link] for up to date FFmpeg and HandBrake builds.
   - Switched from .NET 6 to .NET 7.
     - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
   - Added additional architectures to the published releases, including `win-x64`, `linux-x64`, `linux-musl-x64`, `linux-arm`, `linux-arm64`, and `osx-x64`.
@@ -101,9 +101,9 @@ Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plex
 
 ## Questions or Issues
 
-- Use the [Discussions](https://github.com/ptr727/PlexCleaner/discussions) forum for general questions.
-- Refer to the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker for known problems.
-- Report bugs in the [Issues](https://github.com/ptr727/PlexCleaner/issues) tracker.
+- Use the [Discussions][discussions-link] forum for general questions.
+- Refer to the [Issues][issues-link] tracker for known problems.
+- Report bugs in the [Issues][issues-link] tracker.
 
 ## Use Cases
 
@@ -145,7 +145,7 @@ Alternatively, install directly on [Windows](#windows) or [Linux](#linux) follow
 ### Docker
 
 - Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
-- See the Docker [README](./Docker/README.md) for image and tag details.
+- See the Docker [README][docker-link] for image and tag details.
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -257,7 +257,7 @@ The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` setting
 
 Note that hardware assisted encoding options are operating system, hardware, and tool version specific.  
 Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.  
-The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions](https://github.com/ptr727/PlexCleaner/discussions).
+The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
 ### FFmpeg Options
 
@@ -542,7 +542,7 @@ These commands have no conditional logic and will process all specified media fi
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
 - [Microsoft .NET Linux Docker Images](https://hub.docker.com/_/microsoft-dotnet)
-- [Rob Savoury's PPA](https://launchpad.net/~savoury1)
+- [Rob Savoury's PPA][savoury-link]
 - [Arch Linux](https://archlinux.org/)
 
 ## Sample Media Files
@@ -552,3 +552,24 @@ These commands have no conditional logic and will process all specified media fi
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
 - [MPlayer](https://samples.mplayerhq.hu/)
 - [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
+
+***
+
+[release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build
+[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildDockerPush.yml?logo=github&label=Docker%20Build
+[last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
+[last-build-shield]: https://byob.yarr.is/ptr727/PlexCleaner/lastbuild
+[license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
+[release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
+[pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
+[docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
+[docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
+[actions-link]: https://github.com/ptr727/PlexCleaner/actions
+[docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
+[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[releases-link]: https://github.com/ptr727/PlexCleaner/releases
+[license-link]: ./LICENSE
+[github-link]: https://github.com/ptr727/PlexCleaner
+[savoury-link]: https://launchpad.net/~savoury1
+[discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
+[issues-link]: https://github.com/ptr727/PlexCleaner/issues

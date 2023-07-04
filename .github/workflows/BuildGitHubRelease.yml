@@ -143,10 +143,12 @@ jobs:
 
     # Create GitHub release
     # https://github.com/marketplace/actions/automatic-releases
+    # Alternative: https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
       uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
+        # Create a tag with the version number
         automatic_release_tag: ${{ needs.version.outputs.SemVer2 }}
         # Only main branch is not a pre-release
         prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
