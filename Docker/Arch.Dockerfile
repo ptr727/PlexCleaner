@@ -135,13 +135,17 @@ RUN echo "y\ny" | pacman --sync --noconfirm --clean --clean
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
-# Verify installed versions
-RUN dotnet --info \
-    && mediainfo --version \
-    && mkvmerge --version \
-    && ffmpeg -version \
-    && /PlexCleaner/PlexCleaner --version
-
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy version script
+COPY /Docker/Version.sh /PlexCleaner
+RUN chmod ugo+rwx /PlexCleaner/Version.sh
+
+# Print installed version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        /PlexCleaner/Version.sh; \
+    fi

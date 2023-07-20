@@ -178,18 +178,17 @@ RUN apt-get autoremove -y \
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
+# Copy test script
+COPY /Docker/Test.sh /Test/
+RUN chmod -R ugo+rwx /Test
+
+# Copy version script
+COPY /Docker/Version.sh /PlexCleaner
+RUN chmod ugo+rwx /PlexCleaner/Version.sh
+
 # Print installed version information
 ARG TARGETPLATFORM \
     BUILDPLATFORM
 RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
-        dotnet --info; \
-        ffmpeg -version; \
-        HandBrakeCLI --version; \
-        mediainfo --version; \
-        mkvmerge --version; \
-        /PlexCleaner/PlexCleaner --version; \
+        /PlexCleaner/Version.sh; \
     fi
-
-# Copy test script
-COPY /Docker/Test.sh /Test/
-RUN chmod -R ugo+rwx /Test

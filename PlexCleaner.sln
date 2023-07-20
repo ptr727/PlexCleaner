@@ -29,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F5
 		Docker\README.md = Docker\README.md
 		Docker\Test.sh = Docker\Test.sh
 		Docker\Ubuntu.dotNET.Savoury.Dockerfile = Docker\Ubuntu.dotNET.Savoury.Dockerfile
+		Docker\Version.sh = Docker\Version.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B5CC1-86DF-46DB-8AEB-12CDE10FB785}"
