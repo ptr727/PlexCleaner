@@ -78,8 +78,8 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
 # Update repository from 3.x to edge and add testing
 # HandBrake is only in testing repository, `apk add handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/`
 # https://wiki.alpinelinux.org/wiki/Repositories
-RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
-    && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+#RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
+#    && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
 # Install prerequisites
 RUN apk update \
@@ -102,10 +102,21 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 RUN apk --no-cache add \
-        ffmpeg \
-        handbrake \
-        mediainfo \
-        mkvtoolnix
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+        handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
+        # mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
+
+# Install MediaInfo from source
+# https://github.com/MediaArea/MediaInfo/issues/707
+# https://mediaarea.net/download/snapshots/binary/mediainfo
+RUN apk --no-cache add p7zip wget build-base \
+    && wget -O MediaInfo_CLI_GNU_FromSource.tar.bz2 https://mediaarea.net/download/snapshots/binary/mediainfo/20230715/MediaInfo_CLI_23.07.20230715_GNU_FromSource.tar.bz2 \
+    && 7z x -so MediaInfo_CLI_GNU_FromSource.tar.bz2 | tar xf - \
+    && cd MediaInfo_CLI_GNU_FromSource \
+    && ./CLI_Compile.sh \
+    && cd ./MediaInfo/Project/GNU/CLI \
+    && make install
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
