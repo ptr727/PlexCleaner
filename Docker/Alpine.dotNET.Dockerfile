@@ -56,6 +56,19 @@ COPY ./Docker/Build.sh ./
 RUN chmod ugo+rwx ./Build.sh
 RUN ./Build.sh
 
+# Build MediaInfo from source
+# https://github.com/MediaArea/MediaInfo/issues/707
+# https://mediaarea.net/download/snapshots/binary/mediainfo
+RUN apk update \
+    && apk --no-cache add \
+        build-base \
+        p7zip \
+        wget \
+    && wget -O MediaInfo_CLI_GNU_FromSource.tar.bz2 https://mediaarea.net/download/snapshots/binary/mediainfo/20230715/MediaInfo_CLI_23.07.20230715_GNU_FromSource.tar.bz2 \
+    && 7z x -so MediaInfo_CLI_GNU_FromSource.tar.bz2 | tar xf - \
+    && cd MediaInfo_CLI_GNU_FromSource \
+    && ./CLI_Compile.sh
+
 
 # Final layer
 FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
@@ -107,16 +120,8 @@ RUN apk --no-cache add \
         # mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
         mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
 
-# Install MediaInfo from source
-# https://github.com/MediaArea/MediaInfo/issues/707
-# https://mediaarea.net/download/snapshots/binary/mediainfo
-RUN apk --no-cache add p7zip wget build-base \
-    && wget -O MediaInfo_CLI_GNU_FromSource.tar.bz2 https://mediaarea.net/download/snapshots/binary/mediainfo/20230715/MediaInfo_CLI_23.07.20230715_GNU_FromSource.tar.bz2 \
-    && 7z x -so MediaInfo_CLI_GNU_FromSource.tar.bz2 | tar xf - \
-    && cd MediaInfo_CLI_GNU_FromSource \
-    && ./CLI_Compile.sh \
-    && cd ./MediaInfo/Project/GNU/CLI \
-    && make install
+# Copy MediaInfo from builder layer
+COPY --from=builder /Builder/MediaInfo_CLI_GNU_FromSource/MediaInfo/Project/GNU/CLI/mediainfo /usr/local/bin
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

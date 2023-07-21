@@ -525,8 +525,8 @@ internal class Program
 
         // Log app and runtime version
         Log.Logger.Information("Application Version : {AppVersion}", GetVersion(false));
-        Log.Logger.Information("Runtime Version : {RuntimeVersion}", RuntimeInformation.FrameworkDescription);
-        Log.Logger.Information("OS Version : {OsVersion}", RuntimeInformation.OSDescription);
+        Log.Logger.Information("Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}", RuntimeInformation.FrameworkDescription, RuntimeInformation.RuntimeIdentifier);
+        Log.Logger.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
         Log.Logger.Information("Build Date : {BuildDate}", GetBuildDate().ToLocalTime());
 
         // Parallel processing config
