@@ -41,6 +41,7 @@ WORKDIR /Builder
 # Global builder vriables
 # https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 
+# Build platform args
 ARG \
     # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \

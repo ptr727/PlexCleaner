@@ -21,12 +21,10 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-jammy AS
 # Layer workdir
 WORKDIR /Builder
 
+# Build platform args
 ARG \
-    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \
-    # Architecture component of TARGETPLATFORM
     TARGETARCH \
-    # Platform of the node performing the build
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration

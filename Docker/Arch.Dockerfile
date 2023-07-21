@@ -16,15 +16,22 @@
 
 
 # Builder layer
-FROM archlinux:latest as builder
+# Use base image with AUR helpers pre-installed
+# https://hub.docker.com/r/greyltc/archlinux-aur
+FROM greyltc/archlinux-aur:yay as builder
 
 # Layer workdir
 WORKDIR /Builder
 
-# Install .NET SDK
-RUN pacman-key --init \
-    && pacman --sync --noconfirm --refresh --sysupgrade \
-    && pacman --sync --noconfirm dotnet-sdk
+# No MCR image for Arch, install .NET Preview from AUR
+# https://aur.archlinux.org/packages/dotnet-sdk-preview-bin
+RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-preview-bin'
+
+# Build platform args
+ARG \
+    TARGETPLATFORM \
+    TARGETARCH \
+    BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
 ARG BUILD_CONFIGURATION="Debug" \
@@ -38,6 +45,10 @@ ARG BUILD_CONFIGURATION="Debug" \
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
+
+# Enable running a .NET 7 target on .NET 8 preview
+ENV DOTNET_ROLL_FORWARD=Major \
+    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
@@ -86,7 +97,7 @@ RUN wget https://aka.ms/getvsdbgsh \
     && rm getvsdbgsh
 
 # Install .NET and media processing tools
-# https://archlinux.org/packages/community/x86_64/dotnet-sdk/
+# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
 # https://archlinux.org/packages/extra/x86_64/ffmpeg/
 # https://archlinux.org/packages/community/x86_64/mediainfo/
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
@@ -98,10 +109,6 @@ RUN pacman --sync --noconfirm \
         intel-media-sdk \
         mediainfo \
         mkvtoolnix-cli
-
-# noconfirm selects default option, not yes
-# echo "y\ny" | pacman -Scc
-# find /var/cache/pacman/pkg -mindepth 1 -delete
 
 # Cleanup
 RUN echo "y\ny" | pacman --sync --noconfirm --clean --clean

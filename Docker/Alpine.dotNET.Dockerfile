@@ -23,12 +23,10 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine A
 # Layer workdir
 WORKDIR /Builder
 
+# Build platform args
 ARG \
-    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \
-    # Architecture component of TARGETPLATFORM
     TARGETARCH \
-    # Platform of the node performing the build
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
@@ -78,7 +76,7 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     TZ=Etc/UTC
 
 # Update repository from 3.x to edge and add testing
-# HandBrake is only in testing repository
+# HandBrake is only in testing repository, `apk add handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/`
 # https://wiki.alpinelinux.org/wiki/Repositories
 RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
     && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
