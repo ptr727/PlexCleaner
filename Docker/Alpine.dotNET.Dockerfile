@@ -23,12 +23,10 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine A
 # Layer workdir
 WORKDIR /Builder
 
+# Build platform args
 ARG \
-    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \
-    # Architecture component of TARGETPLATFORM
     TARGETARCH \
-    # Platform of the node performing the build
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
@@ -48,43 +46,28 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 ENV DOTNET_ROLL_FORWARD=Major \
     DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
-# Run unit tests
-RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
+# Unit Test
+COPY ./Docker/UnitTest.sh ./
+RUN chmod ugo+rwx ./UnitTest.sh
+RUN ./UnitTest.sh
 
-# Build release and debug builds
-RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Release \
-        --configuration release \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION \
-    && dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Debug \
-        --configuration debug \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION
+# Build
+COPY ./Docker/Build.sh ./
+RUN chmod ugo+rwx ./Build.sh
+RUN ./Build.sh
 
-# Copy build output
-RUN mkdir -p ./Publish/PlexCleaner\Debug \
-    && mkdir -p ./Publish/PlexCleaner\Release \
-    && if [ "$BUILD_CONFIGURATION" = "Debug" ] || [ "$BUILD_CONFIGURATION" = "debug" ]; \
-    then \
-        cp -r ./Build/Debug ./Publish/PlexCleaner; \
-    else \
-        cp -r ./Build/Release ./Publish/PlexCleaner; \
-    fi \
-    && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
-    && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
-
+# Build MediaInfo from source
+# https://github.com/MediaArea/MediaInfo/issues/707
+# https://mediaarea.net/download/snapshots/binary/mediainfo
+RUN apk update \
+    && apk --no-cache add \
+        build-base \
+        p7zip \
+        wget \
+    && wget -O MediaInfo_CLI_GNU_FromSource.tar.bz2 https://mediaarea.net/download/snapshots/binary/mediainfo/20230715/MediaInfo_CLI_23.07.20230715_GNU_FromSource.tar.bz2 \
+    && 7z x -so MediaInfo_CLI_GNU_FromSource.tar.bz2 | tar xf - \
+    && cd MediaInfo_CLI_GNU_FromSource \
+    && ./CLI_Compile.sh
 
 
 # Final layer
@@ -106,10 +89,10 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     TZ=Etc/UTC
 
 # Update repository from 3.x to edge and add testing
-# HandBrake is only in testing repository
+# HandBrake is only in testing repository, `apk add handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/`
 # https://wiki.alpinelinux.org/wiki/Repositories
-RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
-    && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+#RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
+#    && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
 
 # Install prerequisites
 RUN apk update \
@@ -132,26 +115,28 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 RUN apk --no-cache add \
-        ffmpeg \
-        handbrake \
-        mediainfo \
-        mkvtoolnix
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+        handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
+        # mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
+
+# Copy MediaInfo from builder layer
+COPY --from=builder /Builder/MediaInfo_CLI_GNU_FromSource/MediaInfo/Project/GNU/CLI/mediainfo /usr/local/bin
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
-# Print installed version information
-ARG TARGETPLATFORM \
-    BUILDPLATFORM
-RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
-        dotnet --info; \
-        ffmpeg -version; \
-        HandBrakeCLI --version; \
-        mediainfo --version; \
-        mkvmerge --version; \
-        /PlexCleaner/PlexCleaner --version; \
-    fi
-
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy version script
+COPY /Docker/Version.sh /PlexCleaner/
+RUN chmod ugo+rwx /PlexCleaner/Version.sh
+
+# Print version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        /PlexCleaner/Version.sh; \
+    fi

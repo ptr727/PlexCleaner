@@ -41,6 +41,7 @@ WORKDIR /Builder
 # Global builder vriables
 # https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 
+# Build platform args
 ARG \
     # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
     TARGETPLATFORM \
@@ -66,43 +67,15 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 ENV DOTNET_ROLL_FORWARD=Major \
     DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
-# Run unit tests
-RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
+# Unit Test
+COPY ./Docker/UnitTest.sh ./
+RUN chmod ugo+rwx ./UnitTest.sh
+RUN ./UnitTest.sh
 
-# Build release and debug builds
-RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Release \
-        --configuration release \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION \
-    && dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Debug \
-        --configuration debug \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION
-
-# Copy build output
-RUN mkdir -p ./Publish/PlexCleaner\Debug \
-    && mkdir -p ./Publish/PlexCleaner\Release \
-    && if [ "$BUILD_CONFIGURATION" = "Debug" ] || [ "$BUILD_CONFIGURATION" = "debug" ]; \
-    then \
-        cp -r ./Build/Debug ./Publish/PlexCleaner; \
-    else \
-        cp -r ./Build/Release ./Publish/PlexCleaner; \
-    fi \
-    && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
-    && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
-
+# Build
+COPY ./Docker/Build.sh ./
+RUN chmod ugo+rwx ./Build.sh
+RUN ./Build.sh
 
 
 # Final layer
@@ -195,18 +168,17 @@ RUN apt-get autoremove -y \
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
-# Print installed version information
-ARG TARGETPLATFORM \
-    BUILDPLATFORM
-RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
-        dotnet --info; \
-        ffmpeg -version; \
-        HandBrakeCLI --version; \
-        mediainfo --version; \
-        mkvmerge --version; \
-        /PlexCleaner/PlexCleaner --version; \
-    fi
-
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy version script
+COPY /Docker/Version.sh /PlexCleaner/
+RUN chmod ugo+rwx /PlexCleaner/Version.sh
+
+# Print version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        /PlexCleaner/Version.sh; \
+    fi
