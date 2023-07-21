@@ -48,43 +48,15 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 ENV DOTNET_ROLL_FORWARD=Major \
     DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
-# Run unit tests
-RUN dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj;
+# Unit Test
+COPY ./Docker/UnitTest.sh ./
+RUN chmod ugo+rwx ./UnitTest.sh
+RUN ./UnitTest.sh
 
-# Build release and debug builds
-RUN dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Release \
-        --configuration release \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION \
-    && dotnet publish ./PlexCleaner/PlexCleaner.csproj \
-        --arch $TARGETARCH \
-        --self-contained false \
-        --output ./Build/Debug \
-        --configuration debug \
-        -property:Version=$BUILD_VERSION \
-        -property:FileVersion=$BUILD_FILE_VERSION \
-        -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
-        -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
-        -property:PackageVersion=$BUILD_PACKAGE_VERSION
-
-# Copy build output
-RUN mkdir -p ./Publish/PlexCleaner\Debug \
-    && mkdir -p ./Publish/PlexCleaner\Release \
-    && if [ "$BUILD_CONFIGURATION" = "Debug" ] || [ "$BUILD_CONFIGURATION" = "debug" ]; \
-    then \
-        cp -r ./Build/Debug ./Publish/PlexCleaner; \
-    else \
-        cp -r ./Build/Release ./Publish/PlexCleaner; \
-    fi \
-    && cp -r ./Build/Release ./Publish/PlexCleaner/Release \
-    && cp -r ./Build/Debug ./Publish/PlexCleaner/Debug
-
+# Build
+COPY ./Docker/Build.sh ./
+RUN chmod ugo+rwx ./Build.sh
+RUN ./Build.sh
 
 
 # Final layer
@@ -145,10 +117,10 @@ COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
 
 # Copy version script
-COPY /Docker/Version.sh /PlexCleaner
+COPY /Docker/Version.sh /PlexCleaner/
 RUN chmod ugo+rwx /PlexCleaner/Version.sh
 
-# Print installed version information
+# Print version information
 ARG TARGETPLATFORM \
     BUILDPLATFORM
 RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
