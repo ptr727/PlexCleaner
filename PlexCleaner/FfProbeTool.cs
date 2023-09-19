@@ -42,13 +42,10 @@ public class FfProbeTool : FfMpegTool
         // Make sure that the various stream processors leave the memory stream open for the duration of operations
         using MemoryStream memoryStream = new();
         using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
-        using ProcessEx process = new()
-        {
-            RedirectOutput = true,
-            OutputStream = new StreamWriter(compressStream),
-            // No console output
-            RedirectError = true
-        };
+        using ProcessEx process = new();
+        process.RedirectOutput = true;
+        process.OutputStream = new StreamWriter(compressStream);
+        process.RedirectError = true;
 
         // Build commandline
         StringBuilder commandline = new();

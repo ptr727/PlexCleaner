@@ -12,7 +12,7 @@
 # docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
 
 
@@ -56,21 +56,10 @@ COPY ./Docker/Build.sh ./
 RUN chmod ugo+rwx ./Build.sh
 RUN ./Build.sh
 
-# Build MediaInfo from source
-# https://github.com/MediaArea/MediaInfo/issues/707
-# https://mediaarea.net/download/snapshots/binary/mediainfo
-RUN apk update \
-    && apk --no-cache add \
-        build-base \
-        p7zip \
-        wget \
-    && wget -O MediaInfo_CLI_GNU_FromSource.tar.bz2 https://mediaarea.net/download/snapshots/binary/mediainfo/20230715/MediaInfo_CLI_23.07.20230715_GNU_FromSource.tar.bz2 \
-    && 7z x -so MediaInfo_CLI_GNU_FromSource.tar.bz2 | tar xf - \
-    && cd MediaInfo_CLI_GNU_FromSource \
-    && ./CLI_Compile.sh
-
 
 # Final layer
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/alpine3.18/amd64/Dockerfile
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/7.0/alpine3.18/amd64/Dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
 
 # Image label
@@ -80,23 +69,16 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# Set locale to UTF-8 and timezone to UTC
-# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
+# Enable .NET globalization, set default locale to en_US.UTF-8, and timezone to UTC
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/dotnetapp/Dockerfile.alpine-icu
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8 \
     TZ=Etc/UTC
 
-# Update repository from 3.x to edge and add testing
-# HandBrake is only in testing repository, `apk add handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/`
-# https://wiki.alpinelinux.org/wiki/Repositories
-#RUN sed -i 's|v3\.\d*|edge|' /etc/apk/repositories \
-#    && echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-
 # Install prerequisites
-RUN apk update \
-    && apk --no-cache add \
+RUN apk --upgrade --no-cache add \
         icu-data-full \
         icu-libs \
         p7zip \
@@ -109,19 +91,17 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
+# Install media tools from latest-stable / v3.18 matching base image version
+# HandBrake is only available in edge/testing
+# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
-RUN apk --no-cache add \
-        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mediainfo
+# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mkvtoolnix
+RUN apk --upgrade --no-cache add \
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
         handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
-        # mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
-        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
-
-# Copy MediaInfo from builder layer
-COPY --from=builder /Builder/MediaInfo_CLI_GNU_FromSource/MediaInfo/Project/GNU/CLI/mediainfo /usr/local/bin
+        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

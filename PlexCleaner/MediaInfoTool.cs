@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using InsaneGenius.Utilities;
 using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
@@ -76,39 +75,21 @@ public partial class MediaInfoTool : MediaTool
 
         try
         {
-            // Load the release history page
-            const string uri = "https://raw.githubusercontent.com/MediaArea/MediaInfo/master/History_CLI.txt";
-            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            var historyPage = Download.GetHttpClient().GetStringAsync(uri).Result;
+            // Get the latest release version number from github releases
+            // https://github.com/MediaArea/MediaInfo
+            const string repo = "MediaArea/MediaInfo";
+            mediaToolInfo.Version = GetLatestGitHubRelease(repo);
 
-            // Read each line until we find the first version line
-            // E.g. Version 17.10, 2017-11-02
-            using StringReader lineReader = new(historyPage);
-            string version = null;
-            while (lineReader.ReadLine() is { } line)
-            {
-                // See if the line starts with "Version"
-                line = line.Trim();
-                if (line.IndexOf("Version", StringComparison.Ordinal) == 0)
-                {
-                    version = line;
-                    break;
-                }
-            }
-            if (string.IsNullOrEmpty(version))
-            {
-                throw new NotImplementedException();
-            }
+            // Strip the "v", v23.09 -> 23.09
+            Debug.Assert(mediaToolInfo.Version.StartsWith('v'));
+            mediaToolInfo.Version = mediaToolInfo.Version[1..];
 
-            // Extract the version number from the line
-            // E.g. Version 17.10, 2017-11-02
-            var match = LatestVersionRegex().Match(version);
-            Debug.Assert(match.Success);
-            mediaToolInfo.Version = match.Groups["version"].Value;
-
-            // Create download URL and the output filename using the version number
-            // E.g. https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
+            // Create the filename using the version number
+            // MediaInfo_CLI_17.10_Windows_x64.zip
             mediaToolInfo.FileName = $"MediaInfo_CLI_{mediaToolInfo.Version}_Windows_x64.zip";
+
+            // Create the download Uri, binaries are not published on GitHub
+            // https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
             mediaToolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))

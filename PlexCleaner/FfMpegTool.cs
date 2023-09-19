@@ -94,18 +94,17 @@ public partial class FfMpegTool : MediaTool
 
         try
         {
-            // https://www.ffmpeg.org/download.html
-            // https://www.gyan.dev/ffmpeg/builds/packages/
+            // Get the latest release version number from github releases
+            // https://github.com/GyanD/codexffmpeg
+            const string repo = "GyanD/codexffmpeg";
+            mediaToolInfo.Version = GetLatestGitHubRelease(repo);
 
-            // Load the release version page
-            const string uri = "https://www.gyan.dev/ffmpeg/builds/release-version";
-            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            mediaToolInfo.Version = Download.GetHttpClient().GetStringAsync(uri).Result;
-
-            // Create download URL and the output filename using the version number
-            // https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-6.0-full_build.7z
+            // Create the filename using the version number
+            // ffmpeg-6.0-full_build.7z
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
-            mediaToolInfo.Url = $"https://www.gyan.dev/ffmpeg/builds/packages/{mediaToolInfo.FileName}";
+
+            // Get the GitHub download Uri
+            mediaToolInfo.Url = GetGitHubDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -140,11 +139,11 @@ public partial class FfMpegTool : MediaTool
                 line = line.Trim();
 
                 // See if the line starts with "version:" or "build:"
-                if (line.IndexOf("version:", StringComparison.Ordinal) == 0)
+                if (line.StartsWith("version:", StringComparison.Ordinal))
                 {
                     versionLine = line;
                 }
-                if (line.IndexOf("build:", StringComparison.Ordinal) == 0)
+                if (line.StartsWith("build:", StringComparison.Ordinal))
                 {
                     buildLine = line;
                 }

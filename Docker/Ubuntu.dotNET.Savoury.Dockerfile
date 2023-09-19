@@ -10,7 +10,7 @@
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 

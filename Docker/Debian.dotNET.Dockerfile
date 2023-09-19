@@ -24,7 +24,7 @@
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
+# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 

@@ -621,6 +621,6 @@ public class SidecarFile
 
     private SidecarFileJsonSchema SidecarJson;
 
-    private const string SidecarExtension = @".PlexCleaner";
+    private const string SidecarExtension = ".PlexCleaner";
     private const int HashWindowLength = 64 * Format.KiB;
 }
