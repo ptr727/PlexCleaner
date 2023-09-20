@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using InsaneGenius.Utilities;
-using Newtonsoft.Json.Linq;
 using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
@@ -79,22 +78,16 @@ public partial class HandBrakeTool : MediaTool
         try
         {
             // Get the latest release version number from github releases
-            // https://api.github.com/repos/handbrake/handbrake/releases/latest
-            if (!Download.DownloadString(new Uri(@"https://api.github.com/repos/handbrake/handbrake/releases/latest"), out var json))
-            {
-                return false;
-            }
+            // https://github.com/HandBrake/HandBrake
+            const string repo = "HandBrake/HandBrake";
+            mediaToolInfo.Version = GetLatestGitHubRelease(repo);
 
-            var releases = JObject.Parse(json);
-            // "tag_name": "1.2.2",
-            var versiontag = releases["tag_name"];
-            Debug.Assert(versiontag != null);
-            mediaToolInfo.Version = versiontag.ToString();
-
-            // Create download URL and the output filename using the version number
-            // https://github.com/HandBrake/HandBrake/releases/download/1.3.2/HandBrakeCLI-1.3.2-win-x86_64.zip
+            // Create the filename using the version number
+            // HandBrakeCLI-1.3.2-win-x86_64.zip
             mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
-            mediaToolInfo.Url = $"https://github.com/HandBrake/HandBrake/releases/download/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
+
+            // Get the GitHub download Uri
+            mediaToolInfo.Url = GetGitHubDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {

@@ -432,7 +432,7 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Option CreateMediaFilesOption()
+    private static Option<List<string>> CreateMediaFilesOption()
     {
         // Media files or folders option
         return new Option<List<string>>("--mediafiles")
@@ -442,7 +442,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateSettingsFileOption()
+    private static Option<string> CreateSettingsFileOption()
     {
         // Path to the settings file
         return new Option<string>("--settingsfile")
@@ -452,7 +452,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateLogFileOption()
+    private static Option<string> CreateLogFileOption()
     {
         // Path to the log file
         return new Option<string>("--logfile")
@@ -461,7 +461,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateLogAppendOption()
+    private static Option<bool> CreateLogAppendOption()
     {
         // Append to log vs. overwrite
         return new Option<bool>("--logappend")
@@ -470,7 +470,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateLogWarningOption()
+    private static Option<bool> CreateLogWarningOption()
     {
         // Log warnings and errors
         return new Option<bool>("--logwarning")
@@ -479,7 +479,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateDebugOption()
+    private static Option<bool> CreateDebugOption()
     {
         // Wait for debugger to attach
         return new Option<bool>("--debug")
@@ -488,7 +488,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateTestSnippetsOption()
+    private static Option<bool> CreateTestSnippetsOption()
     {
         // Create short video clips
         return new Option<bool>("--testsnippets")
@@ -497,7 +497,7 @@ public class CommandLineOptions
         };
     }
 
-    private static Option CreateTestNoModifyOption()
+    private static Option<bool> CreateTestNoModifyOption()
     {
         //  Do not make any modifications
         return new Option<bool>("--testnomodify")

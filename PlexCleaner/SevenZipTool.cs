@@ -170,7 +170,7 @@ public partial class SevenZipTool : MediaTool
         // https://www.7-zip.org/a/7zr.exe
         Log.Logger.Information("Downloading \"7zr.exe\" ...");
         var sevenZr = Tools.CombineToolPath("7zr.exe");
-        if (!Download.DownloadFile(new Uri(@"https://www.7-zip.org/a/7zr.exe"), sevenZr))
+        if (!Download.DownloadFile(new Uri("https://www.7-zip.org/a/7zr.exe"), sevenZr))
         {
             return false;
         }

@@ -141,14 +141,12 @@ internal class Program
             // Read key and hide from console display
             var keyInfo = Console.ReadKey(true);
 
-            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C handled in cancel handler
+            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
             if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
                 && keyInfo.Modifiers == ConsoleModifiers.Control)
             {
-                Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", keyInfo.Modifiers, keyInfo.Key);
-
                 // Signal the cancel event
-                Cancel();
+                Cancel(ConsoleModifiers.Control, keyInfo.Key);
 
                 // Done
                 return;
@@ -158,13 +156,12 @@ internal class Program
 
     private static void CancelEventHandler(object sender, ConsoleCancelEventArgs eventArgs)
     {
-        Log.Logger.Warning("Operation interrupted : {SpecialKey}", eventArgs.SpecialKey);
-
         // Keep running and do graceful exit
         eventArgs.Cancel = true;
 
-        // Signal the cancel event
-        Cancel();
+        // Signal the cancel event, use Ctrl+C as signal
+        // TODO: ConsoleSpecialKey can be ControlC or ControlBreak, what is the ConsoleKey for Break, VT_CANCEL in WIN32?
+        Cancel(ConsoleModifiers.Control, ConsoleKey.C);
     }
 
 
@@ -670,6 +667,12 @@ internal class Program
     {
         // Signal cancel
         CancelSource.Cancel();
+    }
+
+    public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
+    {
+        Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
+        Cancel();
     }
 
     public static CancellationToken CancelToken()

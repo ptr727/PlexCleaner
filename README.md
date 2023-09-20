@@ -29,6 +29,11 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.3:
+  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
+  - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
+  - Add "legacy" `osx.13-arm64` build.
+  - Make Rider 2023.2.1 happy with current C# linter rules.
 - Version 3.2:
   - Added `Ctrl-Q` and `Ctrl-Z` as additional break commands, `Ctrl+C` may terminate the shell command vs. cleanly exiting the process.
 - Version 3.1:
@@ -140,7 +145,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 ## Installation
 
 [Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.  
-Alternatively, install directly on [Windows](#windows) or [Linux](#linux) following the provided instructions.
+Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [MacOS](#macos) following the provided instructions.
 
 ### Docker
 
@@ -232,7 +237,14 @@ docker run \
   - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
   - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
   - The tool version information will be stored in `Tools\Tools.json`.
-  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or enabling the `ToolsOptions:AutoUpdate` setting.
+  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
+- If required, e.g. no internet connectivity, the tools can be manually downloaded and extracted:
+  - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+  - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
+  - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
+  - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
+  - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
+  - Disable automatic tool updates by setting `ToolsOptions:AutoUpdate` to `false`.
 
 ### Linux
 
@@ -243,6 +255,10 @@ docker run \
 - Create a default JSON settings file using the `defaultsettings` command:
   - `./PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
+
+### macOS
+
+- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are untested.
 
 ## Configuration
 

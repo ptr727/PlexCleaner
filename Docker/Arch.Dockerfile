@@ -10,7 +10,7 @@
 # docker buildx build --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
+# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 

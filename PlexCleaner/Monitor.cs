@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -9,30 +8,9 @@ namespace PlexCleaner;
 
 internal class Monitor
 {
-    public Monitor()
-    {
-        Watcher = new List<FileSystemWatcher>();
-        WatchFolders = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
-        WatchLock = new object();
-    }
-
     public bool MonitorFolders(List<string> folders)
     {
         Log.Logger.Information("Monitoring folders ...");
-
-        // Change handlers
-        void ChangeHandler(object s, FileSystemEventArgs e)
-        {
-            OnChanged(e, this);
-        }
-        void RenameHandler(object s, RenamedEventArgs e)
-        {
-            OnRenamed(e, this);
-        }
-        void ErrorHandler(object s, ErrorEventArgs e)
-        {
-            OnError(e);
-        }
 
         // Create file system watcher for each folder
         foreach (string folder in folders)
@@ -86,7 +64,7 @@ internal class Monitor
             lock (WatchLock)
             {
                 // Anything to process
-                if (WatchFolders.Any())
+                if (WatchFolders.Count != 0)
                 {
                     // Evaluate all folders in the watch list
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
@@ -128,7 +106,7 @@ internal class Monitor
             }
 
             // Any work to do
-            if (!watchList.Any())
+            if (watchList.Count == 0)
             {
                 continue;
             }
@@ -153,6 +131,20 @@ internal class Monitor
 
         // Done
         return true;
+
+        // Local function change handlers
+        void ErrorHandler(object s, ErrorEventArgs e)
+        {
+            OnError(e);
+        }
+        void RenameHandler(object s, RenamedEventArgs e)
+        {
+            OnRenamed(e, this);
+        }
+        void ChangeHandler(object s, FileSystemEventArgs e)
+        {
+            OnChanged(e, this);
+        }
     }
 
     private static void OnChanged(FileSystemEventArgs e, Monitor monitor)
@@ -280,7 +272,7 @@ internal class Monitor
         // TODO: Figure out how to accurately test if deleted path was a file or folder
     }
 
-    private readonly List<FileSystemWatcher> Watcher;
-    private readonly Dictionary<string, DateTime> WatchFolders;
-    private readonly object WatchLock;
+    private readonly List<FileSystemWatcher> Watcher = new();
+    private readonly Dictionary<string, DateTime> WatchFolders = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object WatchLock = new();
 }

@@ -239,7 +239,7 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         };
         var schema = generator.Generate(typeof(ConfigFileJsonSchema));
         schema.Title = "PlexCleaner Configuration Schema";
-        schema.SchemaVersion = new Uri(@"http://json-schema.org/draft-06/schema");
+        schema.SchemaVersion = new Uri("http://json-schema.org/draft-06/schema");
         schema.Id = new Uri(SchemaUri);
 
         // Write to file
