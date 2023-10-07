@@ -98,6 +98,14 @@
     "Monitor Snippets Test": {
       "commandName": "Project",
       "commandLineArgs": "monitor --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\" --preprocess --testsnippets"
+    },
+    "GetTagMap": {
+      "commandName": "Project",
+      "commandLineArgs": "gettagmap --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+    },
+    "Verify": {
+      "commandName": "Project",
+      "commandLineArgs": "verify --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
     }
   }
 }

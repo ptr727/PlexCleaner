@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ApplicationIcon>Mario.ico</ApplicationIcon>
     <StartupObject>PlexCleaner.Program</StartupObject>
     <AssemblyName>PlexCleaner</AssemblyName>

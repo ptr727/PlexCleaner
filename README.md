@@ -29,6 +29,14 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.4:
+  - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
+  - Warn when a newer [GitHub Release](https://github.com/ptr727/PlexCleaner/releases/latest) version is available.
+    - Useful on Windows to notify of new releases, and only tests for new releases if `ToolsOptions:AutoUpdate` is enabled.
+    - Note that updating the tool itself is still a manual process, recommend to use Docker `latest` tag to always get the latest release.
+  - Added `verify` command option to verify media streams in files.
+    - Note that only media stream validation is performed, no repairs, and track count-, bitrate-, and HDR profile warnings are only part of the `process` command.
+    - The `verify` command is useful when testing and selecting from multiple media sources before running the `process` command.
 - Version 3.3:
   - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
   - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
@@ -353,7 +361,7 @@ During processing the absence of IETF language tags will treated as a track warn
 If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
 
 Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
-E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-BR` Portugal Portuguese.  
+E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.  
 E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
 E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
 E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
