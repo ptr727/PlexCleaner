@@ -8,11 +8,12 @@ body:
       value: |
         Thank you for taking the time to submit a 🐞 bug 🐞 report!  
         Please use [Discussions](https://github.com/ptr727/PlexCleaner/discussions) for general questions.  
-        Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.
+        Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.  
+        Please reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest) before submitting an issue.
   - type: checkboxes
     attributes:
-      label: Is this a new issue that can be reproduced?
-      description: Search [Discussions](https://github.com/ptr727/PlexCleaner/discussions) and [Issues](https://github.com/ptr727/PlexCleaner/issues) for similar problems.
+      label: Is this a new issue that can be reproduced using the latest version?
+      description: Search [Discussions](https://github.com/ptr727/PlexCleaner/discussions) and [Issues](https://github.com/ptr727/PlexCleaner/issues) for similar problems, and reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest).
       options:
         - label: This is a new issue that can be reproduced.
           required: true
