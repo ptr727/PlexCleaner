@@ -1237,7 +1237,7 @@ public class ProcessFile
             return false;
         }
 
-        // Veriy track flags
+        // Verify track flags
         // Warning only
         VerifyTrackFlags();
 

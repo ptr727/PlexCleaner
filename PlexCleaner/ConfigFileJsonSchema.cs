@@ -223,6 +223,8 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
         NullValueHandling = NullValueHandling.Ignore,
         // Reuse the already created objects, required for HashSet() case insensitive comparison operator
+        // TODO: .NET 8 supports readonly properties
+        // https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8#read-only-properties
         ObjectCreationHandling = ObjectCreationHandling.Reuse
         // TODO: Add TraceWriter to log to Serilog
         // TODO: Add a custom resolver to control serialization od deprecated attributes, vs. using internal

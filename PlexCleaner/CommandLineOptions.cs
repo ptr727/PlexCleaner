@@ -66,6 +66,9 @@ public class CommandLineOptions
         // Remove subtitles
         command.AddCommand(CreateRemoveSubtitlesCommand());
 
+        // Verify files
+        command.AddCommand(CreateVerifyCommand());
+
         // Create sidecar files
         command.AddCommand(CreateCreateSidecarCommand());
 
@@ -287,6 +290,24 @@ public class CommandLineOptions
 
         //  Do not make any modifications
         command.AddOption(CreateTestNoModifyOption());
+
+        return command;
+    }
+
+    private static Command CreateVerifyCommand()
+    {
+        // Verify files
+        Command command = new("verify")
+        {
+            Description = "Verify media files",
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand)
+        };
+
+        // Settings file name
+        command.AddOption(CreateSettingsFileOption());
+
+        // Media files or folders option
+        command.AddOption(CreateMediaFilesOption());
 
         return command;
     }

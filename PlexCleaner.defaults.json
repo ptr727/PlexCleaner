@@ -99,7 +99,9 @@
       "en",
       "af",
       "zh",
-      "in"
+      "in",
+      "ja",
+      "ko"
     ],
     // Preferred audio tracks in order and by Format
     // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info

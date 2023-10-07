@@ -478,6 +478,22 @@ internal static class Process
         });
     }
 
+    public static bool VerifyFiles(List<string> fileList)
+    {
+        return ProcessFilesDriver(fileList, "Verify", fileName =>
+        {
+            // Handle only MKV files
+            if (!MkvMergeTool.IsMkvFile(fileName))
+            {
+                return true;
+            }
+
+            // Verify media streams
+            // Track count, bitrate, and HDR profiles are not evaluated here
+            return PlexCleaner.ProcessFile.VerifyMediaStreams(new FileInfo(fileName));
+        });
+    }
+
     public static bool GetTagMapFiles(List<string> fileList)
     {
         // Create a dictionary of ffprobe to mkvmerge and mediainfo tag strings

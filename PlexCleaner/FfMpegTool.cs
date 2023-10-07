@@ -104,7 +104,7 @@ public partial class FfMpegTool : MediaTool
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
 
             // Get the GitHub download Uri
-            mediaToolInfo.Url = GetGitHubDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
