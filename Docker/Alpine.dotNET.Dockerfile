@@ -18,7 +18,7 @@
 
 
 # Builder layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -42,10 +42,6 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
-
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
 RUN chmod ugo+rwx ./UnitTest.sh
@@ -59,8 +55,8 @@ RUN ./Build.sh
 
 # Final layer
 # https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/alpine3.18/amd64/Dockerfile
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/7.0/alpine3.18/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.18/amd64/Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"

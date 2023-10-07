@@ -30,10 +30,7 @@
 
 
 # Builder layer
-# Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
-# TODO: https://github.com/dotnet/dotnet-docker/issues/4388
-# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-bookworm-slim AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -63,10 +60,6 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
-
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
 RUN chmod ugo+rwx ./UnitTest.sh
@@ -84,7 +77,7 @@ RUN ./Build.sh
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim as final
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
