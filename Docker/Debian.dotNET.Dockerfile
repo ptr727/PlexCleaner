@@ -94,6 +94,9 @@ ENV \
 
 # Register additional repos
 # https://serverfault.com/questions/22414/how-can-i-run-debian-stable-but-install-some-packages-from-testing
+# https://manpages.debian.org/bookworm/apt/apt_preferences.5.en.html
+# https://manpages.debian.org/bookworm/apt/sources.list.5.en.html
+# Default sources: /etc/apt/sources.list.d/debian.sources
 RUN touch /etc/apt/preferences.d/stable.pref \
     && echo "Package: *" >> /etc/apt/preferences.d/stable.pref \
     && echo "Pin: release a=stable" >> /etc/apt/preferences.d/stable.pref \
@@ -110,8 +113,6 @@ RUN touch /etc/apt/preferences.d/stable.pref \
     && echo "Package: *" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin: release a=experimental" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin-Priority: 1" >> /etc/apt/preferences.d/experimental.pref \
-    && cp /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list.d/stable.list \
-    && mv /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list.d/debian.sources.orig \
     && touch /etc/apt/sources.list.d/testing.list \
     && echo "deb http://deb.debian.org/debian testing main" >> /etc/apt/sources.list.d/testing.list \
     && touch /etc/apt/sources.list.d/unstable.list \
@@ -142,7 +143,7 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools
+# Install media tools from testing repository
 # https://tracker.debian.org/pkg/ffmpeg
 # https://tracker.debian.org/pkg/handbrake
 # https://tracker.debian.org/pkg/mediainfo
