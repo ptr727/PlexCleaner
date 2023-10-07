@@ -83,7 +83,7 @@ jobs:
           - runtime: linux-arm
           - runtime: linux-arm64
           - runtime: osx-x64
-          - runtime: osx.13-arm64
+          - runtime: osx.arm64
 
     steps:
 
