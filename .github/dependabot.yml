@@ -2,15 +2,25 @@
 version: 2
 updates:
 
-  # NuGet main
-- package-ecosystem: nuget
+  # main
+- package-ecosystem: "nuget"
   directory: "/"
   schedule:
-    interval: daily
+    interval: "daily"
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "daily"
 
-  # NuGet develop
-- package-ecosystem: nuget
+  # develop
+- package-ecosystem: "nuget"
   directory: "/"
   target-branch: "develop"
   schedule:
-    interval: daily
+    interval: "daily"
+- package-ecosystem: "github-actions"
+  directory: "/"
+  target-branch: "develop"
+  schedule:
+    interval: "daily"
+    

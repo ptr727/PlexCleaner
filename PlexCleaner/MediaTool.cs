@@ -1,7 +1,5 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using InsaneGenius.Utilities;
-using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace PlexCleaner;
@@ -140,25 +138,8 @@ public abstract class MediaTool
     public string GetLatestGitHubRelease(string repo)
     {
         // Get the latest release version number from github releases
-        // https://api.github.com/repos/handbrake/handbrake/releases/latest
-        string uri = $"https://api.github.com/repos/{repo}/releases/latest";
-        Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-        var json = Download.GetHttpClient().GetStringAsync(uri).Result;
-        Debug.Assert(json != null);
-
-        // Parse latest version from "tag_name"
-        var releases = JObject.Parse(json);
-        Debug.Assert(releases != null);
-        var versionTag = releases["tag_name"];
-        Debug.Assert(versionTag != null);
-        return versionTag.ToString();
-    }
-
-    public static string GetGitHubDownloadUri(string repo, string tag, string file)
-    { 
-        // Create download URL from the repo, tag, and filename
-        // https://github.com/HandBrake/HandBrake/releases/download/1.3.2/HandBrakeCLI-1.3.2-win-x86_64.zip
-        return $"https://github.com/{repo}/releases/download/{tag}/{file}";
+        Log.Logger.Information("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
+        return GitHubRelease.GetLatestRelease(repo);
     }
 }
 

@@ -122,7 +122,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
 # https://docs.docker.com/build/ci/github-actions/secrets/
 # Github actions configuration:
-#     uses: docker/build-push-action@v4
+#     uses: docker/build-push-action@v5
 #     with:
 #       # SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
 #       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}

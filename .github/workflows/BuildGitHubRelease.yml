@@ -22,15 +22,15 @@ jobs:
 
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK 7
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.x
+          dotnet-version: "8.x"
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Run Unit Tests
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
@@ -54,7 +54,7 @@ jobs:
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Get all history for version calculation
           fetch-depth: 0
@@ -89,15 +89,15 @@ jobs:
 
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK 7
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.x
+          dotnet-version: "8.x"
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Build and publish
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish

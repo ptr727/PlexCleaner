@@ -24,15 +24,15 @@ jobs:
 
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK 7
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.x
+          dotnet-version: "8.x"
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Run Unit Tests
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
@@ -56,7 +56,7 @@ jobs:
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Get all history for version calculation
           fetch-depth: 0
@@ -118,19 +118,19 @@ jobs:
       # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Setup QEMU for multi architecture builds
       # https://github.com/marketplace/actions/docker-setup-qemu
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
       # Setup docker build
       # https://github.com/marketplace/actions/docker-setup-buildx
       - name: Setup Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
@@ -151,7 +151,7 @@ jobs:
 
       # Matrix build
       - name: Docker build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           # GitHub cache as unreliable as posting to GHCR, broken pipe errors
@@ -197,7 +197,7 @@ jobs:
 
     # https://github.com/marketplace/actions/checkout
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
   
     # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
@@ -234,7 +234,7 @@ jobs:
 
     # https://github.com/marketplace/actions/checkout      
     - name: Checkout 
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download version artifacts
