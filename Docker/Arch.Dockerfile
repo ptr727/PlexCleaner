@@ -60,7 +60,9 @@ RUN ./Build.sh
 
 # Final layer
 # https://hub.docker.com/_/archlinux
-FROM archlinux:latest as final
+# TODO: Switch back to standard image when .NET 8 has been released
+FROM greyltc/archlinux-aur:yay as final
+# FROM archlinux:latest as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -87,7 +89,7 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# TODO: Remove when .NET 8.0 has been releases
+# TODO: Remove when .NET 8.0 has been released
 # https://aur.archlinux.org/packages/dotnet-sdk-preview-bin
 RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-preview-bin'
 

@@ -16,7 +16,7 @@
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
@@ -110,8 +110,8 @@ RUN touch /etc/apt/preferences.d/stable.pref \
     && echo "Package: *" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin: release a=experimental" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin-Priority: 1" >> /etc/apt/preferences.d/experimental.pref \
-    && cp /etc/apt/sources.list /etc/apt/sources.list.d/stable.list \
-    && mv /etc/apt/sources.list /etc/apt/sources.list.orig \
+    && cp /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list.d/stable.list \
+    && mv /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list.d/debian.sources.orig \
     && touch /etc/apt/sources.list.d/testing.list \
     && echo "deb http://deb.debian.org/debian testing main" >> /etc/apt/sources.list.d/testing.list \
     && touch /etc/apt/sources.list.d/unstable.list \
