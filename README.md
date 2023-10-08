@@ -31,12 +31,14 @@ Docker images are published on [Docker Hub][docker-link].
 
 - Version 3.4:
   - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
+  - Updated Debian Docker image to Bookworm.
   - Warn when a newer [GitHub Release](https://github.com/ptr727/PlexCleaner/releases/latest) version is available.
-    - Useful on Windows to notify of new releases, and only tests for new releases if `ToolsOptions:AutoUpdate` is enabled.
-    - Note that updating the tool itself is still a manual process, recommend to use Docker `latest` tag to always get the latest release.
+    - Only tests for new release availability if `ToolsOptions:AutoUpdate` is enabled.
+    - Updating the tool itself is still a manual process.
+    - Alternatively subscribe to GitHub [Release Notifications][github-release-notification].
   - Added `verify` command option to verify media streams in files.
-    - Note that only media stream validation is performed, no repairs, and track count-, bitrate-, and HDR profile warnings are only part of the `process` command.
-    - The `verify` command is useful when testing and selecting from multiple media sources before running the `process` command.
+    - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
+    - The `verify` command is useful when testing or selecting from multiple available media sources.
 - Version 3.3:
   - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
   - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
@@ -597,3 +599,4 @@ These commands have no conditional logic and will process all specified media fi
 [savoury-link]: https://launchpad.net/~savoury1
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
+[github-release-notification]: https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/managing-subscriptions-for-activity-on-github/viewing-your-subscriptions
