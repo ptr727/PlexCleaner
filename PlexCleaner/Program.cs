@@ -22,9 +22,19 @@ internal class Program
     {
         return (int)exitCode;
     }
+
     static int MakeExitCode(bool success)
     {
         return success ? (int)ExitCode.Success : (int)ExitCode.Error;
+    }
+
+    public static void LogInterruptMessage()
+    {
+        // Keyboard handler is only active if input is not redirected
+        if (!Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+        }
     }
 
     private static int Main()
@@ -46,7 +56,6 @@ internal class Program
         Task consoleKeyTask = null;
         if (!Console.IsInputRedirected)
         {
-            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
             consoleKeyTask = Task.Run(KeyPressHandler);
         }
 
@@ -61,6 +70,7 @@ internal class Program
         keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
+        LogInterruptMessage();
         var exitCode = CommandLineOptions.Invoke();
 
         // Cancel background operations
