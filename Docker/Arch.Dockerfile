@@ -23,10 +23,9 @@ FROM greyltc/archlinux-aur:yay as builder
 # Layer workdir
 WORKDIR /Builder
 
-# TODO: Switch to .NET 8.0 release
-# No MCR image for Arch, install .NET Preview from AUR
-# https://aur.archlinux.org/packages/dotnet-sdk-preview-bin
-RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-preview-bin'
+# No MCR image for Arch, install .NET from AUR
+# https://aur.archlinux.org/packages/dotnet-sdk-bin
+RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
 # Build platform args
 ARG \
@@ -89,9 +88,9 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# TODO: Remove when .NET 8.0 has been released
-# https://aur.archlinux.org/packages/dotnet-sdk-preview-bin
-RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-preview-bin'
+# TODO: Remove when .NET 8.0 has been released to standard packages
+# https://aur.archlinux.org/packages/dotnet-sdk-bin
+RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
