@@ -16,6 +16,7 @@
 
 
 # Builder layer
+# No MCR image for Arch
 # Use base image with AUR helpers pre-installed
 # https://hub.docker.com/r/greyltc/archlinux-aur
 FROM greyltc/archlinux-aur:yay as builder
@@ -23,7 +24,7 @@ FROM greyltc/archlinux-aur:yay as builder
 # Layer workdir
 WORKDIR /Builder
 
-# No MCR image for Arch, install .NET from AUR
+# Install .NET from AUR if pre-release and not available in standard packages
 # https://aur.archlinux.org/packages/dotnet-sdk-bin
 RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
@@ -59,7 +60,7 @@ RUN ./Build.sh
 
 # Final layer
 # https://hub.docker.com/_/archlinux
-# TODO: Switch back to standard image when .NET 8 has been released
+# Use to standard image if YAY is not required
 FROM greyltc/archlinux-aur:yay as final
 # FROM archlinux:latest as final
 
@@ -88,7 +89,7 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# TODO: Remove when .NET 8.0 has been released to standard packages
+# Install .NET from AUR if pre-release and not available in standard packages
 # https://aur.archlinux.org/packages/dotnet-sdk-bin
 RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
@@ -105,7 +106,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
 RUN pacman --sync --noconfirm \
-        # TODO: Enable when .NET 8.0 has been released
+        # Install released .NET SDK if not using AUR package
         # dotnet-sdk \
         ffmpeg \
         handbrake-cli \

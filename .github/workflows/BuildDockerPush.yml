@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * MON'
@@ -137,6 +137,7 @@ jobs:
       # Login to Docker Hub
       # https://github.com/marketplace/actions/docker-login
       - name: Login to Docker Hub
+        # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
@@ -158,6 +159,7 @@ jobs:
           # cache-from: type=gha,scope=${{ matrix.cache-scope }}
           # cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
+          # Do not push on pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
           secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
@@ -177,6 +179,7 @@ jobs:
     name: Tool versions
     runs-on: ubuntu-latest
     needs: buildpush
+    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
    
     strategy:
@@ -228,6 +231,7 @@ jobs:
     name: Create Docker README.md
     runs-on: ubuntu-latest
     needs: toolversions
+    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
 
     steps:
@@ -261,6 +265,7 @@ jobs:
     name: Date badge
     runs-on: ubuntu-latest
     needs: buildpush
+    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
 
     steps:
