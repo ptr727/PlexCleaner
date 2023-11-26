@@ -145,14 +145,14 @@ jobs:
       run: 7z a -t7z ${{ runner.temp }}/publish/PlexCleaner.7z ${{ runner.temp }}/publish/*
 
     # Create GitHub release
-    # https://github.com/marketplace/actions/automatic-releases
-    # Alternative: https://github.com/marketplace/actions/gh-release
+    # https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
-      uses: marvinpinto/action-automatic-releases@latest
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        # Generate changelog from commit messages
+        generate_release_notes: true
         # Create a tag with the version number
-        automatic_release_tag: ${{ needs.version.outputs.SemVer2 }}
+        tag_name: ${{ needs.version.outputs.SemVer2 }}
         # Only main branch is not a pre-release
         prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
         files: ${{ runner.temp }}/publish/PlexCleaner.7z
