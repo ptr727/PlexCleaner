@@ -23,7 +23,7 @@ jobs:
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK 7
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 7.x
 
@@ -90,7 +90,7 @@ jobs:
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK 7
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 7.x
 
