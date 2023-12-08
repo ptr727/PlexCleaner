@@ -218,7 +218,7 @@ sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
 docker run \
   -it \
   --rm \
-  --pull always
+  --pull always \
   --log-driver json-file --log-opt max-size=10m \
   --name PlexCleaner \
   --user nobody:users \
