@@ -16,16 +16,13 @@
 
 
 # Builder layer
+# No MCR image for Arch
 # Use base image with AUR helpers pre-installed
 # https://hub.docker.com/r/greyltc/archlinux-aur
 FROM greyltc/archlinux-aur:yay as builder
 
 # Layer workdir
 WORKDIR /Builder
-
-# No MCR image for Arch, install .NET Preview from AUR
-# https://aur.archlinux.org/packages/dotnet-sdk-preview-bin
-RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-preview-bin'
 
 # Build platform args
 ARG \
@@ -41,14 +38,18 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Install .NET SDK
+# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
+RUN pacman -Syu --noconfirm dotnet-sdk
+
+# Install .NET from AUR if required version not yet available in standard packages
+# https://aur.archlinux.org/packages/dotnet-sdk-bin
+# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
-
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
 
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
@@ -63,6 +64,8 @@ RUN ./Build.sh
 
 # Final layer
 # https://hub.docker.com/_/archlinux
+# Use to standard image if YAY is not required
+# FROM greyltc/archlinux-aur:yay as final
 FROM archlinux:latest as final
 
 # Image label
@@ -90,6 +93,10 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+# Install .NET from AUR if required version not yet available in standard packages
+# https://aur.archlinux.org/packages/dotnet-runtime-bin
+# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-runtime-bin'
+
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 RUN wget https://aka.ms/getvsdbgsh \
@@ -97,13 +104,14 @@ RUN wget https://aka.ms/getvsdbgsh \
     && rm getvsdbgsh
 
 # Install .NET and media processing tools
-# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
+# https://archlinux.org/packages/extra/x86_64/dotnet-runtime/
 # https://archlinux.org/packages/extra/x86_64/ffmpeg/
 # https://archlinux.org/packages/community/x86_64/mediainfo/
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
-RUN pacman --sync --noconfirm \
-        dotnet-sdk \
+RUN pacman -Syu --noconfirm \
+        # Install released .NET if not using AUR package
+        dotnet-runtime \
         ffmpeg \
         handbrake-cli \
         intel-media-sdk \

@@ -22,9 +22,19 @@ internal class Program
     {
         return (int)exitCode;
     }
+
     static int MakeExitCode(bool success)
     {
         return success ? (int)ExitCode.Success : (int)ExitCode.Error;
+    }
+
+    public static void LogInterruptMessage()
+    {
+        // Keyboard handler is only active if input is not redirected
+        if (!Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
+        }
     }
 
     private static int Main()
@@ -46,7 +56,6 @@ internal class Program
         Task consoleKeyTask = null;
         if (!Console.IsInputRedirected)
         {
-            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
             consoleKeyTask = Task.Run(KeyPressHandler);
         }
 
@@ -61,6 +70,7 @@ internal class Program
         keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
+        LogInterruptMessage();
         var exitCode = CommandLineOptions.Invoke();
 
         // Cancel background operations
@@ -81,36 +91,34 @@ internal class Program
         return exitCode;
     }
 
-    public static string GetVersion(bool versionOnly)
+    public static void VerifyLatestVersion()
     {
-        var assembly = Assembly.GetEntryAssembly();
-        assembly ??= Assembly.GetExecutingAssembly();
+        // TODO: Use AutoUpdate setting to avoid always generating internet IO
+        if (!Config.ToolsOptions.AutoUpdate)
+        {
+            return;
+        }
 
-        var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        try
+        {
+            // Get the latest release version from github releases
+            // E.g. 1.2.3
+            const string repo = "ptr727/PlexCleaner";
+            var latestVersion = new Version(GitHubRelease.GetLatestRelease(repo));
 
-        string version = versionAttribute?.InformationalVersion;
-        version ??= assembly.GetName().Version?.ToString();
-        version ??= "?";
+            // Get this version
+            var thisVersion = new Version(AssemblyVersion.GetReleaseVersion());
 
-        string name = assembly.GetName().Name;
-        name ??= "?";
-
-#if DEBUG
-        const string build = "Debug";
-#else
-        const string build = "Release";
-#endif
-
-        return versionOnly ? version : $"{name} : {version} ({build})";
-    }
-
-    public static DateTime GetBuildDate()
-    {
-        // Use assembly modified time as build date
-        // https://stackoverflow.com/questions/1600962/displaying-the-build-date
-        var assembly = Assembly.GetEntryAssembly();
-        assembly ??= Assembly.GetExecutingAssembly();
-        return File.GetLastWriteTime(assembly.Location).ToLocalTime();
+            // Compare the versions
+            if (thisVersion.CompareTo(latestVersion) < 0)
+            {
+                Log.Logger.Warning("Current version is older than latest version : {CurrentVersion} < {LatestVersion}", thisVersion.ToString(), latestVersion.ToString());
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            // Nothing to do
+        }
     }
 
     private static bool ShowVersionInformation()
@@ -118,7 +126,7 @@ internal class Program
         // Use the raw commandline and look for --version
         if (Environment.CommandLine.Contains("--version"))
         {
-            Console.WriteLine(GetVersion(false));
+            Console.WriteLine(AssemblyVersion.GetDetailedVersion());
             return true;
         }
         return false;
@@ -338,6 +346,19 @@ internal class Program
         return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
     }
 
+    internal static int VerifyCommand(CommandLineOptions options)
+    {
+        // Create program and get file list
+        Program program = CreateFileList(options);
+        if (program == null)
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Verify
+        return MakeExitCode(Process.VerifyFiles(program.FileList));
+    }
+
     internal static int CreateSidecarCommand(CommandLineOptions options)
     {
         // Create program and get file list
@@ -521,10 +542,13 @@ internal class Program
         }
 
         // Log app and runtime version
-        Log.Logger.Information("Application Version : {AppVersion}", GetVersion(false));
+        Log.Logger.Information("Application Version : {AppVersion}", AssemblyVersion.GetDetailedVersion());
         Log.Logger.Information("Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}", RuntimeInformation.FrameworkDescription, RuntimeInformation.RuntimeIdentifier);
         Log.Logger.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Logger.Information("Build Date : {BuildDate}", GetBuildDate().ToLocalTime());
+        Log.Logger.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
+
+        // Warn if a newer version has been released
+        VerifyLatestVersion();
 
         // Parallel processing config
         if (Options.Parallel)

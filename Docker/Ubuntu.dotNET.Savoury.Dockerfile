@@ -16,7 +16,7 @@
 
 
 # Builder layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-jammy AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -40,10 +40,6 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
-
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
 RUN chmod ugo+rwx ./UnitTest.sh
@@ -56,7 +52,7 @@ RUN ./Build.sh
 
 
 # Final layer
-FROM mcr.microsoft.com/dotnet/sdk:7.0-jammy AS final
+FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -98,11 +94,11 @@ RUN wget https://aka.ms/getvsdbgsh \
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-21_all.deb \
-    && dpkg -i repo-mediaarea_1.0-21_all.deb \
+RUN wget -O repo-mediaarea_all.deb https://mediaarea.net/repo/deb/repo-mediaarea_1.0-24_all.deb \
+    && dpkg -i repo-mediaarea_all.deb \
     && apt-get update \
     && apt-get install -y mediainfo \
-    && rm repo-mediaarea_1.0-21_all.deb
+    && rm repo-mediaarea_all.deb
 
 # Install MKVToolNix
 # https://mkvtoolnix.download/downloads.html#ubuntu
@@ -122,7 +118,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
 # https://docs.docker.com/build/ci/github-actions/secrets/
 # Github actions configuration:
-#     uses: docker/build-push-action@v4
+#     uses: docker/build-push-action@v5
 #     with:
 #       # SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
 #       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}

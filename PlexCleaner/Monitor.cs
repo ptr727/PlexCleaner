@@ -8,9 +8,15 @@ namespace PlexCleaner;
 
 internal class Monitor
 {
-    public bool MonitorFolders(List<string> folders)
+    private static void LogMonitorMessage()
     {
         Log.Logger.Information("Monitoring folders ...");
+        Program.LogInterruptMessage();
+    }
+
+    public bool MonitorFolders(List<string> folders)
+    {
+        LogMonitorMessage();
 
         // Create file system watcher for each folder
         foreach (string folder in folders)
@@ -122,7 +128,7 @@ internal class Monitor
                 return false;
             }
 
-            Log.Logger.Information("Monitoring folders ...");
+            LogMonitorMessage();
         }
 
         // Disable event watching

@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 concurrency:
@@ -22,10 +22,10 @@ jobs:
 
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK 7
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 7.x
+          dotnet-version: "8.x"
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
@@ -83,16 +83,16 @@ jobs:
           - runtime: linux-arm
           - runtime: linux-arm64
           - runtime: osx-x64
-          - runtime: osx.13-arm64
+          - runtime: osx-arm64
 
     steps:
 
       # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK 7
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 7.x
+          dotnet-version: "8.x"
 
       # Checkout code
       # https://github.com/marketplace/actions/checkout
@@ -116,6 +116,7 @@ jobs:
 
       # https://github.com/marketplace/actions/upload-a-build-artifact
       - name: Upload build artifacts
+        # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v3
         with:
@@ -127,6 +128,7 @@ jobs:
     name: Publish
     runs-on: ubuntu-latest
     needs: [ build, version ]
+    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
 
     steps:
@@ -143,14 +145,14 @@ jobs:
       run: 7z a -t7z ${{ runner.temp }}/publish/PlexCleaner.7z ${{ runner.temp }}/publish/*
 
     # Create GitHub release
-    # https://github.com/marketplace/actions/automatic-releases
-    # Alternative: https://github.com/marketplace/actions/gh-release
+    # https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
-      uses: marvinpinto/action-automatic-releases@latest
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        # Generate changelog from commit messages
+        generate_release_notes: true
         # Create a tag with the version number
-        automatic_release_tag: ${{ needs.version.outputs.SemVer2 }}
+        tag_name: ${{ needs.version.outputs.SemVer2 }}
         # Only main branch is not a pre-release
         prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
         files: ${{ runner.temp }}/publish/PlexCleaner.7z

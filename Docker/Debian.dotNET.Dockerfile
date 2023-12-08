@@ -16,7 +16,7 @@
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
@@ -30,10 +30,7 @@
 
 
 # Builder layer
-# Build using .NET 8 nighltly SDK, need 8.0.P3 or 7.0.300 to be released
-# TODO: https://github.com/dotnet/dotnet-docker/issues/4388
-# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-bookworm-slim AS builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -63,10 +60,6 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
-
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
 RUN chmod ugo+rwx ./UnitTest.sh
@@ -79,12 +72,12 @@ RUN ./Build.sh
 
 
 # Final layer
-# Build from .NET Debian base image mcr.microsoft.com/dotnet/sdk:latest
+# Build from .NET Debian base image
 # https://hub.docker.com/_/microsoft-dotnet
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim as final
+FROM mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -101,6 +94,9 @@ ENV \
 
 # Register additional repos
 # https://serverfault.com/questions/22414/how-can-i-run-debian-stable-but-install-some-packages-from-testing
+# https://manpages.debian.org/bookworm/apt/apt_preferences.5.en.html
+# https://manpages.debian.org/bookworm/apt/sources.list.5.en.html
+# Default sources: /etc/apt/sources.list.d/debian.sources
 RUN touch /etc/apt/preferences.d/stable.pref \
     && echo "Package: *" >> /etc/apt/preferences.d/stable.pref \
     && echo "Pin: release a=stable" >> /etc/apt/preferences.d/stable.pref \
@@ -117,8 +113,6 @@ RUN touch /etc/apt/preferences.d/stable.pref \
     && echo "Package: *" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin: release a=experimental" >> /etc/apt/preferences.d/experimental.pref \
     && echo "Pin-Priority: 1" >> /etc/apt/preferences.d/experimental.pref \
-    && cp /etc/apt/sources.list /etc/apt/sources.list.d/stable.list \
-    && mv /etc/apt/sources.list /etc/apt/sources.list.orig \
     && touch /etc/apt/sources.list.d/testing.list \
     && echo "deb http://deb.debian.org/debian testing main" >> /etc/apt/sources.list.d/testing.list \
     && touch /etc/apt/sources.list.d/unstable.list \
@@ -149,7 +143,7 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools
+# Install media tools from testing repository
 # https://tracker.debian.org/pkg/ffmpeg
 # https://tracker.debian.org/pkg/handbrake
 # https://tracker.debian.org/pkg/mediainfo

@@ -18,7 +18,8 @@
 
 
 # Builder layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-preview-alpine AS builder
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/alpine3.18/amd64/Dockerfile
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.18 AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -42,10 +43,6 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
-# Enable running a .NET 7 target on .NET 8 preview
-ENV DOTNET_ROLL_FORWARD=Major \
-    DOTNET_ROLL_FORWARD_PRE_RELEASE=1
-
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
 RUN chmod ugo+rwx ./UnitTest.sh
@@ -58,9 +55,9 @@ RUN ./Build.sh
 
 
 # Final layer
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/alpine3.18/amd64/Dockerfile
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/7.0/alpine3.18/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as final
+# Update package versions when base image is updated
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.18/amd64/Dockerfile
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine3.18 as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -91,17 +88,21 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools from latest-stable / v3.18 matching base image version
+# MediaInfo must be installed from the correct versioned repo else segfaults are encountered
+# https://github.com/ptr727/PlexCleaner/issues/153
+# https://github.com/MediaArea/MediaInfo/issues/707
+
+# Install media tools from version matching current base image version (v3.18)
 # HandBrake is only available in edge/testing
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mkvtoolnix
 RUN apk --upgrade --no-cache add \
-        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
         handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
-        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
-        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/
+        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
