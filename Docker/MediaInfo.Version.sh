@@ -8,7 +8,6 @@ set -e
 
 # Print version information
 dotnet --info
-/PlexCleaner/PlexCleaner --version
 ffmpeg -version
 HandBrakeCLI --version
 mkvmerge --version

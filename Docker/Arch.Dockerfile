@@ -24,10 +24,6 @@ FROM greyltc/archlinux-aur:yay as builder
 # Layer workdir
 WORKDIR /Builder
 
-# Install .NET from AUR if pre-release and not available in standard packages
-# https://aur.archlinux.org/packages/dotnet-sdk-bin
-RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
-
 # Build platform args
 ARG \
     TARGETPLATFORM \
@@ -41,6 +37,14 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_ASSEMBLY_VERSION="1.0.0.0" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
+
+# Install .NET SDK
+# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
+RUN pacman -Syu --noconfirm dotnet-sdk
+
+# Install .NET from AUR if required version not yet available in standard packages
+# https://aur.archlinux.org/packages/dotnet-sdk-bin
+# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -89,9 +93,9 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Install .NET from AUR if pre-release and not available in standard packages
+# Install .NET from AUR if required version not yet available in standard packages
 # https://aur.archlinux.org/packages/dotnet-sdk-bin
-RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
+# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -105,9 +109,9 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://archlinux.org/packages/community/x86_64/mediainfo/
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
-RUN pacman --sync --noconfirm \
+RUN pacman -Syu --noconfirm \
         # Install released .NET SDK if not using AUR package
-        # dotnet-sdk \
+        dotnet-sdk \
         ffmpeg \
         handbrake-cli \
         intel-media-sdk \

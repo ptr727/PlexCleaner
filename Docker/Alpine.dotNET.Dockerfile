@@ -52,6 +52,11 @@ COPY ./Docker/Build.sh ./
 RUN chmod ugo+rwx ./Build.sh
 RUN ./Build.sh
 
+# MediaInfo from repo often fails with segmentation fault errors
+# https://github.com/ptr727/PlexCleaner/issues/153
+# https://github.com/MediaArea/MediaInfo/issues/707
+# TODO: Build from source
+
 
 # Final layer
 # https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/alpine3.18/amd64/Dockerfile
