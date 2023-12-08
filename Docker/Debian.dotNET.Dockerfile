@@ -72,12 +72,12 @@ RUN ./Build.sh
 
 
 # Final layer
-# Build from .NET Debian base image mcr.microsoft.com/dotnet/sdk:latest
+# Build from .NET Debian base image
 # https://hub.docker.com/_/microsoft-dotnet
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim as final
+FROM mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"

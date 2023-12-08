@@ -65,8 +65,8 @@ RUN ./Build.sh
 # Final layer
 # https://hub.docker.com/_/archlinux
 # Use to standard image if YAY is not required
-FROM greyltc/archlinux-aur:yay as final
-# FROM archlinux:latest as final
+# FROM greyltc/archlinux-aur:yay as final
+FROM archlinux:latest as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -94,8 +94,8 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
 # Install .NET from AUR if required version not yet available in standard packages
-# https://aur.archlinux.org/packages/dotnet-sdk-bin
-# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
+# https://aur.archlinux.org/packages/dotnet-runtime-bin
+# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-runtime-bin'
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -104,14 +104,14 @@ RUN wget https://aka.ms/getvsdbgsh \
     && rm getvsdbgsh
 
 # Install .NET and media processing tools
-# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
+# https://archlinux.org/packages/extra/x86_64/dotnet-runtime/
 # https://archlinux.org/packages/extra/x86_64/ffmpeg/
 # https://archlinux.org/packages/community/x86_64/mediainfo/
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
 RUN pacman -Syu --noconfirm \
-        # Install released .NET SDK if not using AUR package
-        dotnet-sdk \
+        # Install released .NET if not using AUR package
+        dotnet-runtime \
         ffmpeg \
         handbrake-cli \
         intel-media-sdk \

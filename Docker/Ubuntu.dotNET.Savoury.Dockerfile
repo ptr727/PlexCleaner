@@ -52,7 +52,7 @@ RUN ./Build.sh
 
 
 # Final layer
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS final
+FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"

@@ -18,7 +18,8 @@
 
 
 # Builder layer
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS builder
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/alpine3.18/amd64/Dockerfile
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.18 AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -52,16 +53,11 @@ COPY ./Docker/Build.sh ./
 RUN chmod ugo+rwx ./Build.sh
 RUN ./Build.sh
 
-# MediaInfo from repo often fails with segmentation fault errors
-# https://github.com/ptr727/PlexCleaner/issues/153
-# https://github.com/MediaArea/MediaInfo/issues/707
-# TODO: Build from source
-
 
 # Final layer
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/alpine3.18/amd64/Dockerfile
+# Update package versions when base image is updated
 # https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.18/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine as final
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine3.18 as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -92,17 +88,21 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# Install media tools from latest-stable / v3.18 matching base image version
+# MediaInfo must be installed from the correct versioned repo else segfaults are encountered
+# https://github.com/ptr727/PlexCleaner/issues/153
+# https://github.com/MediaArea/MediaInfo/issues/707
+
+# Install media tools from version matching current base image version (v3.18)
 # HandBrake is only available in edge/testing
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/testing/x86_64/handbrake
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mkvtoolnix
 RUN apk --upgrade --no-cache add \
-        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
         handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ \
-        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/ \
-        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/latest-stable/community/
+        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
