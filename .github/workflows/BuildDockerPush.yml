@@ -222,7 +222,7 @@ jobs:
 
     # https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload version artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: versions
         path: ${{ runner.temp }}/versions/${{ matrix.file }}

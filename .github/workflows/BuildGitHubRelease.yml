@@ -118,7 +118,7 @@ jobs:
       - name: Upload build artifacts
         # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: publish
           path: ${{ runner.temp }}/publish
