@@ -209,8 +209,9 @@ jobs:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ runner.temp }}/versions:/versions
         run: |
-          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) > /versions/${{ matrix.file }}
-          echo dotNET: $(dotnet --version) >> /versions/${{ matrix.file }}
+          echo OS: $(. /etc/os-release; echo $PRETTY_NAME) > /versions/${{ matrix.file }}
+          echo dotNET: $(dotnet --info) >> /versions/${{ matrix.file }}
+          echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) >> /versions/${{ matrix.file }}
           echo HandBrakeCLI: $(HandBrakeCLI --version) >> /versions/${{ matrix.file }}
           echo MediaInfo: $(mediainfo --version) >> /versions/${{ matrix.file }}
           echo MkvMerge: $(mkvmerge --version) >> /versions/${{ matrix.file }}

@@ -25,12 +25,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F5
 		Docker\Alpine.dotNET.Dockerfile = Docker\Alpine.dotNET.Dockerfile
 		Docker\Arch.Dockerfile = Docker\Arch.Dockerfile
 		Docker\Build.sh = Docker\Build.sh
-		Docker\UnitTest.sh = Docker\UnitTest.sh
 		Docker\Debian.dotNET.Dockerfile = Docker\Debian.dotNET.Dockerfile
 		Docker\README.m4 = Docker\README.m4
-		Docker\README.md = Docker\README.md
 		Docker\Test.sh = Docker\Test.sh
 		Docker\Ubuntu.dotNET.Savoury.Dockerfile = Docker\Ubuntu.dotNET.Savoury.Dockerfile
+		Docker\UnitTest.sh = Docker\UnitTest.sh
 		Docker\Version.sh = Docker\Version.sh
 	EndProjectSection
 EndProject
