@@ -221,8 +221,10 @@ jobs:
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
     # https://github.com/marketplace/actions/upload-a-build-artifact
+    # Stay on v3 as v4 fails when uploading to the same path in a matrix
+    # https://github.com/ptr727/PlexCleaner/issues/311
     - name: Upload version artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: versions
         path: ${{ runner.temp }}/versions/${{ matrix.file }}

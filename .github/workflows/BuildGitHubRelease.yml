@@ -118,7 +118,9 @@ jobs:
       - name: Upload build artifacts
         # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4
+        # Stay on v3 as v4 fails when uploading to the same path in a matrix
+        # https://github.com/ptr727/PlexCleaner/issues/311
+        uses: actions/upload-artifact@v3
         with:
           name: publish
           path: ${{ runner.temp }}/publish
