@@ -224,7 +224,7 @@ jobs:
     - name: Upload version artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: versions
+        name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
   # Update Docker README.md
@@ -245,7 +245,8 @@ jobs:
     - name: Download version artifacts
       uses: actions/download-artifact@v4
       with:
-        name: versions
+        pattern: versions-*
+        merge-multiple: true
         path: ${{ runner.temp }}/versions
 
     - name: Create README.md from README.m4

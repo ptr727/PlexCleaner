@@ -120,7 +120,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publish
+          name: publish-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
 
   # Publish
@@ -137,7 +137,8 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: publish
+        pattern: publish-*
+        merge-multiple: true
         path: ${{ runner.temp }}/publish
 
     # Zip the output
