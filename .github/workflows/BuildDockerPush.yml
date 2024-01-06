@@ -221,12 +221,10 @@ jobs:
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
     # https://github.com/marketplace/actions/upload-a-build-artifact
-    # TODO: Stay on v3 as v4 fails when uploading to the same path in a matrix
-    # https://github.com/ptr727/PlexCleaner/issues/311
     - name: Upload version artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: versions
+        name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
   # Update Docker README.md
@@ -245,11 +243,10 @@ jobs:
 
     # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download version artifacts
-    # TODO: Stay on v3 as v4 fails when uploading to the same path in a matrix
-    # https://github.com/ptr727/PlexCleaner/issues/311
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: versions
+        pattern: versions-*
+        merge-multiple: true
         path: ${{ runner.temp }}/versions
 
     - name: Create README.md from README.m4

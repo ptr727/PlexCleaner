@@ -118,11 +118,9 @@ jobs:
       - name: Upload build artifacts
         # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
-        # TODO: Stay on v3 as v4 fails when uploading to the same path in a matrix
-        # https://github.com/ptr727/PlexCleaner/issues/311
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: publish
+          name: publish-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
 
   # Publish
@@ -137,11 +135,10 @@ jobs:
 
       # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download build artifacts
-    # TODO: Stay on v3 as v4 fails when uploading to the same path in a matrix
-    # https://github.com/ptr727/PlexCleaner/issues/311
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: publish
+        pattern: publish-*
+        merge-multiple: true
         path: ${{ runner.temp }}/publish
 
     # Zip the output
