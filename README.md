@@ -29,6 +29,9 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.5:
+  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
+  - Update Alpine Docker image to 3.19.
 - Version 3.4:
   - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
   - Updated Debian Docker image to Bookworm.

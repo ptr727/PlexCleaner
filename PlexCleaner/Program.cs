@@ -80,7 +80,6 @@ internal class Program
 
         // Stop the timer
         keepAwakeTimer.Stop();
-        keepAwakeTimer.Dispose();
         KeepAwake.AllowSleep();
 
         Log.Logger.Information("Exit Code : {ExitCode}", exitCode);

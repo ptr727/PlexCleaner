@@ -213,5 +213,5 @@ public class FfProbeTool : FfMpegTool
     }
 
     // "Undesirable" tags
-    private static readonly string[] UndesirableTags = { "statistics" };
+    private static readonly string[] UndesirableTags = ["statistics"];
 }

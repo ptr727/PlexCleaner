@@ -15,8 +15,8 @@
 # Troublshooting, add "build --progress plain --no-cache"
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:latest /bin/bash
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
@@ -30,6 +30,7 @@
 
 
 # Builder layer
+# https://github.com/dotnet/dotnet-docker/tree/main/src/sdk/8.0/bookworm-slim/amd64/Dockerfile
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS builder
 
 # Layer workdir
@@ -77,6 +78,7 @@ RUN ./Build.sh
 # https://hub.docker.com/_/microsoft-dotnet-sdk/
 # https://github.com/dotnet/dotnet-docker
 # https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
+# https://github.com/dotnet/dotnet-docker/tree/main/src/runtime/8.0/bookworm-slim/amd64/Dockerfile
 FROM mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim as final
 
 # Image label
