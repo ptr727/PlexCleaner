@@ -150,5 +150,5 @@ public class VideoInfo : TrackInfo
     }
 
     // Cover art and thumbnail formats
-    private static readonly string[] CoverArtFormat = { "jpg", "jpeg", "png" };
+    private static readonly string[] CoverArtFormat = ["jpg", "jpeg", "png"];
 }

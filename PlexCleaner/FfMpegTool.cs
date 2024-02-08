@@ -118,70 +118,8 @@ public partial class FfMpegTool : MediaTool
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
 
-        try
-        {
-            // https://www.ffmpeg.org/download.html
-            // https://johnvansickle.com/ffmpeg/
-
-            // Load the release version page
-            const string uri = "https://johnvansickle.com/ffmpeg/release-readme.txt";
-            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            var readmePage = Download.GetHttpClient().GetStringAsync(uri).Result;
-
-            // Read each line until we find the build and version lines
-            // build: ffmpeg-5.0-amd64-static.tar.xz
-            // version: 5.0
-            using StringReader lineReader = new(readmePage);
-            string buildLine = "", versionLine = "";
-            while (lineReader.ReadLine() is { } line)
-            {
-                // Trim whitespace
-                line = line.Trim();
-
-                // See if the line starts with "version:" or "build:"
-                if (line.StartsWith("version:", StringComparison.Ordinal))
-                {
-                    versionLine = line;
-                }
-                if (line.StartsWith("build:", StringComparison.Ordinal))
-                {
-                    buildLine = line;
-                }
-
-                // Do we have both lines
-                if (!string.IsNullOrEmpty(versionLine) &&
-                    !string.IsNullOrEmpty(buildLine))
-                {
-                    // Done
-                    break;
-                }
-            }
-
-            // Did we find the version and build
-            if (string.IsNullOrEmpty(versionLine) ||
-                string.IsNullOrEmpty(buildLine))
-            {
-                throw new NotImplementedException();
-            }
-
-            // Extract the build and version number from the lines
-            var match = LinuxVersionRegex().Match(versionLine);
-            Debug.Assert(match.Success);
-            mediaToolInfo.Version = match.Groups["version"].Value;
-            match = LinuxBuildRegex().Match(buildLine);
-            Debug.Assert(match.Success);
-            mediaToolInfo.FileName = match.Groups["build"].Value;
-
-            // Create download URL and the output filename
-            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-            // E.g. https://johnvansickle.com/ffmpeg/releases/ffmpeg-5.0-amd64-static.tar.xz
-            mediaToolInfo.Url = $"https://johnvansickle.com/ffmpeg/releases/{mediaToolInfo.FileName}";
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            return false;
-        }
-        return true;
+        // TODO:
+        return false;
     }
 
     public override bool Update(string updateFile)
@@ -524,14 +462,6 @@ public partial class FfMpegTool : MediaTool
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     internal static partial Regex InstalledVersionRegex();
-
-    private const string LinuxVersionPattern = @"version:\ (?<version>.*?)$";
-    [GeneratedRegex(LinuxVersionPattern)]
-    internal static partial Regex LinuxVersionRegex();
-
-    private const string LinuxBuildPattern = @"build:\ (?<build>.*?)$";
-    [GeneratedRegex(LinuxBuildPattern)]
-    internal static partial Regex LinuxBuildRegex();
 
     private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
     private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";

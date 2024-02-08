@@ -279,8 +279,8 @@ public record ProcessOptions : ProcessOptions2
             ".asf",
             ".wmv"
         };
-        ReEncodeVideo = new List<VideoFormat>
-        {
+        ReEncodeVideo =
+        [
             new() { Format = "mpeg2video" },
             new() { Format = "vc1" },
             new() { Format = "wmv3" },
@@ -291,7 +291,7 @@ public record ProcessOptions : ProcessOptions2
             new() { Format = "mpeg4", Codec = "dx50" },
             new() { Format = "msmpeg4v2", Codec = "mp42" },
             new() { Format = "msmpeg4v3", Codec = "div3" }
-        };
+        ];
         ReEncodeAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "flac",

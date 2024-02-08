@@ -24,8 +24,8 @@ public static class Tools
     private static List<MediaTool> GetToolList()
     {
         // Add all tools to a list
-        List<MediaTool> toolList = new()
-        {
+        List<MediaTool> toolList =
+        [
             FfMpeg,
             FfProbe,
             MkvMerge,
@@ -34,7 +34,7 @@ public static class Tools
             MediaInfo,
             HandBrake,
             SevenZip
-        };
+        ];
 
         return toolList;
     }
@@ -42,14 +42,14 @@ public static class Tools
     private static List<MediaTool> GetToolFamilyList()
     {
         // Add all tools families to a list
-        List<MediaTool> toolList = new()
-        {
+        List<MediaTool> toolList =
+        [
             FfMpeg,
             MkvMerge,
             MediaInfo,
             HandBrake,
             SevenZip
-        };
+        ];
 
         return toolList;
     }

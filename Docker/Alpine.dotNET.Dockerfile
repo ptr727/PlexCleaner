@@ -4,7 +4,8 @@
 # https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-alpine /bin/sh
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 /bin/sh
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-alpine3.19 /bin/sh
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/sh
 
 # Build Dockerfile
@@ -14,13 +15,10 @@
 # docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
 
-# TODO: Switch to Alpine 3.19 released when promoted from nightly
-# https://github.com/dotnet/dotnet-docker/issues/5052
-
 # Builder layer
-# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/alpine3.18/amd64/Dockerfile
-# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 AS builder
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-alpine3.19 AS builder
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/alpine3.19/amd64/Dockerfile
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 AS builder
+# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-alpine3.19 AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -57,9 +55,9 @@ RUN ./Build.sh
 
 # Final layer
 # Update package versions when base image is updated
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.18/amd64/Dockerfile
-# FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine3.18 as final
-FROM mcr.microsoft.com/dotnet/nightly/runtime:8.0-alpine3.19 as final
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.19/amd64/Dockerfile
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine3.19 as final
+# FROM mcr.microsoft.com/dotnet/nightly/runtime:8.0-alpine3.19 as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -94,17 +92,17 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://github.com/ptr727/PlexCleaner/issues/153
 # https://github.com/MediaArea/MediaInfo/issues/707
 
-# HandBrake is only available in edge
-# Install media tools from version matching current base image version (v3.18)
-# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/ffmpeg
+# Install media tools from version matching current base image version (v3.19)
+# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/ffmpeg
+# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/mediainfo
+# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/mkvtoolnix
+# Handbrake is only on Edge
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
-# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mediainfo
-# https://pkgs.alpinelinux.org/package/v3.18/community/x86_64/mkvtoolnix
 RUN apk --upgrade --no-cache add \
-        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
-        handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ \
-        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/ \
-        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.18/community/
+        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
+        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
+        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
+        handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

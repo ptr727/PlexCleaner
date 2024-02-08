@@ -1,8 +1,8 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:7.0-jammy /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-preview-jammy  /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy  /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy  /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
@@ -16,6 +16,7 @@
 
 
 # Builder layer
+# https://github.com/dotnet/dotnet-docker/tree/main/src/sdk/8.0/jammy/amd64/Dockerfile
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS builder
 
 # Layer workdir
@@ -52,6 +53,7 @@ RUN ./Build.sh
 
 
 # Final layer
+# https://github.com/dotnet/dotnet-docker/tree/main/src/runtime/8.0/jammy/amd64/Dockerfile
 FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS final
 
 # Image label

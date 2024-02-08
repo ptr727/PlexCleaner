@@ -75,22 +75,18 @@ public partial class SevenZipTool : MediaTool
 
         try
         {
-            // Load the download page
-            // TODO: Find a more reliable way of getting the latest release
-            const string uri = "https://www.7-zip.org/download.html";
-            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            var downloadPage = Download.GetHttpClient().GetStringAsync(uri).Result;
+            // Get the latest release version number from github releases
+            // https://github.com/ip7z/7zip
+            const string repo = "ip7z/7zip";
+            mediaToolInfo.Version = GetLatestGitHubRelease(repo);
 
-            // Extract the version number from the page source
-            // E.g. "Download 7-Zip 22.01 (2022-07-15):"
-            var match = LatestVersionRegex().Match(downloadPage);
-            Debug.Assert(match.Success);
-            mediaToolInfo.Version = $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}";
+            // Create the filename using the version number
+            // remove the . from the version, 23.01 -> 2301
+            // 7z2301-extra.7z
+            mediaToolInfo.FileName = $"7z{mediaToolInfo.Version.Replace(".", null)}-extra.7z";
 
-            // Create download URL and the output filename using the version number
-            // E.g. https://www.7-zip.org/a/7z2201-extra.7z
-            mediaToolInfo.FileName = $"7z{match.Groups["major"].Value}{match.Groups["minor"].Value}-extra.7z";
-            mediaToolInfo.Url = $"https://www.7-zip.org/a/{mediaToolInfo.FileName}";
+            // Get the GitHub download Uri
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -217,8 +213,4 @@ public partial class SevenZipTool : MediaTool
     private const string InstalledVersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     internal static partial Regex InstalledVersionRegex();
-
-    private const string LatestVersionPattern = @"Download\ 7-Zip\ (?<major>.*?)\.(?<minor>.*?)\ \((?<date>.*?)\)";
-    [GeneratedRegex(LatestVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex LatestVersionRegex();
 }
