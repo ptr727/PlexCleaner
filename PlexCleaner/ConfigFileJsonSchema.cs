@@ -80,8 +80,37 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 }
 
 // v3
+[Obsolete]
+public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
+{
+    public ConfigFileJsonSchema3() { }
+
+    // Copy from v1
+    [Obsolete]
+    public ConfigFileJsonSchema3(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
+    {
+        // Upgrade from v1
+        Upgrade(configFileJsonSchema1);
+    }
+
+    // Copy from v2
+    [Obsolete]
+    public ConfigFileJsonSchema3(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
+    {
+        // Upgrade from v2
+        Upgrade(configFileJsonSchema2);
+    }
+
+    [Obsolete]
+    internal new ProcessOptions3 ProcessOptions { get; set; } = new();
+
+    // v3
+    public new const int Version = 3;
+}
+
+// v4
 #pragma warning disable CS0612 // Type or member is obsolete
-public record ConfigFileJsonSchema : ConfigFileJsonSchema2
+public record ConfigFileJsonSchema : ConfigFileJsonSchema3
 #pragma warning restore CS0612 // Type or member is obsolete
 {
     public ConfigFileJsonSchema() { }
@@ -89,24 +118,32 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
     [Obsolete]
     public ConfigFileJsonSchema(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
     {
+        // Upgrade from v1
         Upgrade(configFileJsonSchema1);
     }
 
     [Obsolete]
     public ConfigFileJsonSchema(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
     {
+        // Upgrade from v2
         Upgrade(configFileJsonSchema2);
     }
 
     [Obsolete]
-    protected void Upgrade(ConfigFileJsonSchema2 configFileJsonSchema2)
+    public ConfigFileJsonSchema(ConfigFileJsonSchema3 configFileJsonSchema3) : base(configFileJsonSchema3)
     {
-        // Upgrade v1 to v2
-        Upgrade((ConfigFileJsonSchema1)configFileJsonSchema2);
+        // Upgrade from v3
+        Upgrade(configFileJsonSchema3);
+    }
 
+    [Obsolete]
+    protected void Upgrade(ConfigFileJsonSchema3 configFileJsonSchema3)
+    {
         // Upgrade v2 to v3
-        ConvertOptions = new ConvertOptions(configFileJsonSchema2.ConvertOptions);
-        ProcessOptions = new ProcessOptions(configFileJsonSchema2.ProcessOptions);
+        Upgrade((ConfigFileJsonSchema2)configFileJsonSchema3);
+
+        // Upgrade v3 to v4
+        ProcessOptions = new ProcessOptions(configFileJsonSchema3.ProcessOptions);
     }
 
     [Required]
@@ -117,8 +154,8 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
     [JsonProperty(Order = 2)]
     public new ProcessOptions ProcessOptions { get; protected set; } = new();
 
-    // v3
-    public new const int Version = 3;
+    // v4
+    public new const int Version = 4;
 
     public void SetDefaults()
     {
@@ -139,17 +176,6 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         {
             return false;
         }
-
-        // Default to English if language not set
-        if (string.IsNullOrEmpty(ProcessOptions.DefaultLanguage))
-        {
-            ProcessOptions.DefaultLanguage = Language.English;
-        }
-
-        // Always keep no linguistic content (zxx), undefined (und), and the default language
-        ProcessOptions.KeepLanguages.Add(Language.None);
-        ProcessOptions.KeepLanguages.Add(Language.Undefined);
-        ProcessOptions.KeepLanguages.Add(ProcessOptions.DefaultLanguage);
 
         return true;
     }
@@ -207,6 +233,9 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
             // Version 2
             case ConfigFileJsonSchema2.Version:
                 return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema2>(json, Settings));
+            // Version 3
+            case ConfigFileJsonSchema3.Version:
+                return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema3>(json, Settings));
 #pragma warning restore CS0612 // Type or member is obsolete
             // Current version
             case Version:
@@ -223,12 +252,12 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema2
         StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
         NullValueHandling = NullValueHandling.Ignore,
         // Reuse the already created objects, required for HashSet() case insensitive comparison operator
-        // TODO: .NET 8 supports readonly properties
-        // https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8#read-only-properties
         ObjectCreationHandling = ObjectCreationHandling.Reuse
         // TODO: Add TraceWriter to log to Serilog
-        // TODO: Add a custom resolver to control serialization od deprecated attributes, vs. using internal
+        // TODO: Add a custom resolver to control serialization of deprecated attributes, vs. using internal
         // https://stackoverflow.com/questions/11564091/making-a-property-deserialize-but-not-serialize-with-json-net
+        // TODO: .NET 8 supports populating readonly properties, no need for set
+        // https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8/runtime#read-only-properties
     };
 
     public static void WriteSchemaToFile(string path)

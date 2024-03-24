@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine.Completions;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Serilog;
 
 namespace PlexCleaner;
@@ -98,6 +100,8 @@ public record ProcessOptions2 : ProcessOptions1
     [Obsolete]
     protected void Upgrade(ProcessOptions1 processOptions1)
     {
+        // Upgrade from v1
+
         // Convert CSV to HashSet<string>
         if (!string.IsNullOrEmpty(processOptions1.KeepExtensions))
         {
@@ -162,7 +166,7 @@ public record ProcessOptions2 : ProcessOptions1
         }
     }
 
-    [Required]
+    [Obsolete]
     public new HashSet<string> KeepExtensions { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
 
     [Required]
@@ -183,14 +187,14 @@ public record ProcessOptions2 : ProcessOptions1
 
 // v3
 #pragma warning disable CS0612 // Type or member is obsolete
-public record ProcessOptions : ProcessOptions2
+public record ProcessOptions3 : ProcessOptions2
 #pragma warning restore CS0612 // Type or member is obsolete
 {
-    public ProcessOptions() { }
+    public ProcessOptions3() { }
 
     // Copy from v1
     [Obsolete]
-    public ProcessOptions(ProcessOptions1 processOptions1) : base(processOptions1)
+    public ProcessOptions3(ProcessOptions1 processOptions1) : base(processOptions1)
     {
         // Upgrade from v1
         Upgrade(processOptions1);
@@ -198,7 +202,7 @@ public record ProcessOptions : ProcessOptions2
 
     // Copy from v2
     [Obsolete]
-    public ProcessOptions(ProcessOptions2 processOptions2) : base(processOptions2)
+    public ProcessOptions3(ProcessOptions2 processOptions2) : base(processOptions2)
     {
         // Upgrade from v2
         Upgrade(processOptions2);
@@ -209,6 +213,8 @@ public record ProcessOptions : ProcessOptions2
     {
         // Upgrade from v1
         Upgrade(processOptions2 as ProcessOptions1);
+
+        // Upgrade from v2
 
         // Convert ISO 639-2 to RFC 5646 language tags
         DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
@@ -234,6 +240,77 @@ public record ProcessOptions : ProcessOptions2
 
     [Required]
     public bool SetTrackFlags { get; set; }
+}
+
+// v4
+#pragma warning disable CS0612 // Type or member is obsolete
+public record ProcessOptions : ProcessOptions3
+#pragma warning restore CS0612 // Type or member is obsolete
+{
+    public ProcessOptions() { }
+
+    // Copy from v1
+    [Obsolete]
+    public ProcessOptions(ProcessOptions1 processOptions1) : base(processOptions1)
+    {
+        // Upgrade from v1
+        Upgrade(processOptions1);
+    }
+
+    // Copy from v2
+    [Obsolete]
+    public ProcessOptions(ProcessOptions2 processOptions2) : base(processOptions2)
+    {
+        // Upgrade from v2
+        Upgrade(processOptions2);
+    }
+
+    // Copy from v3
+    [Obsolete]
+    public ProcessOptions(ProcessOptions3 processOptions3) : base(processOptions3)
+    {
+        // Upgrade from v3
+        Upgrade(processOptions3);
+    }
+
+    [Obsolete]
+    protected void Upgrade(ProcessOptions3 processOptions3)
+    {
+        // Upgrade from v2
+        Upgrade(processOptions3 as ProcessOptions2);
+
+        // Upgrade from v3
+
+        // Convert KeepExtensions to IgnoreFiles
+        foreach (var item in KeepExtensions)
+        {
+            // Convert ext to *.ext
+            IgnoreFiles.Add($"*.{item}");
+        }
+    }
+
+    [Required]
+    public HashSet<string> IgnoreFiles { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+
+
+    private List<Regex> IgnoreFilesRegEx = new();
+
+    private void IgnoreFilesToRegex()
+    {
+        foreach (var item in IgnoreFiles)
+        {
+            // Convert * and ? wildcards to regex
+            var regexString = "^" + Regex.Escape(item);
+            regexString = regexString.Replace("\\*", ".*");
+            regexString = regexString.Replace("\\?", ".") + "$";
+            IgnoreFilesRegEx.Add(new Regex(regexString, RegexOptions.IgnoreCase));
+        }
+    }
+
+    public bool IsIgnoreFilesMatch(string fileName)
+    {
+        return IgnoreFilesRegEx.Any(item => item.IsMatch(fileName));
+    }
 
     public void SetDefaults()
     {
@@ -255,21 +332,22 @@ public record ProcessOptions : ProcessOptions2
         RemoveClosedCaptions = true;
         FileIgnoreList.Clear();
         DefaultLanguage = "en";
-        KeepExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        IgnoreFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            // TODO: Add UnRaid FUSE files e.g. .fuse_hidden191817c5000c5ee7, will need wildcard support
-            ".partial~",
-            ".nfo",
-            ".jpg",
-            ".srt",
-            ".smi",
-            ".ssa",
-            ".ass",
-            ".vtt"
+            "*.fuse_hidden*",
+            "*.partial~",
+            "*.sample",
+            "*.sample.*",
+            "*.nfo",
+            "*.jpg",
+            "*.srt",
+            "*.smi",
+            "*.ssa",
+            "*.ass",
+            "*.vtt"
         };
         ReMuxExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            // TODO: Just a few, but many more
             ".avi",
             ".m2ts",
             ".ts",
@@ -332,6 +410,20 @@ public record ProcessOptions : ProcessOptions2
             Log.Logger.Error("ProcessOptions:DefaultLanguage must be set");
             return false;
         }
+
+        // Default to English if language not set
+        if (string.IsNullOrEmpty(DefaultLanguage))
+        {
+            DefaultLanguage = Language.English;
+        }
+
+        // Always keep no linguistic content (zxx), undefined (und), and the default language
+        KeepLanguages.Add(Language.None);
+        KeepLanguages.Add(Language.Undefined);
+        KeepLanguages.Add(DefaultLanguage);
+
+        // Convert wildcards to regex
+        IgnoreFilesToRegex();
 
         return true;
     }

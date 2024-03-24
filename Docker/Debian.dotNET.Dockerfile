@@ -36,7 +36,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS
 # Layer workdir
 WORKDIR /Builder
 
-# Global builder vriables
+# Global builder variables
 # https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 
 # Build platform args

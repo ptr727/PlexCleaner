@@ -48,10 +48,10 @@ internal static class Process
             processFile = new ProcessFile(fileName);
             DateTime lastWriteTime = processFile.FileInfo.LastWriteTimeUtc;
 
-            // Skip the file if the extension is in the keep extensions list
-            if (Program.Config.ProcessOptions.KeepExtensions.Contains(processFile.FileInfo.Extension))
+            // Skip the file if in the ignore list
+            if (Program.Config.ProcessOptions.IsIgnoreFilesMatch(processFile.FileInfo.Name))
             {
-                Log.Logger.Warning("Skipping keep extensions file : {FileName}", fileName);
+                Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
                 result = true;
                 break;
             }
