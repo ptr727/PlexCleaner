@@ -32,8 +32,10 @@ Docker images are published on [Docker Hub][docker-link].
 - Version 3.6:
   - Added `ProcessOptions:IgnoreFiles` to support skipping sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
-    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions`.
   - Settings JSON schema updated from v3 to v4 to account for modified `ProcessOptions` settings.
+    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions` on load.
+    - E.g. `ProcessOptions:KeepExtensions` : `nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
+  - Fixed de-serializing and upgrading old settings schemas, some settings were lost on upgrade.
 - Version 3.5:
   - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.

@@ -4,19 +4,22 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class ToolsOptions
+// v1
+public record ToolsOptions1
 {
-    [Required]
-    public bool UseSystem { get; set; }
+    protected const int Version = 1;
 
     [Required]
-    public string RootPath { get; set; } = "";
+    public bool UseSystem { get; internal set; } // Changed at runtime
 
     [Required]
-    public bool RootRelative { get; set; }
+    public string RootPath { get; protected set; } = "";
 
     [Required]
-    public bool AutoUpdate { get; set; }
+    public bool RootRelative { get; protected set; }
+
+    [Required]
+    public bool AutoUpdate { get; internal set; } // Changed at runtime
 
     public void SetDefaults()
     {

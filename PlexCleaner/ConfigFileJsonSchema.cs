@@ -8,6 +8,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
+
 // Base
 public record ConfigFileJsonSchemaBase
 {
@@ -20,142 +21,156 @@ public record ConfigFileJsonSchemaBase
     // Default to 0 if no value specified, and always write the version first
     [DefaultValue(0)]
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
-    public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
+    public int SchemaVersion { get; set; } = ConfigFileJsonSchema4.Version;
 
     // Schema
     public const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
 }
 
 // v1
-[Obsolete]
 public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    // Deprecated
-    [Obsolete]
-    internal ConvertOptions1 ConvertOptions { get; set; } = new();
-    [Obsolete]
-    internal ProcessOptions1 ProcessOptions { get; set; } = new();
+    public const int Version = 1;
 
     [Required]
     [JsonProperty(Order = 1)]
-    public ToolsOptions ToolsOptions { get; protected set; } = new();
+    public ToolsOptions1 ToolsOptions { get; protected set; } = new();
+
+    // v2 : Replaced with ProcessOptions2
+    [Obsolete]
+    [JsonProperty(Order = 2)]
+    internal ProcessOptions1 ProcessOptions { get; set; } = new();
+
+    // v3 : Replaced with ConvertOptions2
+    [Obsolete]
+    [JsonProperty(Order = 3)]
+    internal ConvertOptions1 ConvertOptions { get; set; } = new();
+
+    // v3 : Replaced with VerifyOptions2
+    [Obsolete]
+    [JsonProperty(Order = 4)]
+    internal VerifyOptions1 VerifyOptions { get; set; } = new();
 
     [Required]
     [JsonProperty(Order = 5)]
-    public MonitorOptions MonitorOptions { get; protected set; } = new();
-
-    [Required]
-    [JsonProperty(Order = 4)]
-    public VerifyOptions VerifyOptions { get; protected set; } = new();
-
-    // v1
-    public const int Version = 1;
+    public MonitorOptions1 MonitorOptions { get; protected set; } = new();
 }
 
 // v2
-[Obsolete]
 public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 {
-    public ConfigFileJsonSchema2() { }
-
-    // Copy from v1
-    [Obsolete]
-    public ConfigFileJsonSchema2(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
-    {
-        Upgrade(configFileJsonSchema1);
-    }
-
-    [Obsolete]
-    protected void Upgrade(ConfigFileJsonSchema1 configFileJsonSchema1)
-    {
-        // Upgrade v1 to v2
-        ProcessOptions = new ProcessOptions2(configFileJsonSchema1.ProcessOptions);
-    }
-
-    [Obsolete]
-    internal new ProcessOptions2 ProcessOptions { get; set; } = new();
-
-    // v2
     public new const int Version = 2;
+
+    public ConfigFileJsonSchema2() { }
+    public ConfigFileJsonSchema2(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1) { }
+
+    // v2 : Added
+    // v3 : Replaced with ProcessOptions3
+    [Obsolete]
+    [JsonProperty(Order = 2)]
+    internal new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
 // v3
-[Obsolete]
 public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
 {
+    public new const int Version = 3;
+
     public ConfigFileJsonSchema3() { }
 
-    // Copy from v1
-    [Obsolete]
-    public ConfigFileJsonSchema3(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
-    {
-        // Upgrade from v1
-        Upgrade(configFileJsonSchema1);
-    }
+    public ConfigFileJsonSchema3(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1) { }
+    public ConfigFileJsonSchema3(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2) { }
 
-    // Copy from v2
+    // v3 : Added
+    // v4 : Replaced with ProcessOptions4
     [Obsolete]
-    public ConfigFileJsonSchema3(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
-    {
-        // Upgrade from v2
-        Upgrade(configFileJsonSchema2);
-    }
-
-    [Obsolete]
+    [JsonProperty(Order = 2)]
     internal new ProcessOptions3 ProcessOptions { get; set; } = new();
 
-    // v3
-    public new const int Version = 3;
+    // v3 : Added
+    [Required]
+    [JsonProperty(Order = 3)]
+    public new ConvertOptions2 ConvertOptions { get; protected set; } = new();
+
+    // v3 : Added
+    [Required]
+    [JsonProperty(Order = 4)]
+    public new VerifyOptions2 VerifyOptions { get; protected set; } = new();
 }
 
 // v4
-#pragma warning disable CS0612 // Type or member is obsolete
-public record ConfigFileJsonSchema : ConfigFileJsonSchema3
-#pragma warning restore CS0612 // Type or member is obsolete
+public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 {
-    public ConfigFileJsonSchema() { }
+    public new const int Version = 4;
 
-    [Obsolete]
-    public ConfigFileJsonSchema(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
+    public ConfigFileJsonSchema4() { }
+
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
     {
-        // Upgrade from v1
-        Upgrade(configFileJsonSchema1);
+        Upgrade(ConfigFileJsonSchema1.Version);
+    }
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
+    {
+        Upgrade(ConfigFileJsonSchema2.Version);
+    }
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema3 configFileJsonSchema3) : base(configFileJsonSchema3)
+    {
+        Upgrade(ConfigFileJsonSchema3.Version);
     }
 
-    [Obsolete]
-    public ConfigFileJsonSchema(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
-    {
-        // Upgrade from v2
-        Upgrade(configFileJsonSchema2);
-    }
-
-    [Obsolete]
-    public ConfigFileJsonSchema(ConfigFileJsonSchema3 configFileJsonSchema3) : base(configFileJsonSchema3)
-    {
-        // Upgrade from v3
-        Upgrade(configFileJsonSchema3);
-    }
-
-    [Obsolete]
-    protected void Upgrade(ConfigFileJsonSchema3 configFileJsonSchema3)
-    {
-        // Upgrade v2 to v3
-        Upgrade((ConfigFileJsonSchema2)configFileJsonSchema3);
-
-        // Upgrade v3 to v4
-        ProcessOptions = new ProcessOptions(configFileJsonSchema3.ProcessOptions);
-    }
-
-    [Required]
-    [JsonProperty(Order = 3)]
-    public new ConvertOptions ConvertOptions { get; protected set; } = new();
-
+    // v4 : Added
     [Required]
     [JsonProperty(Order = 2)]
-    public new ProcessOptions ProcessOptions { get; protected set; } = new();
+    public new ProcessOptions4 ProcessOptions { get; protected set; } = new();
 
-    // v4
-    public new const int Version = 4;
+#pragma warning disable CS0612 // Type or member is obsolete
+    protected void Upgrade(int version)
+    {
+        // v1
+        if (version == ConfigFileJsonSchema1.Version)
+        {
+            // Get v1 schema
+            ConfigFileJsonSchema1 configFileJsonSchema1 = this;
+
+            // Upgrade to current version
+            // ToolsOptions = new ToolsOptions(configFileJsonSchema1.ToolsOptions);
+            ConvertOptions = new ConvertOptions2(configFileJsonSchema1.ConvertOptions);
+            ProcessOptions = new ProcessOptions4(configFileJsonSchema1.ProcessOptions);
+            VerifyOptions = new VerifyOptions2(configFileJsonSchema1.VerifyOptions);
+            // MonitorOptions = new MonitorOptions(configFileJsonSchema1.MonitorOptions);
+        }
+
+        // v2
+        if (version == ConfigFileJsonSchema2.Version)
+        {
+            // Get v2 schema
+            ConfigFileJsonSchema2 configFileJsonSchema2 = this;
+
+            // Upgrade to current version
+            // ToolsOptions = new ToolsOptions(configFileJsonSchema2.ToolsOptions);
+            ConvertOptions = new ConvertOptions2(configFileJsonSchema2.ConvertOptions);
+            ProcessOptions = new ProcessOptions4(configFileJsonSchema2.ProcessOptions);
+            VerifyOptions = new VerifyOptions2(configFileJsonSchema2.VerifyOptions);
+            // MonitorOptions = new MonitorOptions(configFileJsonSchema2.MonitorOptions);
+        }
+
+        // v3
+        if (version == ConfigFileJsonSchema3.Version)
+        {
+            // Get v3 schema
+            ConfigFileJsonSchema3 configFileJsonSchema3 = this;
+
+            // Upgrade to current version
+            // ToolsOptions = new ToolsOptions(configFileJsonSchema3.ToolsOptions);
+            ConvertOptions = new ConvertOptions2(configFileJsonSchema3.ConvertOptions);
+            ProcessOptions = new ProcessOptions4(configFileJsonSchema3.ProcessOptions);
+            VerifyOptions = new VerifyOptions2(configFileJsonSchema3.VerifyOptions);
+            // MonitorOptions = new MonitorOptions(configFileJsonSchema3.MonitorOptions);
+        }
+
+        // v4
+    }
+#pragma warning restore CS0612 // Type or member is obsolete
 
     public void SetDefaults()
     {
@@ -183,33 +198,33 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema3
     public static void WriteDefaultsToFile(string path)
     {
         // Set defaults
-        ConfigFileJsonSchema config = new();
+        ConfigFileJsonSchema4 config = new();
         config.SetDefaults();
 
         // Write to file
         ToFile(path, config);
     }
 
-    public static ConfigFileJsonSchema FromFile(string path)
+    public static ConfigFileJsonSchema4 FromFile(string path)
     {
         return FromJson(File.ReadAllText(path));
     }
 
-    public static void ToFile(string path, ConfigFileJsonSchema json)
+    public static void ToFile(string path, ConfigFileJsonSchema4 json)
     {
-        // Set the schema to the current version
+        // Set the schema version to the current version
         json.SchemaVersion = Version;
 
         // Write JSON to file
         File.WriteAllText(path, ToJson(json));
     }
 
-    private static string ToJson(ConfigFileJsonSchema settings)
+    private static string ToJson(ConfigFileJsonSchema4 settings)
     {
         return JsonConvert.SerializeObject(settings, Settings);
     }
 
-    private static ConfigFileJsonSchema FromJson(string json)
+    private static ConfigFileJsonSchema4 FromJson(string json)
     {
         // Deserialize the base class to get the schema version
         var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, Settings);
@@ -224,26 +239,19 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema3
         }
 
         // Deserialize the correct version
-        switch (configFileJsonSchemaBase.SchemaVersion)
+        return configFileJsonSchemaBase.SchemaVersion switch
         {
-#pragma warning disable CS0612 // Type or member is obsolete
             // Version 1
-            case ConfigFileJsonSchema1.Version:
-                return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings));
+            ConfigFileJsonSchema1.Version => new ConfigFileJsonSchema4(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, Settings)),
             // Version 2
-            case ConfigFileJsonSchema2.Version:
-                return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema2>(json, Settings));
+            ConfigFileJsonSchema2.Version => new ConfigFileJsonSchema4(JsonConvert.DeserializeObject<ConfigFileJsonSchema2>(json, Settings)),
             // Version 3
-            case ConfigFileJsonSchema3.Version:
-                return new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema3>(json, Settings));
-#pragma warning restore CS0612 // Type or member is obsolete
+            ConfigFileJsonSchema3.Version => new ConfigFileJsonSchema4(JsonConvert.DeserializeObject<ConfigFileJsonSchema3>(json, Settings)),
             // Current version
-            case Version:
-                return JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, Settings);
+            Version => JsonConvert.DeserializeObject<ConfigFileJsonSchema4>(json, Settings),
             // Unknown version
-            default:
-                throw new NotImplementedException();
-        }
+            _ => throw new NotImplementedException(),
+        };
     }
 
     private static readonly JsonSerializerSettings Settings = new()
@@ -268,7 +276,7 @@ public record ConfigFileJsonSchema : ConfigFileJsonSchema3
             // TODO: How to make the default as required, and just mark individual items as not required?
             DefaultRequired = Required.Default
         };
-        var schema = generator.Generate(typeof(ConfigFileJsonSchema));
+        var schema = generator.Generate(typeof(ConfigFileJsonSchema4));
         schema.Title = "PlexCleaner Configuration Schema";
         schema.SchemaVersion = new Uri("http://json-schema.org/draft-06/schema");
         schema.Id = new Uri(SchemaUri);

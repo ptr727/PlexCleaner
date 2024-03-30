@@ -9,9 +9,10 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
     [InlineData("PlexCleaner.v1.json")]
     [InlineData("PlexCleaner.v2.json")]
     [InlineData("PlexCleaner.v3.json")]
+    [InlineData("PlexCleaner.v4.json")]
     public void Open_OldSchemas_Opens(string fileName)
     {
-        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
+        ConfigFileJsonSchema4 configFileJsonSchema = ConfigFileJsonSchema4.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
     }
 }

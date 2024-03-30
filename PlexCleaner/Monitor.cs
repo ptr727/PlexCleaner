@@ -65,8 +65,8 @@ internal class Monitor
         while (!Program.WaitForCancel(1000))
         {
             // Lock and process the list of folders
-            List<string> watchList = new();
-            List<string> removeList = new();
+            List<string> watchList = [];
+            List<string> removeList = [];
             lock (WatchLock)
             {
                 // Anything to process
@@ -278,7 +278,7 @@ internal class Monitor
         // TODO: Figure out how to accurately test if deleted path was a file or folder
     }
 
-    private readonly List<FileSystemWatcher> Watcher = new();
+    private readonly List<FileSystemWatcher> Watcher = [];
     private readonly Dictionary<string, DateTime> WatchFolders = new(StringComparer.OrdinalIgnoreCase);
     private readonly object WatchLock = new();
 }

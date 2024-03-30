@@ -34,7 +34,7 @@ public class PlexCleanerTests : IDisposable
     {
         // Create defaults for Program Options and Config
         Program.Options = new CommandLineOptions();
-        Program.Config = new ConfigFileJsonSchema();
+        Program.Config = new ConfigFileJsonSchema4();
         Program.Config.SetDefaults();
     }
 

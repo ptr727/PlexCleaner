@@ -17,7 +17,7 @@ public class ToolInfoJsonSchema
 
     public DateTime LastCheck { get; set; }
 
-    public List<MediaToolInfo> Tools { get; } = new();
+    public List<MediaToolInfo> Tools { get; } = [];
 
     public MediaToolInfo GetToolInfo(MediaTool mediaTool)
     {

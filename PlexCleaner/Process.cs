@@ -28,8 +28,9 @@ internal static class Process
         // Process in jump loop
         for (; ; )
         {
-            // Skip the file if it is in the ignore list
-            if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileName))
+            // Skip the file if it is in the ignore lists
+            if (Program.Config.ProcessOptions.FileIgnoreList.Contains(fileName) ||
+                Program.Config.ProcessOptions.IsFileIgnoreMatch(fileName))
             {
                 Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
                 result = true;
@@ -47,14 +48,6 @@ internal static class Process
             // Create file processor to hold state
             processFile = new ProcessFile(fileName);
             DateTime lastWriteTime = processFile.FileInfo.LastWriteTimeUtc;
-
-            // Skip the file if in the ignore list
-            if (Program.Config.ProcessOptions.IsIgnoreFilesMatch(processFile.FileInfo.Name))
-            {
-                Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
-                result = true;
-                break;
-            }
 
             // Is the file writeable
             if (!processFile.IsWriteable())
@@ -290,7 +283,7 @@ internal static class Process
         }
 
         // Process the files
-        List<string> fileList = new();
+        List<string> fileList = [];
         fileInfoList.ForEach(item => fileList.Add(item.FullName));
         return ProcessFiles(fileList);
     }
@@ -354,9 +347,9 @@ internal static class Process
         int ignoreCount = Program.Config.ProcessOptions.FileIgnoreList.Count;
 
         // Process all the files
-        List<ProcessTuple> errorInfo = new();
-        List<ProcessTuple> modifiedInfo = new();
-        List<ProcessTuple> failedInfo = new();
+        List<ProcessTuple> errorInfo = [];
+        List<ProcessTuple> modifiedInfo = [];
+        List<ProcessTuple> failedInfo = [];
         var lockObject = new Object();
         bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
         {
@@ -425,7 +418,7 @@ internal static class Process
             Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
                                     Program.Config.ProcessOptions.FileIgnoreList.Count,
                                     Program.Options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+            ConfigFileJsonSchema4.ToFile(Program.Options.SettingsFile, Program.Config);
         }
 
         return ret;

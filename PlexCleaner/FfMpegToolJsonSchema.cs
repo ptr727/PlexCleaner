@@ -20,7 +20,7 @@ namespace PlexCleaner.FfMpegToolJsonSchema;
 public class FfProbe
 {
     [JsonProperty("streams")]
-    public List<Stream> Streams { get; } = new();
+    public List<Stream> Streams { get; } = [];
 
     [JsonProperty("format")]
     public Format Format { get; } = new();
@@ -111,7 +111,7 @@ public class Disposition
 public class PacketInfo
 {
     [JsonProperty("packets")]
-    public List<Packet> Packets { get; } = new();
+    public List<Packet> Packets { get; } = [];
 }
 
 public class Packet

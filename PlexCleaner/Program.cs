@@ -250,7 +250,7 @@ internal class Program
         Log.Logger.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
 
         // Save default config
-        ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
+        ConfigFileJsonSchema4.WriteDefaultsToFile(options.SettingsFile);
 
         return MakeExitCode(ExitCode.Success);
     }
@@ -260,7 +260,7 @@ internal class Program
         Log.Logger.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
 
         // Write schema
-        ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
+        ConfigFileJsonSchema4.WriteSchemaToFile(options.SchemaFile);
 
         return MakeExitCode(ExitCode.Success);
     }
@@ -485,7 +485,7 @@ internal class Program
 
         // Load config from JSON
         Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
-        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
+        ConfigFileJsonSchema4 config = ConfigFileJsonSchema4.FromFile(options.SettingsFile);
         if (config == null)
         {
             Log.Logger.Error("Failed to load settings : {FileName}", options.SettingsFile);
@@ -493,16 +493,16 @@ internal class Program
         }
 
         // Compare the schema version
-        if (config.SchemaVersion != ConfigFileJsonSchema.Version)
+        if (config.SchemaVersion != ConfigFileJsonSchema4.Version)
         {
             Log.Logger.Warning("Settings JSON schema version mismatch : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
-                ConfigFileJsonSchema.Version,
+                ConfigFileJsonSchema4.Version,
                 options.SettingsFile);
 
             // Upgrade the file schema
             Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
+            ConfigFileJsonSchema4.ToFile(options.SettingsFile, config);
         }
 
         // Verify the settings
@@ -707,7 +707,7 @@ internal class Program
     public static CommandLineOptions Options { get; internal set; }
 
     // Config file options
-    public static ConfigFileJsonSchema Config { get; internal set; }
+    public static ConfigFileJsonSchema4 Config { get; internal set; }
 
     // Snippet runtime in seconds
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
@@ -719,6 +719,6 @@ internal class Program
     private static readonly CancellationTokenSource CancelSource = new();
 
     // File and directory lists
-    private readonly List<string> DirectoryList = new();
-    private readonly List<string> FileList = new();
+    private readonly List<string> DirectoryList = [];
+    private readonly List<string> FileList = [];
 }

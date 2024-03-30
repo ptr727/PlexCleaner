@@ -20,19 +20,19 @@ public class MkvMerge
     public Container Container { get; } = new();
 
     [JsonProperty("global_tags")]
-    public List<GlobalTag> GlobalTags { get; } = new();
+    public List<GlobalTag> GlobalTags { get; } = [];
 
     [JsonProperty("track_tags")]
-    public List<TrackTag> TrackTags { get; } = new();
+    public List<TrackTag> TrackTags { get; } = [];
 
     [JsonProperty("tracks")]
-    public List<Track> Tracks { get; } = new();
+    public List<Track> Tracks { get; } = [];
 
     [JsonProperty("attachments")]
-    public List<Attachment> Attachments { get; } = new();
+    public List<Attachment> Attachments { get; } = [];
 
     [JsonProperty("chapters")]
-    public List<Chapter> Chapters { get; } = new();
+    public List<Chapter> Chapters { get; } = [];
 
     public static MkvMerge FromJson(string json)
     {

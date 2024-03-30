@@ -3,7 +3,7 @@
   "$id": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
   "title": "PlexCleaner Configuration Schema",
   "definitions": {
-    "ConvertOptions": {
+    "ConvertOptions2": {
       "type": "object",
       "properties": {
         "FfMpegOptions": {
@@ -56,7 +56,7 @@
         "Audio"
       ]
     },
-    "MonitorOptions": {
+    "MonitorOptions1": {
       "type": "object",
       "properties": {
         "MonitorWaitTime": {
@@ -81,9 +81,18 @@
         "FileRetryCount"
       ]
     },
-    "ProcessOptions": {
+    "ProcessOptions4": {
       "type": "object",
       "properties": {
+        "FileIgnoreMasks": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "KeepOriginalLanguage": {
           "type": "boolean"
         },
@@ -95,15 +104,6 @@
         },
         "SetTrackFlags": {
           "type": "boolean"
-        },
-        "KeepExtensions": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
         },
         "ReMuxExtensions": {
           "type": "array",
@@ -200,11 +200,11 @@
         }
       },
       "required": [
+        "FileIgnoreMasks",
         "KeepOriginalLanguage",
         "RemoveClosedCaptions",
         "SetIetfLanguageTags",
         "SetTrackFlags",
-        "KeepExtensions",
         "ReMuxExtensions",
         "ReEncodeVideo",
         "ReEncodeAudioFormats",
@@ -227,7 +227,7 @@
         "FileIgnoreList"
       ]
     },
-    "ToolsOptions": {
+    "ToolsOptions1": {
       "type": "object",
       "properties": {
         "UseSystem": {
@@ -250,7 +250,7 @@
         "AutoUpdate"
       ]
     },
-    "VerifyOptions": {
+    "VerifyOptions2": {
       "type": "object",
       "properties": {
         "AutoRepair": {
@@ -315,19 +315,19 @@
       "default": 0
     },
     "ToolsOptions": {
-      "$ref": "#/definitions/ToolsOptions"
+      "$ref": "#/definitions/ToolsOptions1"
     },
     "ProcessOptions": {
-      "$ref": "#/definitions/ProcessOptions"
+      "$ref": "#/definitions/ProcessOptions4"
     },
     "ConvertOptions": {
-      "$ref": "#/definitions/ConvertOptions"
+      "$ref": "#/definitions/ConvertOptions2"
     },
     "VerifyOptions": {
-      "$ref": "#/definitions/VerifyOptions"
+      "$ref": "#/definitions/VerifyOptions2"
     },
     "MonitorOptions": {
-      "$ref": "#/definitions/MonitorOptions"
+      "$ref": "#/definitions/MonitorOptions1"
     }
   },
   "required": [

@@ -133,7 +133,7 @@ public class SelectMediaInfo
     public List<TrackInfo> GetTrackList()
     {
         // Add all tracks to list
-        List<TrackInfo> trackLick = new();
+        List<TrackInfo> trackLick = [];
         trackLick.AddRange(Selected.GetTrackList());
         trackLick.AddRange(NotSelected.GetTrackList());
 
