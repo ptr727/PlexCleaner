@@ -8,15 +8,20 @@ public record MonitorOptions1
 
     [Required]
     [Range(0, int.MaxValue)]
-    public int MonitorWaitTime { get; protected set; }
+    public int MonitorWaitTime { get; set; }
 
     [Required]
     [Range(0, int.MaxValue)]
-    public int FileRetryWaitTime { get; protected set; }
+    public int FileRetryWaitTime { get; set; }
 
     [Required]
     [Range(0, int.MaxValue)]
-    public int FileRetryCount { get; protected set; }
+    public int FileRetryCount { get; set; }
+
+    private void Upgrade(int version)
+    {
+        // Nothing to do
+    }
 
     public void SetDefaults()
     {

@@ -36,9 +36,9 @@ public partial class TrackInfo
         Commentary = 1 << 6
     }
 
-    protected TrackInfo() { }
+    public TrackInfo() { }
 
-    internal TrackInfo(MkvToolJsonSchema.Track trackJson)
+    public TrackInfo(MkvToolJsonSchema.Track trackJson)
     {
         const string parser = "MkvToolJsonSchema";
 
@@ -206,7 +206,7 @@ public partial class TrackInfo
         SetFlagsFromTitle(parser);
     }
 
-    internal TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
+    public TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
     {
         const string parser = "FfMpegToolJsonSchema";
 
@@ -286,7 +286,7 @@ public partial class TrackInfo
         // SetFlagsFromTitle("FfMpegToolJsonSchema");
     }
 
-    internal TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
+    public TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
     {
         const string parser = "MediaInfoToolXmlSchema";
 
@@ -428,7 +428,7 @@ public partial class TrackInfo
     }
 
     [GeneratedRegex(@"(?<id>\d)")]
-    private static partial Regex TrackRegex();
+    public static partial Regex TrackRegex();
 
     // Track title to flag mapping
     private static readonly ValueTuple<string, FlagsType>[] TitleFlags =

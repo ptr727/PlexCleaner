@@ -7,7 +7,10 @@ namespace PlexCleaner;
 // v1
 public record VerifyOptions1
 {
-    public const int Version = 1;
+    protected const int Version = 1;
+
+    public VerifyOptions1() { }
+
 
     [Required]
     public bool AutoRepair { get; set; }
@@ -21,17 +24,17 @@ public record VerifyOptions1
     // v2 : Removed
     [Obsolete]
     [Range(0, int.MaxValue)]
-    internal int MinimumDuration { get; set; }
+    public int MinimumDuration { internal get; set; }
 
     // v2 : Removed
     [Obsolete]
     [Range(0, int.MaxValue)]
-    internal int VerifyDuration { get; set; }
+    public int VerifyDuration { internal get; set; }
 
     // v2 : Removed
     [Obsolete]
     [Range(0, int.MaxValue)]
-    internal int IdetDuration { get; set; }
+    public int IdetDuration { internal get; set; }
 
     [Required]
     [Range(0, int.MaxValue)]
@@ -40,23 +43,23 @@ public record VerifyOptions1
     // v2 : Removed
     [Obsolete]
     [Range(0, int.MaxValue)]
-    internal int MinimumFileAge { get; set; }
+    public int MinimumFileAge { internal get; set; }
 } 
 
 // v2
-// Removed properties only
 public record VerifyOptions2 : VerifyOptions1
 {
-    public new const int Version = 2;
+    protected new const int Version = 2;
 
     public VerifyOptions2() { }
-
-    public VerifyOptions2(VerifyOptions1 verifyOptions1) : base(verifyOptions1)
-    {
+    public VerifyOptions2(VerifyOptions1 verifyOptions1) : base(verifyOptions1) 
+    { 
         Upgrade(VerifyOptions1.Version);
     }
 
-    public void Upgrade(int version) 
+    // Removed properties only
+
+    private void Upgrade(int version) 
     { 
         // Nothing to do
     }

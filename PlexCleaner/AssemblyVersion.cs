@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace PlexCleaner;
 
-internal class AssemblyVersion
+public class AssemblyVersion
 {
     public static string GetDetailedVersion()
     {

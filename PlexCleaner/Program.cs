@@ -14,7 +14,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
-internal class Program
+public class Program
 {
     enum ExitCode { Success = 0, Error = 1 }
 
@@ -245,27 +245,27 @@ internal class Program
         LogOptions.Logger = Log.Logger;
     }
 
-    internal static int WriteDefaultSettingsCommand(CommandLineOptions options)
+    public static int WriteDefaultSettingsCommand(CommandLineOptions options)
     {
         Log.Logger.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
 
         // Save default config
-        ConfigFileJsonSchema4.WriteDefaultsToFile(options.SettingsFile);
+        ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    internal static int CreateJsonSchemaCommand(CommandLineOptions options)
+    public static int CreateJsonSchemaCommand(CommandLineOptions options)
     {
         Log.Logger.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
 
         // Write schema
-        ConfigFileJsonSchema4.WriteSchemaToFile(options.SchemaFile);
+        ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    internal static int CheckForNewToolsCommand(CommandLineOptions options)
+    public static int CheckForNewToolsCommand(CommandLineOptions options)
     {
         // Do not verify tools
         Program program = Create(options, false);
@@ -279,7 +279,7 @@ internal class Program
         return MakeExitCode(Tools.CheckForNewTools() && Tools.VerifyTools());
     }
 
-    internal static int ProcessCommand(CommandLineOptions options)
+    public static int ProcessCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -292,7 +292,7 @@ internal class Program
         return MakeExitCode(Process.ProcessFiles(program.FileList) && Process.DeleteEmptyFolders(program.DirectoryList));
     }
 
-    internal static int MonitorCommand(CommandLineOptions options)
+    public static int MonitorCommand(CommandLineOptions options)
     {
         // Create program
         Program program = Create(options, true);
@@ -306,7 +306,7 @@ internal class Program
         return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
     }
 
-    internal static int ReMuxCommand(CommandLineOptions options)
+    public static int ReMuxCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -319,7 +319,7 @@ internal class Program
         return MakeExitCode(Process.ReMuxFiles(program.FileList));
     }
 
-    internal static int ReEncodeCommand(CommandLineOptions options)
+    public static int ReEncodeCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -332,7 +332,7 @@ internal class Program
         return MakeExitCode(Process.ReEncodeFiles(program.FileList));
     }
 
-    internal static int DeInterlaceCommand(CommandLineOptions options)
+    public static int DeInterlaceCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -345,7 +345,7 @@ internal class Program
         return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
     }
 
-    internal static int VerifyCommand(CommandLineOptions options)
+    public static int VerifyCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -358,7 +358,7 @@ internal class Program
         return MakeExitCode(Process.VerifyFiles(program.FileList));
     }
 
-    internal static int CreateSidecarCommand(CommandLineOptions options)
+    public static int CreateSidecarCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -371,7 +371,7 @@ internal class Program
         return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
     }
 
-    internal static int GetSidecarCommand(CommandLineOptions options)
+    public static int GetSidecarCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -384,7 +384,7 @@ internal class Program
         return MakeExitCode(Process.GetSidecarFiles(program.FileList));
     }
 
-    internal static int UpdateSidecarCommand(CommandLineOptions options)
+    public static int UpdateSidecarCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -397,7 +397,7 @@ internal class Program
         return MakeExitCode(Process.UpdateSidecarFiles(program.FileList));
     }
 
-    internal static int GetTagMapCommand(CommandLineOptions options)
+    public static int GetTagMapCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -410,7 +410,7 @@ internal class Program
         return MakeExitCode(Process.GetTagMapFiles(program.FileList));
     }
 
-    internal static int GetMediaInfoCommand(CommandLineOptions options)
+    public static int GetMediaInfoCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -423,7 +423,7 @@ internal class Program
         return MakeExitCode(Process.GetMediaInfoFiles(program.FileList));
     }
 
-    internal static int GetToolInfoCommand(CommandLineOptions options)
+    public static int GetToolInfoCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -436,7 +436,7 @@ internal class Program
         return MakeExitCode(Process.GetToolInfoFiles(program.FileList));
     }
 
-    internal static int RemoveSubtitlesCommand(CommandLineOptions options)
+    public static int RemoveSubtitlesCommand(CommandLineOptions options)
     {
         // Create program and get file list
         Program program = CreateFileList(options);
@@ -449,7 +449,7 @@ internal class Program
         return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
     }
 
-    internal static int GetVersionInfoCommand(CommandLineOptions options)
+    public static int GetVersionInfoCommand(CommandLineOptions options)
     {
         // Creating the program object will report all version information
         // Do not verify the tools during create
@@ -485,7 +485,7 @@ internal class Program
 
         // Load config from JSON
         Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
-        ConfigFileJsonSchema4 config = ConfigFileJsonSchema4.FromFile(options.SettingsFile);
+        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
         if (config == null)
         {
             Log.Logger.Error("Failed to load settings : {FileName}", options.SettingsFile);
@@ -493,16 +493,16 @@ internal class Program
         }
 
         // Compare the schema version
-        if (config.SchemaVersion != ConfigFileJsonSchema4.Version)
+        if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
             Log.Logger.Warning("Settings JSON schema version mismatch : {SchemaVersion} != {Version}, {FileName}",
                 config.SchemaVersion,
-                ConfigFileJsonSchema4.Version,
+                ConfigFileJsonSchema.Version,
                 options.SettingsFile);
 
             // Upgrade the file schema
             Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
-            ConfigFileJsonSchema4.ToFile(options.SettingsFile, config);
+            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
         // Verify the settings
@@ -704,10 +704,10 @@ internal class Program
     }
 
     // Commandline options
-    public static CommandLineOptions Options { get; internal set; }
+    public static CommandLineOptions Options { get; set; }
 
     // Config file options
-    public static ConfigFileJsonSchema4 Config { get; internal set; }
+    public static ConfigFileJsonSchema Config { get; set; }
 
     // Snippet runtime in seconds
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);

@@ -5,7 +5,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-internal class GitHubRelease
+public class GitHubRelease
 {
     public static string GetLatestRelease(string repo)
     {

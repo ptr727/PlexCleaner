@@ -461,12 +461,12 @@ public partial class FfMpegTool : MediaTool
 
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 
     private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
     private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
     private const string IdetMultiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
     private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
     [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex IdetRegex();
+    public static partial Regex IdetRegex();
 }

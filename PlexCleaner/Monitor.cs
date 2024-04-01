@@ -6,7 +6,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-internal class Monitor
+public class Monitor
 {
     private static void LogMonitorMessage()
     {

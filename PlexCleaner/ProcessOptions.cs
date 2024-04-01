@@ -8,7 +8,7 @@ using Serilog;
 namespace PlexCleaner;
 
 // v2 : Added
-public class VideoFormat
+public record VideoFormat
 {
     public string Format;
     public string Codec;
@@ -20,91 +20,93 @@ public record ProcessOptions1
 {
     protected const int Version = 1;
 
+    public ProcessOptions1() { }
+
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete]
-    internal string ReEncodeVideoFormats { get; set; } = "";
+    public string ReEncodeVideoFormats { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete]
-    internal string ReEncodeVideoCodecs { get; set; } = "";
+    public string ReEncodeVideoCodecs { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete]
-    internal string ReEncodeVideoProfiles { get; set; } = "";
+    public string ReEncodeVideoProfiles { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    internal string ReEncodeAudioFormats { get; set; } = "";
+    public string ReEncodeAudioFormats { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string ReMuxExtensions { get; set; } = "";
+    public string ReMuxExtensions { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    internal string KeepExtensions { get; set; } = "";
+    public string KeepExtensions { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    internal string KeepLanguages { get; set; } = "";
+    public string KeepLanguages { internal get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    internal string PreferredAudioFormats { get; set; } = "";
+    public string PreferredAudioFormats { internal get; set; } = "";
 
     [Required]
-    public bool DeleteEmptyFolders { get; protected set; }
+    public bool DeleteEmptyFolders { get; set; }
 
     [Required]
-    public bool DeleteUnwantedExtensions { get; protected set; }
+    public bool DeleteUnwantedExtensions { get; set; }
 
     [Required]
-    public bool ReMux { get; protected set; }
+    public bool ReMux { get; set; }
 
     [Required]
-    public bool DeInterlace { get; protected set; }
+    public bool DeInterlace { get; set; }
 
     [Required]
-    public bool ReEncode { get; protected set; }
+    public bool ReEncode { get; set; }
 
     [Required]
-    public bool SetUnknownLanguage { get; protected set; }
+    public bool SetUnknownLanguage { get; set; }
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
     [Required]
-    public string DefaultLanguage { get; protected set; } = "";
+    public string DefaultLanguage { get; set; } = "";
 
     [Required]
-    public bool RemoveUnwantedLanguageTracks { get; protected set; }
+    public bool RemoveUnwantedLanguageTracks { get; set; }
 
     [Required]
-    public bool RemoveDuplicateTracks { get; protected set; }
+    public bool RemoveDuplicateTracks { get; set; }
 
     [Required]
-    public bool RemoveTags { get; protected set; }
+    public bool RemoveTags { get; set; }
 
     [Required]
-    public bool UseSidecarFiles { get; protected set; }
+    public bool UseSidecarFiles { get; set; }
 
     [Required]
-    public bool SidecarUpdateOnToolChange { get; protected set; }
+    public bool SidecarUpdateOnToolChange { get; set; }
 
     [Required]
-    public bool Verify { get; protected set; }
+    public bool Verify { get; set; }
 
     [Required]
-    public bool RestoreFileTimestamp { get; protected set; }
+    public bool RestoreFileTimestamp { get; set; }
 
     [Required]
-    public HashSet<string> FileIgnoreList { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> FileIgnoreList { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 // v2
@@ -118,33 +120,33 @@ public record ProcessOptions2 : ProcessOptions1
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    internal new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> KeepExtensions { internal get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [Required]
-    public new HashSet<string> ReMuxExtensions { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> ReMuxExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> List<VideoFormat>
     [Required]
-    public List<VideoFormat> ReEncodeVideo { get; protected set; } = [];
+    public List<VideoFormat> ReEncodeVideo { get; set; } = [];
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [Required]
-    public new HashSet<string> ReEncodeAudioFormats { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> ReEncodeAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [Required]
-    public new HashSet<string> KeepLanguages { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> KeepLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [Required]
-    public new HashSet<string> PreferredAudioFormats { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> PreferredAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 // v3
@@ -158,19 +160,19 @@ public record ProcessOptions3 : ProcessOptions2
 
     // v3 : Added
     [Required]
-    public bool KeepOriginalLanguage { get; protected set; }
+    public bool KeepOriginalLanguage { get; set; }
 
     // v3 : Added
     [Required]
-    public bool RemoveClosedCaptions { get; protected set; }
+    public bool RemoveClosedCaptions { get; set; }
 
     // v3 : Added
     [Required]
-    public bool SetIetfLanguageTags { get; protected set; }
+    public bool SetIetfLanguageTags { get; set; }
 
     // v3 : Added
     [Required]
-    public bool SetTrackFlags { get; protected set; }
+    public bool SetTrackFlags { get; set; }
 }
 
 // v4
@@ -180,21 +182,21 @@ public record ProcessOptions4 : ProcessOptions3
 
     public ProcessOptions4() { }
     public ProcessOptions4(ProcessOptions1 processOptions1) : base(processOptions1) 
-    { 
+    {
         Upgrade(ProcessOptions1.Version);
     }
     public ProcessOptions4(ProcessOptions2 processOptions2) : base(processOptions2)
-    { 
+    {
         Upgrade(ProcessOptions2.Version);
     }
     public ProcessOptions4(ProcessOptions3 processOptions3) : base(processOptions3)
-    { 
+    {
         Upgrade(ProcessOptions3.Version);
     }
 
     // v4 : Added
     [Required]
-    public HashSet<string> FileIgnoreMasks { get; protected set; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> FileIgnoreMasks { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     private List<Regex> FileIgnoreRegExList = [];
 
@@ -206,7 +208,7 @@ public record ProcessOptions4 : ProcessOptions3
         }
     }
 
-    internal static Regex MaskToRegex(string mask)
+    public static Regex MaskToRegex(string mask)
     {
         // Convert * and ? wildcards to regex
         var regexString = "^" + Regex.Escape(mask);
@@ -221,7 +223,7 @@ public record ProcessOptions4 : ProcessOptions3
     }
 
 #pragma warning disable CS0612 // Type or member is obsolete
-    private void Upgrade(int version)
+    protected void Upgrade(int version)
     {
         // v1
         if (version <= ProcessOptions1.Version)
@@ -257,13 +259,13 @@ public record ProcessOptions4 : ProcessOptions3
             }
 
             // v1 -> v2 : Convert CSV to List<VideoFormat>
-            if (!string.IsNullOrEmpty(ReEncodeVideoCodecs) &&
-                !string.IsNullOrEmpty(ReEncodeVideoFormats) &&
-                !string.IsNullOrEmpty(ReEncodeVideoProfiles))
+            if (!string.IsNullOrEmpty(processOptions1.ReEncodeVideoCodecs) &&
+                !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats) &&
+                !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles))
             {
-                var codecList = ReEncodeVideoCodecs.Split(',').ToList();
-                var formatList = ReEncodeVideoFormats.Split(',').ToList();
-                var profileList = ReEncodeVideoProfiles.Split(',').ToList();
+                var codecList = processOptions1.ReEncodeVideoCodecs.Split(',').ToList();
+                var formatList = processOptions1.ReEncodeVideoFormats.Split(',').ToList();
+                var profileList = processOptions1.ReEncodeVideoProfiles.Split(',').ToList();
                 if (codecList.Count != formatList.Count || formatList.Count != profileList.Count)
                 {
                     // The number of arguments has to match
@@ -296,16 +298,16 @@ public record ProcessOptions4 : ProcessOptions3
                     ReEncodeVideo.Add(videoFormat);
                 }
             }
-            ReEncodeVideoCodecs = null;
-            ReEncodeVideoFormats = null;
-            ReEncodeVideoProfiles = null;
+            processOptions1.ReEncodeVideoCodecs = null;
+            processOptions1.ReEncodeVideoFormats = null;
+            processOptions1.ReEncodeVideoProfiles = null;
         }
 
         // v2
         if (version <= ProcessOptions2.Version)
         {
             // Get v2 schema
-            ProcessOptions2 processOptions2 = this;
+            // ProcessOptions2 processOptions2 = this;
 
             // v2 -> v3 : Convert ISO 639-2 to RFC 5646 language tags
             DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
@@ -327,12 +329,12 @@ public record ProcessOptions4 : ProcessOptions3
             ProcessOptions3 processOptions3 = this;
 
             // v3 -> v4 : Convert KeepExtensions to IgnoreFiles
-            foreach (var item in KeepExtensions)
+            foreach (var item in processOptions3.KeepExtensions)
             {
                 // Convert ext to *.ext
-                FileIgnoreMasks.Add($"*.{item}");
+                FileIgnoreMasks.Add($"*{item}");
             }
-            KeepExtensions.Clear();
+            processOptions3.KeepExtensions.Clear();
         }
 
         // v4

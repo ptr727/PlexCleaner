@@ -10,16 +10,21 @@ public record ToolsOptions1
     protected const int Version = 1;
 
     [Required]
-    public bool UseSystem { get; internal set; } // Changed at runtime
+    public bool UseSystem { get; set; }
 
     [Required]
-    public string RootPath { get; protected set; } = "";
+    public string RootPath { get; set; } = "";
 
     [Required]
-    public bool RootRelative { get; protected set; }
+    public bool RootRelative { get; set; }
 
     [Required]
-    public bool AutoUpdate { get; internal set; } // Changed at runtime
+    public bool AutoUpdate { get; set; }
+
+    protected void Upgrade(int version)
+    {
+        // Nothing to do
+    }
 
     public void SetDefaults()
     {

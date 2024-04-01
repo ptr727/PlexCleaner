@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PlexCleanerTests\PlexCleanerTests.csproj" />
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
   </ItemGroup>
 

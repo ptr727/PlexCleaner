@@ -14,7 +14,7 @@ namespace PlexCleaner;
 // Filename, State
 using ProcessTuple = ValueTuple<string, SidecarFile.StatesType>;
 
-internal static class Process
+public static class Process
 {
     private static bool ProcessFile(string fileName, out bool modified, out SidecarFile.StatesType state, out string processName)
     {
@@ -418,7 +418,7 @@ internal static class Process
             Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
                                     Program.Config.ProcessOptions.FileIgnoreList.Count,
                                     Program.Options.SettingsFile);
-            ConfigFileJsonSchema4.ToFile(Program.Options.SettingsFile, Program.Config);
+            ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
         }
 
         return ret;

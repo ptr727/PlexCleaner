@@ -1,11 +1,12 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection.Metadata.Ecma335;
 using Serilog;
 
 namespace PlexCleaner;
 
 // v2 : Added
-public class HandBrakeOptions
+public record HandBrakeOptions
 {
     [Required]
     // Do not include --encoder
@@ -17,7 +18,7 @@ public class HandBrakeOptions
 }
 
 // v2 : Added
-public class FfMpegOptions
+public record FfMpegOptions
 {
     [Required]
     // Do not include -c:v
@@ -37,36 +38,37 @@ public class FfMpegOptions
 // v1
 public record ConvertOptions1
 {
-    public const int Version = 1;
+    protected const int Version = 1;
+
+    public ConvertOptions1() { }
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete]
-    internal bool EnableH265Encoder { get; set; }
+    public bool EnableH265Encoder { internal get; set; }
     [Obsolete]
-    internal int VideoEncodeQuality { get; set; }
+    public int VideoEncodeQuality { internal get; set; }
     [Obsolete]
-    internal string AudioEncodeCodec { get; set; } = "";
+    public string AudioEncodeCodec { internal get; set; } = "";
 }
 
 // v2
 public record ConvertOptions2 : ConvertOptions1
 {
-    public new const int Version = 2;
+    protected new const int Version = 2;
 
     public ConvertOptions2() { }
-
     public ConvertOptions2(ConvertOptions1 convertOptions1) : base(convertOptions1)
-    {
+    { 
         Upgrade(ConvertOptions1.Version);
     }
 
     // v2 : Added
     [Required]
-    public FfMpegOptions FfMpegOptions { get; protected set; } = new();
+    public FfMpegOptions FfMpegOptions { get; set; } = new();
 
     // v2 : Added
     [Required]
-    public HandBrakeOptions HandBrakeOptions { get; protected set; } = new();
+    public HandBrakeOptions HandBrakeOptions { get; set; } = new();
 
 #pragma warning disable CS0612 // Type or member is obsolete
     private void Upgrade(int version)

@@ -15,7 +15,7 @@ namespace PlexCleaner;
 
 public class VideoInfo : TrackInfo
 {
-    internal VideoInfo(MkvToolJsonSchema.Track track) : base(track)
+    public VideoInfo(MkvToolJsonSchema.Track track) : base(track)
     {
         // Missing: Profile
         // Missing: Interlaced
@@ -29,7 +29,7 @@ public class VideoInfo : TrackInfo
         }
     }
 
-    internal VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
+    public VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
     {
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
@@ -66,7 +66,7 @@ public class VideoInfo : TrackInfo
         }
     }
 
-    internal VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
+    public VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
     {
         // Build the Profile
         Profile = string.IsNullOrEmpty(track.FormatProfile) switch
