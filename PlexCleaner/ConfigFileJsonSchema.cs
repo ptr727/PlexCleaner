@@ -247,6 +247,8 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     private static ConfigFileJsonSchema FromJson(string json)
     {
+        // TODO: https://github.com/dotnet/runtime/issues/100523
+
         // Deserialize the base class to get the schema version
         var configFileJsonSchemaBase = JsonSerializer.Deserialize<ConfigFileJsonSchemaBase>(json, JsonReadOptions);
         if (configFileJsonSchemaBase == null)
