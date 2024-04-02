@@ -43,7 +43,7 @@ public class VideoInfo : TrackInfo
         // Build the Profile
         Profile = string.IsNullOrEmpty(stream.Profile) switch
         {
-            false when !string.IsNullOrEmpty(stream.Level) => $"{stream.Profile}@{stream.Level}",
+            false when stream.Level != 0 => $"{stream.Profile}@{stream.Level}",
             false => stream.Profile,
             _ => Profile
         };
@@ -55,7 +55,7 @@ public class VideoInfo : TrackInfo
                      !stream.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
 
         // ClosedCaptions
-        ClosedCaptions = stream.ClosedCaptions;
+        ClosedCaptions = stream.ClosedCaptions != 0;
 
         // Missing: HDR
 

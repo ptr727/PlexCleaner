@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 // Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
@@ -16,137 +17,132 @@ namespace PlexCleaner.MkvToolJsonSchema;
 
 public class MkvMerge
 {
-    [JsonProperty("container")]
+    [JsonPropertyName("container")]
     public Container Container { get; } = new();
 
-    [JsonProperty("global_tags")]
+    [JsonPropertyName("global_tags")]
     public List<GlobalTag> GlobalTags { get; } = [];
 
-    [JsonProperty("track_tags")]
+    [JsonPropertyName("track_tags")]
     public List<TrackTag> TrackTags { get; } = [];
 
-    [JsonProperty("tracks")]
+    [JsonPropertyName("tracks")]
     public List<Track> Tracks { get; } = [];
 
-    [JsonProperty("attachments")]
+    [JsonPropertyName("attachments")]
     public List<Attachment> Attachments { get; } = [];
 
-    [JsonProperty("chapters")]
+    [JsonPropertyName("chapters")]
     public List<Chapter> Chapters { get; } = [];
 
     public static MkvMerge FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+        return JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 }
 
 public class Container
 {
-    [JsonProperty("properties")]
+    [JsonPropertyName("properties")]
     public ContainerProperties Properties { get; } = new();
 
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; } = "";
 }
 
 public class ContainerProperties
 {
-    [JsonProperty("duration")]
+    [JsonPropertyName("duration")]
     public long Duration { get; set; }
-    [JsonProperty("title")]
+    [JsonPropertyName("title")]
     public string Title { get; set; } = "";
 }
 
 public class GlobalTag
 {
-    [JsonProperty("num_entries")]
+    [JsonPropertyName("num_entries")]
     public int NumEntries { get; set; }
 }
 
 public class TrackTag
 {
-    [JsonProperty("num_entries")]
+    [JsonPropertyName("num_entries")]
     public int NumEntries { get; set; }
 
-    [JsonProperty("track_id")]
+    [JsonPropertyName("track_id")]
     public int TrackId { get; set; }
 }
 
 public class Track
 {
-    [JsonProperty("codec")]
+    [JsonPropertyName("codec")]
     public string Codec { get; set; } = "";
 
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public int Id { get; set; }
 
-    [JsonProperty("properties")]
+    [JsonPropertyName("properties")]
     public TrackProperties Properties { get; } = new();
 
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; } = "";
 }
 
 public class TrackProperties
 {
-    [JsonProperty("codec_id")]
+    [JsonPropertyName("codec_id")]
     public string CodecId { get; set; } = "";
 
-    [JsonProperty("codec_name")]
+    [JsonPropertyName("codec_name")]
     public string CodecName { get; set; } = "";
 
-    [JsonProperty("language")]
+    [JsonPropertyName("language")]
     public string Language { get; set; } = "";
 
-    [JsonProperty("language_ietf")]
+    [JsonPropertyName("language_ietf")]
     public string LanguageIetf { get; set; }
 
-    [JsonProperty("forced_track")]
+    [JsonPropertyName("forced_track")]
     public bool Forced { get; set; }
 
-    [JsonProperty("tag_language")]
+    [JsonPropertyName("tag_language")]
     public string TagLanguage { get; set; } = "";
 
-    [JsonProperty("number")]
+    [JsonPropertyName("number")]
     public int Number { get; set; }
 
-    [JsonProperty("track_name")]
+    [JsonPropertyName("track_name")]
     public string TrackName { get; set; } = "";
 
-    [JsonProperty("default_track")]
+    [JsonPropertyName("default_track")]
     public bool DefaultTrack { get; set; }
 
-    [JsonProperty("flag_original")]
+    [JsonPropertyName("flag_original")]
     public bool Original { get; set; }
-    [JsonProperty("flag_commentary")]
+    [JsonPropertyName("flag_commentary")]
     public bool Commentary { get; set; }
 
-    [JsonProperty("flag_visual_impaired")]
+    [JsonPropertyName("flag_visual_impaired")]
     public bool VisualImpaired { get; set; }
 
-    [JsonProperty("flag_hearing_impaired")]
+    [JsonPropertyName("flag_hearing_impaired")]
     public bool HearingImpaired { get; set; }
 
-    [JsonProperty("flag_text_descriptions")]
+    [JsonPropertyName("flag_text_descriptions")]
     public bool TextDescriptions { get; set; }
 }
 
 public class Attachment
 {
-    [JsonProperty("content_type")]
+    [JsonPropertyName("content_type")]
     public string ContentType { get; set; } = "";
 
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public int Id { get; set; }
 }
 
 public class Chapter
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; } = "";
 }

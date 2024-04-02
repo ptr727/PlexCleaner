@@ -4,7 +4,8 @@ global using SidecarFileJsonSchema = PlexCleaner.SidecarFileJsonSchema4;
 using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -12,7 +13,8 @@ namespace PlexCleaner;
 public record SidecarFileJsonSchemaBase
 {
     [DefaultValue(0)]
-    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
+    [JsonPropertyOrder(-2)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = SidecarFileJsonSchema.Version;
 }
 
@@ -20,8 +22,6 @@ public record SidecarFileJsonSchemaBase
 public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 {
     protected const int Version = 1;
-
-    public SidecarFileJsonSchema1() { }
 
     // v3 : Removed
     [Obsolete]
@@ -161,13 +161,13 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
     public static string ToJson(SidecarFileJsonSchema json)
     {
-        return JsonConvert.SerializeObject(json, ConfigFileJsonSchema.JsonWriteSettings);
+        return JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
     }
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var sidecarFileJsonSchemaBase = JsonConvert.DeserializeObject<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadSettings);
+        var sidecarFileJsonSchemaBase = JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadOptions);
         if (sidecarFileJsonSchemaBase == null)
         {
             return null;
@@ -181,10 +181,10 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
         // Deserialize the correct version
         return sidecarFileJsonSchemaBase.SchemaVersion switch
         {
-            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema1>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema2>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema3>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            Version => JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, ConfigFileJsonSchema.JsonReadSettings),
+            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema1>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema2>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema3>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            Version => JsonSerializer.Deserialize<SidecarFileJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions),
             _ => throw new NotImplementedException()
         };
     }

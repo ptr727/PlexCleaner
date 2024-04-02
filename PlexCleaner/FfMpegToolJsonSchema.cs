@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 // Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
 // TODO: Find JSON schema definition
@@ -19,118 +20,116 @@ namespace PlexCleaner.FfMpegToolJsonSchema;
 
 public class FfProbe
 {
-    [JsonProperty("streams")]
+    [JsonPropertyName("streams")]
     public List<Stream> Streams { get; } = [];
 
-    [JsonProperty("format")]
+    [JsonPropertyName("format")]
     public Format Format { get; } = new();
 
     public static FfProbe FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+        return JsonSerializer.Deserialize<FfProbe>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 }
 
 public class Format
 {
-    [JsonProperty("format_name")]
+    [JsonPropertyName("format_name")]
     public string FormatName { get; set; } = "";
 
-    [JsonProperty("duration")]
+    [JsonPropertyName("duration")]
     public double Duration { get; set; }
 
-    [JsonProperty("tags")]
+    [JsonPropertyName("tags")]
     public Dictionary<string, string> Tags { get; } = new();
 }
 
 public class Stream
 {
-    [JsonProperty("index")]
+    [JsonPropertyName("index")]
     public int Index { get; set; }
 
-    [JsonProperty("codec_name")]
+    [JsonPropertyName("codec_name")]
     public string CodecName { get; set; } = "";
 
-    [JsonProperty("codec_long_name")]
+    [JsonPropertyName("codec_long_name")]
     public string CodecLongName { get; set; } = "";
 
-    [JsonProperty("profile")]
+    [JsonPropertyName("profile")]
     public string Profile { get; set; } = "";
 
-    [JsonProperty("codec_type")]
+    [JsonPropertyName("codec_type")]
     public string CodecType { get; set; } = "";
 
-    [JsonProperty("codec_tag_string")]
+    [JsonPropertyName("codec_tag_string")]
     public string CodecTagString { get; set; } = "";
 
-    [JsonProperty("level")]
-    public string Level { get; set; } = "";
+    [JsonPropertyName("level")]
+    public int Level { get; set; }
 
-    [JsonProperty("field_order")]
+    [JsonPropertyName("field_order")]
     public string FieldOrder { get; set; } = "";
 
-    [JsonProperty("closed_captions")]
-    public bool ClosedCaptions { get; set; }
+    // XSD says it is a Boolean, examples use an int
+    // TODO: Newtonsoft would convert 0 to false all else to true, Text.Json is not so forgiving
+    // https://stackoverflow.com/questions/68682450/automatic-conversion-of-numbers-to-bools-migrating-from-newtonsoft-to-system-t
+    [JsonPropertyName("closed_captions")]
+    public int ClosedCaptions { get; set; }
 
-    [JsonProperty("disposition")]
+    [JsonPropertyName("disposition")]
     public Disposition Disposition { get; } = new();
 
-    [JsonProperty("tags")]
+    [JsonPropertyName("tags")]
     public Dictionary<string, string> Tags { get; } = new();
 }
 
 public class Disposition
 {
-    [JsonProperty("default")]
-    public bool Default { get; set; }
+    [JsonPropertyName("default")]
+    public int Default { get; set; }
 
-    [JsonProperty("forced")]
-    public bool Forced { get; set; }
+    [JsonPropertyName("forced")]
+    public int Forced { get; set; }
 
-    [JsonProperty("original")]
-    public bool Original { get; set; }
+    [JsonPropertyName("original")]
+    public int Original { get; set; }
 
-    [JsonProperty("comment")]
-    public bool Comment { get; set; }
+    [JsonPropertyName("comment")]
+    public int Comment { get; set; }
 
-    [JsonProperty("hearing_impaired")]
-    public bool HearingImpaired { get; set; }
+    [JsonPropertyName("hearing_impaired")]
+    public int HearingImpaired { get; set; }
 
-    [JsonProperty("visual_impaired")]
-    public bool VisualImpaired { get; set; }
+    [JsonPropertyName("visual_impaired")]
+    public int VisualImpaired { get; set; }
 
-    [JsonProperty("descriptions")]
-    public bool Descriptions { get; set; }
+    [JsonPropertyName("descriptions")]
+    public int Descriptions { get; set; }
 }
 
 public class PacketInfo
 {
-    [JsonProperty("packets")]
+    [JsonPropertyName("packets")]
     public List<Packet> Packets { get; } = [];
 }
 
 public class Packet
 {
-    [JsonProperty("codec_type")]
+    [JsonPropertyName("codec_type")]
     public string CodecType { get; set; } = "";
 
-    [JsonProperty("stream_index")]
+    [JsonPropertyName("stream_index")]
     public long StreamIndex { get; set; } = -1;
 
-    [JsonProperty("pts_time")]
+    [JsonPropertyName("pts_time")]
     public double PtsTime { get; set; } = double.NaN;
 
-    [JsonProperty("dts_time")]
+    [JsonPropertyName("dts_time")]
     public double DtsTime { get; set; } = double.NaN;
 
-    [JsonProperty("duration_time")]
+    [JsonPropertyName("duration_time")]
     public double DurationTime { get; set; } = double.NaN;
 
-    [JsonProperty("size")]
+    [JsonPropertyName("size")]
     public long Size { get; set; } = -1;
 }

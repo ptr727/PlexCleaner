@@ -34,8 +34,9 @@ Docker images are published on [Docker Hub][docker-link].
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
   - Settings JSON schema updated from v3 to v4 to account for modified `ProcessOptions` settings.
     - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions` on load.
-    - E.g. `ProcessOptions:KeepExtensions` : `nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
-  - Fixed de-serializing and upgrading old settings schemas, some settings were lost on upgrade.
+    - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
+  - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
+  - Fixed issue with old settings schemas not upgrading as expected, updated associated unit tests.
 - Version 3.5:
   - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.

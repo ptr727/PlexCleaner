@@ -11,18 +11,12 @@ global using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 // Update global using statements to the latest version
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Schema.Generation;
-using Newtonsoft.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -31,12 +25,14 @@ namespace PlexCleaner;
 public record ConfigFileJsonSchemaBase
 {
     // Schema reference
-    [JsonProperty(PropertyName = "$schema", Order = -3)]
+    [JsonPropertyName("$schema")]
+    [JsonPropertyOrder(-3)]
     public string Schema { get; } = SchemaUri;
 
     // Default to 0 if no value specified, and always write the version first
     [DefaultValue(0)]
-    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
+    [JsonPropertyOrder(-2)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
 
     // Schema
@@ -48,29 +44,27 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
     protected const int Version = 1;
 
-    public ConfigFileJsonSchema1() { }
-
     [Required]
-    [JsonProperty(Order = 1)]
+    [JsonPropertyOrder(1)]
     public ToolsOptions1 ToolsOptions { get; set; } = new();
 
     // v2 : Replaced with ProcessOptions2
     [Obsolete]
-    [JsonProperty(Order = 2)]
+    [JsonPropertyOrder(2)]
     public ProcessOptions1 ProcessOptions { internal get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
     [Obsolete]
-    [JsonProperty(Order = 3)]
+    [JsonPropertyOrder(3)]
     public ConvertOptions1 ConvertOptions { internal get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
     [Obsolete]
-    [JsonProperty(Order = 4)]
+    [JsonPropertyOrder(4)]
     public VerifyOptions1 VerifyOptions { internal get; set; } = new();
 
     [Required]
-    [JsonProperty(Order = 5)]
+    [JsonPropertyOrder(5)]
     public MonitorOptions1 MonitorOptions { get; set; } = new();
 }
 
@@ -85,7 +79,7 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
     [Obsolete]
-    [JsonProperty(Order = 2)]
+    [JsonPropertyOrder(2)]
     public new ProcessOptions2 ProcessOptions { internal get; set; } = new();
 }
 
@@ -101,17 +95,17 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
     [Obsolete]
-    [JsonProperty(Order = 2)]
+    [JsonPropertyOrder(2)]
     public new ProcessOptions3 ProcessOptions { internal get; set; } = new();
 
     // v3 : Added
     [Required]
-    [JsonProperty(Order = 3)]
+    [JsonPropertyOrder(3)]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
     [Required]
-    [JsonProperty(Order = 4)]
+    [JsonPropertyOrder(4)]
     public new VerifyOptions2 VerifyOptions { get; set; } = new();
 }
 
@@ -136,7 +130,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     // v4 : Added
     [Required]
-    [JsonProperty(Order = 2)]
+    [JsonPropertyOrder(2)]
     public new ProcessOptions4 ProcessOptions { get; set; } = new();
 
 #pragma warning disable CS0612 // Type or member is obsolete
@@ -248,13 +242,13 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     private static string ToJson(ConfigFileJsonSchema json)
     {
-        return JsonConvert.SerializeObject(json, JsonWriteSettings);
+        return JsonSerializer.Serialize(json, JsonWriteOptions);
     }
 
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var configFileJsonSchemaBase = JsonConvert.DeserializeObject<ConfigFileJsonSchemaBase>(json, JsonReadSettings);
+        var configFileJsonSchemaBase = JsonSerializer.Deserialize<ConfigFileJsonSchemaBase>(json, JsonReadOptions);
         if (configFileJsonSchemaBase == null)
         {
             return null;
@@ -268,10 +262,10 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         // Deserialize the correct version
         return configFileJsonSchemaBase.SchemaVersion switch
         {
-            ConfigFileJsonSchema1.Version => new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema1>(json, JsonReadSettings)),
-            ConfigFileJsonSchema2.Version => new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema2>(json, JsonReadSettings)),
-            ConfigFileJsonSchema3.Version => new ConfigFileJsonSchema(JsonConvert.DeserializeObject<ConfigFileJsonSchema3>(json, JsonReadSettings)),
-            Version => JsonConvert.DeserializeObject<ConfigFileJsonSchema>(json, JsonReadSettings),
+            ConfigFileJsonSchema1.Version => new ConfigFileJsonSchema(JsonSerializer.Deserialize<ConfigFileJsonSchema1>(json, JsonReadOptions)),
+            ConfigFileJsonSchema2.Version => new ConfigFileJsonSchema(JsonSerializer.Deserialize<ConfigFileJsonSchema2>(json, JsonReadOptions)),
+            ConfigFileJsonSchema3.Version => new ConfigFileJsonSchema(JsonSerializer.Deserialize<ConfigFileJsonSchema3>(json, JsonReadOptions)),
+            Version => JsonSerializer.Deserialize<ConfigFileJsonSchema>(json, JsonReadOptions),
             _ => throw new NotImplementedException()
         };
     }
@@ -279,10 +273,10 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     public static void WriteSchemaToFile(string path)
     {
         // Create JSON schema
-        var generator = new JSchemaGenerator
+        var generator = new Newtonsoft.Json.Schema.Generation.JSchemaGenerator
         {
             // TODO: How to exclude Obsolete marked items?
-            DefaultRequired = Required.Default
+            DefaultRequired = Newtonsoft.Json.Required.Default
         };
         var schema = generator.Generate(typeof(ConfigFileJsonSchema));
         schema.Title = "PlexCleaner Configuration Schema";
@@ -292,17 +286,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         // Write to file
         File.WriteAllText(path, schema.ToString());
     }
-
-    public static readonly JsonSerializerSettings JsonReadSettings = new() {
-        ObjectCreationHandling = ObjectCreationHandling.Reuse
-    };
-
-    public static readonly JsonSerializerSettings JsonWriteSettings = new()
-    {
-        Formatting = Formatting.Indented,
-        StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-        ContractResolver = new ExcludeObsoletePropertiesResolver()
-    };
 
     public static readonly JsonSerializerOptions JsonReadOptions = new() {
         PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
@@ -327,20 +310,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         {
             // Do not serialize [Obsolete] items
             if (property.AttributeProvider?.IsDefined(typeof(ObsoleteAttribute), true) == true)
-                property.ShouldSerialize = (object _, object? _) => { return false; };
+                property.ShouldSerialize = (_, _) => false;
         }
-    }
-}
-
-public class ExcludeObsoletePropertiesResolver : DefaultContractResolver
-{
-    protected override List<MemberInfo> GetSerializableMembers(Type objectType)
-    {
-        // Get all serializable members
-        var memberList = base.GetSerializableMembers(objectType);
-
-        // Remove all [Obsolete] items
-        memberList.RemoveAll(item => item.IsDefined(typeof(ObsoleteAttribute), true));
-        return memberList;
     }
 }
