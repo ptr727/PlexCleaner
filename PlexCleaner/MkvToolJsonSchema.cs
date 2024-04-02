@@ -36,13 +36,8 @@ public class MkvMerge
 
     public static MkvMerge FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<MkvMerge>(json, Settings);
+        return JsonConvert.DeserializeObject<MkvMerge>(json, ConfigFileJsonSchema.JsonReadSettings);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 }
 
 public class Container

@@ -9,9 +9,6 @@ public record VerifyOptions1
 {
     protected const int Version = 1;
 
-    public VerifyOptions1() { }
-
-
     [Required]
     public bool AutoRepair { get; set; }
 

@@ -222,31 +222,31 @@ public partial class TrackInfo
         }
 
         // Flags
-        if (trackJson.Disposition.Default)
+        if (trackJson.Disposition.Default != 0)
         {
             Flags |= FlagsType.Default;
         }
-        if (trackJson.Disposition.Forced)
+        if (trackJson.Disposition.Forced != 0)
         {
             Flags |= FlagsType.Forced;
         }
-        if (trackJson.Disposition.Original)
+        if (trackJson.Disposition.Original != 0)
         {
             Flags |= FlagsType.Original;
         }
-        if (trackJson.Disposition.Comment)
+        if (trackJson.Disposition.Comment != 0)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (trackJson.Disposition.HearingImpaired)
+        if (trackJson.Disposition.HearingImpaired != 0)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (trackJson.Disposition.VisualImpaired)
+        if (trackJson.Disposition.VisualImpaired != 0)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (trackJson.Disposition.Descriptions)
+        if (trackJson.Disposition.Descriptions != 0)
         {
             Flags |= FlagsType.Descriptions;
         }

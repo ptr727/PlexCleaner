@@ -20,8 +20,6 @@ public record ProcessOptions1
 {
     protected const int Version = 1;
 
-    public ProcessOptions1() { }
-
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete]

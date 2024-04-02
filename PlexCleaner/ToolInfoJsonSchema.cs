@@ -37,18 +37,13 @@ public class ToolInfoJsonSchema
 
     private static string ToJson(ToolInfoJsonSchema tools)
     {
-        return JsonConvert.SerializeObject(tools, Settings);
+        return JsonConvert.SerializeObject(tools, ConfigFileJsonSchema.JsonWriteSettings);
     }
 
     public static ToolInfoJsonSchema FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, Settings);
+        return JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadSettings);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {

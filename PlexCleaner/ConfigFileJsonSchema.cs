@@ -48,8 +48,6 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
     protected const int Version = 1;
 
-    public ConfigFileJsonSchema1() { }
-
     [Required]
     [JsonProperty(Order = 1)]
     public ToolsOptions1 ToolsOptions { get; set; } = new();
@@ -327,7 +325,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         {
             // Do not serialize [Obsolete] items
             if (property.AttributeProvider?.IsDefined(typeof(ObsoleteAttribute), true) == true)
-                property.ShouldSerialize = (object _, object? _) => { return false; };
+                property.ShouldSerialize = (_, _) => false;
         }
     }
 }

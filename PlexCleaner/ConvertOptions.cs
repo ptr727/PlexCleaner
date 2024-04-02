@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection.Metadata.Ecma335;
 using Serilog;
 
 namespace PlexCleaner;
@@ -39,8 +38,6 @@ public record FfMpegOptions
 public record ConvertOptions1
 {
     protected const int Version = 1;
-
-    public ConvertOptions1() { }
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete]

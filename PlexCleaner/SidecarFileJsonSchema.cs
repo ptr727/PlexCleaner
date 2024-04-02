@@ -21,8 +21,6 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 {
     protected const int Version = 1;
 
-    public SidecarFileJsonSchema1() { }
-
     // v3 : Removed
     [Obsolete]
     public string FfMpegToolVersion { internal get; set; }

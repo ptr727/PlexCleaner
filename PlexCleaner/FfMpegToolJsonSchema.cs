@@ -27,13 +27,8 @@ public class FfProbe
 
     public static FfProbe FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<FfProbe>(json, Settings);
+        return JsonConvert.DeserializeObject<FfProbe>(json, ConfigFileJsonSchema.JsonReadSettings);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 }
 
 public class Format
@@ -69,13 +64,16 @@ public class Stream
     public string CodecTagString { get; set; } = "";
 
     [JsonProperty("level")]
-    public string Level { get; set; } = "";
+    public int Level { get; set; };
 
     [JsonProperty("field_order")]
     public string FieldOrder { get; set; } = "";
 
+    // XSD says it is a Boolean, examples use an int
+    // TODO: Newtonsoft would convert 0 to false all else to true, Text.Json is not so forgiving
+    // https://stackoverflow.com/questions/68682450/automatic-conversion-of-numbers-to-bools-migrating-from-newtonsoft-to-system-t
     [JsonProperty("closed_captions")]
-    public bool ClosedCaptions { get; set; }
+    public int ClosedCaptions { get; set; }
 
     [JsonProperty("disposition")]
     public Disposition Disposition { get; } = new();
@@ -87,25 +85,25 @@ public class Stream
 public class Disposition
 {
     [JsonProperty("default")]
-    public bool Default { get; set; }
+    public int Default { get; set; }
 
     [JsonProperty("forced")]
-    public bool Forced { get; set; }
+    public int Forced { get; set; }
 
     [JsonProperty("original")]
-    public bool Original { get; set; }
+    public int Original { get; set; }
 
     [JsonProperty("comment")]
-    public bool Comment { get; set; }
+    public int Comment { get; set; }
 
     [JsonProperty("hearing_impaired")]
-    public bool HearingImpaired { get; set; }
+    public int HearingImpaired { get; set; }
 
     [JsonProperty("visual_impaired")]
-    public bool VisualImpaired { get; set; }
+    public int VisualImpaired { get; set; }
 
     [JsonProperty("descriptions")]
-    public bool Descriptions { get; set; }
+    public int Descriptions { get; set; }
 }
 
 public class PacketInfo
