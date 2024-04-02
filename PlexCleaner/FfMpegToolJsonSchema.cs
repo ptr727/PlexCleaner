@@ -64,7 +64,7 @@ public class Stream
     public string CodecTagString { get; set; } = "";
 
     [JsonProperty("level")]
-    public int Level { get; set; };
+    public int Level { get; set; }
 
     [JsonProperty("field_order")]
     public string FieldOrder { get; set; } = "";

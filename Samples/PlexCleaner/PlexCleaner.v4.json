@@ -128,7 +128,7 @@
     "RestoreFileTimestamp": false,
     "FileIgnoreList": [
       "\\\\server\\Share\\Movies\\Foo (2000)\\Foo (2000).mkv",
-      "\\\\server\\Share\\Series\\Foo\\Season 1\\Foo - S01E01 - Bar.mkv"
+      "\\\\server\\Share\\Series\\Fianc\u00E9\\Season 1\\Fianc\u00E9 - S01E01 - Bar.mkv"
     ]
   },
   "VerifyOptions": {
