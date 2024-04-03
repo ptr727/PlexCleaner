@@ -1,9 +1,7 @@
-﻿// Current schema version
+﻿// Current schema version is v4
 global using SidecarFileJsonSchema = PlexCleaner.SidecarFileJsonSchema4;
 
 using System;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Serilog;
@@ -12,9 +10,8 @@ namespace PlexCleaner;
 
 public record SidecarFileJsonSchemaBase
 {
-    [DefaultValue(0)]
+    [JsonRequired]
     [JsonPropertyOrder(-2)]
-    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = SidecarFileJsonSchema.Version;
 }
 
@@ -35,22 +32,22 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
     [Obsolete]
     public string FfIdetInfoData { internal get; set; }
 
-    [Required]
+    [JsonRequired]
     public DateTime MediaLastWriteTimeUtc { get; set; }
 
-    [Required]
+    [JsonRequired]
     public long MediaLength { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string FfProbeInfoData { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MkvMergeInfoData { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MediaInfoToolVersion { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MediaInfoData { get; set; }
 }
 
@@ -78,11 +75,11 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
     public SidecarFileJsonSchema3(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2) { }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public string FfProbeToolVersion { get; set; }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public string MkvMergeToolVersion { get; set; }
 }
 
@@ -106,11 +103,11 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     }
 
     // v4 : Added
-    [Required]
+    [JsonRequired]
     public SidecarFile.StatesType State { get; set; }
 
     // v4 : Added
-    [Required]
+    [JsonRequired]
     public string MediaHash { get; set; }
 
 #pragma warning disable CS0612 // Type or member is obsolete

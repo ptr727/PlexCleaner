@@ -1,5 +1,5 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -7,30 +7,30 @@ namespace PlexCleaner;
 // v2 : Added
 public record HandBrakeOptions
 {
-    [Required]
     // Do not include --encoder
+    [JsonRequired]
     public string Video { get; set; } = "";
 
-    [Required]
     // Do not include --aencoder
+    [JsonRequired]
     public string Audio { get; set; } = "";
 }
 
 // v2 : Added
 public record FfMpegOptions
 {
-    [Required]
     // Do not include -c:v
+    [JsonRequired]
     public string Video { get; set; } = "";
 
-    [Required]
     // Do not include -c:a 
+    [JsonRequired]
     public string Audio { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public string Global { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public string Output { get; set; } = "";
 }
 
@@ -60,11 +60,11 @@ public record ConvertOptions2 : ConvertOptions1
     }
 
     // v2 : Added
-    [Required]
+    [JsonRequired]
     public FfMpegOptions FfMpegOptions { get; set; } = new();
 
     // v2 : Added
-    [Required]
+    [JsonRequired]
     public HandBrakeOptions HandBrakeOptions { get; set; } = new();
 
 #pragma warning disable CS0612 // Type or member is obsolete

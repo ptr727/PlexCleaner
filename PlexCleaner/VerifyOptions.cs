@@ -1,5 +1,5 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner;
@@ -9,38 +9,32 @@ public record VerifyOptions1
 {
     protected const int Version = 1;
 
-
-    [Required]
+    [JsonRequired]
     public bool AutoRepair { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool DeleteInvalidFiles { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool RegisterInvalidFiles { get; set; }
 
     // v2 : Removed
     [Obsolete]
-    [Range(0, int.MaxValue)]
     public int MinimumDuration { internal get; set; }
 
     // v2 : Removed
     [Obsolete]
-    [Range(0, int.MaxValue)]
     public int VerifyDuration { internal get; set; }
 
     // v2 : Removed
     [Obsolete]
-    [Range(0, int.MaxValue)]
     public int IdetDuration { internal get; set; }
 
-    [Required]
-    [Range(0, int.MaxValue)]
+    [JsonRequired]
     public int MaximumBitrate { get; set; }
 
     // v2 : Removed
     [Obsolete]
-    [Range(0, int.MaxValue)]
     public int MinimumFileAge { internal get; set; }
 } 
 

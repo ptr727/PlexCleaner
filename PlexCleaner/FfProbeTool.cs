@@ -5,8 +5,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using InsaneGenius.Utilities;
-using Newtonsoft.Json;
 using PlexCleaner.FfMpegToolJsonSchema;
 using Serilog;
 
@@ -71,11 +71,7 @@ public class FfProbeTool : FfMpegTool
         // Read JSON from stream
         memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
-        using StreamReader streamReader = new(decompressStream);
-        using JsonTextReader jsonReader = new(streamReader);
-
-        JsonSerializer serializer = new();
-        var packetInfo = serializer.Deserialize<PacketInfo>(jsonReader);
+        var packetInfo = JsonSerializer.Deserialize<PacketInfo>(decompressStream);
         if (packetInfo == null)
         {
             return false;

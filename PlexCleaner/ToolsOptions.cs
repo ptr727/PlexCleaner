@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -9,16 +9,16 @@ public record ToolsOptions1
 {
     protected const int Version = 1;
 
-    [Required]
+    [JsonRequired]
     public bool UseSystem { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string RootPath { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public bool RootRelative { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool AutoUpdate { get; set; }
 
     protected void Upgrade(int version)
