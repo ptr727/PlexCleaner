@@ -29,6 +29,11 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.6:
+  - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
+    - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
+    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases.
+    - Alpine Edge builds will be tagged as `alpine-edge`.
 - Version 3.5:
   - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.
