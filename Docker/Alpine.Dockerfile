@@ -1,26 +1,26 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
+# This is Alpine Edge and there is no MCR with .NET preinstalled
+
 # There is no HandBrake package for arm/v7
 # https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 /bin/sh
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-alpine3.19 /bin/sh
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/sh
+# docker run -it --rm --pull always --name Testing alpine:edge /bin/sh
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine /bin/sh
 
 # Build Dockerfile
-# docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
+# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
 
 
 
 # Builder layer
-# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/alpine3.19/amd64/Dockerfile
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 AS builder
-# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/nightly/sdk:8.0-alpine3.19 AS builder
+# No MCR image for Edge
+FROM --platform=$BUILDPLATFORM alpine:edge AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -39,6 +39,10 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Install .NET SDK
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-sdk
+RUN apk --upgrade --no-cache add dotnet8-sdk
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
@@ -56,10 +60,7 @@ RUN ./Build.sh
 
 
 # Final layer
-# Update package versions when base image is updated
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime/8.0/alpine3.19/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine3.19 as final
-# FROM mcr.microsoft.com/dotnet/nightly/runtime:8.0-alpine3.19 as final
+FROM alpine:edge as final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -76,6 +77,10 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     TZ=Etc/UTC
 
+# Install .NET Runtime
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
+RUN apk --upgrade --no-cache add dotnet8-runtime
+
 # Install prerequisites
 RUN apk --upgrade --no-cache add \
         icu-data-full \
@@ -90,21 +95,16 @@ RUN wget https://aka.ms/getvsdbgsh \
     && sh getvsdbgsh -v latest -l /vsdbg \
     && rm getvsdbgsh
 
-# MediaInfo must be installed from the correct versioned repo else segfaults are encountered
-# https://github.com/ptr727/PlexCleaner/issues/153
-# https://github.com/MediaArea/MediaInfo/issues/707
-
-# Install media tools from version matching current base image version (v3.19)
-# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/ffmpeg
-# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/mediainfo
-# https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/mkvtoolnix
-# Handbrake is only on Edge
+# Install media tools
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
 RUN apk --upgrade --no-cache add \
-        ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
-        mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
-        mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
-        handbrake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/
+        ffmpeg\
+        mediainfo \
+        mkvtoolnix \
+        handbrake
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
