@@ -150,7 +150,7 @@ public partial class HandBrakeTool : MediaTool
         }
     }
 
-    const string VersionPattern = @"HandBrake\ (?<version>.*)";
+    private const string VersionPattern = @"HandBrake\ (?<version>.*)";
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 }

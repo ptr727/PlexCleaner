@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
-  "SchemaVersion": 3,
+  "SchemaVersion": 4,
   "ToolsOptions": {
     // Use system installed tools or tools directory
     "UseSystem": false,
@@ -12,6 +12,20 @@
     "AutoUpdate": true
   },
   "ProcessOptions": {
+    // Files to skip, use * and ? wildcards, non-ascii characters must be JSON escaped
+    "FileIgnoreMasks": [
+      "*.ass",
+      "*.fuse_hidden*",
+      "*.jpg",
+      "*.nfo",
+      "*.partial~",
+      "*.sample.*",
+      "*.sample",
+      "*.smi",
+      "*.srt",
+      "*.ssa",
+      "*.vtt"
+    ],
     // Keep all tracks flagged as original language
     "KeepOriginalLanguage": true,
     // Remove EIA-608 Closed Captions embedded in video streams
@@ -20,26 +34,15 @@
     "SetIetfLanguageTags": true,
     // Set track flags based on track title keywords
     "SetTrackFlags": true,
-    // Files to keep but not process
-    "KeepExtensions": [
-      ".partial~",
-      ".nfo",
-      ".jpg",
-      ".srt",
-      ".smi",
-      ".ssa",
-      ".ass",
-      ".vtt"
-    ],
-    // Files to remux to MKV
     "ReMuxExtensions": [
+      ".asf",
       ".avi",
+      ".dv",
       ".m2ts",
+      ".m4v",
+      ".mp4",
       ".ts",
       ".vob",
-      ".mp4",
-      ".m4v",
-      ".asf",
       ".wmv"
     ],
     // Re-encode video if the Format, Codec, and Profile values match
@@ -47,26 +50,14 @@
     // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeVideo": [
       {
-        "Format": "mpeg2video"
-      },
-      {
-        "Format": "vc1"
-      },
-      {
-        "Format": "wmv3"
-      },
-      {
-        "Format": "msrle"
-      },
-      {
-        "Format": "rawvideo"
+        "Format": "h264",
+        "Profile": "Constrained Baseline@30"
       },
       {
         "Format": "indeo5"
       },
       {
-        "Format": "h264",
-        "Profile": "Constrained Baseline@30"
+        "Format": "mpeg2video"
       },
       {
         "Format": "mpeg4",
@@ -79,40 +70,52 @@
       {
         "Format": "msmpeg4v3",
         "Codec": "div3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "vc1"
+      },
+      {
+        "Format": "wmv3"
       }
     ],
     // Re-encode audio if the Format matches
     // Use FfProbe attribute naming, and the `printmediainfo` command to get media info
     "ReEncodeAudioFormats": [
+      "adpcm_ms",
       "flac",
       "mp2",
+      "opus",
+      "pcm_s16le",
+      "pcm_u8",
       "vorbis",
       "wmapro",
-      "opus",
-      "wmav2",
-      "adpcm_ms",
-      "pcm_u8",
-      "pcm_s16le"
+      "wmav2"
     ],
     // Keep tracks if the language tags match, use RFC-5646 format
     "KeepLanguages": [
-      "en",
       "af",
-      "zh",
+      "en",
       "in",
       "ja",
-      "ko"
+      "ko",
+      "zh"
     ],
     // Preferred audio tracks in order and by Format
     // Use MkvMerge attribute naming, and the `printmediainfo` command to get media info
     "PreferredAudioFormats": [
-      "truehd atmos",
-      "truehd",
-      "dts-hd master audio",
+      "ac-3",
       "dts-hd high resolution audio",
+      "dts-hd master audio",
       "dts",
       "e-ac-3",
-      "ac-3"
+      "truehd atmos",
+      "truehd"
     ],
     // Delete empty folders
     "DeleteEmptyFolders": true,
@@ -143,7 +146,7 @@
     "Verify": true,
     // Restore media file modified timestamp to original pre-processed value
     "RestoreFileTimestamp": false,
-    // List of files to skip, non-ascii characters must be JSON escaped
+    // List of files to skip, exact match, non-ascii characters must be JSON escaped
     "FileIgnoreList": []
   },
   "ConvertOptions": {

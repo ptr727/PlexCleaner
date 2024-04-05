@@ -1,51 +1,97 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
 
-// v1, v2
-[Obsolete]
-public record ConvertOptions1
+// v2 : Added
+public record HandBrakeOptions
 {
-    [Obsolete]
-    internal bool EnableH265Encoder { get; set; }
-    [Obsolete]
-    internal int VideoEncodeQuality { get; set; }
-    [Obsolete]
-    internal string AudioEncodeCodec { get; set; } = "";
+    // Do not include --encoder
+    [JsonRequired]
+    public string Video { get; set; } = "";
+
+    // Do not include --aencoder
+    [JsonRequired]
+    public string Audio { get; set; } = "";
 }
 
-// v3
-#pragma warning disable CS0612 // Type or member is obsolete
-public record ConvertOptions : ConvertOptions1
-#pragma warning restore CS0612 // Type or member is obsolete
+// v2 : Added
+public record FfMpegOptions
 {
-    public ConvertOptions() { }
+    // Do not include -c:v
+    [JsonRequired]
+    public string Video { get; set; } = "";
 
+    // Do not include -c:a 
+    [JsonRequired]
+    public string Audio { get; set; } = "";
+
+    [JsonRequired]
+    public string Global { get; set; } = "";
+
+    [JsonRequired]
+    public string Output { get; set; } = "";
+}
+
+// v1
+public record ConvertOptions1
+{
+    protected const int Version = 1;
+
+    // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete]
-    public ConvertOptions(ConvertOptions1 convertOptions1) : base(convertOptions1)
-    {
-        // Upgrade
-        Upgrade(convertOptions1);
+    [Json.Schema.Generation.JsonExclude]
+    public bool EnableH265Encoder { get; set; }
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public int VideoEncodeQuality { get; set; }
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public string AudioEncodeCodec { get; set; } = "";
+}
+
+// v2
+public record ConvertOptions2 : ConvertOptions1
+{
+    protected new const int Version = 2;
+
+    public ConvertOptions2() { }
+    public ConvertOptions2(ConvertOptions1 convertOptions1) : base(convertOptions1)
+    { 
+        Upgrade(ConvertOptions1.Version);
     }
 
-    [Obsolete]
-    protected void Upgrade(ConvertOptions1 convertOptions1)
+    // v2 : Added
+    [JsonRequired]
+    public FfMpegOptions FfMpegOptions { get; set; } = new();
+
+    // v2 : Added
+    [JsonRequired]
+    public HandBrakeOptions HandBrakeOptions { get; set; } = new();
+
+#pragma warning disable CS0612 // Type or member is obsolete
+    private void Upgrade(int version)
     {
-        // Convert discrete options to encode string options
-        FfMpegOptions.Audio = convertOptions1.AudioEncodeCodec;
-        FfMpegOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "libx265" : "libx264")} -crf {convertOptions1.VideoEncodeQuality} -preset medium";
+        // v1
+        if (version == ConvertOptions1.Version)
+        {
+            // Get v1 schema
+            ConvertOptions1 convertOptions1 = this;
 
-        HandBrakeOptions.Audio = $"copy --audio-fallback {convertOptions1.AudioEncodeCodec}";
-        HandBrakeOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "x265" : "x264")} --quality {convertOptions1.VideoEncodeQuality} --encoder-preset medium";
+            // v1 -> v2 : Replaced with FfMpegOptions and HandBrakeOptions
+
+            // Convert discrete options to encode string options
+            FfMpegOptions.Audio = convertOptions1.AudioEncodeCodec;
+            FfMpegOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "libx265" : "libx264")} -crf {convertOptions1.VideoEncodeQuality} -preset medium";
+
+            HandBrakeOptions.Audio = $"copy --audio-fallback {convertOptions1.AudioEncodeCodec}";
+            HandBrakeOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "x265" : "x264")} --quality {convertOptions1.VideoEncodeQuality} --encoder-preset medium";
+        }
+
+        // v2
     }
-
-    [Required]
-    public FfMpegOptions FfMpegOptions { get; protected set; } = new();
-
-    [Required]
-    public HandBrakeOptions HandBrakeOptions { get; protected set; } = new();
+#pragma warning restore CS0612 // Type or member is obsolete
 
     public void SetDefaults()
     {
@@ -85,32 +131,4 @@ public record ConvertOptions : ConvertOptions1
 
         return true;
     }
-}
-
-public class HandBrakeOptions
-{
-    [Required]
-    // Do not include --encoder
-    public string Video { get; set; } = "";
-
-    [Required]
-    // Do not include --aencoder
-    public string Audio { get; set; } = "";
-}
-
-public class FfMpegOptions
-{
-    [Required]
-    // Do not include -c:v
-    public string Video { get; set; } = "";
-
-    [Required]
-    // Do not include -c:a 
-    public string Audio { get; set; } = "";
-
-    [Required]
-    public string Global { get; set; } = "";
-
-    [Required]
-    public string Output { get; set; } = "";
 }

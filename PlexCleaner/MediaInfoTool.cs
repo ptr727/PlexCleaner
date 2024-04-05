@@ -193,5 +193,5 @@ public partial class MediaInfoTool : MediaTool
 
     private const string InstalledVersionPattern = @"MediaInfoLib\ -\ v(?<version>.*)";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 }

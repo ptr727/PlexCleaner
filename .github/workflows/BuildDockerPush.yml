@@ -237,6 +237,10 @@ jobs:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
+  # TODO: Calculate image sizes at publish time
+  # https://stackoverflow.com/questions/33352901/get-the-size-of-a-docker-image-before-a-pull
+  # docker manifest inspect -v alpine:latest | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | .SchemaV2Manifest.layers[].size'
+
   # Update Docker README.md
   updatereadme:
     name: Create Docker README.md

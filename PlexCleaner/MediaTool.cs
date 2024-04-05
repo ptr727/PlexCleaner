@@ -135,7 +135,7 @@ public abstract class MediaTool
         return exitCode;
     }
 
-    public string GetLatestGitHubRelease(string repo)
+    protected string GetLatestGitHubRelease(string repo)
     {
         // Get the latest release version number from github releases
         Log.Logger.Information("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);

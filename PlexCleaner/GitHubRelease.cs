@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
+using System.Text.Json.Nodes;
 using InsaneGenius.Utilities;
-using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace PlexCleaner;
 
-internal class GitHubRelease
+public class GitHubRelease
 {
     public static string GetLatestRelease(string repo)
     {
@@ -17,7 +17,7 @@ internal class GitHubRelease
         Debug.Assert(json != null);
 
         // Parse latest version from "tag_name"
-        var releases = JObject.Parse(json);
+        var releases = JsonNode.Parse(json);
         Debug.Assert(releases != null);
         var versionTag = releases["tag_name"];
         Debug.Assert(versionTag != null);

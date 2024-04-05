@@ -1,22 +1,64 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Text.Json.Serialization;
 using InsaneGenius.Utilities;
 
 namespace PlexCleaner;
 
-public class VerifyOptions
+// v1
+public record VerifyOptions1
 {
-    [Required]
+    protected const int Version = 1;
+
+    [JsonRequired]
     public bool AutoRepair { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool DeleteInvalidFiles { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool RegisterInvalidFiles { get; set; }
 
-    [Required]
-    [Range(0, int.MaxValue)]
+    // v2 : Removed
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public int MinimumDuration { get; set; }
+
+    // v2 : Removed
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public int VerifyDuration { get; set; }
+
+    // v2 : Removed
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public int IdetDuration { get; set; }
+
+    [JsonRequired]
     public int MaximumBitrate { get; set; }
+
+    // v2 : Removed
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
+    public int MinimumFileAge { get; set; }
+} 
+
+// v2
+public record VerifyOptions2 : VerifyOptions1
+{
+    protected new const int Version = 2;
+
+    public VerifyOptions2() { }
+    public VerifyOptions2(VerifyOptions1 verifyOptions1) : base(verifyOptions1) 
+    { 
+        Upgrade(VerifyOptions1.Version);
+    }
+
+    // Removed properties only
+
+    private void Upgrade(int version) 
+    { 
+        // Nothing to do
+    }
 
     public void SetDefaults()
     {

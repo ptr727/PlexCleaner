@@ -36,9 +36,9 @@ public partial class TrackInfo
         Commentary = 1 << 6
     }
 
-    protected TrackInfo() { }
+    public TrackInfo() { }
 
-    internal TrackInfo(MkvToolJsonSchema.Track trackJson)
+    public TrackInfo(MkvToolJsonSchema.Track trackJson)
     {
         const string parser = "MkvToolJsonSchema";
 
@@ -206,7 +206,7 @@ public partial class TrackInfo
         SetFlagsFromTitle(parser);
     }
 
-    internal TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
+    public TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
     {
         const string parser = "FfMpegToolJsonSchema";
 
@@ -222,31 +222,31 @@ public partial class TrackInfo
         }
 
         // Flags
-        if (trackJson.Disposition.Default)
+        if (trackJson.Disposition.Default != 0)
         {
             Flags |= FlagsType.Default;
         }
-        if (trackJson.Disposition.Forced)
+        if (trackJson.Disposition.Forced != 0)
         {
             Flags |= FlagsType.Forced;
         }
-        if (trackJson.Disposition.Original)
+        if (trackJson.Disposition.Original != 0)
         {
             Flags |= FlagsType.Original;
         }
-        if (trackJson.Disposition.Comment)
+        if (trackJson.Disposition.Comment != 0)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (trackJson.Disposition.HearingImpaired)
+        if (trackJson.Disposition.HearingImpaired != 0)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (trackJson.Disposition.VisualImpaired)
+        if (trackJson.Disposition.VisualImpaired != 0)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (trackJson.Disposition.Descriptions)
+        if (trackJson.Disposition.Descriptions != 0)
         {
             Flags |= FlagsType.Descriptions;
         }
@@ -286,7 +286,7 @@ public partial class TrackInfo
         // SetFlagsFromTitle("FfMpegToolJsonSchema");
     }
 
-    internal TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
+    public TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
     {
         const string parser = "MediaInfoToolXmlSchema";
 
@@ -428,7 +428,7 @@ public partial class TrackInfo
     }
 
     [GeneratedRegex(@"(?<id>\d)")]
-    private static partial Regex TrackRegex();
+    public static partial Regex TrackRegex();
 
     // Track title to flag mapping
     private static readonly ValueTuple<string, FlagsType>[] TitleFlags =
