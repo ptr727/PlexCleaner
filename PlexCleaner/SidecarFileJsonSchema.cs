@@ -22,15 +22,18 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete]
-    public string FfMpegToolVersion { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
     [Obsolete]
-    public string MkvToolVersion { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string MkvToolVersion { get; set; }
     
     // v2 : Removed
     [Obsolete]
-    public string FfIdetInfoData { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string FfIdetInfoData { get; set; }
 
     [JsonRequired]
     public DateTime MediaLastWriteTimeUtc { get; set; }
@@ -62,7 +65,8 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete]
-    public bool Verified { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public bool Verified { get; set; }
 }
 
 // v3
@@ -172,7 +176,7 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
-            Log.Logger.Warning("Upgrading SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
+            Log.Logger.Warning("Converting SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
         }
 
         // Deserialize the correct version

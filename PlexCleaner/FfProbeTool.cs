@@ -71,7 +71,7 @@ public class FfProbeTool : FfMpegTool
         // Read JSON from stream
         memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
-        var packetInfo = JsonSerializer.Deserialize<PacketInfo>(decompressStream);
+        var packetInfo = JsonSerializer.Deserialize<PacketInfo>(decompressStream, ConfigFileJsonSchema.JsonReadOptions);
         if (packetInfo == null)
         {
             return false;

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -22,7 +21,7 @@ var parent1 = new Parent1()
     }
 };
 */
-var parent1Json = "{\r\n  \"Child\": {\r\n    \"List\": [\r\n      {\r\n        \"Foo\": \"foo1\",\r\n        \"Bar\": \"bar1\"\r\n      },\r\n      {\r\n        \"Foo\": \"foo2\",\r\n        \"Bar\": \"bar2\"\r\n      }\r\n    ]\r\n  }\r\n}";
+const string parent1Json = "{\r\n  \"Child\": {\r\n    \"List\": [\r\n      {\r\n        \"Foo\": \"foo1\",\r\n        \"Bar\": \"bar1\"\r\n      },\r\n      {\r\n        \"Foo\": \"foo2\",\r\n        \"Bar\": \"bar2\"\r\n      }\r\n    ]\r\n  }\r\n}";
 
 // Convert to and from JSON using Newtonsoft
 var parentN1 = Newtonsoft.Json.JsonConvert.DeserializeObject<Parent1>(parent1Json, JsonHelper.JsonSerializerSettingsRead);
@@ -32,12 +31,21 @@ var jsonN = Newtonsoft.Json.JsonConvert.SerializeObject(parentN2, JsonHelper.Jso
 Console.WriteLine(jsonN);
 
 // Convert to and from JSON using Text.Json
-// TODO: Parent1.Child.List is not deserialized
 var parentT1 = JsonSerializer.Deserialize<Parent1>(parent1Json, JsonHelper.JsonSerializerOptionsRead);
 ArgumentNullException.ThrowIfNull(parentT1);
 var parentT2 = new Parent2(parentT1);
 var jsonT = JsonSerializer.Serialize(parentT2, JsonHelper.JsonSerializerOptionsWrite);
 Console.WriteLine(jsonT);
+
+// Create JSON schema
+const string schemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
+var builder = new Json.Schema.JsonSchemaBuilder();
+Json.Schema.JsonSchemaBuilderExtensions.Title(builder, "PlexCleaner Configuration Schema");
+Json.Schema.JsonSchemaBuilderExtensions.Id(builder, new Uri(schemaUri));
+var schema = Json.Schema.Generation.JsonSchemaBuilderExtensions.FromType<Parent2>(builder).Build();
+var jsonSchema = JsonSerializer.Serialize(schema);
+Console.WriteLine(jsonSchema);
+
 
 public static class JsonHelper
 {
@@ -86,7 +94,8 @@ public static class JsonHelper
 public record Parent1
 {
     [Obsolete]
-    public Child1 Child { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public Child1 Child { get; set; } = new();
 }
 
 public record Parent2 : Parent1
@@ -120,7 +129,8 @@ public record Child1
     public Child1() { }
 
     [Obsolete]
-    public List<Sub> List { internal get; set; } = [];
+    [Json.Schema.Generation.JsonExclude]
+    public List<Sub> List { get; set; } = [];
 }
 
 public record Child2 : Child1

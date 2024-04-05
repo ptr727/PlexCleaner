@@ -41,11 +41,14 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete]
-    public bool EnableH265Encoder { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public bool EnableH265Encoder { get; set; }
     [Obsolete]
-    public int VideoEncodeQuality { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int VideoEncodeQuality { get; set; }
     [Obsolete]
-    public string AudioEncodeCodec { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string AudioEncodeCodec { get; set; } = "";
 }
 
 // v2

@@ -5,13 +5,12 @@ global using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 // Derive new class from previous version
 // Keep all utility functions e.g. Upgrade() in the latest version
 // Add copy constructors to the new class to handle upgrading from the previous version
-// Mark changed or removed attributes as [Obsolete] in old classes, set internal get
+// Mark changed or removed attributes as [Obsolete] and [Json.Schema.Generation.JsonExclude] and remove [JsonRequired]
 // Add new attributes to the new class and mark as [JsonRequired]
 // Update the Upgrade() method to handle upgrading from the previous version
 // Update global using statements to the latest version
 
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,7 +32,7 @@ public record ConfigFileJsonSchemaBase
     [JsonPropertyOrder(-2)]
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
 
-    // Schema
+    // Schema Id
     protected const string SchemaUri = "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
 }
 
@@ -48,15 +47,18 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 
     // v2 : Replaced with ProcessOptions2
     [Obsolete]
-    public ProcessOptions1 ProcessOptions { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public ProcessOptions1 ProcessOptions { get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
     [Obsolete]
-    public ConvertOptions1 ConvertOptions { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public ConvertOptions1 ConvertOptions { get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
     [Obsolete]
-    public VerifyOptions1 VerifyOptions { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public VerifyOptions1 VerifyOptions { get; set; } = new();
 
     [JsonRequired]
     [JsonPropertyOrder(5)]
@@ -74,7 +76,8 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
     [Obsolete]
-    public new ProcessOptions2 ProcessOptions { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
 // v3
@@ -89,7 +92,8 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
     [Obsolete]
-    public new ProcessOptions3 ProcessOptions { internal get; set; } = new();
+    [Json.Schema.Generation.JsonExclude]
+    public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
     [JsonRequired]
@@ -108,7 +112,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     public new const int Version = 4;
 
     public ConfigFileJsonSchema4() { }
-    public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1) 
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
     {
         Upgrade(ConfigFileJsonSchema1.Version);
     }
@@ -249,7 +253,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
         if (configFileJsonSchemaBase.SchemaVersion != Version)
         {
-            Log.Logger.Warning("Upgrading ConfigFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", configFileJsonSchemaBase.SchemaVersion, Version);
+            Log.Logger.Warning("Converting ConfigFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", configFileJsonSchemaBase.SchemaVersion, Version);
         }
 
         // Deserialize the correct version
@@ -265,49 +269,43 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     public static void WriteSchemaToFile(string path)
     {
+        // TODO: Use refiners to filter out [Obsolete] attributes
+        // Use [Obsolete] and [Json.Schema.Generation.JsonExclude] on all obsolete attributes
+        // https://github.com/gregsdennis/json-everything/issues/703
+        // https://docs.json-everything.net/schema/schemagen/schema-generation/#schema-schemagen-refiners
+
+        // TODO: Avoid using [Required] as it is defined in System.ComponentModel.DataAnnotations and in Json.Schema.Generation, avoid "using Json.Schema.Generation"
+        // Use [JsonRequired] on all must be serialized attributes.
+        // https://github.com/gregsdennis/json-everything/issues/702
+
         // Create JSON schema
-        var schemaBuilder = new JsonSchemaBuilder();
-        var schema = schemaBuilder.FromType<ConfigFileJsonSchema>()
+        // TODO: Schema version should really be set based on generator internals
+        const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
+        var schemaBuilder = new JsonSchemaBuilder().FromType<ConfigFileJsonSchema>(new SchemaGeneratorConfiguration { PropertyOrder = PropertyOrder.ByName })
             .Title("PlexCleaner Configuration Schema")
-            // TODO: .Version(new Uri("http://json-schema.org/draft-06/schema"))
             .Id(new Uri(SchemaUri))
+            .Schema(new Uri(schemaVersion))
             .Build();
+        var jsonSchema = JsonSerializer.Serialize(schemaBuilder, JsonWriteOptions);
 
         // Write to file
-        File.WriteAllText(path, schema.ToString());
+        File.WriteAllText(path, jsonSchema);
     }
-
-/*
-    public static void WriteSchemaToFile(string path)
-    {
-        // Create JSON schema
-        var generator = new Newtonsoft.Json.Schema.Generation.JSchemaGenerator
-        {
-            // TODO: How to exclude Obsolete marked items?
-            DefaultRequired = Newtonsoft.Json.Required.Default
-        };
-        var schema = generator.Generate(typeof(ConfigFileJsonSchema));
-        schema.Title = "PlexCleaner Configuration Schema";
-        schema.SchemaVersion = new Uri("http://json-schema.org/draft-06/schema");
-        schema.Id = new Uri(SchemaUri);
-
-        // Write to file
-        File.WriteAllText(path, schema.ToString());
-    }
-*/
 
     public static readonly JsonSerializerOptions JsonReadOptions = new() {
+        AllowTrailingCommas = true,
         IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
         PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        ReadCommentHandling = JsonCommentHandling.Skip
     };
 
     public static readonly JsonSerializerOptions JsonWriteOptions = new() {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         IncludeFields = true,
-        WriteIndented = true,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-            .WithAddedModifier(ExcludeObsoletePropertiesModifier)
+            .WithAddedModifier(ExcludeObsoletePropertiesModifier),
+        WriteIndented = true
     };
 
     private static void ExcludeObsoletePropertiesModifier(JsonTypeInfo typeInfo)

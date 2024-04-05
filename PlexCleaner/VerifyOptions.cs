@@ -20,22 +20,26 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete]
-    public int MinimumDuration { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int MinimumDuration { get; set; }
 
     // v2 : Removed
     [Obsolete]
-    public int VerifyDuration { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int VerifyDuration { get; set; }
 
     // v2 : Removed
     [Obsolete]
-    public int IdetDuration { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int IdetDuration { get; set; }
 
     [JsonRequired]
     public int MaximumBitrate { get; set; }
 
     // v2 : Removed
     [Obsolete]
-    public int MinimumFileAge { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int MinimumFileAge { get; set; }
 } 
 
 // v2

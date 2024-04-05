@@ -17,7 +17,7 @@ public class GitHubRelease
         Debug.Assert(json != null);
 
         // Parse latest version from "tag_name"
-        var releases = JsonObject.Parse(json);
+        var releases = JsonNode.Parse(json);
         Debug.Assert(releases != null);
         var versionTag = releases["tag_name"];
         Debug.Assert(versionTag != null);
