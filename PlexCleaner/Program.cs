@@ -495,7 +495,7 @@ public class Program
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Settings JSON schema version mismatch : {SchemaVersion} != {Version}, {FileName}",
+            Log.Logger.Warning("Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
                 options.SettingsFile);

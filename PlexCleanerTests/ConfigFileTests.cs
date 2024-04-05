@@ -17,6 +17,7 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
 
         // Test for expected config values
         Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
+        Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
         Assert.Equal("ac3", configFileJsonSchema.ConvertOptions.FfMpegOptions.Audio);
         Assert.Equal("copy --audio-fallback ac3", configFileJsonSchema.ConvertOptions.HandBrakeOptions.Audio);
         Assert.Contains("*.nfo", configFileJsonSchema.ProcessOptions.FileIgnoreMasks);

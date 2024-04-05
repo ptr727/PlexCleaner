@@ -1,5 +1,5 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -7,30 +7,30 @@ namespace PlexCleaner;
 // v2 : Added
 public record HandBrakeOptions
 {
-    [Required]
     // Do not include --encoder
+    [JsonRequired]
     public string Video { get; set; } = "";
 
-    [Required]
     // Do not include --aencoder
+    [JsonRequired]
     public string Audio { get; set; } = "";
 }
 
 // v2 : Added
 public record FfMpegOptions
 {
-    [Required]
     // Do not include -c:v
+    [JsonRequired]
     public string Video { get; set; } = "";
 
-    [Required]
     // Do not include -c:a 
+    [JsonRequired]
     public string Audio { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public string Global { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public string Output { get; set; } = "";
 }
 
@@ -41,11 +41,14 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete]
-    public bool EnableH265Encoder { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public bool EnableH265Encoder { get; set; }
     [Obsolete]
-    public int VideoEncodeQuality { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public int VideoEncodeQuality { get; set; }
     [Obsolete]
-    public string AudioEncodeCodec { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string AudioEncodeCodec { get; set; } = "";
 }
 
 // v2
@@ -60,11 +63,11 @@ public record ConvertOptions2 : ConvertOptions1
     }
 
     // v2 : Added
-    [Required]
+    [JsonRequired]
     public FfMpegOptions FfMpegOptions { get; set; } = new();
 
     // v2 : Added
-    [Required]
+    [JsonRequired]
     public HandBrakeOptions HandBrakeOptions { get; set; } = new();
 
 #pragma warning disable CS0612 // Type or member is obsolete

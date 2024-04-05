@@ -1,18 +1,17 @@
-﻿// Current schema version
+﻿// Current schema version is v4
 global using SidecarFileJsonSchema = PlexCleaner.SidecarFileJsonSchema4;
 
 using System;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
 
 public record SidecarFileJsonSchemaBase
 {
-    [DefaultValue(0)]
-    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate, Order = -2)]
+    [JsonRequired]
+    [JsonPropertyOrder(-2)]
     public int SchemaVersion { get; set; } = SidecarFileJsonSchema.Version;
 }
 
@@ -23,32 +22,35 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete]
-    public string FfMpegToolVersion { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
     [Obsolete]
-    public string MkvToolVersion { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string MkvToolVersion { get; set; }
     
     // v2 : Removed
     [Obsolete]
-    public string FfIdetInfoData { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public string FfIdetInfoData { get; set; }
 
-    [Required]
+    [JsonRequired]
     public DateTime MediaLastWriteTimeUtc { get; set; }
 
-    [Required]
+    [JsonRequired]
     public long MediaLength { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string FfProbeInfoData { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MkvMergeInfoData { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MediaInfoToolVersion { get; set; }
 
-    [Required]
+    [JsonRequired]
     public string MediaInfoData { get; set; }
 }
 
@@ -63,7 +65,8 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete]
-    public bool Verified { internal get; set; }
+    [Json.Schema.Generation.JsonExclude]
+    public bool Verified { get; set; }
 }
 
 // v3
@@ -76,11 +79,11 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
     public SidecarFileJsonSchema3(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2) { }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public string FfProbeToolVersion { get; set; }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public string MkvMergeToolVersion { get; set; }
 }
 
@@ -104,11 +107,11 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     }
 
     // v4 : Added
-    [Required]
+    [JsonRequired]
     public SidecarFile.StatesType State { get; set; }
 
     // v4 : Added
-    [Required]
+    [JsonRequired]
     public string MediaHash { get; set; }
 
 #pragma warning disable CS0612 // Type or member is obsolete
@@ -159,13 +162,13 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
     public static string ToJson(SidecarFileJsonSchema json)
     {
-        return JsonConvert.SerializeObject(json, ConfigFileJsonSchema.JsonWriteSettings);
+        return JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
     }
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var sidecarFileJsonSchemaBase = JsonConvert.DeserializeObject<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadSettings);
+        var sidecarFileJsonSchemaBase = JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadOptions);
         if (sidecarFileJsonSchemaBase == null)
         {
             return null;
@@ -173,16 +176,16 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
-            Log.Logger.Warning("Upgrading SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
+            Log.Logger.Warning("Converting SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
         }
 
         // Deserialize the correct version
         return sidecarFileJsonSchemaBase.SchemaVersion switch
         {
-            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema1>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema2>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(JsonConvert.DeserializeObject<SidecarFileJsonSchema3>(json, ConfigFileJsonSchema.JsonReadSettings)),
-            Version => JsonConvert.DeserializeObject<SidecarFileJsonSchema>(json, ConfigFileJsonSchema.JsonReadSettings),
+            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema1>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema2>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema3>(json, ConfigFileJsonSchema.JsonReadOptions)),
+            Version => JsonSerializer.Deserialize<SidecarFileJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions),
             _ => throw new NotImplementedException()
         };
     }

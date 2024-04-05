@@ -1,151 +1,61 @@
 {
-  "$schema": "http://json-schema.org/draft-06/schema#",
-  "$id": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
-  "title": "PlexCleaner Configuration Schema",
-  "definitions": {
-    "ConvertOptions2": {
+  "type": "object",
+  "properties": {
+    "ConvertOptions": {
       "type": "object",
       "properties": {
         "FfMpegOptions": {
-          "$ref": "#/definitions/FfMpegOptions"
+          "type": "object",
+          "properties": {
+            "Audio": {
+              "type": "string"
+            },
+            "Global": {
+              "type": "string"
+            },
+            "Output": {
+              "type": "string"
+            },
+            "Video": {
+              "type": "string"
+            }
+          }
         },
         "HandBrakeOptions": {
-          "$ref": "#/definitions/HandBrakeOptions"
+          "type": "object",
+          "properties": {
+            "Audio": {
+              "type": "string"
+            },
+            "Video": {
+              "type": "string"
+            }
+          }
         }
-      },
-      "required": [
-        "FfMpegOptions",
-        "HandBrakeOptions"
-      ]
+      }
     },
-    "FfMpegOptions": {
+    "MonitorOptions": {
       "type": "object",
       "properties": {
-        "Video": {
-          "type": "string"
-        },
-        "Audio": {
-          "type": "string"
-        },
-        "Global": {
-          "type": "string"
-        },
-        "Output": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "Video",
-        "Audio",
-        "Global",
-        "Output"
-      ]
-    },
-    "HandBrakeOptions": {
-      "type": "object",
-      "properties": {
-        "Video": {
-          "type": "string"
-        },
-        "Audio": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "Video",
-        "Audio"
-      ]
-    },
-    "MonitorOptions1": {
-      "type": "object",
-      "properties": {
-        "MonitorWaitTime": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
+        "FileRetryCount": {
+          "type": "integer"
         },
         "FileRetryWaitTime": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
+          "type": "integer"
         },
-        "FileRetryCount": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
+        "MonitorWaitTime": {
+          "type": "integer"
         }
-      },
-      "required": [
-        "MonitorWaitTime",
-        "FileRetryWaitTime",
-        "FileRetryCount"
-      ]
+      }
     },
-    "ProcessOptions4": {
+    "ProcessOptions": {
       "type": "object",
       "properties": {
-        "FileIgnoreMasks": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
+        "DefaultLanguage": {
+          "type": "string"
         },
-        "KeepOriginalLanguage": {
+        "DeInterlace": {
           "type": "boolean"
-        },
-        "RemoveClosedCaptions": {
-          "type": "boolean"
-        },
-        "SetIetfLanguageTags": {
-          "type": "boolean"
-        },
-        "SetTrackFlags": {
-          "type": "boolean"
-        },
-        "ReMuxExtensions": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "ReEncodeVideo": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/VideoFormat"
-          }
-        },
-        "ReEncodeAudioFormats": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "KeepLanguages": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "PreferredAudioFormats": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
         },
         "DeleteEmptyFolders": {
           "type": "boolean"
@@ -153,22 +63,45 @@
         "DeleteUnwantedExtensions": {
           "type": "boolean"
         },
-        "ReMux": {
+        "FileIgnoreList": {
+          "$ref": "#/$defs/hashSetOfString"
+        },
+        "FileIgnoreMasks": {
+          "$ref": "#/$defs/hashSetOfString"
+        },
+        "KeepLanguages": {
+          "$ref": "#/$defs/hashSetOfString"
+        },
+        "KeepOriginalLanguage": {
           "type": "boolean"
         },
-        "DeInterlace": {
-          "type": "boolean"
+        "PreferredAudioFormats": {
+          "$ref": "#/$defs/hashSetOfString"
         },
         "ReEncode": {
           "type": "boolean"
         },
-        "SetUnknownLanguage": {
-          "type": "boolean"
+        "ReEncodeAudioFormats": {
+          "$ref": "#/$defs/hashSetOfString"
         },
-        "DefaultLanguage": {
-          "type": "string"
+        "ReEncodeVideo": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Codec": {
+                "type": "string"
+              },
+              "Format": {
+                "type": "string"
+              },
+              "Profile": {
+                "type": "string"
+              }
+            }
+          }
         },
-        "RemoveUnwantedLanguageTracks": {
+        "RemoveClosedCaptions": {
           "type": "boolean"
         },
         "RemoveDuplicateTracks": {
@@ -177,60 +110,49 @@
         "RemoveTags": {
           "type": "boolean"
         },
-        "UseSidecarFiles": {
+        "RemoveUnwantedLanguageTracks": {
+          "type": "boolean"
+        },
+        "ReMux": {
+          "type": "boolean"
+        },
+        "ReMuxExtensions": {
+          "$ref": "#/$defs/hashSetOfString"
+        },
+        "RestoreFileTimestamp": {
+          "type": "boolean"
+        },
+        "SetIetfLanguageTags": {
+          "type": "boolean"
+        },
+        "SetTrackFlags": {
+          "type": "boolean"
+        },
+        "SetUnknownLanguage": {
           "type": "boolean"
         },
         "SidecarUpdateOnToolChange": {
           "type": "boolean"
         },
+        "UseSidecarFiles": {
+          "type": "boolean"
+        },
         "Verify": {
           "type": "boolean"
-        },
-        "RestoreFileTimestamp": {
-          "type": "boolean"
-        },
-        "FileIgnoreList": {
-          "type": "array",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
         }
-      },
-      "required": [
-        "FileIgnoreMasks",
-        "KeepOriginalLanguage",
-        "RemoveClosedCaptions",
-        "SetIetfLanguageTags",
-        "SetTrackFlags",
-        "ReMuxExtensions",
-        "ReEncodeVideo",
-        "ReEncodeAudioFormats",
-        "KeepLanguages",
-        "PreferredAudioFormats",
-        "DeleteEmptyFolders",
-        "DeleteUnwantedExtensions",
-        "ReMux",
-        "DeInterlace",
-        "ReEncode",
-        "SetUnknownLanguage",
-        "DefaultLanguage",
-        "RemoveUnwantedLanguageTracks",
-        "RemoveDuplicateTracks",
-        "RemoveTags",
-        "UseSidecarFiles",
-        "SidecarUpdateOnToolChange",
-        "Verify",
-        "RestoreFileTimestamp",
-        "FileIgnoreList"
-      ]
+      }
     },
-    "ToolsOptions1": {
+    "$schema": {
+      "type": "string",
+      "readOnly": true
+    },
+    "SchemaVersion": {
+      "type": "integer"
+    },
+    "ToolsOptions": {
       "type": "object",
       "properties": {
-        "UseSystem": {
+        "AutoUpdate": {
           "type": "boolean"
         },
         "RootPath": {
@@ -239,18 +161,12 @@
         "RootRelative": {
           "type": "boolean"
         },
-        "AutoUpdate": {
+        "UseSystem": {
           "type": "boolean"
         }
-      },
-      "required": [
-        "UseSystem",
-        "RootPath",
-        "RootRelative",
-        "AutoUpdate"
-      ]
+      }
     },
-    "VerifyOptions2": {
+    "VerifyOptions": {
       "type": "object",
       "properties": {
         "AutoRepair": {
@@ -259,82 +175,24 @@
         "DeleteInvalidFiles": {
           "type": "boolean"
         },
+        "MaximumBitrate": {
+          "type": "integer"
+        },
         "RegisterInvalidFiles": {
           "type": "boolean"
-        },
-        "MaximumBitrate": {
-          "type": "integer",
-          "minimum": 0.0,
-          "maximum": 2147483647.0
-        }
-      },
-      "required": [
-        "AutoRepair",
-        "DeleteInvalidFiles",
-        "RegisterInvalidFiles",
-        "MaximumBitrate"
-      ]
-    },
-    "VideoFormat": {
-      "type": [
-        "object",
-        "null"
-      ],
-      "properties": {
-        "Format": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "Codec": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "Profile": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       }
     }
   },
-  "type": "object",
-  "properties": {
-    "$schema": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "SchemaVersion": {
-      "type": "integer",
-      "default": 0
-    },
-    "ToolsOptions": {
-      "$ref": "#/definitions/ToolsOptions1"
-    },
-    "ProcessOptions": {
-      "$ref": "#/definitions/ProcessOptions4"
-    },
-    "ConvertOptions": {
-      "$ref": "#/definitions/ConvertOptions2"
-    },
-    "VerifyOptions": {
-      "$ref": "#/definitions/VerifyOptions2"
-    },
-    "MonitorOptions": {
-      "$ref": "#/definitions/MonitorOptions1"
+  "$defs": {
+    "hashSetOfString": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
-  "required": [
-    "ToolsOptions",
-    "ProcessOptions",
-    "ConvertOptions",
-    "VerifyOptions",
-    "MonitorOptions"
-  ]
+  "title": "PlexCleaner Configuration Schema",
+  "$id": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

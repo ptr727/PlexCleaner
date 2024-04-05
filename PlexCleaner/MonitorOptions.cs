@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Text.Json.Serialization;
 
 namespace PlexCleaner;
 
@@ -6,16 +6,13 @@ public record MonitorOptions1
 {
     protected const int Version = 1;
 
-    [Required]
-    [Range(0, int.MaxValue)]
+    [JsonRequired]
     public int MonitorWaitTime { get; set; }
 
-    [Required]
-    [Range(0, int.MaxValue)]
+    [JsonRequired]
     public int FileRetryWaitTime { get; set; }
 
-    [Required]
-    [Range(0, int.MaxValue)]
+    [JsonRequired]
     public int FileRetryCount { get; set; }
 
     private void Upgrade(int version)

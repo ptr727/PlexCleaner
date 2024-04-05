@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Serilog;
 
@@ -23,87 +23,95 @@ public record ProcessOptions1
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete]
-    public string ReEncodeVideoFormats { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string ReEncodeVideoFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete]
-    public string ReEncodeVideoCodecs { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string ReEncodeVideoCodecs { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete]
-    public string ReEncodeVideoProfiles { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string ReEncodeVideoProfiles { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string ReEncodeAudioFormats { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string ReEncodeAudioFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string ReMuxExtensions { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string ReMuxExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string KeepExtensions { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string KeepExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string KeepLanguages { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string KeepLanguages { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete]
-    public string PreferredAudioFormats { internal get; set; } = "";
+    [Json.Schema.Generation.JsonExclude]
+    public string PreferredAudioFormats { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public bool DeleteEmptyFolders { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool DeleteUnwantedExtensions { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool ReMux { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool DeInterlace { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool ReEncode { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool SetUnknownLanguage { get; set; }
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
-    [Required]
+    [JsonRequired]
     public string DefaultLanguage { get; set; } = "";
 
-    [Required]
+    [JsonRequired]
     public bool RemoveUnwantedLanguageTracks { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool RemoveDuplicateTracks { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool RemoveTags { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool UseSidecarFiles { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool SidecarUpdateOnToolChange { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool Verify { get; set; }
 
-    [Required]
+    [JsonRequired]
     public bool RestoreFileTimestamp { get; set; }
 
-    [Required]
+    [JsonRequired]
     public HashSet<string> FileIgnoreList { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
@@ -117,33 +125,35 @@ public record ProcessOptions2 : ProcessOptions1
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
+    // v3 -> v4 : Replaced by FileIgnoreMasks
     [Obsolete]
-    public new HashSet<string> KeepExtensions { internal get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    [Json.Schema.Generation.JsonExclude]
+    public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
-    [Required]
+    [JsonRequired]
     public new HashSet<string> ReMuxExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> List<VideoFormat>
-    [Required]
+    [JsonRequired]
     public List<VideoFormat> ReEncodeVideo { get; set; } = [];
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
-    [Required]
+    [JsonRequired]
     public new HashSet<string> ReEncodeAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
-    [Required]
+    [JsonRequired]
     public new HashSet<string> KeepLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
-    [Required]
+    [JsonRequired]
     public new HashSet<string> PreferredAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
@@ -157,19 +167,19 @@ public record ProcessOptions3 : ProcessOptions2
     public ProcessOptions3(ProcessOptions2 processOptions2) : base(processOptions2) { }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public bool KeepOriginalLanguage { get; set; }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public bool RemoveClosedCaptions { get; set; }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public bool SetIetfLanguageTags { get; set; }
 
     // v3 : Added
-    [Required]
+    [JsonRequired]
     public bool SetTrackFlags { get; set; }
 }
 
@@ -193,7 +203,7 @@ public record ProcessOptions4 : ProcessOptions3
     }
 
     // v4 : Added
-    [Required]
+    [JsonRequired]
     public HashSet<string> FileIgnoreMasks { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     private List<Regex> FileIgnoreRegExList = [];
