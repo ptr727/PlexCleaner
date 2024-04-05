@@ -320,7 +320,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             // Do not serialize [Obsolete] items
             if (property.AttributeProvider?.IsDefined(typeof(ObsoleteAttribute), true) == true)
                 property.ShouldSerialize = (_, _) => false;
-                property.ShouldSerialize = (_, _) => false;
         }
     }
 }

@@ -13,7 +13,6 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
     {
         // Deserialize
         var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
-        var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
 
         // Test for expected config values
