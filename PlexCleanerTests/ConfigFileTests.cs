@@ -13,9 +13,11 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
     {
         // Deserialize
         var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
+        var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
 
         // Test for expected config values
+        Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
         Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
         Assert.Equal("ac3", configFileJsonSchema.ConvertOptions.FfMpegOptions.Audio);
         Assert.Equal("copy --audio-fallback ac3", configFileJsonSchema.ConvertOptions.HandBrakeOptions.Audio);
@@ -26,7 +28,7 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
         Assert.Equal("en", configFileJsonSchema.ProcessOptions.DefaultLanguage);
         Assert.Contains("af", configFileJsonSchema.ProcessOptions.KeepLanguages);
         Assert.Contains("truehd", configFileJsonSchema.ProcessOptions.PreferredAudioFormats);
-        Assert.Contains(@"\\server\Share\Movies\Foo (2000)\Foo (2000).mkv", configFileJsonSchema.ProcessOptions.FileIgnoreList);
+        Assert.Contains(@"\\server\Share\Series\Fiancé\Season 1\Fiancé - S01E01 - Bar.mkv", configFileJsonSchema.ProcessOptions.FileIgnoreList);
         Assert.Equal(100000000, configFileJsonSchema.VerifyOptions.MaximumBitrate);
         Assert.Equal(60, configFileJsonSchema.MonitorOptions.MonitorWaitTime);
     }
