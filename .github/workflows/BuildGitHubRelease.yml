@@ -148,7 +148,7 @@ jobs:
     # Create GitHub release
     # https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         # Generate changelog from commit messages
         generate_release_notes: true

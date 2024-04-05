@@ -29,7 +29,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3.6:
+- Version 3.7:
   - Added `ProcessOptions:IgnoreFiles` to support skipping sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
   - Settings JSON schema updated from v3 to v4 to account for modified `ProcessOptions` settings.
@@ -38,6 +38,11 @@ Docker images are published on [Docker Hub][docker-link].
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
   - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
   - Fixed issue with old settings schemas not upgrading as expected, updated associated unit tests.
+- Version 3.6:
+  - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
+    - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
+    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases.
+    - Alpine Edge builds will be tagged as `alpine-edge`.
 - Version 3.5:
   - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.

@@ -88,13 +88,21 @@ jobs:
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
           # Alpine: linux/amd64,linux/arm64
-          - file: ./Docker/Alpine.dotNET.Dockerfile
+          # - file: ./Docker/Alpine.dotNET.Dockerfile
+          #   platforms: linux/amd64,linux/arm64
+          #   cache-scope: alpine
+          #   secrets: SAVOURY_PPA_AUTH
+          #   tags: |
+          #     docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+
+          # Alpine Edge: linux/amd64,linux/arm64
+          - file: ./Docker/Alpine.Dockerfile
             platforms: linux/amd64,linux/arm64
-            cache-scope: alpine
+            cache-scope: alpine-edge
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
+            
           # Ubuntu: linux/amd64
           - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
             platforms: linux/amd64
@@ -189,8 +197,10 @@ jobs:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             file: debian.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-            file: alpine.ver
+          # - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+          #   file: alpine.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
+            file: alpine-edge.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             file: savoury.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
@@ -241,7 +251,7 @@ jobs:
 
     steps:
 
-    # https://github.com/marketplace/actions/checkout      
+    # https://github.com/marketplace/actions/checkout
     - name: Checkout 
       uses: actions/checkout@v4
 
