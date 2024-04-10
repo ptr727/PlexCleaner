@@ -160,7 +160,7 @@ public partial class FfMpegTool : MediaTool
         return "bin";
     }
 
-    public bool VerifyMedia(string filename, out string error)
+    public bool VerifyMedia(string fileName, out string error)
     {
         // https://trac.ffmpeg.org/ticket/6375
         // Too many packets buffered for output stream 0:1
@@ -171,7 +171,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(filename, commandline);
+        CreateDefaultArgs(fileName, commandline);
 
         // Null muxer and exit immediately on error (-xerror)
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
@@ -349,12 +349,17 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0;
     }
 
-    public bool GetIdetInfo(string filename, out FfMpegIdetInfo idetInfo)
+    public bool GetIdetInfo(string fileName, out FfMpegIdetInfo idetInfo, out string error)
     {
         // Get idet output and parse
         idetInfo = null;
-        return GetIdetInfoText(filename, out var text) &&
-               GetIdetInfoFromText(text, out idetInfo);
+        error = null;
+        if (!GetIdetInfoText(fileName, out var text) || !GetIdetInfoFromText(text, out idetInfo))
+        {
+            error = text;
+            return false;
+        }
+        return true;
     }
 
     private bool GetIdetInfoText(string inputName, out string text)

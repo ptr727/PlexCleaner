@@ -108,17 +108,17 @@ public partial class MediaInfoTool : MediaTool
         return false;
     }
 
-    public bool GetMediaInfo(string filename, out MediaInfo mediaInfo)
+    public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(filename, out var xml) &&
+        return GetMediaInfoXml(fileName, out var xml) &&
                GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
-    public bool GetMediaInfoXml(string filename, out string xml)
+    public bool GetMediaInfoXml(string fileName, out string xml)
     {
         // Get media info as XML
-        var commandline = $"--Output=XML \"{filename}\"";
+        var commandline = $"--Output=XML \"{fileName}\"";
         var exitCode = Command(commandline, out xml);
 
         // TODO: No error is returned when the file does not exist

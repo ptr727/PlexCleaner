@@ -433,9 +433,9 @@ public partial class TrackInfo
     // Track title to flag mapping
     private static readonly ValueTuple<string, FlagsType>[] TitleFlags =
     [
-        new ("SDH", FlagsType.HearingImpaired),
-        new ("CC", FlagsType.HearingImpaired),
-        new ("Commentary", FlagsType.Commentary),
-        new ("Forced", FlagsType.Forced)
+        new ValueTuple<string, FlagsType>("SDH", FlagsType.HearingImpaired),
+        new ValueTuple<string, FlagsType>("CC", FlagsType.HearingImpaired),
+        new ValueTuple<string, FlagsType>("Commentary", FlagsType.Commentary),
+        new ValueTuple<string, FlagsType>("Forced", FlagsType.Forced)
     ];
 }

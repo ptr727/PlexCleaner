@@ -395,16 +395,16 @@ public record ProcessOptions4 : ProcessOptions3
         };
         ReEncodeVideo =
         [
-            new() { Format = "h264", Profile = "Constrained Baseline@30" },
-            new() { Format = "indeo5" },
-            new() { Format = "mpeg2video" },
-            new() { Format = "mpeg4", Codec = "dx50" },
-            new() { Format = "msmpeg4v2", Codec = "mp42" },
-            new() { Format = "msmpeg4v3", Codec = "div3" },
-            new() { Format = "msrle" },
-            new() { Format = "rawvideo" },
-            new() { Format = "vc1" },
-            new() { Format = "wmv3" }
+            new VideoFormat { Format = "h264", Profile = "Constrained Baseline@30" },
+            new VideoFormat { Format = "indeo5" },
+            new VideoFormat { Format = "mpeg2video" },
+            new VideoFormat { Format = "mpeg4", Codec = "dx50" },
+            new VideoFormat { Format = "msmpeg4v2", Codec = "mp42" },
+            new VideoFormat { Format = "msmpeg4v3", Codec = "div3" },
+            new VideoFormat { Format = "msrle" },
+            new VideoFormat { Format = "rawvideo" },
+            new VideoFormat { Format = "vc1" },
+            new VideoFormat { Format = "wmv3" }
         ];
         ReEncodeAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {

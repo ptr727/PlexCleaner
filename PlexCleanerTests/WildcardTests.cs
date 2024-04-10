@@ -13,8 +13,8 @@ public class WildcardTests
     [InlineData("*.sample.*", "Foo.sample.foo", true)]
     [InlineData("*.sample.*", "sample.foo", false)]
     [InlineData("*.sample.*", "foo.sample", false)]
-    public void WildcardMatch(string wildcard, string filename, bool match)
+    public void WildcardMatch(string wildCard, string fileName, bool match)
     {
-        Assert.Equal(match, ProcessOptions4.MaskToRegex(wildcard).IsMatch(filename));
+        Assert.Equal(match, ProcessOptions4.MaskToRegex(wildCard).IsMatch(fileName));
     }
 }

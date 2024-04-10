@@ -32,10 +32,10 @@ public class FfProbeTool : FfMpegTool
         return "ffprobe";
     }
 
-    public bool GetPacketInfo(string filename, out List<Packet> packets)
+    public bool GetPacketInfo(string fileName, out List<Packet> packetList)
     {
         // Init
-        packets = null;
+        packetList = null;
 
         // Write JSON text output to compressed memory stream to save memory
         // TODO: Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
@@ -54,7 +54,7 @@ public class FfProbeTool : FfMpegTool
         {
             commandline.Append($"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
         }
-        commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{filename}\"");
+        commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{fileName}\"");
 
         // Get packet info
         string path = GetToolPath();
@@ -77,29 +77,29 @@ public class FfProbeTool : FfMpegTool
             return false;
         }
 
-        packets = packetInfo.Packets;
+        packetList = packetInfo.Packets;
         return true;
     }
 
-    public bool GetFfProbeInfo(string filename, out MediaInfo mediainfo)
+    public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)
     {
-        mediainfo = null;
-        return GetFfProbeInfoJson(filename, out string json) &&
-               GetFfProbeInfoFromJson(json, out mediainfo);
+        mediaInfo = null;
+        return GetFfProbeInfoJson(fileName, out string json) &&
+               GetFfProbeInfoFromJson(json, out mediaInfo);
     }
 
-    public bool GetFfProbeInfoJson(string filename, out string json)
+    public bool GetFfProbeInfoJson(string fileName, out string json)
     {
         // Get media info as JSON
-        string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{filename}\"";
+        string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{fileName}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
     }
 
-    public bool GetFfProbeInfoText(string filename, out string text)
+    public bool GetFfProbeInfoText(string fileName, out string text)
     {
         // Get media info using default output
-        string commandline = $"-hide_banner \"{filename}\"";
+        string commandline = $"-hide_banner \"{fileName}\"";
         int exitCode = Command(commandline, out _, out text);
         return exitCode == 0;
     }

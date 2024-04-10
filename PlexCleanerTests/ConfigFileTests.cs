@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using PlexCleaner;
+using Xunit;
 
 namespace PlexCleanerTests;
 
@@ -22,7 +23,7 @@ public class ConfigFileTests : IClassFixture<PlexCleanerTests>
         Assert.Equal("copy --audio-fallback ac3", configFileJsonSchema.ConvertOptions.HandBrakeOptions.Audio);
         Assert.Contains("*.nfo", configFileJsonSchema.ProcessOptions.FileIgnoreMasks);
         Assert.Contains(".avi", configFileJsonSchema.ProcessOptions.ReMuxExtensions);
-        Assert.Contains(new() { Format = "mpeg2video" }, configFileJsonSchema.ProcessOptions.ReEncodeVideo);
+        Assert.Contains(new VideoFormat { Format = "mpeg2video" }, configFileJsonSchema.ProcessOptions.ReEncodeVideo);
         Assert.Contains("flac", configFileJsonSchema.ProcessOptions.ReEncodeAudioFormats);
         Assert.Equal("en", configFileJsonSchema.ProcessOptions.DefaultLanguage);
         Assert.Contains("af", configFileJsonSchema.ProcessOptions.KeepLanguages);
