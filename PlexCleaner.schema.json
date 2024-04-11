@@ -13,9 +13,6 @@
             "Global": {
               "type": "string"
             },
-            "Output": {
-              "type": "string"
-            },
             "Video": {
               "type": "string"
             }

@@ -33,9 +33,13 @@ Docker images are published on [Docker Hub][docker-link].
   - Added `ProcessOptions:IgnoreFiles` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
     - Wildcard support now also allows excluding temporary UnRaid FuseFS files, e.g. `*.fuse_hidden*`.
-  - Settings JSON schema updated from v3 to v4 to account for modified `ProcessOptions` settings.
-    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions` on load.
-    - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
+  - Settings JSON schema changed from v3 to v4.
+    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions`.
+      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
+    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need to for user changeable values.
+    - `ConvertOptions:FfMpegOptions:Global` no longer require defaults values, only add custom values for e.g. hardware acceleration options, existing values will be converted.
+      - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
+      - E.g. `-analyzeduration 2147483647 -probesize 2147483647` will be converted to ``.
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
   - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
@@ -231,8 +235,7 @@ E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.m
 
 Settings allows for custom configuration of:
 
-- `FfMpegOptions:Global`: Global options, e.g. `-analyzeduration 2147483647 -probesize 2147483647`
-- `FfMpegOptions:Output`: Output options, e.g. `-max_muxing_queue_size 1024 -abort_on empty_output`
+- `FfMpegOptions:Global`: Custom hardware global options, e.g. `-hwaccel cuda -hwaccel_output_format cuda`
 - `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 22 -preset medium`
 - `FfMpegOptions:Audio`: Audio encoder options following the `-c:a` parameter, e.g. `ac3`
 
@@ -252,12 +255,12 @@ Example hardware assisted video encoding options:
 - NVidia NVENC:
   - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
   - View NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
-  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda`
+  - `FfMpegOptions:Global`: `-hwaccel cuda -hwaccel_output_format cuda`
   - `FfMpegOptions:Video`: `h264_nvenc -crf 22 -preset medium`
 - Intel QuickSync:
   - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
   - View QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
-  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel qsv -hwaccel_output_format qsv`
+  - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
   - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
 
 ### HandBrake Options

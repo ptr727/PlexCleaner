@@ -11,8 +11,7 @@
     "FfMpegOptions": {
       "Video": "libx264 -crf 22 -preset medium",
       "Audio": "ac3",
-      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
-      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+      "Global": ""
     },
     "HandBrakeOptions": {
       "Video": "x264 --quality 22 --encoder-preset medium",

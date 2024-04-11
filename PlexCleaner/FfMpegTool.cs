@@ -442,7 +442,7 @@ public partial class FfMpegTool : MediaTool
     private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
     {
         // Global options
-        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+        commandline.Append($"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} ");
 
         // Test snippets
         if (Program.Options.TestSnippets)
@@ -455,14 +455,20 @@ public partial class FfMpegTool : MediaTool
         commandline.Append($"-i \"{inputName}\" ");
 
         // Output options
-        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Output} ");
+        commandline.Append($"{OutputOptions} ");
 
         // Minimize output when running in parallel mode
         if (Program.Options.Parallel)
         {
-            commandline.Append("-hide_banner -nostats ");
+            commandline.Append($"{ParallelOptions} ");
         }
     }
+
+    public const string ParallelOptions = "-hide_banner -nostats";
+    public const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
+    public const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
+    public const string DefaultAudioOptions = "ac3";
 
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]

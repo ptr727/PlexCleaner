@@ -7,11 +7,9 @@ namespace PlexCleaner;
 // v2 : Added
 public record HandBrakeOptions
 {
-    // Do not include --encoder
     [JsonRequired]
     public string Video { get; set; } = "";
 
-    // Do not include --aencoder
     [JsonRequired]
     public string Audio { get; set; } = "";
 }
@@ -19,18 +17,19 @@ public record HandBrakeOptions
 // v2 : Added
 public record FfMpegOptions
 {
-    // Do not include -c:v
     [JsonRequired]
     public string Video { get; set; } = "";
 
-    // Do not include -c:a 
     [JsonRequired]
     public string Audio { get; set; } = "";
 
+    // v3 : Value no longer needs defaults
     [JsonRequired]
     public string Global { get; set; } = "";
 
-    [JsonRequired]
+    // v3 : Removed
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
     public string Output { get; set; } = "";
 }
 
@@ -43,9 +42,11 @@ public record ConvertOptions1
     [Obsolete]
     [Json.Schema.Generation.JsonExclude]
     public bool EnableH265Encoder { get; set; }
+
     [Obsolete]
     [Json.Schema.Generation.JsonExclude]
     public int VideoEncodeQuality { get; set; }
+
     [Obsolete]
     [Json.Schema.Generation.JsonExclude]
     public string AudioEncodeCodec { get; set; } = "";
@@ -57,10 +58,7 @@ public record ConvertOptions2 : ConvertOptions1
     protected new const int Version = 2;
 
     public ConvertOptions2() { }
-    public ConvertOptions2(ConvertOptions1 convertOptions1) : base(convertOptions1)
-    { 
-        Upgrade(ConvertOptions1.Version);
-    }
+    public ConvertOptions2(ConvertOptions1 convertOptions1) : base(convertOptions1) { }
 
     // v2 : Added
     [JsonRequired]
@@ -69,6 +67,25 @@ public record ConvertOptions2 : ConvertOptions1
     // v2 : Added
     [JsonRequired]
     public HandBrakeOptions HandBrakeOptions { get; set; } = new();
+}
+
+// v3
+public record ConvertOptions3 : ConvertOptions2
+{
+    protected new const int Version = 3;
+
+    public ConvertOptions3() { }
+    public ConvertOptions3(ConvertOptions1 convertOptions1) : base(convertOptions1)
+    {
+        Upgrade(ConvertOptions1.Version);
+    }
+    public ConvertOptions3(ConvertOptions2 convertOptions2) : base(convertOptions2)
+    {
+        Upgrade(ConvertOptions2.Version);
+    }
+
+    // v3 : Removed FfMpegOptions.Output
+    // v3 : Removed defaults from FfMpegOptions.Global
 
 #pragma warning disable CS0612 // Type or member is obsolete
     private void Upgrade(int version)
@@ -90,42 +107,49 @@ public record ConvertOptions2 : ConvertOptions1
         }
 
         // v2
+        if (version == ConvertOptions2.Version)
+        {
+            // Get v2 schema
+            ConvertOptions2 convertOptions2 = this;
+
+            // v2 -> v3 :
+            // Removed FfMpegOptions.Output
+            // Removed defaults from FfMpegOptions.Global
+
+            // Obsolete
+            convertOptions2.FfMpegOptions.Output = "";
+
+            // Remove default global options
+            FfMpegOptions.Global = FfMpegOptions.Global.Replace(FfMpegTool.GlobalOptions, null).Trim();
+        }
+
+        // v3
     }
 #pragma warning restore CS0612 // Type or member is obsolete
 
     public void SetDefaults()
     {
-        FfMpegOptions.Video = "libx264 -crf 22 -preset medium";
-        FfMpegOptions.Audio = "ac3";
-        FfMpegOptions.Global = "-analyzeduration 2147483647 -probesize 2147483647";
-        FfMpegOptions.Output = "-max_muxing_queue_size 1024 -abort_on empty_output";
+        FfMpegOptions.Video = FfMpegTool.DefaultVideoOptions;
+        FfMpegOptions.Audio = FfMpegTool.DefaultAudioOptions;
+        FfMpegOptions.Global = "";
 
-        HandBrakeOptions.Video = "x264 --quality 22 --encoder-preset medium";
-        HandBrakeOptions.Audio = "copy --audio-fallback ac3";
+        HandBrakeOptions.Video = HandBrakeTool.DefaultVideoOptions;
+        HandBrakeOptions.Audio = HandBrakeTool.DefaultAudioOptions;
     }
 
     public bool VerifyValues()
     {
-        // All values must be set
+        // Values must be set
         if (string.IsNullOrEmpty(FfMpegOptions.Video) ||
-            string.IsNullOrEmpty(FfMpegOptions.Audio) ||
-            string.IsNullOrEmpty(FfMpegOptions.Global) ||
-            string.IsNullOrEmpty(FfMpegOptions.Output))
+            string.IsNullOrEmpty(FfMpegOptions.Audio))
         {
-            Log.Logger.Error("ConvertOptions:FfMpegOptions all values must be set");
+            Log.Logger.Error("ConvertOptions:FfMpegOptions Video and Audio values must be set");
             return false;
         }
         if (string.IsNullOrEmpty(HandBrakeOptions.Video) ||
             string.IsNullOrEmpty(HandBrakeOptions.Audio))
         {
-            Log.Logger.Error("ConvertOptions:HandBrakeOptions all values must be set");
-            return false;
-        }
-
-        // Required parameters
-        if (!FfMpegOptions.Output.Contains("-abort_on empty_output"))
-        {
-            Log.Logger.Error("ConvertOptions:FfMpegOptions.Output must contain '-abort_on empty_output'");
+            Log.Logger.Error("ConvertOptions:HandBrakeOptions Video and Audio values must be set");
             return false;
         }
 

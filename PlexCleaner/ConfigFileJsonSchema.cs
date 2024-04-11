@@ -96,8 +96,9 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
-    [JsonRequired]
-    [JsonPropertyOrder(3)]
+    // v4 : Replaced with ConvertOptions3
+    [Obsolete]
+    [Json.Schema.Generation.JsonExclude]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
@@ -130,13 +131,18 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     [JsonPropertyOrder(2)]
     public new ProcessOptions4 ProcessOptions { get; set; } = new();
 
+    // v4 : Added
+    [JsonRequired]
+    [JsonPropertyOrder(3)]
+    public new ConvertOptions3 ConvertOptions { get; set; } = new();
+
 #pragma warning disable CS0612 // Type or member is obsolete
     private void Upgrade(int version)
     {
         // v4:
         // ToolsOptions1
         // ProcessOptions4
-        // ConvertOptions2
+        // ConvertOptions3
         // VerifyOptions2
         // MonitorOptions1
 
@@ -152,7 +158,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
             // Upgrade to current version
             ProcessOptions = new ProcessOptions4(configFileJsonSchema1.ProcessOptions);
-            ConvertOptions = new ConvertOptions2(configFileJsonSchema1.ConvertOptions);
+            ConvertOptions = new ConvertOptions3(configFileJsonSchema1.ConvertOptions);
             VerifyOptions = new VerifyOptions2(configFileJsonSchema1.VerifyOptions);
         }
 
@@ -168,7 +174,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
             // Upgrade to current version
             ProcessOptions = new ProcessOptions4(configFileJsonSchema2.ProcessOptions);
-            ConvertOptions = new ConvertOptions2(configFileJsonSchema2.ConvertOptions);
+            ConvertOptions = new ConvertOptions3(configFileJsonSchema2.ConvertOptions);
             VerifyOptions = new VerifyOptions2(configFileJsonSchema2.VerifyOptions);
         }
 
@@ -177,13 +183,14 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         {
             // ToolsOptions1
             // ProcessOptions3 *
-            // ConvertOptions2
+            // ConvertOptions2 *
             // VerifyOptions2
             // MonitorOptions1
             ConfigFileJsonSchema3 configFileJsonSchema3 = this;
 
             // Upgrade to current version
             ProcessOptions = new ProcessOptions4(configFileJsonSchema3.ProcessOptions);
+            ConvertOptions = new ConvertOptions3(configFileJsonSchema3.ConvertOptions);
         }
 
         // v4

@@ -4,7 +4,6 @@
   "ToolsOptions": {
     // Use system installed tools or tools directory
     "UseSystem": false,
-    // Tools directory
     "RootPath": ".\\Tools\\",
     // Tools directory is relative to PlexCleaner binary locations
     "RootRelative": true,
@@ -157,9 +156,7 @@
       // Audio encoding option following -c:a
       "Audio": "ac3",
       // Global options
-      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
-      // Output options
-      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+      "Global": ""
     },
     // HandBrake commandline options
     "HandBrakeOptions": {

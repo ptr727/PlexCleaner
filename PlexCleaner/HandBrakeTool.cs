@@ -149,6 +149,9 @@ public partial class HandBrakeTool : MediaTool
             commandline.Append($"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} ");
         }
     }
+    public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
+    public const string DefaultAudioOptions = "copy --audio-fallback ac3";
+
 
     private const string VersionPattern = @"HandBrake\ (?<version>.*)";
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
