@@ -171,7 +171,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(fileName, commandline);
+        CreateDefaultArgs(fileName, commandline, false);
 
         // Null muxer and exit immediately on error (-xerror)
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
@@ -190,7 +190,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remux and copy all streams to MKV
         commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
@@ -269,7 +269,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, true);
 
         // Input and output map
         commandline.Append($"{inputMap} {outputMap} ");
@@ -290,7 +290,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, true);
 
         // Process all tracks
         commandline.Append("-map 0 ");
@@ -321,7 +321,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
@@ -339,7 +339,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remove all metadata using -map_metadata -1
         commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
@@ -374,10 +374,9 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
-        // Counting can report a failure if there are any stream errors
-        // Do not exit on error (-xerror)
+        // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
         // [h264 @ 0x55ec750529c0] Error splitting the input into NAL units.
         // Error while decoding stream #0:0: Invalid data found when processing input
@@ -439,10 +438,17 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
+    private static void CreateDefaultArgs(string inputName, StringBuilder commandline, bool encoding)
     {
-        // Global options
-        commandline.Append($"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+        // Add custom global options when encoding
+        if (encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global))
+        {
+            commandline.Append($"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+        }
+        else
+        {
+            commandline.Append($"{GlobalOptions} ");
+        }
 
         // Test snippets
         if (Program.Options.TestSnippets)
