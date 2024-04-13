@@ -357,7 +357,7 @@ public partial class MkvMergeTool : MediaTool
 
     private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
 
-    const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
+    private const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 }

@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/develop/PlexCleaner.Schema.json",
-  "SchemaVersion": 3,
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "SchemaVersion": 4,
   "ToolsOptions": {
     "UseSystem": false,
     "RootPath": ".\\Tools\\",
@@ -11,8 +11,7 @@
     "FfMpegOptions": {
       "Video": "libx264 -crf 22 -preset medium",
       "Audio": "ac3",
-      "Global": "-analyzeduration 2147483647 -probesize 2147483647",
-      "Output": "-max_muxing_queue_size 1024 -abort_on empty_output"
+      "Global": ""
     },
     "HandBrakeOptions": {
       "Video": "x264 --quality 22 --encoder-preset medium",
@@ -26,15 +25,18 @@
     "RemoveClosedCaptions": true,
     "SetIetfLanguageTags": true,
     "SetTrackFlags": true,
-    "KeepExtensions": [
-      ".partial~",
-      ".nfo",
-      ".jpg",
-      ".srt",
-      ".smi",
-      ".ssa",
-      ".ass",
-      ".vtt"
+    "FileIgnoreMasks": [
+      "*.fuse_hidden*",
+      "*.partial~",
+      "*.sample",
+      "*.sample.*",
+      "*.nfo",
+      "*.jpg",
+      "*.srt",
+      "*.smi",
+      "*.ssa",
+      "*.ass",
+      "*.vtt"
     ],
     "ReMux": true,
     "ReMuxExtensions": [
@@ -104,7 +106,9 @@
       "en",
       "af",
       "zh",
-      "in"
+      "in",
+      "ja",
+      "ko"
     ],
     "RemoveDuplicateTracks": false,
     "PreferredAudioFormats": [
@@ -126,15 +130,15 @@
       "\\\\server\\Share\\Series\\Fianc\u00E9\\Season 1\\Fianc\u00E9 - S01E01 - Bar.mkv"
     ]
   },
-  "MonitorOptions": {
-    "MonitorWaitTime": 60,
-    "FileRetryWaitTime": 5,
-    "FileRetryCount": 2
-  },
   "VerifyOptions": {
     "AutoRepair": true,
     "DeleteInvalidFiles": false,
     "RegisterInvalidFiles": false,
     "MaximumBitrate": 100000000
+  },
+  "MonitorOptions": {
+    "MonitorWaitTime": 60,
+    "FileRetryWaitTime": 5,
+    "FileRetryCount": 2
   }
 }

@@ -184,14 +184,14 @@ public static class Tools
         return Path.GetFullPath(Path.Combine(toolsRoot!, Program.Config.ToolsOptions.RootPath));
     }
 
-    public static string CombineToolPath(string filename)
+    public static string CombineToolPath(string fileName)
     {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), filename));
+        return Path.GetFullPath(Path.Combine(GetToolsRoot(), fileName));
     }
 
-    public static string CombineToolPath(string path, string subPath, string filename)
+    public static string CombineToolPath(string path, string subPath, string fileName)
     {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, filename));
+        return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, fileName));
     }
 
     private static string GetToolsJsonPath()

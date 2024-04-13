@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Serilog;
 
 namespace PlexCleaner;
@@ -11,13 +12,14 @@ namespace PlexCleaner;
 public class ToolInfoJsonSchema
 {
     [DefaultValue(0)]
-    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+    [JsonPropertyOrder(-2)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public const int CurrentSchemaVersion = 2;
 
     public DateTime LastCheck { get; set; }
 
-    public List<MediaToolInfo> Tools { get; } = new();
+    public List<MediaToolInfo> Tools { get; } = [];
 
     public MediaToolInfo GetToolInfo(MediaTool mediaTool)
     {
@@ -37,18 +39,13 @@ public class ToolInfoJsonSchema
 
     private static string ToJson(ToolInfoJsonSchema tools)
     {
-        return JsonConvert.SerializeObject(tools, Settings);
+        return JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
     }
 
     public static ToolInfoJsonSchema FromJson(string json)
     {
-        return JsonConvert.DeserializeObject<ToolInfoJsonSchema>(json, Settings);
+        return JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
-
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {

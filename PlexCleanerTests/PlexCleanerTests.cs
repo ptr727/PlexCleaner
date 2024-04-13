@@ -1,30 +1,11 @@
-﻿using System;
+﻿// Current schema version
+global using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using PlexCleaner;
-
-// TODO: Create test script
-/*
-./PlexCleaner --version
-./PlexCleaner --help
-./PlexCleaner defaultsettings --settingsfile PlexCleaner.default.json
-./PlexCleaner getversioninfo --settingsfile PlexCleaner.json
-./PlexCleaner checkfornewtools  --settingsfile=PlexCleaner.json
-./PlexCleaner process --settingsfile PlexCleaner.json --mediafiles D:/Test --testsnippets
-./PlexCleaner monitor --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner remux --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner reencode --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner deinterlace --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner removesubtitles --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner createsidecar --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner updatesidecar --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner getsidecarinfo --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner gettagmap --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner getmediainfo --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner gettoolinfo --settingsfile PlexCleaner.json --mediafiles D:/Test
-./PlexCleaner createschema --schemafile PlexCleaner.schema.json
-*/
 
 namespace PlexCleanerTests;
 

@@ -5,14 +5,10 @@ namespace PlexCleaner;
 
 public class SubtitleInfo : TrackInfo
 {
-    internal SubtitleInfo(MkvToolJsonSchema.Track track) : base(track)
-    {
-    }
-    internal SubtitleInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
-    {
-    }
+    public SubtitleInfo(MkvToolJsonSchema.Track track) : base(track) { }
+    public SubtitleInfo(FfMpegToolJsonSchema.Stream stream) : base(stream) { }
 
-    internal SubtitleInfo(MediaInfoToolXmlSchema.Track track) : base(track)
+    public SubtitleInfo(MediaInfoToolXmlSchema.Track track) : base(track)
     {
         // We need MuxingMode for VOBSUB else Plex on Nvidia Shield TV will hang on play start
         // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding

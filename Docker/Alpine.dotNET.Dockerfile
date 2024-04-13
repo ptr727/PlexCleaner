@@ -39,6 +39,10 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Upgrade
+RUN apk update \
+    && apk upgrade
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
@@ -76,8 +80,12 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     TZ=Etc/UTC
 
+# Upgrade
+RUN apk update \
+    && apk upgrade
+
 # Install prerequisites
-RUN apk --upgrade --no-cache add \
+RUN apk add \
         icu-data-full \
         icu-libs \
         p7zip \
@@ -100,7 +108,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/mkvtoolnix
 # Handbrake is only on Edge
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
-RUN apk --upgrade --no-cache add \
+RUN apk add \
         ffmpeg --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
         mediainfo --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \
         mkvtoolnix --repository=http://dl-cdn.alpinelinux.org/alpine/v3.19/community/ \

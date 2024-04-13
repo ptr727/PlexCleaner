@@ -80,7 +80,7 @@ public class Track
 public class MediaElement
 {
     [XmlElement(ElementName = "track", Namespace = "https://mediaarea.net/mediainfo")]
-    public List<Track> Track { get; } = new();
+    public List<Track> Track { get; } = [];
 }
 
 [XmlRoot(ElementName = "MediaInfo", Namespace = "https://mediaarea.net/mediainfo")]

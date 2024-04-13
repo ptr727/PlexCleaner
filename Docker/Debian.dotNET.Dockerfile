@@ -36,7 +36,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS
 # Layer workdir
 WORKDIR /Builder
 
-# Global builder vriables
+# Global builder variables
 # https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 
 # Build platform args
@@ -55,6 +55,10 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_ASSEMBLY_VERSION="1.0.0.0" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
+
+# Upgrade
+RUN apt-get update \
+    && apt-get upgrade -y
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -122,10 +126,12 @@ RUN touch /etc/apt/preferences.d/stable.pref \
     && touch /etc/apt/sources.list.d/experimental.list \
     && echo "deb http://deb.debian.org/debian experimental main" >> /etc/apt/sources.list.d/experimental.list
 
-# Install prerequisites
+# Upgrade
 RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y \
+    && apt-get upgrade -y
+
+# Install prerequisites
+RUN apt-get install -y \
         apt-utils \
         locales \
         locales-all \

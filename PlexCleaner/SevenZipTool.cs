@@ -212,5 +212,5 @@ public partial class SevenZipTool : MediaTool
 
     private const string InstalledVersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 }

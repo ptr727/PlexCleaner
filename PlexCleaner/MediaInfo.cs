@@ -20,13 +20,13 @@ public class MediaInfo
         var clonedInfo = (MediaInfo)MemberwiseClone();
 
         // Create new collections containing the old items
-        List<VideoInfo> newVideo = new();
+        List<VideoInfo> newVideo = [];
         newVideo.AddRange(Video);
         clonedInfo.Video = newVideo;
-        List<AudioInfo> newAudio = new();
+        List<AudioInfo> newAudio = [];
         newAudio.AddRange(Audio);
         clonedInfo.Audio = newAudio;
-        List<SubtitleInfo> newSubtitle = new();
+        List<SubtitleInfo> newSubtitle = [];
         newSubtitle.AddRange(Subtitle);
         clonedInfo.Subtitle = newSubtitle;
 
@@ -36,9 +36,9 @@ public class MediaInfo
     // MkvMerge, FfProbe, MediaInfo
     public MediaTool.ToolType Parser { get; }
 
-    public List<VideoInfo> Video { get; private set; } = new();
-    public List<AudioInfo> Audio { get; private set; } = new();
-    public List<SubtitleInfo> Subtitle { get; private set; } = new();
+    public List<VideoInfo> Video { get; private set; } = [];
+    public List<AudioInfo> Audio { get; private set; } = [];
+    public List<SubtitleInfo> Subtitle { get; private set; } = [];
 
     public bool HasTags { get; set; }
     public bool AnyTags { get => HasTags || Video.Any(item => item.HasTags) || Audio.Any(item => item.HasTags) || Subtitle.Any(item => item.HasTags); }
@@ -66,7 +66,7 @@ public class MediaInfo
     public List<TrackInfo> GetTrackList()
     {
         // Combine all tracks
-        List<TrackInfo> trackLick = new();
+        List<TrackInfo> trackLick = [];
         trackLick.AddRange(Video);
         trackLick.AddRange(Audio);
         trackLick.AddRange(Subtitle);
@@ -136,7 +136,7 @@ public class MediaInfo
         var mkvMergeTrackList = GetTrackList();
 
         // Match by MediaInfo.Number == MkvMerge.Number
-        List<TrackInfo> matchedTrackList = new();
+        List<TrackInfo> matchedTrackList = [];
         mediaInfoTrackList.ForEach(mediaInfoItem => matchedTrackList.Add(mkvMergeTrackList.Find(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)));
 
         // Make sure all items matched

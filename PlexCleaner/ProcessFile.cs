@@ -1694,15 +1694,15 @@ public class ProcessFile
         return true;
     }
 
-    private bool Refresh(string filename)
+    private bool Refresh(string fileName)
     {
         // Media filename changed
         // Compare case sensitive for Linux support
-        Debug.Assert(filename != null);
-        if (!FileInfo.FullName.Equals(filename, StringComparison.Ordinal))
+        Debug.Assert(fileName != null);
+        if (!FileInfo.FullName.Equals(fileName, StringComparison.Ordinal))
         {
             // Refresh sidecar file info but preserve existing state, mark as renamed
-            FileInfo = new FileInfo(filename);
+            FileInfo = new FileInfo(fileName);
             SidecarFile.StatesType state = SidecarFile.State | SidecarFile.StatesType.FileReNamed;
             SidecarFile = new SidecarFile(FileInfo)
             {
@@ -1833,7 +1833,7 @@ public class ProcessFile
     {
         // Count the frame types using the idet filter
         Log.Logger.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out idetInfo))
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out idetInfo, out string error))
         {
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1843,6 +1843,7 @@ public class ProcessFile
 
             // Failed
             Log.Logger.Error("Failed to count interlaced frames : {FileName}", FileInfo.Name);
+            Log.Logger.Error("{Error}", error);
             return false;
         }
 
@@ -1898,7 +1899,9 @@ public class ProcessFile
             if (reEncodeVideo.Count > 0)
             {
                 selectMediaInfo.Move(reEncodeVideo, true);
-                Log.Logger.Warning("Including incompatible Video track for Audio only ReEncoding");
+                Log.Logger.Warning("Audio reencoding requires video reencoding : Audio: {FormatA}, Video: {FormatV}", 
+                    selectMediaInfo.Selected.Audio.Select(item => $"{item.Format}:{item.Codec}"), 
+                    reEncodeVideo.Select(item => $"{item.Format}:{item.Codec}:{item.Profile}"));
             }
         }
 
@@ -1939,7 +1942,7 @@ public class ProcessFile
             selectMediaInfo.Move(trackFlagList, true);
 
             // Keep one non-flag track
-            // E.g. for subtitles it could be forced, hearingimpaired, and one normal
+            // E.g. for subtitles it could be forced, hearing impaired, and one normal
             var videoNotFlagList = trackLanguageList.FindAll(item => item.Flags == TrackInfo.FlagsType.None && item.GetType() == typeof(VideoInfo));
             if (videoNotFlagList.Count > 0)
             {

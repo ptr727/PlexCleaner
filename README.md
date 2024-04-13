@@ -29,97 +29,30 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.7:
+  - Added `ProcessOptions:IgnoreFiles` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
+    - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
+    - Wildcard support now also allows excluding temporary UnRaid FuseFS files, e.g. `*.fuse_hidden*`.
+  - Settings JSON schema changed from v3 to v4.
+    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions`.
+      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
+    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need to for user changeable values.
+    - `ConvertOptions:FfMpegOptions:Global` no longer require defaults values, only add custom values for e.g. hardware acceleration options, existing values will be converted.
+      - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
+      - E.g. `-analyzeduration 2147483647 -probesize 2147483647` will be converted to ``.
+  - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
+  - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
+  - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
+  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
+    - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
 - Version 3.6:
   - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
     - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
-    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases.
+    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases (v3.20 May 2024).
     - Alpine Edge builds will be tagged as `alpine-edge`.
 - Version 3.5:
   - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.
-- Version 3.4:
-  - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
-  - Updated Debian Docker image to Bookworm.
-  - Warn when a newer [GitHub Release](https://github.com/ptr727/PlexCleaner/releases/latest) version is available.
-    - Only tests for new release availability if `ToolsOptions:AutoUpdate` is enabled.
-    - Updating the tool itself is still a manual process.
-    - Alternatively subscribe to GitHub [Release Notifications][github-release-notification].
-  - Added `verify` command option to verify media streams in files.
-    - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
-    - The `verify` command is useful when testing or selecting from multiple available media sources.
-- Version 3.3:
-  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
-  - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
-  - Add "legacy" `osx.13-arm64` build.
-  - Make Rider 2023.2.1 happy with current C# linter rules.
-- Version 3.2:
-  - Added `Ctrl-Q` and `Ctrl-Z` as additional break commands, `Ctrl+C` may terminate the shell command vs. cleanly exiting the process.
-- Version 3.1:
-  - Added `--preprocess` option to the `monitor` command, that will pre-process all monitored folders.
-- Version 3.0:
-  - Docker builds expanded to include support for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`, on Ubuntu, Debian, Alpine, and Arch.
-    - See the Docker [README][docker-link] for image and tag usage details.
-    - The Ubuntu x64 build now utilizes [Rob Savoury's private PPA][savoury-link] for up to date FFmpeg and HandBrake builds.
-  - Switched from .NET 6 to .NET 7.
-    - Utilizing some new capabilities, e.g. `GeneratedRegex` and `LibraryImport`.
-  - Added additional architectures to the published releases, including `win-x64`, `linux-x64`, `linux-musl-x64`, `linux-arm`, `linux-arm64`, and `osx-x64`.
-  - Added support for custom FFmpeg and HandBrake command line arguments.
-    - See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for usage details.
-    - Custom options allows for e.g. AV1 video codec, Intel QuickSync encoding, NVidia NVENC encoding, custom profiles, etc.
-    - Removed the `ConvertOptions:EnableH265Encoder`, `ConvertOptions:VideoEncodeQuality` and `ConvertOptions:AudioEncodeCodec` options.
-    - Replaced with `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` options.
-    - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
-  - Added support for [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag formats.
-    - See the [Language Matching](#language-matching) section usage for details.
-    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
-      - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
-      - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
-    - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` from ISO 639-2B to RFC 5646 format, e.g. `eng` to `en`.
-      - On v3 schema upgrade old ISO 639-2B 3 letter tags will be replaced with generic RFC 5646 tags.
-    - Added `ProcessOptions.SetIetfLanguageTags` to conditionally remux files using MkvMerge to apply IETF language tags when not set.
-      - When enabled all files without IETF tags will be remuxed in order to set IETF language tags, this could be time consuming on large collections of older media that lack the now common IETF tags.
-    - [FFmpeg](https://github.com/ptr727/PlexCleaner/issues/148) and [HandBrake](https://github.com/ptr727/PlexCleaner/issues/149) removes IETF language tags.
-      - Files are remuxed using MkvMerge, and IETF tags are restored using MkvPropEdit, after any FFmpeg or HandBrake operation.
-      - If you care and can, please do communicate the need for IETF language support to the FFmpeg and HandBrake development teams.
-    - Added warnings and attempt to repair when the Language and LanguageIetf are set and are invalid or do not match.
-    - `MkvMerge --identify` added the `--normalize-language-ietf extlang` option to report e.g. `zh-cmn-Hant` vs. `cmn-Hant`.
-      - Existing sidecar metadata can be updated using the `updatesidecar` command.
-  - Added `ProcessOptions:KeepOriginalLanguage` to keep tracks marked as [original language](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-original-flag).
-  - Added `ProcessOptions:RemoveClosedCaptions` to conditionally vs. always remove closed captions.
-  - Added `ProcessOptions:SetTrackFlags` to set track flags based on track title keywords, e.g. `SDH` -> `HearingImpaired`.
-  - Added `createschema` command to create the settings JSON schema file, no longer need to use `Sandbox` project to create the schema file.
-  - Added warnings when multiple tracks of the same kind have a Default flag set.
-  - Added `--logwarning` commandline option to filter log file output to warnings and errors, console still gets all output.
-  - Added `updatesidecar` commandline option to update sidecar files using current media tool information.
-  - Added `getversioninfo` commandline option to print app, runtime, and media tool versions.
-  - Added settings file correctness verification to detect missing but required values.
-  - Fixed bitrate calculation packet filter logic to exclude negative timestamps leading to out of bounds exceptions, see FFmpeg `avoid_negative_ts`.
-  - Fixed sidecar media file hash calculation logic to open media file read only and share read, avoiding file access or sharing violations.
-  - Updated cover art detection and removal logic to not be dependent on `RemoveTags` setting.
-  - Updated `DeleteInvalidFiles` logic to delete any file that fails processing, not just files that fail verification.
-  - Updated `RemoveDuplicateLanguages` logic to use MkvMerge IETF language tags.
-  - Updated `RemoveDuplicateTracks` logic to account for Matroska [track flags](https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags).
-  - Refactored JSON schema versioning logic to use `record` instead of `class` allowing for derived classes to inherited attributes vs. needing to duplicate all attributes.
-  - Refactored track selection logic to simplify containment and use with lambda filters.
-  - Refactored verify and repair logic, became too complicated.
-  - Removed forced file flush and waiting for IO to flush logic, unnecessarily slows down processing and is ineffective.
-  - Removed `VerifyOptions:VerifyDuration`, `VerifyOptions:IdetDuration`, `VerifyOptions:MinimumDuration`, and `VerifyOptions:MinimumFileAge` configuration options.
-  - Removed docker image publishing to GHCR, `broken pipe` errors too frequently break the build.
-  - Changed the process exit code to return `1` vs. `-1` in case of error, more conformant with standard exit codes, `0` remains success.
-  - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
-    - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
-  - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
-  - *Breaking Change* Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
-    - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
-    - The following global options have been removed and added to their respective commands:
-      - `--settingsfile` used by several commands.
-      - `--parallel` used by the `process` command.
-      - `--threadcount` used by the `process` command.
-    - Move the option from the global options to follow the specific command, e.g.:
-      - From: `PlexCleaner --settingsfile PlexCleaner.json defaultsettings ...`
-      - To: `PlexCleaner defaultsettings --settingsfile PlexCleaner.json ...`
-      - From: `PlexCleaner --settingsfile PlexCleaner.json --parallel --threadcount 2 process ...`
-      - To: `PlexCleaner process --settingsfile PlexCleaner.json --parallel --threadcount 2 ...`
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -169,6 +102,9 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 - Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
 - See the Docker [README][docker-link] for image and tag details.
+  - `latest` is based on Ubuntu and contains the most up to date media processing tools.
+  - `alpine` is based on Alpine and is the smallest image.
+  - `debian` is based on Debian and supports the most platforms.
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -301,8 +237,7 @@ E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.m
 
 Settings allows for custom configuration of:
 
-- `FfMpegOptions:Global`: Global options, e.g. `-analyzeduration 2147483647 -probesize 2147483647`
-- `FfMpegOptions:Output`: Output options, e.g. `-max_muxing_queue_size 1024 -abort_on empty_output`
+- `FfMpegOptions:Global`: Custom hardware global options, e.g. `-hwaccel cuda -hwaccel_output_format cuda`
 - `FfMpegOptions:Video`: Video encoder options following the `-c:v` parameter, e.g. `libx264 -crf 22 -preset medium`
 - `FfMpegOptions:Audio`: Audio encoder options following the `-c:a` parameter, e.g. `ac3`
 
@@ -322,12 +257,12 @@ Example hardware assisted video encoding options:
 - NVidia NVENC:
   - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
   - View NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
-  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda`
+  - `FfMpegOptions:Global`: `-hwaccel cuda -hwaccel_output_format cuda`
   - `FfMpegOptions:Video`: `h264_nvenc -crf 22 -preset medium`
 - Intel QuickSync:
   - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
   - View QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
-  - `FfMpegOptions:Global`: `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel qsv -hwaccel_output_format qsv`
+  - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
   - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
 
 ### HandBrake Options
@@ -567,17 +502,14 @@ These commands have no conditional logic and will process all specified media fi
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
-- [Newtonsoft.Json](https://www.newtonsoft.com/json)
-- [System.CommandLine](https://github.com/dotnet/command-line-api)
+- [JsonSchema.Net.Generation][jsonschema-link]
 - [Serilog](https://serilog.net/)
 - [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
 - [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [Microsoft .NET Linux Docker Images](https://hub.docker.com/_/microsoft-dotnet)
 - [Rob Savoury's PPA][savoury-link]
-- [Arch Linux](https://archlinux.org/)
 
 ## Sample Media Files
 
@@ -607,4 +539,4 @@ These commands have no conditional logic and will process all specified media fi
 [savoury-link]: https://launchpad.net/~savoury1
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
-[github-release-notification]: https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/managing-subscriptions-for-activity-on-github/viewing-your-subscriptions
+[jsonschema-link]: https://json-everything.net/json-schema/

@@ -160,7 +160,7 @@ public partial class FfMpegTool : MediaTool
         return "bin";
     }
 
-    public bool VerifyMedia(string filename, out string error)
+    public bool VerifyMedia(string fileName, out string error)
     {
         // https://trac.ffmpeg.org/ticket/6375
         // Too many packets buffered for output stream 0:1
@@ -171,7 +171,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(filename, commandline);
+        CreateDefaultArgs(fileName, commandline, false);
 
         // Null muxer and exit immediately on error (-xerror)
         commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
@@ -190,7 +190,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remux and copy all streams to MKV
         commandline.Append($"-map 0 -codec copy -f matroska \"{outputName}\"");
@@ -269,7 +269,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, true);
 
         // Input and output map
         commandline.Append($"{inputMap} {outputMap} ");
@@ -290,7 +290,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, true);
 
         // Process all tracks
         commandline.Append("-map 0 ");
@@ -321,7 +321,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
@@ -339,7 +339,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
         // Remove all metadata using -map_metadata -1
         commandline.Append($"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
@@ -349,12 +349,17 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0;
     }
 
-    public bool GetIdetInfo(string filename, out FfMpegIdetInfo idetInfo)
+    public bool GetIdetInfo(string fileName, out FfMpegIdetInfo idetInfo, out string error)
     {
         // Get idet output and parse
         idetInfo = null;
-        return GetIdetInfoText(filename, out var text) &&
-               GetIdetInfoFromText(text, out idetInfo);
+        error = null;
+        if (!GetIdetInfoText(fileName, out var text) || !GetIdetInfoFromText(text, out idetInfo))
+        {
+            error = text;
+            return false;
+        }
+        return true;
     }
 
     private bool GetIdetInfoText(string inputName, out string text)
@@ -369,10 +374,9 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        CreateDefaultArgs(inputName, commandline, false);
 
-        // Counting can report a failure if there are any stream errors
-        // Do not exit on error (-xerror)
+        // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
         // [h264 @ 0x55ec750529c0] Error splitting the input into NAL units.
         // Error while decoding stream #0:0: Invalid data found when processing input
@@ -434,10 +438,17 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
+    private static void CreateDefaultArgs(string inputName, StringBuilder commandline, bool encoding)
     {
-        // Global options
-        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+        // Add custom global options when encoding
+        if (encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global))
+        {
+            commandline.Append($"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} ");
+        }
+        else
+        {
+            commandline.Append($"{GlobalOptions} ");
+        }
 
         // Test snippets
         if (Program.Options.TestSnippets)
@@ -450,23 +461,29 @@ public partial class FfMpegTool : MediaTool
         commandline.Append($"-i \"{inputName}\" ");
 
         // Output options
-        commandline.Append($"{Program.Config.ConvertOptions.FfMpegOptions.Output} ");
+        commandline.Append($"{OutputOptions} ");
 
         // Minimize output when running in parallel mode
         if (Program.Options.Parallel)
         {
-            commandline.Append("-hide_banner -nostats ");
+            commandline.Append($"{ParallelOptions} ");
         }
     }
 
+    public const string ParallelOptions = "-hide_banner -nostats";
+    public const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
+    public const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+    public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
+    public const string DefaultAudioOptions = "ac3";
+
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex InstalledVersionRegex();
+    public static partial Regex InstalledVersionRegex();
 
     private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
     private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
     private const string IdetMultiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
     private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
     [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    internal static partial Regex IdetRegex();
+    public static partial Regex IdetRegex();
 }

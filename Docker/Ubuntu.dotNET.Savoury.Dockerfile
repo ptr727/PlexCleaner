@@ -36,6 +36,10 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Upgrade
+RUN apt-get update \
+    && apt-get upgrade -y
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
@@ -66,10 +70,12 @@ LABEL name="PlexCleaner" \
 # Prevent EULA and confirmation prompts in installers
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install prerequisites
+# Upgrade
 RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y \
+    && apt-get upgrade -y
+
+# Install prerequisites
+RUN apt-get install -y \
         apt-utils \
         locales \
         locales-all \

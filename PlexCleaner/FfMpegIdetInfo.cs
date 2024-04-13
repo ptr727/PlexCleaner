@@ -53,8 +53,8 @@ public class FfMpegIdetInfo
         return InterlacedPercentage > Program.InterlacedThreshold;
     }
 
-    public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo)
+    public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo, out string error)
     {
-        return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo);
+        return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo, out error);
     }
 }

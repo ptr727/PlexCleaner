@@ -31,10 +31,6 @@ Images are updated weekly with the latest upstream updates.
   - Media processing tools are installed from the standard repositories.
   - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
   - There is currently no `linux/arm/v7` package for [HandBrake](https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=).
-- `alpine-edge`: Builds using [Alpine Edge](https://hub.docker.com/_/alpine/) as base image.
-  - Media processing tools are installed from the standard repositories.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-  - There is currently no `linux/arm/v7` package for [HandBrake](https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=).
 - `debian`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
   - Media processing tools are installed from the standard repositories.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
@@ -72,11 +68,9 @@ include({{savoury.ver}})
 include({{debian.ver}})
 ```
 
-### `ptr727/plexcleaner:alpine-edge`
+### `ptr727/plexcleaner:alpine`
 
-```text
-include({{alpine-edge.ver}})
-```
+*Alpine is [not](https://github.com/ptr727/PlexCleaner/issues/344) currently being built.*
 
 ### `ptr727/plexcleaner:arch`
 
