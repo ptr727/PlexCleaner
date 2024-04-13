@@ -38,9 +38,12 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Upgrade
+RUN pacman -Syu --noconfirm
+
 # Install .NET SDK
 # https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
-RUN pacman -Syu --noconfirm dotnet-sdk
+RUN pacman -S --noconfirm dotnet-sdk
 
 # Install .NET from AUR if required version not yet available in standard packages
 # https://aur.archlinux.org/packages/dotnet-sdk-bin
@@ -78,13 +81,14 @@ LABEL name="PlexCleaner" \
 # Default timezone is UTC
 ENV TZ=Etc/UTC
 
+# Upgrade
+RUN pacman -Syu --noconfirm
+
 # Install prerequisites and do base configuration
-RUN pacman-key --init \
-    && echo 'en_US.UTF-8 UTF-8' | tee -a /etc/locale.gen \
+RUN echo 'en_US.UTF-8 UTF-8' | tee -a /etc/locale.gen \
     && locale-gen \
     && echo 'LANG=en_US.UTF-8' | tee /etc/locale.conf \
-    && pacman --sync --noconfirm --refresh --sysupgrade \
-    && pacman --sync --noconfirm \
+    && pacman -S --noconfirm \
         p7zip \
         wget
 
@@ -109,7 +113,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://archlinux.org/packages/community/x86_64/mediainfo/
 # https://archlinux.org/packages/community/x86_64/handbrake-cli/
 # https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
-RUN pacman -Syu --noconfirm \
+RUN pacman -S --noconfirm \
         # Install released .NET if not using AUR package
         dotnet-runtime \
         ffmpeg \
@@ -119,7 +123,7 @@ RUN pacman -Syu --noconfirm \
         mkvtoolnix-cli
 
 # Cleanup
-RUN echo "y\ny" | pacman --sync --noconfirm --clean --clean
+RUN echo "y\ny" | pacman -S --noconfirm --clean
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

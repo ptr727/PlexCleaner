@@ -56,6 +56,10 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Upgrade
+RUN apt-get update \
+    && apt-get upgrade -y
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
@@ -122,10 +126,12 @@ RUN touch /etc/apt/preferences.d/stable.pref \
     && touch /etc/apt/sources.list.d/experimental.list \
     && echo "deb http://deb.debian.org/debian experimental main" >> /etc/apt/sources.list.d/experimental.list
 
-# Install prerequisites
+# Upgrade
 RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y \
+    && apt-get upgrade -y
+
+# Install prerequisites
+RUN apt-get install -y \
         apt-utils \
         locales \
         locales-all \

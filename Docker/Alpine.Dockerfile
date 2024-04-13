@@ -39,9 +39,13 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Upgrade
+RUN apk update \
+    && apk upgrade
+
 # Install .NET SDK
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-sdk
-RUN apk --upgrade --no-cache add dotnet8-sdk
+RUN apk add dotnet8-sdk
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -77,12 +81,16 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     TZ=Etc/UTC
 
+# Upgrade
+RUN apk update \
+    && apk upgrade
+
 # Install .NET Runtime
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
-RUN apk --upgrade --no-cache add dotnet8-runtime
+RUN apk add dotnet8-runtime
 
 # Install prerequisites
-RUN apk --upgrade --no-cache add \
+RUN apk add \
         icu-data-full \
         icu-libs \
         p7zip \
@@ -100,7 +108,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
-RUN apk --upgrade --no-cache add \
+RUN apk add \
         ffmpeg\
         mediainfo \
         mkvtoolnix \

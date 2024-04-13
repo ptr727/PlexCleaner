@@ -29,6 +29,9 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.8:
+  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
+  - Will re-enable alpine builds if Alpine 3.20 and Handbrake is stable.
 - Version 3.7:
   - Added `ProcessOptions:IgnoreFiles` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
