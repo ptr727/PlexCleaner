@@ -30,16 +30,15 @@ Docker images are published on [Docker Hub][docker-link].
 ## Release Notes
 
 - Version 3.7:
-  - Added `ProcessOptions:IgnoreFiles` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
+  - Added `ProcessOptions:FileIgnoreMasks` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
     - Wildcard support now also allows excluding temporary UnRaid FuseFS files, e.g. `*.fuse_hidden*`.
   - Settings JSON schema changed from v3 to v4.
-    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:IgnoreExtensions`.
-      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:IgnoreExtensions` : `*.nfo`.
-    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need to for user changeable values.
-    - `ConvertOptions:FfMpegOptions:Global` no longer require defaults values, only add custom values for e.g. hardware acceleration options, existing values will be converted.
+    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:FileIgnoreMasks`.
+      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:FileIgnoreMasks` : `*.nfo`.
+    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need to for user configurable values.
+    - `ConvertOptions:FfMpegOptions:Global` no longer requires defaults values and will only be used during encoding, only add custom values for e.g. hardware acceleration, existing values will be converted.
       - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
-      - E.g. `-analyzeduration 2147483647 -probesize 2147483647` will be converted to ``.
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
   - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
