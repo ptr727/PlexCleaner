@@ -228,6 +228,7 @@ jobs:
   
     - name: Get image size
       run: |
+        docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         mkdir -p ${{ runner.temp }}/versions
         touch ${{ runner.temp }}/versions/${{ matrix.file }}
         echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} >> ${{ runner.temp }}/versions/${{ matrix.file }}
