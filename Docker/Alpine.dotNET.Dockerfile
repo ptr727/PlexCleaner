@@ -8,13 +8,15 @@
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-alpine3.19 /bin/sh
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-develop /bin/sh
 
+# Create and use multi platform build environment
+# docker buildx create --name "plexcleaner" --use
+
 # Build Dockerfile
 # docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
-
 
 
 # Builder layer
@@ -84,14 +86,14 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
 RUN apk update \
     && apk upgrade
 
-# Install prerequisites
+# Install dependencies
 RUN apk add \
         icu-data-full \
         icu-libs \
         p7zip \
         tzdata \
         wget
-        
+
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 RUN wget https://aka.ms/getvsdbgsh \

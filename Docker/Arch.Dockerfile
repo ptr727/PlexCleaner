@@ -6,13 +6,15 @@
 # docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:arch-develop /bin/bash
 
+# Create and use multi platform build environment
+# docker buildx create --name "plexcleaner" --use
+
 # Build Dockerfile
 # docker buildx build --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
-
 
 
 # Builder layer
@@ -84,7 +86,7 @@ ENV TZ=Etc/UTC
 # Upgrade
 RUN pacman -Syu --noconfirm
 
-# Install prerequisites and do base configuration
+# Install dependencies
 RUN echo 'en_US.UTF-8 UTF-8' | tee -a /etc/locale.gen \
     && locale-gen \
     && echo 'LANG=en_US.UTF-8' | tee /etc/locale.conf \

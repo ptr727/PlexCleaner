@@ -6,13 +6,15 @@
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
+# Create and use multi platform build environment
+# docker buildx create --name "plexcleaner" --use
+
 # Build Dockerfile
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
-
 
 
 # Builder layer
@@ -23,8 +25,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS builder
 WORKDIR /Builder
 
 # Build platform args
-ARG \
-    TARGETPLATFORM \
+ARG TARGETPLATFORM \
     TARGETARCH \
     BUILDPLATFORM
 
@@ -74,7 +75,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get upgrade -y
 
-# Install prerequisites
+# Install dependencies
 RUN apt-get install -y \
         apt-utils \
         locales \
