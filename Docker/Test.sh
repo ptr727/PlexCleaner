@@ -11,7 +11,7 @@
 #   --env TZ=America/Los_Angeles \
 #   --volume /data/media/test:/Test/Media:rw \
 #   --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
-#   docker.io/ptr727/plexcleaner:savoury-develop \
+#   docker.io/ptr727/plexcleaner:ubuntu-develop \
 #   /Test/Test.sh
 
 # Use debug build for testing

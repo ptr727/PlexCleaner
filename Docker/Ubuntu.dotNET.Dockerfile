@@ -3,17 +3,17 @@
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy  /bin/bash
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy  /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 # Create and use multi platform build environment
 # docker buildx create --name "plexcleaner" --use
 
 # Build Dockerfile
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
