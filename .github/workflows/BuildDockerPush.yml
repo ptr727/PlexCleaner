@@ -222,18 +222,15 @@ jobs:
 
     steps:
 
-    # https://github.com/marketplace/actions/checkout
-    - name: Checkout
-      uses: actions/checkout@v4
-  
+    # Get image size
     - name: Get image size
       run: |
-        docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         mkdir -p ${{ runner.temp }}/versions
         touch ${{ runner.temp }}/versions/${{ matrix.file }}
         echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} >> ${{ runner.temp }}/versions/${{ matrix.file }}
-        echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | .SchemaV2Manifest.layers[].size') >> ${{ runner.temp }}/versions/${{ matrix.file }}
+        echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec) >> ${{ runner.temp }}/versions/${{ matrix.file }}
 
+    # Get tool versions in container
     # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
       uses: addnab/docker-run-action@v3
@@ -249,10 +246,11 @@ jobs:
           echo MkvMerge: $(mkvmerge --version) >> /versions/${{ matrix.file }}
           echo FfMpeg: $(ffmpeg -version) >> /versions/${{ matrix.file }}
 
+    # Print version file contents
     - name: Print versions
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
-      # https://github.com/marketplace/actions/upload-a-build-artifact
+    # https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload version artifacts
       uses: actions/upload-artifact@v4
       with:
