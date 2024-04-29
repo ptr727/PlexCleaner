@@ -225,6 +225,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
   
+    - name: Get image size
+      run: |
+        echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} > ${{ runner.temp }}/versions/${{ matrix.file }}
+        echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | .SchemaV2Manifest.layers[].size') >> ${{ runner.temp }}/versions/${{ matrix.file }}
+
     # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
       uses: addnab/docker-run-action@v3
@@ -232,8 +237,6 @@ jobs:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ runner.temp }}/versions:/versions
         run: |
-          echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} > /versions/${{ matrix.file }}
-          echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | .SchemaV2Manifest.layers[].size') >> /versions/${{ matrix.file }}
           echo OS: $(. /etc/os-release; echo $PRETTY_NAME) >> /versions/${{ matrix.file }}
           echo dotNET: $(dotnet --info) >> /versions/${{ matrix.file }}
           echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) >> /versions/${{ matrix.file }}
