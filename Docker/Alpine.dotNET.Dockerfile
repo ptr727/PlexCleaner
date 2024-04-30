@@ -1,7 +1,10 @@
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Alpine 3.19
+# .NET installed using MCR .NET base image
+# linux/amd64,linux/arm64
+# ptr727/plexcleaner:alpine
+# TODO: Disabled until 3.20 is released due to missing Handbrake
 
-# There is no HandBrake package for arm/v7
-# https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
+# Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 /bin/sh
@@ -28,8 +31,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19 AS bu
 WORKDIR /Builder
 
 # Build platform args
-ARG \
-    TARGETPLATFORM \
+ARG TARGETPLATFORM \
     TARGETARCH \
     BUILDPLATFORM
 

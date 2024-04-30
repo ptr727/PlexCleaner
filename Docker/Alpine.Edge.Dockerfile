@@ -1,9 +1,9 @@
+# Alpine Edge
+# .NET installed using package manager
+# linux/amd64,linux/arm64
+# ptr727/plexcleaner:alpine-edge
+
 # Refer to Debian.dotNET.Dockerfile for build plan
-
-# No MCR with .NET preinstalled for Alpine Edge
-
-# There is no HandBrake package for arm/v7
-# https://pkgs.alpinelinux.org/packages?name=handbrake&branch=edge&repo=&arch=&maintainer=
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing alpine:edge /bin/sh
@@ -27,8 +27,7 @@ FROM --platform=$BUILDPLATFORM alpine:edge AS builder
 WORKDIR /Builder
 
 # Build platform args
-ARG \
-    TARGETPLATFORM \
+ARG TARGETPLATFORM \
     TARGETARCH \
     BUILDPLATFORM
 
@@ -86,10 +85,6 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
 RUN apk update \
     && apk upgrade
 
-# Install .NET Runtime
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
-RUN apk add dotnet8-runtime
-
 # Install dependencies
 RUN apk add \
         icu-data-full \
@@ -97,6 +92,10 @@ RUN apk add \
         p7zip \
         tzdata \
         wget
+
+# Install .NET Runtime
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
+RUN apk add dotnet8-runtime
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -111,9 +110,9 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
 RUN apk add \
         ffmpeg\
+        handbrake \
         mediainfo \
-        mkvtoolnix \
-        handbrake
+        mkvtoolnix
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

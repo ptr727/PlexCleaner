@@ -1,3 +1,8 @@
+# Debian Bookworm 12.0
+# .NET installed using MCR .NET base image
+# linux/amd64,linux/arm64,linux/arm/v7
+# ptr727/plexcleaner:debian
+
 # Multi-architecture and multi-stage docker build
 # https://www.docker.com/blog/faster-multi-platform-builds-dockerfile-cross-compilation-guide/
 # https://devblogs.microsoft.com/dotnet/improving-multiplatform-container-support/
@@ -103,11 +108,13 @@ RUN apt-get update \
     && apt-get upgrade -y
 
 # Install dependencies
-RUN apt-get install -y \
-        apt-utils \
+RUN apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libicu72 \
         locales \
         locales-all \
         p7zip-full \
+        tzdata \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
 

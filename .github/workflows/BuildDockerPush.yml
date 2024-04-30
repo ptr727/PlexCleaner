@@ -119,10 +119,27 @@ jobs:
             platforms: linux/amd64
             cache-scope: ubuntu
             secrets: SAVOURY_PPA_AUTH
+            # Also tag with latest and version number
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
+
+          # Ubuntu Rolling: linux/amd64,linux/arm64,linux/arm/v7
+          - file: ./Docker/Ubuntu.Rolling.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: ubuntu-rolling
+            secrets: SAVOURY_PPA_AUTH
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-rolling' || 'ubuntu-rolling-develop' }}
+
+          # Ubuntu Devel: linux/amd64,linux/arm64,linux/arm/v7
+          - file: ./Docker/Ubuntu.Devel.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: ubuntu-devel
+            secrets: SAVOURY_PPA_AUTH
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
 
           # Arch: linux/amd64
           - file: ./Docker/Arch.Dockerfile
@@ -217,6 +234,10 @@ jobs:
             file: alpine-edge.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
             file: ubuntu.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-rolling' || 'ubuntu-rolling-develop' }}
+            file: ubuntu-rolling.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
+            file: ubuntu-devel.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
             file: arch.ver
 

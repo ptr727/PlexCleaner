@@ -1,3 +1,8 @@
+# Ubuntu Jammy 22.04 LTS
+# .NET installed using MCR .NET base image
+# linux/amd64
+# ptr727/plexcleaner:ubuntu
+
 # Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
@@ -76,12 +81,11 @@ RUN apt-get update \
     && apt-get upgrade -y
 
 # Install dependencies
-RUN apt-get install -y \
-        apt-utils \
+RUN apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libicu70 \
         locales \
         locales-all \
-        lsb-core \
-        software-properties-common \
         p7zip-full \
         tzdata \
         wget \
@@ -106,7 +110,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 RUN wget -O repo-mediaarea_all.deb https://mediaarea.net/repo/deb/repo-mediaarea_1.0-24_all.deb \
     && dpkg -i repo-mediaarea_all.deb \
     && apt-get update \
-    && apt-get install -y mediainfo \
+    && apt-get install -y --no-install-recommends mediainfo \
     && rm repo-mediaarea_all.deb
 
 # Install MKVToolNix
@@ -115,7 +119,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && touch /etc/apt/sources.list.d/mkvtoolnix.list \
     && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gpg-pub-moritzbunkus.gpg] https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/mkvtoolnix.list' \
     && apt-get update \
-    && apt-get install -y mkvtoolnix
+    && apt-get install -y --no-install-recommends mkvtoolnix
 
 # Install FfMpeg and HandBrake from Rob Savoury's private PPA
 # https://launchpad.net/~savoury1
@@ -141,7 +145,7 @@ RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH 
     && add-apt-repository -y ppa:savoury1/ffmpeg6 \
     && add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get update \
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli
 

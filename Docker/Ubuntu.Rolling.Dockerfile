@@ -1,36 +1,34 @@
-# Arch
+# Ubuntu Rolling (latest release)
 # .NET installed using package manager
-# linux/amd64
-# ptr727/plexcleaner:arch
+# linux/amd64,linux/arm64,linux/arm/v7
+# ptr727/plexcleaner:ubuntu-rolling
 
 # Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing archlinux:latest /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:arch-develop /bin/bash
+# docker run -it --rm --pull always --name Testing ubuntu:rolling /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-rolling /bin/bash
+# export DEBIAN_FRONTEND=noninteractive
 
 # Create and use multi platform build environment
 # docker buildx create --name "plexcleaner" --use
 
 # Build Dockerfile
-# docker buildx build --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Ubuntu.Rolling.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Arch.Dockerfile .
+# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Rolling.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
 # Builder layer
-# Use base image with AUR helpers pre-installed
-# https://hub.docker.com/r/greyltc/archlinux-aur
-FROM greyltc/archlinux-aur:yay as builder
+FROM --platform=$BUILDPLATFORM ubuntu:rolling AS builder
 
 # Layer workdir
 WORKDIR /Builder
 
 # Build platform args
-ARG \
-    TARGETPLATFORM \
+ARG TARGETPLATFORM \
     TARGETARCH \
     BUILDPLATFORM
 
@@ -43,13 +41,12 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
 # Upgrade
-RUN pacman -Syu --noconfirm
+RUN apt-get update \
+    && apt-get upgrade -y
 
 # Install .NET SDK
-# https://aur.archlinux.org/packages/dotnet-sdk-bin
-# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-sdk-bin'
-# https://archlinux.org/packages/extra/x86_64/dotnet-sdk/
-RUN pacman -S --noconfirm dotnet-sdk
+RUN apt-get install -y --no-install-recommends \
+        dotnet-sdk-8.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -68,10 +65,7 @@ RUN ./Build.sh
 
 
 # Final layer
-# https://hub.docker.com/_/archlinux
-# Use standard image if YAY is not required
-# FROM greyltc/archlinux-aur:yay as final
-FROM archlinux:latest as final
+FROM --platform=$BUILDPLATFORM ubuntu:rolling AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -80,31 +74,33 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-# Default timezone is UTC
-ENV TZ=Etc/UTC
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
-RUN pacman -Syu --noconfirm
+RUN apt-get update \
+    && apt-get upgrade -y
 
 # Install dependencies
-RUN echo 'en_US.UTF-8 UTF-8' | tee -a /etc/locale.gen \
-    && locale-gen \
-    && echo 'LANG=en_US.UTF-8' | tee /etc/locale.conf \
-    && pacman -S --noconfirm \
-        p7zip \
-        wget
+RUN apt-get install -y --no-install-recommends \
+        ca-certificates \
+        locales \
+        locales-all \
+        p7zip-full \
+        tzdata \
+        wget \
+    && locale-gen --no-purge en_US en_US.UTF-8
 
 # Set locale to UTF-8 after running locale-gen
-ENV LANG=en_US.UTF-8 \
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
+ENV TZ=Etc/UTC \
+    LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-# https://aur.archlinux.org/packages/dotnet-runtime-bin
-# RUN sudo -u ab -D~ bash -c 'yay -Syu --removemake --needed --noprogressbar --noconfirm dotnet-runtime-bin'
-# https://archlinux.org/packages/extra/x86_64/dotnet-runtime/
-RUN pacman -S --noconfirm \
-        dotnet-runtime
+RUN apt-get install -y --no-install-recommends \
+        dotnet-runtime-8.0
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -113,19 +109,20 @@ RUN wget https://aka.ms/getvsdbgsh \
     && rm getvsdbgsh
 
 # Install media tools
-# https://archlinux.org/packages/extra/x86_64/ffmpeg/
-# https://archlinux.org/packages/community/x86_64/mediainfo/
-# https://archlinux.org/packages/community/x86_64/handbrake-cli/
-# https://archlinux.org/packages/extra/x86_64/mkvtoolnix-cli/
-RUN pacman -S --noconfirm \
+# https://packages.ubuntu.com/noble/ffmpeg
+# https://packages.ubuntu.com/noble/handbrake-cli
+# https://packages.ubuntu.com/noble/mediainfo
+# https://packages.ubuntu.com/noble/mkvtoolnix
+RUN apt-get install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \
-        intel-media-sdk \
         mediainfo \
-        mkvtoolnix-cli
+        mkvtoolnix
 
 # Cleanup
-RUN echo "y\ny" | pacman -S --noconfirm --clean
+RUN apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy PlexCleaner from builder layer
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner

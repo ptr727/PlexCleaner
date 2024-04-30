@@ -1,6 +1,9 @@
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Debian Testing
+# .NET installed using install scripts
+# linux/amd64,linux/arm64,linux/arm/v7
+# ptr727/plexcleaner:debian-testing
 
-# No MCR with .NET preinstalled for Debian Testing
+# Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing debian:testing-slim /bin/bash
@@ -38,6 +41,7 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# .NET in Docker
 ENV DEBIAN_FRONTEND=noninteractive \
     DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_USE_POLLING_FILE_WATCHER=true \
@@ -51,14 +55,14 @@ RUN apt-get update \
 # https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/8.0/bookworm-slim/amd64/Dockerfile
 # https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/8.0/bookworm-slim/amd64/Dockerfile
 # https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian#dependencies
-# TODO: Most packages are already included in Testing, and / or versions in docs are out of date
 RUN apt-get install -y --no-install-recommends \
         ca-certificates \
         libicu72 \
         wget
 
 # Install .NET SDK
-# Msft package repo only supports x64, use install script
+# Installing .NET using install script requires .NET dependencies to be manually installed
+# TODO: Msft package repo only supports x64 per docs, verify
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
     && chmod +x dotnet-install.sh \
     && ./dotnet-install.sh --channel 8.0 -installdir /usr/share/dotnet \
@@ -104,7 +108,6 @@ RUN apt-get update \
 
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
-        apt-utils \
         ca-certificates \
         libicu72 \
         locales \
@@ -121,6 +124,7 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
 # Install .NET runtime
+# Installing .NET using install script requires .NET dependencies to be manually installed
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
     && chmod +x dotnet-install.sh \
     && ./dotnet-install.sh --channel 8.0 --runtime dotnet -installdir /usr/share/dotnet \
