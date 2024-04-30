@@ -6,8 +6,8 @@
 # Refer to Debian.dotNET.Dockerfile for build plan
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy  /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy  /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy /bin/bash
+# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-develop /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
@@ -82,10 +82,12 @@ RUN apt-get update \
 
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
+        apt-utils \
         ca-certificates \
-        libicu70 \
         locales \
         locales-all \
+        lsb-release \
+        software-properties-common \
         p7zip-full \
         tzdata \
         wget \
@@ -129,6 +131,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 
 # Use docker secrets and link the secret file to the filesystem auth.conf
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
+# https://docs.docker.com/build/building/secrets/
 # https://docs.docker.com/build/ci/github-actions/secrets/
 # Github actions configuration:
 #     uses: docker/build-push-action@v5
