@@ -1,23 +1,20 @@
-# Ubuntu Devel
-# .NET installed using package manager
-# linux/amd64,linux/arm64,linux/arm/v7
-# ptr727/plexcleaner:ubuntu-devel
-
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Description: Ubuntu Devel (Oracular)
+# Based on: ubuntu:devel
+# .NET: Ubuntu repository
+# Platforms: linux/amd64, linux/arm64, linux/arm/v7
+# Tag: ptr727/plexcleaner:ubuntu-devel
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing ubuntu:devel /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-devel /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
-# Create and use multi platform build environment
-# docker buildx create --name "plexcleaner" --use
-
 # Build Dockerfile
+# docker buildx create --name "plexcleaner" --use
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Ubuntu.Devel.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Devel.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Devel.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 

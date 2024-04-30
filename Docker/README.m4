@@ -17,48 +17,57 @@ Images are updated weekly with the latest upstream updates.
 
 ## Docker Builds and Tags
 
-- `latest`: Same as `ubuntu`.
-- `develop`: Same as `ubuntu-develop`.
-- `ubuntu`: Builds using [Microsoft .NET pre-installed on Ubuntu LTS](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
-  - Includes the latest [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu).
-  - includes the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu).
-  - Includes the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
+- `latest`: Alias for `ubuntu`.
+- `develop`: Alias for `ubuntu-develop`.
+- `savoury`: Based on [Ubuntu Jammy 22.04 LTS](https://releases.ubuntu.com/) `ubuntu:jammy` base image.
+  - Installs the latest [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu) from the MediaInfo repository.
+  - Installs the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu) from the MkvToolNix repository.
+  - Installs the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
   - Only `linux/amd64` platforms are supported.
-- `ubuntu-rolling`: [Ubuntu Rolling](https://releases.ubuntu.com/) latest release build.
-- `ubuntu-devel`: [Ubuntu Devel](http://archive.ubuntu.com/ubuntu/dists/devel/Release) pre-release build.
-- `alpine`: Builds using [Microsoft .NET pre-installed on Alpine](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
-  - Media processing tools are installed from the standard repositories.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-- `alpine-edge`: [Alpine Edge](https://wiki.alpinelinux.org/wiki/Repositories#Edge) pre-release build.
-- `debian`: Builds using [Microsoft .NET pre-installed on Debian](https://hub.docker.com/_/microsoft-dotnet-sdk/) as base image.
-  - Media processing tools are installed from the standard repositories.
+- `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
+  - Installs media tools from Ubuntu repository.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
-- `debian-testing`: [Debian Testing](https://wiki.debian.org/DebianTesting) pre-release build.
-- `arch`: Builds using [Arch Linux](https://hub.docker.com/_/archlinux) as base image.
-  - Media processing tools are installed from the standard repositories.
-  - Only `linux/amd64` platforms are supported.
+- `ubuntu-devel`: [Ubuntu Devel](http://archive.ubuntu.com/ubuntu/dists/devel/Release) `ubuntu:devel` pre-release base image.
+  - Installs media tools from Ubuntu repository.
+  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `alpine`: Based on [Alpine Latest](https://alpinelinux.org/releases/) `alpine:latest` latest stable release base image.
+  - Installs media tools from the Alpine repository.
+  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
+  - Handbrake on Alpine does not support `linux/arm/v7` builds.
+- `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine-edge` pre-release base image.
+  - Installs media tools from the Alpine repository.
+  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
+  - Handbrake on Alpine does not support `linux/arm/v7` builds.
+- `debian`: Based on [Debian Stable](https://www.debian.org/releases/) `debian:stable-slim` latest stable release base image.
+  - Installs media tools from Debian repository.
+  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `debian-testing`: [Debian Testing](https://www.debian.org/releases/) `debian:testing-slim` pre-release base image.
+  - Installs media tools from Debian repository.
+  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+- `*-develop` : Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
+  - E.g. `ubuntu-develop`, `debian-testing-develop`, etc.
 
 ## Platform Support
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `ubuntu` | &#9745; | &#9744; | &#9744; | ~643MB |
+| `ubuntu` | &#9745; | &#9745; | &#9745; | ~643MB |
 | `alpine` | &#9745; | &#9745; | &#9744; | ~228MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~467MB |
-| `arch` | &#9745; | &#9744; | &#9744; | ~1.1GB |
+| `savoury` | &#9745; | &#9744; | &#9744; | ~643MB |
 
 ## Media Tool Versions
 
-### `ptr727/plexcleaner:ubuntu` (`latest`)
+### `ptr727/plexcleaner:savoury`
+
+```text
+include({{savoury.ver}})
+```
+
+### `ptr727/plexcleaner:ubuntu`
 
 ```text
 include({{ubuntu.ver}})
-```
-
-### `ptr727/plexcleaner:ubuntu-rolling`
-
-```text
-include({{ubuntu-rolling.ver}})
 ```
 
 ### `ptr727/plexcleaner:ubuntu-devel`
@@ -87,10 +96,4 @@ include({{debian-testing.ver}})
 
 ```text
 include({{alpine-edge.ver}})
-```
-
-### `ptr727/plexcleaner:arch`
-
-```text
-include({{arch.ver}})
 ```

@@ -30,7 +30,14 @@ Docker images are published on [Docker Hub][docker-link].
 ## Release Notes
 
 - Version 3.8:
-  - Added Alpine Edge and Debian Testing docker builds.
+  - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
+  - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
+  - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
+  - Alpine Stable builds are still disabled, waiting for Alpine 3.20 to be released.
+  - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS may never get PPA support.
+    - Pinning `savoury` builds to Jammy 22.04 LTS.
+    - Switching `latest` tag to be an alias for Ubuntu Rolling (`ubuntu`) builds.
+    - If media tool versions fall behind `savoury` builds may be deprecated.
 - Version 3.7:
   - Added `ProcessOptions:FileIgnoreMasks` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
@@ -101,11 +108,12 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 ### Docker
 
-- Builds are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).
-- See the Docker [README][docker-link] for image and tag details.
-  - `latest` is based on Ubuntu and contains the most up to date media processing tools.
-  - `alpine` is based on Alpine and is the smallest image.
-  - `debian` is based on Debian and supports the most platforms.
+- Builds are published on [Docker Hub][plexcleaner-hub-link].
+- See the [Docker README][docker-link] for tag details and current media tool versions.
+  - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
+  - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
+  - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
+  - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -522,22 +530,26 @@ These commands have no conditional logic and will process all specified media fi
 
 ***
 
-[release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build
-[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildDockerPush.yml?logo=github&label=Docker%20Build
-[last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
-[last-build-shield]: https://byob.yarr.is/ptr727/PlexCleaner/lastbuild
-[license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
-[release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
-[pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
+[actions-link]: https://github.com/ptr727/PlexCleaner/actions
+[alpine-docker-link]: https://hub.docker.com/_/alpine
+[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[debian-hub-link]: https://hub.docker.com/_/debian
+[discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
-[actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
-[releases-link]: https://github.com/ptr727/PlexCleaner/releases
-[license-link]: ./LICENSE
+[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildDockerPush.yml?logo=github&label=Docker%20Build
 [github-link]: https://github.com/ptr727/PlexCleaner
-[savoury-link]: https://launchpad.net/~savoury1
-[discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
+[plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
 [jsonschema-link]: https://json-everything.net/json-schema/
+[last-build-shield]: https://byob.yarr.is/ptr727/PlexCleaner/lastbuild
+[last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
+[license-link]: ./LICENSE
+[license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
+[pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
+[release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build
+[release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
+[releases-link]: https://github.com/ptr727/PlexCleaner/releases
+[savoury-link]: https://launchpad.net/~savoury1
+[ubuntu-hub-link]: https://hub.docker.com/_/ubuntu

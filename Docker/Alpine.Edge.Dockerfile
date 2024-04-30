@@ -1,22 +1,19 @@
-# Alpine Edge
-# .NET installed using package manager
-# linux/amd64,linux/arm64
-# ptr727/plexcleaner:alpine-edge
-
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Description: Alpine Edge (3.20)
+# Based on: alpine:edge
+# .NET: Alpine repository
+# Platforms: linux/amd64, linux/arm64
+# Tag: ptr727/plexcleaner:alpine-edge
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing alpine:edge /bin/sh
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-edge /bin/sh
 
-# Create and use multi platform build environment
-# docker buildx create --name "plexcleaner" --use
-
 # Build Dockerfile
+# docker buildx create --name "plexcleaner" --use
 # docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.Edge.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.Edge.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.Edge.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/sh
 
 

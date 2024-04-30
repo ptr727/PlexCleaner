@@ -1,23 +1,20 @@
-# Ubuntu Rolling (latest release)
-# .NET installed using package manager
-# linux/amd64,linux/arm64,linux/arm/v7
-# ptr727/plexcleaner:ubuntu-rolling
-
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Description: Ubuntu Rolling (Noble)
+# Based on: ubuntu:rolling
+# .NET: Ubuntu repository
+# Platforms: linux/amd64, linux/arm64, linux/arm/v7
+# Tag: ptr727/plexcleaner:ubuntu
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing ubuntu:rolling /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-rolling /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
-# Create and use multi platform build environment
-# docker buildx create --name "plexcleaner" --use
-
 # Build Dockerfile
+# docker buildx create --name "plexcleaner" --use
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Ubuntu.Rolling.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Rolling.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Rolling.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 

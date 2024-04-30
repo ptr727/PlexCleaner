@@ -1,30 +1,25 @@
-# Ubuntu Jammy 22.04 LTS
-# .NET installed using MCR .NET base image
-# linux/amd64
-# ptr727/plexcleaner:ubuntu
-
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Description: Ubuntu LTS and Savoury PPA (Jammy 22.04)
+# Based on:ubuntu:jammy
+# .NET: Ubuntu repository
+# Platforms: linux/amd64
+# Tag: ptr727/plexcleaner:savoury
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu-develop /bin/bash
+# docker run -it --rm --pull always --name Testing ubuntu:jammy /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
-# Create and use multi platform build environment
-# docker buildx create --name "plexcleaner" --use
-
 # Build Dockerfile
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Dockerfile .
+# docker buildx create --name "plexcleaner" --use
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Savoury.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
 # Builder layer
-# https://github.com/dotnet/dotnet-docker/tree/main/src/sdk/8.0/jammy/amd64/Dockerfile
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS builder
+FROM --platform=$BUILDPLATFORM ubuntu:jammy AS builder
 
 # Layer workdir
 WORKDIR /Builder
@@ -46,6 +41,10 @@ ARG BUILD_CONFIGURATION="Debug" \
 RUN apt-get update \
     && apt-get upgrade -y
 
+# Install .NET SDK
+RUN apt-get install -y --no-install-recommends \
+        dotnet-sdk-8.0
+
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
@@ -63,8 +62,7 @@ RUN ./Build.sh
 
 
 # Final layer
-# https://github.com/dotnet/dotnet-docker/tree/main/src/runtime/8.0/jammy/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS final
+FROM --platform=$BUILDPLATFORM ubuntu:jammy AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -82,7 +80,6 @@ RUN apt-get update \
 
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
-        apt-utils \
         ca-certificates \
         gpg-agent \
         locales \
@@ -100,6 +97,10 @@ ENV TZ=Etc/UTC \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
+
+# Install .NET Runtime
+RUN apt-get install -y --no-install-recommends \
+        dotnet-runtime-8.0
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes

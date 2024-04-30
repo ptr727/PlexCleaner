@@ -1,56 +1,34 @@
-# Debian Bookworm 12.0
-# .NET installed using MCR .NET base image
-# linux/amd64,linux/arm64,linux/arm/v7
-# ptr727/plexcleaner:debian
+# Description: Debian Stable (12 Bookworm)
+# Based on: debian:stable-slim
+# .NET: Msft repository
+# Platforms: linux/amd64, linux/arm64, linux/arm/v7
+# Tag: ptr727/plexcleaner:debian
 
-# Multi-architecture and multi-stage docker build
-# https://www.docker.com/blog/faster-multi-platform-builds-dockerfile-cross-compilation-guide/
-# https://devblogs.microsoft.com/dotnet/improving-multiplatform-container-support/
-# https://docs.docker.com/build/building/multi-stage/
-
-# .NET does not support QEMU
-# Only run compiled code when BUILDPLATFORM == TARGETPLATFORM
-# https://gitlab.com/qemu-project/qemu/-/issues/249
-
-# Loading all targets are not supported, test only linux/amd64 target
-# https://github.com/docker/buildx/issues/59
-
-# Troubleshooting, add "build --progress plain --no-cache"
+# TODO: Update Msft repository when Trixie is released
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-develop /bin/bash
+# docker run -it --rm --pull always --name Testing debian:stable-slim /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
-# Create and use multi platform build environment
-# docker buildx create --name "plexcleaner" --use
-
 # Build Dockerfile
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
+# docker buildx create --name "plexcleaner" --use
+# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.Stable.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.dotNET.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.Stable.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
 # Builder layer
-# https://github.com/dotnet/dotnet-docker/tree/main/src/sdk/8.0/bookworm-slim/amd64/Dockerfile
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS builder
+FROM --platform=$BUILDPLATFORM debian:stable-slim AS builder
 
 # Layer workdir
 WORKDIR /Builder
 
-# Global builder variables
-# https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
-
 # Build platform args
-ARG \
-    # Platform of the build result. Eg linux/amd64, linux/arm/v7, windows/amd64
-    TARGETPLATFORM \
-    # Architecture component of TARGETPLATFORM
+ARG TARGETPLATFORM \
     TARGETARCH \
-    # Platform of the node performing the build
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
@@ -64,6 +42,19 @@ ARG BUILD_CONFIGURATION="Debug" \
 # Upgrade
 RUN apt-get update \
     && apt-get upgrade -y
+
+# Install dependencies
+RUN apt-get install -y --no-install-recommends \
+        ca-certificates \
+        wget
+
+# Install .NET SDK
+RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        dotnet-sdk-8.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -82,13 +73,7 @@ RUN ./Build.sh
 
 
 # Final layer
-# Build from .NET Debian base image
-# https://hub.docker.com/_/microsoft-dotnet
-# https://hub.docker.com/_/microsoft-dotnet-sdk/
-# https://github.com/dotnet/dotnet-docker
-# https://mcr.microsoft.com/en-us/product/dotnet/sdk/tags
-# https://github.com/dotnet/dotnet-docker/tree/main/src/runtime/8.0/bookworm-slim/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:8.0-bookworm-slim as final
+FROM --platform=$BUILDPLATFORM debian:stable-slim AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -97,11 +82,8 @@ LABEL name="PlexCleaner" \
     description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
-ENV \
-    # Default timezone is UTC
-    TZ=Etc/UTC \
-    # Prevent EULA and confirmation prompts in installers
-    DEBIAN_FRONTEND=noninteractive
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
 RUN apt-get update \
@@ -110,7 +92,6 @@ RUN apt-get update \
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
         ca-certificates \
-        libicu72 \
         locales \
         locales-all \
         p7zip-full \
@@ -120,9 +101,18 @@ RUN apt-get install -y --no-install-recommends \
 
 # Set locale to UTF-8 after running locale-gen
 # https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
-ENV LANG=en_US.UTF-8 \
+ENV TZ=Etc/UTC \
+    LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
+
+# Install .NET Runtime
+RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        dotnet-runtime-8.0
 
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
@@ -135,7 +125,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 # https://tracker.debian.org/pkg/handbrake
 # https://tracker.debian.org/pkg/mediainfo
 # https://tracker.debian.org/pkg/mkvtoolnix
-RUN apt-get install -y \
+RUN apt-get install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \
         mediainfo \
