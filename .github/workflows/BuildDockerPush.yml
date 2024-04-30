@@ -115,7 +115,7 @@ jobs:
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
             
           # Ubuntu Savoury:
-          - file: ./Docker/Ubuntu.dotNET.Dockerfile
+          - file: ./Docker/Ubuntu.Savoury.Dockerfile
             platforms: linux/amd64
             cache-scope: savoury
             secrets: SAVOURY_PPA_AUTH
