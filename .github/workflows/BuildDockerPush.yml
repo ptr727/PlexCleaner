@@ -226,7 +226,7 @@ jobs:
             file: alpine-edge.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
             file: ubuntu.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
             file: ubuntu-devel.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             file: savoury.ver
