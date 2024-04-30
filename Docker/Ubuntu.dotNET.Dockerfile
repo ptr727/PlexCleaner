@@ -84,6 +84,7 @@ RUN apt-get update \
 RUN apt-get install -y --no-install-recommends \
         apt-utils \
         ca-certificates \
+        gpg-agent \
         locales \
         locales-all \
         lsb-release \
@@ -132,12 +133,11 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # Use docker secrets and link the secret file to the filesystem auth.conf
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
 # https://docs.docker.com/build/building/secrets/
+# buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf
 # https://docs.docker.com/build/ci/github-actions/secrets/
-# Github actions configuration:
-#     uses: docker/build-push-action@v5
-#     with:
-#       # SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
-#       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
+# uses: docker/build-push-action@v5
+# with:
+#   SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
 
 RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH /etc/apt/auth.conf.d/savoury.conf \
     && touch /etc/apt/sources.list.d/savoury.list \
