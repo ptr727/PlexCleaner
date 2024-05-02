@@ -146,7 +146,7 @@ RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH 
     && add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    && add-apt-repository -y ppa:savoury1/ffmpeg6 \
+    && add-apt-repository -y ppa:savoury1/ffmpeg7 \
     && add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get update \
     && apt-get install -y --no-install-recommends \

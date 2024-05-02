@@ -34,10 +34,10 @@ Docker images are published on [Docker Hub][docker-link].
   - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
   - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
   - Alpine Stable builds are still disabled, waiting for Alpine 3.20 to be released.
-  - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS may never get PPA support.
-    - Pinning `savoury` builds to Jammy 22.04 LTS.
-    - Switching `latest` tag to be an alias for Ubuntu Rolling (`ubuntu`) builds.
-    - If media tool versions fall behind `savoury` builds may be deprecated.
+  - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
+    - Pinning `savoury` docker builds to Jammy 22.04 LTS.
+    - Switching `latest` docker tag from `savoury` to an alias for `ubuntu` builds, i.e. the latest released version of Ubuntu, currently Noble 24.04 LTS.
+  - Updated `savoury` docker builds to FfMpeg v7, currently the only docker build supporting FfMpeg v7.
 - Version 3.7:
   - Added `ProcessOptions:FileIgnoreMasks` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
     - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
