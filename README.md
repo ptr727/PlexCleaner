@@ -33,7 +33,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
   - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
   - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
-  - Alpine Stable builds are still disabled, waiting for Alpine 3.20 to be released.
+  - Alpine Stable builds are still [disabled](https://github.com/ptr727/PlexCleaner/issues/344), waiting for Alpine 3.20 to be released, ETA 1 June 2024.
   - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
     - Pinning `savoury` docker builds to Jammy 22.04 LTS.
     - Switching `latest` docker tag from `savoury` to an alias for `ubuntu` builds, i.e. the latest released version of Ubuntu, currently Noble 24.04 LTS.
@@ -109,11 +109,12 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 ### Docker
 
 - Builds are published on [Docker Hub][plexcleaner-hub-link].
-- See the [Docker README][docker-link] for tag details and current media tool versions.
+- See the [Docker README][docker-link] for full distribution details and current media tool versions.
   - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
   - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
   - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
   - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
+  - `ptr727/plexcleaner:savoury` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:jammy`).
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
