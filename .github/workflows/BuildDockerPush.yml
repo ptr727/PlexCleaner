@@ -74,54 +74,75 @@ jobs:
     needs: version
 
     strategy:
-      # Keep building, helps with troubleshooting
+      # Keep building even if one job fails, helps with troubleshooting when there are multiple errors
       fail-fast: false
+      # Limit number of concurrent builds
+      # Error: buildx failed with: ERROR: failed to solve: error writing layer blob: maximum timeout reached
+      max-parallel: 4
       
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
         include:
 
-          # Debian: linux/amd64,linux/arm64,linux/arm/v7
-          - file: ./Docker/Debian.dotNET.Dockerfile
+          # Debian Stable:
+          - file: ./Docker/Debian.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: debian
             secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
-          # Alpine: linux/amd64,linux/arm64
-          # - file: ./Docker/Alpine.dotNET.Dockerfile
+          # Debian Testing:
+          - file: ./Docker/Debian.Testing.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: debian-testing
+            secrets: SAVOURY_PPA_AUTH
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
+
+          # TODO: No Alpine stable until 3.20 is released
+          # Alpine Stable:
+          # - file: ./Docker/Alpine.Stable.Dockerfile
           #   platforms: linux/amd64,linux/arm64
           #   cache-scope: alpine
           #   secrets: SAVOURY_PPA_AUTH
           #   tags: |
           #     docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
-          # Alpine Edge: linux/amd64,linux/arm64
-          # - file: ./Docker/Alpine.Dockerfile
-          #   platforms: linux/amd64,linux/arm64
-          #   cache-scope: alpine-edge
-          #   secrets: SAVOURY_PPA_AUTH
-          #   tags: |
-          #     docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
+          # Alpine Edge:
+          - file: ./Docker/Alpine.Edge.Dockerfile
+            platforms: linux/amd64,linux/arm64
+            cache-scope: alpine-edge
+            secrets: SAVOURY_PPA_AUTH
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
             
-          # Ubuntu: linux/amd64
-          - file: ./Docker/Ubuntu.dotNET.Savoury.Dockerfile
+          # Ubuntu Savoury:
+          - file: ./Docker/Ubuntu.Savoury.Dockerfile
             platforms: linux/amd64
             cache-scope: savoury
             secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
+
+          # Ubuntu Rolling:
+          - file: ./Docker/Ubuntu.Rolling.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: ubuntu
+            secrets: SAVOURY_PPA_AUTH
+            # Also tag with latest and version number
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
 
-          # Arch: linux/amd64
-          - file: ./Docker/Arch.Dockerfile
-            platforms: linux/amd64
-            cache-scope: arch
+          # Ubuntu Devel:
+          - file: ./Docker/Ubuntu.Devel.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: ubuntu-devel
             secrets: SAVOURY_PPA_AUTH
             tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
 
     steps:
 
@@ -165,7 +186,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # GitHub cache as unreliable as posting to GHCR, broken pipe errors
+          # GitHub cache is as unreliable as posting to GHCR, broken pipe errors
           # cache-from: type=gha,scope=${{ matrix.cache-scope }}
           # cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
@@ -199,21 +220,31 @@ jobs:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             file: debian.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
+            file: debian-testing.ver
+          # TODO: No Alpine stable until 3.20 is released
           # - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
           #   file: alpine.ver
-          # - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
-          #   file: alpine-edge.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
+            file: alpine-edge.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
+            file: ubuntu.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
+            file: ubuntu-devel.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
             file: savoury.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'arch' || 'arch-develop' }}
-            file: arch.ver
 
     steps:
 
-    # https://github.com/marketplace/actions/checkout
-    - name: Checkout
-      uses: actions/checkout@v4
-  
+    # Get image size
+    - name: Get image size
+      run: |
+        mkdir -p ${{ runner.temp }}/versions
+        touch ${{ runner.temp }}/versions/${{ matrix.file }}
+        echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} >> ${{ runner.temp }}/versions/${{ matrix.file }}
+        echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec) >> ${{ runner.temp }}/versions/${{ matrix.file }}
+
+    # Get tool versions in container
     # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
       uses: addnab/docker-run-action@v3
@@ -221,7 +252,7 @@ jobs:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ runner.temp }}/versions:/versions
         run: |
-          echo OS: $(. /etc/os-release; echo $PRETTY_NAME) > /versions/${{ matrix.file }}
+          echo OS: $(. /etc/os-release; echo $PRETTY_NAME) >> /versions/${{ matrix.file }}
           echo dotNET: $(dotnet --info) >> /versions/${{ matrix.file }}
           echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) >> /versions/${{ matrix.file }}
           echo HandBrakeCLI: $(HandBrakeCLI --version) >> /versions/${{ matrix.file }}
@@ -229,6 +260,7 @@ jobs:
           echo MkvMerge: $(mkvmerge --version) >> /versions/${{ matrix.file }}
           echo FfMpeg: $(ffmpeg -version) >> /versions/${{ matrix.file }}
 
+    # Print version file contents
     - name: Print versions
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
@@ -238,10 +270,6 @@ jobs:
       with:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
-
-  # TODO: Calculate image sizes at publish time
-  # https://stackoverflow.com/questions/33352901/get-the-size-of-a-docker-image-before-a-pull
-  # docker manifest inspect -v alpine:latest | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | .SchemaV2Manifest.layers[].size'
 
   # Update Docker README.md
   updatereadme:

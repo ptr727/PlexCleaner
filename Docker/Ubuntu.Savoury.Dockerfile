@@ -1,30 +1,31 @@
-# Refer to Debian.dotNET.Dockerfile for build plan
+# Description: Ubuntu LTS and Savoury PPA (Jammy 22.04)
+# Based on:ubuntu:jammy
+# .NET: Ubuntu repository
+# Platforms: linux/amd64
+# Tag: ptr727/plexcleaner:savoury
 
 # Test image in shell:
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/sdk:8.0-jammy  /bin/bash
-# docker run -it --rm --pull always --name Testing mcr.microsoft.com/dotnet/runtime:8.0-jammy  /bin/bash
-# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury-develop /bin/bash
+# docker run -it --rm --pull always --name Testing ubuntu:jammy /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury /bin/bash
 # export DEBIAN_FRONTEND=noninteractive
 
 # Build Dockerfile
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx create --name "plexcleaner" --use
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Savoury.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --progress plain --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.dotNET.Savoury.Dockerfile .
+# docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Savoury.Dockerfile .
 # docker run -it --rm --name Testing testing:latest /bin/bash
 
 
-
 # Builder layer
-# https://github.com/dotnet/dotnet-docker/tree/main/src/sdk/8.0/jammy/amd64/Dockerfile
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS builder
+FROM --platform=$BUILDPLATFORM ubuntu:jammy AS builder
 
 # Layer workdir
 WORKDIR /Builder
 
 # Build platform args
-ARG \
-    TARGETPLATFORM \
+ARG TARGETPLATFORM \
     TARGETARCH \
     BUILDPLATFORM
 
@@ -39,6 +40,10 @@ ARG BUILD_CONFIGURATION="Debug" \
 # Upgrade
 RUN apt-get update \
     && apt-get upgrade -y
+
+# Install .NET SDK
+RUN apt-get install -y --no-install-recommends \
+        dotnet-sdk-8.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -57,8 +62,7 @@ RUN ./Build.sh
 
 
 # Final layer
-# https://github.com/dotnet/dotnet-docker/tree/main/src/runtime/8.0/jammy/amd64/Dockerfile
-FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS final
+FROM --platform=$BUILDPLATFORM ubuntu:jammy AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -74,12 +78,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get upgrade -y
 
-# Install prerequisites
-RUN apt-get install -y \
-        apt-utils \
+# Install dependencies
+RUN apt-get install -y --no-install-recommends \
+        ca-certificates \
+        gpg-agent \
         locales \
         locales-all \
-        lsb-core \
+        lsb-release \
         software-properties-common \
         p7zip-full \
         tzdata \
@@ -93,6 +98,10 @@ ENV TZ=Etc/UTC \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+# Install .NET Runtime
+RUN apt-get install -y --no-install-recommends \
+        dotnet-runtime-8.0
+
 # Install VS debug tools
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 RUN wget https://aka.ms/getvsdbgsh \
@@ -105,7 +114,7 @@ RUN wget https://aka.ms/getvsdbgsh \
 RUN wget -O repo-mediaarea_all.deb https://mediaarea.net/repo/deb/repo-mediaarea_1.0-24_all.deb \
     && dpkg -i repo-mediaarea_all.deb \
     && apt-get update \
-    && apt-get install -y mediainfo \
+    && apt-get install -y --no-install-recommends mediainfo \
     && rm repo-mediaarea_all.deb
 
 # Install MKVToolNix
@@ -114,7 +123,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
     && touch /etc/apt/sources.list.d/mkvtoolnix.list \
     && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gpg-pub-moritzbunkus.gpg] https://mkvtoolnix.download/ubuntu/ $(lsb_release -sc) main" >> /etc/apt/sources.list.d/mkvtoolnix.list' \
     && apt-get update \
-    && apt-get install -y mkvtoolnix
+    && apt-get install -y --no-install-recommends mkvtoolnix
 
 # Install FfMpeg and HandBrake from Rob Savoury's private PPA
 # https://launchpad.net/~savoury1
@@ -124,12 +133,12 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 
 # Use docker secrets and link the secret file to the filesystem auth.conf
 # auth.conf: "machine private-ppa.launchpadcontent.net login [username] password [password]"
+# https://docs.docker.com/build/building/secrets/
+# buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf
 # https://docs.docker.com/build/ci/github-actions/secrets/
-# Github actions configuration:
-#     uses: docker/build-push-action@v5
-#     with:
-#       # SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
-#       secrets: secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
+# uses: docker/build-push-action@v5
+# with:
+#   SAVOURY_PPA_AUTH=${{ secrets.SAVOURY_PPA_AUTH }}
 
 RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH /etc/apt/auth.conf.d/savoury.conf \
     && touch /etc/apt/sources.list.d/savoury.list \
@@ -137,10 +146,10 @@ RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH 
     && add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    && add-apt-repository -y ppa:savoury1/ffmpeg6 \
+    && add-apt-repository -y ppa:savoury1/ffmpeg7 \
     && add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get update \
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli
 

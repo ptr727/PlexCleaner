@@ -22,14 +22,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F57F-962E-4C71-8F27-939D06813302}"
 	ProjectSection(SolutionItems) = preProject
-		Docker\Alpine.Dockerfile = Docker\Alpine.Dockerfile
+		Docker\Alpine.Edge.Dockerfile = Docker\Alpine.Edge.Dockerfile
 		Docker\Alpine.dotNET.Dockerfile = Docker\Alpine.dotNET.Dockerfile
 		Docker\Arch.Dockerfile = Docker\Arch.Dockerfile
 		Docker\Build.sh = Docker\Build.sh
 		Docker\Debian.dotNET.Dockerfile = Docker\Debian.dotNET.Dockerfile
+		Docker\Debian.Testing.Dockerfile = Docker\Debian.Testing.Dockerfile
 		Docker\README.m4 = Docker\README.m4
 		Docker\Test.sh = Docker\Test.sh
-		Docker\Ubuntu.dotNET.Savoury.Dockerfile = Docker\Ubuntu.dotNET.Savoury.Dockerfile
+		Docker\Ubuntu.dotNET.Dockerfile = Docker\Ubuntu.dotNET.Dockerfile
 		Docker\UnitTest.sh = Docker\UnitTest.sh
 		Docker\Version.sh = Docker\Version.sh
 	EndProjectSection
