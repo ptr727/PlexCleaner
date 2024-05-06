@@ -74,8 +74,11 @@ jobs:
     needs: version
 
     strategy:
-      # Keep building, helps with troubleshooting
+      # Keep building even if one job fails, helps with troubleshooting when there are multiple errors
       fail-fast: false
+      # Limit number of concurrent builds
+      # Error: buildx failed with: ERROR: failed to solve: error writing layer blob: maximum timeout reached
+      max-parallel: 4
       
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
