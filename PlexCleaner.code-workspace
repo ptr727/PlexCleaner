@@ -127,5 +127,14 @@
 			"https://json.schemastore.org/github-issue-config.json": "file:/.github/ISSUE_TEMPLATE/config.yml"
 		},
 		"dotnet.defaultSolution": "PlexCleaner.sln"
+	},
+	"extensions": {
+		"recommendations": [
+			"davidanson.vscode-markdownlint",
+			"gruntfuggly.todo-tree",
+			"ms-dotnettools.csharp",
+			"ms-dotnettools.csdevkit",
+			"streetsidesoftware.code-spell-checker"
+		]
 	}
 }
