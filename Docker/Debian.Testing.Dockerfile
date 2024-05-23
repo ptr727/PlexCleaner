@@ -4,8 +4,6 @@
 # Platforms: linux/amd64, linux/arm64, linux/arm/v7
 # Tag: ptr727/plexcleaner:debian-testing
 
-# TODO: Trixie is not supported in the Msft repository, using 12/Bookworm.
-
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing debian:testing-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian-testing /bin/bash
@@ -46,9 +44,11 @@ RUN apt-get update \
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
         ca-certificates \
+        lsb-release \
         wget
 
 # Install .NET SDK
+# TODO: Keep version number in sync with release, or use latest version published by Msft
 RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
@@ -94,6 +94,7 @@ RUN apt-get install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
+        lsb-release \
         p7zip-full \
         tzdata \
         wget \
@@ -107,6 +108,7 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
+# TODO: Keep version number in sync with release, or use latest version published by Msft
 RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \

@@ -97,10 +97,10 @@ public partial class SevenZipTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
-        // TODO
+        // TODO: Linux implementation
         return false;
     }
 

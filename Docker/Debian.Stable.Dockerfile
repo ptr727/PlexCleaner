@@ -4,8 +4,6 @@
 # Platforms: linux/amd64, linux/arm64, linux/arm/v7
 # Tag: ptr727/plexcleaner:debian
 
-# TODO: Update Msft repository when Trixie is released
-
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing debian:stable-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian /bin/bash
@@ -46,10 +44,11 @@ RUN apt-get update \
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
         ca-certificates \
+        lsb-release \
         wget
 
 # Install .NET SDK
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
@@ -94,6 +93,7 @@ RUN apt-get install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
+        lsb-release \
         p7zip-full \
         tzdata \
         wget \
@@ -107,7 +107,7 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \

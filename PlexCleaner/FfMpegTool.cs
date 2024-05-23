@@ -118,7 +118,7 @@ public partial class FfMpegTool : MediaTool
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
 
-        // TODO:
+        // TODO: Linux implementation
         return false;
     }
 

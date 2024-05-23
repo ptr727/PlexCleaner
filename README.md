@@ -31,7 +31,6 @@ Docker images are published on [Docker Hub][docker-link].
 
 - Version 3.9:
   - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
-  - Re-using sidecar file hash buffer to reduce memory allocation demand.
 - Version 3.8:
   - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
   - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
