@@ -4,6 +4,10 @@
 # Platforms: linux/amd64
 # Tag: ptr727/plexcleaner:savoury
 
+# Docker build debugging:
+# --progress=plain
+# --no-cache
+
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing ubuntu:jammy /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:savoury /bin/bash
@@ -102,12 +106,6 @@ ENV TZ=Etc/UTC \
 RUN apt-get install -y --no-install-recommends \
         dotnet-runtime-8.0
 
-# Install VS debug tools
-# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
-RUN wget https://aka.ms/getvsdbgsh \
-    && sh getvsdbgsh -v latest -l /vsdbg \
-    && rm getvsdbgsh
-
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
@@ -164,6 +162,10 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy debug tools installer script
+COPY ./Docker/DebugTools.sh ./
+RUN chmod ugo+rwx ./DebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

@@ -4,6 +4,10 @@
 # Platforms: linux/amd64, linux/arm64, linux/arm/v7
 # Tag: ptr727/plexcleaner:debian
 
+# Docker build debugging:
+# --progress=plain
+# --no-cache
+
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing debian:stable-slim /bin/bash
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:debian /bin/bash
@@ -114,12 +118,6 @@ RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/package
     && apt-get install -y --no-install-recommends \
         dotnet-runtime-8.0
 
-# Install VS debug tools
-# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
-RUN wget https://aka.ms/getvsdbgsh \
-    && sh getvsdbgsh -v latest -l /vsdbg \
-    && rm getvsdbgsh
-
 # Install media tools
 # https://tracker.debian.org/pkg/ffmpeg
 # https://tracker.debian.org/pkg/handbrake
@@ -142,6 +140,10 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy debug tools installer script
+COPY ./Docker/DebugTools.sh ./
+RUN chmod ugo+rwx ./DebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

@@ -31,6 +31,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 - Version 3.9:
   - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
+  - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
 - Version 3.8:
   - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
   - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
