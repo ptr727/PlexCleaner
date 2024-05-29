@@ -126,6 +126,19 @@
 		"yaml.schemas": {
 			"https://json.schemastore.org/github-issue-config.json": "file:/.github/ISSUE_TEMPLATE/config.yml"
 		},
-		"dotnet.defaultSolution": "PlexCleaner.sln"
+		"dotnet.defaultSolution": "PlexCleaner.sln",
+		"files.trimTrailingWhitespace": true,
+		"[markdown]": {
+			"files.trimTrailingWhitespace": false
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"davidanson.vscode-markdownlint",
+			"gruntfuggly.todo-tree",
+			"ms-dotnettools.csharp",
+			"ms-dotnettools.csdevkit",
+			"streetsidesoftware.code-spell-checker"
+		]
 	}
 }

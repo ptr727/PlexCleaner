@@ -112,7 +112,7 @@ public partial class MkvMergeTool : MediaTool
         // Initialize            
         mediaToolInfo = new MediaToolInfo(this);
 
-        // TODO
+        // TODO: Linux implementation
         return false;
     }
 

@@ -4,6 +4,10 @@
 # Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:alpine-edge
 
+# Docker build debugging:
+# --progress=plain
+# --no-cache
+
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing alpine:edge /bin/sh
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-edge /bin/sh
@@ -94,12 +98,6 @@ RUN apk add \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
 RUN apk add dotnet8-runtime
 
-# Install VS debug tools
-# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
-RUN wget https://aka.ms/getvsdbgsh \
-    && sh getvsdbgsh -v latest -l /vsdbg \
-    && rm getvsdbgsh
-
 # Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
@@ -117,6 +115,10 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy debug tools installer script
+COPY ./Docker/DebugTools.sh ./
+RUN chmod ugo+rwx ./DebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

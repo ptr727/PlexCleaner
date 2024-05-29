@@ -472,18 +472,19 @@ public class SidecarFile
     {
         try
         {
-            // Create a buffer to hold the file data being hashed
-            byte[] buffer = new byte[2 * HashWindowLength];
+            // TODO: Reuse this object to get value out of reusing the 128KB buffer
+            // Allocate buffer to hold data to be hashed
+            byte[] hashBuffer = new byte[2 * HashWindowLength];
 
             // Open file
             using FileStream fileStream = MediaFileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
 
             // Small files read entire file, big files read front and back
-            if (MediaFileInfo.Length <= buffer.Length)
+            if (MediaFileInfo.Length <= hashBuffer.Length)
             {
-                // Read the entire file
+                // Read the entire file, buffer is already zeroed
                 fileStream.Seek(0, SeekOrigin.Begin);
-                if (fileStream.Read(buffer, 0, (int)MediaFileInfo.Length) != MediaFileInfo.Length)
+                if (fileStream.Read(hashBuffer, 0, (int)MediaFileInfo.Length) != MediaFileInfo.Length)
                 {
                     Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
                     return null;
@@ -493,7 +494,7 @@ public class SidecarFile
             {
                 // Read the beginning of the file
                 fileStream.Seek(0, SeekOrigin.Begin);
-                if (fileStream.Read(buffer, 0, HashWindowLength) != HashWindowLength)
+                if (fileStream.Read(hashBuffer, 0, HashWindowLength) != HashWindowLength)
                 {
                     Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
                     return null;
@@ -501,7 +502,7 @@ public class SidecarFile
 
                 // Read the end of the file
                 fileStream.Seek(-HashWindowLength, SeekOrigin.End);
-                if (fileStream.Read(buffer, HashWindowLength, HashWindowLength) != HashWindowLength)
+                if (fileStream.Read(hashBuffer, HashWindowLength, HashWindowLength) != HashWindowLength)
                 {
                     Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
                     return null;
@@ -511,11 +512,8 @@ public class SidecarFile
             // Close stream
             fileStream.Close();
 
-            // Calculate the hash 
-            byte[] hash = SHA256.HashData(buffer);
-
-            // Convert to string
-            return System.Convert.ToBase64String(hash);
+            // Calculate the hash and convert to string
+            return System.Convert.ToBase64String(SHA256.HashData(hashBuffer));
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -602,7 +600,7 @@ public class SidecarFile
         // Must be a MKV file
         Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
 
-        // Create new or udate existing sidecar file
+        // Create new or update existing sidecar file
         SidecarFile sidecarFile = new(fileName);
         return sidecarFile.Open(true);
     }

@@ -4,7 +4,9 @@
 # Platforms: linux/amd64, linux/arm64, linux/arm/v7
 # Tag: ptr727/plexcleaner:debian
 
-# TODO: Update Msft repository when Trixie is released
+# Docker build debugging:
+# --progress=plain
+# --no-cache
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing debian:stable-slim /bin/bash
@@ -46,10 +48,11 @@ RUN apt-get update \
 # Install dependencies
 RUN apt-get install -y --no-install-recommends \
         ca-certificates \
+        lsb-release \
         wget
 
 # Install .NET SDK
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
@@ -94,6 +97,7 @@ RUN apt-get install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
+        lsb-release \
         p7zip-full \
         tzdata \
         wget \
@@ -107,18 +111,12 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         dotnet-runtime-8.0
-
-# Install VS debug tools
-# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
-RUN wget https://aka.ms/getvsdbgsh \
-    && sh getvsdbgsh -v latest -l /vsdbg \
-    && rm getvsdbgsh
 
 # Install media tools
 # https://tracker.debian.org/pkg/ffmpeg
@@ -142,6 +140,10 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy debug tools installer script
+COPY ./Docker/DebugTools.sh ./
+RUN chmod ugo+rwx ./DebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

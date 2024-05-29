@@ -90,7 +90,9 @@ include({{debian-testing.ver}})
 
 ### `ptr727/plexcleaner:alpine`
 
-*Alpine is [not](https://github.com/ptr727/PlexCleaner/issues/344) currently being built.*
+```text
+include({{alpine.ver}})
+```
 
 ### `ptr727/plexcleaner:alpine-edge`
 

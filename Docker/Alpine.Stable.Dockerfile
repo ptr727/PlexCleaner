@@ -1,10 +1,12 @@
-# Description: Alpine Stable (3.19)
+# Description: Alpine Stable (3.20)
 # Based on: alpine:latest
 # .NET: Alpine repository
 # Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:alpine
 
-# TODO: 3.19 does not support Handbrake or .NET 8, wait for 3.20 to be released
+# Docker build debugging:
+# --progress=plain
+# --no-cache
 
 # Test image in shell:
 # docker run -it --rm --pull always --name Testing alpine:latest /bin/sh
@@ -96,17 +98,11 @@ RUN apk add \
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
 RUN apk add dotnet8-runtime
 
-# Install VS debug tools
-# https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
-RUN wget https://aka.ms/getvsdbgsh \
-    && sh getvsdbgsh -v latest -l /vsdbg \
-    && rm getvsdbgsh
-
 # Install media tools
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
+# https://pkgs.alpinelinux.org/package/v3.20/community/x86_64/ffmpeg
+# https://pkgs.alpinelinux.org/package/v3.20/community/x86_64/mediainfo
+# https://pkgs.alpinelinux.org/package/v3.20/community/x86_64/mkvtoolnix
+# https://pkgs.alpinelinux.org/package/v3.20/community/x86_64/handbrake
 RUN apk add \
         ffmpeg\
         handbrake \
@@ -119,6 +115,10 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 # Copy test script
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
+
+# Copy debug tools installer script
+COPY ./Docker/DebugTools.sh ./
+RUN chmod ugo+rwx ./DebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/
