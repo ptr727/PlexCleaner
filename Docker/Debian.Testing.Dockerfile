@@ -41,6 +41,9 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Upgrade
 RUN apt-get update \
     && apt-get upgrade -y
