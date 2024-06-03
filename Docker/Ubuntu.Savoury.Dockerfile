@@ -41,6 +41,9 @@ ARG BUILD_CONFIGURATION="Debug" \
     BUILD_INFORMATION_VERSION="1.0.0.0" \
     BUILD_PACKAGE_VERSION="1.0.0.0"
 
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Upgrade
 RUN apt-get update \
     && apt-get upgrade -y
@@ -126,7 +129,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 # Install FfMpeg and HandBrake from Rob Savoury's private PPA
 # https://launchpad.net/~savoury1
 # https://launchpad.net/~/+archivesubscriptions
-# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg6
+# https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg7
 # https://launchpad.net/~savoury1/+archive/ubuntu/handbrake
 
 # Use docker secrets and link the secret file to the filesystem auth.conf
@@ -143,7 +146,10 @@ RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH 
     && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
     && add-apt-repository -y ppa:savoury1/graphics \
     && add-apt-repository -y ppa:savoury1/multimedia \
+    # FfMpeg 6 and 7 requires FfMpeg 4
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
+    # HandBrake requires FfMpeg 6
+    && add-apt-repository -y ppa:savoury1/ffmpeg6 \
     && add-apt-repository -y ppa:savoury1/ffmpeg7 \
     && add-apt-repository -y ppa:savoury1/handbrake \
     && apt-get update \
