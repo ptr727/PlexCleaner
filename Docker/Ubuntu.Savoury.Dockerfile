@@ -144,11 +144,7 @@ RUN wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.down
 RUN --mount=type=secret,id=SAVOURY_PPA_AUTH ln -s /run/secrets/SAVOURY_PPA_AUTH /etc/apt/auth.conf.d/savoury.conf \
     && touch /etc/apt/sources.list.d/savoury.list \
     && sh -c 'echo "deb https://private-ppa.launchpadcontent.net/savoury1/ffmpeg/ubuntu $(lsb_release -sc) main" >> /etc/apt/sources.list.d/savoury.list' \
-    && add-apt-repository -y ppa:savoury1/graphics \
-    && add-apt-repository -y ppa:savoury1/multimedia \
-    # FfMpeg 6 and 7 requires FfMpeg 4
     && add-apt-repository -y ppa:savoury1/ffmpeg4 \
-    # HandBrake requires FfMpeg 6
     && add-apt-repository -y ppa:savoury1/ffmpeg6 \
     && add-apt-repository -y ppa:savoury1/ffmpeg7 \
     && add-apt-repository -y ppa:savoury1/handbrake \
