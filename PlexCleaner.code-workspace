@@ -130,6 +130,9 @@
 		"files.trimTrailingWhitespace": true,
 		"[markdown]": {
 			"files.trimTrailingWhitespace": false
+		},
+		"[plaintext]": {
+			"files.trimTrailingWhitespace": false
 		}
 	},
 	"extensions": {
