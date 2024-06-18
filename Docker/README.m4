@@ -5,7 +5,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## License
 
-Licensed under the [MIT License](./LICENSE)  
+Licensed under the [MIT License](https://github.com/ptr727/PlexCleaner/LICENSE)
 ![GitHub License](https://img.shields.io/github/license/ptr727/PlexCleaner)
 
 ## Project
