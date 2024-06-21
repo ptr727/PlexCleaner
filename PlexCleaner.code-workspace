@@ -6,6 +6,7 @@
 	],
 	"settings": {
 		"cSpell.words": [
+			"adduser",
 			"adpcm",
 			"aencode",
 			"aencoder",
@@ -77,6 +78,7 @@
 			"Muxing",
 			"Nerdbank",
 			"Newtonsoft",
+			"nonroot",
 			"NONSTRICT",
 			"nostats",
 			"NVENC",
