@@ -182,7 +182,7 @@ jobs:
 
       # Matrix build
       - name: Docker build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           # GitHub cache is as unreliable as posting to GHCR, broken pipe errors
