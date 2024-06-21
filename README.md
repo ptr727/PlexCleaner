@@ -126,9 +126,15 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 Example, run in an interactive shell:
 
-```text
+```console
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
+
+# Make sure the media file permissions allow writing for the executing user
+# adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
+# Replace the user account to suit your needs
+sudo chown -R nonroot:users /data/media
+sudo chmod -R ugo=rwx /data/media
 
 # Run the bash shell in an interactive session
 docker run \
@@ -136,6 +142,7 @@ docker run \
   --rm \
   --pull always \
   --name PlexCleaner \
+  --user nonroot:users \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -160,25 +167,42 @@ exit
 
 Example, run in a screen session:
 
-```text
+```console
 # Start a new screen session
 screen
+# Or attach to the existing screen session
+# screen -rd
 
-# Or attach to an existing screen session
-screen -r
-
-# Make sure the media file permissions allow writing
-sudo chown -R nobody:users /data/media
-sudo chmod -R u=rwx,g=rwx+s,o=rx /data/media
-
-# Run the process command in an interactive session
+# Run the monitor command in an interactive session
 docker run \
   -it \
   --rm \
-  --pull always \
   --log-driver json-file --log-opt max-size=10m \
+  --pull always \
   --name PlexCleaner \
-  --user nobody:users \
+  --user nonroot:users \
+  --env TZ=America/Los_Angeles \
+  --volume /data/media:/media:rw \
+  docker.io/ptr727/plexcleaner \
+  /PlexCleaner/PlexCleaner \
+    --logfile /media/PlexCleaner/PlexCleaner.log \
+    --logwarning \
+    monitor \
+    --settingsfile /media/PlexCleaner/PlexCleaner.json \
+    --parallel \
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
+```
+
+Example, run as a command:
+
+```console
+# Run the process command
+docker run \
+  --rm \
+  --pull always \
+  --name PlexCleaner \
+  --user nonroot:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -187,7 +211,6 @@ docker run \
     --logwarning \
     process \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --parallel \
     --mediafiles /media/Movies \
     --mediafiles /media/Series
 ```
