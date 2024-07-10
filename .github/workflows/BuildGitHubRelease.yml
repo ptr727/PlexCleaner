@@ -13,31 +13,26 @@ concurrency:
 
 jobs:
 
-  # Test
   test:
     name: Test
     runs-on: ubuntu-latest
 
     steps:
 
-      # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.x"
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Run Unit Tests
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: Run unit tests
         run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
-  # Get version information
   version:
     name: Version
     runs-on: ubuntu-latest
@@ -51,21 +46,17 @@ jobs:
 
     steps:
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Get all history for version calculation
           fetch-depth: 0
 
-      # Run Nerdbank.GitVersioning
       # https://github.com/marketplace/actions/nerdbank-gitversioning
       - name: Run Nerdbank.GitVersioning tool
         id: nbgv
         uses: dotnet/nbgv@master
 
-  # Build artifacts
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -87,19 +78,16 @@ jobs:
 
     steps:
 
-      # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.x"
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Build and publish
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: Build
         run: >-
@@ -123,12 +111,10 @@ jobs:
           name: publish-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
 
-  # Publish
   publish:
     name: Publish
     runs-on: ubuntu-latest
     needs: [ build, version ]
-    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
 
     steps:
@@ -141,19 +127,14 @@ jobs:
         merge-multiple: true
         path: ${{ runner.temp }}/publish
 
-    # Zip the output
     - name: Zip build output
       run: 7z a -t7z ${{ runner.temp }}/publish/PlexCleaner.7z ${{ runner.temp }}/publish/*
 
-    # Create GitHub release
     # https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
       uses: softprops/action-gh-release@v2
       with:
-        # Generate changelog from commit messages
         generate_release_notes: true
-        # Create a tag with the version number
         tag_name: ${{ needs.version.outputs.SemVer2 }}
-        # Only main branch is not a pre-release
         prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
         files: ${{ runner.temp }}/publish/PlexCleaner.7z
