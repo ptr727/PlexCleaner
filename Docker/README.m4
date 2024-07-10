@@ -51,10 +51,10 @@ Images are updated weekly with the latest upstream updates.
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `ubuntu` | &#9745; | &#9745; | &#9745; | ~402MB |
-| `alpine` | &#9745; | &#9745; | &#9744; | ~228MB |
-| `debian` | &#9745; | &#9745; | &#9745; | ~398MB |
-| `savoury` | &#9745; | &#9744; | &#9744; | ~462MB |
+| `ubuntu` | &#9745; | &#9745; | &#9745; | ~320MB |
+| `alpine` | &#9745; | &#9745; | &#9744; | ~160MB |
+| `debian` | &#9745; | &#9745; | &#9745; | ~330MB |
+| `savoury` | &#9745; | &#9744; | &#9744; | ~400MB |
 
 ## Media Tool Versions
 
