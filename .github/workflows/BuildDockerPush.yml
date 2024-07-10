@@ -15,31 +15,26 @@ concurrency:
 
 jobs:
 
-  # Test
   test:
     name: Test
     runs-on: ubuntu-latest
 
     steps:
 
-      # Install .NET SDK
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.x"
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Run Unit Tests
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: Run unit tests
         run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
-  # Get version information
   version:
     name: Version
     runs-on: ubuntu-latest
@@ -53,38 +48,30 @@ jobs:
 
     steps:
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Get all history for version calculation
           fetch-depth: 0
 
-      # Run Nerdbank.GitVersioning
       # https://github.com/marketplace/actions/nerdbank-gitversioning
       - name: Run Nerdbank.GitVersioning tool
         id: nbgv
         uses: dotnet/nbgv@master
 
-  # Build and push docker images
   buildpush:
     name: Build and push
     runs-on: ubuntu-latest
     needs: version
 
     strategy:
-      # Keep building even if one job fails, helps with troubleshooting when there are multiple errors
       fail-fast: false
-      # Limit number of concurrent builds
-      # Error: buildx failed with: ERROR: failed to solve: error writing layer blob: maximum timeout reached
       max-parallel: 4
-      
+
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
         include:
 
-          # Debian Stable:
           - file: ./Docker/Debian.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: debian
@@ -92,7 +79,6 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
-          # Debian Testing:
           - file: ./Docker/Debian.Testing.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: debian-testing
@@ -100,7 +86,6 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
 
-          # Alpine Stable:
           - file: ./Docker/Alpine.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine
@@ -108,15 +93,13 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
-          # Alpine Edge:
           - file: ./Docker/Alpine.Edge.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine-edge
             secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
-            
-          # Ubuntu Savoury:
+
           - file: ./Docker/Ubuntu.Savoury.Dockerfile
             platforms: linux/amd64
             cache-scope: savoury
@@ -124,18 +107,15 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
 
-          # Ubuntu Rolling:
           - file: ./Docker/Ubuntu.Rolling.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: ubuntu
             secrets: SAVOURY_PPA_AUTH
-            # Also tag with latest and version number
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
 
-          # Ubuntu Devel:
           - file: ./Docker/Ubuntu.Devel.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: ubuntu-devel
@@ -145,29 +125,24 @@ jobs:
 
     steps:
 
-      # Checkout code
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Setup QEMU for multi architecture builds
       # https://github.com/marketplace/actions/docker-setup-qemu
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
-      # Setup docker build
       # https://github.com/marketplace/actions/docker-setup-buildx
       - name: Setup Buildx
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
-      # Login to Docker Hub
       # https://github.com/marketplace/actions/docker-login
       - name: Login to Docker Hub
-        # Skip pull requests
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
@@ -175,21 +150,12 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Docker build and push
       # https://github.com/marketplace/actions/build-and-push-docker-images
-      # https://docs.docker.com/build/ci/github-actions/cache/
-      # https://github.com/moby/buildkit#github-actions-cache-experimental
-
-      # Matrix build
       - name: Docker build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          # GitHub cache is as unreliable as posting to GHCR, broken pipe errors
-          # cache-from: type=gha,scope=${{ matrix.cache-scope }}
-          # cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
           file: ${{ matrix.file }}
-          # Do not push on pull requests
           push: ${{ (github.event_name != 'pull_request') }}
           # TODO: How to test for secret not null and avoid "null= is not a valid secret"
           secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
@@ -204,14 +170,12 @@ jobs:
             BUILD_INFORMATION_VERSION=${{ needs.version.outputs.AssemblyInformationalVersion }}
             BUILD_PACKAGE_VERSION=${{ needs.version.outputs.SemVer2 }}
 
-  # Get tool versions from image
   toolversions:
     name: Tool versions
     runs-on: ubuntu-latest
     needs: buildpush
-    # Skip pull requests
     if: ${{ github.event_name != 'pull_request' }}
-   
+
     strategy:
 
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
@@ -234,7 +198,6 @@ jobs:
 
     steps:
 
-    # Get image size
     - name: Get image size
       run: |
         mkdir -p ${{ runner.temp }}/versions
@@ -242,7 +205,6 @@ jobs:
         echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} >> ${{ runner.temp }}/versions/${{ matrix.file }}
         echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec) >> ${{ runner.temp }}/versions/${{ matrix.file }}
 
-    # Get tool versions in container
     # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
       uses: addnab/docker-run-action@v3
@@ -258,7 +220,6 @@ jobs:
           echo MkvMerge: $(mkvmerge --version) >> /versions/${{ matrix.file }}
           echo FfMpeg: $(ffmpeg -version) >> /versions/${{ matrix.file }}
 
-    # Print version file contents
     - name: Print versions
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
@@ -269,18 +230,16 @@ jobs:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
-  # Update Docker README.md
   updatereadme:
     name: Create Docker README.md
     runs-on: ubuntu-latest
     needs: toolversions
-    # Skip pull requests and only update on main branch
     if: ${{ (github.event_name != 'pull_request') && (endsWith(github.ref, 'refs/heads/main')) }}
 
     steps:
 
     # https://github.com/marketplace/actions/checkout
-    - name: Checkout 
+    - name: Checkout
       uses: actions/checkout@v4
 
     # https://github.com/marketplace/actions/download-a-build-artifact
@@ -304,22 +263,18 @@ jobs:
         short-description: ${{ github.event.repository.description }}
         readme-filepath: ${{ runner.temp }}/README.md
 
-  # Create a custom badge to report the build date
   datebadge:
     name: Date badge
     runs-on: ubuntu-latest
     needs: buildpush
-    # Skip pull requests and only update on main branch
     if: ${{ (github.event_name != 'pull_request') && (endsWith(github.ref, 'refs/heads/main')) }}
 
     steps:
 
-      # Get date from environment as a variable
       - id: date
         run: |
           echo "date=$(date)" >> $GITHUB_OUTPUT
 
-      # Create badge
       # https://github.com/marketplace/actions/bring-your-own-badge
       - name: Build date badge
         uses: RubbaBoy/BYOB@v1
