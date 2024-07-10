@@ -48,7 +48,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Settings JSON schema changed from v3 to v4.
     - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:FileIgnoreMasks`.
       - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:FileIgnoreMasks` : `*.nfo`.
-    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need to for user configurable values.
+    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need for user configurable values.
     - `ConvertOptions:FfMpegOptions:Global` no longer requires defaults values and will only be used during encoding, only add custom values for e.g. hardware acceleration, existing values will be converted.
       - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
