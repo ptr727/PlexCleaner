@@ -21,7 +21,9 @@
 			"commandline",
 			"createschema",
 			"createsidecar",
+			"csdevkit",
 			"cuda",
+			"davidanson",
 			"decomb",
 			"defaultsettings",
 			"deint",
@@ -29,6 +31,7 @@
 			"deinterlaced",
 			"deinterlacing",
 			"devel",
+			"dotnettools",
 			"dvhe",
 			"EBML",
 			"Emby",
@@ -45,6 +48,7 @@
 			"gettoolinfo",
 			"getversioninfo",
 			"getxxxinfo",
+			"gruntfuggly",
 			"Gyan",
 			"hdmv",
 			"hwaccel",
@@ -135,13 +139,14 @@
 		},
 		"[plaintext]": {
 			"files.trimTrailingWhitespace": false
-		}
+		},
+		"diffEditor.ignoreTrimWhitespace": false,
+		"editor.renderWhitespace": "trailing"
 	},
 	"extensions": {
 		"recommendations": [
 			"davidanson.vscode-markdownlint",
 			"gruntfuggly.todo-tree",
-			"ms-dotnettools.csharp",
 			"ms-dotnettools.csdevkit",
 			"streetsidesoftware.code-spell-checker"
 		]
