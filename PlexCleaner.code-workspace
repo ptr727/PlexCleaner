@@ -141,7 +141,7 @@
 			"files.trimTrailingWhitespace": false
 		},
 		"diffEditor.ignoreTrimWhitespace": false,
-		"editor.renderWhitespace": "trailing"
+		"editor.renderWhitespace": "boundary"
 	},
 	"extensions": {
 		"recommendations": [
