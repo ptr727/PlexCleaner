@@ -4,23 +4,40 @@ updates:
 
   # main
 - package-ecosystem: "nuget"
-  directory: "/"
   target-branch: "main"
-  schedule:
-    interval: "daily"
-- package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: "daily"
+  groups:
+    nuget-deps:
+      patterns:
+        - "*"
+- package-ecosystem: "github-actions"
+  target-branch: "main"
+  directory: "/"
+  schedule:
+    interval: "daily"
+  groups:
+    actions-deps:
+      patterns:
+        - "*"
 
   # develop
 - package-ecosystem: "nuget"
-  directory: "/"
   target-branch: "develop"
+  directory: "/"
   schedule:
     interval: "daily"
+  groups:
+    nuget-deps:
+      patterns:
+        - "*"
 - package-ecosystem: "github-actions"
-  directory: "/"
   target-branch: "develop"
+  directory: "/"
   schedule:
     interval: "daily"
+  groups:
+    actions-deps:
+      patterns:
+        - "*"
