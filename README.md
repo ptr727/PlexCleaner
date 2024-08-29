@@ -126,7 +126,7 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 Example, run in an interactive shell:
 
-```console
+```bash
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
@@ -165,9 +165,9 @@ docker run \
 exit
 ```
 
-Example, run in a screen session:
+Example, run `monitor` command in a screen session:
 
-```console
+```bash
 # Start a new screen session
 screen
 # Or attach to the existing screen session
@@ -194,9 +194,9 @@ docker run \
     --mediafiles /media/Series
 ```
 
-Example, run as a command:
+Example, run `process` command:
 
-```console
+```bash
 # Run the process command
 docker run \
   --rm \
@@ -213,6 +213,30 @@ docker run \
     --settingsfile /media/PlexCleaner/PlexCleaner.json \
     --mediafiles /media/Movies \
     --mediafiles /media/Series
+```
+
+Example, run `monitor` command as a docker compose stack:
+
+```yaml
+services:
+
+  plexcleaner:
+    image: docker.io/ptr727/plexcleaner:latest
+    container_name: PlexCleaner
+    restart: unless-stopped
+    user: nonroot:users
+    command:
+      - /PlexCleaner/PlexCleaner
+      - monitor
+      - --settingsfile=/media/PlexCleaner/PlexCleaner.json
+      - --logfile=/media/PlexCleaner/PlexCleaner.log
+      - --preprocess
+      - --mediafiles=/media/Series
+      - --mediafiles=/media/Movies
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /data/media:/media
 ```
 
 ### Windows
