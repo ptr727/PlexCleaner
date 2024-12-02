@@ -40,7 +40,7 @@
 
   <ItemGroup>
     <PackageReference Include="InsaneGenius.Utilities" Version="3.1.104" />
-    <PackageReference Include="JsonSchema.Net.Generation" Version="4.5.1" />
+    <PackageReference Include="JsonSchema.Net.Generation" Version="4.6.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
     <PackageReference Include="Serilog" Version="4.1.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
