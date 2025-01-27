@@ -32,7 +32,9 @@ Docker images are published on [Docker Hub][docker-link].
 - Version 3:10:
   - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
     - The builds would periodically break due to incompatible or missing libraries.
-    - If you are using the `ptr727/plexcleaner:savoury` docker tag switch to `ptr727/plexcleaner:ubuntu`.
+    - The `ubuntu` docker tag (alias for `latest`) uses `ubuntu:rolling` as upstream and does include the latest released media tools.
+    - If "bleeding edge" media tools are required consider using `ubuntu-devel` (based on `ubuntu:devel`), `alpine-edge` (based on `alpine:edge`) or `debian-testing` (based on `debian:testing-slim`) tags.
+    - If you are currently using the `ptr727/plexcleaner:savoury` docker tag, please switch to `ptr727/plexcleaner:ubuntu`.
 - Version 3.9:
   - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
   - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.

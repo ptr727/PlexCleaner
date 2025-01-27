@@ -46,7 +46,7 @@ RUN apk update \
 
 # Install .NET SDK
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-sdk
-RUN apk add dotnet8-sdk
+RUN apk add --no-cache dotnet8-sdk
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -87,7 +87,7 @@ RUN apk update \
     && apk upgrade
 
 # Install dependencies
-RUN apk add \
+RUN apk add --no-cache \
         icu-data-full \
         icu-libs \
         p7zip \
@@ -96,14 +96,14 @@ RUN apk add \
 
 # Install .NET Runtime
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
-RUN apk add dotnet8-runtime
+RUN apk add --no-cache dotnet8-runtime
 
 # Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mediainfo
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/mkvtoolnix
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/handbrake
-RUN apk add \
+RUN apk add --no-cache \
         ffmpeg\
         handbrake \
         mediainfo \
