@@ -14,6 +14,7 @@
 # export DEBIAN_FRONTEND=noninteractive
 
 # Build Dockerfile
+# Create ./Docker/auth.conf secret file: "machine private-ppa.launchpadcontent.net login [username] password [password]"
 # docker buildx create --name "plexcleaner" --use
 # docker buildx build --secret id=SAVOURY_PPA_AUTH,src=./Docker/auth.conf --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Savoury.Dockerfile .
 
@@ -112,7 +113,7 @@ RUN apt-get install -y --no-install-recommends \
 # Install MediaInfo
 # https://mediaarea.net/en/MediaInfo/Download/Ubuntu
 # https://mediaarea.net/en/Repos
-RUN wget -O repo-mediaarea_all.deb https://mediaarea.net/repo/deb/repo-mediaarea_1.0-24_all.deb \
+RUN wget -O repo-mediaarea_all.deb https://mediaarea.net/repo/deb/repo-mediaarea_1.0-25_all.deb \
     && dpkg -i repo-mediaarea_all.deb \
     && apt-get update \
     && apt-get install -y --no-install-recommends mediainfo \
