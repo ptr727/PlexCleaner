@@ -75,42 +75,30 @@ jobs:
           - file: ./Docker/Debian.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: debian
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
           - file: ./Docker/Debian.Testing.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: debian-testing
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
 
           - file: ./Docker/Alpine.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
 
           - file: ./Docker/Alpine.Edge.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine-edge
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
-
-          - file: ./Docker/Ubuntu.Savoury.Dockerfile
-            platforms: linux/amd64
-            cache-scope: savoury
-            secrets: SAVOURY_PPA_AUTH
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
 
           - file: ./Docker/Ubuntu.Rolling.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: ubuntu
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
@@ -119,7 +107,6 @@ jobs:
           - file: ./Docker/Ubuntu.Devel.Dockerfile
             platforms: linux/amd64,linux/arm64,linux/arm/v7
             cache-scope: ubuntu-devel
-            secrets: SAVOURY_PPA_AUTH
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
 
@@ -157,8 +144,6 @@ jobs:
           context: .
           file: ${{ matrix.file }}
           push: ${{ (github.event_name != 'pull_request') }}
-          # TODO: How to test for secret not null and avoid "null= is not a valid secret"
-          secrets: ${{ matrix.secrets }}=${{ secrets[matrix.secrets] }}
           tags: ${{ matrix.tags }}
           platforms: ${{ matrix.platforms }}
           build-args: |
@@ -193,8 +178,6 @@ jobs:
             file: ubuntu.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
             file: ubuntu-devel.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'savoury' || 'savoury-develop' }}
-            file: savoury.ver
 
     steps:
 

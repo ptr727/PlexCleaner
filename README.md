@@ -29,6 +29,10 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3:10:
+  - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
+    - The builds would periodically break due to incompatible or missing libraries.
+    - If you are using the `ptr727/plexcleaner:savoury` docker tag switch to `ptr727/plexcleaner:ubuntu`.
 - Version 3.9:
   - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
   - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
@@ -115,9 +119,11 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 - See the [Docker README][docker-link] for full distribution details and current media tool versions.
   - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
   - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
+  - `ptr727/plexcleaner:ubuntu-devel` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:devel`).
   - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
+  - `ptr727/plexcleaner:alpine-edge` is based on [Alpine][alpine-docker-link] (`alpine:edge`).
   - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
-  - `ptr727/plexcleaner:savoury` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:jammy`).
+  - `ptr727/plexcleaner:debian-testing` is based on [Debian][debian-hub-link] (`debian:testing-slim`).
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -569,7 +575,6 @@ These commands have no conditional logic and will process all specified media fi
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [Rob Savoury's PPA][savoury-link]
 
 ## Sample Media Files
 

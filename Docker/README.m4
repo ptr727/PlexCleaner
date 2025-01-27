@@ -19,11 +19,6 @@ Images are updated weekly with the latest upstream updates.
 
 - `latest`: Alias for `ubuntu`.
 - `develop`: Alias for `ubuntu-develop`.
-- `savoury`: Based on [Ubuntu Jammy 22.04 LTS](https://releases.ubuntu.com/) `ubuntu:jammy` base image.
-  - Installs the latest [MediaInfo](https://mediaarea.net/en/MediaInfo/Download/Ubuntu) from the MediaInfo repository.
-  - Installs the latest [MkvToolNix](https://mkvtoolnix.download/downloads.html#ubuntu) from the MkvToolNix repository.
-  - Installs the latest FFmpeg and HandBrake installed from [Rob Savoury's](https://launchpad.net/~savoury1) private PPA repository.
-  - Only `linux/amd64` platforms are supported.
 - `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
   - Installs media tools from Ubuntu repository.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
@@ -34,7 +29,7 @@ Images are updated weekly with the latest upstream updates.
   - Installs media tools from the Alpine repository.
   - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
   - Handbrake on Alpine does not support `linux/arm/v7` builds.
-- `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine-edge` pre-release base image.
+- `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine:edge` pre-release base image.
   - Installs media tools from the Alpine repository.
   - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
   - Handbrake on Alpine does not support `linux/arm/v7` builds.
@@ -54,15 +49,8 @@ Images are updated weekly with the latest upstream updates.
 | `ubuntu` | &#9745; | &#9745; | &#9745; | ~320MB |
 | `alpine` | &#9745; | &#9745; | &#9744; | ~160MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~330MB |
-| `savoury` | &#9745; | &#9744; | &#9744; | ~400MB |
 
 ## Media Tool Versions
-
-### `ptr727/plexcleaner:savoury`
-
-```text
-include({{savoury.ver}})
-```
 
 ### `ptr727/plexcleaner:ubuntu`
 
