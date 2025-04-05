@@ -2,20 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using PlexCleaner.FfMpegToolJsonSchema;
 using Serilog;
 
 namespace PlexCleaner;
 
 public class BitrateInfo
 {
-    public void Calculate(List<Packet> packetList, int videoStream, int audioStream, int threshold)
+    public void Calculate(List<FfMpegToolJsonSchema.Packet> packetList, int videoStream, int audioStream, int threshold)
     {
-        // ShouldCompute() must not allow any Assert() to fail
-
         // Calculate the media playback duration from timestamps
         Duration = 0;
-        foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
+        foreach (FfMpegToolJsonSchema.Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
             // Use DTS if PTS not set
             if (double.IsNaN(packet.PtsTime))
@@ -47,15 +44,15 @@ public class BitrateInfo
         // Iterate through all the packets and calculate the bitrate
         long videoPackets = 0;
         long audioPackets = 0;
-        foreach (Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
+        foreach (FfMpegToolJsonSchema.Packet packet in packetList.Where(packet => ShouldCompute(packet, videoStream, audioStream)))
         {
             // Find packet timestamp index entry, round down
             int index = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
             Debug.Assert(index >= 0 && index < VideoBitrate.Rate.Length);
 
             // Stream must match expected types
-            Debug.Assert(packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase) ||
-                         packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase));
+            Debug.Assert((packet.StreamIndex == videoStream && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase)) ||
+                         (packet.StreamIndex == audioStream && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase)));
 
             // Update byte count at packet index
             if (packet.StreamIndex == videoStream)
@@ -77,7 +74,7 @@ public class BitrateInfo
             Log.Logger.Error("Empty stream detected : VideoPackets: {VideoPackets}, AudioPackets: {AudioPackets}", videoPackets, audioPackets);
         }
 
-        // Calculate the bitrates
+        // Calculate the stream bitrate
         VideoBitrate.Calculate(threshold);
         AudioBitrate.Calculate(threshold);
         CombinedBitrate.Calculate(threshold);
@@ -96,7 +93,7 @@ public class BitrateInfo
 
     public int Duration { get; set; }
 
-    private static bool ShouldCompute(Packet packet, int videoStream, int audioStream)
+    private static bool ShouldCompute(FfMpegToolJsonSchema.Packet packet, int videoStream, int audioStream)
     {
         // Stream index must match the audio or video stream index
         if (packet.StreamIndex != videoStream &&
@@ -131,11 +128,6 @@ public class BitrateInfo
         }
 
         // Must have size
-        if (packet.Size <= 0)
-        {
-            return false;
-        }
-
-        return true;
+        return packet.Size > 0;
     }
 }

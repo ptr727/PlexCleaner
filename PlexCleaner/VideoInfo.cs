@@ -29,33 +29,33 @@ public class VideoInfo : TrackInfo
         }
     }
 
-    public VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
+    public VideoInfo(FfMpegToolJsonSchema.Track track) : base(track)
     {
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
         // Ignore bad tags like 0x0000 / [0][0][0][0]
-        if (!string.IsNullOrEmpty(stream.CodecTagString) &&
-            !stream.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(track.CodecTagString) &&
+            !track.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
         {
-            Codec = stream.CodecTagString;
+            Codec = track.CodecTagString;
         }
 
         // Build the Profile
-        Profile = string.IsNullOrEmpty(stream.Profile) switch
+        Profile = string.IsNullOrEmpty(track.Profile) switch
         {
-            false when stream.Level != 0 => $"{stream.Profile}@{stream.Level}",
-            false => stream.Profile,
+            false when track.Level != 0 => $"{track.Profile}@{track.Level}",
+            false => track.Profile,
             _ => Profile
         };
 
         // Test for interlaced
         // https://ffmpeg.org/ffprobe-all.html
         // Progressive, tt, bb, tb, bt
-        Interlaced = !string.IsNullOrEmpty(stream.FieldOrder) &&
-                     !stream.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
+        Interlaced = !string.IsNullOrEmpty(track.FieldOrder) &&
+                     !track.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
 
         // ClosedCaptions
-        ClosedCaptions = stream.ClosedCaptions != 0;
+        ClosedCaptions = track.ClosedCaptions != 0;
 
         // Missing: HDR
 
@@ -104,12 +104,10 @@ public class VideoInfo : TrackInfo
 
     public bool ClosedCaptions { get; set; }
 
-    public bool IsCoverArt { get => MatchCoverArt(Codec) || MatchCoverArt(Format); }
+    public bool IsCoverArt => MatchCoverArt(Codec) || MatchCoverArt(Format);
 
-    public static bool MatchCoverArt(string codec)
-    {
-        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
-    }
+    public static bool MatchCoverArt(string codec) =>
+        s_coverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
 
     public bool CompareVideo(VideoFormat compare)
     {
@@ -122,8 +120,7 @@ public class VideoInfo : TrackInfo
         return formatMatch && codecMatch && profileMatch;
     }
 
-    public override void WriteLine(string prefix)
-    {
+    public override void WriteLine(string prefix) =>
         // Add Profile and Interlaced
         // Keep in sync with TrackInfo::WriteLine
         Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, " +
@@ -147,8 +144,7 @@ public class VideoInfo : TrackInfo
             HasErrors,
             HasTags,
             IsCoverArt);
-    }
 
     // Cover art and thumbnail formats
-    private static readonly string[] CoverArtFormat = ["jpg", "jpeg", "png"];
+    private static readonly string[] s_coverArtFormat = ["jpg", "jpeg", "png"];
 }

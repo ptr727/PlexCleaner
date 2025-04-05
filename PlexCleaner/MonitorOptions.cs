@@ -15,11 +15,6 @@ public record MonitorOptions1
     [JsonRequired]
     public int FileRetryCount { get; set; }
 
-    private void Upgrade(int version)
-    {
-        // Nothing to do
-    }
-
     public void SetDefaults()
     {
         MonitorWaitTime = 60;
@@ -27,9 +22,9 @@ public record MonitorOptions1
         FileRetryCount = 2;
     }
 
-    public bool VerifyValues()
-    {
+#pragma warning disable CA1822 // Mark members as static
+    public bool VerifyValues() =>
         // Nothing to do
-        return true;
-    }
+        true;
+#pragma warning restore CA1822 // Mark members as static
 }

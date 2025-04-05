@@ -25,7 +25,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.x"
+          dotnet-version: "9.x"
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
@@ -84,7 +84,7 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
 
-          - file: ./Docker/Alpine.Stable.Dockerfile
+          - file: ./Docker/Alpine.Latest.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine
             tags: |
@@ -97,7 +97,7 @@ jobs:
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
 
           - file: ./Docker/Ubuntu.Rolling.Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            platforms: linux/amd64,linux/arm64
             cache-scope: ubuntu
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
@@ -105,7 +105,7 @@ jobs:
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
 
           - file: ./Docker/Ubuntu.Devel.Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            platforms: linux/amd64,linux/arm64
             cache-scope: ubuntu-devel
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}

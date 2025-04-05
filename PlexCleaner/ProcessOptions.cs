@@ -10,9 +10,9 @@ namespace PlexCleaner;
 // v2 : Added
 public record VideoFormat
 {
-    public string Format;
-    public string Codec;
-    public string Profile;
+    public string Format { get; set; }
+    public string Codec { get; set; }
+    public string Profile { get; set; }
 }
 
 // v1
@@ -22,49 +22,49 @@ public record ProcessOptions1
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string ReEncodeVideoFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string ReEncodeVideoCodecs { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string ReEncodeVideoProfiles { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string ReEncodeAudioFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string ReMuxExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string KeepExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string KeepLanguages { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string PreferredAudioFormats { get; set; } = "";
 
@@ -126,7 +126,7 @@ public record ProcessOptions2 : ProcessOptions1
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     // v3 -> v4 : Replaced by FileIgnoreMasks
-    [Obsolete]
+    [Obsolete("Replaced in v4 with FileIgnoreMasks")]
     [Json.Schema.Generation.JsonExclude]
     public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -189,50 +189,38 @@ public record ProcessOptions4 : ProcessOptions3
     protected new const int Version = 4;
 
     public ProcessOptions4() { }
-    public ProcessOptions4(ProcessOptions1 processOptions1) : base(processOptions1) 
-    {
-        Upgrade(ProcessOptions1.Version);
-    }
-    public ProcessOptions4(ProcessOptions2 processOptions2) : base(processOptions2)
-    {
-        Upgrade(ProcessOptions2.Version);
-    }
-    public ProcessOptions4(ProcessOptions3 processOptions3) : base(processOptions3)
-    {
-        Upgrade(ProcessOptions3.Version);
-    }
+    public ProcessOptions4(ProcessOptions1 processOptions1) : base(processOptions1) => Upgrade(ProcessOptions1.Version);
+    public ProcessOptions4(ProcessOptions2 processOptions2) : base(processOptions2) => Upgrade(ProcessOptions2.Version);
+    public ProcessOptions4(ProcessOptions3 processOptions3) : base(processOptions3) => Upgrade(ProcessOptions3.Version);
 
     // v4 : Added
     [JsonRequired]
     public HashSet<string> FileIgnoreMasks { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    private List<Regex> FileIgnoreRegExList = [];
+    private readonly List<Regex> _fileIgnoreRegExList = [];
 
     private void FileIgnoreMaskToRegex()
     {
-        foreach (var item in FileIgnoreMasks)
+        foreach (string item in FileIgnoreMasks)
         {
-            FileIgnoreRegExList.Add(MaskToRegex(item));
+            _fileIgnoreRegExList.Add(MaskToRegex(item));
         }
     }
 
     public static Regex MaskToRegex(string mask)
     {
         // Convert * and ? wildcards to regex
-        var regexString = "^" + Regex.Escape(mask);
+        string regexString = "^" + Regex.Escape(mask);
         regexString = regexString.Replace("\\*", ".*");
         regexString = regexString.Replace("\\?", ".") + "$";
         return new Regex(regexString, RegexOptions.IgnoreCase);
     }
 
-    public bool IsFileIgnoreMatch(string fileName)
-    {
-        return FileIgnoreRegExList.Any(item => item.IsMatch(fileName));
-    }
+    public bool IsFileIgnoreMatch(string fileName) => _fileIgnoreRegExList.Any(item => item.IsMatch(fileName));
 
-#pragma warning disable CS0612 // Type or member is obsolete
     protected void Upgrade(int version)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         // v1
         if (version <= ProcessOptions1.Version)
         {
@@ -271,9 +259,9 @@ public record ProcessOptions4 : ProcessOptions3
                 !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats) &&
                 !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles))
             {
-                var codecList = processOptions1.ReEncodeVideoCodecs.Split(',').ToList();
-                var formatList = processOptions1.ReEncodeVideoFormats.Split(',').ToList();
-                var profileList = processOptions1.ReEncodeVideoProfiles.Split(',').ToList();
+                List<string> codecList = [.. processOptions1.ReEncodeVideoCodecs.Split(',')];
+                List<string> formatList = [.. processOptions1.ReEncodeVideoFormats.Split(',')];
+                List<string> profileList = [.. processOptions1.ReEncodeVideoProfiles.Split(',')];
                 if (codecList.Count != formatList.Count || formatList.Count != profileList.Count)
                 {
                     // The number of arguments has to match
@@ -319,7 +307,7 @@ public record ProcessOptions4 : ProcessOptions3
 
             // v2 -> v3 : Convert ISO 639-2 to RFC 5646 language tags
             DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
-            List<string> oldList = KeepLanguages.ToList();
+            List<string> oldList = [.. KeepLanguages];
             KeepLanguages.Clear();
             oldList.ForEach(item => KeepLanguages.Add(Language.Singleton.GetIetfTag(item, true) ?? Language.English));
 
@@ -337,17 +325,17 @@ public record ProcessOptions4 : ProcessOptions3
             ProcessOptions3 processOptions3 = this;
 
             // v3 -> v4 : Convert KeepExtensions to IgnoreFiles
-            foreach (var item in processOptions3.KeepExtensions)
+            foreach (string item in processOptions3.KeepExtensions)
             {
                 // Convert ext to *.ext
-                FileIgnoreMasks.Add($"*{item}");
+                _ = FileIgnoreMasks.Add($"*{item}");
             }
             processOptions3.KeepExtensions.Clear();
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // v4
     }
-#pragma warning restore CS0612 // Type or member is obsolete
 
     public void SetDefaults()
     {
@@ -458,9 +446,9 @@ public record ProcessOptions4 : ProcessOptions3
         }
 
         // Always keep no linguistic content (zxx), undefined (und), and the default language
-        KeepLanguages.Add(Language.None);
-        KeepLanguages.Add(Language.Undefined);
-        KeepLanguages.Add(DefaultLanguage);
+        _ = KeepLanguages.Add(Language.None);
+        _ = KeepLanguages.Add(Language.Undefined);
+        _ = KeepLanguages.Add(DefaultLanguage);
 
         // Convert wildcards to regex
         FileIgnoreMaskToRegex();

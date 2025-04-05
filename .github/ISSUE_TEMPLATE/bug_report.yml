@@ -6,9 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to submit a 🐞 bug 🐞 report!  
-        Please use [Discussions](https://github.com/ptr727/PlexCleaner/discussions) for general questions.  
-        Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.  
+        Thank you for taking the time to submit a 🐞 bug 🐞 report!\
+        Please use [Discussions](https://github.com/ptr727/PlexCleaner/discussions) for general questions.\
+        Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.\
         Please reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest) before submitting an issue.
   - type: checkboxes
     attributes:

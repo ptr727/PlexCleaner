@@ -19,14 +19,9 @@ public class PlexCleanerTests : IDisposable
         Program.Config.SetDefaults();
     }
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() => GC.SuppressFinalize(this);
 
-    public static FileInfo GetSampleFileInfo(string fileName)
-    {
-        return new FileInfo(GetSampleFilePath(fileName));
-    }
+    public static FileInfo GetSampleFileInfo(string fileName) => new(GetSampleFilePath(fileName));
 
     public static string GetSampleFilePath(string fileName)
     {

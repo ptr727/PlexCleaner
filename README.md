@@ -4,31 +4,36 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 
 ## License
 
-Licensed under the [MIT License][license-link]  
+Licensed under the [MIT License][license-link]\
 ![GitHub License][license-shield]
 
 ## Build
 
-Code and Pipeline is on [GitHub][github-link].  
-Binary releases are published on [GitHub Releases][releases-link].  
+Code and Pipeline is on [GitHub][github-link].\
+Binary releases are published on [GitHub Releases][releases-link].\
 Docker images are published on [Docker Hub][docker-link].
 
 ## Status
 
-[![Release Status][release-status-shield]][actions-link]  
-[![Docker Status][docker-status-shield]][actions-link]  
-[![Last Commit][last-commit-shield]][commit-link]  
+[![Release Status][release-status-shield]][actions-link]\
+[![Docker Status][docker-status-shield]][actions-link]\
+[![Last Commit][last-commit-shield]][commit-link]\
 [![Last Build][last-build-shield]][actions-link]
 
 ## Releases
 
-[![GitHub Release][release-version-shield]][releases-link]  
-[![GitHub Pre-Release][pre-release-version-shield]][releases-link]  
-[![Docker Latest][docker-latest-version-shield]][docker-link]  
+[![GitHub Release][release-version-shield]][releases-link]\
+[![GitHub Pre-Release][pre-release-version-shield]][releases-link]\
+[![Docker Latest][docker-latest-version-shield]][docker-link]\
 [![Docker Develop][docker-develop-version-shield]][docker-link]
 
 ## Release Notes
 
+- version 3:11:
+  - Update to .NET 9.0.
+    - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 no longer published in Ubuntu repository.
+    - Switching Debian docker builds to install .NET using Msft install script, Msft repository install only supports x64 builds.
+  - Updated code style to mostly follow the .NET Runtime [`.editorconfig`](https://github.com/dotnet/runtime/blob/main/.editorconfig) style.
 - Version 3:10:
   - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
     - The builds would periodically break due to incompatible or missing libraries.
@@ -62,14 +67,6 @@ Docker images are published on [Docker Hub][docker-link].
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
   - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
     - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
-- Version 3.6:
-  - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
-    - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
-    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases (v3.20 May 2024).
-    - Alpine Edge builds will be tagged as `alpine-edge`.
-- Version 3.5:
-  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
-  - Update Alpine Docker image to 3.19.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -293,13 +290,13 @@ Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json)
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific.  
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific.\
 Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.  
 The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
 ### FFmpeg Options
 
-See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.  
+See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.\
 The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.  
 E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 26 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
 
@@ -364,29 +361,29 @@ Example hardware assisted video encoding options:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
   - `HandBrakeOptions:Video`: `qsv_h264 --quality 22 --encoder-preset medium`
 
-Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.  
+Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
 ## Language Matching
 
-Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
-During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.  
+Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
+During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
 If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
 
-Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
-E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.  
-E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
-E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
+Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.\
+E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.\
+E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.\
+E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.\
 E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
 
-Normalized tags will be expanded for matching.  
+Normalized tags will be expanded for matching.\
 E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
 
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage
 
-Use the `PlexCleaner --help` commandline option to get a list of commands and options.  
+Use the `PlexCleaner --help` commandline option to get a list of commands and options.\
 To get help for a specific command run `PlexCleaner <command> --help`.
 
 ```text

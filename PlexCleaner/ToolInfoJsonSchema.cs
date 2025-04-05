@@ -21,31 +21,17 @@ public class ToolInfoJsonSchema
 
     public List<MediaToolInfo> Tools { get; } = [];
 
-    public MediaToolInfo GetToolInfo(MediaTool mediaTool)
-    {
+    public MediaToolInfo GetToolInfo(MediaTool mediaTool) =>
         // Match tool by family
-        return Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
-    }
+        Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
 
-    public static ToolInfoJsonSchema FromFile(string path)
-    {
-        return FromJson(File.ReadAllText(path));
-    }
+    public static ToolInfoJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
-    public static void ToFile(string path, ToolInfoJsonSchema json)
-    {
-        File.WriteAllText(path, ToJson(json));
-    }
+    public static void ToFile(string path, ToolInfoJsonSchema json) => File.WriteAllText(path, ToJson(json));
 
-    private static string ToJson(ToolInfoJsonSchema tools)
-    {
-        return JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
-    }
+    private static string ToJson(ToolInfoJsonSchema tools) => JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
 
-    public static ToolInfoJsonSchema FromJson(string json)
-    {
-        return JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
-    }
+    public static ToolInfoJsonSchema FromJson(string json) => JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {

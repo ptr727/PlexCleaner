@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Serilog;
@@ -38,13 +39,13 @@ public partial class TrackInfo
 
     public TrackInfo() { }
 
-    public TrackInfo(MkvToolJsonSchema.Track trackJson)
+    public TrackInfo(MkvToolJsonSchema.Track track)
     {
         const string parser = "MkvToolJsonSchema";
 
         // Required
-        Format = trackJson.Codec;
-        Codec = trackJson.Properties.CodecId;
+        Format = track.Codec;
+        Codec = track.Properties.CodecId;
         if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
         {
             HasErrors = true;
@@ -54,57 +55,57 @@ public partial class TrackInfo
         }
 
         // Flags
-        if (trackJson.Properties.DefaultTrack)
+        if (track.Properties.DefaultTrack)
         {
             Flags |= FlagsType.Default;
         }
-        if (trackJson.Properties.Original)
+        if (track.Properties.Original)
         {
             Flags |= FlagsType.Original;
         }
-        if (trackJson.Properties.Commentary)
+        if (track.Properties.Commentary)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (trackJson.Properties.VisualImpaired)
+        if (track.Properties.VisualImpaired)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (trackJson.Properties.HearingImpaired)
+        if (track.Properties.HearingImpaired)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (trackJson.Properties.TextDescriptions)
+        if (track.Properties.TextDescriptions)
         {
             Flags |= FlagsType.Descriptions;
         }
-        if (trackJson.Properties.Forced)
+        if (track.Properties.Forced)
         {
             Flags |= FlagsType.Forced;
         }
 
         // Title
-        Title = trackJson.Properties.TrackName;
+        Title = track.Properties.TrackName;
 
         // ISO 639-2B tag
-        Language = trackJson.Properties.Language;
+        Language = track.Properties.Language;
 
         // RFC-5646 / BCP 47 tag
-        LanguageIetf = trackJson.Properties.LanguageIetf;
+        LanguageIetf = track.Properties.LanguageIetf;
 
         // If the GetIso639Tag() or GetIetfTag() tag lookup logic is incomplete or buggy no amount of remuxing will help
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix
         // https://r12a.github.io/app-subtags/
 
         // For verification logic save state before modification
-        var languageSet = !string.IsNullOrEmpty(Language);
-        var languageIetfSet = !string.IsNullOrEmpty(LanguageIetf);
+        bool languageSet = !string.IsNullOrEmpty(Language);
+        bool languageIetfSet = !string.IsNullOrEmpty(LanguageIetf);
 
         // Language and LanguageIetf are both set, verify they match
         if (languageSet && languageIetfSet)
         {
             // Get the ISO tag from the IETF tag
-            var isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
+            string isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
 
             if (string.IsNullOrEmpty(isoLookup))
             {
@@ -131,7 +132,7 @@ public partial class TrackInfo
         if (languageSet && !languageIetfSet)
         {
             // Get the IETF tag from the ISO tag
-            var ietfLookup = PlexCleaner.Language.Singleton.GetIetfTag(Language, true);
+            string ietfLookup = PlexCleaner.Language.Singleton.GetIetfTag(Language, true);
 
             if (string.IsNullOrEmpty(ietfLookup))
             {
@@ -165,7 +166,7 @@ public partial class TrackInfo
             State = StateType.ReMux;
 
             // Get the ISO tag from the IETF tag
-            var isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
+            string isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
 
             if (string.IsNullOrEmpty(isoLookup))
             {
@@ -182,22 +183,22 @@ public partial class TrackInfo
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
-        if (!string.IsNullOrEmpty(trackJson.Properties.TagLanguage) &&
-            !string.IsNullOrEmpty(trackJson.Properties.Language) &&
-            !trackJson.Properties.Language.Equals(trackJson.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
+            !string.IsNullOrEmpty(track.Properties.Language) &&
+            !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
         {
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", parser, trackJson.Properties.TagLanguage, trackJson.Properties.Language, State);
+            Log.Logger.Warning("{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", parser, track.Properties.TagLanguage, track.Properties.Language, State);
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/About-track-UIDs,-track-numbers-and-track-IDs#track-numbers
         // Id: 0-based track number internally assigned
-        Id = trackJson.Id;
+        Id = track.Id;
         // Number: 1-based track number from Matroska header
-        Number = trackJson.Properties.Number;
+        Number = track.Properties.Number;
 
         // TODO: Anything other than title for tags?
         HasTags = NotTrackTitleFlag();
@@ -206,13 +207,13 @@ public partial class TrackInfo
         SetFlagsFromTitle(parser);
     }
 
-    public TrackInfo(FfMpegToolJsonSchema.Stream trackJson)
+    public TrackInfo(FfMpegToolJsonSchema.Track track)
     {
         const string parser = "FfMpegToolJsonSchema";
 
         // Required
-        Format = trackJson.CodecName;
-        Codec = trackJson.CodecLongName;
+        Format = track.CodecName;
+        Codec = track.CodecLongName;
         if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
         {
             HasErrors = true;
@@ -222,40 +223,40 @@ public partial class TrackInfo
         }
 
         // Flags
-        if (trackJson.Disposition.Default != 0)
+        if (track.Disposition.Default != 0)
         {
             Flags |= FlagsType.Default;
         }
-        if (trackJson.Disposition.Forced != 0)
+        if (track.Disposition.Forced != 0)
         {
             Flags |= FlagsType.Forced;
         }
-        if (trackJson.Disposition.Original != 0)
+        if (track.Disposition.Original != 0)
         {
             Flags |= FlagsType.Original;
         }
-        if (trackJson.Disposition.Comment != 0)
+        if (track.Disposition.Comment != 0)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (trackJson.Disposition.HearingImpaired != 0)
+        if (track.Disposition.HearingImpaired != 0)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (trackJson.Disposition.VisualImpaired != 0)
+        if (track.Disposition.VisualImpaired != 0)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (trackJson.Disposition.Descriptions != 0)
+        if (track.Disposition.Descriptions != 0)
         {
             Flags |= FlagsType.Descriptions;
         }
 
         // Title
-        Title = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Title = track.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
 
         // Language
-        Language = trackJson.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Language = track.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
@@ -275,8 +276,8 @@ public partial class TrackInfo
 
         // Use stream index for id and number
         // TODO: How to get Matroska TrackNumber from ffProbe?
-        Id = trackJson.Index;
-        Number = trackJson.Index;
+        Id = track.Index;
+        Number = track.Index;
 
         // TODO: Anything other than title for tags?
         HasTags = NotTrackTitleFlag();
@@ -286,13 +287,13 @@ public partial class TrackInfo
         // SetFlagsFromTitle("FfMpegToolJsonSchema");
     }
 
-    public TrackInfo(MediaInfoToolXmlSchema.Track trackXml)
+    public TrackInfo(MediaInfoToolXmlSchema.Track track)
     {
         const string parser = "MediaInfoToolXmlSchema";
 
         // Required
-        Format = trackXml.Format;
-        Codec = trackXml.CodecId;
+        Format = track.Format;
+        Codec = track.CodecId;
         if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
         {
             HasErrors = true;
@@ -302,10 +303,10 @@ public partial class TrackInfo
         }
 
         // Title
-        Title = trackXml.Title;
+        Title = track.Title;
 
         // Language
-        Language = trackXml.Language;
+        Language = track.Language;
 
         // TODO: Missing flags
         // Original
@@ -314,11 +315,11 @@ public partial class TrackInfo
         // HearingImpaired
         // Descriptions
 
-        if (trackXml.Default)
+        if (track.Default)
         {
             Flags |= FlagsType.Default;
         }
-        if (trackXml.Forced)
+        if (track.Forced)
         {
             Flags |= FlagsType.Forced;
         }
@@ -339,13 +340,13 @@ public partial class TrackInfo
         // 1
         // 3-CC1
         // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
-        var match = TrackRegex().Match(trackXml.Id);
+        Match match = TrackRegex().Match(track.Id);
         Debug.Assert(match.Success);
         // Use number before dash as Matroska TrackNumber
-        Number = int.Parse(match.Groups["id"].Value);
+        Number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
 
         // Use StreamOrder for Id
-        Id = trackXml.StreamOrder;
+        Id = track.StreamOrder;
 
         // TODO: Anything other than title for tags?
         HasTags = NotTrackTitleFlag();
@@ -358,7 +359,7 @@ public partial class TrackInfo
     public string Codec { get; set; } = "";
     public string Language { get; set; } = "";
     public string LanguageIetf { get; set; } = "";
-    public string LanguageAny { get => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language; }
+    public string LanguageAny => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language;
     public int Id { get; set; }
     public int Number { get; set; }
     public StateType State { get; set; } = StateType.None;
@@ -367,10 +368,8 @@ public partial class TrackInfo
     public bool HasErrors { get; set; }
     public FlagsType Flags { get; set; } = FlagsType.None;
 
-    public virtual void WriteLine(string prefix)
-    {
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, " +
-                               "Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+    public virtual void WriteLine(string prefix) =>
+        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
             Format,
@@ -384,7 +383,6 @@ public partial class TrackInfo
             State,
             HasErrors,
             HasTags);
-    }
 
     public bool NotTrackTitleFlag()
     {
@@ -396,13 +394,13 @@ public partial class TrackInfo
         }
 
         // Not a flag is not a flag
-        return !TitleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
+        return !s_titleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
     }
 
     public void SetFlagsFromTitle(string parser)
     {
         // Add flags based on titles
-        foreach (var tuple in TitleFlags)
+        foreach ((string, FlagsType) tuple in s_titleFlags)
         {
             // Only process if matching flag is not already set
             if (Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase) &&
@@ -417,21 +415,17 @@ public partial class TrackInfo
         }
     }
 
-    public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType)
-    {
-        return Enum.GetValues<FlagsType>().Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
-    }
+    public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType) =>
+        Enum.GetValues<FlagsType>().Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
 
-    public static IEnumerable<FlagsType> GetFlags()
-    {
-        return Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
-    }
+    public static IEnumerable<FlagsType> GetFlags() =>
+        Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
 
     [GeneratedRegex(@"(?<id>\d)")]
     public static partial Regex TrackRegex();
 
     // Track title to flag mapping
-    private static readonly ValueTuple<string, FlagsType>[] TitleFlags =
+    private static readonly ValueTuple<string, FlagsType>[] s_titleFlags =
     [
         new ValueTuple<string, FlagsType>("SDH", FlagsType.HearingImpaired),
         new ValueTuple<string, FlagsType>("CC", FlagsType.HearingImpaired),

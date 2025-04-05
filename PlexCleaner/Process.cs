@@ -9,10 +9,10 @@ using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
-namespace PlexCleaner;
-
 // Filename, State
-using ProcessTuple = ValueTuple<string, SidecarFile.StatesType>;
+using ProcessTuple = System.ValueTuple<string, PlexCleaner.SidecarFile.StatesType>;
+
+namespace PlexCleaner;
 
 public static class Process
 {
@@ -262,9 +262,9 @@ public static class Process
         {
             // Delete files that failed processing
             // Conditional on DeleteInvalidFiles
-            if (result == false)
+            if (!result)
             {
-                processFile.DeleteFailedFile();
+                _ = processFile.DeleteFailedFile();
             }
 
             // Return current state and file info
@@ -314,8 +314,8 @@ public static class Process
                     // Delete empty folders
                     int deleted = 0;
                     Log.Logger.Information("Looking for empty folders in {Folder}", folder);
-                    FileEx.DeleteEmptyDirectories(folder, ref deleted);
-                    Interlocked.Add(ref totalDeleted, deleted);
+                    _ = FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    _ = Interlocked.Add(ref totalDeleted, deleted);
                 });
         }
         catch (OperationCanceledException)
@@ -350,7 +350,7 @@ public static class Process
         List<ProcessTuple> errorInfo = [];
         List<ProcessTuple> modifiedInfo = [];
         List<ProcessTuple> failedInfo = [];
-        var lockObject = new Object();
+        object lockObject = new();
         bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
         {
             // Process the file
@@ -393,7 +393,7 @@ public static class Process
                 {
                     lock (lockObject)
                     {
-                        Program.Config.ProcessOptions.FileIgnoreList.Add(processName);
+                        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(processName);
                     }
                 }
             }
@@ -424,76 +424,68 @@ public static class Process
         return ret;
     }
 
-    public static bool ReMuxFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "ReMux", fileName =>
-        {
-            // Handle only MKV files, and files in the remux extension list
-            if (!MkvMergeTool.IsMkvFile(fileName) &&
-                !Program.Config.ProcessOptions.ReMuxExtensions.Contains(Path.GetExtension(fileName)))
+    public static bool ReMuxFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "ReMux", fileName =>
             {
-                return true;
-            }
+                // Handle only MKV files, and files in the remux extension list
+                if (!MkvMergeTool.IsMkvFile(fileName) &&
+                    !Program.Config.ProcessOptions.ReMuxExtensions.Contains(Path.GetExtension(fileName)))
+                {
+                    return true;
+                }
 
-            // ReMux
-            return Convert.ReMuxToMkv(fileName, out string _);
-        });
-    }
+                // ReMux
+                return Convert.ReMuxToMkv(fileName, out string _);
+            });
 
-    public static bool ReEncodeFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "ReEncode", fileName =>
-        {
-            // Handle only MKV files
-            // ReMux before re-encode, so the track attribute logic works as expected
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool ReEncodeFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "ReEncode", fileName =>
             {
-                return true;
-            }
+                // Handle only MKV files
+                // ReMux before re-encode, so the track attribute logic works as expected
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
 
-            // Re-encode
-            return Convert.ConvertToMkv(fileName, out string _);
-        });
-    }
+                // Re-encode
+                return Convert.ConvertToMkv(fileName, out string _);
+            });
 
-    public static bool DeInterlaceFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "DeInterlace", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool DeInterlaceFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "DeInterlace", fileName =>
             {
-                return true;
-            }
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
 
-            // Deinterlace
-            return Convert.DeInterlaceToMkv(fileName, out string _);
-        });
-    }
+                // Deinterlace
+                return Convert.DeInterlaceToMkv(fileName, out string _);
+            });
 
-    public static bool VerifyFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Verify", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool VerifyFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Verify", fileName =>
             {
-                return true;
-            }
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
 
-            // Verify media streams
-            // Track count, bitrate, and HDR profiles are not evaluated here
-            return PlexCleaner.ProcessFile.VerifyMediaStreams(new FileInfo(fileName));
-        });
-    }
+                // Verify media streams
+                // Track count, bitrate, and HDR profiles are not evaluated here
+                return PlexCleaner.ProcessFile.VerifyMediaStreams(new FileInfo(fileName));
+            });
 
     public static bool GetTagMapFiles(List<string> fileList)
     {
         // Create a dictionary of ffprobe to mkvmerge and mediainfo tag strings
-        TagMapDictionary ffTags = new();
-        TagMapDictionary mkTags = new();
-        TagMapDictionary miTags = new();
-        var lockObject = new Object();
+        TagMapSet ffTags = new();
+        TagMapSet mkTags = new();
+        TagMapSet miTags = new();
+        object lockObject = new();
         if (!ProcessFilesDriver(fileList, "Create Tag Map", fileName =>
             {
                 // Handle only MKV files
@@ -534,135 +526,123 @@ public static class Process
         return true;
     }
 
-    public static bool CreateSidecarFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Create Sidecar Files", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool CreateSidecarFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Create Sidecar Files", fileName =>
             {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
+
+                // Create new or overwrite existing sidecar file
+                return SidecarFile.Create(fileName);
+            });
+
+    public static bool GetSidecarFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
+
+                // Print info
+                return SidecarFile.PrintInformation(fileName);
+            });
+
+    public static bool UpdateSidecarFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Update Sidecar Files", fileName =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
+
+                // Create new or update existing sidecar file
+                return SidecarFile.Update(fileName);
+            });
+
+    public static bool GetMediaInfoFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Get Media Information", fileName =>
+            {
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
+
+                // Get media information
+                ProcessFile processFile = new(fileName);
+                if (!processFile.GetMediaInfo())
+                {
+                    return false;
+                }
+
+                // Print info
+                Log.Logger.Information("{FileName}", fileName);
+                processFile.FfProbeInfo.WriteLine("FfProbe");
+                processFile.MkvMergeInfo.WriteLine("MkvMerge");
+                processFile.MediaInfoInfo.WriteLine("MediaInfo");
+
                 return true;
-            }
+            });
 
-            // Create new or overwrite existing sidecar file
-            return SidecarFile.Create(fileName);
-        });
-    }
-
-    public static bool GetSidecarFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Get Sidecar Information", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool GetToolInfoFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Get Tool Information", fileName =>
             {
+                // Skip sidecar files
+                if (SidecarFile.IsSidecarFile(fileName))
+                {
+                    return true;
+                }
+
+                // Get tool information
+                // Read the tool info text
+                if (!Tools.MediaInfo.GetMediaInfoXml(fileName, out string mediaInfoXml) ||
+                    !Tools.MkvMerge.GetMkvInfoJson(fileName, out string mkvMergeInfoJson) ||
+                    !Tools.FfProbe.GetFfProbeInfoJson(fileName, out string ffProbeInfoJson))
+                {
+                    Log.Logger.Error("Failed to read tool info : {FileName}", fileName);
+                    return false;
+                }
+
+                // Print and log info
+                Log.Logger.Information("{FileName}", fileName);
+                Log.Logger.Information("FfProbe: {FfProbeText}", ffProbeInfoJson);
+                Console.Write(ffProbeInfoJson);
+                Log.Logger.Information("MkvMerge: {MkvMergeText}", mkvMergeInfoJson);
+                Console.Write(mkvMergeInfoJson);
+                Log.Logger.Information("MediaInfo: {MediaInfoText}", mediaInfoXml);
+                Console.Write(mediaInfoXml);
+
                 return true;
-            }
+            });
 
-            // Print info
-            return SidecarFile.PrintInformation(fileName);
-        });
-    }
-
-    public static bool UpdateSidecarFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Update Sidecar Files", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
+    public static bool RemoveSubtitlesFiles(List<string> fileList) =>
+        ProcessFilesDriver(fileList, "Remove Subtitles", fileName =>
             {
-                return true;
-            }
+                // Handle only MKV files
+                if (!MkvMergeTool.IsMkvFile(fileName))
+                {
+                    return true;
+                }
 
-            // Create new or update existing sidecar file
-            return SidecarFile.Update(fileName);
-        });
-    }
+                // Get media information
+                ProcessFile processFile = new(fileName);
+                if (!processFile.GetMediaInfo())
+                {
+                    return false;
+                }
 
-    public static bool GetMediaInfoFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Get Media Information", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
-            {
-                return true;
-            }
+                // Remove subtitles
+                bool modified = false;
+                return processFile.RemoveSubtitles(ref modified);
+            });
 
-            // Get media information
-            ProcessFile processFile = new(fileName);
-            if (!processFile.GetMediaInfo())
-            {
-                return false;
-            }
-
-            // Print info
-            Log.Logger.Information("{FileName}", fileName);
-            processFile.FfProbeInfo.WriteLine("FfProbe");
-            processFile.MkvMergeInfo.WriteLine("MkvMerge");
-            processFile.MediaInfoInfo.WriteLine("MediaInfo");
-
-            return true;
-        });
-    }
-
-    public static bool GetToolInfoFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Get Tool Information", fileName =>
-        {
-            // Skip sidecar files
-            if (SidecarFile.IsSidecarFile(fileName))
-            {
-                return true;
-            }
-
-            // Get tool information
-            // Read the tool info text
-            if (!Tools.MediaInfo.GetMediaInfoXml(fileName, out string mediaInfoXml) ||
-                !Tools.MkvMerge.GetMkvInfoJson(fileName, out string mkvMergeInfoJson) ||
-                !Tools.FfProbe.GetFfProbeInfoJson(fileName, out string ffProbeInfoJson))
-            {
-                Log.Logger.Error("Failed to read tool info : {FileName}", fileName);
-                return false;
-            }
-
-            // Print and log info
-            Log.Logger.Information("{FileName}", fileName);
-            Log.Logger.Information("FfProbe: {FfProbeText}", ffProbeInfoJson);
-            Console.Write(ffProbeInfoJson);
-            Log.Logger.Information("MkvMerge: {MkvMergeText}", mkvMergeInfoJson);
-            Console.Write(mkvMergeInfoJson);
-            Log.Logger.Information("MediaInfo: {MediaInfoText}", mediaInfoXml);
-            Console.Write(mediaInfoXml);
-
-            return true;
-        });
-    }
-
-    public static bool RemoveSubtitlesFiles(List<string> fileList)
-    {
-        return ProcessFilesDriver(fileList, "Remove Subtitles", fileName =>
-        {
-            // Handle only MKV files
-            if (!MkvMergeTool.IsMkvFile(fileName))
-            {
-                return true;
-            }
-
-            // Get media information
-            ProcessFile processFile = new(fileName);
-            if (!processFile.GetMediaInfo())
-            {
-                return false;
-            }
-
-            // Remove subtitles
-            bool modified = false;
-            return processFile.RemoveSubtitles(ref modified);
-        });
-    }
-
-    private static bool ProcessFilesDriver(IReadOnlyCollection<string> fileList, string taskName, Func<string, bool> taskFunc)
+    private static bool ProcessFilesDriver(List<string> fileList, string taskName, Func<string, bool> taskFunc)
     {
         // Start
         Log.Logger.Information("Starting {TaskName}, processing {Count} files ...", taskName, fileList.Count);
@@ -679,12 +659,12 @@ public static class Process
             // Group files by path ignoring extensions
             // This prevents files with the same name being modified by different threads
             // E.g. when remuxing from AVI to MKV, or when testing for existence of MKV for Sidecar files
-            var groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
+            IEnumerable<IGrouping<string, string>> groupedFiles = fileList.GroupBy(path => Path.ChangeExtension(path, null), StringComparer.OrdinalIgnoreCase);
 
             // Use a single item partitioner
             // This prevents a long running task in one thread from starving outstanding work that is assigned to the same thread
             // E.g. a long running FFmpeg task with waiting tasks that could have been completed on the idle threads
-            var partitioner = Partitioner.Create(groupedFiles, EnumerablePartitionerOptions.NoBuffering);
+            OrderablePartitioner<IGrouping<string, string>> partitioner = Partitioner.Create(groupedFiles, EnumerablePartitionerOptions.NoBuffering);
 
             // Process groups in parallel
             partitioner.AsParallel()
@@ -710,7 +690,7 @@ public static class Process
                     {
                         // Error
                         Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);
-                        Interlocked.Increment(ref errorCount);
+                        _ = Interlocked.Increment(ref errorCount);
                     }
 
                     // Log completion % after task completes

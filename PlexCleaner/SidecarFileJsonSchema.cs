@@ -21,17 +21,17 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
     protected const int Version = 1;
 
     // v3 : Removed
-    [Obsolete]
+    [Obsolete("Removed in v3")]
     [Json.Schema.Generation.JsonExclude]
     public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
-    [Obsolete]
+    [Obsolete("Removed in v3")]
     [Json.Schema.Generation.JsonExclude]
     public string MkvToolVersion { get; set; }
-    
+
     // v2 : Removed
-    [Obsolete]
+    [Obsolete("Removed in v2")]
     [Json.Schema.Generation.JsonExclude]
     public string FfIdetInfoData { get; set; }
 
@@ -64,7 +64,7 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
 
     // v2 : Added
     // v4 : Removed
-    [Obsolete]
+    [Obsolete("Removed in v4")]
     [Json.Schema.Generation.JsonExclude]
     public bool Verified { get; set; }
 }
@@ -93,18 +93,9 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     public new const int Version = 4;
 
     public SidecarFileJsonSchema4() { }
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1) 
-    {
-        Upgrade(SidecarFileJsonSchema1.Version);
-    }
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2)
-    {
-        Upgrade(SidecarFileJsonSchema2.Version);
-    }
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema3 sidecarFileJsonSchema3) : base(sidecarFileJsonSchema3)
-    {
-        Upgrade(SidecarFileJsonSchema3.Version);
-    }
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1) => Upgrade(SidecarFileJsonSchema1.Version);
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2) => Upgrade(SidecarFileJsonSchema2.Version);
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema3 sidecarFileJsonSchema3) : base(sidecarFileJsonSchema3) => Upgrade(SidecarFileJsonSchema3.Version);
 
     // v4 : Added
     [JsonRequired]
@@ -114,9 +105,9 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     [JsonRequired]
     public string MediaHash { get; set; }
 
-#pragma warning disable CS0612 // Type or member is obsolete
     private void Upgrade(int version)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         // v1
         if (version <= SidecarFileJsonSchema1.Version)
         {
@@ -155,20 +146,17 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
             // Defaults
             MediaHash = "";
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // v4
     }
-#pragma warning restore CS0612 // Type or member is obsolete
 
-    public static string ToJson(SidecarFileJsonSchema json)
-    {
-        return JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
-    }
+    public static string ToJson(SidecarFileJsonSchema json) => JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var sidecarFileJsonSchemaBase = JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadOptions);
+        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadOptions);
         if (sidecarFileJsonSchemaBase == null)
         {
             return null;

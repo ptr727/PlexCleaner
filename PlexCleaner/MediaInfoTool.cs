@@ -11,34 +11,22 @@ namespace PlexCleaner;
 
 public partial class MediaInfoTool : MediaTool
 {
-    public override ToolFamily GetToolFamily()
-    {
-        return ToolFamily.MediaInfo;
-    }
+    public override ToolFamily GetToolFamily() => ToolFamily.MediaInfo;
 
-    public override ToolType GetToolType()
-    {
-        return ToolType.MediaInfo;
-    }
+    public override ToolType GetToolType() => ToolType.MediaInfo;
 
-    protected override string GetToolNameWindows()
-    {
-        return "mediainfo.exe";
-    }
+    protected override string GetToolNameWindows() => "mediainfo.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "mediainfo";
-    }
+    protected override string GetToolNameLinux() => "mediainfo";
 
     public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         // Get version
         const string commandline = "--version";
-        var exitCode = Command(commandline, out var output);
+        int exitCode = Command(commandline, out string output);
         if (exitCode != 0)
         {
             return false;
@@ -47,10 +35,10 @@ public partial class MediaInfoTool : MediaTool
         // Second line as version
         // E.g. Windows : "MediaInfoLib - v20.09"
         // E.g. Linux : "MediaInfoLib - v20.09"
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        var match = InstalledVersionRegex().Match(lines[1]);
+        Match match = InstalledVersionRegex().Match(lines[1]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
 
@@ -70,7 +58,7 @@ public partial class MediaInfoTool : MediaTool
 
     protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         try
@@ -101,7 +89,7 @@ public partial class MediaInfoTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         // TODO: Linux implementation
@@ -111,15 +99,15 @@ public partial class MediaInfoTool : MediaTool
     public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(fileName, out var xml) &&
+        return GetMediaInfoXml(fileName, out string xml) &&
                GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
     public bool GetMediaInfoXml(string fileName, out string xml)
     {
         // Get media info as XML
-        var commandline = $"--Output=XML \"{fileName}\"";
-        var exitCode = Command(commandline, out xml);
+        string commandline = $"--Output=XML \"{fileName}\"";
+        int exitCode = Command(commandline, out xml);
 
         // TODO: No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
@@ -138,16 +126,16 @@ public partial class MediaInfoTool : MediaTool
         {
             // Deserialize
             var xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
-            var xmlMedia = xmInfo.Media;
+            MediaInfoToolXmlSchema.MediaElement xmlMedia = xmInfo.Media;
 
             // No tracks
-            if (xmlMedia.Track.Count == 0)
+            if (xmlMedia.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (var track in xmlMedia.Track)
+            foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
             {
                 if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
                 {

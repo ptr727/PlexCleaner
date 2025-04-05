@@ -8,11 +8,9 @@ namespace PlexCleaner;
 
 public static class Convert
 {
-    public static bool ConvertToMkv(string inputName, out string outputName)
-    {
+    public static bool ConvertToMkv(string inputName, out string outputName) =>
         // Convert all tracks
-        return ConvertToMkv(inputName, null, out outputName);
-    }
+        ConvertToMkv(inputName, null, out outputName);
 
     public static bool ConvertToMkv(string inputName, SelectMediaInfo selectMediaInfo, out string outputName)
     {
@@ -33,13 +31,13 @@ public static class Convert
         // Selected is ReEncode
         // NotSelected is Keep
         Log.Logger.Information("ReEncode using FfMpeg : {FileName}", inputName);
-        var result = selectMediaInfo == null ?
+        bool result = selectMediaInfo == null ?
             Tools.FfMpeg.ConvertToMkv(inputName, tempName) :
             Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName);
         if (!result)
         {
             Log.Logger.Error("ReEncode using FfMpeg failed : {FileName}", inputName);
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
             return false;
         }
 
@@ -78,7 +76,7 @@ public static class Convert
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
         {
             // Failed, delete temp file
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
 
             // Cancel requested
             if (Program.IsCancelledError())
@@ -94,7 +92,7 @@ public static class Convert
             if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
             {
                 // Failed, delete temp file
-                FileEx.DeleteFile(tempName);
+                _ = FileEx.DeleteFile(tempName);
 
                 // Cancel requested
                 if (Program.IsCancelledError())
@@ -111,7 +109,7 @@ public static class Convert
             Log.Logger.Information("ReMux using MkvMerge : {FileName}", inputName);
             if (!ReMuxInPlace(tempName))
             {
-                FileEx.DeleteFile(tempName);
+                _ = FileEx.DeleteFile(tempName);
                 return false;
             }
         }
@@ -119,7 +117,7 @@ public static class Convert
         // Rename the temp file to the output file
         if (!FileEx.RenameFile(tempName, outputName))
         {
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
             return false;
         }
 
@@ -159,7 +157,7 @@ public static class Convert
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaInfo, tempName))
         {
             Log.Logger.Error("ReMux using MkvMerge failed : {FileName}", inputName);
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
             return false;
         }
 
@@ -178,13 +176,13 @@ public static class Convert
     {
         // Create a temp output filename
         string tempName = Path.ChangeExtension(fileName, ".tmprmx");
-        FileEx.DeleteFile(tempName);
+        _ = FileEx.DeleteFile(tempName);
 
         // Remux
         if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
         {
             Log.Logger.Error("Failed to Remux the media file: {FileName}", fileName);
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
             return false;
         }
 
@@ -211,7 +209,7 @@ public static class Convert
         if (!Tools.HandBrake.ConvertToMkv(inputName, tempName, true, true))
         {
             Log.Logger.Error("DeInterlace using HandBrake failed : {FileName}", inputName);
-            FileEx.DeleteFile(tempName);
+            _ = FileEx.DeleteFile(tempName);
             return false;
         }
 

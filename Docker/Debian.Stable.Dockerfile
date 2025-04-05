@@ -1,6 +1,6 @@
-# Description: Debian Stable (12 Bookworm)
+# Description: Debian latest release
 # Based on: debian:stable-slim
-# .NET: Msft repository
+# .NET install: Install script
 # Platforms: linux/amd64, linux/arm64, linux/arm/v7
 # Tag: ptr727/plexcleaner:debian
 
@@ -15,11 +15,11 @@
 
 # Build Dockerfile
 # docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Debian.Stable.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --file ./Docker/Debian.Stable.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Debian.Stable.Dockerfile .
-# docker run -it --rm --name Testing testing:latest /bin/bash
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:debian --file ./Docker/Debian.Stable.Dockerfile .
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:debian /bin/bash
 
 
 # Builder layer
@@ -45,22 +45,39 @@ ARG BUILD_CONFIGURATION="Debug" \
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
-RUN apt-get update \
-    && apt-get upgrade -y
+RUN apt update \
+    && apt upgrade -y
 
 # Install dependencies
-RUN apt-get install -y --no-install-recommends \
+RUN apt install -y --no-install-recommends \
         ca-certificates \
         lsb-release \
         wget
 
 # Install .NET SDK
-RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        dotnet-sdk-8.0
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-scripted-manual
+# https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script
+# https://github.com/dotnet/core/blob/main/release-notes/9.0/os-packages.md
+# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/9.0/bookworm-slim/amd64/Dockerfile
+# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/9.0/bookworm-slim/amd64/Dockerfile
+RUN apt install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        libc6 \
+        libgcc-s1 \
+        libicu72 \
+        libssl3 \
+        libstdc++6 \
+        tzdata \
+        wget \
+    && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
+    && chmod ugo+rwx dotnet-install.sh \
+    && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --channel 9.0 \
+    && rm dotnet-install.sh
+ENV DOTNET_ROOT=/usr/local/bin/dotnet \
+    PATH=$PATH:/usr/local/bin/dotnet:/usr/local/bin/dotnet/tools \
+    DOTNET_USE_POLLING_FILE_WATCHER=true \
+    DOTNET_RUNNING_IN_CONTAINER=true
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -79,7 +96,7 @@ RUN ./Build.sh
 
 
 # Final layer
-FROM --platform=$BUILDPLATFORM debian:stable-slim AS final
+FROM debian:stable-slim AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -92,11 +109,11 @@ LABEL name="PlexCleaner" \
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
-RUN apt-get update \
-    && apt-get upgrade -y
+RUN apt update \
+    && apt upgrade -y
 
 # Install dependencies
-RUN apt-get install -y --no-install-recommends \
+RUN apt install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
@@ -113,28 +130,41 @@ ENV TZ=Etc/UTC \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# Install .NET Runtime
-RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -sr)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        dotnet-runtime-8.0
+# Install .NET runtime
+# Keep dependencies in sync with SDK install step
+RUN apt install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        libc6 \
+        libgcc-s1 \
+        libicu72 \
+        libssl3 \
+        libstdc++6 \
+        tzdata \
+        wget \
+&& wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
+    && chmod ugo+rwx dotnet-install.sh \
+    && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --runtime dotnet --channel 9.0 \
+    && rm dotnet-install.sh
+ENV DOTNET_ROOT=/usr/local/bin/dotnet \
+    PATH=$PATH:/usr/local/bin/dotnet:/usr/local/bin/dotnet/tools \
+    DOTNET_USE_POLLING_FILE_WATCHER=true \
+    DOTNET_RUNNING_IN_CONTAINER=true
 
 # Install media tools
 # https://tracker.debian.org/pkg/ffmpeg
 # https://tracker.debian.org/pkg/handbrake
 # https://tracker.debian.org/pkg/mediainfo
 # https://tracker.debian.org/pkg/mkvtoolnix
-RUN apt-get install -y --no-install-recommends \
+RUN apt install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \
         mediainfo \
         mkvtoolnix
 
 # Cleanup
-RUN apt-get autoremove -y \
-    && apt-get clean \
+RUN apt autoremove -y \
+    && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy PlexCleaner from builder layer
@@ -144,9 +174,11 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
 
-# Copy debug tools installer script
-COPY ./Docker/DebugTools.sh ./
-RUN chmod ugo+rwx ./DebugTools.sh
+# Install debug tools
+COPY ./Docker/InstallDebugTools.sh ./
+RUN chmod ugo+rwx ./InstallDebugTools.sh \
+    && ./InstallDebugTools.sh \
+    && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

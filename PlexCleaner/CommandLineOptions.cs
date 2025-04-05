@@ -99,7 +99,7 @@ public class CommandLineOptions
     private static Command CreateJsonSchemaCommand()
     {
         // Create settings JSON schema file
-        Command command = new Command("createschema")
+        Command command = new("createschema")
         {
             Description = "Write settings schema to file",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateJsonSchemaCommand)
@@ -119,7 +119,7 @@ public class CommandLineOptions
     private static Command CreateDefaultSettingsCommand()
     {
         // Create default settings file
-        Command command = new Command("defaultsettings")
+        Command command = new("defaultsettings")
         {
             Description = "Write default values to settings file",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.WriteDefaultSettingsCommand)
@@ -134,7 +134,7 @@ public class CommandLineOptions
     private static Command CreateCheckForNewToolsCommand()
     {
         // Check for new tools
-        Command command = new Command("checkfornewtools")
+        Command command = new("checkfornewtools")
         {
             Description = "Check for new tool versions and download if newer",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.CheckForNewToolsCommand)
@@ -440,7 +440,7 @@ public class CommandLineOptions
 
     private static Command CreateGetVersionInfoCommand()
     {
-        // Remove subtitles
+        // Get version information
         Command command = new("getversioninfo")
         {
             Description = "Print application and tools version information",
@@ -453,77 +453,61 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Option<List<string>> CreateMediaFilesOption()
-    {
+    private static Option<List<string>> CreateMediaFilesOption() =>
         // Media files or folders option
-        return new Option<List<string>>("--mediafiles")
+        new("--mediafiles")
         {
             Description = "Path to media file or folder",
             IsRequired = true
         };
-    }
 
-    private static Option<string> CreateSettingsFileOption()
-    {
+    private static Option<string> CreateSettingsFileOption() =>
         // Path to the settings file
-        return new Option<string>("--settingsfile")
+        new("--settingsfile")
         {
             Description = "Path to settings file",
             IsRequired = true
         };
-    }
 
-    private static Option<string> CreateLogFileOption()
-    {
+    private static Option<string> CreateLogFileOption() =>
         // Path to the log file
-        return new Option<string>("--logfile")
+        new("--logfile")
         {
             Description = "Path to log file"
         };
-    }
 
-    private static Option<bool> CreateLogAppendOption()
-    {
+    private static Option<bool> CreateLogAppendOption() =>
         // Append to log vs. overwrite
-        return new Option<bool>("--logappend")
+        new("--logappend")
         {
             Description = "Append to existing log file"
         };
-    }
 
-    private static Option<bool> CreateLogWarningOption()
-    {
+    private static Option<bool> CreateLogWarningOption() =>
         // Log warnings and errors
-        return new Option<bool>("--logwarning")
+        new("--logwarning")
         {
             Description = "Log warnings and errors only"
         };
-    }
 
-    private static Option<bool> CreateDebugOption()
-    {
+    private static Option<bool> CreateDebugOption() =>
         // Wait for debugger to attach
-        return new Option<bool>("--debug")
+        new("--debug")
         {
             Description = "Wait for debugger to attach"
         };
-    }
 
-    private static Option<bool> CreateTestSnippetsOption()
-    {
+    private static Option<bool> CreateTestSnippetsOption() =>
         // Create short video clips
-        return new Option<bool>("--testsnippets")
+        new("--testsnippets")
         {
             Description = "Create short media file clips"
         };
-    }
 
-    private static Option<bool> CreateTestNoModifyOption()
-    {
+    private static Option<bool> CreateTestNoModifyOption() =>
         //  Do not make any modifications
-        return new Option<bool>("--testnomodify")
+        new("--testnomodify")
         {
             Description = "Do not make any media file modifications"
         };
-    }
 }

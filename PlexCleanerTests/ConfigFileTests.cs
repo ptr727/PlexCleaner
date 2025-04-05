@@ -3,14 +3,18 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class ConfigFileTests : IClassFixture<PlexCleanerTests>
+public class ConfigFileTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
 {
+#pragma warning disable IDE0052 // Remove unread private members
+    private readonly PlexCleanerTests _fixture = fixture;
+#pragma warning restore IDE0052 // Remove unread private members
+
     [Theory]
     [InlineData("PlexCleaner.v1.json")]
     [InlineData("PlexCleaner.v2.json")]
     [InlineData("PlexCleaner.v3.json")]
     [InlineData("PlexCleaner.v4.json")]
-    public void Open_OldSchemas_Opens(string fileName)
+    public void OpenOldSchemasOpens(string fileName)
     {
         // Deserialize
         var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));

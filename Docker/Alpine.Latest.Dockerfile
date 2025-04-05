@@ -1,6 +1,6 @@
-# Description: Alpine Stable (3.20)
+# Description: Alpine latest release
 # Based on: alpine:latest
-# .NET: Alpine repository
+# .NET install: Alpine repository
 # Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:alpine
 
@@ -13,12 +13,12 @@
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine /bin/sh
 
 # Build Dockerfile
-# docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.Stable.Dockerfile .
+# docker buildx create --name plexcleaner --use
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Alpine.Latest.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.Stable.Dockerfile .
-# docker run -it --rm --name Testing testing:latest /bin/sh
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:alpine --file ./Docker/Alpine.Latest.Dockerfile .
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:alpine /bin/sh
 
 
 # Builder layer
@@ -45,8 +45,8 @@ RUN apk update \
     && apk upgrade
 
 # Install .NET SDK
-# https://pkgs.alpinelinux.org/package/v3.21/community/x86_64/dotnet8-sdk
-RUN apk add --no-cache dotnet8-sdk
+# https://pkgs.alpinelinux.org/package/v3.21/community/x86_64/dotnet9-sdk
+RUN apk add --no-cache dotnet9-sdk
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -65,7 +65,7 @@ RUN ./Build.sh
 
 
 # Final layer
-FROM alpine:latest as final
+FROM alpine:latest AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -95,8 +95,8 @@ RUN apk add --no-cache \
         wget
 
 # Install .NET Runtime
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
-RUN apk add --no-cache dotnet8-runtime
+# https://pkgs.alpinelinux.org/package/v3.21/community/x86_64/dotnet9-runtime
+RUN apk add --no-cache dotnet9-runtime
 
 # Install media tools
 # https://pkgs.alpinelinux.org/package/v3.21/community/x86_64/ffmpeg
@@ -116,9 +116,11 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 COPY /Docker/Test.sh /Test/
 RUN chmod -R ugo+rwx /Test
 
-# Copy debug tools installer script
-COPY ./Docker/DebugTools.sh ./
-RUN chmod ugo+rwx ./DebugTools.sh
+# Install debug tools
+COPY ./Docker/InstallDebugTools.sh ./
+RUN chmod ugo+rwx ./InstallDebugTools.sh \
+    && ./InstallDebugTools.sh \
+    && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/

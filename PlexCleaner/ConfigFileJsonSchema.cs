@@ -46,18 +46,18 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
     public ToolsOptions1 ToolsOptions { get; set; } = new();
 
     // v2 : Replaced with ProcessOptions2
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with ProcessOptions2 in v2.")]
+    [JsonExclude]
     public ProcessOptions1 ProcessOptions { get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with ConvertOptions2 in v3.")]
+    [JsonExclude]
     public ConvertOptions1 ConvertOptions { get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with VerifyOptions2 in v3.")]
+    [JsonExclude]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
     [JsonRequired]
@@ -75,8 +75,8 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with ProcessOptions3 in v3.")]
+    [JsonExclude]
     public new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
@@ -91,14 +91,14 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
 
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with ProcessOptions4 in v4.")]
+    [JsonExclude]
     public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
     // v4 : Replaced with ConvertOptions3
-    [Obsolete]
-    [Json.Schema.Generation.JsonExclude]
+    [Obsolete("Replaced with ConvertOptions3 in v4.")]
+    [JsonExclude]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
@@ -113,18 +113,10 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     public new const int Version = 4;
 
     public ConfigFileJsonSchema4() { }
-    public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1)
-    {
-        Upgrade(ConfigFileJsonSchema1.Version);
-    }
-    public ConfigFileJsonSchema4(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2)
-    {
-        Upgrade(ConfigFileJsonSchema2.Version);
-    }
-    public ConfigFileJsonSchema4(ConfigFileJsonSchema3 configFileJsonSchema3) : base(configFileJsonSchema3)
-    {
-        Upgrade(ConfigFileJsonSchema3.Version);
-    }
+
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1) : base(configFileJsonSchema1) => Upgrade(ConfigFileJsonSchema1.Version);
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema2 configFileJsonSchema2) : base(configFileJsonSchema2) => Upgrade(ConfigFileJsonSchema2.Version);
+    public ConfigFileJsonSchema4(ConfigFileJsonSchema3 configFileJsonSchema3) : base(configFileJsonSchema3) => Upgrade(ConfigFileJsonSchema3.Version);
 
     // v4 : Added
     [JsonRequired]
@@ -136,7 +128,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     [JsonPropertyOrder(3)]
     public new ConvertOptions3 ConvertOptions { get; set; } = new();
 
-#pragma warning disable CS0612 // Type or member is obsolete
     private void Upgrade(int version)
     {
         // v4:
@@ -157,9 +148,11 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             ConfigFileJsonSchema1 configFileJsonSchema1 = this;
 
             // Upgrade to current version
+#pragma warning disable CS0618 // Type or member is obsolete
             ProcessOptions = new ProcessOptions4(configFileJsonSchema1.ProcessOptions);
             ConvertOptions = new ConvertOptions3(configFileJsonSchema1.ConvertOptions);
             VerifyOptions = new VerifyOptions2(configFileJsonSchema1.VerifyOptions);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         // v2
@@ -173,9 +166,11 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             ConfigFileJsonSchema2 configFileJsonSchema2 = this;
 
             // Upgrade to current version
+#pragma warning disable CS0618 // Type or member is obsolete
             ProcessOptions = new ProcessOptions4(configFileJsonSchema2.ProcessOptions);
             ConvertOptions = new ConvertOptions3(configFileJsonSchema2.ConvertOptions);
             VerifyOptions = new VerifyOptions2(configFileJsonSchema2.VerifyOptions);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         // v3
@@ -189,13 +184,14 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             ConfigFileJsonSchema3 configFileJsonSchema3 = this;
 
             // Upgrade to current version
+#pragma warning disable CS0618 // Type or member is obsolete
             ProcessOptions = new ProcessOptions4(configFileJsonSchema3.ProcessOptions);
             ConvertOptions = new ConvertOptions3(configFileJsonSchema3.ConvertOptions);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         // v4
     }
-#pragma warning restore CS0612 // Type or member is obsolete
 
     public void SetDefaults()
     {
@@ -206,19 +202,12 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         VerifyOptions.SetDefaults();
     }
 
-    public bool VerifyValues()
-    {
-        if (!ToolsOptions.VerifyValues() ||
-            !ConvertOptions.VerifyValues() ||
-            !ProcessOptions.VerifyValues() ||
-            !MonitorOptions.VerifyValues() ||
-            !VerifyOptions.VerifyValues())
-        {
-            return false;
-        }
-
-        return true;
-    }
+    public bool VerifyValues() =>
+        ToolsOptions.VerifyValues() &&
+        ConvertOptions.VerifyValues() &&
+        ProcessOptions.VerifyValues() &&
+        MonitorOptions.VerifyValues() &&
+        VerifyOptions.VerifyValues();
 
     public static void WriteDefaultsToFile(string path)
     {
@@ -230,10 +219,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         ToFile(path, config);
     }
 
-    public static ConfigFileJsonSchema FromFile(string path)
-    {
-        return FromJson(File.ReadAllText(path));
-    }
+    public static ConfigFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
     public static void ToFile(string path, ConfigFileJsonSchema json)
     {
@@ -244,15 +230,12 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         File.WriteAllText(path, ToJson(json));
     }
 
-    private static string ToJson(ConfigFileJsonSchema json)
-    {
-        return JsonSerializer.Serialize(json, JsonWriteOptions);
-    }
+    private static string ToJson(ConfigFileJsonSchema json) => JsonSerializer.Serialize(json, JsonWriteOptions);
 
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        var configFileJsonSchemaBase = JsonSerializer.Deserialize<ConfigFileJsonSchemaBase>(json, JsonReadOptions);
+        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonSerializer.Deserialize<ConfigFileJsonSchemaBase>(json, JsonReadOptions);
         if (configFileJsonSchemaBase == null)
         {
             return null;
@@ -288,18 +271,19 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         // Create JSON schema
         // TODO: Schema version should really be set based on generator internals
         const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
-        var schemaBuilder = new JsonSchemaBuilder().FromType<ConfigFileJsonSchema>(new SchemaGeneratorConfiguration { PropertyOrder = PropertyOrder.ByName })
+        JsonSchema schemaBuilder = new JsonSchemaBuilder().FromType<ConfigFileJsonSchema>(new SchemaGeneratorConfiguration { PropertyOrder = PropertyOrder.ByName })
             .Title("PlexCleaner Configuration Schema")
             .Id(new Uri(SchemaUri))
             .Schema(new Uri(schemaVersion))
             .Build();
-        var jsonSchema = JsonSerializer.Serialize(schemaBuilder, JsonWriteOptions);
+        string jsonSchema = JsonSerializer.Serialize(schemaBuilder, JsonWriteOptions);
 
         // Write to file
         File.WriteAllText(path, jsonSchema);
     }
 
-    public static readonly JsonSerializerOptions JsonReadOptions = new() {
+    public static readonly JsonSerializerOptions JsonReadOptions = new()
+    {
         AllowTrailingCommas = true,
         IncludeFields = true,
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
@@ -307,7 +291,8 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    public static readonly JsonSerializerOptions JsonWriteOptions = new() {
+    public static readonly JsonSerializerOptions JsonWriteOptions = new()
+    {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         IncludeFields = true,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver()
@@ -319,14 +304,18 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     {
         // Only process objects
         if (typeInfo.Kind != JsonTypeInfoKind.Object)
+        {
             return;
+        }
 
         // Iterate over all properties
-        foreach (var property in typeInfo.Properties)
+        foreach (JsonPropertyInfo property in typeInfo.Properties)
         {
             // Do not serialize [Obsolete] items
             if (property.AttributeProvider?.IsDefined(typeof(ObsoleteAttribute), true) == true)
+            {
                 property.ShouldSerialize = (_, _) => false;
+            }
         }
     }
 }

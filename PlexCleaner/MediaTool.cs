@@ -56,20 +56,15 @@ public abstract class MediaTool
 
     // Tool subfolder, e.g. /x64, /bin
     // Used in GetToolPath()
-    protected virtual string GetSubFolder()
-    {
-        return "";
-    }
+    protected virtual string GetSubFolder() => "";
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
     public MediaToolInfo Info { get; set; }
 
-    private string GetToolName()
-    {
+    private string GetToolName() =>
         // Windows or Linux
-        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
-    }
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
 
     public string GetToolPath()
     {
@@ -81,18 +76,14 @@ public abstract class MediaTool
         return Program.Config.ToolsOptions.UseSystem ? toolName : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
     }
 
-    protected string GetToolFolder()
-    {
+    protected string GetToolFolder() =>
         // Append to tools folder using tool family type as folder name
         // Sub folders are not included in the tool folder
-        return Tools.CombineToolPath(GetToolFamily().ToString());
-    }
+        Tools.CombineToolPath(GetToolFamily().ToString());
 
-    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo)
-    {
+    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) =>
         // Windows or Linux
-        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
-    }
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
 
     protected int Command(string parameters)
     {

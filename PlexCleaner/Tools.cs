@@ -184,20 +184,11 @@ public static class Tools
         return Path.GetFullPath(Path.Combine(toolsRoot!, Program.Config.ToolsOptions.RootPath));
     }
 
-    public static string CombineToolPath(string fileName)
-    {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), fileName));
-    }
+    public static string CombineToolPath(string fileName) => Path.GetFullPath(Path.Combine(GetToolsRoot(), fileName));
 
-    public static string CombineToolPath(string path, string subPath, string fileName)
-    {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, fileName));
-    }
+    public static string CombineToolPath(string path, string subPath, string fileName) => Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, fileName));
 
-    private static string GetToolsJsonPath()
-    {
-        return CombineToolPath("Tools.json");
-    }
+    private static string GetToolsJsonPath() => CombineToolPath("Tools.json");
 
     public static bool CheckForNewTools()
     {
@@ -316,7 +307,7 @@ public static class Tools
                 // Update the tool using the downloaded file
                 if (!mediaTool.Update(downloadFile))
                 {
-                    FileEx.DeleteFile(downloadFile);
+                    _ = FileEx.DeleteFile(downloadFile);
                     return false;
                 }
 
@@ -324,7 +315,7 @@ public static class Tools
                 jsonToolInfo.Copy(latestToolInfo);
 
                 // Delete the downloaded update file
-                FileEx.DeleteFile(downloadFile);
+                _ = FileEx.DeleteFile(downloadFile);
 
                 // Next tool
             }

@@ -10,9 +10,9 @@ Licensed under the [MIT License](https://github.com/ptr727/PlexCleaner/LICENSE)
 
 ## Project
 
-Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).  
+Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).\
+Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).\
+Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).\
 Images are updated weekly with the latest upstream updates.
 
 ## Docker Builds and Tags

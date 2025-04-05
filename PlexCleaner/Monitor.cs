@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -31,7 +32,7 @@ public class Monitor
             // Create a file system watcher for the folder
             Log.Logger.Information("Monitoring : {Folder}", folder);
             FileSystemWatcher watch = new();
-            Watcher.Add(watch);
+            _watcher.Add(watch);
             watch.Path = folder;
             watch.NotifyFilter = NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
             watch.Filter = "*.*";
@@ -44,19 +45,19 @@ public class Monitor
         }
 
         // Enable event watching
-        Watcher.ForEach(item => item.EnableRaisingEvents = true);
+        _watcher.ForEach(item => item.EnableRaisingEvents = true);
 
         // Add monitor folders to the processing list
         if (Program.Options.PreProcess)
         {
             // Lock
-            lock (WatchLock)
+            lock (_watchLock)
             {
                 Log.Logger.Information("Pre-processing all monitored folders");
                 foreach (string folder in folders)
                 {
                     Log.Logger.Information("Adding folder to processing queue : {Folder}", folder);
-                    WatchFolders.Add(folder, DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime));
+                    _watchFolders.Add(folder, DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime));
                 }
             }
         }
@@ -67,14 +68,14 @@ public class Monitor
             // Lock and process the list of folders
             List<string> watchList = [];
             List<string> removeList = [];
-            lock (WatchLock)
+            lock (_watchLock)
             {
                 // Anything to process
-                if (WatchFolders.Count != 0)
+                if (_watchFolders.Count != 0)
                 {
                     // Evaluate all folders in the watch list
                     DateTime settleTime = DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime);
-                    foreach ((string folder, DateTime timeStamp) in WatchFolders)
+                    foreach ((string folder, DateTime timeStamp) in _watchFolders)
                     {
                         // Settled down, i.e. not modified in last wait time
                         if (timeStamp >= settleTime)
@@ -95,7 +96,7 @@ public class Monitor
                         if (!FileEx.AreFilesInDirectoryReadable(folder))
                         {
                             Log.Logger.Information("Files in folder are not readable, delaying processing : {Folder}", folder);
-                            WatchFolders[folder] = DateTime.UtcNow;
+                            _watchFolders[folder] = DateTime.UtcNow;
                             continue;
                         }
 
@@ -104,10 +105,10 @@ public class Monitor
                     }
 
                     // Remove deleted folders from watchlist
-                    removeList.ForEach(item => WatchFolders.Remove(item));
+                    removeList.ForEach(item => _watchFolders.Remove(item));
 
                     // Remove watched folders from the watchlist
-                    watchList.ForEach(item => WatchFolders.Remove(item));
+                    watchList.ForEach(item => _watchFolders.Remove(item));
                 }
             }
 
@@ -132,32 +133,21 @@ public class Monitor
         }
 
         // Disable event watching
-        Watcher.ForEach(item => item.EnableRaisingEvents = false);
-        Watcher.Clear();
+        _watcher.ForEach(item => item.EnableRaisingEvents = false);
+        _watcher.Clear();
 
         // Done
         return true;
 
         // Local function change handlers
-        void ErrorHandler(object s, ErrorEventArgs e)
-        {
-            OnError(e);
-        }
-        void RenameHandler(object s, RenamedEventArgs e)
-        {
-            OnRenamed(e, this);
-        }
-        void ChangeHandler(object s, FileSystemEventArgs e)
-        {
-            OnChanged(e, this);
-        }
+        void ErrorHandler(object s, ErrorEventArgs e) => OnError(e);
+        void RenameHandler(object s, RenamedEventArgs e) => OnRenamed(e, this);
+        void ChangeHandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
     }
 
-    private static void OnChanged(FileSystemEventArgs e, Monitor monitor)
-    {
+    private static void OnChanged(FileSystemEventArgs e, Monitor monitor) =>
         // Call instance version
         monitor.OnChangedEx(e);
-    }
 
     private void OnChangedEx(FileSystemEventArgs e)
     {
@@ -174,7 +164,6 @@ public class Monitor
                 OnDeleted();
                 break;
             case WatcherChangeTypes.Renamed:
-                break;
             case WatcherChangeTypes.All:
                 break;
             default:
@@ -182,11 +171,9 @@ public class Monitor
         }
     }
 
-    private static void OnRenamed(RenamedEventArgs e, Monitor monitor)
-    {
+    private static void OnRenamed(RenamedEventArgs e, Monitor monitor) =>
         // Call instance version
         monitor.OnRenamedEx(e);
-    }
 
     private void OnRenamedEx(RenamedEventArgs e)
     {
@@ -200,11 +187,8 @@ public class Monitor
                 OnChanged(e.FullPath);
                 break;
             case WatcherChangeTypes.Created:
-                break;
             case WatcherChangeTypes.Deleted:
-                break;
             case WatcherChangeTypes.Changed:
-                break;
             case WatcherChangeTypes.All:
                 break;
             default:
@@ -212,11 +196,9 @@ public class Monitor
         }
     }
 
-    private static void OnError(ErrorEventArgs e)
-    {
+    private static void OnError(ErrorEventArgs e) =>
         // Call the instance version
         OnErrorEx(e);
-    }
 
     private static void OnErrorEx(ErrorEventArgs e)
     {
@@ -254,20 +236,20 @@ public class Monitor
         }
 
         // Lock
-        lock (WatchLock)
+        lock (_watchLock)
         {
             // Add new folder or update existing timestamp
-            if (WatchFolders.ContainsKey(folderName))
+            if (_watchFolders.ContainsKey(folderName))
             {
                 // Update the modified time
                 Log.Logger.Verbose("Updating timestamp for folder in processing queue : {Folder}", folderName);
-                WatchFolders[folderName] = DateTime.UtcNow;
+                _watchFolders[folderName] = DateTime.UtcNow;
             }
             else
             {
                 // Add the folder
                 Log.Logger.Information("Adding folder to processing queue : {Folder}", folderName);
-                WatchFolders.Add(folderName, DateTime.UtcNow);
+                _watchFolders.Add(folderName, DateTime.UtcNow);
             }
         }
     }
@@ -278,7 +260,7 @@ public class Monitor
         // TODO: Figure out how to accurately test if deleted path was a file or folder
     }
 
-    private readonly List<FileSystemWatcher> Watcher = [];
-    private readonly Dictionary<string, DateTime> WatchFolders = new(StringComparer.OrdinalIgnoreCase);
-    private readonly object WatchLock = new();
+    private readonly List<FileSystemWatcher> _watcher = [];
+    private readonly Dictionary<string, DateTime> _watchFolders = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _watchLock = new();
 }

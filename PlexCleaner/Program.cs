@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,17 +17,11 @@ namespace PlexCleaner;
 
 public class Program
 {
-    enum ExitCode { Success = 0, Error = 1 }
+    private enum ExitCode { Success = 0, Error = 1 }
 
-    static int MakeExitCode(ExitCode exitCode)
-    {
-        return (int)exitCode;
-    }
+    private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 
-    static int MakeExitCode(bool success)
-    {
-        return success ? (int)ExitCode.Success : (int)ExitCode.Error;
-    }
+    private static int MakeExitCode(bool success) => success ? (int)ExitCode.Success : (int)ExitCode.Error;
 
     public static void LogInterruptMessage()
     {
@@ -71,7 +66,7 @@ public class Program
 
         // Create the commandline and execute commands
         LogInterruptMessage();
-        var exitCode = CommandLineOptions.Invoke();
+        int exitCode = CommandLineOptions.Invoke();
 
         // Cancel background operations
         Cancel();
@@ -122,12 +117,21 @@ public class Program
 
     private static bool ShowVersionInformation()
     {
-        // Use the raw commandline and look for --version
+        // --version
         if (Environment.CommandLine.Contains("--version"))
         {
-            Console.WriteLine(AssemblyVersion.GetDetailedVersion());
+            Console.WriteLine(AssemblyVersion.GetAppVersion());
             return true;
         }
+
+        // --rid
+        // TODO: https://github.com/dotnet/runtime/issues/114156
+        if (Environment.CommandLine.Contains("--rid"))
+        {
+            Console.WriteLine(AssemblyVersion.GetNormalizedRuntimeIdentifier());
+            return true;
+        }
+
         return false;
     }
 
@@ -146,7 +150,7 @@ public class Program
             }
 
             // Read key and hide from console display
-            var keyInfo = Console.ReadKey(true);
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 
             // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
             if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
@@ -217,7 +221,8 @@ public class Program
         // Log to console
         loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code,
             restrictedToMinimumLevel: logLevelDefault,
-            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
+            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+            formatProvider: CultureInfo.InvariantCulture);
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
@@ -235,7 +240,8 @@ public class Program
             loggerConfiguration.WriteTo.Async(action => action.File(logfile,
                 restrictedToMinimumLevel: logLevelDefault,
                 rollOnFileSizeLimit: true,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture));
         }
 
         // Create static Serilog logger
@@ -289,7 +295,7 @@ public class Program
         }
 
         // Process all files and delete empty folders
-        return MakeExitCode(Process.ProcessFiles(program.FileList) && Process.DeleteEmptyFolders(program.DirectoryList));
+        return MakeExitCode(Process.ProcessFiles(program._fileList) && Process.DeleteEmptyFolders(program._directoryList));
     }
 
     public static int MonitorCommand(CommandLineOptions options)
@@ -316,7 +322,7 @@ public class Program
         }
 
         // ReMux
-        return MakeExitCode(Process.ReMuxFiles(program.FileList));
+        return MakeExitCode(Process.ReMuxFiles(program._fileList));
     }
 
     public static int ReEncodeCommand(CommandLineOptions options)
@@ -329,7 +335,7 @@ public class Program
         }
 
         // ReEncode
-        return MakeExitCode(Process.ReEncodeFiles(program.FileList));
+        return MakeExitCode(Process.ReEncodeFiles(program._fileList));
     }
 
     public static int DeInterlaceCommand(CommandLineOptions options)
@@ -342,7 +348,7 @@ public class Program
         }
 
         // DeInterlace
-        return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
+        return MakeExitCode(Process.DeInterlaceFiles(program._fileList));
     }
 
     public static int VerifyCommand(CommandLineOptions options)
@@ -355,7 +361,7 @@ public class Program
         }
 
         // Verify
-        return MakeExitCode(Process.VerifyFiles(program.FileList));
+        return MakeExitCode(Process.VerifyFiles(program._fileList));
     }
 
     public static int CreateSidecarCommand(CommandLineOptions options)
@@ -368,7 +374,7 @@ public class Program
         }
 
         // Create sidecar files
-        return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
+        return MakeExitCode(Process.CreateSidecarFiles(program._fileList));
     }
 
     public static int GetSidecarCommand(CommandLineOptions options)
@@ -381,7 +387,7 @@ public class Program
         }
 
         // Get sidecar files info
-        return MakeExitCode(Process.GetSidecarFiles(program.FileList));
+        return MakeExitCode(Process.GetSidecarFiles(program._fileList));
     }
 
     public static int UpdateSidecarCommand(CommandLineOptions options)
@@ -394,7 +400,7 @@ public class Program
         }
 
         // Update sidecar files
-        return MakeExitCode(Process.UpdateSidecarFiles(program.FileList));
+        return MakeExitCode(Process.UpdateSidecarFiles(program._fileList));
     }
 
     public static int GetTagMapCommand(CommandLineOptions options)
@@ -407,7 +413,7 @@ public class Program
         }
 
         // Get tag map
-        return MakeExitCode(Process.GetTagMapFiles(program.FileList));
+        return MakeExitCode(Process.GetTagMapFiles(program._fileList));
     }
 
     public static int GetMediaInfoCommand(CommandLineOptions options)
@@ -420,7 +426,7 @@ public class Program
         }
 
         // Get media info
-        return MakeExitCode(Process.GetMediaInfoFiles(program.FileList));
+        return MakeExitCode(Process.GetMediaInfoFiles(program._fileList));
     }
 
     public static int GetToolInfoCommand(CommandLineOptions options)
@@ -433,7 +439,7 @@ public class Program
         }
 
         // Get tool info
-        return MakeExitCode(Process.GetToolInfoFiles(program.FileList));
+        return MakeExitCode(Process.GetToolInfoFiles(program._fileList));
     }
 
     public static int RemoveSubtitlesCommand(CommandLineOptions options)
@@ -446,7 +452,7 @@ public class Program
         }
 
         // Remove subtitles
-        return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
+        return MakeExitCode(Process.RemoveSubtitlesFiles(program._fileList));
     }
 
     public static int GetVersionInfoCommand(CommandLineOptions options)
@@ -466,12 +472,8 @@ public class Program
     private static Program CreateFileList(CommandLineOptions options)
     {
         // Create program and enumerate files
-        var program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
-        {
-            return null;
-        }
-        return program;
+        Program program = Create(options, true);
+        return program == null || !program.CreateFileList(options.MediaFiles) ? null : program;
     }
 
     private static Program Create(CommandLineOptions options, bool verifyTools)
@@ -522,7 +524,7 @@ public class Program
         FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
 
         // Set the FileEx Cancel object
-        FileEx.Options.Cancel = CancelSource.Token;
+        FileEx.Options.Cancel = s_cancelSource.Token;
 
         // Use log file
         if (!string.IsNullOrEmpty(Options.LogFile))
@@ -541,7 +543,7 @@ public class Program
         }
 
         // Log app and runtime version
-        Log.Logger.Information("Application Version : {AppVersion}", AssemblyVersion.GetDetailedVersion());
+        Log.Logger.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
         Log.Logger.Information("Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}", RuntimeInformation.FrameworkDescription, RuntimeInformation.RuntimeIdentifier);
         Log.Logger.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
         Log.Logger.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
@@ -593,13 +595,13 @@ public class Program
         Log.Logger.Information("Creating file and folder list ...");
 
         // Trim quotes from input paths
-        mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
+        mediaFiles = [.. mediaFiles.Select(file => file.Trim('"'))];
 
         bool fatalError = false;
         try
         {
             // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
-            var lockObject = new Object();
+            object lockObject = new();
 
             // Process each input in parallel
             mediaFiles.AsParallel()
@@ -611,13 +613,13 @@ public class Program
                 CancelToken().ThrowIfCancellationRequested();
 
                 // Test for file or a directory
-                var fileAttributes = File.GetAttributes(fileOrFolder);
+                FileAttributes fileAttributes = File.GetAttributes(fileOrFolder);
                 if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
                     // Add this directory
                     lock (lockObject)
                     {
-                        DirectoryList.Add(fileOrFolder);
+                        _directoryList.Add(fileOrFolder);
                     }
 
                     // Create the file list from the directory
@@ -633,7 +635,7 @@ public class Program
                     // Add file list
                     lock (lockObject)
                     {
-                        fileInfoList.ForEach(item => FileList.Add(item.FullName));
+                        fileInfoList.ForEach(item => _fileList.Add(item.FullName));
                     }
                 }
                 else
@@ -641,7 +643,7 @@ public class Program
                     // Add this file
                     lock (lockObject)
                     {
-                        FileList.Add(fileOrFolder);
+                        _fileList.Add(fileOrFolder);
                     }
                 }
             });
@@ -658,7 +660,7 @@ public class Program
         }
 
         // Report
-        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", FileList.Count, DirectoryList.Count);
+        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", _fileList.Count, _directoryList.Count);
 
         return !fatalError;
     }
@@ -666,7 +668,7 @@ public class Program
     public static bool IsCancelledError()
     {
         // Test immediately
-        if (CancelSource.IsCancellationRequested)
+        if (s_cancelSource.IsCancellationRequested)
         {
             return true;
         }
@@ -676,21 +678,13 @@ public class Program
         return WaitForCancel(100);
     }
 
-    public static bool WaitForCancel(int millisecond)
-    {
-        return CancelSource.Token.WaitHandle.WaitOne(millisecond);
-    }
+    public static bool WaitForCancel(int millisecond) => s_cancelSource.Token.WaitHandle.WaitOne(millisecond);
 
-    public static bool IsCancelled()
-    {
-        return CancelSource.IsCancellationRequested;
-    }
+    public static bool IsCancelled() => s_cancelSource.IsCancellationRequested;
 
-    public static void Cancel()
-    {
+    public static void Cancel() =>
         // Signal cancel
-        CancelSource.Cancel();
-    }
+        s_cancelSource.Cancel();
 
     public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
     {
@@ -698,10 +692,7 @@ public class Program
         Cancel();
     }
 
-    public static CancellationToken CancelToken()
-    {
-        return CancelSource.Token;
-    }
+    public static CancellationToken CancelToken() => s_cancelSource.Token;
 
     // Commandline options
     public static CommandLineOptions Options { get; set; }
@@ -716,9 +707,9 @@ public class Program
     public const double InterlacedThreshold = 5.0 / 100.0;
 
     // Cancellation token
-    private static readonly CancellationTokenSource CancelSource = new();
+    private static readonly CancellationTokenSource s_cancelSource = new();
 
     // File and directory lists
-    private readonly List<string> DirectoryList = [];
-    private readonly List<string> FileList = [];
+    private readonly List<string> _directoryList = [];
+    private readonly List<string> _fileList = [];
 }

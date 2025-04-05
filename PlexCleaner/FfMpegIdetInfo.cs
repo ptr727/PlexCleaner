@@ -44,17 +44,10 @@ public class FfMpegIdetInfo
             return false;
         }
 
-        // No interlaced
-        if (Interlaced == 0)
-        {
-            return false;
-        }
-
-        return InterlacedPercentage > Program.InterlacedThreshold;
+        // Not interlaced
+        return Interlaced != 0 && InterlacedPercentage > Program.InterlacedThreshold;
     }
 
-    public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo, out string error)
-    {
-        return Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo, out error);
-    }
+    public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo, out string error) =>
+        Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo, out error);
 }

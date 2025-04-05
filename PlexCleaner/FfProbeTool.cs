@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -7,7 +8,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using InsaneGenius.Utilities;
-using PlexCleaner.FfMpegToolJsonSchema;
 using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
@@ -17,22 +17,13 @@ namespace PlexCleaner;
 // Use FfMpeg family
 public class FfProbeTool : FfMpegTool
 {
-    public override ToolType GetToolType()
-    {
-        return ToolType.FfProbe;
-    }
+    public override ToolType GetToolType() => ToolType.FfProbe;
 
-    protected override string GetToolNameWindows()
-    {
-        return "ffprobe.exe";
-    }
+    protected override string GetToolNameWindows() => "ffprobe.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "ffprobe";
-    }
+    protected override string GetToolNameLinux() => "ffprobe";
 
-    public bool GetPacketInfo(string fileName, out List<Packet> packetList)
+    public bool GetPacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
     {
         // Init
         packetList = null;
@@ -49,12 +40,12 @@ public class FfProbeTool : FfMpegTool
 
         // Build commandline
         StringBuilder commandline = new();
-        commandline.Append("-loglevel error ");
+        _ = commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
         }
-        commandline.Append($"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{fileName}\"");
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{fileName}\"");
 
         // Get packet info
         string path = GetToolPath();
@@ -69,9 +60,9 @@ public class FfProbeTool : FfMpegTool
         process.OutputStream.Close();
 
         // Read JSON from stream
-        memoryStream.Seek(0, SeekOrigin.Begin);
+        _ = memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
-        var packetInfo = JsonSerializer.Deserialize<PacketInfo>(decompressStream, ConfigFileJsonSchema.JsonReadOptions);
+        FfMpegToolJsonSchema.PacketInfo packetInfo = JsonSerializer.Deserialize<FfMpegToolJsonSchema.PacketInfo>(decompressStream, ConfigFileJsonSchema.JsonReadOptions);
         if (packetInfo == null)
         {
             return false;
@@ -84,8 +75,7 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetFfProbeInfoJson(fileName, out string json) &&
-               GetFfProbeInfoFromJson(json, out mediaInfo);
+        return GetFfProbeInfoJson(fileName, out string json) && GetFfProbeInfoFromJson(json, out mediaInfo);
     }
 
     public bool GetFfProbeInfoJson(string fileName, out string json)
@@ -113,20 +103,20 @@ public class FfProbeTool : FfMpegTool
         try
         {
             // Deserialize
-            FfProbe ffProbe = FfProbe.FromJson(json);
+            FfMpegToolJsonSchema.FfProbe ffProbe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
             if (ffProbe == null)
             {
                 return false;
             }
 
             // No tracks
-            if (ffProbe.Streams.Count == 0)
+            if (ffProbe.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (FfMpegToolJsonSchema.Stream stream in ffProbe.Streams)
+            foreach (FfMpegToolJsonSchema.Track stream in ffProbe.Tracks)
             {
                 // Process by track type
                 if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
@@ -184,8 +174,9 @@ public class FfProbeTool : FfMpegTool
         return true;
     }
 
-    private static bool HasUnwantedTags(Dictionary<string, string> tags)
-    {
+    private static bool HasUnwantedTags(Dictionary<string, string> tags) =>
+        // TODO: Find a more reliable method for determining what tags are expected or not
+
         // Format tags:
         // "encoder": "libebml v1.4.2 + libmatroska v1.6.4",
         // "creation_time": "2022-03-10T12:55:01.000000Z"
@@ -201,13 +192,9 @@ public class FfProbeTool : FfMpegTool
         // "_STATISTICS_TAGS": "BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES"
 
         // Language and title are expected tags
-
-        // TODO: Find a more reliable method for determining what tags are expected or not
-
         // Look for undesirable Tags
-        return tags.Keys.Any(key => UndesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
-    }
+        tags.Keys.Any(key => s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
 
     // "Undesirable" tags
-    private static readonly string[] UndesirableTags = ["statistics"];
+    private static readonly string[] s_undesirableTags = ["statistics"];
 }

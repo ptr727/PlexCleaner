@@ -6,7 +6,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class TagMapDictionary
+public class TagMapSet
 {
     private Dictionary<string, TagMap> Video { get; } = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, TagMap> Audio { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -39,7 +39,7 @@ public class TagMapDictionary
     private static void Add(IReadOnlyCollection<TrackInfo> prime, MediaTool.ToolType primeType,
         IReadOnlyCollection<TrackInfo> sec1, MediaTool.ToolType sec1Type,
         IReadOnlyCollection<TrackInfo> sec2, MediaTool.ToolType sec2Type,
-        IDictionary<string, TagMap> dictionary)
+        Dictionary<string, TagMap> dictionary)
     {
         for (int i = 0; i < prime.Count; i++)
         {

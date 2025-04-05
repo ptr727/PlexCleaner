@@ -3,7 +3,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class MediaToolInfo : IComparable
+public class MediaToolInfo
 {
     public MediaToolInfo()
     {
@@ -23,8 +23,7 @@ public class MediaToolInfo : IComparable
     public string Url { get; set; }
     public string Version { get; set; }
 
-    public void WriteLine(string prefix)
-    {
+    public void WriteLine(string prefix) =>
         Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}",
             prefix,
             ToolType,
@@ -32,12 +31,6 @@ public class MediaToolInfo : IComparable
             FileName,
             Size,
             ModifiedTime, Url);
-    }
-
-    public int CompareTo(object obj)
-    {
-        return CompareTo(obj as MediaToolInfo);
-    }
 
     public int CompareTo(MediaToolInfo toolInfo)
     {
@@ -54,12 +47,7 @@ public class MediaToolInfo : IComparable
         }
 
         result = Size.CompareTo(toolInfo.Size);
-        if (result != 0)
-        {
-            return result;
-        }
-
-        return string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
+        return result != 0 ? result : string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
     }
 
     public void Copy(MediaToolInfo toolInfo)

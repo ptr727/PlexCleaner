@@ -1,7 +1,9 @@
 #!/bin/sh
 
-# Execute in docker:
-# docker run -it --rm --name Testing testing:latest /Test/Test.sh
+# Test from local build:
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /Test/Test.sh
+
+# Test from docker hub build using local media:
 # docker run \
 #   -it \
 #   --rm \
@@ -11,7 +13,7 @@
 #   --env TZ=America/Los_Angeles \
 #   --volume /data/media/test:/Test/Media:rw \
 #   --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
-#   docker.io/ptr727/plexcleaner:ubuntu-develop \
+#   docker.io/ptr727/plexcleaner:ubuntu \
 #   /Test/Test.sh
 
 # Use debug build for testing
@@ -36,7 +38,7 @@ set -e
 if [ ! -d $MediaPath ]; then
     # Download Matroska test files: https://github.com/ietf-wg-cellar/matroska-test-files
     wget --progress=bar:force -O $TestPath/matroska-test-files.zip https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
-    7za e -o$MediaPath $TestPath/matroska-test-files.zip *.mkv -r
+    7z e -o$MediaPath $TestPath/matroska-test-files.zip *.mkv -r
     rm $TestPath/matroska-test-files.zip
 fi
 

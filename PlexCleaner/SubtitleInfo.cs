@@ -6,7 +6,7 @@ namespace PlexCleaner;
 public class SubtitleInfo : TrackInfo
 {
     public SubtitleInfo(MkvToolJsonSchema.Track track) : base(track) { }
-    public SubtitleInfo(FfMpegToolJsonSchema.Stream stream) : base(stream) { }
+    public SubtitleInfo(FfMpegToolJsonSchema.Track track) : base(track) { }
 
     public SubtitleInfo(MediaInfoToolXmlSchema.Track track) : base(track)
     {

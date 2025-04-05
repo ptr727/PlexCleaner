@@ -27,13 +27,10 @@ public class SelectMediaInfo
         Add(mediaInfo, select);
     }
 
-    public MediaInfo Selected;
-    public MediaInfo NotSelected;
+    public MediaInfo Selected { get; private set; }
+    public MediaInfo NotSelected { get; private set; }
 
-    private MediaInfo Select(bool select)
-    {
-        return select ? Selected : NotSelected;
-    }
+    private MediaInfo Select(bool select) => select ? Selected : NotSelected;
 
     public void Add(MediaInfo mediaInfo, Func<TrackInfo, bool> selectFunc)
     {
@@ -55,7 +52,7 @@ public class SelectMediaInfo
 
     public void Add(IEnumerable<TrackInfo> trackList, Func<TrackInfo, bool> selectFunc)
     {
-        foreach (var trackInfo in trackList)
+        foreach (TrackInfo trackInfo in trackList)
         {
             Add(trackInfo, selectFunc(trackInfo));
         }
@@ -63,7 +60,7 @@ public class SelectMediaInfo
 
     public void Add(IEnumerable<TrackInfo> trackList, bool select)
     {
-        foreach (var trackInfo in trackList)
+        foreach (TrackInfo trackInfo in trackList)
         {
             Add(trackInfo, select);
         }
@@ -89,7 +86,7 @@ public class SelectMediaInfo
 
     public void Move(IEnumerable<TrackInfo> trackList, bool select)
     {
-        foreach (var trackInfo in trackList)
+        foreach (TrackInfo trackInfo in trackList)
         {
             Move(trackInfo, select);
         }
@@ -100,18 +97,18 @@ public class SelectMediaInfo
         switch (trackInfo)
         {
             case VideoInfo info:
-                Selected.Video.Remove(info);
-                NotSelected.Video.Remove(info);
+                _ = Selected.Video.Remove(info);
+                _ = NotSelected.Video.Remove(info);
                 Select(select).Video.Add(info);
                 break;
             case AudioInfo info:
-                Selected.Audio.Remove(info);
-                NotSelected.Audio.Remove(info);
+                _ = Selected.Audio.Remove(info);
+                _ = NotSelected.Audio.Remove(info);
                 Select(select).Audio.Add(info);
                 break;
             case SubtitleInfo info:
-                Selected.Subtitle.Remove(info);
-                NotSelected.Subtitle.Remove(info);
+                _ = Selected.Subtitle.Remove(info);
+                _ = NotSelected.Subtitle.Remove(info);
                 Select(select).Subtitle.Add(info);
                 break;
             default:
@@ -140,7 +137,7 @@ public class SelectMediaInfo
         // There should be no track id duplicates
         Debug.Assert(trackLick.GroupBy(item => item.Id).All(group => group.Count() == 1));
 
-        return trackLick.OrderBy(item => item.Id).ToList();
+        return [.. trackLick.OrderBy(item => item.Id)];
     }
 
     public void WriteLine(string selected, string notSelected)

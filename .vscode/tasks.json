@@ -2,50 +2,493 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
-            "command": "dotnet",
+            "label": ".NET Build PlexCleaner",
             "type": "process",
+            "command": "dotnet",
             "args": [
                 "build",
                 "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
         },
         {
-            "label": "publish",
-            "command": "dotnet",
+            "label": ".NET Build PlexCleanerTests",
             "type": "process",
+            "command": "dotnet",
             "args": [
-                "publish",
-                "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj",
+                "build",
+                "${workspaceFolder}/PlexCleanerTests/PlexCleanerTests.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "watch",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj"
+            "problemMatcher": [
+                "$msCompile"
             ],
-            "problemMatcher": "$msCompile"
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
         },
         {
-            "label": "format",
-            "command": "dotnet",
+            "label": "Build Ubuntu.Rolling Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64",
+                "--file=./Docker/Ubuntu.Rolling.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build Ubuntu.Devel Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64",
+                "--file=./Docker/Ubuntu.Devel.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build Alpine.Edge Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64",
+                "--file=./Docker/Alpine.Edge.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build Alpine.Latest Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64",
+                "--file=./Docker/Alpine.Latest.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build Debian.Stable Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64,linux/arm/v7",
+                "--file=./Docker/Debian.Stable.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build Debian.Testing Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64,linux/arm/v7",
+                "--file=./Docker/Debian.Testing.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Build all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Build Ubuntu.Rolling Dockerfile",
+                "Build Ubuntu.Devel Dockerfile",
+                "Build Alpine.Edge Dockerfile",
+                "Build Alpine.Latest Dockerfile",
+                "Build Debian.Stable Dockerfile",
+                "Build Debian.Testing Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
+        {
+            "label": "Load Ubuntu.Rolling Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:ubuntu",
+                "--file=./Docker/Ubuntu.Rolling.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load Ubuntu.Devel Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:ubuntu-devel",
+                "--file=./Docker/Ubuntu.Devel.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load Alpine.Edge Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:alpine-edge",
+                "--file=./Docker/Alpine.Edge.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load Alpine.Latest Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:alpine",
+                "--file=./Docker/Alpine.Latest.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load Debian.Stable Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:debian",
+                "--file=./Docker/Debian.Stable.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load Debian.Testing Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:debian-testing",
+                "--file=./Docker/Debian.Testing.Dockerfile",
+                "${workspaceFolder}",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Load all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Load Ubuntu.Rolling Dockerfile",
+                "Load Ubuntu.Devel Dockerfile",
+                "Load Alpine.Edge Dockerfile",
+                "Load Alpine.Latest Dockerfile",
+                "Load Debian.Stable Dockerfile",
+                "Load Debian.Testing Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Ubuntu.Rolling Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Ubuntu.Rolling",
+                "plexcleaner:ubuntu",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Ubuntu.Rolling Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Ubuntu.Devel Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Ubuntu.Devel",
+                "plexcleaner:ubuntu-devel",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Ubuntu.Devel Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Alpine.Edge Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Alpine.Edge",
+                "plexcleaner:alpine-edge",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Alpine.Edge Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Alpine.Latest Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Alpine.Latest",
+                "plexcleaner:alpine",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Alpine.Latest Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Debian.Stable Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Debian.Stable",
+                "plexcleaner:debian",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Debian.Stable Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test Debian.Testing Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test-Debian.Testing",
+                "plexcleaner:debian-testing",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Debian.Testing Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": "Test all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Test Ubuntu.Rolling Dockerfile",
+                "Test Ubuntu.Devel Dockerfile",
+                "Test Alpine.Edge Dockerfile",
+                "Test Alpine.Latest Dockerfile",
+                "Test Debian.Stable Dockerfile",
+                "Test Debian.Testing Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
+        {
+            "label": ".NET Format",
             "type": "process",
+            "command": "dotnet",
             "args": [
                 "format",
-                "--verbosity",
-                "diagnostic"
-            ]
-        }
+                "--verify-no-changes",
+                "--severity=info",
+                "--verbosity=detailed"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            },
+        },
     ]
 }

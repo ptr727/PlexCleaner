@@ -21,11 +21,6 @@ public record ToolsOptions1
     [JsonRequired]
     public bool AutoUpdate { get; set; }
 
-    protected void Upgrade(int version)
-    {
-        // Nothing to do
-    }
-
     public void SetDefaults()
     {
         // Set defaults based on OS
