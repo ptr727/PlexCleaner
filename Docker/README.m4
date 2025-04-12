@@ -20,24 +20,16 @@ Images are updated weekly with the latest upstream updates.
 - `latest`: Alias for `ubuntu`.
 - `develop`: Alias for `ubuntu-develop`.
 - `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
-  - Installs media tools from Ubuntu repository.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `ubuntu-devel`: [Ubuntu Devel](http://archive.ubuntu.com/ubuntu/dists/devel/Release) `ubuntu:devel` pre-release base image.
-  - Installs media tools from Ubuntu repository.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `alpine`: Based on [Alpine Latest](https://alpinelinux.org/releases/) `alpine:latest` latest stable release base image.
-  - Installs media tools from the Alpine repository.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-  - Handbrake on Alpine does not support `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine:edge` pre-release base image.
-  - Installs media tools from the Alpine repository.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-  - Handbrake on Alpine does not support `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `debian`: Based on [Debian Stable](https://www.debian.org/releases/) `debian:stable-slim` latest stable release base image.
-  - Installs media tools from Debian repository.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
 - `debian-testing`: [Debian Testing](https://www.debian.org/releases/) `debian:testing-slim` pre-release base image.
-  - Installs media tools from Debian repository.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
 - `*-develop` : Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
   - E.g. `ubuntu-develop`, `debian-testing-develop`, etc.
@@ -46,8 +38,8 @@ Images are updated weekly with the latest upstream updates.
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `ubuntu` | &#9745; | &#9745; | &#9744; | ~320MB |
-| `alpine` | &#9745; | &#9745; | &#9744; | ~160MB |
+| `ubuntu` | &#9745; | &#9745; | &#9744; | ~350MB |
+| `alpine` | &#9745; | &#9745; | &#9744; | ~156MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~330MB |
 
 ## Media Tool Versions
