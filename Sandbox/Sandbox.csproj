@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.1.131" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.0" />
   </ItemGroup>
 

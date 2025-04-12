@@ -5,19 +5,17 @@ namespace PlexCleanerTests;
 
 public class ConfigFileTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
 {
-#pragma warning disable IDE0052 // Remove unread private members
     private readonly PlexCleanerTests _fixture = fixture;
-#pragma warning restore IDE0052 // Remove unread private members
 
     [Theory]
     [InlineData("PlexCleaner.v1.json")]
     [InlineData("PlexCleaner.v2.json")]
     [InlineData("PlexCleaner.v3.json")]
     [InlineData("PlexCleaner.v4.json")]
-    public void OpenOldSchemasOpens(string fileName)
+    public void Open_Old_Schemas_Opens(string fileName)
     {
         // Deserialize
-        var configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
+        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
 
         // Test for expected config values

@@ -98,10 +98,10 @@ public class Program
             // Get the latest release version from github releases
             // E.g. 1.2.3
             const string repo = "ptr727/PlexCleaner";
-            var latestVersion = new Version(GitHubRelease.GetLatestRelease(repo));
+            Version latestVersion = new(GitHubRelease.GetLatestRelease(repo));
 
             // Get this version
-            var thisVersion = new Version(AssemblyVersion.GetReleaseVersion());
+            Version thisVersion = new(AssemblyVersion.GetReleaseVersion());
 
             // Compare the versions
             if (thisVersion.CompareTo(latestVersion) < 0)

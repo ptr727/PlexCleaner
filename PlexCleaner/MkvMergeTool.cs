@@ -81,7 +81,7 @@ public partial class MkvMergeTool : MediaTool
             string xml = sr.ReadToEnd();
 
             // Get the version number from XML
-            var mkvtools = MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
+            MkvToolXmlSchema.MkvToolnixReleases mkvtools = MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
             mediaToolInfo.Version = mkvtools.LatestSource.Version;
 
             // Create download URL and the output fileName using the version number
@@ -131,7 +131,7 @@ public partial class MkvMergeTool : MediaTool
         try
         {
             // Deserialize
-            var mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
+            MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
             if (mkvMerge == null)
             {
                 return false;

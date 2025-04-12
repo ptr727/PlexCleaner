@@ -171,7 +171,7 @@ public class Language
         {
             // Cultures are created on the fly, we can't rely on an exception
             // https://stackoverflow.com/questions/35074033/invalid-cultureinfo-no-longer-throws-culturenotfoundexception/
-            var cultureInfo = CultureInfo.GetCultureInfo(language, true);
+            CultureInfo cultureInfo = CultureInfo.GetCultureInfo(language, true);
 
             // Make sure the culture was not custom created
             return cultureInfo == null ||

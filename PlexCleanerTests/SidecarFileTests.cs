@@ -5,16 +5,14 @@ namespace PlexCleanerTests;
 
 public class SidecarFileTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
 {
-#pragma warning disable IDE0052 // Remove unread private members
     private readonly PlexCleanerTests _fixture = fixture;
-#pragma warning restore IDE0052 // Remove unread private members
 
     [Theory]
     [InlineData("Sidecar.v1.mkv")]
     [InlineData("Sidecar.v2.mkv")]
     [InlineData("Sidecar.v3.mkv")]
     [InlineData("Sidecar.v4.mkv")]
-    public void OpenOldSchemasOpens(string fileName)
+    public void Open_Old_Schema_Open(string fileName)
     {
         SidecarFile sidecarFile = new(PlexCleanerTests.GetSampleFileInfo(fileName));
         // Read the JSON file but do not verify the MKV media attributes

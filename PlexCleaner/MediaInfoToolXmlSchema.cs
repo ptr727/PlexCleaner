@@ -94,7 +94,7 @@ public class MediaInfoToolXmlSchema
         {
             XmlSerializer xmlSerializer = new(typeof(MediaInfo));
             using TextReader textReader = new StringReader(xml);
-            using var xmlReader = XmlReader.Create(textReader);
+            using XmlReader xmlReader = XmlReader.Create(textReader);
             return xmlSerializer.Deserialize(xmlReader) as MediaInfo;
         }
 

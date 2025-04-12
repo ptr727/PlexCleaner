@@ -26,7 +26,7 @@ public class MkvToolXmlSchema
         {
             XmlSerializer xmlSerializer = new(typeof(MkvToolnixReleases));
             using TextReader textReader = new StringReader(xml);
-            using var xmlReader = XmlReader.Create(textReader);
+            using XmlReader xmlReader = XmlReader.Create(textReader);
             return xmlSerializer.Deserialize(xmlReader) as MkvToolnixReleases;
         }
     }

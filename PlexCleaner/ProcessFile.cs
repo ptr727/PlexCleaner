@@ -895,7 +895,7 @@ public class ProcessFile
             Log.Logger.Information("ReMuxing subtitles and deinterlaced media : {FileName}", FileInfo.Name);
 
             // Merge the deinterlaced file with the subtitles from the original file
-            var subInfo = new MediaInfo(MediaTool.ToolType.MkvMerge);
+            MediaInfo subInfo = new(MediaTool.ToolType.MkvMerge);
             subInfo.Subtitle.AddRange(MkvMergeInfo.Subtitle);
             _ = FileEx.DeleteFile(remuxName);
             if (!Tools.MkvMerge.MergeToMkv(deintName, FileInfo.FullName, subInfo, remuxName))
@@ -1426,9 +1426,9 @@ public class ProcessFile
         // Use MkvMergeInfo
 
         // Count the number of Default tracks
-        var videoDefaults = MkvMergeInfo.Video.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default)).ToList();
-        var audioDefaults = MkvMergeInfo.Audio.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default)).ToList();
-        var subtitleDefaults = MkvMergeInfo.Subtitle.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default)).ToList();
+        List<bool> videoDefaults = [.. MkvMergeInfo.Video.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default))];
+        List<bool> audioDefaults = [.. MkvMergeInfo.Audio.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default))];
+        List<bool> subtitleDefaults = [.. MkvMergeInfo.Subtitle.Select(item => item.Flags.HasFlag(TrackInfo.FlagsType.Default))];
         if (videoDefaults.Count > 1 ||
             audioDefaults.Count > 1 ||
             subtitleDefaults.Count > 1)
@@ -1997,7 +1997,7 @@ public class ProcessFile
     private static AudioInfo FindPreferredAudio(IEnumerable<TrackInfo> trackInfoList)
     {
         // No preferred tracks, or only 1 track, use first track
-        var audioInfoList = trackInfoList.OfType<AudioInfo>().ToList();
+        List<AudioInfo> audioInfoList = [.. trackInfoList.OfType<AudioInfo>()];
         Debug.Assert(audioInfoList.Count > 0);
         if (Program.Config.ProcessOptions.PreferredAudioFormats.Count == 0 ||
             audioInfoList.Count == 1)

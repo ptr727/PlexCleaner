@@ -12,7 +12,7 @@ public class MediaInfo(MediaTool.ToolType parser)
     public MediaInfo Clone()
     {
         // Shallow copy
-        var clonedInfo = (MediaInfo)MemberwiseClone();
+        MediaInfo clonedInfo = (MediaInfo)MemberwiseClone();
 
         // Create new collections containing the old items
         List<VideoInfo> newVideo = [];

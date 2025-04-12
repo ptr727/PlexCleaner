@@ -66,7 +66,7 @@ public static class AssemblyVersion
             Log.Logger.Error("Unable to determine RID architecture : \"{RID}\"", rid);
             return rid;
         }
-        string architecture = rid.Substring(rid.LastIndexOf('-') + 1);
+        string architecture = rid[(rid.LastIndexOf('-') + 1)..];
 
         // Determine OS and variant
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -90,7 +90,7 @@ public static class AssemblyVersion
 
     private static Assembly GetAssembly()
     {
-        var assembly = Assembly.GetEntryAssembly();
+        Assembly assembly = Assembly.GetEntryAssembly();
         assembly ??= Assembly.GetExecutingAssembly();
         return assembly;
     }

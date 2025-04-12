@@ -33,7 +33,7 @@ public class MkvPropEditTool : MkvMergeTool
 
         // TODO: Should we be skipping und?
         // Only set tracks that are set and not undefined
-        var trackList = mediaInfo.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny)).ToList();
+        System.Collections.Generic.List<TrackInfo> trackList = [.. mediaInfo.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny))];
         trackList.ForEach(item => commandline.Append(CultureInfo.InvariantCulture, $"--edit track:@{item.Number} --set language={item.LanguageAny} "));
 
         // Set language on all unknown tracks
@@ -58,7 +58,7 @@ public class MkvPropEditTool : MkvMergeTool
             // var flagList = TrackInfo.GetFlags().ToList();
 
             // Get flags list for this track
-            var flagList = TrackInfo.GetFlags(trackItem.Flags).ToList();
+            System.Collections.Generic.List<TrackInfo.FlagsType> flagList = [.. TrackInfo.GetFlags(trackItem.Flags)];
             if (flagList.Count > 0)
             {
                 // Edit track
@@ -101,7 +101,7 @@ public class MkvPropEditTool : MkvMergeTool
         _ = commandline.Append("--tags all: --delete title ");
 
         // Delete all track titles if the title is not a flag substitute
-        var trackList = mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag()).ToList();
+        System.Collections.Generic.List<TrackInfo> trackList = [.. mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag())];
         trackList.ForEach(track => commandline.Append(CultureInfo.InvariantCulture, $"--edit track:@{track.Number} --delete name "));
 
         // Clear all tags and main title and track titles

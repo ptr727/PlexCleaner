@@ -125,7 +125,7 @@ public partial class MediaInfoTool : MediaTool
         try
         {
             // Deserialize
-            var xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
+            MediaInfoToolXmlSchema.MediaInfo xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
             MediaInfoToolXmlSchema.MediaElement xmlMedia = xmInfo.Media;
 
             // No tracks

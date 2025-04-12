@@ -33,7 +33,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 no longer published in Ubuntu repository.
     - Switching Debian docker builds to install .NET using Msft install script, Msft repository install only supports x64 builds.
-  - Updated code style to mostly follow the .NET Runtime [`.editorconfig`](https://github.com/dotnet/runtime/blob/main/.editorconfig) style.
+  - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
 - Version 3:10:
   - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
     - The builds would periodically break due to incompatible or missing libraries.
@@ -109,7 +109,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.  
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.
 Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [MacOS](#macos) following the provided instructions.
 
 ### Docker
@@ -281,7 +281,7 @@ services:
 
 ## Configuration
 
-Create a default JSON configuration file by running:  
+Create a default JSON configuration file by running:
 `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
 
 Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for usage.
@@ -291,13 +291,13 @@ Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json)
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
 Note that hardware assisted encoding options are operating system, hardware, and tool version specific.\
-Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.  
+Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.
 The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
 ### FFmpeg Options
 
 See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.\
-The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.  
+The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.
 E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 26 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
 
 Settings allows for custom configuration of:
@@ -332,8 +332,8 @@ Example hardware assisted video encoding options:
 
 ### HandBrake Options
 
-See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.  
-The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.  
+See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.
+The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.
 E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format av_mkv --encoder x265 --quality 26 --encoder-preset medium --comb-detect --decomb --all-audio --aencoder copy --audio-fallback ac3`
 
 Settings allows for custom configuration of:
@@ -534,7 +534,7 @@ These commands have no conditional logic and will process all specified media fi
 ### Create and Update Sidecar Files
 
 - `createsidecar`:
-  - Create or overwrite and re-create sidecar files.  
+  - Create or overwrite and re-create sidecar files.
   - All existing state attributes will be deleted.
 - `updatesidecar`:
   - Update the existing sidecar with current media tool information.
