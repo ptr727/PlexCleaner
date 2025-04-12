@@ -46,7 +46,7 @@ Images are updated weekly with the latest upstream updates.
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `ubuntu` | &#9745; | &#9745; | &#9745; | ~320MB |
+| `ubuntu` | &#9745; | &#9745; | &#9744; | ~320MB |
 | `alpine` | &#9745; | &#9745; | &#9744; | ~160MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~330MB |
 
