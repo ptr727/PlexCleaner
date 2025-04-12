@@ -87,7 +87,7 @@ public class MkvPropEditTool : MkvMergeTool
             TrackInfo.FlagsType.Original => "flag-original",
             TrackInfo.FlagsType.Commentary => "flag-commentary",
             TrackInfo.FlagsType.None => throw new NotImplementedException(),
-            _ => throw new NotImplementedException(),
+            _ => throw new NotImplementedException()
         };
 
     public bool ClearTags(string fileName, MediaInfo mediaInfo)

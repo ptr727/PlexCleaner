@@ -218,7 +218,7 @@ public partial class FfMpegTool : MediaTool
                 VideoInfo videoInfo => sb.Append(videoInfo.State == TrackInfo.StateType.Keep ? $"-c:v:{videoIndex++} copy " : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "),
                 AudioInfo audioInfo => sb.Append(audioInfo.State == TrackInfo.StateType.Keep ? $"-c:a:{audioIndex++} copy " : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "),
                 SubtitleInfo => sb.Append(CultureInfo.InvariantCulture, $"-c:s:{subtitleIndex++} copy "),
-                _ => throw new NotImplementedException(),
+                _ => throw new NotImplementedException()
             };
         }
         outputMap = sb.ToString();
