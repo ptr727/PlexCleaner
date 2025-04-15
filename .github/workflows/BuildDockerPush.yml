@@ -65,8 +65,6 @@ jobs:
     needs: version
 
     strategy:
-      fail-fast: false
-      max-parallel: 4
 
       # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
