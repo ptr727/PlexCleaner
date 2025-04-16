@@ -29,12 +29,13 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- version 3:11:
+- version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 no longer published in Ubuntu repository.
     - Switching Debian docker builds to install .NET using Msft install script, Msft repository install only supports x64 builds.
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
-  - Add `--resultsfile` option to `process` command to write results in JSON format, useful for comparative regression testing.
+- Version 3.11:
+  - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
   - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
     - The builds would periodically break due to incompatible or missing libraries.
