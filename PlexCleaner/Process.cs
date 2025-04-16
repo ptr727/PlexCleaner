@@ -350,6 +350,7 @@ public static class Process
         List<ProcessTuple> errorInfo = [];
         List<ProcessTuple> modifiedInfo = [];
         List<ProcessTuple> failedInfo = [];
+        ProcessResultJsonSchema resultsJson = new();
         var lockObject = new Object();
         bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
         {
@@ -360,6 +361,18 @@ public static class Process
             if (Program.IsCancelled())
             {
                 return false;
+            }
+
+            lock (lockObject)
+            {
+                resultsJson.Results.Add(new()
+                {
+                    Result = processResult,
+                    OriginalFileName = fileName,
+                    NewFileName = processName,
+                    Modified = modified,
+                    State = state
+                });
             }
 
             // Error
@@ -419,6 +432,15 @@ public static class Process
                                     Program.Config.ProcessOptions.FileIgnoreList.Count,
                                     Program.Options.SettingsFile);
             ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+        }
+
+        // Write the process results to file
+        if (Program.Options.ResultsFile != null)
+        {
+            // Sort by file name to simplfy comparison with previous results
+            resultsJson.Results.Sort((x, y) => string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal));
+            Log.Logger.Information("Writing results file : {Program.Options.ResultFile}", Program.Options.ResultsFile);
+            ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
         }
 
         return ret;
