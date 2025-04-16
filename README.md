@@ -34,6 +34,7 @@ Docker images are published on [Docker Hub][docker-link].
     - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 no longer published in Ubuntu repository.
     - Switching Debian docker builds to install .NET using Msft install script, Msft repository install only supports x64 builds.
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
+  - Add `--resultsfile` option to `process` command to write results in JSON format, useful for comparative regression testing.
 - Version 3:10:
   - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
     - The builds would periodically break due to incompatible or missing libraries.
@@ -411,6 +412,7 @@ Commands:
   reencode          Re-Encode media files
   deinterlace       De-Interlace media files
   removesubtitles   Remove subtitles from media files
+  verify            Verify media files
   createsidecar     Create new sidecar files
   updatesidecar     Update existing sidecar files
   getversioninfo    Print application and tools version information
@@ -447,11 +449,12 @@ Usage:
 Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
+  --testsnippets                            Create short media file clips
+  --testnomodify                            Do not make any media file modifications
   --parallel                                Enable parallel processing
   --threadcount <threadcount>               Number of threads to use for parallel processing
-  --testsnippets                            Create short media clips
-  --testnomodify                            Do not make any file modifications
   --reverify                                Re-verify and repair media files in the VerifyFailed state
+  --resultsfile <resultsfile>               Path to results file
   --logfile <logfile>                       Path to log file
   --logappend                               Append to existing log file
   --logwarning                              Log warnings and errors only

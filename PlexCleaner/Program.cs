@@ -64,8 +64,13 @@ public class Program
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
 
+        // TODO: How to test if logical help command is active, same can be used to test for --version?
+        if (!Environment.CommandLine.Contains("--help"))
+        {
+            LogInterruptMessage();
+        }
+
         // Create the commandline and execute commands
-        LogInterruptMessage();
         int exitCode = CommandLineOptions.Invoke();
 
         // Cancel background operations
@@ -608,45 +613,45 @@ public class Program
                 .WithDegreeOfParallelism(Options.ThreadCount)
                 .WithCancellation(CancelToken())
                 .ForAll(fileOrFolder =>
-            {
-                // Handle cancel request
-                CancelToken().ThrowIfCancellationRequested();
-
-                // Test for file or a directory
-                FileAttributes fileAttributes = File.GetAttributes(fileOrFolder);
-                if (fileAttributes.HasFlag(FileAttributes.Directory))
                 {
-                    // Add this directory
-                    lock (lockObject)
-                    {
-                        _directoryList.Add(fileOrFolder);
-                    }
+                    // Handle cancel request
+                    CancelToken().ThrowIfCancellationRequested();
 
-                    // Create the file list from the directory
-                    Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
+                    // Test for file or a directory
+                    FileAttributes fileAttributes = File.GetAttributes(fileOrFolder);
+                    if (fileAttributes.HasFlag(FileAttributes.Directory))
                     {
-                        // Abort
-                        Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
-                        Cancel();
-                        CancelToken().ThrowIfCancellationRequested();
-                    }
+                        // Add this directory
+                        lock (lockObject)
+                        {
+                            _directoryList.Add(fileOrFolder);
+                        }
 
-                    // Add file list
-                    lock (lockObject)
-                    {
-                        fileInfoList.ForEach(item => _fileList.Add(item.FullName));
+                        // Create the file list from the directory
+                        Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                        if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
+                        {
+                            // Abort
+                            Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
+                            Cancel();
+                            CancelToken().ThrowIfCancellationRequested();
+                        }
+
+                        // Add file list
+                        lock (lockObject)
+                        {
+                            fileInfoList.ForEach(item => _fileList.Add(item.FullName));
+                        }
                     }
-                }
-                else
-                {
-                    // Add this file
-                    lock (lockObject)
+                    else
                     {
-                        _fileList.Add(fileOrFolder);
+                        // Add this file
+                        lock (lockObject)
+                        {
+                            _fileList.Add(fileOrFolder);
+                        }
                     }
-                }
-            });
+                });
         }
         catch (OperationCanceledException)
         {

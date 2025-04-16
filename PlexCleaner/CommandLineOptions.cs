@@ -22,6 +22,7 @@ public class CommandLineOptions
     public bool Debug { get; set; }
     public string SchemaFile { get; set; }
     public bool PreProcess { get; set; }
+    public string ResultsFile { get; set; }
 
     public static int Invoke()
     {
@@ -186,6 +187,13 @@ public class CommandLineOptions
             new Option<bool>("--reverify")
             {
                 Description = "Re-verify and repair media files in the VerifyFailed state"
+            });
+
+        // Results file name
+        command.AddOption(
+            new Option<string>("--resultsfile")
+            {
+                Description = "Path to results file",
             });
 
         return command;

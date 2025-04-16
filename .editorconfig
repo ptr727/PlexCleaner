@@ -1,18 +1,14 @@
 # https://editorconfig.org
 
+# https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/identifier-names
+# https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview
 
+# https://github.com/dotnet/runtime/blob/main/docs/coding-guidelines/coding-style.md
 # https://github.com/dotnet/runtime/blob/main/.editorconfig
-# https://github.com/dotnet/sdk/blob/main/.editorconfig
 
 # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format
 # dotnet format --verify-no-changes --severity=info --verbosity=detailed
-
-# Using https://github.com/dotnet/runtime/blob/main/.editorconfig
-# Comment out file_header_template
-# Add csharp_style_namespace_declarations = file_scoped
-# Add dotnet_analyzer_diagnostic.severity = warning
-# Add trim_trailing_whitespace = false for markdown
 
 # Root config
 root = true

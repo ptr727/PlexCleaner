@@ -2,6 +2,19 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build",
+            "type": "dotnet",
+            "task": "build",
+            "group": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
+        {
             "label": ".NET Build PlexCleaner",
             "type": "process",
             "command": "dotnet",
@@ -17,7 +30,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": ".NET Build PlexCleanerTests",
@@ -35,7 +48,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Ubuntu.Rolling Dockerfile",
@@ -46,7 +59,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64",
                 "--file=./Docker/Ubuntu.Rolling.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -54,7 +67,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Ubuntu.Devel Dockerfile",
@@ -65,7 +78,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64",
                 "--file=./Docker/Ubuntu.Devel.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -73,7 +86,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Alpine.Edge Dockerfile",
@@ -84,7 +97,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64",
                 "--file=./Docker/Alpine.Edge.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -92,7 +105,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Alpine.Latest Dockerfile",
@@ -103,7 +116,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64",
                 "--file=./Docker/Alpine.Latest.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -111,7 +124,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Debian.Stable Dockerfile",
@@ -122,7 +135,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64,linux/arm/v7",
                 "--file=./Docker/Debian.Stable.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -130,7 +143,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build Debian.Testing Dockerfile",
@@ -141,7 +154,7 @@
                 "build",
                 "--platform=linux/amd64,linux/arm64,linux/arm/v7",
                 "--file=./Docker/Debian.Testing.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -149,7 +162,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Build all Dockerfiles",
@@ -179,7 +192,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:ubuntu",
                 "--file=./Docker/Ubuntu.Rolling.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -187,7 +200,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load Ubuntu.Devel Dockerfile",
@@ -200,7 +213,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:ubuntu-devel",
                 "--file=./Docker/Ubuntu.Devel.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -208,7 +221,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load Alpine.Edge Dockerfile",
@@ -221,7 +234,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:alpine-edge",
                 "--file=./Docker/Alpine.Edge.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -229,7 +242,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load Alpine.Latest Dockerfile",
@@ -242,7 +255,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:alpine",
                 "--file=./Docker/Alpine.Latest.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -250,7 +263,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load Debian.Stable Dockerfile",
@@ -263,7 +276,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:debian",
                 "--file=./Docker/Debian.Stable.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -271,7 +284,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load Debian.Testing Dockerfile",
@@ -284,7 +297,7 @@
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:debian-testing",
                 "--file=./Docker/Debian.Testing.Dockerfile",
-                "${workspaceFolder}",
+                "${workspaceFolder}"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -292,7 +305,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Load all Dockerfiles",
@@ -309,7 +322,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Ubuntu.Rolling Dockerfile",
@@ -333,7 +346,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Ubuntu.Devel Dockerfile",
@@ -357,7 +370,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Alpine.Edge Dockerfile",
@@ -381,7 +394,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Alpine.Latest Dockerfile",
@@ -405,7 +418,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Debian.Stable Dockerfile",
@@ -429,7 +442,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test Debian.Testing Dockerfile",
@@ -453,7 +466,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": "Test all Dockerfiles",
@@ -470,7 +483,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
         {
             "label": ".NET Format",
@@ -488,7 +501,7 @@
             "presentation": {
                 "showReuseMessage": false,
                 "clear": true
-            },
+            }
         },
     ]
 }

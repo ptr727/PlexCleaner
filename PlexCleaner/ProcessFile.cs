@@ -1497,11 +1497,11 @@ public class ProcessFile
         // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
         List<VideoInfo> nonHdr10Tracks = hdrTracks.FindAll(videoInfo => s_hdr10Format.All(hdr10Format => !videoInfo.FormatHdr.Contains(hdr10Format, StringComparison.OrdinalIgnoreCase)));
         nonHdr10Tracks.ForEach(videoItem =>
-        {
-            Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, s_hdr10Format, FileInfo.Name);
+            {
+                Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, s_hdr10Format, FileInfo.Name);
 
-            // Warning only
-        });
+                // Warning only
+            });
 
         return true;
     }

@@ -2,12 +2,34 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Default Settings",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "defaultsettings",
+                "--settingsfile=PlexCleaner.json",
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
             "name": "Process Snippets Test",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
-            "args": ["process", "--logfile", "PlexCleaner.log", "--settingsfile", "PlexCleaner.json", "--testsnippets", "--mediafiles", "D:\\Test"],
+            "args": [
+                "process",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results.json",
+                "--testsnippets",
+                "--mediafiles",
+                "D:\\Test"
+            ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
             "console": "internalConsole",
             "stopAtEntry": false

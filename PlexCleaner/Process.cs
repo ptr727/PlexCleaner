@@ -9,9 +9,6 @@ using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
 
-// Filename, State
-using ProcessTuple = System.ValueTuple<string, PlexCleaner.SidecarFile.StatesType>;
-
 namespace PlexCleaner;
 
 public static class Process
@@ -343,82 +340,80 @@ public static class Process
                                Program.Options.ReVerify,
                                Program.Config.ProcessOptions.FileIgnoreList.Count);
 
-        // Ignore count before
-        int ignoreCount = Program.Config.ProcessOptions.FileIgnoreList.Count;
-
         // Process all the files
-        List<ProcessTuple> errorInfo = [];
-        List<ProcessTuple> modifiedInfo = [];
-        List<ProcessTuple> failedInfo = [];
+        ProcessResultJsonSchema resultsJson = new();
         object lockObject = new();
         bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
-        {
-            // Process the file
-            bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.StatesType state, out string processName);
-
-            // Cancelled
-            if (Program.IsCancelled())
             {
-                return false;
-            }
+                // Process the file
+                bool processResult = ProcessFile(fileName, out bool modified, out SidecarFile.StatesType state, out string processName);
 
-            // Error
-            if (!processResult)
-            {
-                lock (lockObject)
+                // Cancelled
+                if (Program.IsCancelled())
                 {
-                    errorInfo.Add(new ProcessTuple(processName, state));
-                }
-            }
-
-            // Modified
-            if (modified)
-            {
-                lock (lockObject)
-                {
-                    modifiedInfo.Add(new ProcessTuple(processName, state));
-                }
-            }
-
-            // Verify failed
-            if (state.HasFlag(SidecarFile.StatesType.VerifyFailed))
-            {
-                lock (lockObject)
-                {
-                    failedInfo.Add(new ProcessTuple(processName, state));
+                    return false;
                 }
 
-                // Add the failed file to the ignore list
-                if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+                // Save results
+                lock (lockObject)
                 {
-                    lock (lockObject)
+                    resultsJson.Results.Add(new()
                     {
-                        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(processName);
-                    }
+                        Result = processResult,
+                        OriginalFileName = fileName,
+                        NewFileName = processName,
+                        Modified = modified,
+                        State = state
+                    });
+                }
+
+                return processResult;
+            });
+
+        // Errors
+        // Log.Logger.Information("Error files : {Count}", errorCount);
+        List<ProcessResult> errorResults = [.. resultsJson.Results.Where(item => !item.Result)];
+        errorResults.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.State, item.NewFileName));
+
+        // Modified
+        List<ProcessResult> modifedResults = [.. resultsJson.Results.Where(item => item.Modified)];
+        Log.Logger.Information("Modified files : {Count}", modifedResults.Count);
+        modifedResults.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.State, item.NewFileName));
+
+        // Verify failed
+        List<ProcessResult> failedResults = [.. resultsJson.Results.Where(item => item.State.HasFlag(SidecarFile.StatesType.VerifyFailed))];
+        Log.Logger.Information("VerifyFailed files : {Count}", failedResults.Count);
+        failedResults.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName));
+
+        // Updated ignore file list
+        if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+        {
+            // Add all failed items to the ignore list
+            bool newItems = false;
+            foreach (ProcessResult item in failedResults)
+            {
+                if (Program.Config.ProcessOptions.FileIgnoreList.Add(item.NewFileName))
+                {
+                    // New item added
+                    newItems = true;
                 }
             }
+            if (newItems)
+            {
+                Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
+                                        Program.Config.ProcessOptions.FileIgnoreList.Count,
+                                        Program.Options.SettingsFile);
+                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+            }
+        }
 
-            return processResult;
-        });
-
-        // Summary
-        // Log.Logger.Information("Error files : {Count}", errorCount);
-        errorInfo.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.Item2, item.Item1));
-
-        Log.Logger.Information("Modified files : {Count}", modifiedInfo.Count);
-        modifiedInfo.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.Item2, item.Item1));
-
-        Log.Logger.Information("VerifyFailed files : {Count}", failedInfo.Count);
-        failedInfo.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.Item2, item.Item1));
-
-        // Write the updated ignore file list
-        if (Program.Config.VerifyOptions.RegisterInvalidFiles &&
-            Program.Config.ProcessOptions.FileIgnoreList.Count != ignoreCount)
+        // Write the process results to file
+        if (Program.Options.ResultsFile != null)
         {
-            Log.Logger.Information("Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
-                                    Program.Config.ProcessOptions.FileIgnoreList.Count,
-                                    Program.Options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+            // Sort by file name to simplfy comparison with previous results
+            resultsJson.Results.Sort((x, y) => string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal));
+            Log.Logger.Information("Writing results file : {Program.Options.ResultFile}", Program.Options.ResultsFile);
+            ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
         }
 
         return ret;
@@ -671,33 +666,33 @@ public static class Process
                 .WithDegreeOfParallelism(Program.Options.ThreadCount)
                 .WithCancellation(Program.CancelToken())
                 .ForAll(keyPair =>
-            {
-                // Process all files in the group in this thread
-                foreach (string fileName in keyPair)
                 {
-                    // Log completion % before task starts
-                    double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
-                    Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
-
-                    // Perform the task
-                    bool taskResult = taskFunc(fileName);
-
-                    // Handle cancel request
-                    Program.CancelToken().ThrowIfCancellationRequested();
-
-                    // Handle result
-                    if (!taskResult)
+                    // Process all files in the group in this thread
+                    foreach (string fileName in keyPair)
                     {
-                        // Error
-                        Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);
-                        _ = Interlocked.Increment(ref errorCount);
-                    }
+                        // Log completion % before task starts
+                        double processedPercentage = GetPercentage(Interlocked.CompareExchange(ref processedCount, 0, 0), totalCount);
+                        Log.Logger.Information("{TaskName} ({Processed:N2}%) Before : {FileName}", taskName, processedPercentage, fileName);
 
-                    // Log completion % after task completes
-                    processedPercentage = GetPercentage(Interlocked.Increment(ref processedCount), totalCount);
-                    Log.Logger.Information("{TaskName} ({Processed:N2}%) After : {FileName}", taskName, processedPercentage, fileName);
-                }
-            });
+                        // Perform the task
+                        bool taskResult = taskFunc(fileName);
+
+                        // Handle cancel request
+                        Program.CancelToken().ThrowIfCancellationRequested();
+
+                        // Handle result
+                        if (!taskResult)
+                        {
+                            // Error
+                            Log.Logger.Error("{TaskName} Error : {FileName}", taskName, fileName);
+                            _ = Interlocked.Increment(ref errorCount);
+                        }
+
+                        // Log completion % after task completes
+                        processedPercentage = GetPercentage(Interlocked.Increment(ref processedCount), totalCount);
+                        Log.Logger.Information("{TaskName} ({Processed:N2}%) After : {FileName}", taskName, processedPercentage, fileName);
+                    }
+                });
         }
         catch (OperationCanceledException)
         {
