@@ -36,6 +36,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
   - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfiles.
   - Updated 7-Zip version number parsing to account for newly observed variants.
+  - Remove support for Closed Caption detection and removal from video streams. FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) support for detecting CC presence, investigating alternatives, see [issue #497](https://github.com/ptr727/PlexCleaner/issues/497) for details.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:

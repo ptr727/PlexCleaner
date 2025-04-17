@@ -297,6 +297,12 @@ public partial class FfMpegTool : MediaTool
         StringBuilder commandline = new();
         CreateDefaultArgs(inputName, commandline, false);
 
+        // TODO: The filter type is video format dependent
+        // H264: remove_types=6
+        // H265: remove_types=39
+        // MPEG2: remove_types=178
+        // https://trac.ffmpeg.org/ticket/5283
+
         // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
         _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");

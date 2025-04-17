@@ -760,6 +760,11 @@ public class ProcessFile
         // Init
         videoInfo = null;
 
+        // TODO: No longer works in current (Jan 2025+) FFmpeg versions
+        // https://github.com/ptr727/PlexCleaner/issues/497
+        return false;
+
+        /*
         // Are any CC attributes set
         videoInfo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
         videoInfo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
@@ -770,9 +775,6 @@ public class ProcessFile
             return true;
         }
 
-        // TODO: Detecting CC's using ffprobe JSON output is broken, run ffprobe in normal output mode
-        // https://github.com/ptr727/PlexCleaner/issues/94
-
         // Running ffprobe is not free, skip if already verified or CC's already removed
         if (State.HasFlag(SidecarFile.StatesType.Verified) ||
             State.HasFlag(SidecarFile.StatesType.VerifyFailed) ||
@@ -781,6 +783,9 @@ public class ProcessFile
             // Assume not set
             return false;
         }
+
+        // TODO: Detecting CC's using ffprobe JSON output is broken, run ffprobe in normal output mode
+        // https://github.com/ptr727/PlexCleaner/issues/94
 
         // Get ffprobe text output
         Log.Logger.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.Name);
@@ -801,6 +806,8 @@ public class ProcessFile
                 line.Contains("Video", StringComparison.OrdinalIgnoreCase) &&
                 line.Contains("Closed Captions", StringComparison.OrdinalIgnoreCase))
             {
+                // TODO: Only supported for H264
+                // See
                 // Use the first video track from FfProbe
                 videoInfo = FfProbeInfo.Video.First();
                 videoInfo.ClosedCaptions = true;
@@ -810,6 +817,7 @@ public class ProcessFile
 
         // Not found
         return false;
+        */
     }
 
     public bool DeInterlace(ref bool modified)
