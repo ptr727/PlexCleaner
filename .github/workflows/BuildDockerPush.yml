@@ -166,16 +166,10 @@ jobs:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
             file: debian.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
-            file: debian-testing.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
             file: alpine.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
-            file: alpine-edge.ver
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
             file: ubuntu.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
-            file: ubuntu-devel.ver
 
     steps:
 

@@ -31,9 +31,10 @@ Docker images are published on [Docker Hub][docker-link].
 
 - version 3:12:
   - Update to .NET 9.0.
-    - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 no longer published in Ubuntu repository.
-    - Switching Debian docker builds to install .NET using Msft install script, Msft repository install only supports x64 builds.
+    - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 is no longer published in the Ubuntu repository.
+    - Switching Debian docker builds to install .NET using Msft install script, the Msft repository only supports x64 builds.
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
+  - Removed docker `ubuntu-devel` (based on `ubuntu:devel`), `alpine-edge` (based on `alpine:edge`) or `debian-testing` (based on `debian:testing-slim`) builds from CI as they were prone to breaking.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
@@ -120,11 +121,8 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 - See the [Docker README][docker-link] for full distribution details and current media tool versions.
   - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
   - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
-  - `ptr727/plexcleaner:ubuntu-devel` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:devel`).
   - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
-  - `ptr727/plexcleaner:alpine-edge` is based on [Alpine][alpine-docker-link] (`alpine:edge`).
   - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
-  - `ptr727/plexcleaner:debian-testing` is based on [Debian][debian-hub-link] (`debian:testing-slim`).
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
