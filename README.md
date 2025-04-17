@@ -35,7 +35,7 @@ Docker images are published on [Docker Hub][docker-link].
     - Switching Debian docker builds to install .NET using Msft install script as the Microsoft repository now only supports x64 builds.
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
   - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfiles.
-  - Updated 7-Zip version parsing to account for newly observed variants.
+  - Updated 7-Zip version number parsing to account for newly observed variants.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
