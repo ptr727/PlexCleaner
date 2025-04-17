@@ -62,73 +62,44 @@ public abstract class MediaTool
     // Version information is used in the sidecar tool logic
     public MediaToolInfo Info { get; set; }
 
-    private string GetToolName() =>
-        // Windows or Linux
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
+    private string GetToolName() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
 
-    public string GetToolPath()
-    {
-        // Tool binary name
-        string toolName = GetToolName();
+    public string GetToolPath() => Program.Config.ToolsOptions.UseSystem ? GetToolName() : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), GetToolName());
 
-        // System use just tool name
-        // Append to tools folder using tool family type and sub folder as folder name
-        return Program.Config.ToolsOptions.UseSystem ? toolName : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), toolName);
-    }
+    protected string GetToolFolder() => Tools.CombineToolPath(GetToolFamily().ToString());
 
-    protected string GetToolFolder() =>
-        // Append to tools folder using tool family type as folder name
-        // Sub folders are not included in the tool folder
-        Tools.CombineToolPath(GetToolFamily().ToString());
-
-    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) =>
-        // Windows or Linux
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
+    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
 
     protected int Command(string parameters)
     {
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
-
-        // Suppress console output when running in parallel mode
-        string path = GetToolPath();
-        int exitCode = ProcessEx.Execute(path, parameters, !Program.Options.Parallel);
-        return exitCode;
+        return ProcessEx.Execute(GetToolPath(), parameters, !Program.Options.Parallel);
     }
 
     protected int Command(string parameters, out string output)
     {
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
-
-        string path = GetToolPath();
-        int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output);
-        return exitCode;
+        return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output);
     }
 
     protected int Command(string parameters, out string output, out string error)
     {
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
-
-        string path = GetToolPath();
-        int exitCode = ProcessEx.Execute(path, parameters, false, 0, out output, out error);
-        return exitCode;
+        return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output, out error);
     }
 
     protected int Command(string parameters, int limit, out string output, out string error)
     {
         parameters = parameters.Trim();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
-
-        string path = GetToolPath();
-        int exitCode = ProcessEx.Execute(path, parameters, false, limit, out output, out error);
-        return exitCode;
+        return ProcessEx.Execute(GetToolPath(), parameters, false, limit, out output, out error);
     }
 
     protected string GetLatestGitHubRelease(string repo)
     {
-        // Get the latest release version number from github releases
         Log.Logger.Information("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
         return GitHubRelease.GetLatestRelease(repo);
     }

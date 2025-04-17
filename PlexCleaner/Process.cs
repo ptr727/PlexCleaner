@@ -372,16 +372,16 @@ public static class Process
 
         // Errors
         // Log.Logger.Information("Error files : {Count}", errorCount);
-        List<ProcessResult> errorResults = [.. resultsJson.Results.Where(item => !item.Result)];
+        List<ProcessResultJsonSchema.ProcessResult> errorResults = [.. resultsJson.Results.Where(item => !item.Result)];
         errorResults.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.State, item.NewFileName));
 
         // Modified
-        List<ProcessResult> modifedResults = [.. resultsJson.Results.Where(item => item.Modified)];
+        List<ProcessResultJsonSchema.ProcessResult> modifedResults = [.. resultsJson.Results.Where(item => item.Modified)];
         Log.Logger.Information("Modified files : {Count}", modifedResults.Count);
         modifedResults.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.State, item.NewFileName));
 
         // Verify failed
-        List<ProcessResult> failedResults = [.. resultsJson.Results.Where(item => item.State.HasFlag(SidecarFile.StatesType.VerifyFailed))];
+        List<ProcessResultJsonSchema.ProcessResult> failedResults = [.. resultsJson.Results.Where(item => item.State.HasFlag(SidecarFile.StatesType.VerifyFailed))];
         Log.Logger.Information("VerifyFailed files : {Count}", failedResults.Count);
         failedResults.ForEach(item => Log.Logger.Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName));
 
@@ -390,7 +390,7 @@ public static class Process
         {
             // Add all failed items to the ignore list
             bool newItems = false;
-            foreach (ProcessResult item in failedResults)
+            foreach (ProcessResultJsonSchema.ProcessResult item in failedResults)
             {
                 if (Program.Config.ProcessOptions.FileIgnoreList.Add(item.NewFileName))
                 {
@@ -412,6 +412,7 @@ public static class Process
         {
             // Sort by file name to simplfy comparison with previous results
             resultsJson.Results.Sort((x, y) => string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal));
+            resultsJson.SetVersionInfo();
             Log.Logger.Information("Writing results file : {Program.Options.ResultFile}", Program.Options.ResultsFile);
             ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
         }

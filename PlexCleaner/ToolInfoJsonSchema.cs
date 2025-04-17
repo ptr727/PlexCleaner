@@ -21,9 +21,7 @@ public class ToolInfoJsonSchema
 
     public List<MediaToolInfo> Tools { get; } = [];
 
-    public MediaToolInfo GetToolInfo(MediaTool mediaTool) =>
-        // Match tool by family
-        Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
+    public MediaToolInfo GetToolInfo(MediaTool mediaTool) => Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
 
     public static ToolInfoJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 

@@ -11,7 +11,7 @@ namespace PlexCleaner;
 
 public static class Tools
 {
-    // All the tools
+    // Tool details are populated during VerifyTools() call
     public static readonly FfMpegTool FfMpeg = new();
     public static readonly FfProbeTool FfProbe = new();
     public static readonly MkvMergeTool MkvMerge = new();
@@ -21,11 +21,7 @@ public static class Tools
     public static readonly HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
 
-    private static List<MediaTool> GetToolList()
-    {
-        // Add all tools to a list
-        List<MediaTool> toolList =
-        [
+    public static List<MediaTool> GetToolList() => [
             FfMpeg,
             FfProbe,
             MkvMerge,
@@ -36,14 +32,7 @@ public static class Tools
             SevenZip
         ];
 
-        return toolList;
-    }
-
-    private static List<MediaTool> GetToolFamilyList()
-    {
-        // Add all tools families to a list
-        List<MediaTool> toolList =
-        [
+    public static List<MediaTool> GetToolFamilyList() => [
             FfMpeg,
             MkvMerge,
             MediaInfo,
@@ -51,12 +40,9 @@ public static class Tools
             SevenZip
         ];
 
-        return toolList;
-    }
-
     public static bool VerifyTools()
     {
-        // TODO: Folder tools are not currently supported on Linux
+        // TODO: Folder tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
             !Program.Config.ToolsOptions.UseSystem)
         {
@@ -65,15 +51,19 @@ public static class Tools
             Program.Config.ToolsOptions.UseSystem = true;
         }
 
-        // Verify System tools or Tool folder tools
-        return Program.Config.ToolsOptions.UseSystem ? VerifySystemTools() : VerifyFolderTools();
+        // Verify tools populates the tool information
+        if (Program.Config.ToolsOptions.UseSystem ? VerifySystemTools() : VerifyFolderTools())
+        {
+            GetToolList().ForEach(tool => Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}", tool.GetToolType(), tool.Info.Version, tool.Info.FileName));
+            return true;
+        }
+        return false;
     }
 
     private static bool VerifySystemTools()
     {
         // Verify each tool
-        List<MediaTool> toolList = GetToolList();
-        foreach (MediaTool mediaTool in toolList)
+        foreach (MediaTool mediaTool in GetToolList())
         {
             // Query the installed version information
             if (!mediaTool.GetInstalledVersion(out MediaToolInfo mediaToolInfo))
@@ -81,9 +71,6 @@ public static class Tools
                 Log.Logger.Error("{Tool} not found : {FileName}", mediaTool.GetToolType(), mediaTool.GetToolPath());
                 return false;
             }
-            Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}", mediaTool.GetToolType(), mediaToolInfo.Version, mediaToolInfo.FileName);
-
-            // Assign the tool info
             mediaTool.Info = mediaToolInfo;
         }
 
@@ -131,8 +118,7 @@ public static class Tools
         }
 
         // Verify each tool
-        List<MediaTool> toolList = GetToolList();
-        foreach (MediaTool mediaTool in toolList)
+        foreach (MediaTool mediaTool in GetToolList())
         {
             // Lookup using the tool family
             MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
@@ -150,12 +136,6 @@ public static class Tools
                 Log.Logger.Error("{Tool} not found in path {Directory}", mediaTool.GetToolType(), mediaTool.GetToolPath());
                 return false;
             }
-            Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}",
-                mediaTool.GetToolType(),
-                mediaToolInfo.Version,
-                mediaToolInfo.FileName);
-
-            // Assign the tool info
             mediaTool.Info = mediaToolInfo;
         }
 
@@ -192,7 +172,7 @@ public static class Tools
 
     public static bool CheckForNewTools()
     {
-        // TODO: Checking for new tools are not currently supported on Linux
+        // TODO: Checking for new tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             Log.Logger.Warning("Checking for new tools are not supported on Linux");

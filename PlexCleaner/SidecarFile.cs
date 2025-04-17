@@ -226,10 +226,7 @@ public class SidecarFile
 
     private bool IsStateCurrent() => State == _sidecarJson.State;
 
-    public bool IsWriteable() =>
-        // File must exist and be writeable
-        // TODO: FileEx.IsFileReadWriteable(FileInfo) slows down processing
-        _sidecarFileInfo.Exists && !_sidecarFileInfo.IsReadOnly;
+    public bool IsWriteable() => _sidecarFileInfo.Exists && !_sidecarFileInfo.IsReadOnly;
 
     public bool Exists() => _sidecarFileInfo.Exists;
 
