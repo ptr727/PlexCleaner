@@ -64,7 +64,7 @@ $PlexCleanerApp getversioninfo --settingsfile $SettingsFile
 # Take care of order of commands to not interfere with sidecar logic
 
 # Run process command first
-$PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets
+$PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets --resultsfile $TestPath/Results.json
 
 # Info commands
 $PlexCleanerApp updatesidecar --settingsfile $SettingsFile --mediafiles $MediaPath

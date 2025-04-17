@@ -133,7 +133,7 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 Example, run in an interactive shell:
 
-```bash
+```shell
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
@@ -174,7 +174,7 @@ exit
 
 Example, run `monitor` command in a screen session:
 
-```bash
+```shell
 # Start a new screen session
 screen
 # Or attach to the existing screen session
@@ -203,7 +203,7 @@ docker run \
 
 Example, run `process` command:
 
-```bash
+```shell
 # Run the process command
 docker run \
   --rm \
@@ -557,6 +557,104 @@ These commands have no conditional logic and will process all specified media fi
   - Print sidecar file attribute information.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
+
+## Testing
+
+The majority of development and debugging time is spent figuring out how to deal with media file and media processing tool specifics affecting playback.\
+For repetitive test tasks pre-configured on-demand tests are included in VSCode [`tasks.json`](./.vscode/tasks.json) and [`launch.json`](./.vscode/launch.json), and VisualStudio [`launchSettings.json`](./PlexCleaner/Properties/launchSettings.json).\
+Several of the tests reference system local paths containing media files, so you may need to make path changes to match your environment.
+
+### Unit Testing
+
+Unit tests are included for static tests that do not require the use of media files.
+
+```console
+dotnet build
+dotnet format --verify-no-changes --severity=info --verbosity=detailed
+dotnet test
+```
+
+### Docker Testing
+
+the [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.\
+If an external media path is not specified the test will download and use the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip).
+
+```console
+docker run \
+  -it --rm \
+  --name PlexCleaner-Test \
+  docker.io/ptr727/plexcleaner:latest \
+  /Test/Test.sh
+```
+
+### Regression Testing
+
+The behavior of the tool is very dependent on the media files being tested, and the following process can facilitate regressions testing, assuring that the process results between versions remain consistent.
+
+- Maintain a collection of troublesome media files that resulted in functional changes.
+- Create a ZFS snapshot of the media files to test.
+- Process the files, using a known good version, and save the results in JSON format using the `--resultsfile` option.
+- Restore the ZFS snapshot allowing repetitive testing using the original files.
+- Process the files again using the under test version.
+- Compare the JSON results file from the known good version with the version under test.
+- Investigate any file comparison discrepancies.
+
+E.g.
+
+```shell
+# Copy troublesome files
+rsync -av --delete --progress /data/media/Troublesome/. /data/media/test
+chown -R nobody:users /data/media/test
+chmod -R ug=rwx,o=rx /data/media/test
+
+# Take snapshot
+zfs destroy hddpool/media/test@backup
+zfs snapshot hddpool/media/test@backup
+```
+
+```shell
+# Config
+PlexCleanerApp=/PlexCleaner/Debug/PlexCleaner
+MediaPath=/Test/Media
+ConfigPath=/Test/Config
+
+# Test function
+RunContainer () {
+  local Image=$1
+  local Tag=$2
+
+  # Rollback to snapshot
+  sudo zfs rollback hddpool/media/test@backup
+
+  # Process files
+  docker run \
+    -it \
+    --rm \
+    --pull always \
+    --name PlexCleaner-Test \
+    --user nobody:users \
+    --env TZ=America/Los_Angeles \
+    --volume /data/media/test:$MediaPath:rw \
+    --volume /data/media/PlexCleaner:$ConfigPath:rw \
+    $Image:$Tag \
+    $PlexCleanerApp process \
+      --settingsfile=$ConfigPath/PlexCleaner.json \
+      --logfile=$ConfigPath/PlexCleaner-$Tag.log \
+      --mediafiles=$MediaPath \
+      --testsnippets \
+      --resultsfile=$ConfigPath/Results-$Tag.json
+}
+
+# Test release containers
+RunContainer docker.io/ptr727/plexcleaner ubuntu
+RunContainer docker.io/ptr727/plexcleaner debian
+RunContainer docker.io/ptr727/plexcleaner alpine
+
+# Test pre-release containers
+RunContainer docker.io/ptr727/plexcleaner ubuntu-develop
+RunContainer docker.io/ptr727/plexcleaner debian-develop
+RunContainer docker.io/ptr727/plexcleaner alpine-develop
+```
 
 ## 3rd Party Tools
 

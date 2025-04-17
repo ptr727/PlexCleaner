@@ -11,7 +11,7 @@ set -e
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 echo "Installing VS debug tools to /vsdbg"
 wget -O ./getvsdbg.sh https://aka.ms/getvsdbgsh
-chmod ugo+rwx getvsdbg.sh
+chmod ug=rwx,o=rx getvsdbg.sh
 ./getvsdbg.sh -v latest -l /vsdbg
 rm -f getvsdbg.sh
 
@@ -62,6 +62,6 @@ get_dotnet_runtime_id
 echo "Installing .NET diagnostic tools for $__RuntimeID to /dotnet-tools"
 mkdir -p /dotnet-tools
 wget -O /dotnet-tools/dotnet-counters https://aka.ms/dotnet-counters/$__RuntimeID
-chmod ugo+rwx /dotnet-tools/dotnet-counters
+chmod ug=rwx,o=rx /dotnet-tools/dotnet-counters
 wget -O /dotnet-tools/dotnet-dump https://aka.ms/dotnet-dump/$__RuntimeID
-chmod ugo+rwx /dotnet-tools/dotnet-dump
+chmod ug=rwx,o=rx /dotnet-tools/dotnet-dump

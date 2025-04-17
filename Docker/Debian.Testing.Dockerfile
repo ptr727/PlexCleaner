@@ -71,7 +71,7 @@ RUN apt install -y --no-install-recommends \
         tzdata \
         wget \
     && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
-    && chmod ugo+rwx dotnet-install.sh \
+    && chmod ug=rwx,o=rx dotnet-install.sh \
     && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --channel 9.0 \
     && rm dotnet-install.sh
 ENV DOTNET_ROOT=/usr/local/bin/dotnet \
@@ -86,12 +86,12 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
-RUN chmod ugo+rwx ./UnitTest.sh
+RUN chmod ug=rwx,o=rx ./UnitTest.sh
 RUN ./UnitTest.sh
 
 # Build
 COPY ./Docker/Build.sh ./
-RUN chmod ugo+rwx ./Build.sh
+RUN chmod ug=rwx,o=rx ./Build.sh
 RUN ./Build.sh
 
 
@@ -143,7 +143,7 @@ RUN apt install -y --no-install-recommends \
         tzdata \
         wget \
     && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
-    && chmod ugo+rwx dotnet-install.sh \
+    && chmod ug=rwx,o=rx dotnet-install.sh \
     && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --runtime dotnet --channel 9.0 \
     && rm dotnet-install.sh
 ENV DOTNET_ROOT=/usr/local/bin/dotnet \
@@ -172,17 +172,17 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Copy test script
 COPY /Docker/Test.sh /Test/
-RUN chmod -R ugo+rwx /Test
+RUN chmod -R ug=rwx,o=rx /Test
 
 # Install debug tools
 COPY ./Docker/InstallDebugTools.sh ./
-RUN chmod ugo+rwx ./InstallDebugTools.sh \
+RUN chmod ug=rwx,o=rx ./InstallDebugTools.sh \
     && ./InstallDebugTools.sh \
     && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/
-RUN chmod ugo+rwx /PlexCleaner/Version.sh
+RUN chmod ug=rwx,o=rx /PlexCleaner/Version.sh
 
 # Print version information
 ARG TARGETPLATFORM \
