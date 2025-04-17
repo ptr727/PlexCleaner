@@ -78,11 +78,11 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
-          - file: ./Docker/Debian.Testing.Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
-            cache-scope: debian-testing
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
+          #- file: ./Docker/Debian.Testing.Dockerfile
+          #  platforms: linux/amd64,linux/arm64,linux/arm/v7
+          #  cache-scope: debian-testing
+          #  tags: |
+          #    docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
 
           - file: ./Docker/Alpine.Stable.Dockerfile
             platforms: linux/amd64,linux/arm64
