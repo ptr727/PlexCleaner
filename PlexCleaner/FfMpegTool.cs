@@ -49,7 +49,7 @@ public partial class FfMpegTool : MediaTool
             return false;
         }
 
-        // First line as version
+        // First line of stderr as version
         // Windows : "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
         // Ubuntu: "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
         // Arch: "ffmpeg version n6.0 Copyright (c) 2000-2023 the FFmpeg developers"
@@ -60,6 +60,7 @@ public partial class FfMpegTool : MediaTool
         Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();

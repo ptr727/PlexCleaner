@@ -35,7 +35,7 @@ public partial class HandBrakeTool : MediaTool
             return false;
         }
 
-        // First line as version
+        // First line of stdout as version
         // E.g. Windows : "HandBrake 1.3.3"
         // E.g. Linux : "HandBrake 1.3.3"
         string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
@@ -44,6 +44,7 @@ public partial class HandBrakeTool : MediaTool
         Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();

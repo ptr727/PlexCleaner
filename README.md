@@ -31,10 +31,11 @@ Docker images are published on [Docker Hub][docker-link].
 
 - version 3:12:
   - Update to .NET 9.0.
-    - Dropping Ubuntu docker `arm/v7` support, .NET for ARM32 is no longer published in the Ubuntu repository.
-    - Switching Debian docker builds to install .NET using Msft install script, the Msft repository only supports x64 builds.
+    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
+    - Switching Debian docker builds to install .NET using Msft install script as the Microsoft repository now only supports x64 builds.
   - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
-  - Removed docker `ubuntu-devel` (based on `ubuntu:devel`), `alpine-edge` (based on `alpine:edge`) or `debian-testing` (based on `debian:testing-slim`) builds from CI as they were prone to breaking.
+  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfiles.
+  - Updated 7-Zip version parsing to account for newly observed variants.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:

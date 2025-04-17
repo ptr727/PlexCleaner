@@ -32,7 +32,7 @@ public partial class MediaInfoTool : MediaTool
             return false;
         }
 
-        // Second line as version
+        // Second line of stdout as version
         // E.g. Windows : "MediaInfoLib - v20.09"
         // E.g. Linux : "MediaInfoLib - v20.09"
         string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
@@ -41,6 +41,7 @@ public partial class MediaInfoTool : MediaTool
         Match match = InstalledVersionRegex().Match(lines[1]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();

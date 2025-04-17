@@ -32,15 +32,16 @@ public partial class SevenZipTool : MediaTool
             return false;
         }
 
-        // First line as version
-        // E.g. Windows : "7-Zip (a) 19.00 (x64) : Copyright (c) 1999-2018 Igor Pavlov : 2019-02-21"
-        // E.g. Linux : "7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21"
+        // First line of stdout as version
+        // E.g. Windows : "7-Zip (a) 24.09 (x86) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29"
+        // E.g. Linux : "7-Zip 24.08 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-08-11"
         string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
         Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();
@@ -195,7 +196,7 @@ public partial class SevenZipTool : MediaTool
         return FileEx.RenameFolder(extractPath, toolPath);
     }
 
-    private const string InstalledVersionPattern = @"7-Zip\ ([^\s]+)\ (?<version>.*?)\ ";
+    private const string InstalledVersionPattern = @"7-Zip(?:\s+\(.*?\))?(?:\s+\[\d+\])?\s+(?<version>\d+\.\d+)";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 }

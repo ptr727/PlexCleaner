@@ -38,7 +38,7 @@ public partial class MkvMergeTool : MediaTool
             return false;
         }
 
-        // First line as version
+        // First line of stdout as version
         // E.g. Windows : "mkvmerge v51.0.0 ('I Wish') 64-bit"
         // E.g. Linux : "mkvmerge v51.0.0 ('I Wish') 64-bit"
         string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
@@ -48,6 +48,7 @@ public partial class MkvMergeTool : MediaTool
         Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool fileName
         mediaToolInfo.FileName = GetToolPath();
