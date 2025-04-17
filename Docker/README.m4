@@ -21,18 +21,11 @@ Images are updated weekly with the latest upstream updates.
 - `develop`: Alias for `ubuntu-develop`.
 - `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
   - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
-- `ubuntu-devel`: [Ubuntu Devel](http://archive.ubuntu.com/ubuntu/dists/devel/Release) `ubuntu:devel` pre-release base image.
-  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `alpine`: Based on [Alpine Latest](https://alpinelinux.org/releases/) `alpine:latest` latest stable release base image.
-  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
-- `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine:edge` pre-release base image.
   - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `debian`: Based on [Debian Stable](https://www.debian.org/releases/) `debian:stable-slim` latest stable release base image.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
-- `debian-testing`: [Debian Testing](https://www.debian.org/releases/) `debian:testing-slim` pre-release base image.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
 - `*-develop` : Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
-  - E.g. `ubuntu-develop`, `debian-testing-develop`, etc.
 
 ## Platform Support
 
@@ -50,32 +43,14 @@ Images are updated weekly with the latest upstream updates.
 include({{ubuntu.ver}})
 ```
 
-### `ptr727/plexcleaner:ubuntu-devel`
-
-```text
-include({{ubuntu-devel.ver}})
-```
-
 ### `ptr727/plexcleaner:debian`
 
 ```text
 include({{debian.ver}})
 ```
 
-### `ptr727/plexcleaner:debian-testing`
-
-```text
-include({{debian-testing.ver}})
-```
-
 ### `ptr727/plexcleaner:alpine`
 
 ```text
 include({{alpine.ver}})
-```
-
-### `ptr727/plexcleaner:alpine-edge`
-
-```text
-include({{alpine-edge.ver}})
 ```

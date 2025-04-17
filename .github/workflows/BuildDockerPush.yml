@@ -76,23 +76,11 @@ jobs:
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
 
-          - file: ./Docker/Debian.Testing.Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
-            cache-scope: debian-testing
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian-testing' || 'debian-testing-develop' }}
-
           - file: ./Docker/Alpine.Latest.Dockerfile
             platforms: linux/amd64,linux/arm64
             cache-scope: alpine
             tags: |
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-
-          - file: ./Docker/Alpine.Edge.Dockerfile
-            platforms: linux/amd64,linux/arm64
-            cache-scope: alpine-edge
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine-edge' || 'alpine-edge-develop' }}
 
           - file: ./Docker/Ubuntu.Rolling.Dockerfile
             platforms: linux/amd64,linux/arm64
@@ -101,12 +89,6 @@ jobs:
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
               docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
               docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
-
-          - file: ./Docker/Ubuntu.Devel.Dockerfile
-            platforms: linux/amd64,linux/arm64
-            cache-scope: ubuntu-devel
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu-devel' || 'ubuntu-devel-develop' }}
 
     steps:
 
