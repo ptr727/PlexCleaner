@@ -21,11 +21,7 @@ public static class Tools
     public static readonly HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
 
-    private static List<MediaTool> GetToolList()
-    {
-        // Add all tools to a list
-        List<MediaTool> toolList =
-        [
+    public static List<MediaTool> GetToolList() => [
             FfMpeg,
             FfProbe,
             MkvMerge,
@@ -36,23 +32,13 @@ public static class Tools
             SevenZip
         ];
 
-        return toolList;
-    }
-
-    private static List<MediaTool> GetToolFamilyList()
-    {
-        // Add all tools families to a list
-        List<MediaTool> toolList =
-        [
+    public static List<MediaTool> GetToolFamilyList() => [
             FfMpeg,
             MkvMerge,
             MediaInfo,
             HandBrake,
             SevenZip
         ];
-
-        return toolList;
-    }
 
     public static bool VerifyTools()
     {

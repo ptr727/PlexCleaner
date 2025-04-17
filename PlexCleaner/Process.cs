@@ -439,6 +439,7 @@ public static class Process
         {
             // Sort by file name to simplfy comparison with previous results
             resultsJson.Results.Sort((x, y) => string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal));
+            resultsJson.SetVersionInfo();
             Log.Logger.Information("Writing results file : {Program.Options.ResultFile}", Program.Options.ResultsFile);
             ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
         }
