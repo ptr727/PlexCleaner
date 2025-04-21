@@ -172,17 +172,19 @@ public class ProcessFile
 
     public bool RemuxNonMkvContainer(ref bool modified)
     {
-        // Optional
-        if (!Program.Config.ProcessOptions.ReMux)
-        {
-            return true;
-        }
-
         // Make sure that MKV named files are Matroska containers
         if (MkvMergeTool.IsMkvContainer(MkvMergeInfo))
         {
             // Nothing to do
             return true;
+        }
+
+        // Optional, but required for correct processing
+        if (!Program.Config.ProcessOptions.ReMux)
+        {
+            // Error, MKV files must be Matroska, enable ReMux option
+            Log.Logger.Error("MKV file is not in Matroska format, ReMux option not enabled : Container: {Container} : {FileName}", MkvMergeInfo.Container, FileInfo.Name);
+            return false;
         }
 
         // ReMux the file
@@ -312,6 +314,56 @@ public class ProcessFile
         if (!Convert.ReMuxToMkv(FileInfo.FullName,
                 selectMediaInfo.NotSelected.Count > 0 ? selectMediaInfo : null,
                 out string outputName))
+        {
+            // Error
+            return false;
+        }
+
+        // Test
+        if (Program.Options.TestNoModify)
+        {
+            // Continuing is not safe
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        return Refresh(outputName);
+    }
+
+    public bool RemuxRemoveExtraVideoTracks(ref bool modified)
+    {
+        if (MkvMergeInfo.Video.Count <= 1)
+        {
+            // Nothing to do
+            return true;
+        }
+
+        // Conditional
+        if (!Program.Config.ProcessOptions.ReMux)
+        {
+            // Error, multiple video tracks are not supported, enable ReMux option
+            Log.Logger.Error("Multiple video tracks not supported, ReMux option not enabled : Video: {TrackCount} : {FileName}", MkvMergeInfo.Video.Count, FileInfo.Name);
+            return false;
+        }
+
+        // Start with keeping all tracks
+        // Selected is Keep
+        // NotSelected is Remove
+        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
+
+        // Remove all but first video track
+        List<VideoInfo> mkvMergeRemoveList = [.. MkvMergeInfo.Video.Skip(1)];
+        mkvMergeRemoveList.ForEach(item => item.State = TrackInfo.StateType.Remove);
+
+        // To be removed tracks
+        selectMediaInfo.Move(mkvMergeRemoveList, false);
+
+        // ReMux the file
+        Log.Logger.Information("ReMux to remove extra video tracks : {FileName}", FileInfo.Name);
+        selectMediaInfo.WriteLine("Keep", "Remove");
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Error
             return false;
@@ -475,7 +527,16 @@ public class ProcessFile
         // Any cover art
         if (!MkvMergeInfo.HasCovertArt && !FfProbeInfo.HasCovertArt && !MediaInfoInfo.HasCovertArt)
         {
+            // Nothing to do
             return true;
+        }
+
+        // Conditional
+        if (!Program.Config.ProcessOptions.ReMux)
+        {
+            // Error, cover art interferes with processing and must be removed, enable ReMux option
+            Log.Logger.Error("Cover Art must be removed, ReMux option not enabled : {FileName}", FileInfo.Name);
+            return false;
         }
 
         // Cover art can be detected by MediaInfo or FfMpeg or MkvMerge
@@ -710,10 +771,8 @@ public class ProcessFile
         // Return false on error
         // Set videoInfo if interlaced
 
-        // Init
-        videoInfo = null;
-
         // Are any interlaced attributes set
+        videoInfo = null;
         videoInfo ??= FfProbeInfo.Video.Find(item => item.Interlaced);
         videoInfo ??= MediaInfoInfo.Video.Find(item => item.Interlaced);
         videoInfo ??= MkvMergeInfo.Video.Find(item => item.Interlaced);
@@ -746,78 +805,58 @@ public class ProcessFile
             return true;
         }
 
-        // Idet said yes metadata said no
+        // Idet said yes but metadata said no
         Log.Logger.Warning("Idet reported interlaced, metadata reported not interlaced : {FileName}", FileInfo.Name);
 
         // Use the first video track from FfProbe
         videoInfo = FfProbeInfo.Video.First();
         videoInfo.Interlaced = true;
+
         return true;
     }
 
     private bool FindClosedCaptionTracks(out VideoInfo videoInfo)
     {
-        // Init
+        // Return false on error
+        // Set videoInfo if contains closed captions
+
+        // Are any closed caption attributes set
         videoInfo = null;
-
-        // TODO: No longer works in current (Jan 2025+) FFmpeg versions
-        // https://github.com/ptr727/PlexCleaner/issues/497
-        return false;
-
-        /*
-        // Are any CC attributes set
         videoInfo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
         videoInfo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
         videoInfo ??= MkvMergeInfo.Video.Find(item => item.ClosedCaptions);
         if (videoInfo != null)
         {
-            // CC attribute set
+            // Attribute set
             return true;
         }
 
-        // Running ffprobe is not free, skip if already verified or CC's already removed
+        // Running lavfi is expensive, skip if already verified or closed captions already removed
         if (State.HasFlag(SidecarFile.StatesType.Verified) ||
             State.HasFlag(SidecarFile.StatesType.VerifyFailed) ||
             State.HasFlag(SidecarFile.StatesType.ClearedCaptions))
         {
-            // Assume not set
-            return false;
+            // Assume no closed captions
+            return true;
         }
 
-        // TODO: Detecting CC's using ffprobe JSON output is broken, run ffprobe in normal output mode
-        // https://github.com/ptr727/PlexCleaner/issues/94
-
-        // Get ffprobe text output
+        // Get packet info using ccsub filter
         Log.Logger.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.Name);
-        if (!Tools.FfProbe.GetFfProbeInfoText(FileInfo.FullName, out string ffProbe))
+        if (!Tools.FfProbe.GetSubCcPacketInfo(FileInfo.FullName, out List<FfMpegToolJsonSchema.Packet> packetList))
         {
             // Error
             return false;
         }
 
-        // Look for the "Closed Captions" in the video stream line
-        // Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1280x720, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
-        using StringReader lineReader = new(ffProbe);
-        while (lineReader.ReadLine() is { } line)
+        // Any packets means there are subtitles present in the video stream
+        if (packetList.Count > 0)
         {
-            // Line should start with "Stream #", and contain "Video" and contain "Closed Captions"
-            line = line.Trim();
-            if (line.StartsWith("Stream #", StringComparison.OrdinalIgnoreCase) &&
-                line.Contains("Video", StringComparison.OrdinalIgnoreCase) &&
-                line.Contains("Closed Captions", StringComparison.OrdinalIgnoreCase))
-            {
-                // TODO: Only supported for H264
-                // See
-                // Use the first video track from FfProbe
-                videoInfo = FfProbeInfo.Video.First();
-                videoInfo.ClosedCaptions = true;
-                return true;
-            }
+            // Use the first video track from FfProbe
+            videoInfo = FfProbeInfo.Video.First();
+            videoInfo.ClosedCaptions = true;
         }
 
-        // Not found
-        return false;
-        */
+        return true;
     }
 
     public bool DeInterlace(ref bool modified)
@@ -834,9 +873,7 @@ public class ProcessFile
             // Error
             return false;
         }
-
-        // Interlaced
-        if (videoInfo is not { Interlaced: true })
+        if (videoInfo == null)
         {
             // Not interlaced
             return true;
@@ -1013,8 +1050,19 @@ public class ProcessFile
         // Do we have any closed captions
         if (!FindClosedCaptionTracks(out VideoInfo videoInfo))
         {
-            // Done
+            // Error
+            return false;
+        }
+        if (videoInfo == null)
+        {
+            // No closed captions
             return true;
+        }
+
+        // Already removed?
+        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedCaptions))
+        {
+            Log.Logger.Warning("Closed Captions re-detected after removing : {FileName}", FileInfo.Name);
         }
 
         Log.Logger.Information("Removing Closed Captions from video stream : {FileName}", FileInfo.Name);
@@ -1027,13 +1075,33 @@ public class ProcessFile
             return true;
         }
 
+        // Get SEI NAL unit based on video format
+        int nalUnit = FfMpegTool.GetNalUnit(videoInfo.Format);
+        if (nalUnit == default)
+        {
+            // Error
+            // TODO: Could re-encode fist, but not guaranteed that codec is in the re-encode list
+            Log.Logger.Error("Unsupported video format for Closed Captions removal : Format: {Format} : {FileName}", videoInfo.Format, FileInfo.Name);
+            return false;
+        }
+
+        // https://trac.ffmpeg.org/ticket/5283
+        // TODO: HDR10+ information may be removed from H265 content
+        // Use MediaInfo tags
+        VideoInfo mediaInfoVideo = MediaInfoInfo.Video.First();
+        if (s_hdr10FormatList.Any(item => mediaInfoVideo.FormatHdr.Contains(item, StringComparison.OrdinalIgnoreCase)))
+        {
+            Log.Logger.Warning("Removing Closed Captions may remove HDR10+ information : {Format} : {FileName}", mediaInfoVideo.FormatHdr, FileInfo.Name);
+            // Warning only
+        }
+
         // Create a temp output filename
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
 
         // Remove Closed Captions
         _ = FileEx.DeleteFile(tempName);
         Log.Logger.Information("Removing Closed Captions using FfMpeg : {FileName}", FileInfo.Name);
-        if (!Tools.FfMpeg.RemoveClosedCaptions(FileInfo.FullName, tempName))
+        if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName))
         {
             // Error
             Log.Logger.Error("Removing Closed Captions using FfMpeg failed : {FileName}", FileInfo.Name);
@@ -1151,30 +1219,29 @@ public class ProcessFile
     {
         // Use MkvMergeInfo
 
-        // Need at least one video or audio track
-        if (MkvMergeInfo.Video.Count == 0 && MediaInfoInfo.Audio.Count == 0)
+        // TODO: Tooling supports one and only one video track
+        if (MkvMergeInfo.Video.Count == 0)
         {
-            Log.Logger.Error("File missing audio and video track : {FileName}", FileInfo.Name);
-            MkvMergeInfo.WriteLine("Missing");
+            Log.Logger.Error("File missing video track : {FileName}", FileInfo.Name);
+            MkvMergeInfo.WriteLine("Unsupported");
+
+            // Error
+            return false;
+        }
+        if (MkvMergeInfo.Video.Count > 1)
+        {
+            Log.Logger.Error("File has more than one video track : Video: {Video} : {FileName}", MkvMergeInfo.Video.Count, FileInfo.Name);
+            MkvMergeInfo.WriteLine("Unsupported");
 
             // Error
             return false;
         }
 
-        // Warn if audio or video tracks are missing
-        if (MkvMergeInfo.Video.Count == 0 || MediaInfoInfo.Audio.Count == 0)
+        // Warn if audio track is missing
+        if (MkvMergeInfo.Audio.Count == 0)
         {
-            Log.Logger.Warning("File missing audio or video tracks : Audio: {Audio}, Video: {Video} : {FileName}", MkvMergeInfo.Audio.Count, MkvMergeInfo.Video.Count, FileInfo.Name);
+            Log.Logger.Warning("File missing audio : {FileName}", FileInfo.Name);
             MkvMergeInfo.WriteLine("Missing");
-
-            // Warning only
-        }
-
-        // Warn if more than one video track
-        if (MkvMergeInfo.Video.Count > 1)
-        {
-            Log.Logger.Warning("File has more than one video track : Video: {Video} : {FileName}", MkvMergeInfo.Video.Count, FileInfo.Name);
-            MkvMergeInfo.WriteLine("Extra");
 
             // Warning only
         }
@@ -1498,10 +1565,10 @@ public class ProcessFile
         }
 
         // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
-        List<VideoInfo> nonHdr10Tracks = hdrTracks.FindAll(videoInfo => s_hdr10Format.All(hdr10Format => !videoInfo.FormatHdr.Contains(hdr10Format, StringComparison.OrdinalIgnoreCase)));
+        List<VideoInfo> nonHdr10Tracks = hdrTracks.FindAll(videoInfo => s_hdr10FormatList.All(hdr10Format => !videoInfo.FormatHdr.Contains(hdr10Format, StringComparison.OrdinalIgnoreCase)));
         nonHdr10Tracks.ForEach(videoItem =>
             {
-                Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, s_hdr10Format, FileInfo.Name);
+                Log.Logger.Warning("Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}", videoItem.FormatHdr, s_hdr10FormatList, FileInfo.Name);
 
                 // Warning only
             });
@@ -1756,12 +1823,14 @@ public class ProcessFile
             FfProbeInfo.Subtitle.Count != MkvMergeInfo.Subtitle.Count ||
             MkvMergeInfo.Subtitle.Count != MediaInfoInfo.Subtitle.Count)
         {
-            // Something is wrong; bad logic, bad media, bad tools?
+            // Something is very wrong; bad logic, bad media, bad tools?
             Log.Logger.Error("Tool track count discrepancy : {File}", FileInfo.Name);
             MediaInfoInfo.WriteLine("MediaInfo");
             MkvMergeInfo.WriteLine("MkvMerge");
             FfProbeInfo.WriteLine("FfProbe");
 
+            // Break in debug builds
+            Debug.Assert(false);
             return false;
         }
 
@@ -1785,10 +1854,9 @@ public class ProcessFile
 
     public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
     {
-        bitrateInfo = null;
-
         // Get packet info
-        if (!Tools.FfProbe.GetPacketInfo(FileInfo.FullName, out List<FfMpegToolJsonSchema.Packet> packetList))
+        bitrateInfo = null;
+        if (!Tools.FfProbe.GetBitratePacketInfo(FileInfo.FullName, out List<FfMpegToolJsonSchema.Packet> packetList))
         {
             return false;
         }
@@ -1872,7 +1940,7 @@ public class ProcessFile
             selectMediaInfo.Selected.Video.Count == 0)
         {
             // If the video is not H264, H265 or AV1 (by experimentation), then tag the video to also be reencoded
-            List<VideoInfo> reEncodeVideo = selectMediaInfo.NotSelected.Video.FindAll(item => !s_reEncodeVideoOnAudioReEncode.Contains(item.Format, StringComparer.OrdinalIgnoreCase));
+            List<VideoInfo> reEncodeVideo = selectMediaInfo.NotSelected.Video.FindAll(item => !s_reEncodeVideoOnAudioReEncodeList.Contains(item.Format, StringComparer.OrdinalIgnoreCase));
             if (reEncodeVideo.Count > 0)
             {
                 selectMediaInfo.Move(reEncodeVideo, true);
@@ -2042,6 +2110,8 @@ public class ProcessFile
 
     private SidecarFile _sidecarFile;
 
-    private static readonly string[] s_hdr10Format = ["SMPTE ST 2086", "SMPTE ST 2094"];
-    private static readonly string[] s_reEncodeVideoOnAudioReEncode = ["h264", "hevc", "av1"];
+    // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
+    private static readonly string[] s_hdr10FormatList = [MediaInfoTool.HDR10Format, MediaInfoTool.HDR10PlusFormat];
+    // Reencode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
+    private static readonly string[] s_reEncodeVideoOnAudioReEncodeList = [MediaInfoTool.H264Format, MediaInfoTool.H265Format, MediaInfoTool.AV1Format];
 }

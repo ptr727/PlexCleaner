@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -16,9 +17,8 @@ using Serilog;
 // https://trac.ffmpeg.org/wiki/Encode/H.265
 
 // FfMpeg logs to stderr, not stdout
-// "By default the program logs to stderr. If coloring is supported by the terminal, colors are used to mark errors and warnings."
-// Power events, e.g. sleep, can result in an invalid argument error
-// TODO: Figure out how to get ffmpeg more resilient to power events
+
+// TODO: Figure out how to get ffmpeg more resilient to continue when the system resumes from sleep
 // TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
 
 // Typical commandline:
@@ -151,16 +151,17 @@ public partial class FfMpegTool : MediaTool
         // https://trac.ffmpeg.org/ticket/6375
         // Too many packets buffered for output stream 0:1
         // Set max_muxing_queue_size to large value to work around issue
+        // TODO: Issue is reported fixed, to be verified
 
         // Use null muxer, no stats, report errors
         // https://trac.ffmpeg.org/wiki/Null
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(fileName, commandline, false);
+        CreateDefaultArgs(fileName, commandline, false, true);
 
-        // Null muxer and exit immediately on error (-xerror)
-        _ = commandline.Append("-hide_banner -nostats -loglevel error -xerror -f null -");
+        // Null output muxer and exit immediately on error
+        _ = commandline.Append("-loglevel error -xerror -f null -");
 
         // Execute and limit captured output to last 5 lines
         int exitCode = Command(commandline.ToString(), 5, out _, out error);
@@ -176,7 +177,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false);
+        CreateDefaultArgs(inputName, commandline, false, false);
 
         // Remux and copy all streams to MKV
         _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -codec copy -f matroska \"{outputName}\"");
@@ -236,14 +237,15 @@ public partial class FfMpegTool : MediaTool
         // NotSelected is Keep
         CreateTrackArgs(selectMediaInfo, out string inputMap, out string outputMap);
 
-        // TODO: Error with some PGS subtitles
         // https://trac.ffmpeg.org/ticket/2622
-        //  [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
-        //  Consider increasing the value for the 'analyzeduration' and 'probesize' options
+        // Error with some PGS subtitles
+        // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
+        // Consider increasing the value for the 'analyzeduration' and 'probesize' options
+        // TODO: Issue is reported fixed, to be verified
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, true);
+        CreateDefaultArgs(inputName, commandline, true, false);
 
         // Input and output map
         _ = commandline.Append(CultureInfo.InvariantCulture, $"{inputMap} {outputMap} ");
@@ -264,7 +266,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, true);
+        CreateDefaultArgs(inputName, commandline, true, false);
 
         // Process all tracks
         _ = commandline.Append("-map 0 ");
@@ -288,24 +290,18 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0;
     }
 
-    public bool RemoveClosedCaptions(string inputName, string outputName)
+    public bool RemoveNalUnits(string inputName, int nalUnit, string outputName)
     {
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false);
+        CreateDefaultArgs(inputName, commandline, false, false);
 
-        // TODO: The filter type is video format dependent
-        // H264: remove_types=6
-        // H265: remove_types=39
-        // MPEG2: remove_types=178
-        // https://trac.ffmpeg.org/ticket/5283
-
-        // Remove SEI NAL units, e.g. EIA-608, from video stream using -bsf:v "filter_units=remove_types=6"
+        // Remove SEI NAL units e.g. EIA-608 and CTA-708 content
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -c copy -bsf:v \"filter_units=remove_types=6\" -f matroska \"{outputName}\"");
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -c copy -bsf:v \"filter_units=remove_types={nalUnit}\" -f matroska \"{outputName}\"");
 
         // Execute
         int exitCode = Command(commandline.ToString());
@@ -319,7 +315,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false);
+        CreateDefaultArgs(inputName, commandline, false, false);
 
         // Remove all metadata using -map_metadata -1
         _ = commandline.Append(CultureInfo.InvariantCulture, $"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
@@ -354,7 +350,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false);
+        CreateDefaultArgs(inputName, commandline, false, true);
 
         // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
@@ -367,7 +363,7 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
         // Run idet filter
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-hide_banner -nostats -filter:v idet -an -f rawvideo {nullOut}");
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-filter:v idet -an -f rawvideo {nullOut}");
 
         // Execute and limit captured output to 5 lines to just get stats
         int exitCode = Command(commandline.ToString(), 5, out _, out text);
@@ -389,7 +385,7 @@ public partial class FfMpegTool : MediaTool
             // [Parsed_idet_0 @ 00000234e42d0440] Single frame detection: TFF:     0 BFF:     0 Progressive:  1745 Undetermined:   304
             // [Parsed_idet_0 @ 00000234e42d0440] Multi frame detection: TFF:     0 BFF:     0 Progressive:  2021 Undetermined:    28
 
-            // We need to match in LF not CRLF mode else $ does not work as expected
+            // Match in LF not CRLF mode else $ does not work as expected
             string textLf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
 
             // Match
@@ -418,7 +414,7 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline, bool encoding)
+    private static void CreateDefaultArgs(string inputName, StringBuilder commandline, bool encoding, bool silent)
     {
         // Add custom global options when encoding
         _ = encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global)
@@ -439,13 +435,13 @@ public partial class FfMpegTool : MediaTool
         _ = commandline.Append($"{OutputOptions} ");
 
         // Minimize output when running in parallel mode
-        if (Program.Options.Parallel)
+        if (Program.Options.Parallel || silent)
         {
-            _ = commandline.Append($"{ParallelOptions} ");
+            _ = commandline.Append($"{SilentOptions} ");
         }
     }
 
-    public const string ParallelOptions = "-hide_banner -nostats";
+    public const string SilentOptions = "-hide_banner -nostats";
     public const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
     public const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
     public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
@@ -461,4 +457,18 @@ public partial class FfMpegTool : MediaTool
     private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
     [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex IdetRegex();
+
+    public static int GetNalUnit(string format) =>
+        // Get SEI NAL unit based on video format
+        // H264 = 6, H265 = 9, MPEG2 = 178
+        // Return default(int) if not found
+        SEINalUnitList.FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase)).nalunit;
+
+    // Common format tags
+    public const string H264Format = "h264";
+    public const string H265Format = "h265";
+    public const string MPEG2Format = "mpeg2video";
+
+    // SEI NAL units for EIA-608 and CTA-708 content
+    public static readonly (string format, int nalunit)[] SEINalUnitList = [(H264Format, 6), (H265Format, 39), (MPEG2Format, 178)];
 }

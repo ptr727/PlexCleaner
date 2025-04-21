@@ -33,6 +33,17 @@
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
             "console": "internalConsole",
             "stopAtEntry": false
+        },
+        {
+            "name": "Sandbox",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Sandbox/bin/Debug/net9.0/Sandbox.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Sandbox/bin/Debug/net9.0",
+            "console": "internalConsole",
+            "stopAtEntry": false
         }
     ]
 }

@@ -23,7 +23,7 @@ public class FfProbeTool : FfMpegTool
 
     protected override string GetToolNameLinux() => "ffprobe";
 
-    public bool GetPacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
+    public bool GetPacketInfo(string commandline, out List<FfMpegToolJsonSchema.Packet> packetList)
     {
         // Init
         packetList = null;
@@ -37,27 +37,17 @@ public class FfProbeTool : FfMpegTool
         process.RedirectOutput = true;
         process.OutputStream = new StreamWriter(compressStream);
         process.RedirectError = true;
-
-        // Build commandline
-        StringBuilder commandline = new();
-        _ = commandline.Append("-loglevel error ");
-        if (Program.Options.TestSnippets)
-        {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
-        }
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-show_packets -show_entries packet=codec_type,stream_index,pts_time,dts_time,duration_time,size -print_format json \"{fileName}\"");
+        process.ConsoleError = !Program.Options.Parallel;
 
         // Get packet info
         string path = GetToolPath();
         Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
-        int exitCode = process.ExecuteEx(path, commandline.ToString());
-        if (exitCode != 0)
+        int exitCode = process.ExecuteEx(path, commandline);
+        process.OutputStream.Close();
+        if (exitCode != 0 || memoryStream.Length == 0)
         {
             return false;
         }
-
-        // Close and flush the output stream
-        process.OutputStream.Close();
 
         // Read JSON from stream
         _ = memoryStream.Seek(0, SeekOrigin.Begin);
@@ -70,6 +60,45 @@ public class FfProbeTool : FfMpegTool
 
         packetList = packetInfo.Packets;
         return true;
+    }
+
+    public bool GetSubCcPacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
+    {
+        // Build commandline
+        StringBuilder commandline = new();
+        _ = commandline.Append("-loglevel error ");
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
+        }
+        // Get packet info using ccsub filter
+        // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json");
+
+        return GetPacketInfo(commandline.ToString(), out packetList);
+    }
+
+    public static string EscapeMovieFileName(string fileName) =>
+        // Escape the file name, specifically : \ ' characters
+        // \ -> /
+        // : -> \\:
+        // ' -> \\\'
+        // , -> \\\,
+        // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
+        fileName.Replace(@"\", @"/").Replace(@":", @"\\:").Replace(@"'", @"\\\'").Replace(@",", @"\\\,");
+
+    public bool GetBitratePacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
+    {
+        // Build commandline
+        StringBuilder commandline = new();
+        _ = commandline.Append("-loglevel error ");
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
+        }
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-show_packets -print_format json \"{fileName}\"");
+
+        return GetPacketInfo(commandline.ToString(), out packetList);
     }
 
     public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)

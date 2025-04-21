@@ -183,4 +183,11 @@ public partial class MediaInfoTool : MediaTool
     private const string InstalledVersionPattern = @"MediaInfoLib\ -\ v(?<version>.*)";
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
+
+    // Common format tags
+    public const string HDR10Format = "SMPTE ST 2086";
+    public const string HDR10PlusFormat = "SMPTE ST 2094";
+    public const string H264Format = "h264";
+    public const string H265Format = "hevc";
+    public const string AV1Format = "av1";
 }

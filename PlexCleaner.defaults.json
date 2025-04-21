@@ -27,7 +27,7 @@
     ],
     // Keep all tracks flagged as original language
     "KeepOriginalLanguage": true,
-    // Remove EIA-608 Closed Captions embedded in video streams
+    // Remove EIA-608 and and CTA-708 Closed Captions embedded in video streams
     "RemoveClosedCaptions": true,
     // Set IETF language tags when not set
     "SetIetfLanguageTags": true,

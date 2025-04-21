@@ -32,11 +32,13 @@ Docker images are published on [Docker Hub][docker-link].
 - version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
-    - Switching Debian docker builds to install .NET using Msft install script as the Microsoft repository now only supports x64 builds.
-  - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
-  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfiles.
-  - Updated 7-Zip version number parsing to account for newly observed variants.
-  - Remove support for Closed Caption detection and removal from video streams. FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) support for detecting CC presence, investigating alternatives, see [issue #497](https://github.com/ptr727/PlexCleaner/issues/497) for details.
+    - Switching Debian docker builds to install .NET using Msft install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
+    - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
+  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
+  - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
+  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe. See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
+  - Re-added `parallel` and `threadcount` option to `monitor` command to be used during the processing phase, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
+  - Added conditional checks for `ProcessOptions:ReMux` to warn when disabled when media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
@@ -82,7 +84,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Use Cases
 
-The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).
+The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html), etc.
 
 Below are examples of issues that can be resolved using the primary `process` command:
 
@@ -98,8 +100,8 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Corrupt media streams cause playback issues, verify stream integrity, and try to automatically repair by re-encoding.
 - Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
 - Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10/HDR10+ displays.
-- EIA-608 Closed Captions embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
-- See the `process` [command](#process-command) for more details.
+- EIA-608 and CTA-708 closed captions (CC) embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
+- See the [`process` command](#process-command) for more details.
 
 ## Performance Considerations
 
@@ -279,7 +281,7 @@ services:
 
 ### macOS
 
-- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are untested.
+- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are not tested during CI.
 
 ## Configuration
 
@@ -366,7 +368,7 @@ Example hardware assisted video encoding options:
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
-## Language Matching
+## IETF Language Matching
 
 Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
 During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
@@ -382,6 +384,103 @@ Normalized tags will be expanded for matching.\
 E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
 
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
+
+## EIA-608 and CTA-708 Closed Captions
+
+[EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
+While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
+
+Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
+Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
+Note that I have no expertise in video engineering, and the following information was gathered by research and experimentation.
+
+FFprobe [never supported](https://github.com/ptr727/PlexCleaner/issues/94) closed caption detection when using `-print_format json`, and recently [removed reporting](https://github.com/ptr727/PlexCleaner/issues/497) of closed caption presence reporting completely.\
+E.g. (no longer supported)
+
+```text
+Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1920x1080, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
+```
+
+MediaInfo supports closed caption detection, but only for [some container types](https://github.com/MediaArea/MediaInfoLib/issues/2264), and [only scans](https://github.com/MediaArea/MediaInfoLib/issues/1881) the first 30s of the video looking for video frames containing closed captions.\
+MediaInfo does not support input piping (e.g. MKV -> FFmpeg -> TS -> MediaInfo), and requires the TS file to be created on disk and used as standard input.\
+In my testing I found that remuxing 30s of video from MKV to TS first did produce reliable results.\
+E.g. (trimmed output)
+
+```json
+{
+    "@type": "Text",
+    "ID": "256-CC1",
+    "Format": "EIA-608",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+{
+    "@type": "Text",
+    "ID": "256-1",
+    "Format": "EIA-708",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+```
+
+[CCExtractor](https://ccextractor.org/) supports closed caption detection using `-out=report`.\
+In my testing I found using MKV containers directly as input produced unreliable results, either no output generated or false negatives.\
+CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires the TS file to be created on disk and used as standard input.\
+Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.\
+E.g. (trimmed output)
+
+```text
+EIA-608: Yes
+CEA-708: Yes
+```
+
+FFmpeg [`readeia608` filter](https://ffmpeg.org/ffmpeg-filters.html#readeia608) can be used in FFprobe to report EIA-608 frame information.\
+E.g. `ffprobe -loglevel error -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format json`\
+In my testing I found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.\
+E.g. (trimmed output)
+
+```json
+{
+    "best_effort_timestamp_time": "0.000000",
+    "duration_time": "0.033367",
+    "tags": {
+        "lavfi.readeia608.1.cc": "0x8504",
+        "lavfi.readeia608.0.cc": "0x8080",
+        "lavfi.readeia608.0.line": "28",
+        "lavfi.readeia608.1.line": "29"
+    },
+}
+```
+
+FFmpeg [`subcc` filter](https://www.ffmpeg.org/ffmpeg-devices.html#Options-10) can be used to create subtitle streams from the closed captions in video streams.\
+Note that the `movie=filename[out0+subcc]` convention requires [escaping](https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena) the filename to not interfere with commandline parsing.\
+E.g. `ffprobe -loglevel error -select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -show_packets -print_format json`\
+E.g. `ffmpeg -abort_on empty_output -y -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -map 0:s -c:s srt \"{outputFileInfo.FullName}\"`\
+In my testing I found the results to be reliable.\
+E.g. (trimmed output)
+
+```json
+{
+    "codec_type": "subtitle",
+    "stream_index": 1,
+    "pts_time": "0.000000",
+    "dts_time": "0.000000",
+    "size": "60",
+    "pos": "5690",
+    "flags": "K__"
+},
+```
+
+```text
+9
+00:00:35,568 --> 00:00:38,004
+<font face="Monospace">{\an7}No going back now.</font>
+```
+
+The currently implemented method of closed caption detection is using FFprobe and the `subcc` filter to detect closed caption frames.
+
+FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits) can be used to [remove closed captions](https://stackoverflow.com/questions/48177694/removing-eia-608-closed-captions-from-h-264-without-reencode) from video streams.\
+E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v filter_units=remove_types=6 \"{outInfo.FullName}\"`\
+Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.\
+[Note](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [note](https://trac.ffmpeg.org/ticket/5283) that as of writing HDR10+ metadata may be lost when removing closed captions from H265 content.
 
 ## Usage
 
@@ -426,7 +525,7 @@ Commands:
 
 ### Global Options
 
-Global options apply to all commands.
+Global options apply to all commands:
 
 - `--logfile`:
   - Path to the log file.
@@ -475,7 +574,7 @@ The `process` command will process the media content using options as defined in
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
 - Deinterlace the video track if interlaced.
-- Remove EIA-608 Closed Captions from video streams.
+- Remove EIA-608 and CTA-708 closed captions from video streams.
 - Re-encode video if video format matches `ReEncodeVideo`.
 - Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
 - Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
@@ -513,9 +612,38 @@ Example:
   --mediafiles D:\Media
 ```
 
-### Re-Multiplex, Re-Encode, De-Interlace, Remove Subtitles Commands
+### Monitor Command
 
-These commands have no conditional logic and will process all specified media files.
+```text
+> ./PlexCleaner monitor --help
+Description:
+  Monitor for file changes and process changed media files
+
+Usage:
+  PlexCleaner monitor [options]
+
+Options:
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
+  --testsnippets                            Create short media file clips
+  --testnomodify                            Do not make any media file modifications
+  --parallel                                Enable parallel processing
+  --threadcount <threadcount>               Number of threads to use for parallel processing
+  --preprocess                              Pre-process all monitored folders
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to existing log file
+  --logwarning                              Log warnings and errors only
+  --debug                                   Wait for debugger to attach
+  -?, -h, --help                            Show help and usage information
+```
+
+The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
+
+- Most of the `process` command options apply.
+- Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
+- Enabling `--preprocess` will process all media on startup and then start monitoring for changes. Note that it is possible that files may be modified or added between iterating for process, and processing, and then monitoring.
+
+### Other Commands
 
 - `remux`:
   - Re-multiplex the media files using MkvMerge.
@@ -527,25 +655,12 @@ These commands have no conditional logic and will process all specified media fi
 - `removesubtitles`:
   - Remove all subtitle tracks from the media files.
   - Useful when subtitles are forced and contains offensive language or advertising.
-
-### Monitor
-
-- `monitor`:
-  - Watch the specified folders for file changes, and periodically run the `process` command on the changed folders.
-  - The `monitor` command honors the `process` options.
-  - Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
-
-### Create and Update Sidecar Files
-
 - `createsidecar`:
   - Create or overwrite and re-create sidecar files.
   - All existing state attributes will be deleted.
 - `updatesidecar`:
   - Update the existing sidecar with current media tool information.
   - Existing state attributes will be retained unless the media file had been modified.
-
-### Get Information
-
 - `gettagmap`:
   - Calculate and print media file attribute mappings between between different media tools.
 - `getmediainfo`:

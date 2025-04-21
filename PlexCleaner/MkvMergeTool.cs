@@ -170,6 +170,7 @@ public partial class MkvMergeTool : MediaTool
                     // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1648
                     // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
                     // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
+                    // TODO: Reported fixed, to be verified
 
                     SubtitleInfo info = new(track);
                     mediaInfo.Subtitle.Add(info);
@@ -279,7 +280,6 @@ public partial class MkvMergeTool : MediaTool
         // Source two track options
         CreateTrackArgs(keepTwo, commandline);
         // Source two
-        // TODO: Why did I use --no-chapters
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceTwo}\"");
         // Remux tracks
         int exitCode = Command(commandline.ToString());

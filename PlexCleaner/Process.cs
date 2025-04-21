@@ -30,6 +30,7 @@ public static class Process
                 Program.Config.ProcessOptions.IsFileIgnoreMatch(fileName))
             {
                 Log.Logger.Warning("Skipping ignored file : {FileName}", fileName);
+                // Ok
                 result = true;
                 break;
             }
@@ -37,7 +38,8 @@ public static class Process
             // Does the file exist and have access permissions
             if (!File.Exists(fileName))
             {
-                Log.Logger.Warning("Skipping inaccessible file : {FileName}", fileName);
+                Log.Logger.Error("Skipping inaccessible file : {FileName}", fileName);
+                // Error
                 result = false;
                 break;
             }
@@ -50,6 +52,7 @@ public static class Process
             if (!processFile.IsWriteable())
             {
                 Log.Logger.Error("Skipping read-only file : {FileName}", fileName);
+                // Error
                 result = false;
                 break;
             }
@@ -57,6 +60,7 @@ public static class Process
             // Delete the sidecar file if matching MKV file not found
             if (!processFile.DeleteMismatchedSidecarFile(ref modified))
             {
+                // Error
                 result = false;
                 break;
             }
@@ -64,39 +68,48 @@ public static class Process
             // Skip if this is a sidecar file
             if (SidecarFile.IsSidecarFile(processFile.FileInfo))
             {
+                // Error
                 result = true;
                 break;
             }
 
             // ReMux non-MKV containers matched by extension
+            // Conditional on ReMux option
             if (!processFile.RemuxByExtensions(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
 
             // Delete or skip non-MKV files
+            // Conditional on DeleteUnwantedExtensions option
             if (!processFile.DeleteNonMkvFile(ref modified))
             {
+                // Ok
                 result = true;
                 break;
             }
 
             // All files past this point are MKV files
+            Debug.Assert(MkvMergeTool.IsMkvFile(processFile.FileInfo));
 
             // If a sidecar file exists for this MKV file it must be writable
             if (processFile.IsSidecarAvailable() &&
                 !processFile.IsSidecarWriteable())
             {
                 Log.Logger.Error("Skipping media file due to read-only sidecar file : {FileName}", fileName);
+                // Error
                 result = false;
                 break;
             }
 
             // Make sure the file extension is lowercase for case sensitive filesystems
+            // Always changes extension to lowercase
             if (!processFile.MakeExtensionLowercase(ref modified))
             {
+                // Error
                 result = false;
                 break;
             }
@@ -105,6 +118,7 @@ public static class Process
             if (!processFile.GetMediaInfo() ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -113,22 +127,47 @@ public static class Process
             if (!processFile.SetReVerifyState() ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
 
             // ReMux non-MKV containers using MKV file extensions
+            // Conditional on ReMux option, fails if not Matroska and ReMux is not enabled
             if (!processFile.RemuxNonMkvContainer(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
+                result = false;
+                break;
+            }
+
+            // ReMux to remove extra video tracks
+            // Conditional on ReMux option, fails if more than one video track and ReMux not enabled
+            if (!processFile.RemuxRemoveExtraVideoTracks(ref modified) ||
+                Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+
+            // Verify track counts are supported
+            // No more than one video track, audio or video track
+            if (!processFile.VerifyTrackCounts() ||
+                Program.IsCancelled())
+            {
+                // Error
                 result = false;
                 break;
             }
 
             // Remove all cover art attachments or video tracks that interfere with processing logic
+            // Conditional on ReMux option, fails if cover art is present and ReMux not enabled
             if (!processFile.RemoveCoverArt(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -138,6 +177,7 @@ public static class Process
             if (!processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -145,6 +185,7 @@ public static class Process
             // Test that the file extension and container type is MKV and all media info should be valid
             if (!processFile.VerifyMediaInfo())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -154,15 +195,17 @@ public static class Process
             if (!processFile.RepairMetadataErrors(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
 
-            // Remove EIA-608 Closed Captions from the video stream
+            // Remove EIA-EIA-608 and CTA-708 Closed Captions from the video stream
             // Conditional on RemoveClosedCaptions option
             if (!processFile.RemoveClosedCaptions(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -172,6 +215,7 @@ public static class Process
             if (!processFile.DeInterlace(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -181,6 +225,7 @@ public static class Process
             if (!processFile.SetUnknownLanguageTracks(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -190,6 +235,7 @@ public static class Process
             if (!processFile.RemoveUnwantedLanguageTracks(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -202,6 +248,7 @@ public static class Process
             if (!processFile.RemoveDuplicateTracks(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -211,6 +258,7 @@ public static class Process
             if (!processFile.ReEncode(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -220,16 +268,18 @@ public static class Process
             if (!processFile.VerifyAndRepair(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
 
-            // FfMpeg or HandBrake could undo the previous cleanup, repeat
+            // FfMpeg or HandBrake could undo the previous cleanup, repeat cleanup
             if (!processFile.RepairMetadataErrors(ref modified) ||
                 !processFile.SetUnknownLanguageTracks(ref modified) ||
                 !processFile.RemoveTags(ref modified) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -238,6 +288,7 @@ public static class Process
             if (!processFile.SetLastWriteTimeUtc(lastWriteTime) ||
                 Program.IsCancelled())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -245,6 +296,7 @@ public static class Process
             // Re-verify the tool info is correctly recorded
             if (!processFile.VerifyMediaInfo())
             {
+                // Error
                 result = false;
                 break;
             }
@@ -342,7 +394,7 @@ public static class Process
 
         // Process all the files
         ProcessResultJsonSchema resultsJson = new();
-        object lockObject = new();
+        Lock resultLock = new();
         bool ret = ProcessFilesDriver(fileList, "Process", fileName =>
             {
                 // Process the file
@@ -355,7 +407,7 @@ public static class Process
                 }
 
                 // Save results
-                lock (lockObject)
+                lock (resultLock)
                 {
                     resultsJson.Results.Add(new()
                     {
@@ -376,9 +428,9 @@ public static class Process
         errorResults.ForEach(item => Log.Logger.Information("Error: {State} : {FileName}", item.State, item.NewFileName));
 
         // Modified
-        List<ProcessResultJsonSchema.ProcessResult> modifedResults = [.. resultsJson.Results.Where(item => item.Modified)];
-        Log.Logger.Information("Modified files : {Count}", modifedResults.Count);
-        modifedResults.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.State, item.NewFileName));
+        List<ProcessResultJsonSchema.ProcessResult> modifiedResults = [.. resultsJson.Results.Where(item => item.Modified)];
+        Log.Logger.Information("Modified files : {Count}", modifiedResults.Count);
+        modifiedResults.ForEach(item => Log.Logger.Information("Modified: {State} : {FileName}", item.State, item.NewFileName));
 
         // Verify failed
         List<ProcessResultJsonSchema.ProcessResult> failedResults = [.. resultsJson.Results.Where(item => item.State.HasFlag(SidecarFile.StatesType.VerifyFailed))];
@@ -410,7 +462,7 @@ public static class Process
         // Write the process results to file
         if (Program.Options.ResultsFile != null)
         {
-            // Sort by file name to simplfy comparison with previous results
+            // Sort by file name to simplify comparison with previous results
             resultsJson.Results.Sort((x, y) => string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal));
             resultsJson.SetVersionInfo();
             Log.Logger.Information("Writing results file : {Program.Options.ResultFile}", Program.Options.ResultsFile);
@@ -481,8 +533,8 @@ public static class Process
         TagMapSet ffTags = new();
         TagMapSet mkTags = new();
         TagMapSet miTags = new();
-        object lockObject = new();
-        if (!ProcessFilesDriver(fileList, "Create Tag Map", fileName =>
+        Lock tagLock = new();
+        bool ret = ProcessFilesDriver(fileList, "Create Tag Map", fileName =>
             {
                 // Handle only MKV files
                 if (!MkvMergeTool.IsMkvFile(fileName))
@@ -498,7 +550,7 @@ public static class Process
                 }
 
                 // Add all the tags
-                lock (lockObject)
+                lock (tagLock)
                 {
                     ffTags.Add(processFile.FfProbeInfo, processFile.MkvMergeInfo, processFile.MediaInfoInfo);
                     mkTags.Add(processFile.MkvMergeInfo, processFile.FfProbeInfo, processFile.MediaInfoInfo);
@@ -506,7 +558,8 @@ public static class Process
                 }
 
                 return true;
-            }))
+            });
+        if (!ret)
         {
             return false;
         }

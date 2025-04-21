@@ -77,7 +77,7 @@ public class VideoInfo : TrackInfo
         };
 
         // Test for interlaced
-        // TODO: Does not work for HEVC
+        // TODO: Does not work for H265
         // https://sourceforge.net/p/mediainfo/bugs/771/
         // https://github.com/MediaArea/MediaInfoLib/issues/1092
         // Test for Progressive, Interlaced, MBAFF, or empty

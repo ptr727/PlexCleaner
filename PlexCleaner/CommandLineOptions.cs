@@ -169,18 +169,10 @@ public class CommandLineOptions
         command.AddOption(CreateTestNoModifyOption());
 
         // Parallel processing
-        command.AddOption(
-            new Option<bool>("--parallel")
-            {
-                Description = "Enable parallel processing"
-            });
+        command.AddOption(CreateParallelOption());
 
         // Parallel processing thread count
-        command.AddOption(
-            new Option<int>("--threadcount")
-            {
-                Description = "Number of threads to use for parallel processing"
-            });
+        command.AddOption(CreateThreadCountOption());
 
         //  Re-verify
         command.AddOption(
@@ -220,7 +212,13 @@ public class CommandLineOptions
         //  Do not make any modifications
         command.AddOption(CreateTestNoModifyOption());
 
-        //  Process
+        // Parallel processing
+        command.AddOption(CreateParallelOption());
+
+        // Parallel processing thread count
+        command.AddOption(CreateThreadCountOption());
+
+        //  Pre-process
         command.AddOption(
             new Option<bool>("--preprocess")
             {
@@ -517,5 +515,19 @@ public class CommandLineOptions
         new("--testnomodify")
         {
             Description = "Do not make any media file modifications"
+        };
+
+    private static Option<bool> CreateParallelOption() =>
+        // Parallel processing
+        new("--parallel")
+        {
+            Description = "Enable parallel processing"
+        };
+
+    private static Option<int> CreateThreadCountOption() =>
+        // Parallel processing thread count
+        new("--threadcount")
+        {
+            Description = "Number of threads to use for parallel processing"
         };
 }

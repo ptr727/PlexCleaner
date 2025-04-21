@@ -77,7 +77,6 @@ public class MediaInfo(MediaTool.ToolType parser)
     {
         mkvMerge = null;
         mediaInfo = null;
-
         return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffProbe) &&
                GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvMerge) &&
                GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);

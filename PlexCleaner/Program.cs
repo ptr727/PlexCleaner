@@ -606,7 +606,7 @@ public class Program
         try
         {
             // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
-            object lockObject = new();
+            Lock listLock = new();
 
             // Process each input in parallel
             mediaFiles.AsParallel()
@@ -622,7 +622,7 @@ public class Program
                     if (fileAttributes.HasFlag(FileAttributes.Directory))
                     {
                         // Add this directory
-                        lock (lockObject)
+                        lock (listLock)
                         {
                             _directoryList.Add(fileOrFolder);
                         }
@@ -638,7 +638,7 @@ public class Program
                         }
 
                         // Add file list
-                        lock (lockObject)
+                        lock (listLock)
                         {
                             fileInfoList.ForEach(item => _fileList.Add(item.FullName));
                         }
@@ -646,7 +646,7 @@ public class Program
                     else
                     {
                         // Add this file
-                        lock (lockObject)
+                        lock (listLock)
                         {
                             _fileList.Add(fileOrFolder);
                         }
