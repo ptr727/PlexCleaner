@@ -3,9 +3,9 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class ConfigFileTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
+public class ConfigFileTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerTests _fixture = fixture;
+    private readonly PlexCleanerFixture _fixture = fixture;
 
     [Theory]
     [InlineData("PlexCleaner.v1.json")]
@@ -15,7 +15,7 @@ public class ConfigFileTests(PlexCleanerTests fixture) : IClassFixture<PlexClean
     public void Open_Old_Schemas_Opens(string fileName)
     {
         // Deserialize
-        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(PlexCleanerTests.GetSampleFilePath(fileName));
+        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(_fixture.GetSampleFilePath(fileName));
         Assert.NotNull(configFileJsonSchema);
 
         // Test for expected config values

@@ -3,9 +3,9 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class FileNameEscapingTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
+public class FileNameEscapingTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerTests _fixture = fixture;
+    private readonly PlexCleanerFixture _fixture = fixture;
 
     [Theory]
     [InlineData(@"\", @"/")]

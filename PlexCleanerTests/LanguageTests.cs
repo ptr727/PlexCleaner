@@ -3,9 +3,9 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class LanguageTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
+public class LanguageTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerTests _fixture = fixture;
+    private readonly PlexCleanerFixture _fixture = fixture;
 
     [Theory]
     [InlineData("afr", "af")]

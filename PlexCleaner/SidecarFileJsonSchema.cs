@@ -1,5 +1,4 @@
-﻿// Current schema version is v4
-global using SidecarFileJsonSchema = PlexCleaner.SidecarFileJsonSchema4;
+﻿// See ConfigFileJsonSchema.cs for schema update steps
 
 using System;
 using System.Text.Json;

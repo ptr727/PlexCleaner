@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
-using InsaneGenius.Utilities;
+using PlexCleaner;
 using Serilog;
-using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -11,7 +10,8 @@ public class Program
 {
     private static int Main()
     {
-        CreateLogger();
+        // Default test initialization
+        StaticTestInit();
 
         int ret = ClosedCaptions.Test();
 
@@ -20,9 +20,15 @@ public class Program
         return ret;
     }
 
-    private static void CreateLogger()
+    public static void StaticTestInit()
     {
-        SelfLog.Enable(Console.Error);
+        // Create default commandline options and config
+        PlexCleaner.Program.Options = new CommandLineOptions();
+        PlexCleaner.Program.Config = new ConfigFileJsonSchema();
+        PlexCleaner.Program.Config.SetDefaults();
+
+        // Create default logger
+        Serilog.Debugging.SelfLog.Enable(Console.Error);
         Log.Logger = new LoggerConfiguration()
             .Enrich.WithThreadId()
             .WriteTo.Console(
@@ -31,6 +37,6 @@ public class Program
                 outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture)
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
     }
 }

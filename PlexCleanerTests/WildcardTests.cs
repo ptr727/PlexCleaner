@@ -3,9 +3,9 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class WildcardTests(PlexCleanerTests fixture) : IClassFixture<PlexCleanerTests>
+public class WildcardTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerTests _fixture = fixture;
+    private readonly PlexCleanerFixture _fixture = fixture;
 
     [Theory]
     [InlineData("*.fuse_hidden*", "Foo.fuse_hidden1234", true)]

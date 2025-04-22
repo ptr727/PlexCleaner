@@ -1,14 +1,11 @@
-﻿// Current schema version is v4
-global using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
-
-// Schema update steps (also applies to SidecarFileJsonSchema):
+﻿// Schema update steps (also applies to SidecarFileJsonSchema):
 // Derive new class from previous version
 // Keep all utility functions e.g. Upgrade() in the latest version
 // Add copy constructors to the new class to handle upgrading from the previous version
 // Mark changed or removed attributes as [Obsolete] and [Json.Schema.Generation.JsonExclude] and remove [JsonRequired]
 // Add new attributes to the new class and mark as [JsonRequired]
 // Update the Upgrade() method to handle upgrading from the previous version
-// Update global using statements to the latest version
+// Update GlobalUsing.cs global using statements to the latest version
 
 using System;
 using System.IO;
