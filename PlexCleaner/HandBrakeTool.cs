@@ -77,7 +77,11 @@ public partial class HandBrakeTool : MediaTool
             mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
 
             // Get the GitHub download Uri
-            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(
+                repo,
+                mediaToolInfo.Version,
+                mediaToolInfo.FileName
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -95,7 +99,12 @@ public partial class HandBrakeTool : MediaTool
         return false;
     }
 
-    public bool ConvertToMkv(string inputName, string outputName, bool includeSubtitles, bool deInterlace)
+    public bool ConvertToMkv(
+        string inputName,
+        string outputName,
+        bool includeSubtitles,
+        bool deInterlace
+    )
     {
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
@@ -111,7 +120,10 @@ public partial class HandBrakeTool : MediaTool
 
         // Video encoder options
         // E.g. --encoder x264 --quality 20 --encoder-preset medium
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} "
+        );
 
         // Deinterlace using decomb filter
         if (deInterlace)
@@ -121,7 +133,10 @@ public partial class HandBrakeTool : MediaTool
 
         // All audio with encoder
         // E.g. --all-audio --aencoder copy --audio-fallback ac3
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"--all-audio --aencoder {Program.Config.ConvertOptions.HandBrakeOptions.Audio} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"--all-audio --aencoder {Program.Config.ConvertOptions.HandBrakeOptions.Audio} "
+        );
 
         // All or no subtitles
         _ = commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
@@ -136,14 +151,18 @@ public partial class HandBrakeTool : MediaTool
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--input \"{inputName}\" ");
         if (Program.Options.TestSnippets)
         {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} ");
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} "
+            );
         }
     }
+
     public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
     public const string DefaultAudioOptions = "copy --audio-fallback ac3";
 
-
     private const string VersionPattern = @"HandBrake\ (?<version>.*)";
+
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 }

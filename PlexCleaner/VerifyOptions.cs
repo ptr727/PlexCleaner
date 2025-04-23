@@ -48,7 +48,9 @@ public record VerifyOptions2 : VerifyOptions1
     protected new const int Version = 2;
 
     public VerifyOptions2() { }
-    public VerifyOptions2(VerifyOptions1 verifyOptions1) : base(verifyOptions1)
+
+    public VerifyOptions2(VerifyOptions1 verifyOptions1)
+        : base(verifyOptions1)
     {
         // No upgrade of schema required
         // Upgrade(VerifyOptions1.Version);

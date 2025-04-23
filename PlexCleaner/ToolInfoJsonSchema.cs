@@ -21,15 +21,19 @@ public class ToolInfoJsonSchema
 
     public List<MediaToolInfo> Tools { get; } = [];
 
-    public MediaToolInfo GetToolInfo(MediaTool mediaTool) => Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
+    public MediaToolInfo GetToolInfo(MediaTool mediaTool) =>
+        Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
 
     public static ToolInfoJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
-    public static void ToFile(string path, ToolInfoJsonSchema json) => File.WriteAllText(path, ToJson(json));
+    public static void ToFile(string path, ToolInfoJsonSchema json) =>
+        File.WriteAllText(path, ToJson(json));
 
-    private static string ToJson(ToolInfoJsonSchema tools) => JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
+    private static string ToJson(ToolInfoJsonSchema tools) =>
+        JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
 
-    public static ToolInfoJsonSchema FromJson(string json) => JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
+    public static ToolInfoJsonSchema FromJson(string json) =>
+        JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {
@@ -42,7 +46,10 @@ public class ToolInfoJsonSchema
         // Unspecified / v0 to v2 was the first set version
         // Tools changed from List<ToolInfo> to List<MediaToolInfo>
         // Not worth the trouble to migrate, just get new tools
-        Log.Logger.Error("Schema version {SchemaVersion} not supported, run the 'checkfornewtools' command", json.SchemaVersion);
+        Log.Error(
+            "Schema version {SchemaVersion} not supported, run the 'checkfornewtools' command",
+            json.SchemaVersion
+        );
 
         return false;
     }

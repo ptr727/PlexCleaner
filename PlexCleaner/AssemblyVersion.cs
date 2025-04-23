@@ -24,7 +24,9 @@ public static class AssemblyVersion
 
     public static string GetInformationalVersion() =>
         // E.g. 1.2.3+abc123.abc123
-        GetAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        GetAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
 
     public static string GetFileVersion() =>
         // E.g. 1.2.3.4
@@ -44,10 +46,21 @@ public static class AssemblyVersion
     {
         // https://learn.microsoft.com/en-us/dotnet/core/rid-catalog
         string rid = RuntimeInformation.RuntimeIdentifier;
-        if (rid is
-            "win-x64" or "win-x86" or "win-arm64" or
-            "linux-x64" or "linux-musl-x64" or "linux-musl-arm64" or "linux-arm" or "linux-arm64" or "linux-bionic-arm64" or "linux-loongarch64" or
-            "osx-x64" or "osx-arm64")
+        if (
+            rid
+            is "win-x64"
+                or "win-x86"
+                or "win-arm64"
+                or "linux-x64"
+                or "linux-musl-x64"
+                or "linux-musl-arm64"
+                or "linux-arm"
+                or "linux-arm64"
+                or "linux-bionic-arm64"
+                or "linux-loongarch64"
+                or "osx-x64"
+                or "osx-arm64"
+        )
         {
             // Already normalized
             return rid;
@@ -63,7 +76,7 @@ public static class AssemblyVersion
         // Determine architecture
         if (!rid.Contains('-'))
         {
-            Log.Logger.Error("Unable to determine RID architecture : \"{RID}\"", rid);
+            Log.Error("Unable to determine RID architecture : \"{RID}\"", rid);
             return rid;
         }
         string architecture = rid[(rid.LastIndexOf('-') + 1)..];
@@ -84,7 +97,7 @@ public static class AssemblyVersion
             return $"osx-{architecture}";
         }
 
-        Log.Logger.Error("Unable to determine RID OS variant : \"{RID}\"", rid);
+        Log.Error("Unable to determine RID OS variant : \"{RID}\"", rid);
         return rid;
     }
 

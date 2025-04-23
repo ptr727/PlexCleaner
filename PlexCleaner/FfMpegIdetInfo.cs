@@ -11,6 +11,7 @@ public class FfMpegIdetInfo
         public int Bottom { get; set; }
         public int Total => Neither + Top + Bottom;
     }
+
     public Repeated RepeatedFields { get; } = new();
 
     public class Frames
@@ -22,6 +23,7 @@ public class FfMpegIdetInfo
         public int Interlaced => Tff + Bff;
         public int Total => Tff + Bff + Progressive + Undetermined;
     }
+
     public Frames SingleFrame { get; } = new();
     public Frames MultiFrame { get; } = new();
 
@@ -31,7 +33,8 @@ public class FfMpegIdetInfo
     public int Total => SingleFrame.Total + MultiFrame.Total;
 
     // % of interlaced frames vs. progressive frames
-    public double InterlacedPercentage => System.Convert.ToDouble(Interlaced) / System.Convert.ToDouble(Interlaced + Progressive);
+    public double InterlacedPercentage =>
+        System.Convert.ToDouble(Interlaced) / System.Convert.ToDouble(Interlaced + Progressive);
 
     public bool IsInterlaced()
     {
@@ -48,5 +51,9 @@ public class FfMpegIdetInfo
         return Interlaced != 0 && InterlacedPercentage > Program.InterlacedThreshold;
     }
 
-    public static bool GetIdetInfo(FileInfo mediaFile, out FfMpegIdetInfo idetInfo, out string error) => Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo, out error);
+    public static bool GetIdetInfo(
+        FileInfo mediaFile,
+        out FfMpegIdetInfo idetInfo,
+        out string error
+    ) => Tools.FfMpeg.GetIdetInfo(mediaFile.FullName, out idetInfo, out error);
 }

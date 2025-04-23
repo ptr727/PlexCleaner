@@ -36,7 +36,8 @@ public class MkvToolJsonSchema
         [JsonPropertyName("chapters")]
         public List<Chapter> Chapters { get; } = [];
 
-        public static MkvMerge FromJson(string json) => JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
+        public static MkvMerge FromJson(string json) =>
+            JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
 
     public class Container
@@ -52,6 +53,7 @@ public class MkvToolJsonSchema
     {
         [JsonPropertyName("duration")]
         public long Duration { get; set; }
+
         [JsonPropertyName("title")]
         public string Title { get; set; } = "";
     }
@@ -117,6 +119,7 @@ public class MkvToolJsonSchema
 
         [JsonPropertyName("flag_original")]
         public bool Original { get; set; }
+
         [JsonPropertyName("flag_commentary")]
         public bool Commentary { get; set; }
 

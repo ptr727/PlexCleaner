@@ -18,28 +18,32 @@ public class TagMapSet
         Debug.Assert(DoTracksMatch(prime, sec1, sec2));
 
         // Video
-        Add(prime.Video, prime.Parser,
-            sec1.Video, sec1.Parser,
-            sec2.Video, sec2.Parser,
-            Video);
+        Add(prime.Video, prime.Parser, sec1.Video, sec1.Parser, sec2.Video, sec2.Parser, Video);
 
         // Audio
-        Add(prime.Audio, prime.Parser,
-            sec1.Audio, sec1.Parser,
-            sec2.Audio, sec2.Parser,
-            Audio);
+        Add(prime.Audio, prime.Parser, sec1.Audio, sec1.Parser, sec2.Audio, sec2.Parser, Audio);
 
         // Subtitle
-        Add(prime.Subtitle, prime.Parser,
-            sec1.Subtitle, sec1.Parser,
-            sec2.Subtitle, sec2.Parser,
-            Subtitle);
+        Add(
+            prime.Subtitle,
+            prime.Parser,
+            sec1.Subtitle,
+            sec1.Parser,
+            sec2.Subtitle,
+            sec2.Parser,
+            Subtitle
+        );
     }
 
-    private static void Add(IReadOnlyCollection<TrackInfo> prime, MediaTool.ToolType primeType,
-        IReadOnlyCollection<TrackInfo> sec1, MediaTool.ToolType sec1Type,
-        IReadOnlyCollection<TrackInfo> sec2, MediaTool.ToolType sec2Type,
-        Dictionary<string, TagMap> dictionary)
+    private static void Add(
+        IReadOnlyCollection<TrackInfo> prime,
+        MediaTool.ToolType primeType,
+        IReadOnlyCollection<TrackInfo> sec1,
+        MediaTool.ToolType sec1Type,
+        IReadOnlyCollection<TrackInfo> sec2,
+        MediaTool.ToolType sec2Type,
+        Dictionary<string, TagMap> dictionary
+    )
     {
         for (int i = 0; i < prime.Count; i++)
         {
@@ -61,7 +65,7 @@ public class TagMapSet
                     SecondaryTool = sec1Type,
                     Tertiary = sec2.ElementAt(i).Format,
                     TertiaryTool = sec2Type,
-                    Count = 1
+                    Count = 1,
                 };
                 dictionary.Add(key, tagmap);
             }
@@ -76,9 +80,14 @@ public class TagMapSet
         }
 
         // Verify the track counts match
-        if (mediaInfo.Video.Count != mkvMerge.Video.Count || mediaInfo.Video.Count != ffProbe.Video.Count ||
-            mediaInfo.Audio.Count != mkvMerge.Audio.Count || mediaInfo.Audio.Count != ffProbe.Audio.Count ||
-            mediaInfo.Subtitle.Count != mkvMerge.Subtitle.Count || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count)
+        if (
+            mediaInfo.Video.Count != mkvMerge.Video.Count
+            || mediaInfo.Video.Count != ffProbe.Video.Count
+            || mediaInfo.Audio.Count != mkvMerge.Audio.Count
+            || mediaInfo.Audio.Count != ffProbe.Audio.Count
+            || mediaInfo.Subtitle.Count != mkvMerge.Subtitle.Count
+            || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count
+        )
         {
             return false;
         }
@@ -92,38 +101,44 @@ public class TagMapSet
     {
         foreach ((_, TagMap value) in Video)
         {
-            Log.Logger.Information("Video, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
+            Log.Information(
+                "Video, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
                 value.PrimaryTool,
                 value.Primary,
                 value.SecondaryTool,
                 value.Secondary,
                 value.TertiaryTool,
                 value.Tertiary,
-                value.Count);
+                value.Count
+            );
         }
 
         foreach ((_, TagMap value) in Audio)
         {
-            Log.Logger.Information("Audio, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
+            Log.Information(
+                "Audio, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
                 value.PrimaryTool,
                 value.Primary,
                 value.SecondaryTool,
                 value.Secondary,
                 value.TertiaryTool,
                 value.Tertiary,
-                value.Count);
+                value.Count
+            );
         }
 
         foreach ((_, TagMap value) in Subtitle)
         {
-            Log.Logger.Information("Subtitle, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
+            Log.Information(
+                "Subtitle, {PrimaryTool}, {Primary}, {SecondaryTool}, {Secondary}, {TertiaryTool}, {Tertiary}, {Count}",
                 value.PrimaryTool,
                 value.Primary,
                 value.SecondaryTool,
                 value.Secondary,
                 value.TertiaryTool,
                 value.Tertiary,
-                value.Count);
+                value.Count
+            );
         }
     }
 }

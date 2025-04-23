@@ -33,8 +33,16 @@ public class MkvPropEditTool : MkvMergeTool
 
         // TODO: Should we be skipping und?
         // Only set tracks that are set and not undefined
-        System.Collections.Generic.List<TrackInfo> trackList = [.. mediaInfo.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny))];
-        trackList.ForEach(item => commandline.Append(CultureInfo.InvariantCulture, $"--edit track:@{item.Number} --set language={item.LanguageAny} "));
+        System.Collections.Generic.List<TrackInfo> trackList =
+        [
+            .. mediaInfo.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny)),
+        ];
+        trackList.ForEach(item =>
+            commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"--edit track:@{item.Number} --set language={item.LanguageAny} "
+            )
+        );
 
         // Set language on all unknown tracks
         int exitCode = Command(commandline.ToString());
@@ -58,14 +66,25 @@ public class MkvPropEditTool : MkvMergeTool
             // var flagList = TrackInfo.GetFlags().ToList();
 
             // Get flags list for this track
-            System.Collections.Generic.List<TrackInfo.FlagsType> flagList = [.. TrackInfo.GetFlags(trackItem.Flags)];
+            System.Collections.Generic.List<TrackInfo.FlagsType> flagList =
+            [
+                .. TrackInfo.GetFlags(trackItem.Flags),
+            ];
             if (flagList.Count > 0)
             {
                 // Edit track
-                _ = commandline.Append(CultureInfo.InvariantCulture, $"--edit track:@{trackItem.Number} ");
+                _ = commandline.Append(
+                    CultureInfo.InvariantCulture,
+                    $"--edit track:@{trackItem.Number} "
+                );
 
                 // Set flag by name
-                flagList.ForEach(item => commandline.Append(CultureInfo.InvariantCulture, $"--set {GetTrackFlag(item)}=1 "));
+                flagList.ForEach(item =>
+                    commandline.Append(
+                        CultureInfo.InvariantCulture,
+                        $"--set {GetTrackFlag(item)}=1 "
+                    )
+                );
             }
         }
 
@@ -87,7 +106,7 @@ public class MkvPropEditTool : MkvMergeTool
             TrackInfo.FlagsType.Original => "flag-original",
             TrackInfo.FlagsType.Commentary => "flag-commentary",
             TrackInfo.FlagsType.None => throw new NotImplementedException(),
-            _ => throw new NotImplementedException()
+            _ => throw new NotImplementedException(),
         };
 
     public bool ClearTags(string fileName, MediaInfo mediaInfo)
@@ -101,8 +120,16 @@ public class MkvPropEditTool : MkvMergeTool
         _ = commandline.Append("--tags all: --delete title ");
 
         // Delete all track titles if the title is not a flag substitute
-        System.Collections.Generic.List<TrackInfo> trackList = [.. mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag())];
-        trackList.ForEach(track => commandline.Append(CultureInfo.InvariantCulture, $"--edit track:@{track.Number} --delete name "));
+        System.Collections.Generic.List<TrackInfo> trackList =
+        [
+            .. mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag()),
+        ];
+        trackList.ForEach(track =>
+            commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"--edit track:@{track.Number} --delete name "
+            )
+        );
 
         // Clear all tags and main title and track titles
         int exitCode = Command(commandline.ToString());
@@ -133,5 +160,6 @@ public class MkvPropEditTool : MkvMergeTool
         // if (Program.Options.Parallel)
         commandline.Append(CultureInfo.InvariantCulture, $"\"{fileName}\" {EditOptions} ");
 
-    private const string EditOptions = "--delete-track-statistics-tags --normalize-language-ietf extlang";
+    private const string EditOptions =
+        "--delete-track-statistics-tags --normalize-language-ietf extlang";
 }

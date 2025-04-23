@@ -59,7 +59,9 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     protected new const int Version = 2;
 
     public SidecarFileJsonSchema2() { }
-    public SidecarFileJsonSchema2(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1) { }
+
+    public SidecarFileJsonSchema2(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
+        : base(sidecarFileJsonSchema1) { }
 
     // v2 : Added
     // v4 : Removed
@@ -74,8 +76,12 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
     protected new const int Version = 3;
 
     public SidecarFileJsonSchema3() { }
-    public SidecarFileJsonSchema3(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1) { }
-    public SidecarFileJsonSchema3(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2) { }
+
+    public SidecarFileJsonSchema3(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
+        : base(sidecarFileJsonSchema1) { }
+
+    public SidecarFileJsonSchema3(SidecarFileJsonSchema2 sidecarFileJsonSchema2)
+        : base(sidecarFileJsonSchema2) { }
 
     // v3 : Added
     [JsonRequired]
@@ -92,9 +98,15 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     public new const int Version = 4;
 
     public SidecarFileJsonSchema4() { }
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema1 sidecarFileJsonSchema1) : base(sidecarFileJsonSchema1) => Upgrade(SidecarFileJsonSchema1.Version);
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema2 sidecarFileJsonSchema2) : base(sidecarFileJsonSchema2) => Upgrade(SidecarFileJsonSchema2.Version);
-    public SidecarFileJsonSchema4(SidecarFileJsonSchema3 sidecarFileJsonSchema3) : base(sidecarFileJsonSchema3) => Upgrade(SidecarFileJsonSchema3.Version);
+
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
+        : base(sidecarFileJsonSchema1) => Upgrade(SidecarFileJsonSchema1.Version);
+
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema2 sidecarFileJsonSchema2)
+        : base(sidecarFileJsonSchema2) => Upgrade(SidecarFileJsonSchema2.Version);
+
+    public SidecarFileJsonSchema4(SidecarFileJsonSchema3 sidecarFileJsonSchema3)
+        : base(sidecarFileJsonSchema3) => Upgrade(SidecarFileJsonSchema3.Version);
 
     // v4 : Added
     [JsonRequired]
@@ -140,7 +152,9 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
             SidecarFileJsonSchema3 sidecarFileJsonSchema3 = this;
 
             // Upgrade v3 to v4
-            State = sidecarFileJsonSchema3.Verified ? SidecarFile.StatesType.Verified : SidecarFile.StatesType.None;
+            State = sidecarFileJsonSchema3.Verified
+                ? SidecarFile.StatesType.Verified
+                : SidecarFile.StatesType.None;
 
             // Defaults
             MediaHash = "";
@@ -150,12 +164,17 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
         // v4
     }
 
-    public static string ToJson(SidecarFileJsonSchema json) => JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
+    public static string ToJson(SidecarFileJsonSchema json) =>
+        JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(json, ConfigFileJsonSchema.JsonReadOptions);
+        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase =
+            JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(
+                json,
+                ConfigFileJsonSchema.JsonReadOptions
+            );
         if (sidecarFileJsonSchemaBase == null)
         {
             return null;
@@ -163,17 +182,39 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
-            Log.Logger.Warning("Converting SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}", sidecarFileJsonSchemaBase.SchemaVersion, Version);
+            Log.Warning(
+                "Converting SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}",
+                sidecarFileJsonSchemaBase.SchemaVersion,
+                Version
+            );
         }
 
         // Deserialize the correct version
         return sidecarFileJsonSchemaBase.SchemaVersion switch
         {
-            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema1>(json, ConfigFileJsonSchema.JsonReadOptions)),
-            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema2>(json, ConfigFileJsonSchema.JsonReadOptions)),
-            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(JsonSerializer.Deserialize<SidecarFileJsonSchema3>(json, ConfigFileJsonSchema.JsonReadOptions)),
-            Version => JsonSerializer.Deserialize<SidecarFileJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions),
-            _ => throw new NotImplementedException()
+            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(
+                JsonSerializer.Deserialize<SidecarFileJsonSchema1>(
+                    json,
+                    ConfigFileJsonSchema.JsonReadOptions
+                )
+            ),
+            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(
+                JsonSerializer.Deserialize<SidecarFileJsonSchema2>(
+                    json,
+                    ConfigFileJsonSchema.JsonReadOptions
+                )
+            ),
+            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(
+                JsonSerializer.Deserialize<SidecarFileJsonSchema3>(
+                    json,
+                    ConfigFileJsonSchema.JsonReadOptions
+                )
+            ),
+            Version => JsonSerializer.Deserialize<SidecarFileJsonSchema>(
+                json,
+                ConfigFileJsonSchema.JsonReadOptions
+            ),
+            _ => throw new NotImplementedException(),
         };
     }
 }

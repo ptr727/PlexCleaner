@@ -13,8 +13,9 @@ public abstract class MediaTool
         HandBrake,
         MediaInfo,
         MkvToolNix,
-        SevenZip
+        SevenZip,
     }
+
     public enum ToolType
     {
         None,
@@ -25,15 +26,19 @@ public abstract class MediaTool
         MkvMerge,
         MkvPropEdit,
         SevenZip,
-        MkvExtract
+        MkvExtract,
     }
+
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();
+
     // Tool binary name
     protected abstract string GetToolNameWindows();
     protected abstract string GetToolNameLinux();
+
     // Installed version information retrieved from the tool commandline
     public abstract bool GetInstalledVersion(out MediaToolInfo mediaToolInfo);
+
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
     protected abstract bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo);
@@ -43,14 +48,13 @@ public abstract class MediaTool
     {
         // Make sure the tool folder exists and is empty
         string toolPath = GetToolFolder();
-        if (!FileEx.CreateDirectory(toolPath) ||
-            !FileEx.DeleteInsideDirectory(toolPath))
+        if (!FileEx.CreateDirectory(toolPath) || !FileEx.DeleteInsideDirectory(toolPath))
         {
             return false;
         }
 
         // Extract the update file
-        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
+        Log.Information("Extracting {UpdateFile} ...", updateFile);
         return Tools.SevenZip.UnZip(updateFile, toolPath);
     }
 
@@ -62,46 +66,58 @@ public abstract class MediaTool
     // Version information is used in the sidecar tool logic
     public MediaToolInfo Info { get; set; }
 
-    private string GetToolName() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetToolNameWindows() : GetToolNameLinux();
+    private string GetToolName() =>
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? GetToolNameWindows()
+            : GetToolNameLinux();
 
-    public string GetToolPath() => Program.Config.ToolsOptions.UseSystem ? GetToolName() : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), GetToolName());
+    public string GetToolPath() =>
+        Program.Config.ToolsOptions.UseSystem
+            ? GetToolName()
+            : Tools.CombineToolPath(GetToolFamily().ToString(), GetSubFolder(), GetToolName());
 
     protected string GetToolFolder() => Tools.CombineToolPath(GetToolFamily().ToString());
 
-    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? GetLatestVersionWindows(out mediaToolInfo) : GetLatestVersionLinux(out mediaToolInfo);
+    public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) =>
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? GetLatestVersionWindows(out mediaToolInfo)
+            : GetLatestVersionLinux(out mediaToolInfo);
 
     protected int Command(string parameters)
     {
         parameters = parameters.Trim();
-        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
+        Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, !Program.Options.Parallel);
     }
 
     protected int Command(string parameters, out string output)
     {
         parameters = parameters.Trim();
-        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
+        Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output);
     }
 
     protected int Command(string parameters, out string output, out string error)
     {
         parameters = parameters.Trim();
-        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
+        Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output, out error);
     }
 
     protected int Command(string parameters, int limit, out string output, out string error)
     {
         parameters = parameters.Trim();
-        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
+        Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, false, limit, out output, out error);
     }
 
     protected string GetLatestGitHubRelease(string repo)
     {
-        Log.Logger.Information("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
+        Log.Information(
+            "{Tool} : Getting latest version from GitHub : {Repo}",
+            GetToolFamily(),
+            repo
+        );
         return GitHubRelease.GetLatestRelease(repo);
     }
 }
-

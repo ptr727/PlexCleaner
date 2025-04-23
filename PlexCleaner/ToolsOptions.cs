@@ -45,7 +45,7 @@ public record ToolsOptions1
         // Path must be set if not using system path
         if (!UseSystem && string.IsNullOrEmpty(RootPath))
         {
-            Log.Logger.Error("ToolsOptions:RootPath must be set if not UseSystem");
+            Log.Error("ToolsOptions:RootPath must be set if not UseSystem");
             return false;
         }
 

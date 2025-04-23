@@ -121,7 +121,9 @@ public record ProcessOptions2 : ProcessOptions1
     protected new const int Version = 2;
 
     public ProcessOptions2() { }
-    public ProcessOptions2(ProcessOptions1 processOptions1) : base(processOptions1) { }
+
+    public ProcessOptions2(ProcessOptions1 processOptions1)
+        : base(processOptions1) { }
 
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
@@ -133,7 +135,8 @@ public record ProcessOptions2 : ProcessOptions1
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [JsonRequired]
-    public new HashSet<string> ReMuxExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> ReMuxExtensions { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
     // v1 -> v2 : CSV -> List<VideoFormat>
@@ -143,7 +146,8 @@ public record ProcessOptions2 : ProcessOptions1
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [JsonRequired]
-    public new HashSet<string> ReEncodeAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> ReEncodeAudioFormats { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
     // v2 : Added
@@ -154,7 +158,8 @@ public record ProcessOptions2 : ProcessOptions1
     // v2 : Added
     // v1 -> v2 : CSV -> HashSet<string>
     [JsonRequired]
-    public new HashSet<string> PreferredAudioFormats { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public new HashSet<string> PreferredAudioFormats { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 }
 
 // v3
@@ -163,8 +168,12 @@ public record ProcessOptions3 : ProcessOptions2
     protected new const int Version = 3;
 
     public ProcessOptions3() { }
-    public ProcessOptions3(ProcessOptions1 processOptions1) : base(processOptions1) { }
-    public ProcessOptions3(ProcessOptions2 processOptions2) : base(processOptions2) { }
+
+    public ProcessOptions3(ProcessOptions1 processOptions1)
+        : base(processOptions1) { }
+
+    public ProcessOptions3(ProcessOptions2 processOptions2)
+        : base(processOptions2) { }
 
     // v3 : Added
     [JsonRequired]
@@ -189,9 +198,15 @@ public record ProcessOptions4 : ProcessOptions3
     protected new const int Version = 4;
 
     public ProcessOptions4() { }
-    public ProcessOptions4(ProcessOptions1 processOptions1) : base(processOptions1) => Upgrade(ProcessOptions1.Version);
-    public ProcessOptions4(ProcessOptions2 processOptions2) : base(processOptions2) => Upgrade(ProcessOptions2.Version);
-    public ProcessOptions4(ProcessOptions3 processOptions3) : base(processOptions3) => Upgrade(ProcessOptions3.Version);
+
+    public ProcessOptions4(ProcessOptions1 processOptions1)
+        : base(processOptions1) => Upgrade(ProcessOptions1.Version);
+
+    public ProcessOptions4(ProcessOptions2 processOptions2)
+        : base(processOptions2) => Upgrade(ProcessOptions2.Version);
+
+    public ProcessOptions4(ProcessOptions3 processOptions3)
+        : base(processOptions3) => Upgrade(ProcessOptions3.Version);
 
     // v4 : Added
     [JsonRequired]
@@ -216,7 +231,8 @@ public record ProcessOptions4 : ProcessOptions3
         return new Regex(regexString, RegexOptions.IgnoreCase);
     }
 
-    public bool IsFileIgnoreMatch(string fileName) => _fileIgnoreRegExList.Any(item => item.IsMatch(fileName));
+    public bool IsFileIgnoreMatch(string fileName) =>
+        _fileIgnoreRegExList.Any(item => item.IsMatch(fileName));
 
     protected void Upgrade(int version)
     {
@@ -255,9 +271,11 @@ public record ProcessOptions4 : ProcessOptions3
             }
 
             // v1 -> v2 : Convert CSV to List<VideoFormat>
-            if (!string.IsNullOrEmpty(processOptions1.ReEncodeVideoCodecs) &&
-                !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats) &&
-                !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles))
+            if (
+                !string.IsNullOrEmpty(processOptions1.ReEncodeVideoCodecs)
+                && !string.IsNullOrEmpty(processOptions1.ReEncodeVideoFormats)
+                && !string.IsNullOrEmpty(processOptions1.ReEncodeVideoProfiles)
+            )
             {
                 List<string> codecList = [.. processOptions1.ReEncodeVideoCodecs.Split(',')];
                 List<string> formatList = [.. processOptions1.ReEncodeVideoFormats.Split(',')];
@@ -274,7 +292,7 @@ public record ProcessOptions4 : ProcessOptions3
                     {
                         Codec = codecList.ElementAt(i),
                         Format = formatList.ElementAt(i),
-                        Profile = profileList.ElementAt(i)
+                        Profile = profileList.ElementAt(i),
                     };
 
                     // Convert the * as wildcard to a null as any match
@@ -306,10 +324,13 @@ public record ProcessOptions4 : ProcessOptions3
             // ProcessOptions2 processOptions2 = this;
 
             // v2 -> v3 : Convert ISO 639-2 to RFC 5646 language tags
-            DefaultLanguage = Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
+            DefaultLanguage =
+                Language.Singleton.GetIetfTag(DefaultLanguage, true) ?? Language.English;
             List<string> oldList = [.. KeepLanguages];
             KeepLanguages.Clear();
-            oldList.ForEach(item => KeepLanguages.Add(Language.Singleton.GetIetfTag(item, true) ?? Language.English));
+            oldList.ForEach(item =>
+                KeepLanguages.Add(Language.Singleton.GetIetfTag(item, true) ?? Language.English)
+            );
 
             // v2 -> v3 : Defaults
             KeepOriginalLanguage = true;
@@ -370,7 +391,7 @@ public record ProcessOptions4 : ProcessOptions3
             "*.smi",
             "*.srt",
             "*.ssa",
-            "*.vtt"
+            "*.vtt",
         };
         KeepLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -379,7 +400,7 @@ public record ProcessOptions4 : ProcessOptions3
             "in",
             "ja",
             "ko",
-            "zh"
+            "zh",
         };
         ReEncodeVideo =
         [
@@ -392,7 +413,7 @@ public record ProcessOptions4 : ProcessOptions3
             new VideoFormat { Format = "msrle" },
             new VideoFormat { Format = "rawvideo" },
             new VideoFormat { Format = "vc1" },
-            new VideoFormat { Format = "wmv3" }
+            new VideoFormat { Format = "wmv3" },
         ];
         ReEncodeAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -404,7 +425,7 @@ public record ProcessOptions4 : ProcessOptions3
             "pcm_u8",
             "vorbis",
             "wmapro",
-            "wmav2"
+            "wmav2",
         };
         ReMuxExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -416,7 +437,7 @@ public record ProcessOptions4 : ProcessOptions3
             ".mp4",
             ".ts",
             ".vob",
-            ".wmv"
+            ".wmv",
         };
         PreferredAudioFormats = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -426,7 +447,7 @@ public record ProcessOptions4 : ProcessOptions3
             "dts",
             "e-ac-3",
             "truehd atmos",
-            "truehd"
+            "truehd",
         };
     }
 
@@ -435,7 +456,7 @@ public record ProcessOptions4 : ProcessOptions3
         // Some values must be set
         if (string.IsNullOrEmpty(DefaultLanguage))
         {
-            Log.Logger.Error("ProcessOptions:DefaultLanguage must be set");
+            Log.Error("ProcessOptions:DefaultLanguage must be set");
             return false;
         }
 

@@ -58,7 +58,9 @@ public record ConvertOptions2 : ConvertOptions1
     protected new const int Version = 2;
 
     public ConvertOptions2() { }
-    public ConvertOptions2(ConvertOptions1 convertOptions1) : base(convertOptions1) { }
+
+    public ConvertOptions2(ConvertOptions1 convertOptions1)
+        : base(convertOptions1) { }
 
     // v2 : Added
     [JsonRequired]
@@ -75,8 +77,12 @@ public record ConvertOptions3 : ConvertOptions2
     protected new const int Version = 3;
 
     public ConvertOptions3() { }
-    public ConvertOptions3(ConvertOptions1 convertOptions1) : base(convertOptions1) => Upgrade(ConvertOptions1.Version);
-    public ConvertOptions3(ConvertOptions2 convertOptions2) : base(convertOptions2) => Upgrade(ConvertOptions2.Version);
+
+    public ConvertOptions3(ConvertOptions1 convertOptions1)
+        : base(convertOptions1) => Upgrade(ConvertOptions1.Version);
+
+    public ConvertOptions3(ConvertOptions2 convertOptions2)
+        : base(convertOptions2) => Upgrade(ConvertOptions2.Version);
 
     // v3 : Removed FfMpegOptions.Output
     // v3 : Removed defaults from FfMpegOptions.Global
@@ -94,10 +100,12 @@ public record ConvertOptions3 : ConvertOptions2
             // Convert discrete options to encode string options
 #pragma warning disable CS0618 // Type or member is obsolete
             FfMpegOptions.Audio = convertOptions1.AudioEncodeCodec;
-            FfMpegOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "libx265" : "libx264")} -crf {convertOptions1.VideoEncodeQuality} -preset medium";
+            FfMpegOptions.Video =
+                $"{(convertOptions1.EnableH265Encoder ? "libx265" : "libx264")} -crf {convertOptions1.VideoEncodeQuality} -preset medium";
 
             HandBrakeOptions.Audio = $"copy --audio-fallback {convertOptions1.AudioEncodeCodec}";
-            HandBrakeOptions.Video = $"{(convertOptions1.EnableH265Encoder ? "x265" : "x264")} --quality {convertOptions1.VideoEncodeQuality} --encoder-preset medium";
+            HandBrakeOptions.Video =
+                $"{(convertOptions1.EnableH265Encoder ? "x265" : "x264")} --quality {convertOptions1.VideoEncodeQuality} --encoder-preset medium";
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
@@ -117,7 +125,9 @@ public record ConvertOptions3 : ConvertOptions2
 #pragma warning restore CS0618 // Type or member is obsolete
 
             // Remove default global options
-            FfMpegOptions.Global = FfMpegOptions.Global.Replace(FfMpegTool.GlobalOptions, null).Trim();
+            FfMpegOptions.Global = FfMpegOptions
+                .Global.Replace(FfMpegTool.GlobalOptions, null)
+                .Trim();
         }
 
         // v3
@@ -136,16 +146,17 @@ public record ConvertOptions3 : ConvertOptions2
     public bool VerifyValues()
     {
         // Values must be set
-        if (string.IsNullOrEmpty(FfMpegOptions.Video) ||
-            string.IsNullOrEmpty(FfMpegOptions.Audio))
+        if (string.IsNullOrEmpty(FfMpegOptions.Video) || string.IsNullOrEmpty(FfMpegOptions.Audio))
         {
-            Log.Logger.Error("ConvertOptions:FfMpegOptions Video and Audio values must be set");
+            Log.Error("ConvertOptions:FfMpegOptions Video and Audio values must be set");
             return false;
         }
-        if (string.IsNullOrEmpty(HandBrakeOptions.Video) ||
-            string.IsNullOrEmpty(HandBrakeOptions.Audio))
+        if (
+            string.IsNullOrEmpty(HandBrakeOptions.Video)
+            || string.IsNullOrEmpty(HandBrakeOptions.Audio)
+        )
         {
-            Log.Logger.Error("ConvertOptions:HandBrakeOptions Video and Audio values must be set");
+            Log.Error("ConvertOptions:HandBrakeOptions Video and Audio values must be set");
             return false;
         }
 

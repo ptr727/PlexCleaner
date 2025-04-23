@@ -5,9 +5,7 @@ namespace PlexCleaner;
 
 public class MediaToolInfo
 {
-    public MediaToolInfo()
-    {
-    }
+    public MediaToolInfo() { }
 
     public MediaToolInfo(MediaTool mediaTool)
     {
@@ -24,17 +22,24 @@ public class MediaToolInfo
     public string Version { get; set; }
 
     public void WriteLine(string prefix) =>
-        Log.Logger.Information("{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}",
+        Log.Information(
+            "{Prefix} : {ToolType}, {Version}, {FileName}, {Size}, {ModifiedTime}, {Url}",
             prefix,
             ToolType,
             Version,
             FileName,
             Size,
-            ModifiedTime, Url);
+            ModifiedTime,
+            Url
+        );
 
     public int CompareTo(MediaToolInfo toolInfo)
     {
-        int result = string.Compare(FileName, toolInfo.FileName, StringComparison.OrdinalIgnoreCase);
+        int result = string.Compare(
+            FileName,
+            toolInfo.FileName,
+            StringComparison.OrdinalIgnoreCase
+        );
         if (result != 0)
         {
             return result;
@@ -47,7 +52,9 @@ public class MediaToolInfo
         }
 
         result = Size.CompareTo(toolInfo.Size);
-        return result != 0 ? result : string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
+        return result != 0
+            ? result
+            : string.Compare(Version, toolInfo.Version, StringComparison.OrdinalIgnoreCase);
     }
 
     public void Copy(MediaToolInfo toolInfo)

@@ -20,7 +20,7 @@ public partial class TrackInfo
         DeInterlace,
         SetFlags,
         SetLanguage,
-        Unsupported
+        Unsupported,
     }
 
     // https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags
@@ -34,7 +34,7 @@ public partial class TrackInfo
         VisualImpaired = 1 << 3,
         Descriptions = 1 << 4,
         Original = 1 << 5,
-        Commentary = 1 << 6
+        Commentary = 1 << 6,
     }
 
     public TrackInfo() { }
@@ -50,7 +50,11 @@ public partial class TrackInfo
         {
             HasErrors = true;
             State = StateType.Unsupported;
-            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            Log.Error(
+                "{Parser} : Track is missing required codec information : State: {State}",
+                parser,
+                State
+            );
             return;
         }
 
@@ -114,7 +118,13 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup ISO tag from IETF tag
-                Log.Logger.Error("{Parser} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
+                Log.Error(
+                    "{Parser} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
+                    parser,
+                    Language,
+                    LanguageIetf,
+                    State
+                );
             }
             else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
             {
@@ -123,7 +133,14 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
-                Log.Logger.Error("{Parser} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}", parser, Language, LanguageIetf, isoLookup, State);
+                Log.Error(
+                    "{Parser} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}",
+                    parser,
+                    Language,
+                    LanguageIetf,
+                    isoLookup,
+                    State
+                );
             }
             // Lookup good and matches
         }
@@ -141,7 +158,12 @@ public partial class TrackInfo
                 State = StateType.ReMux;
 
                 // Failed to lookup IETF tag from ISO tag
-                Log.Logger.Error("{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}", parser, Language, State);
+                Log.Error(
+                    "{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}",
+                    parser,
+                    Language,
+                    State
+                );
             }
             else
             {
@@ -152,7 +174,13 @@ public partial class TrackInfo
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
-                Log.Logger.Information("{Parser} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
+                Log.Information(
+                    "{Parser} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
+                    parser,
+                    Language,
+                    LanguageIetf,
+                    State
+                );
             }
         }
 
@@ -171,26 +199,48 @@ public partial class TrackInfo
             if (string.IsNullOrEmpty(isoLookup))
             {
                 // Failed to lookup ISO from IETF
-                Log.Logger.Error("{Parser} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}", parser, LanguageIetf, State);
+                Log.Error(
+                    "{Parser} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}",
+                    parser,
+                    LanguageIetf,
+                    State
+                );
             }
             else
             {
                 // Set ISO from lookup
                 Language = isoLookup;
-                Log.Logger.Warning("{Parser} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}", parser, Language, LanguageIetf, State);
+                Log.Warning(
+                    "{Parser} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
+                    parser,
+                    Language,
+                    LanguageIetf,
+                    State
+                );
             }
         }
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
         // https://github.com/MediaArea/MediaAreaXml/issues/34
-        if (!string.IsNullOrEmpty(track.Properties.TagLanguage) &&
-            !string.IsNullOrEmpty(track.Properties.Language) &&
-            !track.Properties.Language.Equals(track.Properties.TagLanguage, StringComparison.OrdinalIgnoreCase))
+        if (
+            !string.IsNullOrEmpty(track.Properties.TagLanguage)
+            && !string.IsNullOrEmpty(track.Properties.Language)
+            && !track.Properties.Language.Equals(
+                track.Properties.TagLanguage,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}", parser, track.Properties.TagLanguage, track.Properties.Language, State);
+            Log.Warning(
+                "{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}",
+                parser,
+                track.Properties.TagLanguage,
+                track.Properties.Language,
+                State
+            );
         }
 
         // Take care to use id and number correctly in MkvMerge and MkvPropEdit
@@ -218,7 +268,11 @@ public partial class TrackInfo
         {
             HasErrors = true;
             State = StateType.Unsupported;
-            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            Log.Error(
+                "{Parser} : Track is missing required codec information : State: {State}",
+                parser,
+                State
+            );
             return;
         }
 
@@ -253,23 +307,40 @@ public partial class TrackInfo
         }
 
         // Title
-        Title = track.Tags.FirstOrDefault(item => item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Title =
+            track
+                .Tags.FirstOrDefault(item =>
+                    item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)
+                )
+                .Value ?? "";
 
         // Language
-        Language = track.Tags.FirstOrDefault(item => item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)).Value ?? "";
+        Language =
+            track
+                .Tags.FirstOrDefault(item =>
+                    item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)
+                )
+                .Value ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
         // https://github.com/MediaArea/MediaAreaXml/issues/34
 
         // Some sample files use "???" or "null" for the language
-        if (Language.Equals("???", StringComparison.OrdinalIgnoreCase) ||
-            Language.Equals("null", StringComparison.OrdinalIgnoreCase))
+        if (
+            Language.Equals("???", StringComparison.OrdinalIgnoreCase)
+            || Language.Equals("null", StringComparison.OrdinalIgnoreCase)
+        )
         {
             // Set track error and recommend remux
             HasErrors = true;
             State = StateType.ReMux;
-            Log.Logger.Warning("{Parser} : Invalid Language : {Language} : {State}", parser, Language, State);
+            Log.Warning(
+                "{Parser} : Invalid Language : {Language} : {State}",
+                parser,
+                Language,
+                State
+            );
         }
 
         // Leave the Language as is, no need to verify
@@ -298,7 +369,11 @@ public partial class TrackInfo
         {
             HasErrors = true;
             State = StateType.Unsupported;
-            Log.Logger.Error("{Parser} : Track is missing required codec information : State: {State}", parser, State);
+            Log.Error(
+                "{Parser} : Track is missing required codec information : State: {State}",
+                parser,
+                State
+            );
             return;
         }
 
@@ -369,7 +444,8 @@ public partial class TrackInfo
     public FlagsType Flags { get; set; } = FlagsType.None;
 
     public virtual void WriteLine(string prefix) =>
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+        Log.Information(
+            "{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
             GetType().Name,
             Format,
@@ -382,7 +458,8 @@ public partial class TrackInfo
             Flags,
             State,
             HasErrors,
-            HasTags);
+            HasTags
+        );
 
     public bool NotTrackTitleFlag()
     {
@@ -394,7 +471,9 @@ public partial class TrackInfo
         }
 
         // Not a flag is not a flag
-        return !s_titleFlags.Any(tuple => Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase));
+        return !s_titleFlags.Any(tuple =>
+            Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     public void SetFlagsFromTitle(string parser)
@@ -403,20 +482,29 @@ public partial class TrackInfo
         foreach ((string, FlagsType) tuple in s_titleFlags)
         {
             // Only process if matching flag is not already set
-            if (Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase) &&
-                !Flags.HasFlag(tuple.Item2))
+            if (
+                Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase)
+                && !Flags.HasFlag(tuple.Item2)
+            )
             {
                 // Set track error state and recommend setting the track flags
                 HasErrors = true;
                 State = StateType.SetFlags;
                 Flags |= tuple.Item2;
-                Log.Logger.Information("{Parser} : Setting track Flag from Title : {Title} -> {Flag} : {State}", parser, Title, tuple.Item2, State);
+                Log.Information(
+                    "{Parser} : Setting track Flag from Title : {Title} -> {Flag} : {State}",
+                    parser,
+                    Title,
+                    tuple.Item2,
+                    State
+                );
             }
         }
     }
 
     public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType) =>
-        Enum.GetValues<FlagsType>().Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
+        Enum.GetValues<FlagsType>()
+            .Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
 
     public static IEnumerable<FlagsType> GetFlags() =>
         Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
@@ -430,6 +518,6 @@ public partial class TrackInfo
         new("SDH", FlagsType.HearingImpaired),
         new("CC", FlagsType.HearingImpaired),
         new("Commentary", FlagsType.Commentary),
-        new("Forced", FlagsType.Forced)
+        new("Forced", FlagsType.Forced),
     ];
 }

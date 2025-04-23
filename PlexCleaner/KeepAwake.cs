@@ -11,7 +11,9 @@ public static partial class KeepAwake
         // Windows only
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            _ = SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+            _ = SetThreadExecutionState(
+                ExecutionState.EsContinuous | ExecutionState.EsSystemRequired
+            );
         }
     }
 
@@ -26,7 +28,6 @@ public static partial class KeepAwake
 
     public static void OnTimedEvent(object sender, ElapsedEventArgs e) => PreventSleep();
 
-
     [LibraryImport("kernel32.dll")]
     private static partial ExecutionState SetThreadExecutionState(ExecutionState esFlags);
 
@@ -36,6 +37,6 @@ public static partial class KeepAwake
         EsAwayModeRequired = 0x00000040,
         EsContinuous = 0x80000000,
         EsDisplayRequired = 0x00000002,
-        EsSystemRequired = 0x00000001
+        EsSystemRequired = 0x00000001,
     }
 }

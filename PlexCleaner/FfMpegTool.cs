@@ -93,7 +93,11 @@ public partial class FfMpegTool : MediaTool
             mediaToolInfo.FileName = $"ffmpeg-{mediaToolInfo.Version}-full_build.7z";
 
             // Get the GitHub download Uri
-            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(
+                repo,
+                mediaToolInfo.Version,
+                mediaToolInfo.FileName
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -122,7 +126,7 @@ public partial class FfMpegTool : MediaTool
         string extractPath = Tools.GetToolsRoot();
 
         // Extract the update file
-        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
+        Log.Information("Extracting {UpdateFile} ...", updateFile);
         if (!Tools.SevenZip.UnZip(updateFile, extractPath))
         {
             return false;
@@ -180,14 +184,21 @@ public partial class FfMpegTool : MediaTool
         CreateDefaultArgs(inputName, commandline, false, false);
 
         // Remux and copy all streams to MKV
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -codec copy -f matroska \"{outputName}\"");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-map 0 -codec copy -f matroska \"{outputName}\""
+        );
 
         // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
     }
 
-    private static void CreateTrackArgs(SelectMediaInfo selectMediaInfo, out string inputMap, out string outputMap)
+    private static void CreateTrackArgs(
+        SelectMediaInfo selectMediaInfo,
+        out string inputMap,
+        out string outputMap
+    )
     {
         // Verify correct media type
         Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.FfProbe);
@@ -217,10 +228,21 @@ public partial class FfMpegTool : MediaTool
             // Copy or encode
             _ = trackInfo switch
             {
-                VideoInfo videoInfo => sb.Append(videoInfo.State == TrackInfo.StateType.Keep ? $"-c:v:{videoIndex++} copy " : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "),
-                AudioInfo audioInfo => sb.Append(audioInfo.State == TrackInfo.StateType.Keep ? $"-c:a:{audioIndex++} copy " : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "),
-                SubtitleInfo => sb.Append(CultureInfo.InvariantCulture, $"-c:s:{subtitleIndex++} copy "),
-                _ => throw new NotImplementedException()
+                VideoInfo videoInfo => sb.Append(
+                    videoInfo.State == TrackInfo.StateType.Keep
+                        ? $"-c:v:{videoIndex++} copy "
+                        : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+                ),
+                AudioInfo audioInfo => sb.Append(
+                    audioInfo.State == TrackInfo.StateType.Keep
+                        ? $"-c:a:{audioIndex++} copy "
+                        : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+                ),
+                SubtitleInfo => sb.Append(
+                    CultureInfo.InvariantCulture,
+                    $"-c:s:{subtitleIndex++} copy "
+                ),
+                _ => throw new NotImplementedException(),
             };
         }
         outputMap = sb.ToString();
@@ -258,7 +280,6 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0;
     }
 
-
     public bool ConvertToMkv(string inputName, string outputName)
     {
         // Delete output file
@@ -273,11 +294,17 @@ public partial class FfMpegTool : MediaTool
 
         // Convert video
         // E.g. -c:v libx264 -crf 20 -preset medium
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-c:v {Program.Config.ConvertOptions.FfMpegOptions.Video} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-c:v {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+        );
 
         // Convert audio
         // E.g. -c:a ac3
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-c:a {Program.Config.ConvertOptions.FfMpegOptions.Audio} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-c:a {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+        );
 
         // Copy subtitles
         _ = commandline.Append("-c:s copy ");
@@ -301,7 +328,10 @@ public partial class FfMpegTool : MediaTool
 
         // Remove SEI NAL units e.g. EIA-608 and CTA-708 content
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map 0 -c copy -bsf:v \"filter_units=remove_types={nalUnit}\" -f matroska \"{outputName}\"");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-map 0 -c copy -bsf:v \"filter_units=remove_types={nalUnit}\" -f matroska \"{outputName}\""
+        );
 
         // Execute
         int exitCode = Command(commandline.ToString());
@@ -318,7 +348,10 @@ public partial class FfMpegTool : MediaTool
         CreateDefaultArgs(inputName, commandline, false, false);
 
         // Remove all metadata using -map_metadata -1
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\"");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\""
+        );
 
         // Execute
         int exitCode = Command(commandline.ToString());
@@ -346,7 +379,9 @@ public partial class FfMpegTool : MediaTool
 
         // Null output is platform specific
         // https://trac.ffmpeg.org/wiki/Null
-        string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null";
+        string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? "-y NUL"
+            : "-y /dev/null";
 
         // Build commandline
         StringBuilder commandline = new();
@@ -363,7 +398,10 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
         // Run idet filter
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-filter:v idet -an -f rawvideo {nullOut}");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-filter:v idet -an -f rawvideo {nullOut}"
+        );
 
         // Execute and limit captured output to 5 lines to just get stats
         int exitCode = Command(commandline.ToString(), 5, out _, out text);
@@ -393,19 +431,52 @@ public partial class FfMpegTool : MediaTool
             Debug.Assert(match.Success);
 
             // Get the frame counts
-            idetInfo.RepeatedFields.Neither = int.Parse(match.Groups["repeated_neither"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.RepeatedFields.Top = int.Parse(match.Groups["repeated_top"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.RepeatedFields.Bottom = int.Parse(match.Groups["repeated_bottom"].Value.Trim(), CultureInfo.InvariantCulture);
+            idetInfo.RepeatedFields.Neither = int.Parse(
+                match.Groups["repeated_neither"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.RepeatedFields.Top = int.Parse(
+                match.Groups["repeated_top"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.RepeatedFields.Bottom = int.Parse(
+                match.Groups["repeated_bottom"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
 
-            idetInfo.SingleFrame.Tff = int.Parse(match.Groups["single_tff"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.SingleFrame.Bff = int.Parse(match.Groups["single_bff"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.SingleFrame.Progressive = int.Parse(match.Groups["single_prog"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.SingleFrame.Undetermined = int.Parse(match.Groups["single_und"].Value.Trim(), CultureInfo.InvariantCulture);
+            idetInfo.SingleFrame.Tff = int.Parse(
+                match.Groups["single_tff"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.SingleFrame.Bff = int.Parse(
+                match.Groups["single_bff"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.SingleFrame.Progressive = int.Parse(
+                match.Groups["single_prog"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.SingleFrame.Undetermined = int.Parse(
+                match.Groups["single_und"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
 
-            idetInfo.MultiFrame.Tff = int.Parse(match.Groups["multi_tff"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.MultiFrame.Bff = int.Parse(match.Groups["multi_bff"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.MultiFrame.Progressive = int.Parse(match.Groups["multi_prog"].Value.Trim(), CultureInfo.InvariantCulture);
-            idetInfo.MultiFrame.Undetermined = int.Parse(match.Groups["multi_und"].Value.Trim(), CultureInfo.InvariantCulture);
+            idetInfo.MultiFrame.Tff = int.Parse(
+                match.Groups["multi_tff"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.MultiFrame.Bff = int.Parse(
+                match.Groups["multi_bff"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.MultiFrame.Progressive = int.Parse(
+                match.Groups["multi_prog"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
+            idetInfo.MultiFrame.Undetermined = int.Parse(
+                match.Groups["multi_und"].Value.Trim(),
+                CultureInfo.InvariantCulture
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -414,18 +485,30 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline, bool encoding, bool silent)
+    private static void CreateDefaultArgs(
+        string inputName,
+        StringBuilder commandline,
+        bool encoding,
+        bool silent
+    )
     {
         // Add custom global options when encoding
-        _ = encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global)
-            ? commandline.Append(CultureInfo.InvariantCulture, $"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} ")
-            : commandline.Append($"{GlobalOptions} ");
+        _ =
+            encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global)
+                ? commandline.Append(
+                    CultureInfo.InvariantCulture,
+                    $"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} "
+                )
+                : commandline.Append($"{GlobalOptions} ");
 
         // Test snippets
         if (Program.Options.TestSnippets)
         {
             // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"-ss 0 -t {(int)Program.SnippetTimeSpan.TotalSeconds} ");
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"-ss 0 -t {(int)Program.SnippetTimeSpan.TotalSeconds} "
+            );
         }
 
         // Input filename
@@ -448,13 +531,18 @@ public partial class FfMpegTool : MediaTool
     public const string DefaultAudioOptions = "ac3";
 
     private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
+
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 
-    private const string IdetRepeatedFields = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
-    private const string IdetSingleFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
-    private const string IdetMultiFrame = @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
+    private const string IdetRepeatedFields =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
+    private const string IdetSingleFrame =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
+    private const string IdetMultiFrame =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
     private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
+
     [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex IdetRegex();
 
@@ -462,7 +550,9 @@ public partial class FfMpegTool : MediaTool
         // Get SEI NAL unit based on video format
         // H264 = 6, H265 = 9, MPEG2 = 178
         // Return default(int) if not found
-        SEINalUnitList.FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase)).nalunit;
+        SEINalUnitList
+            .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
+            .nalunit;
 
     // Common format tags
     public const string H264Format = "h264";
@@ -470,5 +560,10 @@ public partial class FfMpegTool : MediaTool
     public const string MPEG2Format = "mpeg2video";
 
     // SEI NAL units for EIA-608 and CTA-708 content
-    public static readonly (string format, int nalunit)[] SEINalUnitList = [(H264Format, 6), (H265Format, 39), (MPEG2Format, 178)];
+    public static readonly (string format, int nalunit)[] SEINalUnitList =
+    [
+        (H264Format, 6),
+        (H265Format, 39),
+        (MPEG2Format, 178),
+    ];
 }

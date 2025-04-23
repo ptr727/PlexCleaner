@@ -32,14 +32,14 @@ public record ProcessResultJsonSchema
         AppVersion = AssemblyVersion.GetAppVersion();
         OSVersion = RuntimeInformation.OSDescription;
 
-        Tools.GetToolFamilyList().ForEach(tool =>
-        {
-            ToolVersions.Add(new ToolVersion
+        Tools
+            .GetToolFamilyList()
+            .ForEach(tool =>
             {
-                Tool = tool.GetToolFamily(),
-                Version = tool.Info.Version
+                ToolVersions.Add(
+                    new ToolVersion { Tool = tool.GetToolFamily(), Version = tool.Info.Version }
+                );
             });
-        });
     }
 
     [DefaultValue(0)]
@@ -55,9 +55,15 @@ public record ProcessResultJsonSchema
 
     public static ProcessResultJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
-    public static void ToFile(string path, ProcessResultJsonSchema json) => File.WriteAllText(path, ToJson(json));
+    public static void ToFile(string path, ProcessResultJsonSchema json) =>
+        File.WriteAllText(path, ToJson(json));
 
-    private static string ToJson(ProcessResultJsonSchema tools) => JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
+    private static string ToJson(ProcessResultJsonSchema tools) =>
+        JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
 
-    public static ProcessResultJsonSchema FromJson(string json) => JsonSerializer.Deserialize<ProcessResultJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
+    public static ProcessResultJsonSchema FromJson(string json) =>
+        JsonSerializer.Deserialize<ProcessResultJsonSchema>(
+            json,
+            ConfigFileJsonSchema.JsonReadOptions
+        );
 }

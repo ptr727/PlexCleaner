@@ -41,7 +41,7 @@ public class FfProbeTool : FfMpegTool
 
         // Get packet info
         string path = GetToolPath();
-        Log.Logger.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
+        Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), commandline);
         int exitCode = process.ExecuteEx(path, commandline);
         process.OutputStream.Close();
         if (exitCode != 0 || memoryStream.Length == 0)
@@ -52,7 +52,11 @@ public class FfProbeTool : FfMpegTool
         // Read JSON from stream
         _ = memoryStream.Seek(0, SeekOrigin.Begin);
         using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
-        FfMpegToolJsonSchema.PacketInfo packetInfo = JsonSerializer.Deserialize<FfMpegToolJsonSchema.PacketInfo>(decompressStream, ConfigFileJsonSchema.JsonReadOptions);
+        FfMpegToolJsonSchema.PacketInfo packetInfo =
+            JsonSerializer.Deserialize<FfMpegToolJsonSchema.PacketInfo>(
+                decompressStream,
+                ConfigFileJsonSchema.JsonReadOptions
+            );
         if (packetInfo == null)
         {
             return false;
@@ -62,18 +66,27 @@ public class FfProbeTool : FfMpegTool
         return true;
     }
 
-    public bool GetSubCcPacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
+    public bool GetSubCcPacketInfo(
+        string fileName,
+        out List<FfMpegToolJsonSchema.Packet> packetList
+    )
     {
         // Build commandline
         StringBuilder commandline = new();
         _ = commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} "
+            );
         }
         // Get packet info using ccsub filter
         // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json"
+        );
 
         return GetPacketInfo(commandline.ToString(), out packetList);
     }
@@ -85,18 +98,31 @@ public class FfProbeTool : FfMpegTool
         // ' -> \\\'
         // , -> \\\,
         // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
-        fileName.Replace(@"\", @"/").Replace(@":", @"\\:").Replace(@"'", @"\\\'").Replace(@",", @"\\\,");
+        fileName
+            .Replace(@"\", @"/")
+            .Replace(@":", @"\\:")
+            .Replace(@"'", @"\\\'")
+            .Replace(@",", @"\\\,");
 
-    public bool GetBitratePacketInfo(string fileName, out List<FfMpegToolJsonSchema.Packet> packetList)
+    public bool GetBitratePacketInfo(
+        string fileName,
+        out List<FfMpegToolJsonSchema.Packet> packetList
+    )
     {
         // Build commandline
         StringBuilder commandline = new();
         _ = commandline.Append("-loglevel error ");
         if (Program.Options.TestSnippets)
         {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} ");
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} "
+            );
         }
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-show_packets -print_format json \"{fileName}\"");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"-show_packets -print_format json \"{fileName}\""
+        );
 
         return GetPacketInfo(commandline.ToString(), out packetList);
     }
@@ -104,13 +130,15 @@ public class FfProbeTool : FfMpegTool
     public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetFfProbeInfoJson(fileName, out string json) && GetFfProbeInfoFromJson(json, out mediaInfo);
+        return GetFfProbeInfoJson(fileName, out string json)
+            && GetFfProbeInfoFromJson(json, out mediaInfo);
     }
 
     public bool GetFfProbeInfoJson(string fileName, out string json)
     {
         // Get media info as JSON
-        string commandline = $"-loglevel quiet -show_streams -show_format -print_format json \"{fileName}\"";
+        string commandline =
+            $"-loglevel quiet -show_streams -show_format -print_format json \"{fileName}\"";
         int exitCode = Command(commandline, out json, out string error);
         return exitCode == 0 && error.Length == 0;
     }
@@ -161,10 +189,12 @@ public class FfProbeTool : FfMpegTool
                 else if (stream.CodecType.Equals("subtitle", StringComparison.OrdinalIgnoreCase))
                 {
                     // Some subtitle codecs are not supported, e.g. S_TEXT / WEBVTT
-                    if (string.IsNullOrEmpty(stream.CodecName) ||
-                        string.IsNullOrEmpty(stream.CodecLongName))
+                    if (
+                        string.IsNullOrEmpty(stream.CodecName)
+                        || string.IsNullOrEmpty(stream.CodecLongName)
+                    )
                     {
-                        Log.Logger.Warning("FfProbe Subtitle Format unknown");
+                        Log.Warning("FfProbe Subtitle Format unknown");
                         if (string.IsNullOrEmpty(stream.CodecName))
                         {
                             stream.CodecName = "Unknown";
@@ -222,7 +252,9 @@ public class FfProbeTool : FfMpegTool
 
         // Language and title are expected tags
         // Look for undesirable Tags
-        tags.Keys.Any(key => s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase)));
+        tags.Keys.Any(key =>
+            s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase))
+        );
 
     // "Undesirable" tags
     private static readonly string[] s_undesirableTags = ["statistics"];

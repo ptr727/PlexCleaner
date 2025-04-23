@@ -143,6 +143,7 @@
             "printsidecar",
             "privateuse",
             "probesize",
+            "processextensions",
             "projitems",
             "quicktype",
             "rawvideo",
@@ -170,6 +171,7 @@
             "subsampling",
             "subtag",
             "tagmap",
+            "testdir",
             "testnomodify",
             "testsnippets",
             "threadcount",
@@ -208,12 +210,15 @@
             "files.trimTrailingWhitespace": false
         },
         "[csharp]": {
-            "editor.formatOnSave": true
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "csharpier.csharpier-vscode"
         },
         "diffEditor.ignoreTrimWhitespace": false,
         "editor.renderWhitespace": "boundary",
+        "dotnet.formatting.organizeImportsOnFormat": true,
         "csharp.debug.symbolOptions.searchNuGetOrgSymbolServer": true,
-        "dotnet.formatting.organizeImportsOnFormat": true
+        "csharp.debug.symbolOptions.searchMicrosoftSymbolServer": true,
+        "files.encoding": "utf8bom"
     },
     "extensions": {
         "recommendations": [

@@ -15,5 +15,6 @@ public class WildcardTests(PlexCleanerFixture fixture)
     [InlineData("*.sample.*", "Foo.sample.foo", true)]
     [InlineData("*.sample.*", "sample.foo", false)]
     [InlineData("*.sample.*", "foo.sample", false)]
-    public void Wildcard_Match(string wildCard, string fileName, bool match) => Assert.Equal(match, ProcessOptions4.MaskToRegex(wildCard).IsMatch(fileName));
+    public void Wildcard_Match(string wildCard, string fileName, bool match) =>
+        Assert.Equal(match, ProcessOptions4.MaskToRegex(wildCard).IsMatch(fileName));
 }

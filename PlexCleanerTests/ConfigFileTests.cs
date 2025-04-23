@@ -15,7 +15,9 @@ public class ConfigFileTests(PlexCleanerFixture fixture)
     public void Open_Old_Schemas_Opens(string fileName)
     {
         // Deserialize
-        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(_fixture.GetSampleFilePath(fileName));
+        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(
+            _fixture.GetSampleFilePath(fileName)
+        );
         Assert.NotNull(configFileJsonSchema);
 
         // Test for expected config values
@@ -23,15 +25,24 @@ public class ConfigFileTests(PlexCleanerFixture fixture)
         Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
         Assert.Equal("ac3", configFileJsonSchema.ConvertOptions.FfMpegOptions.Audio);
         Assert.Empty(configFileJsonSchema.ConvertOptions.FfMpegOptions.Global);
-        Assert.Equal("copy --audio-fallback ac3", configFileJsonSchema.ConvertOptions.HandBrakeOptions.Audio);
+        Assert.Equal(
+            "copy --audio-fallback ac3",
+            configFileJsonSchema.ConvertOptions.HandBrakeOptions.Audio
+        );
         Assert.Contains("*.nfo", configFileJsonSchema.ProcessOptions.FileIgnoreMasks);
         Assert.Contains(".avi", configFileJsonSchema.ProcessOptions.ReMuxExtensions);
-        Assert.Contains(new VideoFormat { Format = "mpeg2video" }, configFileJsonSchema.ProcessOptions.ReEncodeVideo);
+        Assert.Contains(
+            new VideoFormat { Format = "mpeg2video" },
+            configFileJsonSchema.ProcessOptions.ReEncodeVideo
+        );
         Assert.Contains("flac", configFileJsonSchema.ProcessOptions.ReEncodeAudioFormats);
         Assert.Equal("en", configFileJsonSchema.ProcessOptions.DefaultLanguage);
         Assert.Contains("af", configFileJsonSchema.ProcessOptions.KeepLanguages);
         Assert.Contains("truehd", configFileJsonSchema.ProcessOptions.PreferredAudioFormats);
-        Assert.Contains(@"\\server\Share\Series\Fiancé\Season 1\Fiancé - S01E01 - Bar.mkv", configFileJsonSchema.ProcessOptions.FileIgnoreList);
+        Assert.Contains(
+            @"\\server\Share\Series\Fiancé\Season 1\Fiancé - S01E01 - Bar.mkv",
+            configFileJsonSchema.ProcessOptions.FileIgnoreList
+        );
         Assert.Equal(100000000, configFileJsonSchema.VerifyOptions.MaximumBitrate);
         Assert.Equal(60, configFileJsonSchema.MonitorOptions.MonitorWaitTime);
     }

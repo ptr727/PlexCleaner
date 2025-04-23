@@ -27,7 +27,8 @@ public class FfMpegToolJsonSchema
         [JsonPropertyName("format")]
         public FormatInfo Format { get; } = new();
 
-        public static FfProbe FromJson(string json) => JsonSerializer.Deserialize<FfProbe>(json, ConfigFileJsonSchema.JsonReadOptions);
+        public static FfProbe FromJson(string json) =>
+            JsonSerializer.Deserialize<FfProbe>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
 
     public class FormatInfo

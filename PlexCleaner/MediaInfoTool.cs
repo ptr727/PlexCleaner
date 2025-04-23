@@ -79,7 +79,8 @@ public partial class MediaInfoTool : MediaTool
 
             // Create the download Uri, binaries are not published on GitHub
             // https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
-            mediaToolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
+            mediaToolInfo.Url =
+                $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -100,8 +101,7 @@ public partial class MediaInfoTool : MediaTool
     public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(fileName, out string xml) &&
-               GetMediaInfoFromXml(xml, out mediaInfo);
+        return GetMediaInfoXml(fileName, out string xml) && GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
     public bool GetMediaInfoXml(string fileName, out string xml)
@@ -146,10 +146,12 @@ public partial class MediaInfoTool : MediaTool
                 else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
                 {
                     // Skip sub-tracks e.g. 0-1
-                    if (string.IsNullOrEmpty(track.CodecId) &&
-                        track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
+                    if (
+                        string.IsNullOrEmpty(track.CodecId)
+                        && track.Id.Contains('-', StringComparison.OrdinalIgnoreCase)
+                    )
                     {
-                        Log.Logger.Warning("MediaInfo skipping Audio sub-track : {TrackId}", track.Id);
+                        Log.Warning("MediaInfo skipping Audio sub-track : {TrackId}", track.Id);
                         continue;
                     }
 
@@ -181,6 +183,7 @@ public partial class MediaInfoTool : MediaTool
     }
 
     private const string InstalledVersionPattern = @"MediaInfoLib\ -\ v(?<version>.*)";
+
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 

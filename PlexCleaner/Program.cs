@@ -17,11 +17,16 @@ namespace PlexCleaner;
 
 public class Program
 {
-    private enum ExitCode { Success = 0, Error = 1 }
+    private enum ExitCode
+    {
+        Success = 0,
+        Error = 1,
+    }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 
-    private static int MakeExitCode(bool success) => success ? (int)ExitCode.Success : (int)ExitCode.Error;
+    private static int MakeExitCode(bool success) =>
+        success ? (int)ExitCode.Success : (int)ExitCode.Error;
 
     public static void LogInterruptMessage()
     {
@@ -82,7 +87,7 @@ public class Program
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
-        Log.Logger.Information("Exit Code : {ExitCode}", exitCode);
+        Log.Information("Exit Code : {ExitCode}", exitCode);
 
         // Close and flush on process exit
         Log.CloseAndFlush();
@@ -111,7 +116,11 @@ public class Program
             // Compare the versions
             if (thisVersion.CompareTo(latestVersion) < 0)
             {
-                Log.Logger.Warning("Current version is older than latest version : {CurrentVersion} < {LatestVersion}", thisVersion.ToString(), latestVersion.ToString());
+                Log.Warning(
+                    "Current version is older than latest version : {CurrentVersion} < {LatestVersion}",
+                    thisVersion.ToString(),
+                    latestVersion.ToString()
+                );
             }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
@@ -158,8 +167,10 @@ public class Program
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 
             // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
-            if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
-                && keyInfo.Modifiers == ConsoleModifiers.Control)
+            if (
+                keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
+                && keyInfo.Modifiers == ConsoleModifiers.Control
+            )
             {
                 // Signal the cancel event
                 Cancel(ConsoleModifiers.Control, keyInfo.Key);
@@ -179,7 +190,6 @@ public class Program
         // TODO: ConsoleSpecialKey can be ControlC or ControlBreak, what is the ConsoleKey for Break, VT_CANCEL in WIN32?
         Cancel(ConsoleModifiers.Control, ConsoleKey.C);
     }
-
 
     private static void WaitForDebugger()
     {
@@ -220,14 +230,16 @@ public class Program
 #if DEBUG
         LogEventLevel logLevelDefault = LogEventLevel.Debug;
 #else
-            LogEventLevel logLevelDefault = LogEventLevel.Information;
+        LogEventLevel logLevelDefault = LogEventLevel.Information;
 #endif
 
         // Log to console
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code,
+        loggerConfiguration.WriteTo.Console(
+            theme: AnsiConsoleTheme.Code,
             restrictedToMinimumLevel: logLevelDefault,
             outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-            formatProvider: CultureInfo.InvariantCulture);
+            formatProvider: CultureInfo.InvariantCulture
+        );
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
@@ -242,11 +254,15 @@ public class Program
 
             // Write async to file
             // Default max size is 1GB, roll when max size is reached
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile,
-                restrictedToMinimumLevel: logLevelDefault,
-                rollOnFileSizeLimit: true,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                formatProvider: CultureInfo.InvariantCulture));
+            loggerConfiguration.WriteTo.Async(action =>
+                action.File(
+                    logfile,
+                    restrictedToMinimumLevel: logLevelDefault,
+                    rollOnFileSizeLimit: true,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+                    formatProvider: CultureInfo.InvariantCulture
+                )
+            );
         }
 
         // Create static Serilog logger
@@ -258,7 +274,7 @@ public class Program
 
     public static int WriteDefaultSettingsCommand(CommandLineOptions options)
     {
-        Log.Logger.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
+        Log.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
 
         // Save default config
         ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
@@ -268,7 +284,7 @@ public class Program
 
     public static int CreateJsonSchemaCommand(CommandLineOptions options)
     {
-        Log.Logger.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
+        Log.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
 
         // Write schema
         ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
@@ -300,7 +316,10 @@ public class Program
         }
 
         // Process all files and delete empty folders
-        return MakeExitCode(Process.ProcessFiles(program._fileList) && Process.DeleteEmptyFolders(program._directoryList));
+        return MakeExitCode(
+            Process.ProcessFiles(program._fileList)
+                && Process.DeleteEmptyFolders(program._directoryList)
+        );
     }
 
     public static int MonitorCommand(CommandLineOptions options)
@@ -486,36 +505,41 @@ public class Program
         // Does the file exist
         if (!File.Exists(options.SettingsFile))
         {
-            Log.Logger.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
+            Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
             return null;
         }
 
         // Load config from JSON
-        Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
+        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
         if (config == null)
         {
-            Log.Logger.Error("Failed to load settings : {FileName}", options.SettingsFile);
+            Log.Error("Failed to load settings : {FileName}", options.SettingsFile);
             return null;
         }
 
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
+            Log.Warning(
+                "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
-                options.SettingsFile);
+                options.SettingsFile
+            );
 
             // Upgrade the file schema
-            Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
+            Log.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
             ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
         // Verify the settings
         if (!config.VerifyValues())
         {
-            Log.Logger.Error("Settings file contains incorrect or missing values : {FileName}", options.SettingsFile);
+            Log.Error(
+                "Settings file contains incorrect or missing values : {FileName}",
+                options.SettingsFile
+            );
             return null;
         }
 
@@ -535,23 +559,26 @@ public class Program
         if (!string.IsNullOrEmpty(Options.LogFile))
         {
             // Delete if not in append mode
-            if (!Options.LogAppend &&
-                !FileEx.DeleteFile(Options.LogFile))
+            if (!Options.LogAppend && !FileEx.DeleteFile(Options.LogFile))
             {
-                Log.Logger.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
+                Log.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
                 return null;
             }
 
             // Recreate the logger with a file
             CreateLogger(Options.LogFile);
-            Log.Logger.Information("Logging output to : {LogFile}", Options.LogFile);
+            Log.Information("Logging output to : {LogFile}", Options.LogFile);
         }
 
         // Log app and runtime version
-        Log.Logger.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
-        Log.Logger.Information("Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}", RuntimeInformation.FrameworkDescription, RuntimeInformation.RuntimeIdentifier);
-        Log.Logger.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Logger.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
+        Log.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
+        Log.Information(
+            "Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}",
+            RuntimeInformation.FrameworkDescription,
+            RuntimeInformation.RuntimeIdentifier
+        );
+        Log.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
+        Log.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 
         // Warn if a newer version has been released
         VerifyLatestVersion();
@@ -570,17 +597,23 @@ public class Program
             // If disabled set the threadcount to 1
             Options.ThreadCount = 1;
         }
-        Log.Logger.Information("Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}", Options.Parallel, Options.ThreadCount, Environment.ProcessorCount);
+        Log.Information(
+            "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
+            Options.Parallel,
+            Options.ThreadCount,
+            Environment.ProcessorCount
+        );
 
         // Verify tools
         if (verifyTools)
         {
             // Upgrade tools if auto update is enabled
-            if (Config.ToolsOptions.AutoUpdate &&
-                !Tools.CheckForNewTools())
+            if (Config.ToolsOptions.AutoUpdate && !Tools.CheckForNewTools())
             {
                 // Ignore error, do not stop execution in case of e.g. a site being down
-                Log.Logger.Error("Checking for new tools failed but continuing with existing tool versions");
+                Log.Error(
+                    "Checking for new tools failed but continuing with existing tool versions"
+                );
             }
 
             // Verify tools
@@ -597,7 +630,7 @@ public class Program
 
     private bool CreateFileList(List<string> mediaFiles)
     {
-        Log.Logger.Information("Creating file and folder list ...");
+        Log.Information("Creating file and folder list ...");
 
         // Trim quotes from input paths
         mediaFiles = [.. mediaFiles.Select(file => file.Trim('"'))];
@@ -609,7 +642,8 @@ public class Program
             Lock listLock = new();
 
             // Process each input in parallel
-            mediaFiles.AsParallel()
+            mediaFiles
+                .AsParallel()
                 .WithDegreeOfParallelism(Options.ThreadCount)
                 .WithCancellation(CancelToken())
                 .ForAll(fileOrFolder =>
@@ -628,11 +662,20 @@ public class Program
                         }
 
                         // Create the file list from the directory
-                        Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                        if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
+                        Log.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                        if (
+                            !FileEx.EnumerateDirectory(
+                                fileOrFolder,
+                                out List<FileInfo> fileInfoList,
+                                out _
+                            )
+                        )
                         {
                             // Abort
-                            Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
+                            Log.Error(
+                                "Failed to enumerate files in directory {Directory}",
+                                fileOrFolder
+                            );
                             Cancel();
                             CancelToken().ThrowIfCancellationRequested();
                         }
@@ -665,7 +708,11 @@ public class Program
         }
 
         // Report
-        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", _fileList.Count, _directoryList.Count);
+        Log.Information(
+            "Discovered {FileListCount} files from {DirectoryListCount} directories",
+            _fileList.Count,
+            _directoryList.Count
+        );
 
         return !fatalError;
     }
@@ -683,7 +730,8 @@ public class Program
         return WaitForCancel(100);
     }
 
-    public static bool WaitForCancel(int millisecond) => s_cancelSource.Token.WaitHandle.WaitOne(millisecond);
+    public static bool WaitForCancel(int millisecond) =>
+        s_cancelSource.Token.WaitHandle.WaitOne(millisecond);
 
     public static bool IsCancelled() => s_cancelSource.IsCancellationRequested;
 
@@ -693,7 +741,7 @@ public class Program
 
     public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
     {
-        Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
+        Log.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
         Cancel();
     }
 

@@ -75,7 +75,11 @@ public partial class SevenZipTool : MediaTool
             mediaToolInfo.FileName = $"7z{mediaToolInfo.Version.Replace(".", null)}-extra.7z";
 
             // Get the GitHub download Uri
-            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(
+                repo,
+                mediaToolInfo.Version,
+                mediaToolInfo.FileName
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -93,7 +97,8 @@ public partial class SevenZipTool : MediaTool
         return false;
     }
 
-    protected override string GetSubFolder() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
+    protected override string GetSubFolder() =>
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
 
     public override bool Update(string updateFile)
     {
@@ -104,7 +109,7 @@ public partial class SevenZipTool : MediaTool
         string extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
 
         // Extract the update file
-        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
+        Log.Information("Extracting {UpdateFile} ...", updateFile);
         if (!Tools.SevenZip.UnZip(updateFile, extractPath))
         {
             return false;
@@ -141,7 +146,7 @@ public partial class SevenZipTool : MediaTool
         // Make sure that the Tools folder exists
         if (!Directory.Exists(Tools.GetToolsRoot()))
         {
-            Log.Logger.Warning("Creating missing Tools folder : \"{ToolsRoot}\"", Tools.GetToolsRoot());
+            Log.Warning("Creating missing Tools folder : \"{ToolsRoot}\"", Tools.GetToolsRoot());
             if (!FileEx.CreateDirectory(Tools.GetToolsRoot()))
             {
                 return false;
@@ -150,7 +155,7 @@ public partial class SevenZipTool : MediaTool
 
         // Download 7zr.exe in the tools root folder
         // https://www.7-zip.org/a/7zr.exe
-        Log.Logger.Information("Downloading \"7zr.exe\" ...");
+        Log.Information("Downloading \"7zr.exe\" ...");
         string sevenZr = Tools.CombineToolPath("7zr.exe");
         if (!Download.DownloadFile(new Uri("https://www.7-zip.org/a/7zr.exe"), sevenZr))
         {
@@ -164,7 +169,7 @@ public partial class SevenZipTool : MediaTool
         }
 
         // Download the latest version in the tools root folder
-        Log.Logger.Information("Downloading \"{FileName}\" ...", mediaToolInfo.FileName);
+        Log.Information("Downloading \"{FileName}\" ...", mediaToolInfo.FileName);
         string updateFile = Tools.CombineToolPath(mediaToolInfo.FileName);
         if (!Download.DownloadFile(new Uri(mediaToolInfo.Url), updateFile))
         {
@@ -174,13 +179,13 @@ public partial class SevenZipTool : MediaTool
         // Follow the pattern from Update()
 
         // Use 7zr.exe to extract the archive to the tools folder
-        Log.Logger.Information("Extracting {UpdateFile} ...", updateFile);
+        Log.Information("Extracting {UpdateFile} ...", updateFile);
         string extractPath = Tools.CombineToolPath(Path.GetFileNameWithoutExtension(updateFile));
         string commandline = $"x -aoa -spe -y \"{updateFile}\" -o\"{extractPath}\"";
         int exitCode = ProcessEx.Execute(sevenZr, commandline);
         if (exitCode != 0)
         {
-            Log.Logger.Error("Failed to extract archive : ExitCode: {ExitCode}", exitCode);
+            Log.Error("Failed to extract archive : ExitCode: {ExitCode}", exitCode);
             return false;
         }
 
@@ -196,7 +201,9 @@ public partial class SevenZipTool : MediaTool
         return FileEx.RenameFolder(extractPath, toolPath);
     }
 
-    private const string InstalledVersionPattern = @"7-Zip(?:\s+\(.*?\))?(?:\s+\[\d+\])?\s+(?<version>\d+\.\d+)";
+    private const string InstalledVersionPattern =
+        @"7-Zip(?:\s+\(.*?\))?(?:\s+\[\d+\])?\s+(?<version>\d+\.\d+)";
+
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 }

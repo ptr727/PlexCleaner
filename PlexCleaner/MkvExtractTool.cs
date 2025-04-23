@@ -28,7 +28,11 @@ public class MkvExtractTool : MkvMergeTool
         return exitCode is 0 or 1;
     }
 
-    public bool ExtractToFiles(string inputName, MediaInfo extractTracks, out Dictionary<int, string> idToFileNames)
+    public bool ExtractToFiles(
+        string inputName,
+        MediaInfo extractTracks,
+        out Dictionary<int, string> idToFileNames
+    )
     {
         // Verify correct data type
         Debug.Assert(extractTracks.Parser == ToolType.MkvMerge);

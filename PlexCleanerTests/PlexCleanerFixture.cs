@@ -31,7 +31,8 @@ public class PlexCleanerFixture : IDisposable
                 theme: AnsiConsoleTheme.Code,
                 restrictedToMinimumLevel: LogEventLevel.Debug,
                 outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                formatProvider: CultureInfo.InvariantCulture)
+                formatProvider: CultureInfo.InvariantCulture
+            )
             .CreateLogger();
         InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
 
@@ -49,7 +50,8 @@ public class PlexCleanerFixture : IDisposable
         Log.CloseAndFlush();
     }
 
-    public string GetSampleFilePath(string fileName) => Path.GetFullPath(Path.Combine(_samplesDirectory, fileName));
+    public string GetSampleFilePath(string fileName) =>
+        Path.GetFullPath(Path.Combine(_samplesDirectory, fileName));
 
     private readonly string _samplesDirectory;
 

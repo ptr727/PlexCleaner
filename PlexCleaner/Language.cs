@@ -80,7 +80,11 @@ public class Language
 
         // Try CultureInfo
         CultureInfo cultureInfo = CreateCultureInfo(language);
-        return cultureInfo == null ? nullOnFailure ? null : Undefined : cultureInfo.IetfLanguageTag;
+        return cultureInfo == null
+            ? nullOnFailure
+                ? null
+                : Undefined
+            : cultureInfo.IetfLanguageTag;
     }
 
     // Get the ISO-639-2B tag from a RFC-5646 tag
@@ -174,9 +178,16 @@ public class Language
             CultureInfo cultureInfo = CultureInfo.GetCultureInfo(language, true);
 
             // Make sure the culture was not custom created
-            return cultureInfo == null ||
-                cultureInfo.ThreeLetterWindowsLanguageName.Equals(Missing, StringComparison.OrdinalIgnoreCase) ||
-                (cultureInfo.CultureTypes & CultureTypes.UserCustomCulture) == CultureTypes.UserCustomCulture ? null : cultureInfo;
+            return
+                cultureInfo == null
+                || cultureInfo.ThreeLetterWindowsLanguageName.Equals(
+                    Missing,
+                    StringComparison.OrdinalIgnoreCase
+                )
+                || (cultureInfo.CultureTypes & CultureTypes.UserCustomCulture)
+                    == CultureTypes.UserCustomCulture
+                ? null
+                : cultureInfo;
         }
         catch (CultureNotFoundException)
         {
@@ -186,7 +197,8 @@ public class Language
     }
 
     public static bool IsUndefined(string language) =>
-        string.IsNullOrEmpty(language) || language.Equals(Undefined, StringComparison.OrdinalIgnoreCase);
+        string.IsNullOrEmpty(language)
+        || language.Equals(Undefined, StringComparison.OrdinalIgnoreCase);
 
     public bool IsMatch(string prefix, string language)
     {
@@ -208,7 +220,10 @@ public class Language
             }
 
             // The language start with the prefix, and the the next character is a -
-            if (language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && language[prefix.Length..].StartsWith('-'))
+            if (
+                language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && language[prefix.Length..].StartsWith('-')
+            )
             {
                 return true;
             }

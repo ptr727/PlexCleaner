@@ -55,14 +55,16 @@ public class Bitrate(int seconds)
     }
 
     public void WriteLine(string prefix) =>
-        Log.Logger.Information("{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
+        Log.Information(
+            "{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
             prefix,
             TimeSpan.FromSeconds(Rate.Length),
             ToBitsPerSecond(Minimum),
             ToBitsPerSecond(Maximum),
             ToBitsPerSecond(Average),
             Exceeded,
-            TimeSpan.FromSeconds(Duration));
+            TimeSpan.FromSeconds(Duration)
+        );
 
     public static string ToBitsPerSecond(long byteRate) => Format.BytesToKilo(byteRate * 8, "bps");
 
