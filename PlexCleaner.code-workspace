@@ -226,7 +226,8 @@
             "gruntfuggly.todo-tree",
             "ms-dotnettools.csdevkit",
             "streetsidesoftware.code-spell-checker",
-            "editorconfig.editorconfig"
+            "editorconfig.editorconfig",
+            "csharpier.csharpier-vscode"
         ]
     }
 }

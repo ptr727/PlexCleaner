@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using InsaneGenius.Utilities;
 using Medallion.Shell;
+using PlexCleaner;
 using Serilog;
 
 namespace Sandbox;
@@ -9,9 +10,6 @@ namespace Sandbox;
 /*
 {
     "ClosedCaptions": {
-        "ffprobe": "ffprobe.exe",
-        "ffmpeg": "ffmpeg.exe",
-        "mediainfo": "mediainfo.exe",
         "ccextractor": "ccextractor.exe",
         "filepath": "C:\\Temp\\Test\\ClosedCaptions",
         "processextensions": ".ts,.mp4,.mkv"
@@ -21,36 +19,37 @@ namespace Sandbox;
 
 public class ClosedCaptions
 {
-    // TODO: Replace standard tools with Tools class
-    private readonly string _ffProbe;
-    private readonly string _ffMpeg;
-    private readonly string _mediaInfo;
     private readonly string _ccExtractor;
     private readonly string _filePath;
     private readonly List<string> _processExtensionList;
 
     public ClosedCaptions(Program program)
     {
-        // Get configuration settings
+        // Get settings
         Dictionary<string, string>? settings = program.GetSettingsDictionary(
             nameof(ClosedCaptions)
         );
         Debug.Assert(settings is not null);
-        _ffProbe = settings["ffprobe"];
-        _ffMpeg = settings["ffmpeg"];
-        _mediaInfo = settings["mediainfo"];
         _ccExtractor = settings["ccextractor"];
-        _filePath = settings["testdir"];
+        _filePath = settings["filepath"];
         _processExtensionList = [.. settings["processextensions"].Split(',').Select(s => s.Trim())];
     }
 
     public int Test()
     {
+        // Get tools
+        if (!Tools.CheckForNewTools() || !Tools.VerifyTools())
+        {
+            return -1;
+        }
+
+        // Get files
         if (!FileEx.EnumerateDirectory(_filePath, out List<FileInfo> fileInfoList, out _))
         {
             return -1;
         }
 
+        // Process files
         fileInfoList.ForEach(fileInfo =>
         {
             if (_processExtensionList.Contains(fileInfo.Extension))
@@ -76,7 +75,7 @@ public class ClosedCaptions
             .Replace(@"'", @"\\\'")
             .Replace(@",", @"\\\,");
 
-    private void ReadEIA608(FileInfo fileInfo)
+    private static void ReadEIA608(FileInfo fileInfo)
     {
         string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         string commandline =
@@ -87,7 +86,7 @@ public class ClosedCaptions
 
         Log.Information("Reading EIA608 data from {FilePath}", fileInfo.Name);
         int ret = ProcessEx.Execute(
-            _ffProbe,
+            Tools.FfProbe.GetToolPath(),
             commandline,
             false,
             0,
@@ -105,7 +104,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private void ReadSubCC(FileInfo fileInfo)
+    private static void ReadSubCC(FileInfo fileInfo)
     {
         string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         string commandline =
@@ -114,7 +113,7 @@ public class ClosedCaptions
 
         Log.Information("Reading SubCC data from {FilePath}", fileInfo.Name);
         int ret = ProcessEx.Execute(
-            _ffProbe,
+            Tools.FfProbe.GetToolPath(),
             commandline,
             false,
             0,
@@ -132,7 +131,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private void WriteSubCC(FileInfo fileInfo)
+    private static void WriteSubCC(FileInfo fileInfo)
     {
         string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         FileInfo outputFileInfo = new(Path.ChangeExtension(fileInfo.FullName, "subcc.srt"));
@@ -144,7 +143,14 @@ public class ClosedCaptions
             fileInfo.Name,
             outputFileInfo.Name
         );
-        int ret = ProcessEx.Execute(_ffMpeg, commandline, false, 0, out string _, out string error);
+        int ret = ProcessEx.Execute(
+            Tools.FfMpeg.GetToolPath(),
+            commandline,
+            false,
+            0,
+            out string _,
+            out string error
+        );
         if (ret != 0)
         {
             Log.Error("Error writing SubCC data : {Error}", error);
@@ -152,13 +158,13 @@ public class ClosedCaptions
         Log.Information("SubCC data written to {OutputFile}", outputFileInfo.Name);
     }
 
-    private void ReadMediaInfo(FileInfo fileInfo)
+    private static void ReadMediaInfo(FileInfo fileInfo)
     {
         string commandline = $"--Output=JSON \"{fileInfo.FullName}\"";
 
         Log.Information("Reading MediaInfo data from {FilePath}", fileInfo.Name);
         int ret = ProcessEx.Execute(
-            _mediaInfo,
+            Tools.MediaInfo.GetToolPath(),
             commandline,
             false,
             0,
@@ -176,7 +182,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private void ReadTrimMediaInfo(FileInfo fileInfo)
+    private static void ReadTrimMediaInfo(FileInfo fileInfo)
     {
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =
@@ -189,7 +195,7 @@ public class ClosedCaptions
             tempFile.Name
         );
         int ret = ProcessEx.Execute(
-            _ffMpeg,
+            Tools.FfMpeg.GetToolPath(),
             ffmpegCommandline,
             false,
             0,
@@ -205,7 +211,7 @@ public class ClosedCaptions
 
         Log.Information("Reading MediaInfo data from {FilePath}", tempFile.Name);
         ret = ProcessEx.Execute(
-            _mediaInfo,
+            Tools.MediaInfo.GetToolPath(),
             mediainfoCommandline,
             false,
             0,
@@ -286,7 +292,7 @@ public class ClosedCaptions
         try
         {
             result = Command
-                .Run(_ffMpeg, ffmpegCommandline)
+                .Run(Tools.FfMpeg.GetToolPath(), ffmpegCommandline)
                 .PipeTo(Command.Run(_ccExtractor, ccextractorCommandline))
                 .Task;
             result.Wait();
@@ -322,7 +328,7 @@ public class ClosedCaptions
             tempFile.Name
         );
         int ret = ProcessEx.Execute(
-            _ffMpeg,
+            Tools.FfMpeg.GetToolPath(),
             ffmpegCommandline,
             false,
             0,

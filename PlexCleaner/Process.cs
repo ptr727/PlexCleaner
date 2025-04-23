@@ -326,8 +326,7 @@ public static class Process
         }
 
         // Process the files
-        List<string> fileList = [];
-        fileInfoList.ForEach(item => fileList.Add(item.FullName));
+        List<string> fileList = [.. fileInfoList.Select(item => item.FullName)];
         return ProcessFiles(fileList);
     }
 
@@ -786,7 +785,7 @@ public static class Process
             }
         );
 
-    private static bool ProcessFilesDriver(
+    public static bool ProcessFilesDriver(
         List<string> fileList,
         string taskName,
         Func<string, bool> taskFunc

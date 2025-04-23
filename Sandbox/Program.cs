@@ -10,6 +10,15 @@ using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Sandbox;
 
+// Settings:
+/*
+{
+    "class": {
+        "key": "value",
+    }
+}
+*/
+
 public class Program
 {
     private static int Main()
@@ -19,7 +28,10 @@ public class Program
         PlexCleaner.Program.Config = new ConfigFileJsonSchema();
         PlexCleaner.Program.Config.SetDefaults();
 
-        // Create default logger
+        // Set runtime options
+        SetRuntimeOptions();
+
+        // Create logger
         Serilog.Debugging.SelfLog.Enable(Console.Error);
         Log.Logger = new LoggerConfiguration()
             .Enrich.WithThreadId()
@@ -32,22 +44,57 @@ public class Program
             .CreateLogger();
         InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
 
-        // Dynamic init
+        // Sandbox tests
         Program program = new();
 
-        // Sandbox tests
-        ClosedCaptions closedCaptions = new(program);
-        int ret = closedCaptions.Test();
+        // ClosedCaptions closedCaptions = new(program);
+        // int ret = closedCaptions.Test();
 
+        ProcessFiles processFiles = new(program);
+        int ret = processFiles.Test();
+
+        // Done
         Log.CloseAndFlush();
         return ret;
     }
 
+    public static void SetRuntimeOptions()
+    {
+        InsaneGenius.Utilities.FileEx.Options.TestNoModify = PlexCleaner
+            .Program
+            .Options
+            .TestNoModify;
+        InsaneGenius.Utilities.FileEx.Options.RetryCount = PlexCleaner
+            .Program
+            .Config
+            .MonitorOptions
+            .FileRetryCount;
+        InsaneGenius.Utilities.FileEx.Options.RetryWaitTime = PlexCleaner
+            .Program
+            .Config
+            .MonitorOptions
+            .FileRetryWaitTime;
+
+        if (PlexCleaner.Program.Options.Parallel)
+        {
+            if (PlexCleaner.Program.Options.ThreadCount == 0)
+            {
+                PlexCleaner.Program.Options.ThreadCount = Math.Max(
+                    Environment.ProcessorCount / 2,
+                    1
+                );
+            }
+        }
+        else
+        {
+            PlexCleaner.Program.Options.ThreadCount = 1;
+        }
+    }
+
     private Program()
     {
-        // Get full path to JSON settings file
-        string? settingsPath = GetSettingsFilePath(JsonConfigFile);
-        if (settingsPath is not null)
+        // Get settings
+        if (GetSettingsFilePath(JsonConfigFile) is string settingsPath)
         {
             using FileStream jsonStream = File.OpenRead(settingsPath);
             _settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
@@ -65,11 +112,13 @@ public class Program
         if (!File.Exists(settingsPath))
         {
             // Try to load settings file from assembly directory
-            Assembly? entryAssembly = Assembly.GetEntryAssembly();
-            Debug.Assert(entryAssembly != null);
-            string? assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
-            Debug.Assert(assemblyDirectory != null);
-            settingsPath = Path.GetFullPath(Path.Combine(assemblyDirectory, fileName));
+            if (
+                Assembly.GetEntryAssembly() is { } entryAssembly
+                && Path.GetDirectoryName(entryAssembly.Location) is { } assemblyDirectory
+            )
+            {
+                settingsPath = Path.GetFullPath(Path.Combine(assemblyDirectory, fileName));
+            }
         }
         if (!File.Exists(settingsPath))
         {
@@ -90,15 +139,13 @@ public class Program
     };
 
     public JsonElement? GetSettingsObject(string key) =>
-        _settings is null ? null
-        : _settings.TryGetValue(key, out JsonElement value) ? value
-        : null;
+        _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
 
-    public Dictionary<string, string>? GetSettingsDictionary(string key)
-    {
-        JsonElement? jsonElement = GetSettingsObject(key);
-        return jsonElement == null ? null : jsonElement?.Deserialize<Dictionary<string, string>>();
-    }
+    public Dictionary<string, string>? GetSettingsDictionary(string key) =>
+        GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>();
+
+    public T? GetSettings<T>(string key)
+        where T : class => GetSettingsObject(key)?.Deserialize<T>();
 
     private readonly Dictionary<string, JsonElement>? _settings;
 
