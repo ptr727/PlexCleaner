@@ -9,8 +9,8 @@ namespace Sandbox;
 /*
 {
     "ProcessFiles": {
-        "settingsfile": "plexcleaner.json",
-        "filepath": "D:\\Test"
+        "SettingsFile": "PlexCleaner.json",
+        "FilePath": "D:\\Test"
     }
 }
 */
@@ -25,8 +25,8 @@ public class ProcessFiles
         // Get settings
         Dictionary<string, string>? settings = program.GetSettingsDictionary(nameof(ProcessFiles));
         Debug.Assert(settings is not null);
-        _settingsFile = settings["settingsfile"];
-        _filePath = settings["filepath"];
+        _settingsFile = settings["SettingsFile"];
+        _filePath = settings["FilePath"];
     }
 
     public int Test()

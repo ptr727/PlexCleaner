@@ -47,11 +47,11 @@ public class Program
         // Sandbox tests
         Program program = new();
 
-        // ClosedCaptions closedCaptions = new(program);
-        // int ret = closedCaptions.Test();
+        ClosedCaptions closedCaptions = new(program);
+        int ret = closedCaptions.Test();
 
-        ProcessFiles processFiles = new(program);
-        int ret = processFiles.Test();
+        // ProcessFiles processFiles = new(program);
+        // int ret = processFiles.Test();
 
         // Done
         Log.CloseAndFlush();
@@ -142,7 +142,11 @@ public class Program
         _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
 
     public Dictionary<string, string>? GetSettingsDictionary(string key) =>
-        GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>();
+        new(
+            GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>()
+                ?? new Dictionary<string, string>(),
+            StringComparer.OrdinalIgnoreCase
+        );
 
     public T? GetSettings<T>(string key)
         where T : class => GetSettingsObject(key)?.Deserialize<T>();

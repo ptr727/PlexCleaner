@@ -140,11 +140,11 @@ Example, run in an interactive shell:
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
-# Make sure the media file permissions allow writing for the executing user
+# If running docker as a non-root user make sure the media file permissions allow writing for the executing user
 # adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
-# Replace the user account to suit your needs
-sudo chown -R nonroot:users /data/media
-sudo chmod -R ugo=rwx /data/media
+# sudo chown -R nonroot:users /data/media
+# sudo chmod -R ug=rwx,o=rx /data/media
+# docker run --user nonroot:users
 
 # Run the bash shell in an interactive session
 docker run \
@@ -152,7 +152,6 @@ docker run \
   --rm \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -190,7 +189,6 @@ docker run \
   --log-driver json-file --log-opt max-size=10m \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -212,7 +210,6 @@ docker run \
   --rm \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -291,7 +288,7 @@ Create a default JSON configuration file by running:
 
 Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for usage.
 
-## Custom FFmpeg and HandBrake CLI Parameters
+### Custom FFmpeg and HandBrake CLI Parameters
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
@@ -299,7 +296,7 @@ Note that hardware assisted encoding options are operating system, hardware, and
 Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.
 The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
-### FFmpeg Options
+#### FFmpeg Options
 
 See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.\
 The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.
@@ -335,7 +332,7 @@ Example hardware assisted video encoding options:
   - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
   - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
 
-### HandBrake Options
+#### HandBrake Options
 
 See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.
 The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.
@@ -368,120 +365,6 @@ Example hardware assisted video encoding options:
 
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
-
-## IETF Language Matching
-
-Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
-During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
-If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
-
-Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.\
-E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.\
-E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.\
-E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.\
-E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
-
-Normalized tags will be expanded for matching.\
-E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
-
-See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
-
-## EIA-608 and CTA-708 Closed Captions
-
-[EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
-While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
-
-Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
-Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
-Note that I have no expertise in video engineering, and the following information was gathered by research and experimentation.
-
-FFprobe [never supported](https://github.com/ptr727/PlexCleaner/issues/94) closed caption detection when using `-print_format json`, and recently [removed reporting](https://github.com/ptr727/PlexCleaner/issues/497) of closed caption presence reporting completely.\
-E.g. (no longer supported)
-
-```text
-Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1920x1080, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
-```
-
-MediaInfo supports closed caption detection, but only for [some container types](https://github.com/MediaArea/MediaInfoLib/issues/2264), and [only scans](https://github.com/MediaArea/MediaInfoLib/issues/1881) the first 30s of the video looking for video frames containing closed captions.\
-MediaInfo does not support input piping (e.g. MKV -> FFmpeg -> TS -> MediaInfo), and requires the TS file to be created on disk and used as standard input.\
-In my testing I found that remuxing 30s of video from MKV to TS first did produce reliable results.\
-E.g. (trimmed output)
-
-```json
-{
-    "@type": "Text",
-    "ID": "256-CC1",
-    "Format": "EIA-608",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
-},
-{
-    "@type": "Text",
-    "ID": "256-1",
-    "Format": "EIA-708",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
-},
-```
-
-[CCExtractor](https://ccextractor.org/) supports closed caption detection using `-out=report`.\
-In my testing I found using MKV containers directly as input produced unreliable results, either no output generated or false negatives.\
-CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires the TS file to be created on disk and used as standard input.\
-Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.\
-E.g. (trimmed output)
-
-```text
-EIA-608: Yes
-CEA-708: Yes
-```
-
-FFmpeg [`readeia608` filter](https://ffmpeg.org/ffmpeg-filters.html#readeia608) can be used in FFprobe to report EIA-608 frame information.\
-E.g. `ffprobe -loglevel error -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format json`\
-In my testing I found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.\
-E.g. (trimmed output)
-
-```json
-{
-    "best_effort_timestamp_time": "0.000000",
-    "duration_time": "0.033367",
-    "tags": {
-        "lavfi.readeia608.1.cc": "0x8504",
-        "lavfi.readeia608.0.cc": "0x8080",
-        "lavfi.readeia608.0.line": "28",
-        "lavfi.readeia608.1.line": "29"
-    },
-}
-```
-
-FFmpeg [`subcc` filter](https://www.ffmpeg.org/ffmpeg-devices.html#Options-10) can be used to create subtitle streams from the closed captions in video streams.\
-Note that the `movie=filename[out0+subcc]` convention requires [escaping](https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena) the filename to not interfere with commandline parsing.\
-E.g. `ffprobe -loglevel error -select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -show_packets -print_format json`\
-E.g. `ffmpeg -abort_on empty_output -y -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -map 0:s -c:s srt \"{outputFileInfo.FullName}\"`\
-In my testing I found the results to be reliable.\
-E.g. (trimmed output)
-
-```json
-{
-    "codec_type": "subtitle",
-    "stream_index": 1,
-    "pts_time": "0.000000",
-    "dts_time": "0.000000",
-    "size": "60",
-    "pos": "5690",
-    "flags": "K__"
-},
-```
-
-```text
-9
-00:00:35,568 --> 00:00:38,004
-<font face="Monospace">{\an7}No going back now.</font>
-```
-
-The currently implemented method of closed caption detection is using FFprobe and the `subcc` filter to detect closed caption frames.
-
-FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits) can be used to [remove closed captions](https://stackoverflow.com/questions/48177694/removing-eia-608-closed-captions-from-h-264-without-reencode) from video streams.\
-E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v filter_units=remove_types=6 \"{outInfo.FullName}\"`\
-Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.\
-[Note](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [note](https://trac.ffmpeg.org/ticket/5283) that as of writing HDR10+ metadata may be lost when removing closed captions from H265 content.
 
 ## Usage
 
@@ -642,7 +525,8 @@ The `monitor` command will watch the specified folders for file changes, and per
 
 - Most of the `process` command options apply.
 - Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
-- Enabling `--preprocess` will process all media on startup and then start monitoring for changes. Note that it is possible that files may be modified or added between iterating for process, and processing, and then monitoring.
+- Enabling `--preprocess` will process all media on startup and then start monitoring for changes.
+- Note if any files are added or modified or added between file iteration starting, and processing those files, and then monitoring, those files will not be included in processing, jsut run again.
 
 ### Other Commands
 
@@ -673,6 +557,122 @@ The `monitor` command will watch the specified folders for file changes, and per
   - Print sidecar file attribute information.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
+
+## IETF Language Matching
+
+Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
+During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
+If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
+
+Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.\
+E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.\
+E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.\
+E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.\
+E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+
+Normalized tags will be expanded for matching.\
+E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
+
+See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
+
+## EIA-608 and CTA-708 Closed Captions
+
+[EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
+While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
+
+Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
+Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
+Note I have no expertise in video engineering, and the following information was gathered by research and experimentation.
+
+FFprobe [never supported](https://github.com/ptr727/PlexCleaner/issues/94) closed caption detection when using `-print_format json`, and recently [removed reporting](https://github.com/ptr727/PlexCleaner/issues/497) of closed caption presence reporting completely.\
+E.g. (no longer supported)
+
+```text
+Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1920x1080, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
+```
+
+MediaInfo supports closed caption detection, but only for [some container types](https://github.com/MediaArea/MediaInfoLib/issues/2264), and [only scans](https://github.com/MediaArea/MediaInfoLib/issues/1881) the first 30s of the video looking for video frames containing closed captions.\
+MediaInfo does [not support](https://github.com/MediaArea/MediaInfoLib/issues/1881#issuecomment-2816754336) general input piping (e.g. MKV -> FFmpeg -> TS -> MediaInfo), and requires the TS file to be created on disk and used as standard input.\
+In my testing I found that remuxing 30s of video from MKV to TS first did produce reliable results.\
+E.g. (trimmed output)
+
+```json
+{
+    "@type": "Text",
+    "ID": "256-CC1",
+    "Format": "EIA-608",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+{
+    "@type": "Text",
+    "ID": "256-1",
+    "Format": "EIA-708",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+```
+
+[CCExtractor](https://ccextractor.org/) supports closed caption detection using `-out=report`.\
+In my testing I found using MKV containers directly as input produced unreliable results, either no output generated or false negatives.\
+CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires the TS file to be created on disk and used as standard input.\
+Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.\
+E.g. (trimmed output)
+
+```text
+EIA-608: Yes
+CEA-708: Yes
+```
+
+FFmpeg [`readeia608` filter](https://ffmpeg.org/ffmpeg-filters.html#readeia608) can be used in FFprobe to report EIA-608 frame information.\
+E.g. `ffprobe -loglevel error -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format json`\
+Note the `movie=filename[out0+subcc]` convention requires [escaping](https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena) the filename to not interfere with commandline parsing.\
+In my testing I found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.\
+E.g. (trimmed output)
+
+```json
+{
+    "best_effort_timestamp_time": "0.000000",
+    "duration_time": "0.033367",
+    "tags": {
+        "lavfi.readeia608.1.cc": "0x8504",
+        "lavfi.readeia608.0.cc": "0x8080",
+        "lavfi.readeia608.0.line": "28",
+        "lavfi.readeia608.1.line": "29"
+    },
+}
+```
+
+FFmpeg [`subcc` filter](https://www.ffmpeg.org/ffmpeg-devices.html#Options-10) can be used to create subtitle streams from the closed captions in video streams.\
+E.g. `ffprobe -loglevel error -select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -show_packets -print_format json`\
+E.g. `ffmpeg -abort_on empty_output -y -f lavfi -i \"movie={EscapeMovieFileName(fileInfo.FullName)}[out0+subcc]\" -map 0:s -c:s srt \"{outputFileInfo.FullName}\"`\
+In my testing I found the results to be reliable.\
+E.g. (trimmed output)
+
+```json
+{
+    "codec_type": "subtitle",
+    "stream_index": 1,
+    "pts_time": "0.000000",
+    "dts_time": "0.000000",
+    "size": "60",
+    "pos": "5690",
+    "flags": "K__"
+},
+```
+
+```text
+9
+00:00:35,568 --> 00:00:38,004
+<font face="Monospace">{\an7}No going back now.</font>
+```
+
+The currently implemented method of closed caption detection is using FFprobe and the `subcc` filter to detect closed caption frames.\
+Not that as of writing the `ffmpeg -t` and `ffprobe -read_intervals` to limits [do not seems to work](https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc) and the entire file is scanned making the operation time consuming.\
+An alternative implementation could be to write a short sipped of video to a temp file and process the snippet only.
+
+FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits) can be used to [remove closed captions](https://stackoverflow.com/questions/48177694/removing-eia-608-closed-captions-from-h-264-without-reencode) from video streams.\
+E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v filter_units=remove_types=6 \"{outInfo.FullName}\"`\
+Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.\
+[Note](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [note](https://trac.ffmpeg.org/ticket/5283) that as of writing HDR10+ metadata may be lost when removing closed captions from H265 content.
 
 ## Testing
 

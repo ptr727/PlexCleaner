@@ -10,9 +10,9 @@ namespace Sandbox;
 /*
 {
     "ClosedCaptions": {
-        "ccextractor": "ccextractor.exe",
-        "filepath": "C:\\Temp\\Test\\ClosedCaptions",
-        "processextensions": ".ts,.mp4,.mkv"
+        "CCExtractor": "ccextractor.exe",
+        "FilePath": "C:\\Temp\\Test\\ClosedCaptions",
+        "ProcessExtensions": ".ts,.mp4,.mkv"
     }
 }
 */
@@ -30,9 +30,9 @@ public class ClosedCaptions
             nameof(ClosedCaptions)
         );
         Debug.Assert(settings is not null);
-        _ccExtractor = settings["ccextractor"];
-        _filePath = settings["filepath"];
-        _processExtensionList = [.. settings["processextensions"].Split(',').Select(s => s.Trim())];
+        _ccExtractor = settings["CCExtractor"];
+        _filePath = settings["FilePath"];
+        _processExtensionList = [.. settings["ProcessExtensions"].Split(',').Select(s => s.Trim())];
     }
 
     public int Test()
@@ -54,14 +54,15 @@ public class ClosedCaptions
         {
             if (_processExtensionList.Contains(fileInfo.Extension))
             {
-                ReadEIA608(fileInfo);
-                ReadSubCC(fileInfo);
-                WriteSubCC(fileInfo);
-                ReadMediaInfo(fileInfo);
-                ReadTrimMediaInfo(fileInfo);
-                ReadCCExtractor(fileInfo);
-                ReadFFmpegPipeCCExtractor(fileInfo);
-                ReadFFmpegTempCCExtractor(fileInfo);
+                //ReadFFprobeEIA608ToJson(fileInfo);
+                //ReadFFprobeSubCCToJson(fileInfo);
+                //WriteFFmpegSubCCToSrt(fileInfo);
+                //ReadMediaInfoToJson(fileInfo);
+                //ReadFFmpegTempMediaInfo(fileInfo);
+                //ReadCCExtractor(fileInfo);
+                //ReadFFmpegPipeCCExtractor(fileInfo);
+                //ReadFFmpegTempCCExtractor(fileInfo);
+                ReadFFmpegTempFFprobe(fileInfo);
             }
         });
 
@@ -75,14 +76,10 @@ public class ClosedCaptions
             .Replace(@"'", @"\\\'")
             .Replace(@",", @"\\\,");
 
-    private static void ReadEIA608(FileInfo fileInfo)
+    private static void ReadFFprobeEIA608ToJson(FileInfo fileInfo)
     {
-        string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         string commandline =
-            $"-loglevel error -f lavfi -i \"movie={escapedPath},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format csv";
-        // $"-loglevel error -f lavfi -i \"movie={escapedPath},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time,side_data_list:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format:compact=1 json";
-        // $"-loglevel error -f lavfi -i \"movie={escapedPath},readeia608\" -show_entries frame=best_effort_timestamp_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format csv";
-        // $"-loglevel error -f lavfi -i \"movie={escapedPath},readeia608\" -show_entries frame=best_effort_timestamp_time,tags,side_data_list -print_format json";
+            $"-loglevel error -f lavfi -i \"movie={EscapeMovieFilterPath(fileInfo.FullName)},readeia608\" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format json";
 
         Log.Information("Reading EIA608 data from {FilePath}", fileInfo.Name);
         int ret = ProcessEx.Execute(
@@ -99,17 +96,15 @@ public class ClosedCaptions
             return;
         }
 
-        string outputFile = Path.ChangeExtension(fileInfo.FullName, "readeia608.csv");
+        string outputFile = Path.ChangeExtension(fileInfo.FullName, "readeia608.json");
         Log.Information("Writing EIA608 data to {OutputFile}", outputFile);
         File.WriteAllText(outputFile, output);
     }
 
-    private static void ReadSubCC(FileInfo fileInfo)
+    private static void ReadFFprobeSubCCToJson(FileInfo fileInfo)
     {
-        string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         string commandline =
-            $"-loglevel error -select_streams s:0 -f lavfi -i \"movie={escapedPath}[out0+subcc]\" -show_packets -print_format json";
-        // $"-loglevel error -f lavfi -i \"movie={escapedPath}[out0+subcc]\" -show_frames -print_format json";
+            $"-loglevel error -select_streams s:0 -f lavfi -i \"movie={EscapeMovieFilterPath(fileInfo.FullName)}[out0+subcc]\" -show_packets -print_format json";
 
         Log.Information("Reading SubCC data from {FilePath}", fileInfo.Name);
         int ret = ProcessEx.Execute(
@@ -131,12 +126,11 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private static void WriteSubCC(FileInfo fileInfo)
+    private static void WriteFFmpegSubCCToSrt(FileInfo fileInfo)
     {
-        string escapedPath = EscapeMovieFilterPath(fileInfo.FullName);
         FileInfo outputFileInfo = new(Path.ChangeExtension(fileInfo.FullName, "subcc.srt"));
         string commandline =
-            $"-abort_on empty_output -y -f lavfi -i \"movie={escapedPath}[out0+subcc]\" -map 0:s -c:s srt \"{outputFileInfo.FullName}\"";
+            $"-abort_on empty_output -y -f lavfi -i \"movie={EscapeMovieFilterPath(fileInfo.FullName)}[out0+subcc]\" -map 0:s -c:s srt \"{outputFileInfo.FullName}\"";
 
         Log.Information(
             "Extracting SubCC data from {FilePath} to {OutputFile}",
@@ -158,7 +152,7 @@ public class ClosedCaptions
         Log.Information("SubCC data written to {OutputFile}", outputFileInfo.Name);
     }
 
-    private static void ReadMediaInfo(FileInfo fileInfo)
+    private static void ReadMediaInfoToJson(FileInfo fileInfo)
     {
         string commandline = $"--Output=JSON \"{fileInfo.FullName}\"";
 
@@ -182,12 +176,11 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private static void ReadTrimMediaInfo(FileInfo fileInfo)
+    private static void ReadFFmpegTempMediaInfo(FileInfo fileInfo)
     {
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =
             $"-hide_banner -report -loglevel error -i \"{fileInfo.FullName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -t 30 -f mpegts \"{tempFile.FullName}\"";
-        string mediainfoCommandline = $"--Output=JSON \"{tempFile.FullName}\"";
 
         Log.Information(
             "Remuxing {FilePath} to temp short TS file {TempFilePath}",
@@ -210,6 +203,7 @@ public class ClosedCaptions
         }
 
         Log.Information("Reading MediaInfo data from {FilePath}", tempFile.Name);
+        string mediainfoCommandline = $"--Output=JSON \"{tempFile.FullName}\"";
         ret = ProcessEx.Execute(
             Tools.MediaInfo.GetToolPath(),
             mediainfoCommandline,
@@ -320,7 +314,6 @@ public class ClosedCaptions
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =
             $"-hide_banner -report -loglevel error -i \"{fileInfo.FullName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile.FullName}\"";
-        string ccextractorCommandline = $"\"{tempFile.FullName}\" -in=ts -12 -out=report";
 
         Log.Information(
             "Remuxing {FilePath} to temp TS file {TempFilePath}",
@@ -343,6 +336,7 @@ public class ClosedCaptions
         }
 
         Log.Information("Reading CCExtractor data from {FilePath}", tempFile.Name);
+        string ccextractorCommandline = $"\"{tempFile.FullName}\" -in=ts -12 -out=report";
         ret = ProcessEx.Execute(
             _ccExtractor,
             ccextractorCommandline,
@@ -360,6 +354,55 @@ public class ClosedCaptions
 
         string outputFile = Path.ChangeExtension(fileInfo.FullName, "temp.ccextractor.txt");
         Log.Information("Writing CCExtractor data to {OutputFile}", outputFile);
+        File.WriteAllText(outputFile, output);
+    }
+
+    private static void ReadFFmpegTempFFprobe(FileInfo fileInfo)
+    {
+        FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
+        string ffmpegCommandline =
+            $"-hide_banner -report -loglevel error -i \"{fileInfo.FullName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile.FullName}\"";
+
+        Log.Information(
+            "Remuxing {FilePath} to temp TS file {TempFilePath}",
+            fileInfo.Name,
+            tempFile.Name
+        );
+        int ret = ProcessEx.Execute(
+            Tools.FfMpeg.GetToolPath(),
+            ffmpegCommandline,
+            false,
+            0,
+            out string _,
+            out string error
+        );
+        if (ret != 0)
+        {
+            Log.Error("Error writing temp TS file : {Error}", error);
+            tempFile.Delete();
+            return;
+        }
+
+        Log.Information("Reading SubCC data from {FilePath}", tempFile.Name);
+        string ffprobeCommandline =
+            $"-loglevel error -select_streams s:0 -f lavfi -i \"movie={EscapeMovieFilterPath(tempFile.FullName)}[out0+subcc]\" -show_packets -print_format json";
+        ret = ProcessEx.Execute(
+            Tools.FfProbe.GetToolPath(),
+            ffprobeCommandline,
+            false,
+            0,
+            out string output,
+            out error
+        );
+        tempFile.Delete();
+        if (ret != 0)
+        {
+            Log.Error("Error reading SubCC data : {Error}", error);
+            return;
+        }
+
+        string outputFile = Path.ChangeExtension(fileInfo.FullName, "temp.subcc.json");
+        Log.Information("Writing SubCC data to {OutputFile}", outputFile);
         File.WriteAllText(outputFile, output);
     }
 }
