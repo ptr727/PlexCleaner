@@ -74,15 +74,12 @@ public class FfProbeTool : FfMpegTool
         // Build commandline
         StringBuilder commandline = new();
         _ = commandline.Append("-loglevel error ");
-        if (Program.Options.TestSnippets)
-        {
-            _ = commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} "
-            );
-        }
+        // TODO: -t and read_intervals do not work with the subcc filter
+        // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
+
         // Get packet info using ccsub filter
         // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
+        // TODO: Scanning the entire file is costly, consider adding a "quickscan" option, write to short temp TS file then scan
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json"
@@ -136,6 +133,9 @@ public class FfProbeTool : FfMpegTool
 
     public bool GetFfProbeInfoJson(string fileName, out string json)
     {
+        // TODO: Add analyze_frames when available in all FFmpeg builds
+        // https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01
+
         // Get media info as JSON
         string commandline =
             $"-loglevel quiet -show_streams -show_format -print_format json \"{fileName}\"";

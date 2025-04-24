@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -47,11 +46,11 @@ public class Program
         // Sandbox tests
         Program program = new();
 
-        ClosedCaptions closedCaptions = new(program);
-        int ret = closedCaptions.Test();
+        // ClosedCaptions closedCaptions = new(program);
+        // int ret = closedCaptions.Test();
 
-        // ProcessFiles processFiles = new(program);
-        // int ret = processFiles.Test();
+        ProcessFiles processFiles = new(program);
+        int ret = processFiles.Test();
 
         // Done
         Log.CloseAndFlush();
@@ -143,8 +142,7 @@ public class Program
 
     public Dictionary<string, string>? GetSettingsDictionary(string key) =>
         new(
-            GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>()
-                ?? new Dictionary<string, string>(),
+            GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>() ?? [],
             StringComparer.OrdinalIgnoreCase
         );
 

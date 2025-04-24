@@ -54,15 +54,16 @@ public class ClosedCaptions
         {
             if (_processExtensionList.Contains(fileInfo.Extension))
             {
-                //ReadFFprobeEIA608ToJson(fileInfo);
-                //ReadFFprobeSubCCToJson(fileInfo);
-                //WriteFFmpegSubCCToSrt(fileInfo);
-                //ReadMediaInfoToJson(fileInfo);
-                //ReadFFmpegTempMediaInfo(fileInfo);
-                //ReadCCExtractor(fileInfo);
-                //ReadFFmpegPipeCCExtractor(fileInfo);
-                //ReadFFmpegTempCCExtractor(fileInfo);
-                ReadFFmpegTempFFprobe(fileInfo);
+                ReadFFprobeAnalyzeFramesToJson(fileInfo);
+                ReadFFprobeEIA608ToJson(fileInfo);
+                ReadFFprobeSubCCToJson(fileInfo);
+                WriteFFmpegSubCCToSrt(fileInfo);
+                ReadMediaInfoToJson(fileInfo);
+                ReadFFmpegTempMediaInfoToJson(fileInfo);
+                ReadCCExtractorToTxt(fileInfo);
+                ReadFFmpegPipeCCExtractorToTxt(fileInfo);
+                ReadFFmpegTempCCExtractorToTxt(fileInfo);
+                ReadFFmpegTempFFprobeToJson(fileInfo);
             }
         });
 
@@ -75,6 +76,32 @@ public class ClosedCaptions
             .Replace(@":", @"\\:")
             .Replace(@"'", @"\\\'")
             .Replace(@",", @"\\\,");
+
+    private static void ReadFFprobeAnalyzeFramesToJson(FileInfo fileInfo)
+    {
+        string commandline =
+            $"-loglevel error -show_streams -analyze_frames -read_intervals %00:05 \"{fileInfo.FullName}\"";
+        //$"-i \"{fileInfo.FullName}\" stream=closed_captions -select_streams v:0 -analyze_frames -read_intervals %+30";
+
+        Log.Information("Reading CC data from {FilePath}", fileInfo.Name);
+        int ret = ProcessEx.Execute(
+            Tools.FfProbe.GetToolPath(),
+            commandline,
+            false,
+            0,
+            out string output,
+            out string error
+        );
+        if (ret != 0)
+        {
+            Log.Error("Error reading CC data : {Error}", error);
+            return;
+        }
+
+        string outputFile = Path.ChangeExtension(fileInfo.FullName, "ffprobe.json");
+        Log.Information("Writing CC data to {OutputFile}", outputFile);
+        File.WriteAllText(outputFile, output);
+    }
 
     private static void ReadFFprobeEIA608ToJson(FileInfo fileInfo)
     {
@@ -176,7 +203,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private static void ReadFFmpegTempMediaInfo(FileInfo fileInfo)
+    private static void ReadFFmpegTempMediaInfoToJson(FileInfo fileInfo)
     {
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =
@@ -224,7 +251,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private void ReadCCExtractor(FileInfo fileInfo)
+    private void ReadCCExtractorToTxt(FileInfo fileInfo)
     {
         // https://github.com/CCExtractor/ccextractor/blob/master/src/lib_ccx/ccx_common_common.h
 
@@ -250,7 +277,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private void ReadFFmpegPipeCCExtractor(FileInfo fileInfo)
+    private void ReadFFmpegPipeCCExtractorToTxt(FileInfo fileInfo)
     {
         List<string> ffmpegCommandline =
         [
@@ -309,7 +336,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, result.Result.StandardOutput);
     }
 
-    private void ReadFFmpegTempCCExtractor(FileInfo fileInfo)
+    private void ReadFFmpegTempCCExtractorToTxt(FileInfo fileInfo)
     {
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =
@@ -357,7 +384,7 @@ public class ClosedCaptions
         File.WriteAllText(outputFile, output);
     }
 
-    private static void ReadFFmpegTempFFprobe(FileInfo fileInfo)
+    private static void ReadFFmpegTempFFprobeToJson(FileInfo fileInfo)
     {
         FileInfo tempFile = new(Path.ChangeExtension(fileInfo.FullName, "temp.ts"));
         string ffmpegCommandline =

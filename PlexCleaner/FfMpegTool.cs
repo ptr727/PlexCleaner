@@ -398,6 +398,7 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
         // Run idet filter
+        // TODO: Scanning the entire file is costly, consider adding a "quickscan" option using -t
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-filter:v idet -an -f rawvideo {nullOut}"

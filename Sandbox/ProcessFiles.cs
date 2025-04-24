@@ -67,11 +67,13 @@ public class ProcessFiles
     public void VerifyClosedCaptions(List<string> fileList)
     {
         // Speed up processing
-        PlexCleaner.Program.Options.TestSnippets = true;
+        PlexCleaner.Program.Options.TestSnippets = false;
         PlexCleaner.Program.Options.Parallel = true;
         PlexCleaner.Program.Options.ThreadCount = 0;
         Program.SetRuntimeOptions();
 
+        Lock resultLock = new();
+        List<string> resultList = [];
         _ = PlexCleaner.Process.ProcessFilesDriver(
             fileList,
             nameof(VerifyClosedCaptions),
@@ -90,22 +92,59 @@ public class ProcessFiles
                     return false;
                 }
 
+                // Must have video stream
+                if (processFile.FfProbeInfo.Video.Count == 0)
+                {
+                    Log.Warning("No video stream found : {FileName}", processFile.FileInfo.Name);
+                    return false;
+                }
+
+                // Write a snippet of the file to a temp file
+                FileInfo tempFile = new(Path.ChangeExtension(fileName, "temp.ts"));
+                string ffmpegCommandline =
+                    $"-hide_banner -report -loglevel error -t 30 -i \"{fileName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile}\"";
+                Log.Information(
+                    "Remuxing {FilePath} to temp TS file {TempFilePath}",
+                    processFile.FileInfo.Name,
+                    tempFile
+                );
+                int ret = ProcessEx.Execute(
+                    Tools.FfMpeg.GetToolPath(),
+                    ffmpegCommandline,
+                    false,
+                    0,
+                    out string _,
+                    out string error
+                );
+                if (ret != 0)
+                {
+                    // Error
+                    Log.Error("Error writing temp TS file : {Error}", error);
+                    tempFile.Delete();
+                    return false;
+                }
+
                 // Get closed captions
                 if (
                     !Tools.FfProbe.GetSubCcPacketInfo(
-                        fileName,
+                        tempFile.FullName,
                         out List<FfMpegToolJsonSchema.Packet> packetList
                     )
                 )
                 {
                     // Error
+                    tempFile.Delete();
                     return false;
                 }
+                tempFile.Delete();
 
                 // Any packets means there are subtitles present in the video stream
                 bool ffProbe = packetList.Count > 0;
                 bool sideCar = processFile.State.HasFlag(SidecarFile.StatesType.ClearedCaptions);
-                if (ffProbe != sideCar)
+                if (
+                    ffProbe != sideCar
+                    && processFile.State.HasFlag(SidecarFile.StatesType.Verified)
+                )
                 {
                     Log.Warning(
                         "Closed Captions state does not match : ffProbe: {FFprobe}, Sidecar: {Sidecar} : {FileName}",
@@ -113,10 +152,20 @@ public class ProcessFiles
                         sideCar,
                         fileName
                     );
+                    lock (resultLock)
+                    {
+                        resultList.Add(fileName);
+                    }
                 }
 
                 return true;
             }
         );
+
+        resultList.Sort();
+        resultList.ForEach(fileName =>
+        {
+            Log.Information("Closed Captions state mismatch : {FileName}", fileName);
+        });
     }
 }
