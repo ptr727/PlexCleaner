@@ -36,7 +36,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.6" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.9" />
     <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />

@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.6" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.9" />
     <PackageReference Include="MedallionShell" Version="1.6.2" />
   </ItemGroup>
   <ItemGroup>
