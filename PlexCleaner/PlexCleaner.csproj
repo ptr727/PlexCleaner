@@ -9,7 +9,7 @@
     <Authors>Pieter Viljoen</Authors>
     <Company>Pieter Viljoen</Company>
     <Copyright>Pieter Viljoen</Copyright>
-    <Description>Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.</Description>
+    <Description>Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.</Description>
     <PackageProjectUrl>https://github.com/ptr727/PlexCleaner</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ptr727/PlexCleaner</RepositoryUrl>

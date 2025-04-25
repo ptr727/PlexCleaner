@@ -27,7 +27,7 @@ public class ProcessFile
         }
 
         // Get the matching MKV file
-        string mediaFile = Path.ChangeExtension(FileInfo.FullName, ".mkv");
+        string mediaFile = SidecarFile.GetMkvName(FileInfo);
 
         // Does the media file exist
         if (File.Exists(mediaFile))
@@ -65,7 +65,7 @@ public class ProcessFile
     public bool DeleteNonMkvFile(ref bool modified)
     {
         // If MKV file nothing to do
-        if (MkvMergeTool.IsMkvFile(FileInfo))
+        if (SidecarFile.IsMkvFile(FileInfo))
         {
             return true;
         }
@@ -103,7 +103,7 @@ public class ProcessFile
     public bool MakeExtensionLowercase(ref bool modified)
     {
         // Is the extension lowercase
-        string lowerExtension = FileInfo.Extension.ToLower(CultureInfo.InvariantCulture);
+        string lowerExtension = FileInfo.Extension.ToLowerInvariant();
         if (FileInfo.Extension.Equals(lowerExtension, StringComparison.Ordinal))
         {
             return true;
@@ -114,7 +114,7 @@ public class ProcessFile
 
         // Rename the file
         // Windows is case insensitive, so we need to rename in two steps
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
         string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
         if (
             !FileEx.RenameFile(FileInfo.FullName, tempName)
@@ -942,7 +942,7 @@ public class ProcessFile
         // Already deinterlaced?
         if (State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
-            Log.Error("DeInterlacing already deinterlaced media : {FileName}", FileInfo.Name);
+            Log.Warning("DeInterlacing already deinterlaced media : {FileName}", FileInfo.Name);
         }
 
         Log.Information("DeInterlacing interlaced media : {FileName}", FileInfo.Name);
@@ -961,7 +961,8 @@ public class ProcessFile
         }
 
         // Create a temp filename for the deinterlaced output
-        string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmpint");
+        string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
+        Debug.Assert(FileInfo.FullName != deintName);
 
         // Deinterlace using HandBrake and ignore subtitles
         _ = FileEx.DeleteFile(deintName);
@@ -973,7 +974,8 @@ public class ProcessFile
         }
 
         // Create a temp filename for the remuxed output
-        string remuxName = Path.ChangeExtension(FileInfo.FullName, ".tmprmx");
+        string remuxName = Path.ChangeExtension(FileInfo.FullName, ".tmp9");
+        Debug.Assert(FileInfo.FullName != remuxName);
 
         // If there are subtitles in the original file merge them back
         if (MkvMergeInfo.Subtitle.Count == 0)
@@ -1070,38 +1072,6 @@ public class ProcessFile
         return true;
     }
 
-    public bool RemoveSubtitles(ref bool modified)
-    {
-        // Any subtitle tracks, use MkvMergeInfo
-        if (MkvMergeInfo.Subtitle.Count == 0)
-        {
-            // Done
-            return true;
-        }
-
-        // Remove all the subtitle tracks
-        // Selected Keep
-        // NotSelected Remove
-        SelectMediaInfo selectMediaInfo = new(MkvMergeInfo, true);
-        selectMediaInfo.Move(MkvMergeInfo.Subtitle, false);
-        selectMediaInfo.SetState(TrackInfo.StateType.Keep, TrackInfo.StateType.Remove);
-
-        Log.Information("Removing subtitle tracks : {FileName}", FileInfo.Name);
-        selectMediaInfo.WriteLine("Keep", "Remove");
-
-        // ReMux and only keep the specified tracks
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
-        {
-            // Error
-            return false;
-        }
-
-        // Refresh
-        modified = true;
-        _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
-        return Refresh(outputName);
-    }
-
     public bool RemoveClosedCaptions(ref bool modified)
     {
         // Conditional
@@ -1157,7 +1127,7 @@ public class ProcessFile
         // Use MediaInfo tags
         VideoInfo mediaInfoVideo = MediaInfoInfo.Video.First();
         if (
-            s_hdr10FormatList.Any(item =>
+            Hdr10FormatList.Any(item =>
                 mediaInfoVideo.FormatHdr.Contains(item, StringComparison.OrdinalIgnoreCase)
             )
         )
@@ -1171,7 +1141,8 @@ public class ProcessFile
         }
 
         // Create a temp output filename
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp10");
+        Debug.Assert(FileInfo.FullName != tempName);
 
         // Remove Closed Captions
         _ = FileEx.DeleteFile(tempName);
@@ -1186,7 +1157,7 @@ public class ProcessFile
 
         // Remux using MkvMerge after FfMpeg encoding
         Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
-        if (!Convert.ReMuxInPlace(tempName))
+        if (!MkvProcess.ReMux(tempName))
         {
             // Error
             _ = FileEx.DeleteFile(tempName);
@@ -1245,7 +1216,7 @@ public class ProcessFile
 
         // Remux using MkvMerge after FfMpeg encoding
         Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
-        if (!Convert.ReMuxInPlace(outputName))
+        if (!MkvProcess.ReMux(outputName))
         {
             // Error
             return false;
@@ -1667,7 +1638,7 @@ public class ProcessFile
 
         // Find tracks that are not HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) compatible
         List<VideoInfo> nonHdr10Tracks = hdrTracks.FindAll(videoInfo =>
-            s_hdr10FormatList.All(hdr10Format =>
+            Hdr10FormatList.All(hdr10Format =>
                 !videoInfo.FormatHdr.Contains(hdr10Format, StringComparison.OrdinalIgnoreCase)
             )
         );
@@ -1676,7 +1647,7 @@ public class ProcessFile
             Log.Warning(
                 "Video is not HDR10 compatible : {Hdr} not in {Hdr10}: {FileName}",
                 videoItem.FormatHdr,
-                s_hdr10FormatList,
+                Hdr10FormatList,
                 FileInfo.Name
             );
 
@@ -1740,7 +1711,8 @@ public class ProcessFile
         // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
         // Repair to temp file, only if verify is successful replace original file
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp");
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp12");
+        Debug.Assert(FileInfo.FullName != tempName);
 
         // Convert using ffmpeg
         Log.Information(
@@ -1787,7 +1759,7 @@ public class ProcessFile
 
         // Remux using MkvMerge after FfMpeg or HandBrake encoding
         Log.Information("ReMuxing repaired media : {FileName}", tempName);
-        if (!Convert.ReMuxInPlace(tempName))
+        if (!MkvProcess.ReMux(tempName))
         {
             // Failed
             _ = FileEx.DeleteFile(tempName);
@@ -1958,7 +1930,7 @@ public class ProcessFile
     public bool GetMediaInfo()
     {
         // Only MKV files
-        Debug.Assert(MkvMergeTool.IsMkvFile(FileInfo));
+        Debug.Assert(SidecarFile.IsMkvFile(FileInfo));
 
         // Get media info
         if (!Refresh(false))
@@ -2029,7 +2001,7 @@ public class ProcessFile
             "FfMpeg Idet : Interlaced: {IdetInterlaced} ({Percentage:P} > {Threshold:P}), Interlaced: {Interlaced}, Progressive: {Progressive}, Undetermined: {Undetermined}, Total: {Total} : {FileName}",
             idetInfo.IsInterlaced(),
             idetInfo.InterlacedPercentage,
-            Program.InterlacedThreshold,
+            FfMpegIdetInfo.InterlacedThreshold,
             idetInfo.Interlaced,
             idetInfo.Progressive,
             idetInfo.Undetermined,
@@ -2087,7 +2059,7 @@ public class ProcessFile
         {
             // If the video is not H264, H265 or AV1 (by experimentation), then tag the video to also be reencoded
             List<VideoInfo> reEncodeVideo = selectMediaInfo.NotSelected.Video.FindAll(item =>
-                !s_reEncodeVideoOnAudioReEncodeList.Contains(
+                !ReEncodeVideoOnAudioReEncodeList.Contains(
                     item.Format,
                     StringComparer.OrdinalIgnoreCase
                 )
@@ -2290,7 +2262,8 @@ public class ProcessFile
     }
 
     public static bool IsTempFile(FileInfo fileInfo) =>
-        // *.tmp, *.tmpint, *.tmprmx
+        // All temp files are to be named tmp[x] where x is an incrementing number
+        // All uses of temp files must be uniquely named allowing nested use without overlap in temp file names
         fileInfo.Extension.StartsWith(".tmp", StringComparison.OrdinalIgnoreCase);
 
     public MediaInfo FfProbeInfo { get; private set; }
@@ -2302,14 +2275,14 @@ public class ProcessFile
     private SidecarFile _sidecarFile;
 
     // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
-    private static readonly string[] s_hdr10FormatList =
+    public static readonly string[] Hdr10FormatList =
     [
         MediaInfoTool.HDR10Format,
         MediaInfoTool.HDR10PlusFormat,
     ];
 
     // Reencode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
-    private static readonly string[] s_reEncodeVideoOnAudioReEncodeList =
+    public static readonly string[] ReEncodeVideoOnAudioReEncodeList =
     [
         MediaInfoTool.H264Format,
         MediaInfoTool.H265Format,

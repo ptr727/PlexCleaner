@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using InsaneGenius.Utilities;
 using Serilog;
@@ -18,6 +19,9 @@ public class Monitor
     public bool MonitorFolders(List<string> folders)
     {
         LogMonitorMessage();
+
+        // Trim quotes around input paths
+        folders = [.. folders.Select(file => file.Trim('"'))];
 
         // Create file system watcher for each folder
         foreach (string folder in folders)
@@ -39,7 +43,8 @@ public class Monitor
                 | NotifyFilters.CreationTime
                 | NotifyFilters.LastWrite
                 | NotifyFilters.FileName
-                | NotifyFilters.DirectoryName;
+                | NotifyFilters.DirectoryName
+                | NotifyFilters.Size;
             watch.Filter = "*.*";
             watch.IncludeSubdirectories = true;
             watch.Changed += ChangeHandler;
@@ -135,11 +140,7 @@ public class Monitor
             }
 
             // Process changes in the watched folders
-            foreach (string folder in watchList)
-            {
-                Log.Information("Processing changes in : {Folder}", folder);
-            }
-            if (!Process.ProcessFolders(watchList) || !Process.DeleteEmptyFolders(watchList))
+            if (!ProcessChanges(watchList))
             {
                 // Fatal error
                 return false;
@@ -156,17 +157,46 @@ public class Monitor
         return true;
 
         // Local function change handlers
+        // TODO: Can event handlers directly call instance functions?
         void ErrorHandler(object s, ErrorEventArgs e) => OnError(e);
-        void RenameHandler(object s, RenamedEventArgs e) => OnRenamed(e, this);
-        void ChangeHandler(object s, FileSystemEventArgs e) => OnChanged(e, this);
+        void RenameHandler(object s, RenamedEventArgs e) => OnRenamed(e);
+        void ChangeHandler(object s, FileSystemEventArgs e) => OnChanged(e);
     }
 
-    private static void OnChanged(FileSystemEventArgs e, Monitor monitor) =>
-        // Call instance version
-        monitor.OnChangedEx(e);
-
-    private void OnChangedEx(FileSystemEventArgs e)
+    private static bool ProcessChanges(List<string> folderList)
     {
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                folderList,
+                out List<string> directoryList,
+                out List<string> fileList
+            )
+        )
+        {
+            return false;
+        }
+        directoryList.ForEach(item => Log.Information("Processing changes in : {Folder}", item));
+
+        // Process files
+        if (!Process.ProcessFiles(fileList))
+        {
+            return false;
+        }
+
+        // Delete empty folders
+        if (!Process.DeleteEmptyFolders(directoryList))
+        {
+            return false;
+        }
+
+        // Done
+        return true;
+    }
+
+    private void OnChanged(FileSystemEventArgs e)
+    {
+        // Registered for Changed, Created, Deleted
         Log.Verbose("OnChanged : {ChangeType} : {FullPath}", e.ChangeType, e.FullPath);
         switch (e.ChangeType)
         {
@@ -177,22 +207,18 @@ public class Monitor
                 break;
             case WatcherChangeTypes.Deleted:
                 // Cleanup when a file or directory gets deleted
-                OnDeleted();
+                OnDeleted(e.FullPath);
                 break;
             case WatcherChangeTypes.Renamed:
             case WatcherChangeTypes.All:
-                break;
             default:
                 throw new NotImplementedException();
         }
     }
 
-    private static void OnRenamed(RenamedEventArgs e, Monitor monitor) =>
-        // Call instance version
-        monitor.OnRenamedEx(e);
-
-    private void OnRenamedEx(RenamedEventArgs e)
+    private void OnRenamed(RenamedEventArgs e)
     {
+        // Registered for Renamed
         Log.Verbose(
             "OnRenamed : {ChangeType} : {OldFullPath} to {FullPath}",
             e.ChangeType,
@@ -203,7 +229,7 @@ public class Monitor
         {
             case WatcherChangeTypes.Renamed:
                 // Treat the old file as a deleted file
-                OnDeleted();
+                OnDeleted(e.OldFullPath);
                 // Treat the renamed file as a changed file
                 OnChanged(e.FullPath);
                 break;
@@ -211,20 +237,17 @@ public class Monitor
             case WatcherChangeTypes.Deleted:
             case WatcherChangeTypes.Changed:
             case WatcherChangeTypes.All:
-                break;
             default:
                 throw new NotImplementedException();
         }
     }
 
-    private static void OnError(ErrorEventArgs e) =>
-        // Call the instance version
-        OnErrorEx(e);
-
-    private static void OnErrorEx(ErrorEventArgs e)
+#pragma warning disable CA1822 // Mark members as static
+    private void OnError(ErrorEventArgs e)
+#pragma warning restore CA1822 // Mark members as static
     {
         // Cancel in case of error
-        Log.Error(e.GetException(), "OnErrorEx()");
+        Log.Error(e.GetException(), "OnError()");
         Program.Cancel();
     }
 
@@ -277,11 +300,12 @@ public class Monitor
         }
     }
 
-    private static void OnDeleted()
-    {
+#pragma warning disable CA1822 // Mark members as static
+    private void OnDeleted(string pathname) =>
         // The path we get no longer exists, it may be a file, or it may be a folder
         // TODO: Figure out how to accurately test if deleted path was a file or folder
-    }
+        Log.Verbose("OnDeleted : {PathName}", pathname);
+#pragma warning restore CA1822 // Mark members as static
 
     private readonly List<FileSystemWatcher> _watcher = [];
     private readonly Dictionary<string, DateTime> _watchFolders = new(

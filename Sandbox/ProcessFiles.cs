@@ -74,17 +74,12 @@ public class ProcessFiles
 
         Lock resultLock = new();
         List<string> resultList = [];
-        _ = PlexCleaner.Process.ProcessFilesDriver(
+        _ = ProcessDriver.ProcessFiles(
             fileList,
             nameof(VerifyClosedCaptions),
+            true,
             fileName =>
             {
-                // Handle only MKV files
-                if (!MkvMergeTool.IsMkvFile(fileName))
-                {
-                    return true;
-                }
-
                 // Get media information
                 ProcessFile processFile = new(fileName);
                 if (!processFile.GetMediaInfo())
@@ -99,12 +94,24 @@ public class ProcessFiles
                     return false;
                 }
 
+                /*
+                [mpegts @ 0x5713ff02ab40] first pts and dts value must be set
+                av_interleaved_write_frame(): Invalid data found when processing input
+                https://superuser.com/questions/710008/how-to-get-rid-of-ffmpeg-pts-has-no-value-error
+
+                [matroska @ 0x604976cd9dc0] Can't write packet with unknown timestamp
+                av_interleaved_write_frame(): Invalid argument
+                https://stackoverflow.com/questions/66013483/cant-write-packet-with-unknown-timestamp-av-interleaved-write-frame-invalid
+
+                -fflags +genpts
+                */
+
                 // Write a snippet of the file to a temp file
-                FileInfo tempFile = new(Path.ChangeExtension(fileName, "temp.ts"));
+                FileInfo tempFile = new(Path.ChangeExtension(fileName, "snip.temp"));
                 string ffmpegCommandline =
-                    $"-hide_banner -report -loglevel error -t 30 -i \"{fileName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile}\"";
+                    $"-hide_banner -no_stats -loglevel error -t 30 -fflags +genpts -i \"{fileName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile}\"";
                 Log.Information(
-                    "Remuxing {FilePath} to temp TS file {TempFilePath}",
+                    "Remuxing {FilePath} to temp file {TempFilePath}",
                     processFile.FileInfo.Name,
                     tempFile
                 );
@@ -119,7 +126,7 @@ public class ProcessFiles
                 if (ret != 0)
                 {
                     // Error
-                    Log.Error("Error writing temp TS file : {Error}", error);
+                    Log.Error("Error writing temp file : {Error}", error);
                     tempFile.Delete();
                     return false;
                 }

@@ -6,6 +6,9 @@ using Serilog;
 
 namespace PlexCleaner;
 
+// Conditional processing:
+//   Program.Options.TestNoModify
+
 public static class Convert
 {
     public static bool ConvertToMkv(string inputName, out string outputName) =>
@@ -28,7 +31,9 @@ public static class Convert
 
         // Create a temp filename based on the input name
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        string tempName = Path.ChangeExtension(inputName, ".tmp");
+        Debug.Assert(inputName != outputName);
+        string tempName = Path.ChangeExtension(inputName, ".tmp1");
+        Debug.Assert(inputName != tempName);
 
         // Convert using ffmpeg
         // Selected is ReEncode
@@ -69,7 +74,9 @@ public static class Convert
 
         // Create a MKV and temp filename based on the input name
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        string tempName = Path.ChangeExtension(inputName, ".tmp");
+        Debug.Assert(inputName != outputName);
+        string tempName = Path.ChangeExtension(inputName, ".tmp2");
+        Debug.Assert(inputName != tempName);
 
         // MkvMerge and FfMpeg both have problems dealing with some AVI files, so we will try both
         // E.g. https://github.com/FFmpeg/FFmpeg/commit/8de1ee9f725aa3c550f425bd3120bcd95d5b2ea8
@@ -111,7 +118,7 @@ public static class Convert
 
             // Remux using MkvMerge after FfMpeg or HandBrake encoding
             Log.Information("ReMux using MkvMerge : {FileName}", inputName);
-            if (!ReMuxInPlace(tempName))
+            if (!MkvProcess.ReMux(tempName))
             {
                 _ = FileEx.DeleteFile(tempName);
                 return false;
@@ -143,7 +150,7 @@ public static class Convert
 
         // This only works on MKV files and MkvMerge MediaInfo types
         Debug.Assert(selectMediaInfo.Selected.Parser == MediaTool.ToolType.MkvMerge);
-        Debug.Assert(MkvMergeTool.IsMkvFile(inputName));
+        Debug.Assert(SidecarFile.IsMkvFile(inputName));
 
         // Match the logic in ConvertToMKV()
 
@@ -156,7 +163,9 @@ public static class Convert
 
         // Create a temp filename based on the input name
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        string tempName = Path.ChangeExtension(inputName, ".tmp");
+        Debug.Assert(inputName != outputName);
+        string tempName = Path.ChangeExtension(inputName, ".tmp3");
+        Debug.Assert(inputName != tempName);
 
         // Remux keeping specific tracks
         // Selected is Keep
@@ -165,58 +174,6 @@ public static class Convert
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaInfo, tempName))
         {
             Log.Error("ReMux using MkvMerge failed : {FileName}", inputName);
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
-
-        // Rename the temp file to the output file
-        if (!FileEx.RenameFile(tempName, outputName))
-        {
-            return false;
-        }
-
-        // If the input and output names are not the same, delete the input
-        return inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase)
-            || FileEx.DeleteFile(inputName);
-    }
-
-    public static bool ReMuxInPlace(string fileName)
-    {
-        // Create a temp output filename
-        string tempName = Path.ChangeExtension(fileName, ".tmprmx");
-        _ = FileEx.DeleteFile(tempName);
-
-        // Remux
-        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
-        {
-            Log.Error("Failed to Remux the media file: {FileName}", fileName);
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
-
-        return FileEx.RenameFile(tempName, fileName);
-    }
-
-    public static bool DeInterlaceToMkv(string inputName, out string outputName)
-    {
-        // Match the logic in ConvertToMKV()
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            outputName = inputName;
-            return true;
-        }
-
-        // Create a temp filename based on the input name
-        outputName = Path.ChangeExtension(inputName, ".mkv");
-        string tempName = Path.ChangeExtension(inputName, ".tmp");
-
-        // Deinterlace video using handbrake
-        Log.Information("DeInterlace using HandBrake : {FileName}", inputName);
-        if (!Tools.HandBrake.ConvertToMkv(inputName, tempName, true, true))
-        {
-            Log.Error("DeInterlace using HandBrake failed : {FileName}", inputName);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }

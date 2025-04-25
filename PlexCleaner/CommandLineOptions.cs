@@ -38,7 +38,7 @@ public class CommandLineOptions
     {
         // Root command
         RootCommand command = new(
-            "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin"
+            "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc."
         );
 
         // Global options applying to all commands
@@ -71,6 +71,9 @@ public class CommandLineOptions
         // Remove subtitles
         command.AddCommand(CreateRemoveSubtitlesCommand());
 
+        // Remove closed captions
+        command.AddCommand(CreateRemoveClosedCaptionsCommand());
+
         // Verify files
         command.AddCommand(CreateVerifyCommand());
 
@@ -84,7 +87,7 @@ public class CommandLineOptions
         command.AddCommand(CreateGetVersionInfoCommand());
 
         // Print sidecar files
-        command.AddCommand(CreateGetSidecarCommand());
+        command.AddCommand(CreateGetSidecarInfoCommand());
 
         // Print tag-map
         command.AddCommand(CreateGetTagMapCommand());
@@ -163,6 +166,14 @@ public class CommandLineOptions
             Handler = CommandHandler.Create<CommandLineOptions>(Program.ProcessCommand),
         };
 
+        // Process options
+        CreateProcessCommandOptions(command);
+
+        return command;
+    }
+
+    private static void CreateProcessCommandOptions(Command command)
+    {
         // Settings file name
         command.AddOption(CreateSettingsFileOption());
 
@@ -180,6 +191,9 @@ public class CommandLineOptions
 
         // Parallel processing thread count
         command.AddOption(CreateThreadCountOption());
+
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
 
         //  Re-verify
         command.AddOption(
@@ -193,8 +207,6 @@ public class CommandLineOptions
         command.AddOption(
             new Option<string>("--resultsfile") { Description = "Path to results file" }
         );
-
-        return command;
     }
 
     private static Command CreateMonitorCommand()
@@ -206,23 +218,8 @@ public class CommandLineOptions
             Handler = CommandHandler.Create<CommandLineOptions>(Program.MonitorCommand),
         };
 
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
-
-        //  Do not make any modifications
-        command.AddOption(CreateTestNoModifyOption());
-
-        // Parallel processing
-        command.AddOption(CreateParallelOption());
-
-        // Parallel processing thread count
-        command.AddOption(CreateThreadCountOption());
+        // Process options
+        CreateProcessCommandOptions(command);
 
         //  Pre-process
         command.AddOption(
@@ -301,6 +298,9 @@ public class CommandLineOptions
         //  Do not make any modifications
         command.AddOption(CreateTestNoModifyOption());
 
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
+
         return command;
     }
 
@@ -309,7 +309,7 @@ public class CommandLineOptions
         // Verify files
         Command command = new("verify")
         {
-            Description = "Verify media files",
+            Description = "Verify media file streams",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand),
         };
 
@@ -340,13 +340,13 @@ public class CommandLineOptions
         return command;
     }
 
-    private static Command CreateGetSidecarCommand()
+    private static Command CreateGetSidecarInfoCommand()
     {
         // Read sidecar files
         Command command = new("getsidecarinfo")
         {
             Description = "Print sidecar file information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarCommand),
+            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarInfoCommand),
         };
 
         // Settings file name
@@ -463,6 +463,29 @@ public class CommandLineOptions
         return command;
     }
 
+    private static Command CreateRemoveClosedCaptionsCommand()
+    {
+        // Remove closed captions
+        Command command = new("removeclosedcaptions")
+        {
+            Description = "Remove closed caption from media files",
+            Handler = CommandHandler.Create<CommandLineOptions>(
+                Program.RemoveClosedCaptionsCommand
+            ),
+        };
+
+        // Settings file name
+        command.AddOption(CreateSettingsFileOption());
+
+        // Media files or folders option
+        command.AddOption(CreateMediaFilesOption());
+
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
+
+        return command;
+    }
+
     private static Option<List<string>> CreateMediaFilesOption() =>
         // Media files or folders option
         new("--mediafiles") { Description = "Path to media file or folder", IsRequired = true };
@@ -502,4 +525,8 @@ public class CommandLineOptions
     private static Option<int> CreateThreadCountOption() =>
         // Parallel processing thread count
         new("--threadcount") { Description = "Number of threads to use for parallel processing" };
+
+    private static Option<bool> CreateQuickScanOption() =>
+        // Scan only parts of the file
+        new("--quickscan") { Description = "Scan only part of the file" };
 }

@@ -563,21 +563,32 @@ public class SidecarFile
     }
 
     public static bool IsSidecarFile(string sidecarName) =>
-        // Compare extension
-        Path.GetExtension(sidecarName)
-            .Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
+        IsSidecarExtension(Path.GetExtension(sidecarName));
 
     public static bool IsSidecarFile(FileInfo sidecarFileInfo) =>
-        // Compare extension
-        sidecarFileInfo.Extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
+        IsSidecarExtension(sidecarFileInfo.Extension);
 
-    public static string GetSidecarName(string fileName) =>
-        // Change extension of media file
-        Path.ChangeExtension(fileName, SidecarExtension);
+    public static bool IsSidecarExtension(string extension) =>
+        extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
 
-    public static string GetSidecarName(FileInfo mediaFileInfo) =>
-        // Change extension of media file
-        Path.ChangeExtension(mediaFileInfo.FullName, SidecarExtension);
+    public static bool IsMkvFile(string mkvName) => IsMkvExtension(Path.GetExtension(mkvName));
+
+    public static bool IsMkvFile(FileInfo mkvFileInfo) => IsMkvExtension(mkvFileInfo.Extension);
+
+    public static bool IsMkvExtension(string extension) =>
+        extension.Equals(MkvExtension, StringComparison.OrdinalIgnoreCase);
+
+    public static string GetSidecarName(string mkvName) =>
+        Path.ChangeExtension(mkvName, SidecarExtension);
+
+    public static string GetSidecarName(FileInfo mkvFileInfo) =>
+        Path.ChangeExtension(mkvFileInfo.FullName, SidecarExtension);
+
+    public static string GetMkvName(string sidecarName) =>
+        Path.ChangeExtension(sidecarName, MkvExtension);
+
+    public static string GetMkvName(FileInfo sidecarFileInfo) =>
+        Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
 
     public void WriteLine()
     {
@@ -606,10 +617,10 @@ public class SidecarFile
         );
     }
 
-    public static bool PrintInformation(string fileName)
+    public static bool GetInformation(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Does a sidecar exist
         if (!File.Exists(GetSidecarName(fileName)))
@@ -634,7 +645,7 @@ public class SidecarFile
     public static bool Create(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Create new or overwrite existing sidecar file
         SidecarFile sidecarFile = new(fileName);
@@ -644,7 +655,7 @@ public class SidecarFile
     public static bool Update(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Create new or update existing sidecar file
         SidecarFile sidecarFile = new(fileName);
@@ -666,5 +677,6 @@ public class SidecarFile
     private SidecarFileJsonSchema _sidecarJson;
 
     private const string SidecarExtension = ".PlexCleaner";
+    private const string MkvExtension = ".mkv";
     private const int HashWindowLength = 64 * Format.KiB;
 }

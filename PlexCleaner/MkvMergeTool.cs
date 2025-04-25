@@ -224,14 +224,6 @@ public partial class MkvMergeTool : MediaTool
         return true;
     }
 
-    public static bool IsMkvFile(string fileName) => IsMkvExtension(Path.GetExtension(fileName));
-
-    public static bool IsMkvFile(FileInfo fileInfo) => IsMkvExtension(fileInfo.Extension);
-
-    public static bool IsMkvExtension(string extension) =>
-        // Case insensitive match, .mkv or .MKV
-        extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
-
     public static bool IsMkvContainer(MediaInfo mediaInfo) =>
         mediaInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
 
@@ -267,6 +259,21 @@ public partial class MkvMergeTool : MediaTool
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
         // Remux all
+        int exitCode = Command(commandline.ToString());
+        return exitCode is 0 or 1;
+    }
+
+    public bool RemoveSubtitles(string inputName, string outputName)
+    {
+        // Delete output file
+        _ = FileEx.DeleteFile(outputName);
+
+        // Build commandline
+        StringBuilder commandline = new();
+        CreateDefaultArgs(outputName, commandline);
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--no-subtitles \"{inputName}\"");
+
+        // Remux tracks
         int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }

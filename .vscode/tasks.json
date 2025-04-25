@@ -11,7 +11,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -29,7 +29,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -47,7 +47,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -66,7 +66,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -85,7 +85,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -104,7 +104,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -123,7 +123,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -142,7 +142,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -161,7 +161,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -178,7 +178,7 @@
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -199,7 +199,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -220,7 +220,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -241,7 +241,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -262,7 +262,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -283,7 +283,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -304,7 +304,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -321,7 +321,7 @@
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -345,7 +345,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -369,7 +369,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -393,7 +393,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -417,7 +417,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -441,7 +441,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -465,7 +465,7 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -482,7 +482,7 @@
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -500,7 +500,25 @@
             ],
             "presentation": {
                 "showReuseMessage": false,
-                "clear": true
+                "clear": true,
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "CSharpier Format",
+            "type": "process",
+            "command": "csharpier",
+            "args": [
+                "format",
+                ".",
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": true,
+                "panel": "dedicated"
             }
         },
     ]

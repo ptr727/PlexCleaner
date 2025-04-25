@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,7 +14,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
-public class Program
+public static class Program
 {
     private enum ExitCode
     {
@@ -97,9 +96,9 @@ public class Program
 
     public static void VerifyLatestVersion()
     {
-        // TODO: Use AutoUpdate setting to avoid always generating internet IO
         if (!Config.ToolsOptions.AutoUpdate)
         {
+            // Skip
             return;
         }
 
@@ -140,6 +139,7 @@ public class Program
 
         // --rid
         // TODO: https://github.com/dotnet/runtime/issues/114156
+        // TODO: Remove if no longer needed
         if (Environment.CommandLine.Contains("--rid"))
         {
             Console.WriteLine(AssemblyVersion.GetNormalizedRuntimeIdentifier());
@@ -294,9 +294,8 @@ public class Program
 
     public static int CheckForNewToolsCommand(CommandLineOptions options)
     {
-        // Do not verify tools
-        Program program = Create(options, false);
-        if (program == null)
+        // Create but do not verify tools
+        if (!Create(options, false))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -308,205 +307,184 @@ public class Program
 
     public static int ProcessCommand(CommandLineOptions options)
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Process all files and delete empty folders
-        return MakeExitCode(
-            Process.ProcessFiles(program._fileList)
-                && Process.DeleteEmptyFolders(program._directoryList)
-        );
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> directoryList,
+                out List<string> fileList
+            )
+        )
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Process files
+        if (!Process.ProcessFiles(fileList))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Delete empty folders
+        if (!Process.DeleteEmptyFolders(directoryList))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
     public static int MonitorCommand(CommandLineOptions options)
     {
-        // Create program
-        Program program = Create(options, true);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Monitor and process changes
+        // Monitor and process changes in directories
         Monitor monitor = new();
-        return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
-    }
-
-    public static int ReMuxCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        if (!monitor.MonitorFolders(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // ReMux
-        return MakeExitCode(Process.ReMuxFiles(program._fileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int ReEncodeCommand(CommandLineOptions options)
+    private static int ProcessFiles(CommandLineOptions options, Func<List<string>, bool> taskFunc)
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // ReEncode
-        return MakeExitCode(Process.ReEncodeFiles(program._fileList));
-    }
-
-    public static int DeInterlaceCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // DeInterlace
-        return MakeExitCode(Process.DeInterlaceFiles(program._fileList));
-    }
-
-    public static int VerifyCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Call task function with file list
+        if (!taskFunc(fileList))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Verify
-        return MakeExitCode(Process.VerifyFiles(program._fileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CreateSidecarCommand(CommandLineOptions options)
+    private static int ProcessFiles(
+        CommandLineOptions options,
+        bool mkvOnly,
+        Func<string, bool> taskFunc
+    )
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Create sidecar files
-        return MakeExitCode(Process.CreateSidecarFiles(program._fileList));
-    }
-
-    public static int GetSidecarCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Get sidecar files info
-        return MakeExitCode(Process.GetSidecarFiles(program._fileList));
-    }
-
-    public static int UpdateSidecarCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Call task function for all files in list
+        if (!ProcessDriver.ProcessFiles(fileList, nameof(taskFunc), mkvOnly, taskFunc))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Update sidecar files
-        return MakeExitCode(Process.UpdateSidecarFiles(program._fileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int GetTagMapCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int ReMuxCommand(CommandLineOptions options) =>
+        ProcessFiles(options, false, MkvProcess.ReMuxTypes);
 
-        // Get tag map
-        return MakeExitCode(Process.GetTagMapFiles(program._fileList));
-    }
+    public static int ReEncodeCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, MkvProcess.ReEncode);
 
-    public static int GetMediaInfoCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int DeInterlaceCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, MkvProcess.DeInterlace);
 
-        // Get media info
-        return MakeExitCode(Process.GetMediaInfoFiles(program._fileList));
-    }
+    public static int VerifyCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, MkvProcess.VerifyMedia);
 
-    public static int GetToolInfoCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int CreateSidecarCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, SidecarFile.Create);
 
-        // Get tool info
-        return MakeExitCode(Process.GetToolInfoFiles(program._fileList));
-    }
+    public static int GetSidecarInfoCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, SidecarFile.GetInformation);
 
-    public static int RemoveSubtitlesCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int UpdateSidecarCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, SidecarFile.Update);
 
-        // Remove subtitles
-        return MakeExitCode(Process.RemoveSubtitlesFiles(program._fileList));
-    }
+    public static int GetTagMapCommand(CommandLineOptions options) =>
+        ProcessFiles(options, ProcessDriver.GetTagMap);
+
+    public static int GetMediaInfoCommand(CommandLineOptions options) =>
+        ProcessFiles(options, ProcessDriver.GetMediaInfo);
+
+    public static int GetToolInfoCommand(CommandLineOptions options) =>
+        ProcessFiles(options, ProcessDriver.GetToolInfo);
+
+    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, MkvProcess.RemoveSubtitles);
+
+    public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, MkvProcess.RemoveClosedCaptions);
 
     public static int GetVersionInfoCommand(CommandLineOptions options)
     {
         // Creating the program object will report all version information
-        // Do not verify the tools during create
-        Program program = Create(options, false);
-        if (program == null)
+        if (!Create(options, false))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
         // Verify tools to get tool version information
-        return MakeExitCode(Tools.VerifyTools());
+        if (!Tools.VerifyTools())
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    private static Program CreateFileList(CommandLineOptions options)
-    {
-        // Create program and enumerate files
-        Program program = Create(options, true);
-        return program == null || !program.CreateFileList(options.MediaFiles) ? null : program;
-    }
-
-    private static Program Create(CommandLineOptions options, bool verifyTools)
+    private static bool Create(CommandLineOptions options, bool verifyTools)
     {
         // Does the file exist
         if (!File.Exists(options.SettingsFile))
         {
             Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
-            return null;
+            return false;
         }
 
         // Load config from JSON
@@ -515,7 +493,7 @@ public class Program
         if (config == null)
         {
             Log.Error("Failed to load settings : {FileName}", options.SettingsFile);
-            return null;
+            return false;
         }
 
         // Compare the schema version
@@ -540,7 +518,7 @@ public class Program
                 "Settings file contains incorrect or missing values : {FileName}",
                 options.SettingsFile
             );
-            return null;
+            return false;
         }
 
         // Set the static options from the loaded settings and options
@@ -562,7 +540,7 @@ public class Program
             if (!Options.LogAppend && !FileEx.DeleteFile(Options.LogFile))
             {
                 Log.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
-                return null;
+                return false;
             }
 
             // Recreate the logger with a file
@@ -620,101 +598,12 @@ public class Program
             if (!Tools.VerifyTools())
             {
                 // Error
-                return null;
+                return false;
             }
         }
 
-        // Create program instance
-        return new Program();
-    }
-
-    private bool CreateFileList(List<string> mediaFiles)
-    {
-        Log.Information("Creating file and folder list ...");
-
-        // Trim quotes from input paths
-        mediaFiles = [.. mediaFiles.Select(file => file.Trim('"'))];
-
-        bool fatalError = false;
-        try
-        {
-            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
-            Lock listLock = new();
-
-            // Process each input in parallel
-            mediaFiles
-                .AsParallel()
-                .WithDegreeOfParallelism(Options.ThreadCount)
-                .WithCancellation(CancelToken())
-                .ForAll(fileOrFolder =>
-                {
-                    // Handle cancel request
-                    CancelToken().ThrowIfCancellationRequested();
-
-                    // Test for file or a directory
-                    FileAttributes fileAttributes = File.GetAttributes(fileOrFolder);
-                    if (fileAttributes.HasFlag(FileAttributes.Directory))
-                    {
-                        // Add this directory
-                        lock (listLock)
-                        {
-                            _directoryList.Add(fileOrFolder);
-                        }
-
-                        // Create the file list from the directory
-                        Log.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                        if (
-                            !FileEx.EnumerateDirectory(
-                                fileOrFolder,
-                                out List<FileInfo> fileInfoList,
-                                out _
-                            )
-                        )
-                        {
-                            // Abort
-                            Log.Error(
-                                "Failed to enumerate files in directory {Directory}",
-                                fileOrFolder
-                            );
-                            Cancel();
-                            CancelToken().ThrowIfCancellationRequested();
-                        }
-
-                        // Add file list
-                        lock (listLock)
-                        {
-                            fileInfoList.ForEach(item => _fileList.Add(item.FullName));
-                        }
-                    }
-                    else
-                    {
-                        // Add this file
-                        lock (listLock)
-                        {
-                            _fileList.Add(fileOrFolder);
-                        }
-                    }
-                });
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancelled
-            fatalError = true;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            // Error
-            fatalError = true;
-        }
-
-        // Report
-        Log.Information(
-            "Discovered {FileListCount} files from {DirectoryListCount} directories",
-            _fileList.Count,
-            _directoryList.Count
-        );
-
-        return !fatalError;
+        // Done
+        return true;
     }
 
     public static bool IsCancelledError()
@@ -756,13 +645,6 @@ public class Program
     // Snippet runtime in seconds
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
 
-    // Interlaced detection threshold as percentage
-    public const double InterlacedThreshold = 5.0 / 100.0;
-
     // Cancellation token
     private static readonly CancellationTokenSource s_cancelSource = new();
-
-    // File and directory lists
-    private readonly List<string> _directoryList = [];
-    private readonly List<string> _fileList = [];
 }

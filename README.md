@@ -1,6 +1,6 @@
 # PlexCleaner
 
-Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## License
 
@@ -40,6 +40,7 @@ Docker images are published on [Docker Hub][docker-link].
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe. See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
   - Re-added `parallel` and `threadcount` option to `monitor` command to be used during the processing phase, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ProcessOptions:ReMux` to warn when disabled when media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
+  - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
@@ -466,23 +467,27 @@ The `process` command will process the media content using options as defined in
 Options:
 
 - `--settingsfile`: (required)
-  - Path to the settings file.
+  - Path to the JSON settings file.
 - `--mediafiles`: (required)
   - Path to file or folder containing files to process.
   - Paths with spaces should be double quoted.
   - Repeat the option to include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.
-- `--reverify`:
-  - Re-verify and repair media files that are in the `VerifyFailed` state.
-  - By default files would be skipped due to processing optimization logic when using sidecar files.
+- `--testsnippets`:
+  - Create short media clips that limit the processing time required, useful during testing.
+- `--testnomodify`:
+  - Process files but do not make any file modifications, useful during testing.
 - `--parallel`:
   - Process multiple files concurrently.
   - When parallel processing is enabled, the default thread count is half the number of system cores.
 - `--threadcount`:
   - Override the thread count when the `--parallel` option is enabled.
-- `--testsnippets`:
-  - Create short media clips that limit the processing time required, useful during testing.
-- `--testnomodify`:
-  - Process files but do not make any file modifications, useful during testing.
+- `--reverify`:
+  - Re-verify and re-attempt repair of media files that are in the `VerifyFailed` state.
+  - By default files would be skipped due to processing optimization logic when using sidecar files.
+  - This may be useful when media tools were updated with new abilitites or bug fixes.
+- `resultsfile`:
+  - Write processing results to a JSON file.
+  - Useful when investigating issues or comparing with previous results.
 
 Example:
 
@@ -523,40 +528,88 @@ Options:
 
 The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
 
+- All the referenced directories will be watched for changes, and any changes will be added to a queue to be periodically processed.
+- Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
+
+Options:
+
 - Most of the `process` command options apply.
-- Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
-- Enabling `--preprocess` will process all media on startup and then start monitoring for changes.
-- Note if any files are added or modified between file iteration starting, and processing those files, and then monitoring, those files may not be included in processing, just run again.
+- `--preprocess`:
+  - On startup process all media files and then handled monitored changes.
 
 ### Other Commands
 
+- `defaultsettings`:
+  - Create JSON configuration file using default settings.
+- `checkfornewtools`:
+  - Check for new tool versions and download if newer.
+  - Only supported on Windows.
 - `remux`:
-  - Re-multiplex the media files using MkvMerge.
-  - Useful to update the file with the latest multiplexer.
+  - Re-multiplex MKV or non-MKV files in the `ProcessOptions.ReMuxExtensions` list to MKV files.
+  - Useful to convert non-MKV container formats to MKV or to update file structures using the current Matroska multiplexer.
+  - Unconditional processing.
+  - Sidecar state is not updated.
 - `reencode`:
-  - Re-encode the media files using FFmpeg.
+  - Re-encode media files using `ConvertOptions` settings.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is not updated.
 - `deinterlace`:
-  - De-interlace interlaced media files using HandBrake.
+  - De-interlace media files using `ConvertOptions` settings.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is not updated.
 - `removesubtitles`:
-  - Remove all subtitle tracks from the media files.
-  - Useful when subtitles are forced and contains offensive language or advertising.
+  - Remove all subtitle tracks from media files.
+  - Useful when media players cannot disable output or content is undesirable.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is updated.
+- `removeclosedcaptions`:
+  - Remove EIA-608 and CTA-708 closed captions embedded in the video stream.
+  - Useful when media players cannot disable ouitput or content is undesirable.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is updated.
+- `verify`:
+  - Verify media file stream contents.
+  - Not as exhausitive as `process` when `Processoptions.Verify` is enabled, e.g. track counts, bitrates, HDR profiles, etc. are not evaluated.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is not updated.
 - `createsidecar`:
-  - Create or overwrite and re-create sidecar files.
-  - All existing state attributes will be deleted.
+  - Create or re-create sidecar files.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - All existing sidecar state attributes will be deleted.
 - `updatesidecar`:
-  - Update the existing sidecar with current media tool information.
+  - Create or update sidecar files with current media tool information.
+  - Only MKV files are supported.
+  - Unconditional processing.
   - Existing state attributes will be retained unless the media file had been modified.
-- `gettagmap`:
-  - Calculate and print media file attribute mappings between between different media tools.
-- `getmediainfo`:
-  - Print media attribute information using the Sidecar file if present.
-  - If sidecar is not present or out of date media tools will be used.
-- `gettoolinfo`:
-  - Print media attribute information using the current media tools.
-- `getsidecarinfo`:
-  - Print sidecar file attribute information.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
+- `getsidecarinfo`:
+  - Print sidecar file information.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is not updated.
+- `gettagmap`:
+  - Print media file attribute mappings between between different media tools.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is updated.
+- `getmediainfo`:
+  - Print media attribute information from sidecar files.
+  - Only MKV files are supported.
+  - Unconditional processing.
+  - Sidecar state is updated.
+- `gettoolinfo`:
+  - Print media attribute information using media tools.
+  - Unconditional processing.
+  - Sidecar state is not updated.
+- `createschema`:
+  - Write JSON settings schema to file.
 
 ## IETF Language Matching
 

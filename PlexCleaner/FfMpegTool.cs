@@ -162,7 +162,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(fileName, commandline, false, true);
+        CreateDefaultArgs(fileName, "", commandline, false, true);
 
         // Null output muxer and exit immediately on error
         _ = commandline.Append("-loglevel error -xerror -f null -");
@@ -179,9 +179,15 @@ public partial class FfMpegTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
+        // [mpegts @ 0x5713ff02ab40] first pts and dts value must be set
+        // av_interleaved_write_frame(): Invalid data found when processing input
+        // [matroska @ 0x604976cd9dc0] Can't write packet with unknown timestamp
+        // av_interleaved_write_frame(): Invalid argument
+        // -fflags +genpts
+
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false, false);
+        CreateDefaultArgs(inputName, "-fflags +genpts", commandline, false, false);
 
         // Remux and copy all streams to MKV
         _ = commandline.Append(
@@ -267,7 +273,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, true, false);
+        CreateDefaultArgs(inputName, "", commandline, true, false);
 
         // Input and output map
         _ = commandline.Append(CultureInfo.InvariantCulture, $"{inputMap} {outputMap} ");
@@ -287,7 +293,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, true, false);
+        CreateDefaultArgs(inputName, "", commandline, true, false);
 
         // Process all tracks
         _ = commandline.Append("-map 0 ");
@@ -324,7 +330,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false, false);
+        CreateDefaultArgs(inputName, "", commandline, false, false);
 
         // Remove SEI NAL units e.g. EIA-608 and CTA-708 content
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
@@ -345,7 +351,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false, false);
+        CreateDefaultArgs(inputName, "", commandline, false, false);
 
         // Remove all metadata using -map_metadata -1
         _ = commandline.Append(
@@ -385,7 +391,7 @@ public partial class FfMpegTool : MediaTool
 
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline, false, true);
+        CreateDefaultArgs(inputName, "", commandline, false, true);
 
         // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
@@ -488,6 +494,7 @@ public partial class FfMpegTool : MediaTool
 
     private static void CreateDefaultArgs(
         string inputName,
+        string inputOptions,
         StringBuilder commandline,
         bool encoding,
         bool silent
@@ -502,14 +509,25 @@ public partial class FfMpegTool : MediaTool
                 )
                 : commandline.Append($"{GlobalOptions} ");
 
-        // Test snippets
-        if (Program.Options.TestSnippets)
+        // Test snippets, only if -t or -ss not already in input options
+        if (
+            Program.Options.TestSnippets
+            && !inputOptions.Contains(" -t ", StringComparison.Ordinal)
+            && !inputOptions.Contains(" -ss ", StringComparison.Ordinal)
+        )
         {
+            // Add snippet time span to input options
             // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
             _ = commandline.Append(
                 CultureInfo.InvariantCulture,
                 $"-ss 0 -t {(int)Program.SnippetTimeSpan.TotalSeconds} "
             );
+        }
+
+        // Input options
+        if (!string.IsNullOrEmpty(inputOptions))
+        {
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"{inputOptions} ");
         }
 
         // Input filename
