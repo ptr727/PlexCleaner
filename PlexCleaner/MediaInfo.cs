@@ -57,8 +57,15 @@ public class MediaInfo(MediaTool.ToolType parser)
     public int Chapters { get; set; }
     public bool HasCovertArt => Video.Any(item => item.IsCoverArt);
 
+    public void WriteLine() => WriteLine(string.Empty);
+
     public void WriteLine(string prefix)
     {
+        if (string.IsNullOrEmpty(prefix))
+        {
+            // TODO: Add parser to prefix
+            prefix = Parser.ToString();
+        }
         Video.ForEach(item => item.WriteLine(prefix));
         Audio.ForEach(item => item.WriteLine(prefix));
         Subtitle.ForEach(item => item.WriteLine(prefix));

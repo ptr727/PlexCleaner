@@ -492,9 +492,9 @@ public class SidecarFile
         FfProbeInfo = ffProbeInfo;
 
         // Print info
-        MediaInfoInfo.WriteLine("MediaInfo");
-        MkvMergeInfo.WriteLine("MkvMerge");
-        FfProbeInfo.WriteLine("FfProbe");
+        MediaInfoInfo.WriteLine();
+        MkvMergeInfo.WriteLine();
+        FfProbeInfo.WriteLine();
 
         return true;
     }

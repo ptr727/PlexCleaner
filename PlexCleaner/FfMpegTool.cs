@@ -189,7 +189,7 @@ public partial class FfMpegTool : MediaTool
         StringBuilder commandline = new();
         CreateDefaultArgs(inputName, "-fflags +genpts", commandline, false, false);
 
-        // Remux and copy all streams to MKV
+        // ReMux and copy all streams to MKV
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-map 0 -codec copy -f matroska \"{outputName}\""
@@ -257,6 +257,12 @@ public partial class FfMpegTool : MediaTool
 
     public bool ConvertToMkv(string inputName, SelectMediaInfo selectMediaInfo, string outputName)
     {
+        if (selectMediaInfo == null)
+        {
+            // No track selection, use default conversion
+            return ConvertToMkv(inputName, outputName);
+        }
+
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 

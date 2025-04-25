@@ -32,7 +32,9 @@
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
         },
         {
             "name": "Sandbox",
@@ -44,6 +46,7 @@
             "cwd": "${workspaceFolder}/Sandbox/bin/Debug/net9.0",
             "console": "internalConsole",
             "stopAtEntry": false,
+            "enableStepFiltering": false,
             "justMyCode": false
         }
     ]

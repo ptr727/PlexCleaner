@@ -393,6 +393,7 @@ public static class Program
     private static int ProcessFiles(
         CommandLineOptions options,
         bool mkvOnly,
+        string taskName,
         Func<string, bool> taskFunc
     )
     {
@@ -415,7 +416,7 @@ public static class Program
         }
 
         // Call task function for all files in list
-        if (!ProcessDriver.ProcessFiles(fileList, nameof(taskFunc), mkvOnly, taskFunc))
+        if (!ProcessDriver.ProcessFiles(fileList, taskName, mkvOnly, taskFunc))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -425,25 +426,25 @@ public static class Program
     }
 
     public static int ReMuxCommand(CommandLineOptions options) =>
-        ProcessFiles(options, false, MkvProcess.ReMuxTypes);
+        ProcessFiles(options, false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
 
     public static int ReEncodeCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, MkvProcess.ReEncode);
+        ProcessFiles(options, true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
 
     public static int DeInterlaceCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, MkvProcess.DeInterlace);
+        ProcessFiles(options, true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
 
     public static int VerifyCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, MkvProcess.VerifyMedia);
+        ProcessFiles(options, true, nameof(MkvProcess.VerifyMedia), MkvProcess.VerifyMedia);
 
     public static int CreateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, SidecarFile.Create);
+        ProcessFiles(options, true, nameof(SidecarFile.Create), SidecarFile.Create);
 
     public static int GetSidecarInfoCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, SidecarFile.GetInformation);
+        ProcessFiles(options, true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
 
     public static int UpdateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, SidecarFile.Update);
+        ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
 
     public static int GetTagMapCommand(CommandLineOptions options) =>
         ProcessFiles(options, ProcessDriver.GetTagMap);
@@ -455,10 +456,15 @@ public static class Program
         ProcessFiles(options, ProcessDriver.GetToolInfo);
 
     public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, MkvProcess.RemoveSubtitles);
+        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
 
     public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, MkvProcess.RemoveClosedCaptions);
+        ProcessFiles(
+            options,
+            true,
+            nameof(MkvProcess.RemoveClosedCaptions),
+            MkvProcess.RemoveClosedCaptions
+        );
 
     public static int GetVersionInfoCommand(CommandLineOptions options)
     {

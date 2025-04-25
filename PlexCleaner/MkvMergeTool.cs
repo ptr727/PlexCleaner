@@ -212,7 +212,7 @@ public partial class MkvMergeTool : MediaTool
             {
                 Log.Warning("MKV container type is not Matroska : {Type}", mkvMerge.Container.Type);
 
-                // Remux to convert to MKV
+                // ReMux to convert to MKV
                 mediaInfo.HasErrors = true;
                 mediaInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
             }
@@ -243,7 +243,7 @@ public partial class MkvMergeTool : MediaTool
         CreateTrackArgs(selectMediaInfo.Selected, commandline);
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
-        // Remux tracks
+        // ReMux tracks
         int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }
@@ -258,7 +258,7 @@ public partial class MkvMergeTool : MediaTool
         CreateDefaultArgs(outputName, commandline);
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
-        // Remux all
+        // ReMux all
         int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }
@@ -273,7 +273,7 @@ public partial class MkvMergeTool : MediaTool
         CreateDefaultArgs(outputName, commandline);
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--no-subtitles \"{inputName}\"");
 
-        // Remux tracks
+        // ReMux tracks
         int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }
@@ -298,7 +298,7 @@ public partial class MkvMergeTool : MediaTool
         CreateTrackArgs(keepTwo, commandline);
         // Source two
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceTwo}\"");
-        // Remux tracks
+        // ReMux tracks
         int exitCode = Command(commandline.ToString());
         return exitCode is 0 or 1;
     }

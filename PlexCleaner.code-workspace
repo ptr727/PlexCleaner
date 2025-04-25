@@ -152,6 +152,7 @@
             "reencode",
             "reencoded",
             "reencoding",
+            "removeclosedcaptions",
             "removesubtitles",
             "remux",
             "remuxed",

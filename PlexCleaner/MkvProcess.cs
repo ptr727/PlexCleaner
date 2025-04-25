@@ -9,7 +9,7 @@ namespace PlexCleaner;
 
 public static class MkvProcess
 {
-    public static bool ReMuxTypes(string fileName)
+    public static bool ReMux(string fileName)
     {
         // Only remux .mkv or ProcessOptions.ReMuxExtensions files
         if (
@@ -24,40 +24,8 @@ public static class MkvProcess
             return true;
         }
 
-        // Create a temp output filename
-        string tempName = Path.ChangeExtension(fileName, ".tmp4");
-        Debug.Assert(fileName != tempName);
-        _ = FileEx.DeleteFile(tempName);
-
-        // Remux
-        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
-        {
-            Log.Error("ReMux using MkvMerge failed : {FileName}", fileName);
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
-
-        return FileEx.RenameFile(tempName, fileName);
-    }
-
-    public static bool ReMux(string fileName)
-    {
-        // Do not limit file types by extension, called with temp extensions during processing
-
-        // Create a temp output filename
-        string tempName = Path.ChangeExtension(fileName, ".tmp4");
-        Debug.Assert(fileName != tempName);
-        _ = FileEx.DeleteFile(tempName);
-
-        // Remux
-        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
-        {
-            Log.Error("ReMux using MkvMerge failed : {FileName}", fileName);
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
-
-        return FileEx.RenameFile(tempName, fileName);
+        // ReMux in-place using MkvMerge
+        return Convert.ReMux(fileName);
     }
 
     public static bool DeInterlace(string fileName)
@@ -70,7 +38,7 @@ public static class MkvProcess
         Debug.Assert(fileName != tempName);
         _ = FileEx.DeleteFile(tempName);
 
-        // Deinterlace
+        // DeInterlace without testing for interlaced frames
         if (!Tools.HandBrake.ConvertToMkv(fileName, tempName, true, true))
         {
             Log.Error("DeInterlace using HandBrake failed : {FileName}", fileName);
@@ -78,8 +46,8 @@ public static class MkvProcess
             return false;
         }
 
-        // Remux using MkvMerge after Handbrake encoding
-        if (!ReMux(tempName))
+        // ReMux using MkvMerge after Handbrake encoding
+        if (!Convert.ReMux(tempName))
         {
             // Error
             _ = FileEx.DeleteFile(tempName);
@@ -99,7 +67,7 @@ public static class MkvProcess
         Debug.Assert(fileName != tempName);
         _ = FileEx.DeleteFile(tempName);
 
-        // ReEncode
+        // ReEncode using FfMpeg
         if (!Tools.FfMpeg.ConvertToMkv(fileName, tempName))
         {
             Log.Error("ReEncode using FfMpeg failed : {FileName}", fileName);
@@ -107,8 +75,8 @@ public static class MkvProcess
             return false;
         }
 
-        // Remux using MkvMerge after FfMpeg encoding
-        if (!ReMux(tempName))
+        // ReMux using MkvMerge after FfMpeg encoding
+        if (!Convert.ReMux(tempName))
         {
             // Error
             _ = FileEx.DeleteFile(tempName);
@@ -163,7 +131,6 @@ public static class MkvProcess
         ProcessFile processFile = new(fileName);
         if (!processFile.GetMediaInfo())
         {
-            Log.Error("Failed to get media tool info : {FileName}", fileName);
             return false;
         }
 
@@ -171,15 +138,8 @@ public static class MkvProcess
         Program.Config.ProcessOptions.RemoveClosedCaptions = true;
         Program.Options.TestNoModify = false;
 
-        // Remove closed captions
+        // Detect and remove closed captions if present
         bool modified = false;
-        if (!processFile.RemoveClosedCaptions(ref modified))
-        {
-            Log.Error("Remove Closed Captions failed : {FileName}", fileName);
-            return false;
-        }
-
-        // Done
-        return true;
+        return processFile.RemoveClosedCaptions(ref modified);
     }
 }

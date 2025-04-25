@@ -118,7 +118,6 @@ public static class ProcessDriver
 
     public static bool ProcessFiles(
         List<string> fileList,
-        // TODO: Use nameof(taskFunc) for task name?
         string taskName,
         bool mkvFilesOnly,
         Func<string, bool> taskFunc
@@ -127,7 +126,7 @@ public static class ProcessDriver
         // Start
         Log.Information(
             "Starting {TaskName}, processing {Count} files ...",
-            nameof(taskName),
+            taskName,
             fileList.Count
         );
         Stopwatch timer = new();
@@ -253,7 +252,6 @@ public static class ProcessDriver
             true,
             fileName =>
             {
-                // TODO: Do not use ProcessFile, use MkvMerge and MediaInfo directly
                 // Get media information
                 ProcessFile processFile = new(fileName);
                 if (!processFile.GetMediaInfo())
@@ -316,9 +314,9 @@ public static class ProcessDriver
 
                 // Print info
                 Log.Information("{FileName}", fileName);
-                processFile.FfProbeInfo.WriteLine("FfProbe");
-                processFile.MkvMergeInfo.WriteLine("MkvMerge");
-                processFile.MediaInfoInfo.WriteLine("MediaInfo");
+                processFile.MediaInfoInfo.WriteLine();
+                processFile.MkvMergeInfo.WriteLine();
+                processFile.FfProbeInfo.WriteLine();
 
                 return true;
             }

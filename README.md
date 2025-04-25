@@ -458,7 +458,7 @@ The `process` command will process the media content using options as defined in
 - Remove tracks with languages not in the `KeepLanguages` list.
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
 - Re-multiplex the media file if required.
-- Deinterlace the video track if interlaced.
+- De-interlace the video track if interlaced.
 - Remove EIA-608 and CTA-708 closed captions from video streams.
 - Re-encode video if video format matches `ReEncodeVideo`.
 - Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
@@ -484,7 +484,7 @@ Options:
 - `--reverify`:
   - Re-verify and re-attempt repair of media files that are in the `VerifyFailed` state.
   - By default files would be skipped due to processing optimization logic when using sidecar files.
-  - This may be useful when media tools were updated with new abilitites or bug fixes.
+  - This may be useful when media tools were updated with new features or bug fixes.
 - `resultsfile`:
   - Write processing results to a JSON file.
   - Useful when investigating issues or comparing with previous results.
@@ -545,69 +545,45 @@ Options:
   - Check for new tool versions and download if newer.
   - Only supported on Windows.
 - `remux`:
-  - Re-multiplex MKV or non-MKV files in the `ProcessOptions.ReMuxExtensions` list to MKV files.
+  - Re-multiplex MKV or non-MKV files in the `ProcessOptions.ReMuxExtensions` list to MKV files using MkvMerge.
   - Useful to convert non-MKV container formats to MKV or to update file structures using the current Matroska multiplexer.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `reencode`:
-  - Re-encode media files using `ConvertOptions` settings.
+  - Re-encode media files using `ConvertOptions` settings using FFmpeg.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `deinterlace`:
-  - De-interlace media files using `ConvertOptions` settings.
+  - De-interlace media files using `ConvertOptions` settings using HandBrake.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `removesubtitles`:
-  - Remove all subtitle tracks from media files.
+  - Remove all subtitle tracks from media files using MkvMerge.
   - Useful when media players cannot disable output or content is undesirable.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is updated.
 - `removeclosedcaptions`:
   - Remove EIA-608 and CTA-708 closed captions embedded in the video stream.
-  - Useful when media players cannot disable ouitput or content is undesirable.
+  - Useful when media players cannot disable output or content is undesirable.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is updated.
 - `verify`:
   - Verify media file stream contents.
-  - Not as exhausitive as `process` when `Processoptions.Verify` is enabled, e.g. track counts, bitrates, HDR profiles, etc. are not evaluated.
+  - Not as exhaustive as `process` when `ProcessOptions.Verify` is enabled, e.g. track counts, bitrate, HDR profiles, etc. are not evaluated.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `createsidecar`:
   - Create or re-create sidecar files.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - All existing sidecar state attributes will be deleted.
 - `updatesidecar`:
   - Create or update sidecar files with current media tool information.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Existing state attributes will be retained unless the media file had been modified.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
 - `getsidecarinfo`:
   - Print sidecar file information.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `gettagmap`:
   - Print media file attribute mappings between between different media tools.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is updated.
 - `getmediainfo`:
   - Print media attribute information from sidecar files.
   - Only MKV files are supported.
-  - Unconditional processing.
-  - Sidecar state is updated.
 - `gettoolinfo`:
   - Print media attribute information using media tools.
-  - Unconditional processing.
-  - Sidecar state is not updated.
 - `createschema`:
   - Write JSON settings schema to file.
 

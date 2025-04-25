@@ -208,7 +208,7 @@ public static class Process
                 break;
             }
 
-            // Deinterlace interlaced content
+            // DeInterlace interlaced content
             // Conditional on DeInterlace option
             if (!processFile.DeInterlace(ref modified) || Program.IsCancelled())
             {

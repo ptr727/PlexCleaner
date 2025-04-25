@@ -37,6 +37,7 @@ public partial class TrackInfo
         Commentary = 1 << 6,
     }
 
+    // TODO: Add parser tool enum for use in reporting
     public TrackInfo() { }
 
     public TrackInfo(MkvToolJsonSchema.Track track)
@@ -266,6 +267,13 @@ public partial class TrackInfo
         Codec = track.CodecLongName;
         if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
         {
+            // Encrypted / DRM tracks, e.g. QuickTime audio report no codec information
+            // "codec_tag_string": "enca",
+            // "codec_tag": "0x61636e65",
+            if (!string.IsNullOrEmpty(track.CodecTagString))
+            {
+                Codec = track.CodecTagString;
+            }
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(

@@ -125,7 +125,7 @@ public partial class HandBrakeTool : MediaTool
             $"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} "
         );
 
-        // Deinterlace using decomb filter
+        // DeInterlace using decomb filter
         if (deInterlace)
         {
             _ = commandline.Append("--comb-detect --decomb ");

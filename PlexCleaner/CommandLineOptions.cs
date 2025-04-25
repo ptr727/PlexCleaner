@@ -279,7 +279,7 @@ public class CommandLineOptions
 
     private static Command CreateDeInterlaceCommand()
     {
-        // Deinterlace files
+        // DeInterlace files
         Command command = new("deinterlace")
         {
             Description = "De-Interlace media files",

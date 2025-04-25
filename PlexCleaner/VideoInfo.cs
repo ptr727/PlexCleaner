@@ -39,7 +39,7 @@ public class VideoInfo : TrackInfo
     {
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
-        // Ignore bad tags like 0x0000 / [0][0][0][0]
+        // Ignore bad tags like codec_tag: 0x0000 or codec_tag_string: [0][0][0][0]
         if (
             !string.IsNullOrEmpty(track.CodecTagString)
             && !track.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase)

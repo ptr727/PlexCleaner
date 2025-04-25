@@ -154,7 +154,7 @@ public class ProcessFile
         // ReMux the file
         Log.Information("ReMux file matched by extension : {FileName}", FileInfo.Name);
 
-        // Remux the file, use the new filename
+        // ReMux the file, use the new filename
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
@@ -203,7 +203,7 @@ public class ProcessFile
             FileInfo.Name
         );
 
-        // Remux the file, use the new filename
+        // ReMux the file, use the new filename
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
@@ -964,7 +964,7 @@ public class ProcessFile
         string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
         Debug.Assert(FileInfo.FullName != deintName);
 
-        // Deinterlace using HandBrake and ignore subtitles
+        // DeInterlace using HandBrake and ignore subtitles
         _ = FileEx.DeleteFile(deintName);
         if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, deintName, false, true))
         {
@@ -1155,9 +1155,9 @@ public class ProcessFile
             return false;
         }
 
-        // Remux using MkvMerge after FfMpeg encoding
+        // ReMux using MkvMerge after FfMpeg encoding
         Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
-        if (!MkvProcess.ReMux(tempName))
+        if (!Convert.ReMux(tempName))
         {
             // Error
             _ = FileEx.DeleteFile(tempName);
@@ -1206,7 +1206,7 @@ public class ProcessFile
         Log.Information("ReEncoding required tracks : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("ReEncode", "Passthrough");
 
-        // Reencode selected tracks
+        // ReEncode selected tracks
         if (!Convert.ConvertToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
             // Convert will log error
@@ -1214,9 +1214,9 @@ public class ProcessFile
             return false;
         }
 
-        // Remux using MkvMerge after FfMpeg encoding
+        // ReMux using MkvMerge after FfMpeg encoding
         Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
-        if (!MkvProcess.ReMux(outputName))
+        if (!Convert.ReMux(outputName))
         {
             // Error
             return false;
@@ -1757,9 +1757,9 @@ public class ProcessFile
             }
         }
 
-        // Remux using MkvMerge after FfMpeg or HandBrake encoding
+        // ReMux using MkvMerge after FfMpeg or HandBrake encoding
         Log.Information("ReMuxing repaired media : {FileName}", tempName);
-        if (!MkvProcess.ReMux(tempName))
+        if (!Convert.ReMux(tempName))
         {
             // Failed
             _ = FileEx.DeleteFile(tempName);
@@ -1885,14 +1885,14 @@ public class ProcessFile
         }
 
         // Assign results
-        FfProbeInfo = ffProbeInfo;
-        MkvMergeInfo = mkvMergeInfo;
         MediaInfoInfo = mediaInfoInfo;
+        MkvMergeInfo = mkvMergeInfo;
+        FfProbeInfo = ffProbeInfo;
 
         // Print info
-        MediaInfoInfo.WriteLine("MediaInfo");
-        MkvMergeInfo.WriteLine("MkvMerge");
-        FfProbeInfo.WriteLine("FfProbe");
+        MediaInfoInfo.WriteLine();
+        MkvMergeInfo.WriteLine();
+        FfProbeInfo.WriteLine();
 
         return true;
     }
@@ -1915,9 +1915,9 @@ public class ProcessFile
         {
             // Something is very wrong; bad logic, bad media, bad tools?
             Log.Error("Tool track count discrepancy : {File}", FileInfo.Name);
-            MediaInfoInfo.WriteLine("MediaInfo");
-            MkvMergeInfo.WriteLine("MkvMerge");
-            FfProbeInfo.WriteLine("FfProbe");
+            MediaInfoInfo.WriteLine();
+            MkvMergeInfo.WriteLine();
+            FfProbeInfo.WriteLine();
 
             // Break in debug builds
             Debug.Assert(false);
@@ -1935,11 +1935,31 @@ public class ProcessFile
         // Get media info
         if (!Refresh(false))
         {
+            Log.Error("Failed to get media tool info : {FileName}", FileInfo.Name);
             return false;
         }
 
         // Verify that all codecs and tracks are supported
-        return !MediaInfoInfo.Unsupported && !FfProbeInfo.Unsupported && !MkvMergeInfo.Unsupported;
+        if (MediaInfoInfo.Unsupported || FfProbeInfo.Unsupported || MkvMergeInfo.Unsupported)
+        {
+            Log.Error("Unsupported media info : {FileName}", FileInfo.Name);
+            if (MediaInfoInfo.Unsupported)
+            {
+                MediaInfoInfo.WriteLine($"Unsupported: {MediaInfoInfo.Parser}");
+            }
+            if (MkvMergeInfo.Unsupported)
+            {
+                MkvMergeInfo.WriteLine($"Unsupported: {MkvMergeInfo.Parser}");
+            }
+            if (FfProbeInfo.Unsupported)
+            {
+                FfProbeInfo.WriteLine($"Unsupported: {FfProbeInfo.Parser}");
+            }
+            return false;
+        }
+
+        // Done
+        return true;
     }
 
     public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
@@ -2281,7 +2301,7 @@ public class ProcessFile
         MediaInfoTool.HDR10PlusFormat,
     ];
 
-    // Reencode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
+    // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
     public static readonly string[] ReEncodeVideoOnAudioReEncodeList =
     [
         MediaInfoTool.H264Format,

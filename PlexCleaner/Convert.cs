@@ -6,9 +6,6 @@ using Serilog;
 
 namespace PlexCleaner;
 
-// Conditional processing:
-//   Program.Options.TestNoModify
-
 public static class Convert
 {
     public static bool ConvertToMkv(string inputName, out string outputName) =>
@@ -29,9 +26,9 @@ public static class Convert
             return true;
         }
 
-        // Create a temp filename based on the input name
+        // Create a MKV and temp filename based on the input name
+        // Input may already be MKV file
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        Debug.Assert(inputName != outputName);
         string tempName = Path.ChangeExtension(inputName, ".tmp1");
         Debug.Assert(inputName != tempName);
 
@@ -39,11 +36,7 @@ public static class Convert
         // Selected is ReEncode
         // NotSelected is Keep
         Log.Information("ReEncode using FfMpeg : {FileName}", inputName);
-        bool result =
-            selectMediaInfo == null
-                ? Tools.FfMpeg.ConvertToMkv(inputName, tempName)
-                : Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName);
-        if (!result)
+        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName))
         {
             Log.Error("ReEncode using FfMpeg failed : {FileName}", inputName);
             _ = FileEx.DeleteFile(tempName);
@@ -63,6 +56,8 @@ public static class Convert
 
     public static bool ReMuxToMkv(string inputName, out string outputName)
     {
+        // This function will try both MkvMerge and FfMpeg
+
         // Match the logic in ConvertToMKV()
 
         // Test
@@ -73,8 +68,8 @@ public static class Convert
         }
 
         // Create a MKV and temp filename based on the input name
+        // Input may already be MKV file
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        Debug.Assert(inputName != outputName);
         string tempName = Path.ChangeExtension(inputName, ".tmp2");
         Debug.Assert(inputName != tempName);
 
@@ -116,9 +111,9 @@ public static class Convert
                 return false;
             }
 
-            // Remux using MkvMerge after FfMpeg or HandBrake encoding
+            // ReMux using MkvMerge after FfMpeg or HandBrake encoding
             Log.Information("ReMux using MkvMerge : {FileName}", inputName);
-            if (!MkvProcess.ReMux(tempName))
+            if (!ReMux(tempName))
             {
                 _ = FileEx.DeleteFile(tempName);
                 return false;
@@ -143,8 +138,10 @@ public static class Convert
         out string outputName
     )
     {
+        // This function will only use MkvMerge
         if (selectMediaInfo == null)
         {
+            // Use version that will try both MkvMerge and FfMpeg
             return ReMuxToMkv(inputName, out outputName);
         }
 
@@ -161,13 +158,13 @@ public static class Convert
             return true;
         }
 
-        // Create a temp filename based on the input name
+        // Create a MKV and temp filename based on the input name
+        // Input may already be MKV file
         outputName = Path.ChangeExtension(inputName, ".mkv");
-        Debug.Assert(inputName != outputName);
         string tempName = Path.ChangeExtension(inputName, ".tmp3");
         Debug.Assert(inputName != tempName);
 
-        // Remux keeping specific tracks
+        // ReMux keeping specific tracks
         // Selected is Keep
         // NotSelected is Remove
         Log.Information("ReMux using MkvMerge : {FileName}", inputName);
@@ -187,5 +184,27 @@ public static class Convert
         // If the input and output names are not the same, delete the input
         return inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase)
             || FileEx.DeleteFile(inputName);
+    }
+
+    public static bool ReMux(string fileName)
+    {
+        // This function will only use MkvMerge
+        // The file will be replaced with the remuxed file
+
+        // Create a temp output filename
+        string tempName = Path.ChangeExtension(fileName, ".tmp4");
+        Debug.Assert(fileName != tempName);
+        _ = FileEx.DeleteFile(tempName);
+
+        // ReMux
+        Log.Information("ReMux using MkvMerge : {FileName}", fileName);
+        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
+        {
+            Log.Error("ReMux using MkvMerge failed : {FileName}", fileName);
+            _ = FileEx.DeleteFile(tempName);
+            return false;
+        }
+
+        return FileEx.RenameFile(tempName, fileName);
     }
 }
