@@ -2,18 +2,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON file to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
-// TODO: Find JSON schema definition
-// https://stackoverflow.com/questions/61398647/where-can-i-get-the-ffprobe-json-schema-definition
+// Convert JSON file to C# using app.quicktype.io
+// Set language, framework, namespace, list
 
-// Use ffprobe example output:
-// ffprobe -loglevel quiet -show_streams -print_format json file.mkv
+// No JSON schema, use XML schema
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
 
 // Convert array[] to List<>
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
-// No JSON schema, but XML schema
-// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
+// Use ffprobe example output:
+// ffprobe -loglevel quiet -show_streams -print_format json file.mkv
 
 namespace PlexCleaner;
 

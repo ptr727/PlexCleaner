@@ -37,12 +37,11 @@ public partial class TrackInfo
         Commentary = 1 << 6,
     }
 
-    // TODO: Add parser tool enum for use in reporting
     public TrackInfo() { }
 
     public TrackInfo(MkvToolJsonSchema.Track track)
     {
-        const string parser = "MkvToolJsonSchema";
+        Parser = MediaTool.ToolType.MkvMerge;
 
         // Required
         Format = track.Codec;
@@ -53,7 +52,7 @@ public partial class TrackInfo
             State = StateType.Unsupported;
             Log.Error(
                 "{Parser} : Track is missing required codec information : State: {State}",
-                parser,
+                Parser,
                 State
             );
             return;
@@ -121,7 +120,7 @@ public partial class TrackInfo
                 // Failed to lookup ISO tag from IETF tag
                 Log.Error(
                     "{Parser} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    parser,
+                    Parser,
                     Language,
                     LanguageIetf,
                     State
@@ -136,7 +135,7 @@ public partial class TrackInfo
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
                 Log.Error(
                     "{Parser} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}",
-                    parser,
+                    Parser,
                     Language,
                     LanguageIetf,
                     isoLookup,
@@ -161,7 +160,7 @@ public partial class TrackInfo
                 // Failed to lookup IETF tag from ISO tag
                 Log.Error(
                     "{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}",
-                    parser,
+                    Parser,
                     Language,
                     State
                 );
@@ -177,7 +176,7 @@ public partial class TrackInfo
                 LanguageIetf = ietfLookup;
                 Log.Information(
                     "{Parser} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    parser,
+                    Parser,
                     Language,
                     LanguageIetf,
                     State
@@ -202,7 +201,7 @@ public partial class TrackInfo
                 // Failed to lookup ISO from IETF
                 Log.Error(
                     "{Parser} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}",
-                    parser,
+                    Parser,
                     LanguageIetf,
                     State
                 );
@@ -213,7 +212,7 @@ public partial class TrackInfo
                 Language = isoLookup;
                 Log.Warning(
                     "{Parser} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    parser,
+                    Parser,
                     Language,
                     LanguageIetf,
                     State
@@ -237,7 +236,7 @@ public partial class TrackInfo
             State = StateType.ReMux;
             Log.Warning(
                 "{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}",
-                parser,
+                Parser,
                 track.Properties.TagLanguage,
                 track.Properties.Language,
                 State
@@ -255,12 +254,12 @@ public partial class TrackInfo
         HasTags = NotTrackTitleFlag();
 
         // Set flags from title
-        SetFlagsFromTitle(parser);
+        SetFlagsFromTitle();
     }
 
     public TrackInfo(FfMpegToolJsonSchema.Track track)
     {
-        const string parser = "FfMpegToolJsonSchema";
+        Parser = MediaTool.ToolType.FfProbe;
 
         // Required
         Format = track.CodecName;
@@ -278,7 +277,7 @@ public partial class TrackInfo
             State = StateType.Unsupported;
             Log.Error(
                 "{Parser} : Track is missing required codec information : State: {State}",
-                parser,
+                Parser,
                 State
             );
             return;
@@ -345,7 +344,7 @@ public partial class TrackInfo
             State = StateType.ReMux;
             Log.Warning(
                 "{Parser} : Invalid Language : {Language} : {State}",
-                parser,
+                Parser,
                 Language,
                 State
             );
@@ -368,7 +367,7 @@ public partial class TrackInfo
 
     public TrackInfo(MediaInfoToolXmlSchema.Track track)
     {
-        const string parser = "MediaInfoToolXmlSchema";
+        Parser = MediaTool.ToolType.MediaInfo;
 
         // Required
         Format = track.Format;
@@ -379,7 +378,7 @@ public partial class TrackInfo
             State = StateType.Unsupported;
             Log.Error(
                 "{Parser} : Track is missing required codec information : State: {State}",
-                parser,
+                Parser,
                 State
             );
             return;
@@ -416,6 +415,13 @@ public partial class TrackInfo
 
         // Leave the Language as is, no need to verify
 
+        // TODO: Sub-tracks are identified as [ID]-[Sub-ID]
+        // Sub-tracks of @type Text of the video track can indicate EIA-608/CTA-708 closed captions
+        /// "ID": "1-CC4",
+        // "Format": "EIA-608",
+        // "MuxingMode": "SCTE 128 / DTVCC Transport",
+        // "MuxingMode_MoreInfo": "Muxed in Video #1",
+
         // https://github.com/MediaArea/MediaInfo/issues/201
         // "For Matroska, the first part (before the dash) of the ID field is mapped to TrackNumber Matroska field,
         // and the first part (before the dash) of the UniqueID field is mapped to TrackUID Matroska field"
@@ -438,6 +444,7 @@ public partial class TrackInfo
         // SetFlagsFromTitle("MediaInfoToolXmlSchema");
     }
 
+    public MediaTool.ToolType Parser { get; }
     public string Format { get; set; } = "";
     public string Codec { get; set; } = "";
     public string Language { get; set; } = "";
@@ -451,10 +458,29 @@ public partial class TrackInfo
     public bool HasErrors { get; set; }
     public FlagsType Flags { get; set; } = FlagsType.None;
 
+    public virtual void WriteLine() =>
+        Log.Information(
+            "Parser: {Parser}, Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+            Parser,
+            GetType().Name,
+            Format,
+            Codec,
+            Language,
+            LanguageIetf,
+            Id,
+            Number,
+            Title,
+            Flags,
+            State,
+            HasErrors,
+            HasTags
+        );
+
     public virtual void WriteLine(string prefix) =>
         Log.Information(
-            "{Prefix} : Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
+            "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}",
             prefix,
+            Parser,
             GetType().Name,
             Format,
             Codec,
@@ -484,7 +510,7 @@ public partial class TrackInfo
         );
     }
 
-    public void SetFlagsFromTitle(string parser)
+    public void SetFlagsFromTitle()
     {
         // Add flags based on titles
         foreach ((string, FlagsType) tuple in s_titleFlags)
@@ -501,7 +527,7 @@ public partial class TrackInfo
                 Flags |= tuple.Item2;
                 Log.Information(
                     "{Parser} : Setting track Flag from Title : {Title} -> {Flag} : {State}",
-                    parser,
+                    Parser,
                     Title,
                     tuple.Item2,
                     State

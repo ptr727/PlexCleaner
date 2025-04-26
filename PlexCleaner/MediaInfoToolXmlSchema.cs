@@ -41,24 +41,6 @@ public class MediaInfoToolXmlSchema
         [XmlElement(ElementName = "HDR_Format", Namespace = "https://mediaarea.net/mediainfo")]
         public string HdrFormat { get; set; } = "";
 
-        [XmlElement(
-            ElementName = "HDR_Format_Profile",
-            Namespace = "https://mediaarea.net/mediainfo"
-        )]
-        public string HdrFormatProfile { get; set; } = "";
-
-        [XmlElement(
-            ElementName = "HDR_Format_Level",
-            Namespace = "https://mediaarea.net/mediainfo"
-        )]
-        public string HdrFormatLevel { get; set; } = "";
-
-        [XmlElement(
-            ElementName = "HDR_Format_Compatibility",
-            Namespace = "https://mediaarea.net/mediainfo"
-        )]
-        public string HdrFormatCompatibility { get; set; } = "";
-
         [XmlElement(ElementName = "CodecID", Namespace = "https://mediaarea.net/mediainfo")]
         public string CodecId { get; set; } = "";
 

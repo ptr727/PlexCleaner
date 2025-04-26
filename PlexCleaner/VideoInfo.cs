@@ -103,6 +103,7 @@ public class VideoInfo : TrackInfo
         // HDR
         FormatHdr = track.HdrFormat;
 
+        // TODO: CC's are reported as separate tracks in MediaInfo
         // Missing: ClosedCaptions
 
         // Cover art
@@ -146,14 +147,40 @@ public class VideoInfo : TrackInfo
         return formatMatch && codecMatch && profileMatch;
     }
 
-    public override void WriteLine(string prefix) =>
-        // Add Profile and Interlaced
+    public override void WriteLine() =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Information(
-            "{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+            "Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
+            Parser,
+            GetType().Name,
+            Format,
+            FormatHdr,
+            Codec,
+            Language,
+            LanguageIetf,
+            Id,
+            Number,
+            Title,
+            Flags,
+            Profile,
+            Interlaced,
+            ClosedCaptions,
+            State,
+            HasErrors,
+            HasTags,
+            IsCoverArt
+        );
+
+    public override void WriteLine(string prefix) =>
+        // Keep in sync with TrackInfo::WriteLine
+        Log.Information(
+            "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
                 + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
                 + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
             prefix,
+            Parser,
             GetType().Name,
             Format,
             FormatHdr,

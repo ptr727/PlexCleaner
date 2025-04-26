@@ -13,5 +13,3 @@ public class AudioInfo : TrackInfo
     public AudioInfo(MediaInfoToolXmlSchema.Track track)
         : base(track) { }
 }
-
-// No need to override WriteLine()

@@ -2,7 +2,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
+// Convert JSON file to C# using app.quicktype.io
+// Set language, framework, namespace, list
+
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
 
 // Use mkvmerge example output:
@@ -64,6 +66,7 @@ public class MkvToolJsonSchema
         public int NumEntries { get; set; }
     }
 
+    // TODO: TrackTag is only used to test for presence, do we need contents?
     public class TrackTag
     {
         [JsonPropertyName("num_entries")]
@@ -92,9 +95,6 @@ public class MkvToolJsonSchema
     {
         [JsonPropertyName("codec_id")]
         public string CodecId { get; set; } = "";
-
-        [JsonPropertyName("codec_name")]
-        public string CodecName { get; set; } = "";
 
         [JsonPropertyName("language")]
         public string Language { get; set; } = "";
@@ -133,6 +133,7 @@ public class MkvToolJsonSchema
         public bool TextDescriptions { get; set; }
     }
 
+    // TODO: As with tracktags, only used for count, do we need contents?
     public class Attachment
     {
         [JsonPropertyName("content_type")]
@@ -142,6 +143,7 @@ public class MkvToolJsonSchema
         public int Id { get; set; }
     }
 
+    // TODO: As with tracktags, only used for count, do we need contents?
     public class Chapter
     {
         [JsonPropertyName("type")]
