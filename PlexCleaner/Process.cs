@@ -15,12 +15,14 @@ public static class Process
     private static bool ProcessFile(
         string fileName,
         out bool modified,
+        out bool ignored,
         out SidecarFile.StatesType state,
         out string processName
     )
     {
         // Init
         modified = false;
+        ignored = false;
         state = SidecarFile.StatesType.None;
         processName = fileName;
         ProcessFile processFile = null;
@@ -37,6 +39,7 @@ public static class Process
             {
                 Log.Warning("Skipping ignored file : {FileName}", fileName);
                 // Ok
+                ignored = true;
                 result = true;
                 break;
             }
@@ -74,7 +77,8 @@ public static class Process
             // Skip if this is a sidecar file
             if (SidecarFile.IsSidecarFile(processFile.FileInfo))
             {
-                // Error
+                // Ok
+                ignored = true;
                 result = true;
                 break;
             }
@@ -383,10 +387,12 @@ public static class Process
             false,
             fileName =>
             {
+                // TODO: Add skipped flag tto remove non processed content from results
                 // Process the file
                 bool processResult = ProcessFile(
                     fileName,
                     out bool modified,
+                    out bool ignored,
                     out SidecarFile.StatesType state,
                     out string processName
                 );
@@ -397,7 +403,13 @@ public static class Process
                     return false;
                 }
 
-                // Save results
+                // Ignored do not add to results
+                if (ignored)
+                {
+                    return processResult;
+                }
+
+                // Save result
                 lock (resultLock)
                 {
                     resultsJson.Results.Add(

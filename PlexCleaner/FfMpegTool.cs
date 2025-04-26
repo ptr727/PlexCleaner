@@ -150,6 +150,15 @@ public partial class FfMpegTool : MediaTool
 
     protected override string GetSubFolder() => "bin";
 
+    public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"-ss {(int)timeStart.TotalSeconds} -t {(int)timeEnd.TotalSeconds}";
+
+    public static string GetStartSplit(TimeSpan timeSpan) => $"-ss {(int)timeSpan.TotalSeconds}";
+
+    public static string GetStopSplit(TimeSpan timeSpan) => $"-t {(int)timeSpan.TotalSeconds}";
+
+    public bool VerifyMedia(string fileName) => VerifyMedia(fileName, out _);
+
     public bool VerifyMedia(string fileName, out string error)
     {
         // https://trac.ffmpeg.org/ticket/6375
@@ -174,7 +183,13 @@ public partial class FfMpegTool : MediaTool
         return exitCode == 0 && error.Length == 0;
     }
 
-    public bool ReMuxToMkv(string inputName, string outputName)
+    public bool ReMuxToMkv(string inputName, string outputName) =>
+        ReMuxToFormat(inputName, outputName, "matroska", TimeSpan.Zero);
+
+    public bool ReMuxToFormat(string inputName, string outputName, string format) =>
+        ReMuxToFormat(inputName, outputName, format, TimeSpan.Zero);
+
+    public bool ReMuxToFormat(string inputName, string outputName, string format, TimeSpan timeSpan)
     {
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
@@ -185,14 +200,20 @@ public partial class FfMpegTool : MediaTool
         // av_interleaved_write_frame(): Invalid argument
         // -fflags +genpts
 
+        // Set input options and optional timespan
+        string inputOptions = $"-fflags +genpts";
+        if (timeSpan != TimeSpan.Zero)
+        {
+            inputOptions += $" {GetStopSplit(timeSpan)}";
+        }
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "-fflags +genpts", commandline, false, false);
+        CreateDefaultArgs(inputName, inputOptions, commandline, false, false);
 
-        // ReMux and copy all streams to MKV
+        // ReMux and copy all streams to specific format
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
-            $"-map 0 -codec copy -f matroska \"{outputName}\""
+            $"-map 0 -c copy -f {format} \"{outputName}\""
         );
 
         // Execute
@@ -395,9 +416,14 @@ public partial class FfMpegTool : MediaTool
             ? "-y NUL"
             : "-y /dev/null";
 
+        // Limit the processing time if quickscan is enabled
+        string quickScan = Program.Options.QuickScan
+            ? GetStopSplit(Program.QuickScanTimeSpan)
+            : string.Empty;
+
         // Build commandline
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "", commandline, false, true);
+        CreateDefaultArgs(inputName, quickScan, commandline, false, true);
 
         // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
@@ -410,7 +436,6 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
         // Run idet filter
-        // TODO: Scanning the entire file is costly, consider adding a "quickscan" option using -t
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-filter:v idet -an -f rawvideo {nullOut}"
@@ -526,7 +551,7 @@ public partial class FfMpegTool : MediaTool
             // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
             _ = commandline.Append(
                 CultureInfo.InvariantCulture,
-                $"-ss 0 -t {(int)Program.SnippetTimeSpan.TotalSeconds} "
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
             );
         }
 

@@ -46,11 +46,11 @@ public class Program
         // Sandbox tests
         Program program = new();
 
-        // ClosedCaptions closedCaptions = new(program);
-        // int ret = closedCaptions.Test();
+        ClosedCaptions closedCaptions = new(program);
+        int ret = closedCaptions.Test();
 
-        ProcessFiles processFiles = new(program);
-        int ret = processFiles.Test();
+        // ProcessFiles processFiles = new(program);
+        // int ret = processFiles.Test();
 
         // Done
         Log.CloseAndFlush();

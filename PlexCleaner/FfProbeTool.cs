@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -71,21 +72,69 @@ public class FfProbeTool : FfMpegTool
         out List<FfMpegToolJsonSchema.Packet> packetList
     )
     {
-        // Build commandline
-        StringBuilder commandline = new();
-        _ = commandline.Append("-loglevel error ");
-        // TODO: -t and read_intervals do not work with the subcc filter
+        // If quickscan is enabled, limit the processing time
+        // -t and read_intervals do not work with the subcc filter
         // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
+        // ReMux using FFmpeg to a snippet TS file then scan the TS file
+        StringBuilder commandline = new();
+        if (Program.Options.QuickScan)
+        {
+            // Create a temp filename based on the input name
+            string tempName = Path.ChangeExtension(fileName, ".tmp13");
+            Debug.Assert(fileName != tempName);
+            _ = FileEx.DeleteFile(tempName);
+
+            // TODO: Create more generic version of FfMpegTool.ReMux() that can be used here
+
+            // -fflags +genpts : Generate missing timestamp values
+            // -map 0:v : Select video stream
+            // -c copy : Copy stream without re-encoding
+            // -f mpegts : MPEGTS output format
+            Log.Information(
+                "Creating QuickScan ({QuickScanTimeSpan}) temp TS file : {TempFileName}",
+                Program.QuickScanTimeSpan,
+                tempName
+            );
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"-hide_banner -nostats -loglevel error -fflags +genpts {GetStopSplit(Program.QuickScanTimeSpan)}"
+            );
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $" -i \"{fileName}\" -map 0:v -c copy -f mpegts \"{tempName}\""
+            );
+            int exitCode = Tools.FfMpeg.Command(commandline.ToString(), 5, out _, out string error);
+            if (exitCode != 0)
+            {
+                Log.Error("Failed to create temp TS file : {TempFileName}", tempName);
+                Log.Error("{Error}", error);
+                packetList = null;
+                return false;
+            }
+
+            // TODO: Could also use MediaInfo on TS files vs. show_packets
+
+            // Use the temp file as the input file
+            fileName = tempName;
+        }
+
+        // Build commandline
+        commandline = new();
+        _ = commandline.Append("-loglevel error ");
 
         // Get packet info using ccsub filter
         // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
-        // TODO: Scanning the entire file is costly, consider adding a "quickscan" option, write to short temp TS file then scan
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json"
         );
-
-        return GetPacketInfo(commandline.ToString(), out packetList);
+        bool ret = GetPacketInfo(commandline.ToString(), out packetList);
+        if (Program.Options.QuickScan)
+        {
+            // Delete the temp file
+            File.Delete(fileName);
+        }
+        return ret;
     }
 
     public static string EscapeMovieFileName(string fileName) =>

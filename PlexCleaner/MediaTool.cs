@@ -66,7 +66,7 @@ public abstract class MediaTool
     // Version information is used in the sidecar tool logic
     public MediaToolInfo Info { get; set; }
 
-    private string GetToolName() =>
+    public string GetToolName() =>
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? GetToolNameWindows()
             : GetToolNameLinux();
@@ -83,28 +83,28 @@ public abstract class MediaTool
             ? GetLatestVersionWindows(out mediaToolInfo)
             : GetLatestVersionLinux(out mediaToolInfo);
 
-    protected int Command(string parameters)
+    public int Command(string parameters)
     {
         parameters = parameters.Trim();
         Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, !Program.Options.Parallel);
     }
 
-    protected int Command(string parameters, out string output)
+    public int Command(string parameters, out string output)
     {
         parameters = parameters.Trim();
         Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output);
     }
 
-    protected int Command(string parameters, out string output, out string error)
+    public int Command(string parameters, out string output, out string error)
     {
         parameters = parameters.Trim();
         Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);
         return ProcessEx.Execute(GetToolPath(), parameters, false, 0, out output, out error);
     }
 
-    protected int Command(string parameters, int limit, out string output, out string error)
+    public int Command(string parameters, int limit, out string output, out string error)
     {
         parameters = parameters.Trim();
         Log.Information("Executing {ToolType} : {Parameters}", GetToolType(), parameters);

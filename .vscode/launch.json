@@ -27,6 +27,7 @@
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results.json",
                 "--testsnippets",
+                "--quickscan",
                 "--mediafiles",
                 "D:\\Test"
             ],

@@ -23,6 +23,7 @@ public class CommandLineOptions
     public string SchemaFile { get; set; }
     public bool PreProcess { get; set; }
     public string ResultsFile { get; set; }
+    public bool QuickScan { get; set; }
 
     public static int Invoke()
     {

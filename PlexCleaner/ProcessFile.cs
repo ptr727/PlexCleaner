@@ -818,8 +818,15 @@ public class ProcessFile
         // Return false on error
         // Set videoInfo if interlaced
 
-        // Are any interlaced attributes set
+        // Any video tracks
         videoInfo = null;
+        if (FfProbeInfo.Video.Count == 0)
+        {
+            // No video tracks
+            return true;
+        }
+
+        // Are any interlaced attributes set
         videoInfo ??= FfProbeInfo.Video.Find(item => item.Interlaced);
         videoInfo ??= MediaInfoInfo.Video.Find(item => item.Interlaced);
         videoInfo ??= MkvMergeInfo.Video.Find(item => item.Interlaced);
@@ -872,8 +879,15 @@ public class ProcessFile
         // Return false on error
         // Set videoInfo if contains closed captions
 
-        // Are any closed caption attributes set
+        // Any video tracks
         videoInfo = null;
+        if (FfProbeInfo.Video.Count == 0)
+        {
+            // No video tracks
+            return true;
+        }
+
+        // Are any closed caption attributes set
         videoInfo ??= FfProbeInfo.Video.Find(item => item.ClosedCaptions);
         videoInfo ??= MediaInfoInfo.Video.Find(item => item.ClosedCaptions);
         videoInfo ??= MkvMergeInfo.Video.Find(item => item.ClosedCaptions);
@@ -1944,15 +1958,15 @@ public class ProcessFile
             Log.Error("Unsupported media info : {FileName}", FileInfo.Name);
             if (MediaInfoInfo.Unsupported)
             {
-                MediaInfoInfo.WriteLine($"Unsupported: {MediaInfoInfo.Parser}");
+                MediaInfoInfo.WriteLine("Unsupported");
             }
             if (MkvMergeInfo.Unsupported)
             {
-                MkvMergeInfo.WriteLine($"Unsupported: {MkvMergeInfo.Parser}");
+                MkvMergeInfo.WriteLine("Unsupported");
             }
             if (FfProbeInfo.Unsupported)
             {
-                FfProbeInfo.WriteLine($"Unsupported: {FfProbeInfo.Parser}");
+                FfProbeInfo.WriteLine("Unsupported");
             }
             return false;
         }

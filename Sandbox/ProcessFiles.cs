@@ -109,7 +109,7 @@ public class ProcessFiles
                 // Write a snippet of the file to a temp file
                 FileInfo tempFile = new(Path.ChangeExtension(fileName, "snip.temp"));
                 string ffmpegCommandline =
-                    $"-hide_banner -no_stats -loglevel error -t 30 -fflags +genpts -i \"{fileName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile}\"";
+                    $"-hide_banner -nostats -loglevel error -t 30 -fflags +genpts -i \"{fileName}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{tempFile}\"";
                 Log.Information(
                     "Remuxing {FilePath} to temp file {TempFilePath}",
                     processFile.FileInfo.Name,

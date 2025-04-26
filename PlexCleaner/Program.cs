@@ -648,8 +648,11 @@ public static class Program
     // Config file options
     public static ConfigFileJsonSchema Config { get; set; }
 
-    // Snippet runtime in seconds
+    // Snippet runtime
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
+
+    // QuickScan runtime
+    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
 
     // Cancellation token
     private static readonly CancellationTokenSource s_cancelSource = new();

@@ -108,6 +108,15 @@ public partial class MkvMergeTool : MediaTool
         return false;
     }
 
+    public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"--split parts:{(int)timeStart.TotalSeconds}s-{(int)timeEnd.TotalSeconds}s";
+
+    public static string GetStartSplit(TimeSpan timeSpan) =>
+        $"--split parts:{(int)timeSpan.TotalSeconds}s-";
+
+    public static string GetStopSplit(TimeSpan timeSpan) =>
+        $"--split parts:-{(int)timeSpan.TotalSeconds}s";
+
     public bool GetMkvInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
@@ -157,6 +166,7 @@ public partial class MkvMergeTool : MediaTool
                     && string.IsNullOrEmpty(track.Properties.CodecId)
                 )
                 {
+                    // TODO: Maybe leave empty instead?
                     track.Properties.CodecId = "Unknown";
                 }
 
@@ -315,7 +325,7 @@ public partial class MkvMergeTool : MediaTool
         {
             _ = commandline.Append(
                 CultureInfo.InvariantCulture,
-                $"--split parts:00:00:00-{Program.SnippetTimeSpan:hh\\:mm\\:ss} "
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
             );
         }
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");

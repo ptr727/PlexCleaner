@@ -215,6 +215,9 @@
             "editor.formatOnSave": true,
             "editor.defaultFormatter": "csharpier.csharpier-vscode"
         },
+        "[json][jsonc]": {
+            "editor.defaultFormatter": "vscode.json-language-features"
+        },
         "diffEditor.ignoreTrimWhitespace": false,
         "editor.renderWhitespace": "boundary",
         "dotnet.formatting.organizeImportsOnFormat": true,
