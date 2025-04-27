@@ -18,7 +18,6 @@ using Serilog;
 
 // FfMpeg logs to stderr, not stdout
 
-// TODO: Figure out how to get ffmpeg more resilient to continue when the system resumes from sleep
 // TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
 
 // Typical commandline:
@@ -108,17 +107,13 @@ public partial class FfMpegTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
 
     public override bool Update(string updateFile)
     {
-        // TODO: This only works for Windows
-
         // FfMpeg archives have versioned folders in the zip file
         // The 7Zip -spe option does not work for zip files
         // https://sourceforge.net/p/sevenzip/discussion/45798/thread/8cb61347/

@@ -101,10 +101,8 @@ public partial class MkvMergeTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
 
@@ -166,7 +164,6 @@ public partial class MkvMergeTool : MediaTool
                     && string.IsNullOrEmpty(track.Properties.CodecId)
                 )
                 {
-                    // TODO: Maybe leave empty instead?
                     track.Properties.CodecId = "Unknown";
                 }
 

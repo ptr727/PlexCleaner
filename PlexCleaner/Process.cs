@@ -387,7 +387,6 @@ public static class Process
             false,
             fileName =>
             {
-                // TODO: Add skipped flag tto remove non processed content from results
                 // Process the file
                 bool processResult = ProcessFile(
                     fileName,

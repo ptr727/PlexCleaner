@@ -66,9 +66,11 @@ public record VerifyOptions2 : VerifyOptions1
         MaximumBitrate = 100 * Format.MB;
     }
 
-#pragma warning disable CA1822 // Mark members as static
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static"
+    )]
     public bool VerifyValues() =>
         // Nothing to do
         true;
-#pragma warning restore CA1822 // Mark members as static
 }

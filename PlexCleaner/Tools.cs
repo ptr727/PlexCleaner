@@ -29,7 +29,7 @@ public static class Tools
 
     public static bool VerifyTools()
     {
-        // TODO: Folder tools are not supported on Linux
+        // Folder tools are not supported on Linux
         if (
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             && !Program.Config.ToolsOptions.UseSystem
@@ -183,7 +183,7 @@ public static class Tools
 
     public static bool CheckForNewTools()
     {
-        // TODO: Checking for new tools are not supported on Linux
+        // Checking for new tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             Log.Warning("Checking for new tools are not supported on Linux");

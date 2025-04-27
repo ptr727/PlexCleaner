@@ -120,7 +120,7 @@ public class ProcessFile
             || !FileEx.RenameFile(tempName, lowerName)
         )
         {
-            // TODO: Chance of partial failure
+            // TODO: Chance of partial failure if only one rename succeeds
             return false;
         }
 
@@ -448,12 +448,10 @@ public class ProcessFile
             return false;
         }
 
-        // TODO: Only MkvMergeInfo is used
+        // Set flags using MkvMergeInfo
         Debug.Assert(
             MkvMergeInfo.GetTrackList().Any(item => item.State == TrackInfo.StateType.SetFlags)
         );
-
-        // Set flags using MkvMergeInfo
         if (!Tools.MkvPropEdit.SetTrackFlags(FileInfo.FullName, MkvMergeInfo))
         {
             // Error
@@ -1126,7 +1124,6 @@ public class ProcessFile
         if (nalUnit == default)
         {
             // Error
-            // TODO: Could re-encode fist, but not guaranteed that codec is in the re-encode list
             Log.Error(
                 "Unsupported video format for Closed Captions removal : Format: {Format} : {FileName}",
                 videoInfo.Format,
@@ -1145,12 +1142,14 @@ public class ProcessFile
             )
         )
         {
-            Log.Warning(
+            // TODO: Treating this as an error until verified with actual examples
+            // Error
+            Log.Error(
                 "Removing Closed Captions may remove HDR10+ information : {Format} : {FileName}",
                 mediaInfoVideo.FormatHdr,
                 FileInfo.Name
             );
-            // Warning only
+            return false;
         }
 
         // Create a temp output filename
@@ -1278,7 +1277,7 @@ public class ProcessFile
     {
         // Use MkvMergeInfo
 
-        // TODO: Tooling supports one and only one video track
+        // Tooling supports one and only one video track
         if (MkvMergeInfo.Video.Count == 0)
         {
             Log.Error("File missing video track : {FileName}", FileInfo.Name);

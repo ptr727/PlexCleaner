@@ -9,8 +9,6 @@ using InsaneGenius.Utilities;
 
 namespace PlexCleaner;
 
-// TODO: Find a use or delete
-
 // Use MkvMerge family
 public class MkvExtractTool : MkvMergeTool
 {

@@ -38,16 +38,15 @@ public class FfMpegIdetInfo
 
     public bool IsInterlaced()
     {
-        // TODO: Based on experimentation this logic is not completely reliable
-        // E.g. When the interlaced frames are > 0, and running deinterlace, the interlaced frame count is still > 0
-
         // All undetermined
         if (Undetermined == Total)
         {
             return false;
         }
 
-        // Not interlaced
+        // TODO: Based on experimentation this logic is not completely reliable
+        // Even after running deinterlace the interlaced frame count is still > 0
+        // Declare anything less than x% not interlaced
         return Interlaced != 0 && InterlacedPercentage > InterlacedThreshold;
     }
 

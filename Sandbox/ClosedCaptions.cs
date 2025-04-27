@@ -185,7 +185,7 @@ public class ClosedCaptions
         return true;
     }
 
-    private bool FfProbeEia608ToJson(string inFile, string outFile)
+    private static bool FfProbeEia608ToJson(string inFile, string outFile)
     {
         Log.Information("FFprobe EIA608 JSON from {InFile} to {OutFile}", inFile, outFile);
         string commandline =
@@ -231,6 +231,10 @@ public class ClosedCaptions
         return true;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Style",
+        "IDE0051:Remove unused private members"
+    )]
     private bool FfProbeAnalyzeFramesToJson(string inFile, string outFile)
     {
         // Not yet released in v7.1.1 as of writing
@@ -278,7 +282,7 @@ public class ClosedCaptions
         return true;
     }
 
-    private bool FfMpegToSrt(string inFile, string outFile)
+    private static bool FfMpegToSrt(string inFile, string outFile)
     {
         Log.Information("FFmpeg SRT from {InFile} to {OutFile}", inFile, outFile);
         string commandline =

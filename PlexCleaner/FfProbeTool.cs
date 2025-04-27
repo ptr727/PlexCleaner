@@ -30,7 +30,6 @@ public class FfProbeTool : FfMpegTool
         packetList = null;
 
         // Write JSON text output to compressed memory stream to save memory
-        // TODO: Do the packet calculation in ProcessEx.OutputHandler() instead of writing all output to stream then processing the stream
         // Make sure that the various stream processors leave the memory stream open for the duration of operations
         using MemoryStream memoryStream = new();
         using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
@@ -111,8 +110,6 @@ public class FfProbeTool : FfMpegTool
                 packetList = null;
                 return false;
             }
-
-            // TODO: Could also use MediaInfo on TS files vs. show_packets
 
             // Use the temp file as the input file
             fileName = tempName;

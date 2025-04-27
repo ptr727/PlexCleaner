@@ -27,7 +27,7 @@ public class CommandLineOptions
 
     public static int Invoke()
     {
-        // TODO: Remove first argument for compatibility
+        // Remove first argument when using Environment.CommandLine
         // https://github.com/dotnet/command-line-api/issues/1781
         RootCommand rootCommand = CreateRootCommand();
         return rootCommand.Invoke(

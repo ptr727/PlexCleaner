@@ -40,6 +40,7 @@ Docker images are published on [Docker Hub][docker-link].
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe. See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
   - Re-added `parallel` and `threadcount` option to `monitor` command to be used during the processing phase, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ProcessOptions:ReMux` to warn when disabled when media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
+  - Added `quickscan` option to limit the scan duration and improve performance, at the cost of accuracy, when looking for interlaced frames and closed captions.
   - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
@@ -438,6 +439,7 @@ Options:
   --testnomodify                            Do not make any media file modifications
   --parallel                                Enable parallel processing
   --threadcount <threadcount>               Number of threads to use for parallel processing
+  --quickscan                               Scan only part of the file
   --reverify                                Re-verify and repair media files in the VerifyFailed state
   --resultsfile <resultsfile>               Path to results file
   --logfile <logfile>                       Path to log file
@@ -481,13 +483,16 @@ Options:
   - When parallel processing is enabled, the default thread count is half the number of system cores.
 - `--threadcount`:
   - Override the thread count when the `--parallel` option is enabled.
+- `--quickscan`:
+  - Limits the duration when scanning a media file for closed captions or interlaced frames.
+  - Can improve performance, but if closed captions or interlaced frames are only present later, they may be missed.
 - `--reverify`:
   - Re-verify and re-attempt repair of media files that are in the `VerifyFailed` state.
   - By default files would be skipped due to processing optimization logic when using sidecar files.
   - This may be useful when media tools were updated with new features or bug fixes.
-- `resultsfile`:
+- `--resultsfile`:
   - Write processing results to a JSON file.
-  - Useful when investigating issues or comparing with previous results.
+  - Useful when comparing results with previous processing runs.
 
 Example:
 
@@ -518,6 +523,9 @@ Options:
   --testnomodify                            Do not make any media file modifications
   --parallel                                Enable parallel processing
   --threadcount <threadcount>               Number of threads to use for parallel processing
+  --quickscan                               Scan only part of the file
+  --reverify                                Re-verify and repair media files in the VerifyFailed state
+  --resultsfile <resultsfile>               Path to results file
   --preprocess                              Pre-process all monitored folders
   --logfile <logfile>                       Path to log file
   --logappend                               Append to existing log file
@@ -535,7 +543,7 @@ Options:
 
 - Most of the `process` command options apply.
 - `--preprocess`:
-  - On startup process all media files and then handled monitored changes.
+  - On startup process all existing media files.
 
 ### Other Commands
 
@@ -713,8 +721,8 @@ E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %00:
 }
 ```
 
-The currently implemented method of closed caption detection uses FFprobe and the `subcc` filter to detect closed caption frames, but requires scanning of the entire file.\
-It would also be possible to write a small file snippet to a temp TS file, then analyze that file using MediaInfo or FFprobe, may be implemented in a later version.
+The currently implemented method of closed caption detection uses FFprobe and the `subcc` filter to detect closed caption frames, but requires scanning of the entire file as there are no options to limit the scan duration when using the `subcc` filter.\
+If the `quickscan` options is enabled a small file snippet is first created, and the snippet is used for analysis reducing processing times.
 
 FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits) can be used to [remove closed captions](https://stackoverflow.com/questions/48177694/removing-eia-608-closed-captions-from-h-264-without-reencode) from video streams.\
 E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v filter_units=remove_types=6 \"{outInfo.FullName}\"`\

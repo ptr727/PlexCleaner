@@ -137,9 +137,10 @@ public static class Program
             return true;
         }
 
-        // --rid
-        // TODO: https://github.com/dotnet/runtime/issues/114156
         // TODO: Remove if no longer needed
+        // --rid
+        // RID is not reliable when using platform built .NET tools
+        // https://github.com/dotnet/runtime/issues/114156
         if (Environment.CommandLine.Contains("--rid"))
         {
             Console.WriteLine(AssemblyVersion.GetNormalizedRuntimeIdentifier());
@@ -186,9 +187,8 @@ public static class Program
         // Keep running and do graceful exit
         eventArgs.Cancel = true;
 
-        // Signal the cancel event, use Ctrl+C as signal
-        // TODO: ConsoleSpecialKey can be ControlC or ControlBreak, what is the ConsoleKey for Break, VT_CANCEL in WIN32?
-        Cancel(ConsoleModifiers.Control, ConsoleKey.C);
+        // Signal the cancel event, use Ctrl+Break as signal
+        Cancel(ConsoleModifiers.Control, ConsoleKey.Pause);
     }
 
     private static void WaitForDebugger()

@@ -47,11 +47,11 @@ public class Monitor
                 | NotifyFilters.Size;
             watch.Filter = "*.*";
             watch.IncludeSubdirectories = true;
-            watch.Changed += ChangeHandler;
-            watch.Created += ChangeHandler;
-            watch.Deleted += ChangeHandler;
-            watch.Renamed += RenameHandler;
-            watch.Error += ErrorHandler;
+            watch.Changed += (s, e) => OnChanged(e);
+            watch.Created += (s, e) => OnChanged(e);
+            watch.Deleted += (s, e) => OnChanged(e);
+            watch.Renamed += (s, e) => OnRenamed(e);
+            watch.Error += (s, e) => OnError(e);
         }
 
         // Enable event watching
@@ -155,12 +155,6 @@ public class Monitor
 
         // Done
         return true;
-
-        // Local function change handlers
-        // TODO: Can event handlers directly call instance functions?
-        void ErrorHandler(object s, ErrorEventArgs e) => OnError(e);
-        void RenameHandler(object s, RenamedEventArgs e) => OnRenamed(e);
-        void ChangeHandler(object s, FileSystemEventArgs e) => OnChanged(e);
     }
 
     private static bool ProcessChanges(List<string> folderList)
@@ -242,9 +236,7 @@ public class Monitor
         }
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    private void OnError(ErrorEventArgs e)
-#pragma warning restore CA1822 // Mark members as static
+    private static void OnError(ErrorEventArgs e)
     {
         // Cancel in case of error
         Log.Error(e.GetException(), "OnError()");
@@ -300,12 +292,10 @@ public class Monitor
         }
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    private void OnDeleted(string pathname) =>
+    private static void OnDeleted(string pathname) =>
         // The path we get no longer exists, it may be a file, or it may be a folder
-        // TODO: Figure out how to accurately test if deleted path was a file or folder
+        // TODO: How to determine if the deleted path was a file or folder?
         Log.Verbose("OnDeleted : {PathName}", pathname);
-#pragma warning restore CA1822 // Mark members as static
 
     private readonly List<FileSystemWatcher> _watcher = [];
     private readonly Dictionary<string, DateTime> _watchFolders = new(

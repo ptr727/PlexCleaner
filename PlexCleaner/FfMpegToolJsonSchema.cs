@@ -69,8 +69,6 @@ public class FfMpegToolJsonSchema
         public string FieldOrder { get; set; } = "";
 
         // XSD says it is a Boolean, examples use an int
-        // TODO: Newtonsoft would convert 0 to false all else to true, Text.Json is not so forgiving
-        // https://stackoverflow.com/questions/68682450/automatic-conversion-of-numbers-to-bools-migrating-from-newtonsoft-to-system-t
         [JsonPropertyName("closed_captions")]
         public int ClosedCaptions { get; set; }
 

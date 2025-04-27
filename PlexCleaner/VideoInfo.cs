@@ -103,8 +103,30 @@ public class VideoInfo : TrackInfo
         // HDR
         FormatHdr = track.HdrFormat;
 
-        // TODO: CC's are reported as separate tracks in MediaInfo
+        // TODO: CC's are reported as sub-tracks in MediaInfo
+        // Parse CC flag based on presence of CC tracks
         // Missing: ClosedCaptions
+        /*
+        {
+            "@type": "Video",
+            "ID": "256",
+            "Format": "AVC",
+        },
+        {
+            "@type": "Text",
+            "ID": "256-CC1",
+            "Format": "EIA-608",
+            "MuxingMode": "SCTE 128 / DTVCC Transport",
+            "MuxingMode_MoreInfo": "Muxed in Video #1",
+        },
+        {
+            "@type": "Text",
+            "ID": "256-1",
+            "Format": "EIA-708",
+            "MuxingMode": "SCTE 128 / DTVCC Transport",
+            }
+        },
+        */
 
         // Cover art
         if (IsCoverArt)

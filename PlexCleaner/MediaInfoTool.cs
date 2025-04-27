@@ -91,10 +91,8 @@ public partial class MediaInfoTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
 

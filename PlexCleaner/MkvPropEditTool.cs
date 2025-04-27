@@ -31,7 +31,6 @@ public class MkvPropEditTool : MkvMergeTool
         // Set the language property not the language-ietf property
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
 
-        // TODO: Should we be skipping und?
         // Only set tracks that are set and not undefined
         System.Collections.Generic.List<TrackInfo> trackList =
         [
@@ -62,8 +61,6 @@ public class MkvPropEditTool : MkvMergeTool
         foreach (TrackInfo trackItem in mediaInfo.GetTrackList())
         {
             // Setting a flag does not unset the counter flag, e.g. setting default on one track does not unset default on other tracks
-            // TODO: Should we set all flags for all tracks, cli gets very long, or only set flags
-            // var flagList = TrackInfo.GetFlags().ToList();
 
             // Get flags list for this track
             System.Collections.Generic.List<TrackInfo.FlagsType> flagList =

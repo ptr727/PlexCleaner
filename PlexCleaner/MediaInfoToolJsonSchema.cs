@@ -12,8 +12,6 @@ using System.Text.Json.Serialization;
 // mediainfo --Output=JSON file.mkv
 
 // TODO: Evaluate support on all version of MediaInfo and switch from XML to JSON
-// TODO: Reduce to minimal set of used values
-// TODO: VideoCount, AudioCount, TextCount indicates sub-tracks that can be used for exclusion or e.g. CC inclusion
 
 namespace PlexCleaner;
 

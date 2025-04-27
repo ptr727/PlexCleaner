@@ -454,7 +454,6 @@ public class SidecarFile
         _sidecarJson.MediaInfoData = StringCompression.Compress(_mediaInfoXml);
 
         // State
-        // TODO: Only update tool and file info if changed, else just update state
         _sidecarJson.State = State;
 
         return true;
@@ -503,7 +502,7 @@ public class SidecarFile
     {
         try
         {
-            // TODO: Reuse this object to get value out of reusing the 128KB buffer
+            // TODO: Reuse this object or the buffer without breaking multithreading
             // Allocate buffer to hold data to be hashed
             byte[] hashBuffer = new byte[2 * HashWindowLength];
 

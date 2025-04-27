@@ -280,17 +280,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     public static void WriteSchemaToFile(string path)
     {
-        // TODO: Use refiners to filter out [Obsolete] attributes
-        // Use [Obsolete] and [Json.Schema.Generation.JsonExclude] on all obsolete attributes
-        // https://github.com/gregsdennis/json-everything/issues/703
-        // https://docs.json-everything.net/schema/schemagen/schema-generation/#schema-schemagen-refiners
-
-        // TODO: Avoid using [Required] as it is defined in System.ComponentModel.DataAnnotations and in Json.Schema.Generation, avoid "using Json.Schema.Generation"
-        // Use [JsonRequired] on all must be serialized attributes.
-        // https://github.com/gregsdennis/json-everything/issues/702
-
         // Create JSON schema
-        // TODO: Schema version should really be set based on generator internals
         const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
         JsonSchema schemaBuilder = new JsonSchemaBuilder()
             .FromType<ConfigFileJsonSchema>(
