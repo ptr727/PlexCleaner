@@ -242,11 +242,30 @@ public partial class MkvMergeTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
+        StringBuilder commandline = new();
+        _ = commandline.Append($"{MergeOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append("--quiet ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
         // Selected is Keep
         // NotSelected is Remove
-        StringBuilder commandline = new();
-        CreateDefaultArgs(outputName, commandline);
         CreateTrackArgs(selectMediaInfo.Selected, commandline);
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
@@ -260,9 +279,29 @@ public partial class MkvMergeTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
         StringBuilder commandline = new();
-        CreateDefaultArgs(outputName, commandline);
+        _ = commandline.Append($"{MergeOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append("--quiet ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // Input file
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
         // ReMux all
@@ -275,9 +314,29 @@ public partial class MkvMergeTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
         StringBuilder commandline = new();
-        CreateDefaultArgs(outputName, commandline);
+        _ = commandline.Append($"{MergeOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append("--quiet ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // No subtitles and input file
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--no-subtitles \"{inputName}\"");
 
         // ReMux tracks
@@ -295,29 +354,17 @@ public partial class MkvMergeTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
         StringBuilder commandline = new();
-        // Default args
-        CreateDefaultArgs(outputName, commandline);
-        // Source one as is
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceOne}\" ");
-        // Source two track options
-        CreateTrackArgs(keepTwo, commandline);
-        // Source two
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceTwo}\"");
-        // ReMux tracks
-        int exitCode = Command(commandline.ToString());
-        return exitCode is 0 or 1;
-    }
-
-    private static void CreateDefaultArgs(string outputName, StringBuilder commandline)
-    {
         _ = commandline.Append($"{MergeOptions} ");
+
+        // Quiet
         if (Program.Options.Parallel)
         {
-            // Suppress console output
             _ = commandline.Append("--quiet ");
         }
+
+        // Snippets
         if (Program.Options.TestSnippets)
         {
             _ = commandline.Append(
@@ -325,7 +372,22 @@ public partial class MkvMergeTool : MediaTool
                 $"{GetStopSplit(Program.SnippetTimeSpan)} "
             );
         }
+
+        // Output file
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // Source one as is
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceOne}\" ");
+
+        // Source two track options
+        CreateTrackArgs(keepTwo, commandline);
+
+        // Source two
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceTwo}\"");
+
+        // ReMux tracks
+        int exitCode = Command(commandline.ToString());
+        return exitCode is 0 or 1;
     }
 
     private static void CreateTrackArgs(MediaInfo mediaInfo, StringBuilder commandline)

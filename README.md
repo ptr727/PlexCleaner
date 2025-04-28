@@ -40,7 +40,8 @@ Docker images are published on [Docker Hub][docker-link].
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe. See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
   - Re-added `parallel` and `threadcount` option to `monitor` command to be used during the processing phase, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ProcessOptions:ReMux` to warn when disabled when media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
-  - Added `quickscan` option to limit the scan duration and improve performance, at the cost of accuracy, when looking for interlaced frames and closed captions.
+  - Added `quickscan` option to limit the scan duration and improve performance, at the cost of accuracy.
+  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap manualy set value to CPU count, prevents CPU starvation.
   - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
@@ -113,8 +114,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
 - Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
-- When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
-- Processing can be interrupted using `Ctrl-C`, if using sidecar files restarting will skip previously verified files.
+- Processing can be interrupted using `Ctrl-Break`, if using sidecar files restarting will skip previously verified files.
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
@@ -475,17 +475,24 @@ Options:
   - Paths with spaces should be double quoted.
   - Repeat the option to include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.
 - `--testsnippets`:
-  - Create short media clips that limit the processing time required, useful during testing.
+  - Create shortened snippets for any files being created.
+  - Useful when testing to speed up processing.
+  - Use this option only when testing, do not use on valuable media files.
+  - Can be combined with `--quickscan` to limit file scanning operations.
 - `--testnomodify`:
   - Process files but do not make any file modifications, useful during testing.
 - `--parallel`:
   - Process multiple files concurrently.
-  - When parallel processing is enabled, the default thread count is half the number of system cores.
 - `--threadcount`:
-  - Override the thread count when the `--parallel` option is enabled.
+  - Concurrent processing thread count when the `--parallel` option is enabled.
+  - The default thread count is max(cores / 2, 4).
 - `--quickscan`:
-  - Limits the duration when scanning a media file for closed captions or interlaced frames.
-  - Can improve performance, but if closed captions or interlaced frames are only present later, they may be missed.
+  - Limits the time duration when scanning media files, applies to:
+    - Steam verification, uses `ffmpeg -t`.
+    - Interlaced frame detection, uses `ffmpeg -t`.
+    - Closed caption detection, `subcc` filter does not support `ffmpeg -t` or `ffprobe -read_intervals`, creates a small temp file using `ffmpeg -t`.
+    - Bitrate calculation using `ffprobe -read_intervals`.
+  - Improves scan times, but risks missing information if only present later in the media file.
 - `--reverify`:
   - Re-verify and re-attempt repair of media files that are in the `VerifyFailed` state.
   - By default files would be skipped due to processing optimization logic when using sidecar files.
@@ -707,7 +714,7 @@ E.g.
 
 FFprobe [recently added](https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01) the `analyze_frames` [option](https://ffmpeg.org/ffprobe.html#toc-Main-options) that reports on the presence of closed captions in video streams.\
 As of writing this functionality has not yet been released, but is in nightly builds.\
-E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %00:05 filename -print_format json`
+E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %180 filename -print_format json`
 
 ```json
 {

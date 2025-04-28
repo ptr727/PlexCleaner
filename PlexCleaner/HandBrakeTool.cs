@@ -97,6 +97,15 @@ public partial class HandBrakeTool : MediaTool
         return false;
     }
 
+    public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"--start-at seconds:{(int)timeStart.TotalSeconds} --stop-at seconds:{(int)timeEnd.TotalSeconds}";
+
+    public static string GetStartSplit(TimeSpan timeSpan) =>
+        $"--start-at seconds:{(int)timeSpan.TotalSeconds}";
+
+    public static string GetStopSplit(TimeSpan timeSpan) =>
+        $"--stop-at seconds:{(int)timeSpan.TotalSeconds}";
+
     public bool ConvertToMkv(
         string inputName,
         string outputName,
@@ -110,10 +119,23 @@ public partial class HandBrakeTool : MediaTool
         // TODO: How to suppress console output when running in parallel mode?
         // if (Program.Options.Parallel)
 
-        // Build commandline
+        // Input file
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--input \"{inputName}\" ");
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // MKV output
         _ = commandline.Append("--format av_mkv ");
 
         // Video encoder options
@@ -142,18 +164,6 @@ public partial class HandBrakeTool : MediaTool
         // Execute
         int exitCode = Command(commandline.ToString());
         return exitCode == 0;
-    }
-
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
-    {
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"--input \"{inputName}\" ");
-        if (Program.Options.TestSnippets)
-        {
-            _ = commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} "
-            );
-        }
     }
 
     public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";

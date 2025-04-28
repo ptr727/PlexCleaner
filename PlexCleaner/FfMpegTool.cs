@@ -156,19 +156,30 @@ public partial class FfMpegTool : MediaTool
 
     public bool VerifyMedia(string fileName, out string error)
     {
-        // https://trac.ffmpeg.org/ticket/6375
-        // Too many packets buffered for output stream 0:1
-        // Set max_muxing_queue_size to large value to work around issue
-        // TODO: Issue is reported fixed, to be verified
-
-        // Use null muxer, no stats, report errors
-        // https://trac.ffmpeg.org/wiki/Null
-
-        // Build commandline
+        // Default options
         StringBuilder commandline = new();
-        CreateDefaultArgs(fileName, "", commandline, false, true);
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        _ = commandline.Append($"{SilentOptions} ");
+
+        // Quickscan
+        if (Program.Options.QuickScan)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.QuickScanTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{fileName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
 
         // Null output muxer and exit immediately on error
+        // https://trac.ffmpeg.org/wiki/Null
         _ = commandline.Append("-loglevel error -xerror -f null -");
 
         // Execute and limit captured output to last 5 lines
@@ -179,31 +190,44 @@ public partial class FfMpegTool : MediaTool
     }
 
     public bool ReMuxToMkv(string inputName, string outputName) =>
-        ReMuxToFormat(inputName, outputName, "matroska", TimeSpan.Zero);
+        ReMuxToFormat(inputName, outputName, "matroska");
 
-    public bool ReMuxToFormat(string inputName, string outputName, string format) =>
-        ReMuxToFormat(inputName, outputName, format, TimeSpan.Zero);
-
-    public bool ReMuxToFormat(string inputName, string outputName, string format, TimeSpan timeSpan)
+    public bool ReMuxToFormat(string inputName, string outputName, string format)
     {
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
+        // Default options
+        StringBuilder commandline = new();
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append($"{SilentOptions} ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
+
+        // Add -fflags +genpts to generate missing timestamps
         // [mpegts @ 0x5713ff02ab40] first pts and dts value must be set
         // av_interleaved_write_frame(): Invalid data found when processing input
         // [matroska @ 0x604976cd9dc0] Can't write packet with unknown timestamp
         // av_interleaved_write_frame(): Invalid argument
-        // -fflags +genpts
-
-        // Set input options and optional timespan
-        string inputOptions = $"-fflags +genpts";
-        if (timeSpan != TimeSpan.Zero)
-        {
-            inputOptions += $" {GetStopSplit(timeSpan)}";
-        }
-        // Build commandline
-        StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, inputOptions, commandline, false, false);
+        _ = commandline.Append("-fflags +genpts ");
 
         // ReMux and copy all streams to specific format
         _ = commandline.Append(
@@ -287,15 +311,39 @@ public partial class FfMpegTool : MediaTool
         // NotSelected is Keep
         CreateTrackArgs(selectMediaInfo, out string inputMap, out string outputMap);
 
-        // https://trac.ffmpeg.org/ticket/2622
-        // Error with some PGS subtitles
-        // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
-        // Consider increasing the value for the 'analyzeduration' and 'probesize' options
-        // TODO: Issue is reported fixed, to be verified
-
-        // Build commandline
+        // Default options
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "", commandline, true, false);
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append($"{SilentOptions} ");
+        }
+
+        // Encoding options
+        if (!string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global))
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{Program.Config.ConvertOptions.FfMpegOptions.Global} "
+            );
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
 
         // Input and output map
         _ = commandline.Append(CultureInfo.InvariantCulture, $"{inputMap} {outputMap} ");
@@ -313,9 +361,39 @@ public partial class FfMpegTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Default options
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "", commandline, true, false);
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append($"{SilentOptions} ");
+        }
+
+        // Encoding options
+        if (!string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global))
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{Program.Config.ConvertOptions.FfMpegOptions.Global} "
+            );
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
 
         // Process all tracks
         _ = commandline.Append("-map 0 ");
@@ -350,16 +428,40 @@ public partial class FfMpegTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Default options
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "", commandline, false, false);
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append($"{SilentOptions} ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
 
         // Remove SEI NAL units e.g. EIA-608 and CTA-708 content
         // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
-            $"-map 0 -c copy -bsf:v \"filter_units=remove_types={nalUnit}\" -f matroska \"{outputName}\""
+            $"-map 0 -c copy -bsf:v \"filter_units=remove_types={nalUnit}\" "
         );
+
+        // Output to MKV
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-f matroska \"{outputName}\"");
 
         // Execute
         int exitCode = Command(commandline.ToString());
@@ -371,15 +473,36 @@ public partial class FfMpegTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Default options
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, "", commandline, false, false);
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        if (Program.Options.Parallel)
+        {
+            _ = commandline.Append($"{SilentOptions} ");
+        }
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
 
         // Remove all metadata using -map_metadata -1
-        _ = commandline.Append(
-            CultureInfo.InvariantCulture,
-            $"-map_metadata -1 -map 0 -c copy -f matroska \"{outputName}\""
-        );
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-map_metadata -1 -map 0 -c copy ");
+
+        // Output to MKV
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-f matroska \"{outputName}\"");
 
         // Execute
         int exitCode = Command(commandline.ToString());
@@ -405,21 +528,6 @@ public partial class FfMpegTool : MediaTool
         // https://ffmpeg.org/ffmpeg-filters.html#idet
         // http://www.aktau.be/2013/09/22/detecting-interlaced-video-with-ffmpeg/
 
-        // Null output is platform specific
-        // https://trac.ffmpeg.org/wiki/Null
-        string nullOut = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "-y NUL"
-            : "-y /dev/null";
-
-        // Limit the processing time if quickscan is enabled
-        string quickScan = Program.Options.QuickScan
-            ? GetStopSplit(Program.QuickScanTimeSpan)
-            : string.Empty;
-
-        // Build commandline
-        StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, quickScan, commandline, false, true);
-
         // Counting can report stream errors, keep going, do not use -xerror
         // [h264 @ 0x55ec750529c0] Invalid NAL unit size (106673 > 27162).
         // [h264 @ 0x55ec750529c0] Error splitting the input into NAL units.
@@ -430,10 +538,36 @@ public partial class FfMpegTool : MediaTool
         // [Parsed_idet_0 @ 0x55ec7698bd00] Single frame detection: TFF:    34 BFF:    33 Progressive: 29439 Undetermined: 14657
         // [Parsed_idet_0 @ 0x55ec7698bd00] Multi frame detection: TFF:    41 BFF:    99 Progressive: 43999 Undetermined:    24
 
+        // Default options
+        StringBuilder commandline = new();
+        _ = commandline.Append($"{GlobalOptions} ");
+
+        // Quiet
+        _ = commandline.Append($"{SilentOptions} ");
+
+        // Quickscan
+        if (Program.Options.QuickScan)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.QuickScanTimeSpan)} "
+            );
+        }
+
+        // Input filename
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
+
+        // Default output options
+        _ = commandline.Append($"{OutputOptions} ");
+
         // Run idet filter
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"-filter:v idet -an -f rawvideo ");
+
+        // Null output is platform specific
+        // https://trac.ffmpeg.org/wiki/Null
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
-            $"-filter:v idet -an -f rawvideo {nullOut}"
+            $"{(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "-y NUL" : "-y /dev/null")}"
         );
 
         // Execute and limit captured output to 5 lines to just get stats
@@ -518,60 +652,22 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    private static void CreateDefaultArgs(
-        string inputName,
-        string inputOptions,
-        StringBuilder commandline,
-        bool encoding,
-        bool silent
-    )
-    {
-        // Add custom global options when encoding
-        _ =
-            encoding && !string.IsNullOrEmpty(Program.Config.ConvertOptions.FfMpegOptions.Global)
-                ? commandline.Append(
-                    CultureInfo.InvariantCulture,
-                    $"{GlobalOptions} {Program.Config.ConvertOptions.FfMpegOptions.Global} "
-                )
-                : commandline.Append($"{GlobalOptions} ");
+    public const string SilentOptions = "-nostats";
 
-        // Test snippets, only if -t or -ss not already in input options
-        if (
-            Program.Options.TestSnippets
-            && !inputOptions.Contains(" -t ", StringComparison.Ordinal)
-            && !inputOptions.Contains(" -ss ", StringComparison.Ordinal)
-        )
-        {
-            // Add snippet time span to input options
-            // https://trac.ffmpeg.org/wiki/Seeking#Cuttingsmallsections
-            _ = commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"{GetStopSplit(Program.SnippetTimeSpan)} "
-            );
-        }
-
-        // Input options
-        if (!string.IsNullOrEmpty(inputOptions))
-        {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"{inputOptions} ");
-        }
-
-        // Input filename
-        _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{inputName}\" ");
-
-        // Output options
-        _ = commandline.Append($"{OutputOptions} ");
-
-        // Minimize output when running in parallel mode
-        if (Program.Options.Parallel || silent)
-        {
-            _ = commandline.Append($"{SilentOptions} ");
-        }
-    }
-
-    public const string SilentOptions = "-hide_banner -nostats";
+    // https://trac.ffmpeg.org/ticket/6375
+    // Too many packets buffered for output stream 0:1
+    // Set max_muxing_queue_size to large value to work around issue
+    // TODO: Issue is reported fixed, to be verified
     public const string OutputOptions = "-max_muxing_queue_size 1024 -abort_on empty_output";
-    public const string GlobalOptions = "-analyzeduration 2147483647 -probesize 2147483647";
+
+    // https://trac.ffmpeg.org/ticket/2622
+    // Error with some PGS subtitles
+    // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
+    // Consider increasing the value for the 'analyzeduration' and 'probesize' options
+    // TODO: Issue is reported fixed, to be verified
+    public const string GlobalOptions =
+        "-analyzeduration 2147483647 -probesize 2147483647 -hide_banner";
+
     public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
     public const string DefaultAudioOptions = "ac3";
 

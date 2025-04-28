@@ -360,7 +360,10 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    private static int ProcessFiles(CommandLineOptions options, Func<List<string>, bool> taskFunc)
+    private static int ProcessFileList(
+        CommandLineOptions options,
+        Func<List<string>, bool> taskFunc
+    )
     {
         // Create
         if (!Create(options, true))
@@ -447,13 +450,13 @@ public static class Program
         ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
 
     public static int GetTagMapCommand(CommandLineOptions options) =>
-        ProcessFiles(options, ProcessDriver.GetTagMap);
+        ProcessFileList(options, ProcessDriver.GetTagMap);
 
     public static int GetMediaInfoCommand(CommandLineOptions options) =>
-        ProcessFiles(options, ProcessDriver.GetMediaInfo);
+        ProcessFileList(options, ProcessDriver.GetMediaInfo);
 
     public static int GetToolInfoCommand(CommandLineOptions options) =>
-        ProcessFiles(options, ProcessDriver.GetToolInfo);
+        ProcessFileList(options, ProcessDriver.GetToolInfo);
 
     public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
         ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
@@ -567,20 +570,12 @@ public static class Program
         // Warn if a newer version has been released
         VerifyLatestVersion();
 
-        // Parallel processing config
-        if (Options.Parallel)
-        {
-            // If threadcount is 0 (default) use half the number of processors
-            if (Options.ThreadCount == 0)
-            {
-                Options.ThreadCount = Math.Max(Environment.ProcessorCount / 2, 1);
-            }
-        }
-        else
-        {
-            // If disabled set the threadcount to 1
-            Options.ThreadCount = 1;
-        }
+        // Configure thread count for parallel processing
+        Options.ThreadCount = Options.Parallel
+            ? Options.ThreadCount == 0
+                ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+                : Math.Clamp(Options.ThreadCount, 1, Environment.ProcessorCount)
+            : 1;
         Log.Information(
             "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
             Options.Parallel,

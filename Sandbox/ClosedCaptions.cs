@@ -117,8 +117,8 @@ public class ClosedCaptions
     {
         Log.Information("FFmpeg remuxing {InFile} to {OutFile}", inFile, outFile);
         string commandline =
-            // From online discussion?
-            // a53 defaults 1, sn do not encode subtitles, an doe not encode audio?
+            // From online discussion it is more complicated than tested?
+            // a53 defaults 1, sn do not encode subtitles, an do not encode audio?
             // $"-t {(int)_timeSpan.TotalSeconds} -i \"{inFile}\" -map 0:v:0 -c:v:0 copy -a53cc 1 -an -sn -y -f mpegts \"{outFile}\"";
             //
             // Map all tracks and copy streams output in TS format

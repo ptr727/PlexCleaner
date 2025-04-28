@@ -32,7 +32,49 @@
                 "D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
-            "console": "internalConsole",
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Parallel Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results.json",
+                "--parallel",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": true,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Test Parallel Quickscan",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results.json",
+                "--parallel",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": true,
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false
@@ -45,7 +87,6 @@
             "program": "${workspaceFolder}/Sandbox/bin/Debug/net9.0/Sandbox.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Sandbox/bin/Debug/net9.0",
-            "console": "internalConsole",
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false

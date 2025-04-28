@@ -24,6 +24,15 @@ public class FfProbeTool : FfMpegTool
 
     protected override string GetToolNameLinux() => "ffprobe";
 
+    public static new string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"-read_intervals +{(int)timeStart.TotalSeconds}%{(int)timeEnd.TotalSeconds}";
+
+    public static new string GetStartSplit(TimeSpan timeSpan) =>
+        $"-read_interval +{(int)timeSpan.TotalSeconds}%";
+
+    public static new string GetStopSplit(TimeSpan timeSpan) =>
+        $"-read_intervals %+{(int)timeSpan.TotalSeconds}";
+
     public bool GetPacketInfo(string commandline, out List<FfMpegToolJsonSchema.Packet> packetList)
     {
         // Init
@@ -71,7 +80,7 @@ public class FfProbeTool : FfMpegTool
         out List<FfMpegToolJsonSchema.Packet> packetList
     )
     {
-        // If quickscan is enabled, limit the processing time
+        // Quickscan
         // -t and read_intervals do not work with the subcc filter
         // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
         // ReMux using FFmpeg to a snippet TS file then scan the TS file
@@ -83,30 +92,45 @@ public class FfProbeTool : FfMpegTool
             Debug.Assert(fileName != tempName);
             _ = FileEx.DeleteFile(tempName);
 
-            // TODO: Create more generic version of FfMpegTool.ReMux() that can be used here
+            // Default options
+            _ = commandline.Append($"{GlobalOptions} ");
 
-            // -fflags +genpts : Generate missing timestamp values
-            // -map 0:v : Select video stream
-            // -c copy : Copy stream without re-encoding
-            // -f mpegts : MPEGTS output format
+            // Quiet
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{SilentOptions} -loglevel error "
+            );
+
+            // Add -fflags +genpts to generate missing timestamps
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"-fflags +genpts ");
+
+            // Quickscan
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{FfMpegTool.GetStopSplit(Program.QuickScanTimeSpan)} "
+            );
+
+            // Input filename
+            _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{fileName}\" ");
+
+            // Copy video stream to TS
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"-map 0:v -c copy -f mpegts \"{tempName}\""
+            );
+
+            // Remux to temp file
             Log.Information(
-                "Creating QuickScan ({QuickScanTimeSpan}) temp TS file : {TempFileName}",
+                "Creating short ({TimeSpan}) temp TS file : {TempFileName}",
                 Program.QuickScanTimeSpan,
                 tempName
-            );
-            _ = commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"-hide_banner -nostats -loglevel error -fflags +genpts {GetStopSplit(Program.QuickScanTimeSpan)}"
-            );
-            _ = commandline.Append(
-                CultureInfo.InvariantCulture,
-                $" -i \"{fileName}\" -map 0:v -c copy -f mpegts \"{tempName}\""
             );
             int exitCode = Tools.FfMpeg.Command(commandline.ToString(), 5, out _, out string error);
             if (exitCode != 0)
             {
                 Log.Error("Failed to create temp TS file : {TempFileName}", tempName);
                 Log.Error("{Error}", error);
+                _ = FileEx.DeleteFile(tempName);
                 packetList = null;
                 return false;
             }
@@ -115,9 +139,9 @@ public class FfProbeTool : FfMpegTool
             fileName = tempName;
         }
 
-        // Build commandline
+        // Quiet
         commandline = new();
-        _ = commandline.Append("-loglevel error ");
+        _ = commandline.Append("-hide_banner -loglevel error ");
 
         // Get packet info using ccsub filter
         // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
@@ -152,16 +176,20 @@ public class FfProbeTool : FfMpegTool
         out List<FfMpegToolJsonSchema.Packet> packetList
     )
     {
-        // Build commandline
+        // Quiet
         StringBuilder commandline = new();
-        _ = commandline.Append("-loglevel error ");
-        if (Program.Options.TestSnippets)
+        _ = commandline.Append("-hide_banner -loglevel error ");
+
+        // Quickscan
+        if (Program.Options.QuickScan)
         {
             _ = commandline.Append(
                 CultureInfo.InvariantCulture,
-                $"-read_intervals %{Program.SnippetTimeSpan:mm\\:ss} "
+                $"{GetStopSplit(Program.QuickScanTimeSpan)} "
             );
         }
+
+        // Show packets in JSON format
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-show_packets -print_format json \"{fileName}\""

@@ -435,6 +435,8 @@ public record ProcessOptions4 : ProcessOptions3
             ".m2ts",
             ".m4v",
             ".mp4",
+            ".mpg",
+            ".mov",
             ".ts",
             ".vob",
             ".wmv",
