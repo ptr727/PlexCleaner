@@ -41,13 +41,6 @@ public class ProcessFile
             FileInfo.Name
         );
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Delete the file
         if (!FileEx.DeleteFile(FileInfo.FullName))
         {
@@ -78,13 +71,6 @@ public class ProcessFile
 
         // Non-MKV file, delete
         Log.Warning("Deleting non-MKV file : {FileName}", FileInfo.Name);
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
 
         // Delete the file
         if (!FileEx.DeleteFile(FileInfo.FullName))
@@ -135,10 +121,10 @@ public class ProcessFile
 
     public bool IsSidecarWriteable() => _sidecarFile.IsWriteable();
 
-    public bool RemuxByExtensions(ref bool modified)
+    public bool RemuxByExtension(bool conditional, ref bool modified)
     {
         // Optional
-        if (!Program.Config.ProcessOptions.ReMux)
+        if (conditional && !Program.Config.ProcessOptions.ReMux)
         {
             return true;
         }
@@ -157,13 +143,6 @@ public class ProcessFile
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
-            return false;
-        }
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
             return false;
         }
 
@@ -206,13 +185,6 @@ public class ProcessFile
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
         {
             // Error
-            return false;
-        }
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
             return false;
         }
 
@@ -346,13 +318,6 @@ public class ProcessFile
             return false;
         }
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Refresh
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
@@ -400,13 +365,6 @@ public class ProcessFile
             return false;
         }
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Refresh
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
@@ -440,13 +398,6 @@ public class ProcessFile
 
         // Setting flags
         Log.Information("Setting track flags on media file : {FileName}", FileInfo.Name);
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
 
         // Set flags using MkvMergeInfo
         Debug.Assert(
@@ -498,13 +449,6 @@ public class ProcessFile
         // Remove tags
         Log.Information("Clearing all tags from media file : {FileName}", FileInfo.Name);
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Delete the tags
         if (!Tools.MkvPropEdit.ClearTags(FileInfo.FullName, MkvMergeInfo))
         {
@@ -535,13 +479,6 @@ public class ProcessFile
 
         // Remove attachments
         Log.Information("Clearing attachments from media file : {FileName}", FileInfo.Name);
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
 
         // Delete the attachments
         if (!Tools.MkvPropEdit.ClearAttachments(FileInfo.FullName, MkvMergeInfo))
@@ -651,13 +588,6 @@ public class ProcessFile
             Log.Warning("Cover Art re-detected after removing : {FileName}", FileInfo.Name);
         }
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Select all tracks with cover art
         // Use MkvMerge for cover art logic
         // Selected is Keep
@@ -716,13 +646,6 @@ public class ProcessFile
         selectMediaInfo
             .Selected.GetTrackList()
             .ForEach(item => item.LanguageIetf = Program.Config.ProcessOptions.DefaultLanguage);
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
 
         // Set languages
         if (!Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, selectMediaInfo.Selected))
@@ -811,7 +734,7 @@ public class ProcessFile
         return Refresh(outputName);
     }
 
-    private bool FindInterlacedTracks(out VideoInfo videoInfo)
+    private bool FindInterlacedTracks(bool conditional, out VideoInfo videoInfo)
     {
         // Return false on error
         // Set videoInfo if interlaced
@@ -836,9 +759,12 @@ public class ProcessFile
 
         // Running idet is expensive, skip if already verified or already deinterlaced
         if (
-            State.HasFlag(SidecarFile.StatesType.Verified)
-            || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
-            || State.HasFlag(SidecarFile.StatesType.DeInterlaced)
+            conditional
+            && (
+                State.HasFlag(SidecarFile.StatesType.Verified)
+                || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
+                || State.HasFlag(SidecarFile.StatesType.DeInterlaced)
+            )
         )
         {
             // Assume not interlaced
@@ -872,7 +798,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptionTracks(out VideoInfo videoInfo)
+    private bool FindClosedCaptionTracks(bool conditional, out VideoInfo videoInfo)
     {
         // Return false on error
         // Set videoInfo if contains closed captions
@@ -897,9 +823,12 @@ public class ProcessFile
 
         // Running lavfi is expensive, skip if already verified or closed captions already removed
         if (
-            State.HasFlag(SidecarFile.StatesType.Verified)
-            || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
-            || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
+            conditional
+            && (
+                State.HasFlag(SidecarFile.StatesType.Verified)
+                || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
+                || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
+            )
         )
         {
             // Assume no closed captions
@@ -930,16 +859,16 @@ public class ProcessFile
         return true;
     }
 
-    public bool DeInterlace(ref bool modified)
+    public bool DeInterlace(bool conditional, ref bool modified)
     {
         // Conditional
-        if (!Program.Config.ProcessOptions.DeInterlace)
+        if (conditional && !Program.Config.ProcessOptions.DeInterlace)
         {
             return true;
         }
 
         // Do we have any interlaced video
-        if (!FindInterlacedTracks(out VideoInfo videoInfo))
+        if (!FindInterlacedTracks(conditional, out VideoInfo videoInfo))
         {
             // Error
             return false;
@@ -963,13 +892,6 @@ public class ProcessFile
         // TODO: HandBrake will convert closed captions and subtitle tracks to ASS format
         // To work around this we will deinterlace without subtitles then add the subtitles back
         // https://github.com/ptr727/PlexCleaner/issues/95
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is safe
-            return true;
-        }
 
         // Create a temp filename for the deinterlaced output
         string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
@@ -1048,13 +970,6 @@ public class ProcessFile
         postMkvMerge.Subtitle.AddRange(MkvMergeInfo.Subtitle);
         postMkvMerge.Subtitle.ForEach(item => item.Number = trackNumber++);
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
         // https://github.com/ptr727/PlexCleaner/issues/148
         if (!Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, postMkvMerge))
@@ -1083,16 +998,16 @@ public class ProcessFile
         return true;
     }
 
-    public bool RemoveClosedCaptions(ref bool modified)
+    public bool RemoveClosedCaptions(bool conditional, ref bool modified)
     {
         // Conditional
-        if (!Program.Config.ProcessOptions.RemoveClosedCaptions)
+        if (conditional && !Program.Config.ProcessOptions.RemoveClosedCaptions)
         {
             return true;
         }
 
         // Do we have any closed captions
-        if (!FindClosedCaptionTracks(out VideoInfo videoInfo))
+        if (!FindClosedCaptionTracks(conditional, out VideoInfo videoInfo))
         {
             // Error
             return false;
@@ -1111,13 +1026,6 @@ public class ProcessFile
 
         Log.Information("Removing Closed Captions from video stream : {FileName}", FileInfo.Name);
         videoInfo.WriteLine("Closed Captions");
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is safe
-            return true;
-        }
 
         // Get SEI NAL unit based on video format
         int nalUnit = FfMpegTool.GetNalUnit(videoInfo.Format);
@@ -1190,10 +1098,52 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool ReEncode(ref bool modified)
+    public bool RemoveSubtitles(ref bool modified)
+    {
+        // Only called by MkvProcess, not currently used in Process logic
+
+        // Do we have any subtitles
+        if (MkvMergeInfo.Subtitle.Count == 0)
+        {
+            // No subtitles to remove
+            return true;
+        }
+
+        Log.Information("Removing Subtitles from video stream : {FileName}", FileInfo.Name);
+        MkvMergeInfo.Video.ForEach(item => item.WriteLine("Subtitles"));
+
+        // Create a temp output filename
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp6");
+        Debug.Assert(FileInfo.FullName != tempName);
+
+        // Remove Subtitles
+        _ = FileEx.DeleteFile(tempName);
+        Log.Information("Removing Subtitles using MkvMerge : {FileName}", FileInfo.Name);
+        if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName))
+        {
+            // Error
+            Log.Error("Removing Subtitles using MkvMerge failed : {FileName}", FileInfo.Name);
+            _ = FileEx.DeleteFile(tempName);
+            return false;
+        }
+
+        // Rename the temp file to the original file
+        if (!FileEx.RenameFile(tempName, FileInfo.FullName))
+        {
+            _ = FileEx.DeleteFile(tempName);
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        return Refresh(true);
+    }
+
+    public bool ReEncode(bool conditional, ref bool modified)
     {
         // Conditional
-        if (!Program.Config.ProcessOptions.ReEncode)
+        if (conditional && !Program.Config.ProcessOptions.ReEncode)
         {
             return true;
         }
@@ -1237,13 +1187,6 @@ public class ProcessFile
         // The FfMpeg map is constructed using the same order as the original file
         // No need to adjust the track numbers
         MediaInfo postMkvMerge = MkvMergeInfo.Clone();
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
 
         // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
         // https://github.com/ptr727/PlexCleaner/issues/148
@@ -1311,7 +1254,7 @@ public class ProcessFile
         return true;
     }
 
-    public bool Verify(out bool canRepair)
+    public bool Verify(bool conditional, out bool canRepair)
     {
         // Do not set any state, caller will set state
 
@@ -1319,14 +1262,14 @@ public class ProcessFile
         canRepair = false;
 
         // Conditional
-        if (!Program.Config.ProcessOptions.Verify)
+        if (conditional && !Program.Config.ProcessOptions.Verify)
         {
             // Done
             return true;
         }
 
         // Skip if Verified
-        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
+        if (conditional && _sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
         {
             Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed));
             Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
@@ -1334,7 +1277,7 @@ public class ProcessFile
         }
 
         // Skip if VerifyFailed
-        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
+        if (conditional && _sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
         {
             Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
             Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
@@ -1416,7 +1359,7 @@ public class ProcessFile
     public bool VerifyAndRepair(ref bool modified)
     {
         // Verify (verify does not set any state, it just tests state)
-        if (Verify(out bool canRepair))
+        if (Verify(true, out bool canRepair))
         {
             // Set Verified state if not already set
             if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
@@ -1671,13 +1614,6 @@ public class ProcessFile
 
     private bool RepairAndReVerify()
     {
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is not safe
-            return false;
-        }
-
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
@@ -1801,13 +1737,6 @@ public class ProcessFile
 
     public bool SetLastWriteTimeUtc(DateTime lastWriteTimeUtc)
     {
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            // Continuing is safe
-            return true;
-        }
-
         // Conditional
         if (!Program.Config.ProcessOptions.RestoreFileTimestamp)
         {
@@ -1819,27 +1748,6 @@ public class ProcessFile
 
         // Refresh sidecar info
         return Refresh(true);
-    }
-
-    public bool SetReVerifyState()
-    {
-        // Conditionally remove the VerifyFailed flag if set
-        if (Program.Options.ReVerify && State.HasFlag(SidecarFile.StatesType.VerifyFailed))
-        {
-            Log.Information("Resetting verify and repair state : {FileName}", FileInfo.Name);
-
-            // Remove VerifyFailed and RepairFailed flags
-            Debug.Assert(!State.HasFlag(SidecarFile.StatesType.Verified));
-            Debug.Assert(!State.HasFlag(SidecarFile.StatesType.Repaired));
-            _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-            _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
-
-            // Refresh sidecar info
-            return Refresh(true);
-        }
-
-        // Done
-        return true;
     }
 
     private bool Refresh(string fileName)

@@ -158,6 +158,8 @@
             "reencoded",
             "reencoding",
             "removeclosedcaptions",
+            "removestateflag",
+            "removestateflags",
             "removesubtitles",
             "remux",
             "remuxed",

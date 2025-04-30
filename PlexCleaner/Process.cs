@@ -85,7 +85,7 @@ public static class Process
 
             // ReMux non-MKV containers matched by extension
             // Conditional on ReMux option
-            if (!processFile.RemuxByExtensions(ref modified) || Program.IsCancelled())
+            if (!processFile.RemuxByExtension(true, ref modified) || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -127,14 +127,6 @@ public static class Process
 
             // Read the media info
             if (!processFile.GetMediaInfo() || Program.IsCancelled())
-            {
-                // Error
-                result = false;
-                break;
-            }
-
-            // If ReVerify is set reset the VerifyFailed and RepairFailed states
-            if (!processFile.SetReVerifyState() || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -205,7 +197,7 @@ public static class Process
 
             // Remove EIA-EIA-608 and CTA-708 Closed Captions from the video stream
             // Conditional on RemoveClosedCaptions option
-            if (!processFile.RemoveClosedCaptions(ref modified) || Program.IsCancelled())
+            if (!processFile.RemoveClosedCaptions(true, ref modified) || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -214,7 +206,7 @@ public static class Process
 
             // DeInterlace interlaced content
             // Conditional on DeInterlace option
-            if (!processFile.DeInterlace(ref modified) || Program.IsCancelled())
+            if (!processFile.DeInterlace(true, ref modified) || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -253,7 +245,7 @@ public static class Process
 
             // Re-Encode formats that cannot be direct-played
             // Conditional on ReEncode option
-            if (!processFile.ReEncode(ref modified) || Program.IsCancelled())
+            if (!processFile.ReEncode(true, ref modified) || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -371,10 +363,10 @@ public static class Process
     {
         // Log active options
         Log.Information(
-            "Process Options: TestSnippets: {TestSnippets}, TestNoModify: {TestNoModify}, ReVerify: {ReVerify}, FileIgnoreList: {FileIgnoreList}",
+            "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, RemoveStateFlags: {RemoveStateFlags}, FileIgnoreList: {FileIgnoreList}",
             Program.Options.TestSnippets,
-            Program.Options.TestNoModify,
-            Program.Options.ReVerify,
+            Program.Options.QuickScan,
+            Program.Options.RemoveStateFlags,
             Program.Config.ProcessOptions.FileIgnoreList.Count
         );
 

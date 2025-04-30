@@ -19,13 +19,6 @@ public static class Convert
     {
         // Match the logic in ReMuxToMKV()
 
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            outputName = inputName;
-            return true;
-        }
-
         // Create a MKV and temp filename based on the input name
         // Input may already be MKV file
         outputName = Path.ChangeExtension(inputName, ".mkv");
@@ -59,13 +52,6 @@ public static class Convert
         // This function will try both MkvMerge and FfMpeg
 
         // Match the logic in ConvertToMKV()
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            outputName = inputName;
-            return true;
-        }
 
         // Create a MKV and temp filename based on the input name
         // Input may already be MKV file
@@ -150,13 +136,6 @@ public static class Convert
         Debug.Assert(SidecarFile.IsMkvFile(inputName));
 
         // Match the logic in ConvertToMKV()
-
-        // Test
-        if (Program.Options.TestNoModify)
-        {
-            outputName = inputName;
-            return true;
-        }
 
         // Create a MKV and temp filename based on the input name
         // Input may already be MKV file

@@ -124,9 +124,9 @@ public record ConvertOptions3 : ConvertOptions2
             convertOptions2.FfMpegOptions.Output = "";
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            // Remove default global options
+            // Remove old default global options
             FfMpegOptions.Global = FfMpegOptions
-                .Global.Replace(FfMpegTool.GlobalOptions, null)
+                .Global.Replace("-analyzeduration 2147483647 -probesize 2147483647", null)
                 .Trim();
         }
 

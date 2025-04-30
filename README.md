@@ -32,16 +32,21 @@ Docker images are published on [Docker Hub][docker-link].
 - version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
-    - Switching Debian docker builds to install .NET using Msft install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
+    - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
     - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
     - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
   - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
   - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
-  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe. See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
-  - Re-added `parallel` and `threadcount` option to `monitor` command to be used during the processing phase, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
-  - Added conditional checks for `ProcessOptions:ReMux` to warn when disabled when media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
+  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
+    - See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
+    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove, optionally with the `quickscan` options to speed up detection.
+  - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
+  - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
   - Added `quickscan` option to limit the scan duration and improve performance, at the cost of accuracy.
-  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap manualy set value to CPU count, prevents CPU starvation.
+  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap set value to CPU count, prevents CPU starvation.
+  - Removed the `reverify` option, it was only partially resetting process state, to reset state and start fresh use the `createsidecar` command.
+  - Removed the `testnomodify` option, some modifying code paths missed and conditional logic became too convoluted to maintain, use `testsnippets` and `quickscan` options with sample media files to test instead.
+  - Modified logic for `reencode`, `remux`, `verify`, `removesubtitles`, and `removeclosedcaptions` commands to use the same logic as used by the `process` command.
   - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
@@ -374,9 +379,9 @@ Use the `PlexCleaner --help` commandline option to get a list of commands and op
 To get help for a specific command run `PlexCleaner <command> --help`.
 
 ```text
-> ./PlexCleaner --help
+> PlexCleaner --help
 Description:
-  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
+  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 Usage:
   PlexCleaner [command] [options]
@@ -390,24 +395,25 @@ Options:
   -?, -h, --help       Show help and usage information
 
 Commands:
-  defaultsettings   Write default values to settings file
-  checkfornewtools  Check for new tool versions and download if newer
-  process           Process media files
-  monitor           Monitor for file changes and process changed media files
-  remux             Re-Multiplex media files
-  reencode          Re-Encode media files
-  deinterlace       De-Interlace media files
-  removesubtitles   Remove subtitles from media files
-  verify            Verify media files
-  createsidecar     Create new sidecar files
-  updatesidecar     Update existing sidecar files
-  getversioninfo    Print application and tools version information
-  getsidecarinfo    Print sidecar file information
-  gettagmap         Print media information tag-map
-  getmediainfo      Print media information using sidecar files
-  gettoolinfo       Print media information using media tools
-  createschema      Write settings schema to file
-  ```
+  defaultsettings       Write default values to settings file
+  checkfornewtools      Check for new tool versions and download if newer
+  process               Process media files
+  monitor               Monitor for file changes and process changed media files
+  remux                 Re-Multiplex media files
+  reencode              Re-Encode media files
+  deinterlace           De-Interlace media files
+  removesubtitles       Remove subtitles from media files
+  removeclosedcaptions  Remove closed captions from media files
+  verify                Verify media files
+  createsidecar         Create new sidecar files
+  updatesidecar         Update existing sidecar files
+  getversioninfo        Print application and tools version information
+  getsidecarinfo        Print sidecar file information
+  gettagmap             Print media information tag-map
+  getmediainfo          Print media information using sidecar files
+  gettoolinfo           Print media information using media tools
+  createschema          Write settings schema to file
+```
 
 ### Global Options
 
@@ -425,7 +431,7 @@ Global options apply to all commands:
 ### Process Command
 
 ```text
-> ./PlexCleaner process --help
+> PlexCleaner process --help
 Description:
   Process media files
 
@@ -435,13 +441,11 @@ Usage:
 Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --testsnippets                            Create short media file clips
-  --testnomodify                            Do not make any media file modifications
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
+  --parallel                                Enable parallel file processing
+  --threadcount <threadcount>               Number of threads for parallel file processing
   --quickscan                               Scan only part of the file
-  --reverify                                Re-verify and repair media files in the VerifyFailed state
   --resultsfile <resultsfile>               Path to results file
+  --testsnippets                            Create short media file clips
   --logfile <logfile>                       Path to log file
   --logappend                               Append to existing log file
   --logwarning                              Log warnings and errors only
@@ -451,20 +455,41 @@ Options:
 
 The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
 
-- Delete files with extensions not in the `KeepExtensions` list.
-- Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
+- Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for configuration details.
+- Delete unwanted files.
+  - `FileIgnoreMasks`, `ReMuxExtensions`, `DeleteUnwantedExtensions`.
+- Re-multiplex non-MKV containers to MKV format.
+  - `ReMuxExtensions`, `ReMux`.
 - Remove all tags, titles, thumbnails, cover art, and attachments from the media file.
-- Set IETF language tags and Matroska track flags if missing.
-- Set the language to `DefaultLanguage` for any track with an undefined language.
-- If multiple audio tracks of the same language but different encoding formats are present, set the default track based on `PreferredAudioFormats`.
-- Remove tracks with languages not in the `KeepLanguages` list.
+  - `RemoveTags`.
+- Set IETF language tags and Matroska special track flags if missing.
+  - `SetIetfLanguageTags`.
+- Set Matroska special track flags based on track titles.
+  - `SetTrackFlags`.
+- Set the default language for any track with an undefined language.
+  - `SetUnknownLanguage`, `DefaultLanguage`.
+- Remove tracks with unwanted languages.
+  - `KeepLanguages`, `KeepOriginalLanguage`, `RemoveUnwantedLanguageTracks`
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
-- Re-multiplex the media file if required.
-- De-interlace the video track if interlaced.
-- Remove EIA-608 and CTA-708 closed captions from video streams.
-- Re-encode video if video format matches `ReEncodeVideo`.
-- Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
+  - `RemoveDuplicateTracks`, `PreferredAudioFormats`.
+- Re-multiplex the media file if required to fix inconsistencies.
+  - `ReMux`.
+- De-interlace the video stream if interlaced.
+  - `DeInterlace`.
+- Remove EIA-608 and CTA-708 closed captions from video stream if present.
+  - `RemoveClosedCaptions`.
+- Re-encode video and audio based on specified codecs and formats.
+  - `ReEncodeVideo`, `ReEncodeAudioFormats`, `ConvertOptions`, `ReEncode`.
+- Verify the media container and stream integrity.
+  - `MaximumBitrate`, `Verify`.
+- If verification fails attempt repair.
+  - `AutoRepair`.
+- If verification after repair fails delete or mark file to be ignored.
+  - `DeleteInvalidFiles`, `RegisterInvalidFiles`.
+- Restore modified timestamp of modified files to original timestamp.
+  - See `RestoreFileTimestamp`.
+- Delete empty folders.
+  - `DeleteEmptyFolders`.
 
 Options:
 
@@ -475,28 +500,24 @@ Options:
   - Paths with spaces should be double quoted.
   - Repeat the option to include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.
 - `--testsnippets`:
-  - Create shortened snippets for any files being created.
-  - Useful when testing to speed up processing.
-  - Use this option only when testing, do not use on valuable media files.
+  - Create shortened output snippets (30s) for any files created during processing.
+  - Useful when testing to speed up processing times.
   - Can be combined with `--quickscan` to limit file scanning operations.
-- `--testnomodify`:
-  - Process files but do not make any file modifications, useful during testing.
+  - Use this option only when testing and on test files.
 - `--parallel`:
   - Process multiple files concurrently.
+  - Useful when the system has more processing power than being utilized with serial file processing.
 - `--threadcount`:
-  - Concurrent processing thread count when the `--parallel` option is enabled.
-  - The default thread count is max(cores / 2, 4).
+  - Concurrent file processing thread count when the `--parallel` option is enabled.
+  - The default thread count is the largest of 1/2 number of logical processors or 4.
+  - Note that media tools internally use multiple threads.
 - `--quickscan`:
-  - Limits the time duration when scanning media files, applies to:
-    - Steam verification, uses `ffmpeg -t`.
-    - Interlaced frame detection, uses `ffmpeg -t`.
-    - Closed caption detection, `subcc` filter does not support `ffmpeg -t` or `ffprobe -read_intervals`, creates a small temp file using `ffmpeg -t`.
-    - Bitrate calculation using `ffprobe -read_intervals`.
-  - Improves scan times, but risks missing information if only present later in the media file.
-- `--reverify`:
-  - Re-verify and re-attempt repair of media files that are in the `VerifyFailed` state.
-  - By default files would be skipped due to processing optimization logic when using sidecar files.
-  - This may be useful when media tools were updated with new features or bug fixes.
+  - Limits the time duration (3min) when scanning media files, applies to:
+    - Stream verification.
+    - Interlaced frame detection.
+    - Closed caption detection.
+    - Bitrate calculation.
+  - Improves processing times, but there is some risk of missing future stream information.
 - `--resultsfile`:
   - Write processing results to a JSON file.
   - Useful when comparing results with previous processing runs.
@@ -508,7 +529,6 @@ Example:
   --logfile PlexCleaner.log \
   process \
   --settingsfile PlexCleaner.json \
-  --parallel \
   --mediafiles "C:\Foo With Space\Test.mkv" \
   --mediafiles D:\Media
 ```
@@ -516,7 +536,7 @@ Example:
 ### Monitor Command
 
 ```text
-> ./PlexCleaner monitor --help
+> PlexCleaner monitor --help
 Description:
   Monitor for file changes and process changed media files
 
@@ -526,12 +546,9 @@ Usage:
 Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --testsnippets                            Create short media file clips
-  --testnomodify                            Do not make any media file modifications
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
+  --parallel                                Enable parallel file processing
+  --threadcount <threadcount>               Number of threads for parallel file processing
   --quickscan                               Scan only part of the file
-  --reverify                                Re-verify and repair media files in the VerifyFailed state
   --resultsfile <resultsfile>               Path to results file
   --preprocess                              Pre-process all monitored folders
   --logfile <logfile>                       Path to log file
@@ -550,7 +567,8 @@ Options:
 
 - Most of the `process` command options apply.
 - `--preprocess`:
-  - On startup process all existing media files.
+  - On startup process all existing media files while watching for new changes.
+- Advanced options are configured in [`MonitorOptions`](PlexCleaner.defaults.json).
 
 ### Other Commands
 
@@ -560,43 +578,37 @@ Options:
   - Check for new tool versions and download if newer.
   - Only supported on Windows.
 - `remux`:
-  - Re-multiplex MKV or non-MKV files in the `ProcessOptions.ReMuxExtensions` list to MKV files using MkvMerge.
-  - Useful to convert non-MKV container formats to MKV or to update file structures using the current Matroska multiplexer.
+  - Re-multiplex non-MKV containers in the `ReMuxExtensions` list to MKV container format.
+  - Same logic as used in the `process` command.
 - `reencode`:
-  - Re-encode media files using `ConvertOptions` settings using FFmpeg.
-  - Only MKV files are supported.
+  - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in `ConvertOptions`.
+  - Same logic as used in the `process` command.
 - `deinterlace`:
-  - De-interlace media files using `ConvertOptions` settings using HandBrake.
-  - Only MKV files are supported.
+  - De-interlace the video stream if interlaced.
+  - Same logic as used in the `process` command.
 - `removesubtitles`:
-  - Remove all subtitle tracks from media files using MkvMerge.
+  - Remove all subtitle tracks.
   - Useful when media players cannot disable output or content is undesirable.
-  - Only MKV files are supported.
 - `removeclosedcaptions`:
-  - Remove EIA-608 and CTA-708 closed captions embedded in the video stream.
+  - Remove EIA-608 and CTA-708 closed captions from video stream if present.
   - Useful when media players cannot disable output or content is undesirable.
-  - Only MKV files are supported.
+  - Same logic as used in the `process` command.
 - `verify`:
-  - Verify media file stream contents.
-  - Not as exhaustive as `process` when `ProcessOptions.Verify` is enabled, e.g. track counts, bitrate, HDR profiles, etc. are not evaluated.
-  - Only MKV files are supported.
+  - Verify the media container and stream integrity.
+  - Same logic as used in the `process` command.
 - `createsidecar`:
   - Create or re-create sidecar files.
-  - Only MKV files are supported.
+  - Useful to start fresh and update tool info and remove old processing state.
 - `updatesidecar`:
   - Create or update sidecar files with current media tool information.
-  - Only MKV files are supported.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
 - `getsidecarinfo`:
   - Print sidecar file information.
-  - Only MKV files are supported.
 - `gettagmap`:
   - Print media file attribute mappings between between different media tools.
-  - Only MKV files are supported.
 - `getmediainfo`:
   - Print media attribute information from sidecar files.
-  - Only MKV files are supported.
 - `gettoolinfo`:
   - Print media attribute information using media tools.
 - `createschema`:
@@ -820,6 +832,7 @@ RunContainer () {
       --logfile=$ConfigPath/PlexCleaner-$Tag.log \
       --mediafiles=$MediaPath \
       --testsnippets \
+      --quickscan \
       --resultsfile=$ConfigPath/Results-$Tag.json
 }
 
@@ -854,6 +867,8 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
+- [FluentAssertions](https://fluentassertions.com/)
+- [xUnit.Net](https://xunit.net/)
 
 ## Sample Media Files
 

@@ -44,10 +44,11 @@ public class Program
         InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
 
         // Sandbox tests
-        Program program = new();
+        int ret = 0;
+        // Program program = new();
 
-        ClosedCaptions closedCaptions = new(program);
-        int ret = closedCaptions.Test();
+        // ClosedCaptions closedCaptions = new(program);
+        // int ret = closedCaptions.Test();
 
         // ProcessFiles processFiles = new(program);
         // int ret = processFiles.Test();
@@ -59,10 +60,6 @@ public class Program
 
     public static void SetRuntimeOptions()
     {
-        InsaneGenius.Utilities.FileEx.Options.TestNoModify = PlexCleaner
-            .Program
-            .Options
-            .TestNoModify;
         InsaneGenius.Utilities.FileEx.Options.RetryCount = PlexCleaner
             .Program
             .Config
@@ -74,20 +71,11 @@ public class Program
             .MonitorOptions
             .FileRetryWaitTime;
 
-        if (PlexCleaner.Program.Options.Parallel)
-        {
-            if (PlexCleaner.Program.Options.ThreadCount == 0)
-            {
-                PlexCleaner.Program.Options.ThreadCount = Math.Max(
-                    Environment.ProcessorCount / 2,
-                    1
-                );
-            }
-        }
-        else
-        {
-            PlexCleaner.Program.Options.ThreadCount = 1;
-        }
+        PlexCleaner.Program.Options.ThreadCount = PlexCleaner.Program.Options.Parallel
+            ? PlexCleaner.Program.Options.ThreadCount == 0
+                ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+                : Math.Clamp(PlexCleaner.Program.Options.ThreadCount, 1, Environment.ProcessorCount)
+            : 1;
     }
 
     private Program()

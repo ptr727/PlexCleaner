@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
-using System.CommandLine.Parsing;
-using System.Linq;
 
 namespace PlexCleaner;
 
@@ -15,8 +12,6 @@ public class CommandLineOptions
     public bool LogAppend { get; set; }
     public bool LogWarning { get; set; }
     public bool TestSnippets { get; set; }
-    public bool TestNoModify { get; set; }
-    public bool ReVerify { get; set; }
     public bool Parallel { get; set; }
     public int ThreadCount { get; set; }
     public bool Debug { get; set; }
@@ -24,16 +19,11 @@ public class CommandLineOptions
     public bool PreProcess { get; set; }
     public string ResultsFile { get; set; }
     public bool QuickScan { get; set; }
+    public List<SidecarFile.StatesType> RemoveStateFlags { get; set; }
 
-    public static int Invoke()
-    {
-        // Remove first argument when using Environment.CommandLine
-        // https://github.com/dotnet/command-line-api/issues/1781
-        RootCommand rootCommand = CreateRootCommand();
-        return rootCommand.Invoke(
-            CommandLineStringSplitter.Instance.Split(Environment.CommandLine).ToArray()[1..]
-        );
-    }
+    // TODO: How to override --version?
+    // https://github.com/dotnet/command-line-api/issues/2009
+    // https://github.com/dotnet/command-line-api/issues/1691
 
     public static RootCommand CreateRootCommand()
     {
@@ -43,10 +33,28 @@ public class CommandLineOptions
         );
 
         // Global options applying to all commands
-        command.AddGlobalOption(CreateLogFileOption());
-        command.AddGlobalOption(CreateLogAppendOption());
-        command.AddGlobalOption(CreateLogWarningOption());
-        command.AddGlobalOption(CreateDebugOption());
+
+        // Path to the log file
+        command.AddGlobalOption(
+            new Option<string>("--logfile") { Description = "Path to log file" }
+        );
+
+        // Append to log vs. overwrite
+        command.AddGlobalOption(
+            new Option<bool>("--logappend") { Description = "Append to existing log file" }
+        );
+
+        // Log warnings and errors
+        command.AddGlobalOption(
+            new Option<bool>("--logwarning") { Description = "Log warnings and errors only" }
+        );
+
+        // Wait for debugger to attach
+        command.AddGlobalOption(
+            new Option<bool>("--debug") { Description = "Wait for debugger to attach" }
+        );
+
+        // Commands
 
         // Create default settings
         command.AddCommand(CreateDefaultSettingsCommand());
@@ -170,6 +178,9 @@ public class CommandLineOptions
         // Process options
         CreateProcessCommandOptions(command);
 
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
         return command;
     }
 
@@ -181,12 +192,6 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
-
-        //  Do not make any modifications
-        command.AddOption(CreateTestNoModifyOption());
-
         // Parallel processing
         command.AddOption(CreateParallelOption());
 
@@ -195,14 +200,6 @@ public class CommandLineOptions
 
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
-
-        //  Re-verify
-        command.AddOption(
-            new Option<bool>("--reverify")
-            {
-                Description = "Re-verify and repair media files in the VerifyFailed state",
-            }
-        );
 
         // Results file name
         command.AddOption(
@@ -248,9 +245,6 @@ public class CommandLineOptions
         // Create short video clips
         command.AddOption(CreateTestSnippetsOption());
 
-        //  Do not make any modifications
-        command.AddOption(CreateTestNoModifyOption());
-
         return command;
     }
 
@@ -271,9 +265,6 @@ public class CommandLineOptions
 
         // Create short video clips
         command.AddOption(CreateTestSnippetsOption());
-
-        //  Do not make any modifications
-        command.AddOption(CreateTestNoModifyOption());
 
         return command;
     }
@@ -296,9 +287,6 @@ public class CommandLineOptions
         // Create short video clips
         command.AddOption(CreateTestSnippetsOption());
 
-        //  Do not make any modifications
-        command.AddOption(CreateTestNoModifyOption());
-
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
 
@@ -310,7 +298,7 @@ public class CommandLineOptions
         // Verify files
         Command command = new("verify")
         {
-            Description = "Verify media file streams",
+            Description = "Verify media files",
             Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand),
         };
 
@@ -319,6 +307,9 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
+
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
 
         return command;
     }
@@ -446,6 +437,9 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
+
         return command;
     }
 
@@ -469,7 +463,7 @@ public class CommandLineOptions
         // Remove closed captions
         Command command = new("removeclosedcaptions")
         {
-            Description = "Remove closed caption from media files",
+            Description = "Remove closed captions from media files",
             Handler = CommandHandler.Create<CommandLineOptions>(
                 Program.RemoveClosedCaptionsCommand
             ),
@@ -480,6 +474,9 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
+
+        // Create short video clips
+        command.AddOption(CreateTestSnippetsOption());
 
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
@@ -495,37 +492,17 @@ public class CommandLineOptions
         // Path to the settings file
         new("--settingsfile") { Description = "Path to settings file", IsRequired = true };
 
-    private static Option<string> CreateLogFileOption() =>
-        // Path to the log file
-        new("--logfile") { Description = "Path to log file" };
-
-    private static Option<bool> CreateLogAppendOption() =>
-        // Append to log vs. overwrite
-        new("--logappend") { Description = "Append to existing log file" };
-
-    private static Option<bool> CreateLogWarningOption() =>
-        // Log warnings and errors
-        new("--logwarning") { Description = "Log warnings and errors only" };
-
-    private static Option<bool> CreateDebugOption() =>
-        // Wait for debugger to attach
-        new("--debug") { Description = "Wait for debugger to attach" };
-
     private static Option<bool> CreateTestSnippetsOption() =>
         // Create short video clips
         new("--testsnippets") { Description = "Create short media file clips" };
 
-    private static Option<bool> CreateTestNoModifyOption() =>
-        //  Do not make any modifications
-        new("--testnomodify") { Description = "Do not make any media file modifications" };
-
     private static Option<bool> CreateParallelOption() =>
         // Parallel processing
-        new("--parallel") { Description = "Enable parallel processing" };
+        new("--parallel") { Description = "Enable parallel file processing" };
 
     private static Option<int> CreateThreadCountOption() =>
         // Parallel processing thread count
-        new("--threadcount") { Description = "Number of threads to use for parallel processing" };
+        new("--threadcount") { Description = "Number of threads for parallel file processing" };
 
     private static Option<bool> CreateQuickScanOption() =>
         // Scan only parts of the file

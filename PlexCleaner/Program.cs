@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -36,16 +39,25 @@ public static class Program
         }
     }
 
-    private static int Main()
+    private static int Main(string[] args)
     {
-        // Wait for debugger to attach
-        WaitForDebugger();
-
-        // Display version information only
-        if (ShowVersionInformation())
+        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+        ParseResult parseResult = rootCommand.Parse(args);
+        if (parseResult.Errors.Count > 0)
         {
-            // Exit immediately to not print anything else
-            return 0;
+            // TODO Parse does not handle --help and --version
+            // https://github.com/dotnet/command-line-api/discussions/2553
+            // Exit with default error handling
+            return rootCommand.Invoke(args);
+        }
+
+        // Wait for debugger to attach
+        // How to get access to CommandLineOptions containing name binding options to test values?
+        // if (parseResult.HasOption(CommandLineOptions.DebugOption))
+        if (args.Any(arg => arg == "--debug"))
+        {
+            WaitForDebugger();
+            // Continue
         }
 
         // Register cancel handler
@@ -68,14 +80,8 @@ public static class Program
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
 
-        // TODO: How to test if logical help command is active, same can be used to test for --version?
-        if (!Environment.CommandLine.Contains("--help"))
-        {
-            LogInterruptMessage();
-        }
-
         // Create the commandline and execute commands
-        int exitCode = CommandLineOptions.Invoke();
+        int exitCode = parseResult.Invoke();
 
         // Cancel background operations
         Cancel();
@@ -128,27 +134,8 @@ public static class Program
         }
     }
 
-    private static bool ShowVersionInformation()
-    {
-        // --version
-        if (Environment.CommandLine.Contains("--version"))
-        {
-            Console.WriteLine(AssemblyVersion.GetAppVersion());
-            return true;
-        }
-
-        // TODO: Remove if no longer needed
-        // --rid
-        // RID is not reliable when using platform built .NET tools
-        // https://github.com/dotnet/runtime/issues/114156
-        if (Environment.CommandLine.Contains("--rid"))
-        {
-            Console.WriteLine(AssemblyVersion.GetNormalizedRuntimeIdentifier());
-            return true;
-        }
-
-        return false;
-    }
+    private static void ShowVersionInformation() =>
+        Console.WriteLine(AssemblyVersion.GetAppVersion());
 
     private static void KeyPressHandler()
     {
@@ -195,21 +182,17 @@ public static class Program
     {
         // Do not use any dependencies as this code gets called very early in launch
 
-        // Use the raw commandline and look for --debug
-        if (Environment.CommandLine.Contains("--debug"))
+        // Wait for a debugger to be attached
+        Console.WriteLine("Waiting for debugger to attach...");
+        while (!System.Diagnostics.Debugger.IsAttached)
         {
-            // Wait for a debugger to be attached
-            Console.WriteLine("Waiting for debugger to attach...");
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                // Wait a bit and try again
-                Thread.Sleep(100);
-            }
-            Console.WriteLine("Debugger attached.");
-
-            // Break into the debugger
-            System.Diagnostics.Debugger.Break();
+            // Wait a bit and try again
+            Thread.Sleep(100);
         }
+        Console.WriteLine("Debugger attached.");
+
+        // Break into the debugger
+        System.Diagnostics.Debugger.Break();
     }
 
     private static void CreateLogger(string logfile)
@@ -438,7 +421,7 @@ public static class Program
         ProcessFiles(options, true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
 
     public static int VerifyCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.VerifyMedia), MkvProcess.VerifyMedia);
+        ProcessFiles(options, true, nameof(MkvProcess.Verify), MkvProcess.Verify);
 
     public static int CreateSidecarCommand(CommandLineOptions options) =>
         ProcessFiles(options, true, nameof(SidecarFile.Create), SidecarFile.Create);
@@ -535,7 +518,6 @@ public static class Program
         Config = config;
 
         // Set the FileEx options
-        FileEx.Options.TestNoModify = Options.TestNoModify;
         FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
         FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
 

@@ -118,7 +118,7 @@
     ],
     // Delete empty folders
     "DeleteEmptyFolders": true,
-    // Delete non-MKV files not in KeepExtensions or ReMuxExtensions lists
+    // Delete non-MKV files not in FileIgnoreMasks or ReMuxExtensions lists
     "DeleteUnwantedExtensions": true,
     // Re-mux files in ReMuxExtensions list to MKV
     "ReMux": true,

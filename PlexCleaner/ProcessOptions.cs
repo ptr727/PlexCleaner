@@ -71,6 +71,7 @@ public record ProcessOptions1
     [JsonRequired]
     public bool DeleteEmptyFolders { get; set; }
 
+    // TODO: Rename to DeleteUnwantedFiles since KeepExtensions was replaced with FileIgnoreList
     [JsonRequired]
     public bool DeleteUnwantedExtensions { get; set; }
 
