@@ -1110,7 +1110,7 @@ public class ProcessFile
         }
 
         Log.Information("Removing Subtitles from video stream : {FileName}", FileInfo.Name);
-        MkvMergeInfo.Video.ForEach(item => item.WriteLine("Subtitles"));
+        MkvMergeInfo.Subtitle.ForEach(item => item.WriteLine("Subtitles"));
 
         // Create a temp output filename
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp6");

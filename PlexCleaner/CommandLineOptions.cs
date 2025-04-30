@@ -242,8 +242,8 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
 
         return command;
     }
@@ -263,8 +263,8 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
+        // Scan only part of the file
+        command.AddOption(CreateQuickScanOption());
 
         return command;
     }
@@ -283,9 +283,6 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
-
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
 
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
@@ -437,9 +434,6 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
-
         return command;
     }
 
@@ -474,9 +468,6 @@ public class CommandLineOptions
 
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
-
-        // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
 
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());

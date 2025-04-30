@@ -10,10 +10,6 @@ public static class MkvProcess
     public static bool ReMux(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        if (!processFile.GetMediaInfo())
-        {
-            return false;
-        }
         bool modified = false;
         return processFile.RemuxByExtension(false, ref modified);
     }

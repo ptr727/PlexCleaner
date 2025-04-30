@@ -28,6 +28,20 @@
             "stopAtEntry": false
         },
         {
+            "name": "Get Version Info",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "getversioninfo",
+                "--settingsfile=PlexCleaner.json",
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
             "name": "Default Settings",
             "type": "coreclr",
             "request": "launch",
@@ -42,7 +56,7 @@
             "stopAtEntry": false
         },
         {
-            "name": "Process Snippets Test",
+            "name": "Process Test",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -52,55 +66,173 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results.json",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Process Parallel TestSnippets Quickscan Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results.json",
+                "--parallel",
                 "--testsnippets",
                 "--quickscan",
                 "--mediafiles",
                 "D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
-            "stopAtEntry": false,
-            "enableStepFiltering": false,
-            "justMyCode": false
-        },
-        {
-            "name": "Parallel Test",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
-            "args": [
-                "process",
-                "--logfile=PlexCleaner.log",
-                "--settingsfile=PlexCleaner.json",
-                "--resultsfile=Results.json",
-                "--parallel",
-                "--mediafiles",
-                "D:\\Test"
-            ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
             "externalConsole": true,
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false
         },
         {
-            "name": "Test Parallel Quickscan",
+            "name": "Monitor Test",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
             "args": [
-                "process",
+                "monitor",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results.json",
-                "--parallel",
+                "--preprocess",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "ReMux Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "remux",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
                 "--quickscan",
                 "--mediafiles",
                 "D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
-            "externalConsole": true,
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "ReEncode Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "reencode",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "DeInterlace Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "deinterlace",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Remove ClosedCaptions Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "removeclosedcaptions",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Remove Subtitles Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "removesubtitles",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Verify Test",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "verify",
+                "--logfile=PlexCleaner.log",
+                "--settingsfile=PlexCleaner.json",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false

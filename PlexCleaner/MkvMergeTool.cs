@@ -13,6 +13,9 @@ using Serilog;
 // https://mkvtoolnix.download/doc/mkvmerge.html
 // mkvmerge [global options] {-o out} [options1] {file1} [[options2] {file2}] [@options-file.json]
 
+// TODO: Option to display static output but suppresses progress reporting vs. --quiet that suppresses all output
+// https://help.mkvtoolnix.download/t/option-to-suppress-progress-reporting-but-keep-static-output/1320
+
 namespace PlexCleaner;
 
 public partial class MkvMergeTool : MediaTool
@@ -247,10 +250,7 @@ public partial class MkvMergeTool : MediaTool
         _ = commandline.Append($"{MergeOptions} ");
 
         // Quiet
-        if (Program.Options.Parallel)
-        {
-            _ = commandline.Append("--quiet ");
-        }
+        _ = commandline.Append("--quiet ");
 
         // Snippets
         if (Program.Options.TestSnippets)
@@ -284,10 +284,7 @@ public partial class MkvMergeTool : MediaTool
         _ = commandline.Append($"{MergeOptions} ");
 
         // Quiet
-        if (Program.Options.Parallel)
-        {
-            _ = commandline.Append("--quiet ");
-        }
+        _ = commandline.Append("--quiet ");
 
         // Snippets
         if (Program.Options.TestSnippets)
@@ -319,10 +316,7 @@ public partial class MkvMergeTool : MediaTool
         _ = commandline.Append($"{MergeOptions} ");
 
         // Quiet
-        if (Program.Options.Parallel)
-        {
-            _ = commandline.Append("--quiet ");
-        }
+        _ = commandline.Append("--quiet ");
 
         // Snippets
         if (Program.Options.TestSnippets)
@@ -359,10 +353,7 @@ public partial class MkvMergeTool : MediaTool
         _ = commandline.Append($"{MergeOptions} ");
 
         // Quiet
-        if (Program.Options.Parallel)
-        {
-            _ = commandline.Append("--quiet ");
-        }
+        _ = commandline.Append("--quiet ");
 
         // Snippets
         if (Program.Options.TestSnippets)
