@@ -264,6 +264,20 @@ public static class ProcessDriver
                 _ = processFile.FfProbeInfo.Video.RemoveAll(track => track.IsCoverArt);
                 _ = processFile.MkvMergeInfo.Video.RemoveAll(track => track.IsCoverArt);
 
+                // Skip media with errors
+                if (
+                    processFile.MediaInfoInfo.HasErrors
+                    || processFile.FfProbeInfo.HasErrors
+                    || processFile.MkvMergeInfo.HasErrors
+                )
+                {
+                    Log.Warning(
+                        "Skipping media with errors : {FileName}",
+                        processFile.FileInfo.Name
+                    );
+                    return false;
+                }
+
                 // Add all the tags
                 lock (tagLock)
                 {

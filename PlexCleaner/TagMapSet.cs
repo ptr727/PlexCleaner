@@ -14,8 +14,10 @@ public class TagMapSet
 
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
-        // Warn when we can't do matching
-        _ = DoTracksMatch(prime, sec1, sec2);
+        if (!DoTracksMatch(prime, sec1, sec2))
+        {
+            return;
+        }
 
         // Video
         Add(prime.Video, prime.Parser, sec1.Video, sec1.Parser, sec2.Video, sec2.Parser, Video);
