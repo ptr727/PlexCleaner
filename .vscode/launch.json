@@ -259,6 +259,24 @@
             "justMyCode": false
         },
         {
+            "name": "Get Tag Map",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "gettagmap",
+                "--settingsfile=PlexCleaner.json",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
             "name": "Sandbox",
             "type": "coreclr",
             "request": "launch",

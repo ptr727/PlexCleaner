@@ -76,6 +76,7 @@ public class TagMapSet
     {
         if (mediaInfo == null || mkvMerge == null || ffProbe == null)
         {
+            Debug.Assert(false);
             return false;
         }
 
@@ -89,6 +90,7 @@ public class TagMapSet
             || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count
         )
         {
+            Debug.Assert(false);
             return false;
         }
 
