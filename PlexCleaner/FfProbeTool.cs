@@ -33,10 +33,15 @@ public class FfProbeTool : FfMpegTool
     public static new string GetStopSplit(TimeSpan timeSpan) =>
         $"-read_intervals %+{(int)timeSpan.TotalSeconds}";
 
-    public bool GetPacketInfo(string commandline, out List<FfMpegToolJsonSchema.Packet> packetList)
+    public bool GetPacketInfo(
+        string commandline,
+        out List<FfMpegToolJsonSchema.Packet> packetList,
+        out string error
+    )
     {
         // Init
         packetList = null;
+        error = string.Empty;
 
         // Write JSON text output to compressed memory stream to save memory
         // Make sure that the various stream processors leave the memory stream open for the duration of operations
@@ -46,7 +51,7 @@ public class FfProbeTool : FfMpegTool
         process.RedirectOutput = true;
         process.OutputStream = new StreamWriter(compressStream);
         process.RedirectError = true;
-        process.ConsoleError = !Program.Options.Parallel;
+        process.ErrorString = new StringHistory(5, 5);
 
         // Get packet info
         string path = GetToolPath();
@@ -55,6 +60,7 @@ public class FfProbeTool : FfMpegTool
         process.OutputStream.Close();
         if (exitCode != 0 || memoryStream.Length == 0)
         {
+            error = process.ErrorString.ToString();
             return false;
         }
 
@@ -68,6 +74,7 @@ public class FfProbeTool : FfMpegTool
             );
         if (packetInfo == null)
         {
+            Log.Error("Failed to DeSerialize JSON PacketInfo");
             return false;
         }
 
@@ -83,10 +90,13 @@ public class FfProbeTool : FfMpegTool
         // Quickscan
         // -t and read_intervals do not work with the subcc filter
         // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
-        // ReMux using FFmpeg to a snippet TS file then scan the TS file
+        // ReMux using FFmpeg to a snippet file then scan the snippet file
         StringBuilder commandline = new();
+        string error;
         if (Program.Options.QuickScan)
         {
+            // Keep in sync with FfMpegTool.ReMuxToFormat()
+
             // Create a temp filename based on the input name
             string tempName = Path.ChangeExtension(fileName, ".tmp13");
             Debug.Assert(fileName != tempName);
@@ -113,22 +123,25 @@ public class FfProbeTool : FfMpegTool
             // Input filename
             _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{fileName}\" ");
 
-            // Copy video stream to TS
+            // Default output options
+            _ = commandline.Append($"{OutputOptions} ");
+
+            // Use Matroska for snippet format as it supports more stream formats
+            // E.g. DVCPRO videop streams can be muxed into MKV but not into TS
+            // [mpegts @ 000001543cf744c0] Stream 0, codec dvvideo, is muxed as a private data stream and may not be recognized upon reading.
+
+            // Copy only first video stream
             _ = commandline.Append(
                 CultureInfo.InvariantCulture,
-                $"-map 0:v -c copy -f mpegts \"{tempName}\""
+                $"-map 0:v -c copy -f matroska \"{tempName}\""
             );
 
             // Remux to temp file
-            Log.Information(
-                "Creating short ({TimeSpan}) temp TS file : {TempFileName}",
-                Program.QuickScanTimeSpan,
-                tempName
-            );
-            int exitCode = Tools.FfMpeg.Command(commandline.ToString(), 5, out _, out string error);
+            Log.Information("Creating temp media file : {TempFileName}", tempName);
+            int exitCode = Tools.FfMpeg.Command(commandline.ToString(), 5, out _, out error);
             if (exitCode != 0)
             {
-                Log.Error("Failed to create temp TS file : {TempFileName}", tempName);
+                Log.Error("Failed to create temp media file : {TempFileName}", tempName);
                 Log.Error("{Error}", error);
                 _ = FileEx.DeleteFile(tempName);
                 packetList = null;
@@ -143,13 +156,19 @@ public class FfProbeTool : FfMpegTool
         commandline = new();
         _ = commandline.Append("-hide_banner -loglevel error ");
 
-        // Get packet info using ccsub filter
+        // Get packet info using subcc filter
         // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
         _ = commandline.Append(
             CultureInfo.InvariantCulture,
             $"-select_streams s:0 -f lavfi -i \"movie={EscapeMovieFileName(fileName)}[out0+subcc]\" -show_packets -print_format json"
         );
-        bool ret = GetPacketInfo(commandline.ToString(), out packetList);
+        Log.Information("Getting subcc packet info : {FileName}", fileName);
+        bool ret = GetPacketInfo(commandline.ToString(), out packetList, out error);
+        if (!ret)
+        {
+            Log.Error("Failed to get subcc packet info : {FileName}", fileName);
+            Log.Error("{Error}", error);
+        }
         if (Program.Options.QuickScan)
         {
             // Delete the temp file
@@ -195,7 +214,15 @@ public class FfProbeTool : FfMpegTool
             $"-show_packets -print_format json \"{fileName}\""
         );
 
-        return GetPacketInfo(commandline.ToString(), out packetList);
+        // Get packet info
+        Log.Information("Getting bitrate packet info : {FileName}", fileName);
+        if (!GetPacketInfo(commandline.ToString(), out packetList, out string error))
+        {
+            Log.Error("Failed to get bitrate packet info : {FileName}", fileName);
+            Log.Error("{Error}", error);
+            return false;
+        }
+        return true;
     }
 
     public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)
@@ -235,53 +262,71 @@ public class FfProbeTool : FfMpegTool
         {
             // Deserialize
             FfMpegToolJsonSchema.FfProbe ffProbe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
-            if (ffProbe == null)
-            {
-                return false;
-            }
-
-            // No tracks
-            if (ffProbe.Tracks.Count == 0)
+            if (ffProbe == null || ffProbe.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (FfMpegToolJsonSchema.Track stream in ffProbe.Tracks)
+            foreach (FfMpegToolJsonSchema.Track track in ffProbe.Tracks)
             {
                 // Process by track type
-                if (stream.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase))
+                switch (track.CodecType.ToLowerInvariant())
                 {
-                    VideoInfo info = new(stream);
-                    mediaInfo.Video.Add(info);
-                }
-                else if (stream.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase))
-                {
-                    AudioInfo info = new(stream);
-                    mediaInfo.Audio.Add(info);
-                }
-                else if (stream.CodecType.Equals("subtitle", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Some subtitle codecs are not supported, e.g. S_TEXT / WEBVTT
-                    if (
-                        string.IsNullOrEmpty(stream.CodecName)
-                        || string.IsNullOrEmpty(stream.CodecLongName)
-                    )
-                    {
-                        Log.Warning("FfProbe Subtitle Format unknown");
-                        if (string.IsNullOrEmpty(stream.CodecName))
+                    case "video":
+                        mediaInfo.Video.Add(new(track));
+                        break;
+                    case "audio":
+                        if (
+                            string.IsNullOrEmpty(track.CodecName)
+                            || string.IsNullOrEmpty(track.CodecLongName)
+                        )
                         {
-                            stream.CodecName = "Unknown";
+                            // Encrypted / DRM tracks, e.g. QuickTime audio report no codec information
+                            // "codec_tag_string": "enca"
+                            // "codec_tag": "0x61636e65"
+                            if (!string.IsNullOrEmpty(track.CodecTagString))
+                            {
+                                Log.Warning(
+                                    "FfMpegToolJsonSchema : Overriding unknown audio codec : Format: {Format}, Codec: {Codec}, CodecTagString: {CodecTagString}",
+                                    track.CodecLongName,
+                                    track.CodecName,
+                                    track.CodecTagString
+                                );
+                                track.CodecLongName = track.CodecTagString;
+                            }
                         }
-
-                        if (string.IsNullOrEmpty(stream.CodecLongName))
+                        mediaInfo.Audio.Add(new(track));
+                        break;
+                    case "subtitle":
+                        if (
+                            string.IsNullOrEmpty(track.CodecName)
+                            || string.IsNullOrEmpty(track.CodecLongName)
+                        )
                         {
-                            stream.CodecLongName = "Unknown";
+                            // Some subtitle codecs are not supported by FFmpeg, e.g. S_TEXT / WEBVTT, but are supported by MKVToolNix
+                            Log.Warning(
+                                "FfMpegToolJsonSchema : Overriding unknown subtitle codec : Format: {Format}, Codec: {Codec}",
+                                track.CodecLongName,
+                                track.CodecName
+                            );
+                            if (string.IsNullOrEmpty(track.CodecName))
+                            {
+                                track.CodecName = "unknown";
+                            }
+                            if (string.IsNullOrEmpty(track.CodecLongName))
+                            {
+                                track.CodecLongName = "unknown";
+                            }
                         }
-                    }
-
-                    SubtitleInfo info = new(stream);
-                    mediaInfo.Subtitle.Add(info);
+                        mediaInfo.Subtitle.Add(new(track));
+                        break;
+                    default:
+                        Log.Warning(
+                            "FfMpegToolJsonSchema : Unknown track type : {CodecType}",
+                            track.CodecType
+                        );
+                        break;
                 }
             }
 
@@ -331,5 +376,5 @@ public class FfProbeTool : FfMpegTool
         );
 
     // "Undesirable" tags
-    private static readonly string[] s_undesirableTags = ["statistics"];
+    private static readonly List<string> s_undesirableTags = ["statistics"];
 }

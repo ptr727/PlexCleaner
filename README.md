@@ -39,14 +39,18 @@ Docker images are published on [Docker Hub][docker-link].
   - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
     - See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
-    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove, optionally with the `quickscan` options to speed up detection.
+    - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
+    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
+  - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
   - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
-  - Added `quickscan` option to limit the scan duration and improve performance, at the cost of accuracy.
+  - Added `quickscan` option to limit the scan duration and improve performance, at the potential cost of accuracy.
   - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap set value to CPU count, prevents CPU starvation.
   - Removed the `reverify` option, it was only partially resetting process state, to reset state and start fresh use the `createsidecar` command.
   - Removed the `testnomodify` option, some modifying code paths missed and conditional logic became too convoluted to maintain, use `testsnippets` and `quickscan` options with sample media files to test instead.
   - Modified logic for `reencode`, `remux`, `verify`, `removesubtitles`, and `removeclosedcaptions` commands to use the same logic as used by the `process` command.
+  - Capturing all media tool console output, printing any errors only when encountered.
+  - Added additional unit tests.
   - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
@@ -517,7 +521,7 @@ Options:
     - Interlaced frame detection.
     - Closed caption detection.
     - Bitrate calculation.
-  - Improves processing times, but there is some risk of missing future stream information.
+  - Improves processing times, but there is some risk of missing information present in later parts of the stream.
 - `--resultsfile`:
   - Write processing results to a JSON file.
   - Useful when comparing results with previous processing runs.

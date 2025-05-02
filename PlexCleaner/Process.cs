@@ -403,7 +403,7 @@ public static class Process
                 // Save result
                 lock (resultLock)
                 {
-                    resultsJson.Results.Add(
+                    resultsJson.Results.Results.Add(
                         new()
                         {
                             Result = processResult,
@@ -423,7 +423,7 @@ public static class Process
         // Log.Information("Error files : {Count}", errorCount);
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [
-            .. resultsJson.Results.Where(item => !item.Result),
+            .. resultsJson.Results.Results.Where(item => !item.Result),
         ];
         errorResults.ForEach(item =>
             Log.Information("Error: {State} : {FileName}", item.State, item.NewFileName)
@@ -432,7 +432,7 @@ public static class Process
         // Modified
         List<ProcessResultJsonSchema.ProcessResult> modifiedResults =
         [
-            .. resultsJson.Results.Where(item => item.Modified),
+            .. resultsJson.Results.Results.Where(item => item.Modified),
         ];
         Log.Information("Modified files : {Count}", modifiedResults.Count);
         modifiedResults.ForEach(item =>
@@ -442,7 +442,7 @@ public static class Process
         // Verify failed
         List<ProcessResultJsonSchema.ProcessResult> failedResults =
         [
-            .. resultsJson.Results.Where(item =>
+            .. resultsJson.Results.Results.Where(item =>
                 item.State.HasFlag(SidecarFile.StatesType.VerifyFailed)
             ),
         ];
@@ -464,6 +464,8 @@ public static class Process
                     newItems = true;
                 }
             }
+
+            // Update JSON settings if modified
             if (newItems)
             {
                 Log.Information(
@@ -478,12 +480,31 @@ public static class Process
         // Write the process results to file
         if (Program.Options.ResultsFile != null)
         {
+            // Add result summaries
+            errorResults.ForEach(item => resultsJson.Results.Errors.Files.Add(item.NewFileName));
+            resultsJson.Results.Errors.Total = errorResults.Count;
+            modifiedResults.ForEach(item =>
+                resultsJson.Results.Modified.Files.Add(item.NewFileName)
+            );
+            resultsJson.Results.Modified.Total = modifiedResults.Count;
+            failedResults.ForEach(item =>
+                resultsJson.Results.VerifyFailed.Files.Add(item.NewFileName)
+            );
+            resultsJson.Results.VerifyFailed.Total = failedResults.Count;
+
             // Sort by file name to simplify comparison with previous results
-            resultsJson.Results.Sort(
+            resultsJson.Results.Results.Sort(
                 (x, y) =>
                     string.Compare(x.OriginalFileName, y.OriginalFileName, StringComparison.Ordinal)
             );
+            resultsJson.Results.Errors.Files.Sort(StringComparer.Ordinal);
+            resultsJson.Results.Modified.Files.Sort(StringComparer.Ordinal);
+            resultsJson.Results.VerifyFailed.Files.Sort(StringComparer.Ordinal);
+
+            // Set version info
             resultsJson.SetVersionInfo();
+
+            // Write to results JSON file
             Log.Information(
                 "Writing results file : {Program.Options.ResultFile}",
                 Program.Options.ResultsFile

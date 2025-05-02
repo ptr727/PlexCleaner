@@ -28,10 +28,11 @@ public static class Convert
         // Convert using ffmpeg
         // Selected is ReEncode
         // NotSelected is Keep
-        Log.Information("ReEncode using FfMpeg : {FileName}", inputName);
-        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName))
+        Log.Information("Reencode using FfMpeg : {FileName}", inputName);
+        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName, out string error))
         {
-            Log.Error("ReEncode using FfMpeg failed : {FileName}", inputName);
+            Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }
@@ -64,8 +65,8 @@ public static class Convert
         // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
 
         // Try MKV first
-        Log.Information("ReMux using MkvMerge : {FileName}", inputName);
-        if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
+        Log.Information("Remux using MkvMerge : {FileName}", inputName);
+        if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName, out string error))
         {
             // Failed, delete temp file
             _ = FileEx.DeleteFile(tempName);
@@ -76,12 +77,12 @@ public static class Convert
                 return false;
             }
 
-            // Failed
-            Log.Error("ReMux using MkvMerge failed : {FileName}", inputName);
+            Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
+            Log.Error("{Error}", error);
 
             // Retry using FfMpeg
-            Log.Information("ReMux using FfMpeg : {FileName}", inputName);
-            if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
+            Log.Information("Remux using FfMpeg : {FileName}", inputName);
+            if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName, out error))
             {
                 // Failed, delete temp file
                 _ = FileEx.DeleteFile(tempName);
@@ -92,13 +93,14 @@ public static class Convert
                     return false;
                 }
 
+                Log.Error("Failed to remux using FfMpeg : {TempFileName}", tempName);
+                Log.Error("{Error}", error);
+
                 // Error
-                Log.Error("ReMux using FfMpeg failed : {FileName}", inputName);
                 return false;
             }
 
             // ReMux using MkvMerge after FfMpeg or HandBrake encoding
-            Log.Information("ReMux using MkvMerge : {FileName}", inputName);
             if (!ReMux(tempName))
             {
                 _ = FileEx.DeleteFile(tempName);
@@ -146,10 +148,11 @@ public static class Convert
         // ReMux keeping specific tracks
         // Selected is Keep
         // NotSelected is Remove
-        Log.Information("ReMux using MkvMerge : {FileName}", inputName);
-        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaInfo, tempName))
+        Log.Information("Remux using MkvMerge : {FileName}", inputName);
+        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaInfo, tempName, out string error))
         {
-            Log.Error("ReMux using MkvMerge failed : {FileName}", inputName);
+            Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }
@@ -176,10 +179,11 @@ public static class Convert
         _ = FileEx.DeleteFile(tempName);
 
         // ReMux
-        Log.Information("ReMux using MkvMerge : {FileName}", fileName);
-        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
+        Log.Information("Remux using MkvMerge : {FileName}", fileName);
+        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName, out string error))
         {
-            Log.Error("ReMux using MkvMerge failed : {FileName}", fileName);
+            Log.Error("Failed to remux using MkvMerge : {FileName}", fileName);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }

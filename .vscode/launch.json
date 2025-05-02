@@ -56,16 +56,16 @@
             "stopAtEntry": false
         },
         {
-            "name": "Process Test",
+            "name": "Process Single",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
             "args": [
                 "process",
-                "--logfile=PlexCleaner.log",
+                "--logfile=PlexCleaner_Single.log",
                 "--settingsfile=PlexCleaner.json",
-                "--resultsfile=Results.json",
+                "--resultsfile=Results_Single.json",
                 "--mediafiles",
                 "D:\\Test"
             ],
@@ -75,16 +75,37 @@
             "justMyCode": false
         },
         {
-            "name": "Process Parallel TestSnippets Quickscan Test",
+            "name": "Process Quickscan",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
             "args": [
                 "process",
-                "--logfile=PlexCleaner.log",
+                "--logfile=PlexCleaner_Single_Quickscan.log",
                 "--settingsfile=PlexCleaner.json",
-                "--resultsfile=Results.json",
+                "--resultsfile=Results_Single_Quickscan.json",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Process Parallel TestSnippets Quickscan",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--logfile=PlexCleaner_Parallel_TestSnippets_Quickscan.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results_Parallel_TestSnippets_Quickscan.json",
                 "--parallel",
                 "--testsnippets",
                 "--quickscan",
@@ -92,13 +113,13 @@
                 "D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
-            "externalConsole": true,
+            "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false
         },
         {
-            "name": "Monitor Test",
+            "name": "Monitor",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -119,7 +140,7 @@
             "justMyCode": false
         },
         {
-            "name": "ReMux Test",
+            "name": "ReMux",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -139,7 +160,7 @@
             "justMyCode": false
         },
         {
-            "name": "ReEncode Test",
+            "name": "ReEncode",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -159,7 +180,7 @@
             "justMyCode": false
         },
         {
-            "name": "DeInterlace Test",
+            "name": "DeInterlace",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -179,7 +200,7 @@
             "justMyCode": false
         },
         {
-            "name": "Remove ClosedCaptions Test",
+            "name": "Remove ClosedCaptions",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -199,7 +220,7 @@
             "justMyCode": false
         },
         {
-            "name": "Remove Subtitles Test",
+            "name": "Remove Subtitles",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -218,7 +239,7 @@
             "justMyCode": false
         },
         {
-            "name": "Verify Test",
+            "name": "Verify",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",

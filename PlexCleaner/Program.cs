@@ -541,11 +541,7 @@ public static class Program
 
         // Log app and runtime version
         Log.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
-        Log.Information(
-            "Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}",
-            RuntimeInformation.FrameworkDescription,
-            RuntimeInformation.RuntimeIdentifier
-        );
+        Log.Information("Runtime Version : {RuntimeVersions}", AssemblyVersion.GetRuntimeVersion());
         Log.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
         Log.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 

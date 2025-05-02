@@ -128,7 +128,7 @@ public class Program
     public JsonElement? GetSettingsObject(string key) =>
         _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
 
-    public Dictionary<string, string>? GetSettingsDictionary(string key) =>
+    public Dictionary<string, string> GetSettingsDictionary(string key) =>
         new(
             GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>() ?? [],
             StringComparer.OrdinalIgnoreCase

@@ -44,7 +44,7 @@ public class MkvPropEditTool : MkvMergeTool
         );
 
         // Set language on all unknown tracks
-        int exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), out string _, out string _);
         return exitCode == 0;
     }
 
@@ -86,7 +86,7 @@ public class MkvPropEditTool : MkvMergeTool
         }
 
         // Set flags
-        int exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), out string _, out string _);
         return exitCode == 0;
     }
 
@@ -111,15 +111,15 @@ public class MkvPropEditTool : MkvMergeTool
         // Verify correct data type
         Debug.Assert(mediaInfo.Parser == ToolType.MkvMerge);
 
-        // Build commandline
+        // Delete all tags and title
         StringBuilder commandline = new();
         DefaultArgs(fileName, commandline);
         _ = commandline.Append("--tags all: --delete title ");
 
-        // Delete all track titles if the title is not a flag substitute
+        // Delete track titles if the title is not used as a flag
         System.Collections.Generic.List<TrackInfo> trackList =
         [
-            .. mediaInfo.GetTrackList().Where(track => track.NotTrackTitleFlag()),
+            .. mediaInfo.GetTrackList().Where(track => !track.TitleContainsFlag()),
         ];
         trackList.ForEach(track =>
             commandline.Append(
@@ -129,7 +129,7 @@ public class MkvPropEditTool : MkvMergeTool
         );
 
         // Clear all tags and main title and track titles
-        int exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), out string _, out string _);
         return exitCode == 0;
     }
 
@@ -139,7 +139,7 @@ public class MkvPropEditTool : MkvMergeTool
         Debug.Assert(mediaInfo.Parser == ToolType.MkvMerge);
         Debug.Assert(mediaInfo.Attachments > 0);
 
-        // Build commandline
+        // Delete all attachments
         StringBuilder commandline = new();
         DefaultArgs(fileName, commandline);
         for (int id = 0; id < mediaInfo.Attachments; id++)
@@ -147,8 +147,7 @@ public class MkvPropEditTool : MkvMergeTool
             _ = commandline.Append(CultureInfo.InvariantCulture, $"--delete-attachment {id + 1} ");
         }
 
-        // Delete all attachments
-        int exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), out string _, out string _);
         return exitCode == 0;
     }
 

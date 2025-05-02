@@ -10,6 +10,9 @@ public static class AssemblyVersion
 {
     public static string GetAppVersion() => $"{GetName()} : {GetFileVersion()} ({GetBuildType()})";
 
+    public static string GetRuntimeVersion() =>
+        $"{RuntimeInformation.FrameworkDescription} : {RuntimeInformation.RuntimeIdentifier}";
+
     public static string GetBuildType()
     {
 #if DEBUG

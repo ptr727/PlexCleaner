@@ -21,13 +21,13 @@ public class MediaInfoToolJsonSchema
     public Media Media { get; } = new();
 }
 
-public partial class Media
+public class Media
 {
     [JsonPropertyName("track")]
     public List<Track> Tracks { get; } = [];
 }
 
-public partial class Track
+public class Track
 {
     [JsonPropertyName("@type")]
     public string Type { get; set; } = "";

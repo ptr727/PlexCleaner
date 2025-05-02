@@ -362,7 +362,7 @@ public record ProcessOptions4 : ProcessOptions3
     public void SetDefaults()
     {
         DefaultLanguage = "en";
-        DeInterlace = true;
+        DeInterlace = false;
         DeleteEmptyFolders = true;
         DeleteUnwantedExtensions = true;
         FileIgnoreList.Clear();

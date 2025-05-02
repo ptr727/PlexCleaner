@@ -137,7 +137,7 @@ public class ProcessFile
         }
 
         // ReMux the file
-        Log.Information("ReMux file matched by extension : {FileName}", FileInfo.Name);
+        Log.Information("Remux file matched by extension : {FileName}", FileInfo.Name);
 
         // ReMux the file, use the new filename
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
@@ -302,7 +302,7 @@ public class ProcessFile
         // Do not call SetState() on items that are not in scope, further processing is done by state
 
         // ReMux the file
-        Log.Information("ReMux to repair metadata errors : {FileName}", FileInfo.Name);
+        Log.Information("Remux to repair metadata errors : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("Keep", "Remove");
 
         // Conditional with tracks or all tracks
@@ -357,7 +357,7 @@ public class ProcessFile
         selectMediaInfo.Move(mkvMergeRemoveList, false);
 
         // ReMux the file
-        Log.Information("ReMux to remove extra video tracks : {FileName}", FileInfo.Name);
+        Log.Information("Remux to remove extra video tracks : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("Keep", "Remove");
         if (!Convert.ReMuxToMkv(FileInfo.FullName, selectMediaInfo, out string outputName))
         {
@@ -882,10 +882,10 @@ public class ProcessFile
         // Already deinterlaced?
         if (State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
-            Log.Warning("DeInterlacing already deinterlaced media : {FileName}", FileInfo.Name);
+            Log.Warning("Deinterlacing already deinterlaced media : {FileName}", FileInfo.Name);
         }
 
-        Log.Information("DeInterlacing interlaced media : {FileName}", FileInfo.Name);
+        Log.Information("Deinterlacing interlaced media : {FileName}", FileInfo.Name);
         videoInfo.State = TrackInfo.StateType.DeInterlace;
         videoInfo.WriteLine("Interlaced");
 
@@ -899,9 +899,18 @@ public class ProcessFile
 
         // DeInterlace using HandBrake and ignore subtitles
         _ = FileEx.DeleteFile(deintName);
-        if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, deintName, false, true))
+        if (
+            !Tools.HandBrake.ConvertToMkv(
+                FileInfo.FullName,
+                deintName,
+                false,
+                true,
+                out string error
+            )
+        )
         {
-            // Error
+            Log.Error("Failed to deinterlace interlaced media : {FileName}", FileInfo.Name);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(deintName);
             return false;
         }
@@ -913,13 +922,13 @@ public class ProcessFile
         // If there are subtitles in the original file merge them back
         if (MkvMergeInfo.Subtitle.Count == 0)
         {
-            Log.Information("ReMuxing deinterlaced media : {FileName}", FileInfo.Name);
-
             // No subtitles, just remux all content
             _ = FileEx.DeleteFile(remuxName);
-            if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName))
+            Log.Information("Remuxing deinterlaced media : {FileName}", FileInfo.Name);
+            if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName, out error))
             {
-                // Error
+                Log.Error("Failed to remux deinterlaced media : {FileName}", FileInfo.Name);
+                Log.Error("{Error}", error);
                 _ = FileEx.DeleteFile(deintName);
                 _ = FileEx.DeleteFile(remuxName);
                 return false;
@@ -927,18 +936,29 @@ public class ProcessFile
         }
         else
         {
-            Log.Information(
-                "ReMuxing subtitles and deinterlaced media : {FileName}",
-                FileInfo.Name
-            );
-
             // Merge the deinterlaced file with the subtitles from the original file
             MediaInfo subInfo = new(MediaTool.ToolType.MkvMerge);
             subInfo.Subtitle.AddRange(MkvMergeInfo.Subtitle);
             _ = FileEx.DeleteFile(remuxName);
-            if (!Tools.MkvMerge.MergeToMkv(deintName, FileInfo.FullName, subInfo, remuxName))
+            Log.Information(
+                "Remuxing subtitles and deinterlaced media : {FileName}",
+                FileInfo.Name
+            );
+            if (
+                !Tools.MkvMerge.MergeToMkv(
+                    deintName,
+                    FileInfo.FullName,
+                    subInfo,
+                    remuxName,
+                    out error
+                )
+            )
             {
-                // Error
+                Log.Error(
+                    "Failed to remux subtitles and deinterlaced media : {FileName}",
+                    FileInfo.Name
+                );
+                Log.Error("{Error}", error);
                 _ = FileEx.DeleteFile(deintName);
                 _ = FileEx.DeleteFile(remuxName);
                 return false;
@@ -1066,17 +1086,17 @@ public class ProcessFile
 
         // Remove Closed Captions
         _ = FileEx.DeleteFile(tempName);
-        Log.Information("Removing Closed Captions using FfMpeg : {FileName}", FileInfo.Name);
-        if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName))
+        Log.Information("Removing closed captions using FfMpeg : {FileName}", FileInfo.Name);
+        if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName, out string error))
         {
             // Error
-            Log.Error("Removing Closed Captions using FfMpeg failed : {FileName}", FileInfo.Name);
+            Log.Error("Failed to remove closed captions using FfMpeg : {FileName}", FileInfo.Name);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }
 
         // ReMux using MkvMerge after FfMpeg encoding
-        Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
         if (!Convert.ReMux(tempName))
         {
             // Error
@@ -1109,7 +1129,7 @@ public class ProcessFile
             return true;
         }
 
-        Log.Information("Removing Subtitles from video stream : {FileName}", FileInfo.Name);
+        Log.Information("Removing subtitles : {FileName}", FileInfo.Name);
         MkvMergeInfo.Subtitle.ForEach(item => item.WriteLine("Subtitles"));
 
         // Create a temp output filename
@@ -1118,11 +1138,11 @@ public class ProcessFile
 
         // Remove Subtitles
         _ = FileEx.DeleteFile(tempName);
-        Log.Information("Removing Subtitles using MkvMerge : {FileName}", FileInfo.Name);
-        if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName))
+        if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName, out string error))
         {
             // Error
-            Log.Error("Removing Subtitles using MkvMerge failed : {FileName}", FileInfo.Name);
+            Log.Error("Failed to remove subtitles : {FileName}", FileInfo.Name);
+            Log.Error("{Error}", error);
             _ = FileEx.DeleteFile(tempName);
             return false;
         }
@@ -1162,10 +1182,10 @@ public class ProcessFile
         // Already reencoded?
         if (State.HasFlag(SidecarFile.StatesType.ReEncoded))
         {
-            Log.Warning("ReEncoding already reencoded media : {FileName}", FileInfo.Name);
+            Log.Warning("Reencoding already reencoded media : {FileName}", FileInfo.Name);
         }
 
-        Log.Information("ReEncoding required tracks : {FileName}", FileInfo.Name);
+        Log.Information("Reencoding required tracks : {FileName}", FileInfo.Name);
         selectMediaInfo.WriteLine("ReEncode", "Passthrough");
 
         // ReEncode selected tracks
@@ -1177,7 +1197,6 @@ public class ProcessFile
         }
 
         // ReMux using MkvMerge after FfMpeg encoding
-        Log.Information("ReMuxing reencoded media : {FileName}", FileInfo.Name);
         if (!Convert.ReMux(outputName))
         {
             // Error
@@ -1322,7 +1341,7 @@ public class ProcessFile
             }
 
             // Failed stream validation
-            Log.Error("Media stream validation failed : {FileName}", fileInfo.Name);
+            Log.Error("Failed to verify media streams : {FileName}", fileInfo.Name);
             Log.Error("{Error}", error);
 
             // Caller should update the state
@@ -1664,10 +1683,10 @@ public class ProcessFile
 
         // Convert using ffmpeg
         Log.Information(
-            "Attempting media repair by ReEncoding using FfMpeg : {FileName}",
+            "Attempting media repair by reencoding using FfMpeg : {FileName}",
             FileInfo.Name
         );
-        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName))
+        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName, out string error))
         {
             // Failed, delete temp file
             _ = FileEx.DeleteFile(tempName);
@@ -1679,14 +1698,15 @@ public class ProcessFile
             }
 
             // Failed
-            Log.Error("ReEncoding using FfMpeg failed : {FileName}", FileInfo.Name);
+            Log.Error("Failed to reencode using FfMpeg : {FileName}", FileInfo.Name);
+            Log.Error("{Error}", error);
 
             // Try again using handbrake
             Log.Information(
-                "Attempting media repair by ReEncoding using HandBrake : {FileName}",
+                "Attempting media repair by reencoding using HandBrake : {FileName}",
                 FileInfo.Name
             );
-            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false))
+            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false, out error))
             {
                 // Failed, delete temp file
                 _ = FileEx.DeleteFile(tempName);
@@ -1698,7 +1718,8 @@ public class ProcessFile
                 }
 
                 // Failed
-                Log.Error("ReEncode using HandBrake failed : {FileName}", FileInfo.Name);
+                Log.Error("Failed to reencode using HandBrake : {FileName}", FileInfo.Name);
+                Log.Error("{Error}", error);
 
                 // Caller will update state
                 return false;
@@ -1706,7 +1727,6 @@ public class ProcessFile
         }
 
         // ReMux using MkvMerge after FfMpeg or HandBrake encoding
-        Log.Information("ReMuxing repaired media : {FileName}", tempName);
         if (!Convert.ReMux(tempName))
         {
             // Failed
@@ -1922,7 +1942,7 @@ public class ProcessFile
     {
         // Count the frame types using the idet filter
         Log.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo, out idetInfo, out string error))
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo, out string error))
         {
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1930,25 +1950,14 @@ public class ProcessFile
                 return false;
             }
 
-            // Failed
+            // Error
             Log.Error("Failed to count interlaced frames : {FileName}", FileInfo.Name);
             Log.Error("{Error}", error);
             return false;
         }
 
         // Log result
-        Log.Information(
-            "FfMpeg Idet : Interlaced: {IdetInterlaced} ({Percentage:P} > {Threshold:P}), Interlaced: {Interlaced}, Progressive: {Progressive}, Undetermined: {Undetermined}, Total: {Total} : {FileName}",
-            idetInfo.IsInterlaced(),
-            idetInfo.InterlacedPercentage,
-            FfMpegIdetInfo.InterlacedThreshold,
-            idetInfo.Interlaced,
-            idetInfo.Progressive,
-            idetInfo.Undetermined,
-            idetInfo.Total,
-            FileInfo.Name
-        );
-
+        idetInfo.WriteLine();
         return true;
     }
 
@@ -2215,14 +2224,14 @@ public class ProcessFile
     private SidecarFile _sidecarFile;
 
     // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
-    public static readonly string[] Hdr10FormatList =
+    public static readonly List<string> Hdr10FormatList =
     [
         MediaInfoTool.HDR10Format,
         MediaInfoTool.HDR10PlusFormat,
     ];
 
     // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
-    public static readonly string[] ReEncodeVideoOnAudioReEncodeList =
+    public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
     [
         MediaInfoTool.H264Format,
         MediaInfoTool.H265Format,

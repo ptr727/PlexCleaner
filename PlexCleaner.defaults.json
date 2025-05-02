@@ -123,7 +123,7 @@
     // Re-mux files in ReMuxExtensions list to MKV
     "ReMux": true,
     // De-interlace interlaced media
-    "DeInterlace": true,
+    "DeInterlace": false,
     // Re-encode audio and video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
     "ReEncode": true,
     // Set tracks with undefined language to DefaultLanguage

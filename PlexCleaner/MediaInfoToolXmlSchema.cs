@@ -29,6 +29,9 @@ public class MediaInfoToolXmlSchema
         [XmlElement(ElementName = "ID", Namespace = "https://mediaarea.net/mediainfo")]
         public string Id { get; set; } = "";
 
+        [XmlElement(ElementName = "Duration", Namespace = "https://mediaarea.net/mediainfo")]
+        public string Duration { get; set; } = "";
+
         [XmlElement(ElementName = "Format", Namespace = "https://mediaarea.net/mediainfo")]
         public string Format { get; set; } = "";
 
@@ -59,7 +62,7 @@ public class MediaInfoToolXmlSchema
         public string MuxingMode { get; set; } = "";
 
         [XmlElement(ElementName = "StreamOrder", Namespace = "https://mediaarea.net/mediainfo")]
-        public int StreamOrder { get; set; }
+        public string StreamOrder { get; set; }
 
         [XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
         public string ScanType { get; set; } = "";

@@ -171,7 +171,7 @@ public static class ProcessDriver
                             totalCount
                         );
                         Log.Information(
-                            "{TaskName} ({Processed:N2}%) Before : {FileName}",
+                            "{TaskName} ({Processed:F2}%) Before : {FileName}",
                             taskName,
                             processedPercentage,
                             fileName
@@ -208,7 +208,7 @@ public static class ProcessDriver
                             totalCount
                         );
                         Log.Information(
-                            "{TaskName} ({Processed:N2}%) After : {FileName}",
+                            "{TaskName} ({Processed:F2}%) After : {FileName}",
                             taskName,
                             processedPercentage,
                             fileName

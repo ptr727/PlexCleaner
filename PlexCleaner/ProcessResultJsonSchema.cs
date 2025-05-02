@@ -16,6 +16,14 @@ public record ProcessResultJsonSchema
         public string Version { get; set; }
     }
 
+    public class Version
+    {
+        public string Application { get; set; }
+        public string Runtime { get; set; }
+        public string OS { get; set; }
+        public List<ToolVersion> Tools { get; } = [];
+    }
+
     public class ProcessResult
     {
         public bool Result { get; set; }
@@ -27,16 +35,31 @@ public record ProcessResultJsonSchema
         public SidecarFile.StatesType State { get; set; }
     }
 
+    public class ProcessSummary
+    {
+        public int Total { get; set; }
+        public List<string> Files { get; } = [];
+    }
+
+    public class Result
+    {
+        public ProcessSummary Errors { get; } = new();
+        public ProcessSummary VerifyFailed { get; } = new();
+        public ProcessSummary Modified { get; } = new();
+        public List<ProcessResult> Results { get; } = [];
+    }
+
     public void SetVersionInfo()
     {
-        AppVersion = AssemblyVersion.GetAppVersion();
-        OSVersion = RuntimeInformation.OSDescription;
+        Versions.Application = AssemblyVersion.GetAppVersion();
+        Versions.Runtime = AssemblyVersion.GetRuntimeVersion();
+        Versions.OS = RuntimeInformation.OSDescription;
 
         Tools
             .GetToolFamilyList()
             .ForEach(tool =>
             {
-                ToolVersions.Add(
+                Versions.Tools.Add(
                     new ToolVersion { Tool = tool.GetToolFamily(), Version = tool.Info.Version }
                 );
             });
@@ -48,10 +71,8 @@ public record ProcessResultJsonSchema
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public const int CurrentSchemaVersion = 1;
 
-    public string AppVersion { get; set; }
-    public string OSVersion { get; set; }
-    public List<ToolVersion> ToolVersions { get; } = [];
-    public List<ProcessResult> Results { get; } = [];
+    public Version Versions { get; } = new();
+    public Result Results { get; } = new();
 
     public static ProcessResultJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 

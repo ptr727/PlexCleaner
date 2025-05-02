@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Serilog;
 
@@ -24,6 +25,7 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
@@ -56,12 +58,10 @@ public class VideoInfo : TrackInfo
             _ => Profile,
         };
 
-        // Test for interlaced
-        // https://ffmpeg.org/ffprobe-all.html
+        // Test for interlaced in field_order
+        // https://ffmpeg.org/ffmpeg-codecs.html
         // Progressive, tt, bb, tb, bt
-        Interlaced =
-            !string.IsNullOrEmpty(track.FieldOrder)
-            && !track.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
+        Interlaced = track.FieldOrder.ToLowerInvariant() is "tt" or "bb" or "tb" or "bt";
 
         // ClosedCaptions
         ClosedCaptions = track.ClosedCaptions != 0;
@@ -69,6 +69,7 @@ public class VideoInfo : TrackInfo
         // Missing: HDR
 
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
@@ -93,42 +94,15 @@ public class VideoInfo : TrackInfo
 
         // Test for interlaced
         // TODO: Does not work for H265
-        // https://sourceforge.net/p/mediainfo/bugs/771/
         // https://github.com/MediaArea/MediaInfoLib/issues/1092
-        // Test for Progressive, Interlaced, MBAFF, or empty
-        Interlaced =
-            !string.IsNullOrEmpty(track.ScanType)
-            && !track.ScanType.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
+        // Only set when ScanType is Interlaced
+        Interlaced = track.ScanType.Equals("Interlaced", StringComparison.OrdinalIgnoreCase);
 
         // HDR
         FormatHdr = track.HdrFormat;
 
-        // TODO: CC's are reported as sub-tracks in MediaInfo
-        // Parse CC flag based on presence of CC tracks
-        // Missing: ClosedCaptions
-        /*
-        {
-            "@type": "Video",
-            "ID": "256",
-            "Format": "AVC",
-        },
-        {
-            "@type": "Text",
-            "ID": "256-CC1",
-            "Format": "EIA-608",
-            "MuxingMode": "SCTE 128 / DTVCC Transport",
-            "MuxingMode_MoreInfo": "Muxed in Video #1",
-        },
-        {
-            "@type": "Text",
-            "ID": "256-1",
-            "Format": "EIA-708",
-            "MuxingMode": "SCTE 128 / DTVCC Transport",
-            }
-        },
-        */
-
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
@@ -223,5 +197,5 @@ public class VideoInfo : TrackInfo
         );
 
     // Cover art and thumbnail formats
-    private static readonly string[] s_coverArtFormat = ["jpg", "jpeg", "png"];
+    private static readonly List<string> s_coverArtFormat = ["jpg", "jpeg", "png"];
 }

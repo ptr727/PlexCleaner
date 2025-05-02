@@ -10,6 +10,9 @@ using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
+// TODO: What is an equivalent to ffmpeg -nostats to suppress progress output?
+// https://github.com/HandBrake/HandBrake/issues/2000
+
 namespace PlexCleaner;
 
 public partial class HandBrakeTool : MediaTool
@@ -110,7 +113,8 @@ public partial class HandBrakeTool : MediaTool
         string inputName,
         string outputName,
         bool includeSubtitles,
-        bool deInterlace
+        bool deInterlace,
+        out string error
     )
     {
         // Delete output file
@@ -162,7 +166,7 @@ public partial class HandBrakeTool : MediaTool
         _ = commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
 
         // Execute
-        int exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
         return exitCode == 0;
     }
 

@@ -8,7 +8,9 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public partial class TrackInfo
+// TODO: Convert constructor based initialization to overeloaded method create, allowing derived to fixup data before callign base
+
+public class TrackInfo
 {
     public enum StateType
     {
@@ -51,8 +53,9 @@ public partial class TrackInfo
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "{Parser} : Track is missing required codec information : State: {State}",
-                Parser,
+                "MkvToolJsonSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State}",
+                Format,
+                Codec,
                 State
             );
             return;
@@ -97,7 +100,6 @@ public partial class TrackInfo
         // RFC-5646 / BCP 47 tag
         LanguageIetf = track.Properties.LanguageIetf;
 
-        // If the GetIso639Tag() or GetIetfTag() tag lookup logic is incomplete or buggy no amount of remuxing will help
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix
         // https://r12a.github.io/app-subtags/
 
@@ -119,8 +121,7 @@ public partial class TrackInfo
 
                 // Failed to lookup ISO tag from IETF tag
                 Log.Error(
-                    "{Parser} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
                     Language,
                     LanguageIetf,
                     State
@@ -134,8 +135,7 @@ public partial class TrackInfo
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
                 Log.Error(
-                    "{Parser} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State}",
                     Language,
                     LanguageIetf,
                     isoLookup,
@@ -159,8 +159,7 @@ public partial class TrackInfo
 
                 // Failed to lookup IETF tag from ISO tag
                 Log.Error(
-                    "{Parser} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State}",
                     Language,
                     State
                 );
@@ -175,8 +174,7 @@ public partial class TrackInfo
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
                 Log.Information(
-                    "{Parser} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
                     Language,
                     LanguageIetf,
                     State
@@ -200,8 +198,7 @@ public partial class TrackInfo
             {
                 // Failed to lookup ISO from IETF
                 Log.Error(
-                    "{Parser} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State}",
                     LanguageIetf,
                     State
                 );
@@ -211,8 +208,7 @@ public partial class TrackInfo
                 // Set ISO from lookup
                 Language = isoLookup;
                 Log.Warning(
-                    "{Parser} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
-                    Parser,
+                    "MkvToolJsonSchema : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State}",
                     Language,
                     LanguageIetf,
                     State
@@ -235,8 +231,7 @@ public partial class TrackInfo
             HasErrors = true;
             State = StateType.ReMux;
             Log.Warning(
-                "{Parser} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}",
-                Parser,
+                "MkvToolJsonSchema : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State}",
                 track.Properties.TagLanguage,
                 track.Properties.Language,
                 State
@@ -247,11 +242,12 @@ public partial class TrackInfo
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/About-track-UIDs,-track-numbers-and-track-IDs#track-numbers
         // Id: 0-based track number internally assigned
         Id = track.Id;
+
         // Number: 1-based track number from Matroska header
         Number = track.Properties.Number;
 
         // TODO: Anything other than title for tags?
-        HasTags = NotTrackTitleFlag();
+        HasTags = TitleIsTag();
 
         // Set flags from title
         SetFlagsFromTitle();
@@ -266,18 +262,12 @@ public partial class TrackInfo
         Codec = track.CodecLongName;
         if (string.IsNullOrEmpty(Format) || string.IsNullOrEmpty(Codec))
         {
-            // Encrypted / DRM tracks, e.g. QuickTime audio report no codec information
-            // "codec_tag_string": "enca",
-            // "codec_tag": "0x61636e65",
-            if (!string.IsNullOrEmpty(track.CodecTagString))
-            {
-                Codec = track.CodecTagString;
-            }
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "{Parser} : Track is missing required codec information : State: {State}",
-                Parser,
+                "FfMpegToolJsonSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State}",
+                Format,
+                Codec,
                 State
             );
             return;
@@ -343,8 +333,7 @@ public partial class TrackInfo
             HasErrors = true;
             State = StateType.ReMux;
             Log.Warning(
-                "{Parser} : Invalid Language : {Language} : {State}",
-                Parser,
+                "FfMpegToolJsonSchema : Invalid Language : Language: {Language}, State: {State}",
                 Language,
                 State
             );
@@ -358,11 +347,10 @@ public partial class TrackInfo
         Number = track.Index;
 
         // TODO: Anything other than title for tags?
-        HasTags = NotTrackTitleFlag();
+        HasTags = TitleIsTag();
 
         // TODO: Set flags from title
         // Repair uses MkvPropEdit, only set for MkvMergeInfo
-        // SetFlagsFromTitle("FfMpegToolJsonSchema");
     }
 
     public TrackInfo(MediaInfoToolXmlSchema.Track track)
@@ -377,8 +365,9 @@ public partial class TrackInfo
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "{Parser} : Track is missing required codec information : State: {State}",
-                Parser,
+                "MediaInfoToolXmlSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State}",
+                Format,
+                Codec,
                 State
             );
             return;
@@ -415,33 +404,27 @@ public partial class TrackInfo
 
         // Leave the Language as is, no need to verify
 
-        // TODO: Sub-tracks are identified as [ID]-[Sub-ID]
-        // Sub-tracks of @type Text of the video track can indicate EIA-608/CTA-708 closed captions
-        /// "ID": "1-CC4",
-        // "Format": "EIA-608",
-        // "MuxingMode": "SCTE 128 / DTVCC Transport",
-        // "MuxingMode_MoreInfo": "Muxed in Video #1",
-
+        // Use Id for Number
         // https://github.com/MediaArea/MediaInfo/issues/201
-        // "For Matroska, the first part (before the dash) of the ID field is mapped to TrackNumber Matroska field,
-        // and the first part (before the dash) of the UniqueID field is mapped to TrackUID Matroska field"
-        // ID can be in a variety of formats:
         // 1
         // 3-CC1
         // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
-        Match match = TrackRegex().Match(track.Id);
+        Match match = MediaInfoTool.TrackRegex().Match(track.Id);
         Debug.Assert(match.Success);
-        // Use number before dash as Matroska TrackNumber
+        // Use Number before dash as Matroska TrackNumber
         Number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
 
         // Use StreamOrder for Id
-        Id = track.StreamOrder;
+        // 0
+        // 0-1
+        match = MediaInfoTool.TrackRegex().Match(track.StreamOrder);
+        Debug.Assert(match.Success);
+        Id = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
 
         // TODO: Anything other than title for tags?
-        HasTags = NotTrackTitleFlag();
+        HasTags = TitleIsTag();
 
         // TODO: Set flags from title, flags are incomplete
-        // SetFlagsFromTitle("MediaInfoToolXmlSchema");
     }
 
     public MediaTool.ToolType Parser { get; }
@@ -495,46 +478,46 @@ public partial class TrackInfo
             HasTags
         );
 
-    public bool NotTrackTitleFlag()
+    public bool TitleIsTag()
     {
-        // Not logic, i.e. title is not a flag
+        // No title no tag
         if (string.IsNullOrEmpty(Title))
         {
-            // Empty is not a flag
             return false;
         }
 
-        // Not a flag is not a flag
-        return !s_titleFlags.Any(tuple =>
-            Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase)
-        );
+        // Has title but is not flag
+        // TODO: Need so more sanitization to ensure title is clean
+        return !TitleContainsFlag();
     }
 
-    public void SetFlagsFromTitle()
-    {
-        // Add flags based on titles
-        foreach ((string, FlagsType) tuple in s_titleFlags)
+    public bool TitleContainsFlag() =>
+        // Title contins a flag
+        s_titleFlags.Any(item => Title.Contains(item.Name, StringComparison.OrdinalIgnoreCase));
+
+    public void SetFlagsFromTitle() =>
+        // Add flags based on flag presence in the title
+        s_titleFlags.ForEach(item =>
         {
-            // Only process if matching flag is not already set
+            // Set flag if present in the title
             if (
-                Title.Contains(tuple.Item1, StringComparison.OrdinalIgnoreCase)
-                && !Flags.HasFlag(tuple.Item2)
+                Title.Contains(item.Name, StringComparison.OrdinalIgnoreCase)
+                && !Flags.HasFlag(item.Flag)
             )
             {
                 // Set track error state and recommend setting the track flags
                 HasErrors = true;
                 State = StateType.SetFlags;
-                Flags |= tuple.Item2;
+                Flags |= item.Flag;
                 Log.Information(
                     "{Parser} : Setting track Flag from Title : {Title} -> {Flag} : {State}",
                     Parser,
                     Title,
-                    tuple.Item2,
+                    item.Flag,
                     State
                 );
             }
-        }
-    }
+        });
 
     public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType) =>
         Enum.GetValues<FlagsType>()
@@ -543,11 +526,8 @@ public partial class TrackInfo
     public static IEnumerable<FlagsType> GetFlags() =>
         Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
 
-    [GeneratedRegex(@"(?<id>\d)")]
-    public static partial Regex TrackRegex();
-
     // Track title to flag mapping
-    private static readonly ValueTuple<string, FlagsType>[] s_titleFlags =
+    private static readonly List<(string Name, FlagsType Flag)> s_titleFlags =
     [
         new("SDH", FlagsType.HearingImpaired),
         new("CC", FlagsType.HearingImpaired),

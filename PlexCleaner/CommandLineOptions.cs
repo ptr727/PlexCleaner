@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 
@@ -108,18 +109,18 @@ public class CommandLineOptions
         command.AddCommand(CreateGetToolInfoCommand());
 
         // Create JSON schema
-        command.AddCommand(CreateJsonSchemaCommand());
+        command.AddCommand(CreateCreateSchemaCommand());
 
         return command;
     }
 
-    private static Command CreateJsonSchemaCommand()
+    private static Command CreateCreateSchemaCommand()
     {
         // Create settings JSON schema file
         Command command = new("createschema")
         {
             Description = "Write settings schema to file",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateJsonSchemaCommand),
+            Handler = CommandHandler.Create(s_createSchemaFunc),
         };
 
         // Schema file name
@@ -140,9 +141,7 @@ public class CommandLineOptions
         Command command = new("defaultsettings")
         {
             Description = "Write default values to settings file",
-            Handler = CommandHandler.Create<CommandLineOptions>(
-                Program.WriteDefaultSettingsCommand
-            ),
+            Handler = CommandHandler.Create(s_defaultSettingsFunc),
         };
 
         // Settings file name
@@ -157,7 +156,7 @@ public class CommandLineOptions
         Command command = new("checkfornewtools")
         {
             Description = "Check for new tool versions and download if newer",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.CheckForNewToolsCommand),
+            Handler = CommandHandler.Create(s_checkForNewToolsFunc),
         };
 
         // Settings file name
@@ -172,7 +171,7 @@ public class CommandLineOptions
         Command command = new("process")
         {
             Description = "Process media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.ProcessCommand),
+            Handler = CommandHandler.Create(s_processFunc),
         };
 
         // Process options
@@ -213,7 +212,7 @@ public class CommandLineOptions
         Command command = new("monitor")
         {
             Description = "Monitor for file changes and process changed media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.MonitorCommand),
+            Handler = CommandHandler.Create(s_monitorFunc),
         };
 
         // Process options
@@ -233,7 +232,7 @@ public class CommandLineOptions
         Command command = new("remux")
         {
             Description = "Re-Multiplex media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.ReMuxCommand),
+            Handler = CommandHandler.Create(s_reMuxFunc),
         };
 
         // Settings file name
@@ -254,7 +253,7 @@ public class CommandLineOptions
         Command command = new("reencode")
         {
             Description = "Re-Encode media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.ReEncodeCommand),
+            Handler = CommandHandler.Create(s_reEncodeFunc),
         };
 
         // Settings file name
@@ -275,7 +274,7 @@ public class CommandLineOptions
         Command command = new("deinterlace")
         {
             Description = "De-Interlace media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.DeInterlaceCommand),
+            Handler = CommandHandler.Create(s_deInterlaceFunc),
         };
 
         // Settings file name
@@ -296,7 +295,7 @@ public class CommandLineOptions
         Command command = new("verify")
         {
             Description = "Verify media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.VerifyCommand),
+            Handler = CommandHandler.Create(s_verifyFunc),
         };
 
         // Settings file name
@@ -317,7 +316,7 @@ public class CommandLineOptions
         Command command = new("createsidecar")
         {
             Description = "Create new sidecar files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.CreateSidecarCommand),
+            Handler = CommandHandler.Create(s_createSidecarFunc),
         };
 
         // Settings file name
@@ -335,7 +334,7 @@ public class CommandLineOptions
         Command command = new("getsidecarinfo")
         {
             Description = "Print sidecar file information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetSidecarInfoCommand),
+            Handler = CommandHandler.Create(s_getSidecarInfoFunc),
         };
 
         // Settings file name
@@ -353,7 +352,7 @@ public class CommandLineOptions
         Command command = new("updatesidecar")
         {
             Description = "Update existing sidecar files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.UpdateSidecarCommand),
+            Handler = CommandHandler.Create(s_updateSidecarFunc),
         };
 
         // Settings file name
@@ -371,7 +370,7 @@ public class CommandLineOptions
         Command command = new("gettagmap")
         {
             Description = "Print media information tag-map",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetTagMapCommand),
+            Handler = CommandHandler.Create(s_getTagMapFunc),
         };
 
         // Settings file name
@@ -389,7 +388,7 @@ public class CommandLineOptions
         Command command = new("getmediainfo")
         {
             Description = "Print media information using sidecar files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetMediaInfoCommand),
+            Handler = CommandHandler.Create(s_getMediaInfoFunc),
         };
 
         // Settings file name
@@ -407,7 +406,7 @@ public class CommandLineOptions
         Command command = new("gettoolinfo")
         {
             Description = "Print media information using media tools",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetToolInfoCommand),
+            Handler = CommandHandler.Create(s_getToolInfoFunc),
         };
 
         // Settings file name
@@ -425,7 +424,7 @@ public class CommandLineOptions
         Command command = new("removesubtitles")
         {
             Description = "Remove subtitles from media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.RemoveSubtitlesCommand),
+            Handler = CommandHandler.Create(s_removeSubtitlesFunc),
         };
 
         // Settings file name
@@ -443,7 +442,7 @@ public class CommandLineOptions
         Command command = new("getversioninfo")
         {
             Description = "Print application and tools version information",
-            Handler = CommandHandler.Create<CommandLineOptions>(Program.GetVersionInfoCommand),
+            Handler = CommandHandler.Create(s_getVersionInfoFunc),
         };
 
         // Settings file name
@@ -458,9 +457,7 @@ public class CommandLineOptions
         Command command = new("removeclosedcaptions")
         {
             Description = "Remove closed captions from media files",
-            Handler = CommandHandler.Create<CommandLineOptions>(
-                Program.RemoveClosedCaptionsCommand
-            ),
+            Handler = CommandHandler.Create(s_removeClosedCaptionsFunc),
         };
 
         // Settings file name
@@ -498,4 +495,33 @@ public class CommandLineOptions
     private static Option<bool> CreateQuickScanOption() =>
         // Scan only parts of the file
         new("--quickscan") { Description = "Scan only part of the file" };
+
+    // Default delegates for command handlers, overridden in tests
+    internal static Func<CommandLineOptions, int> s_removeClosedCaptionsFunc =
+        Program.RemoveClosedCaptionsCommand;
+    internal static Func<CommandLineOptions, int> s_getToolInfoFunc = Program.GetToolInfoCommand;
+    internal static Func<CommandLineOptions, int> s_getMediaInfoFunc = Program.GetMediaInfoCommand;
+    internal static Func<CommandLineOptions, int> s_getTagMapFunc = Program.GetTagMapCommand;
+    internal static Func<CommandLineOptions, int> s_updateSidecarFunc =
+        Program.UpdateSidecarCommand;
+    internal static Func<CommandLineOptions, int> s_getSidecarInfoFunc =
+        Program.GetSidecarInfoCommand;
+    internal static Func<CommandLineOptions, int> s_createSidecarFunc =
+        Program.CreateSidecarCommand;
+    internal static Func<CommandLineOptions, int> s_verifyFunc = Program.VerifyCommand;
+    internal static Func<CommandLineOptions, int> s_deInterlaceFunc = Program.DeInterlaceCommand;
+    internal static Func<CommandLineOptions, int> s_reEncodeFunc = Program.ReEncodeCommand;
+    internal static Func<CommandLineOptions, int> s_reMuxFunc = Program.ReMuxCommand;
+    internal static Func<CommandLineOptions, int> s_monitorFunc = Program.MonitorCommand;
+    internal static Func<CommandLineOptions, int> s_processFunc = Program.ProcessCommand;
+    internal static Func<CommandLineOptions, int> s_checkForNewToolsFunc =
+        Program.CheckForNewToolsCommand;
+    internal static Func<CommandLineOptions, int> s_defaultSettingsFunc =
+        Program.WriteDefaultSettingsCommand;
+    internal static Func<CommandLineOptions, int> s_createSchemaFunc =
+        Program.CreateJsonSchemaCommand;
+    internal static Func<CommandLineOptions, int> s_getVersionInfoFunc =
+        Program.GetVersionInfoCommand;
+    internal static Func<CommandLineOptions, int> s_removeSubtitlesFunc =
+        Program.RemoveSubtitlesCommand;
 }

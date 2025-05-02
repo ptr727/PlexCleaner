@@ -47,11 +47,11 @@ public class Monitor
                 | NotifyFilters.Size;
             watch.Filter = "*.*";
             watch.IncludeSubdirectories = true;
-            watch.Changed += (s, e) => OnChanged(e);
-            watch.Created += (s, e) => OnChanged(e);
-            watch.Deleted += (s, e) => OnChanged(e);
-            watch.Renamed += (s, e) => OnRenamed(e);
-            watch.Error += (s, e) => OnError(e);
+            watch.Changed += (_, e) => OnChanged(e);
+            watch.Created += (_, e) => OnChanged(e);
+            watch.Deleted += (_, e) => OnChanged(e);
+            watch.Renamed += (_, e) => OnRenamed(e);
+            watch.Error += (_, e) => OnError(e);
         }
 
         // Enable event watching

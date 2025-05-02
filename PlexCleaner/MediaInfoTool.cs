@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -136,30 +137,102 @@ public partial class MediaInfoTool : MediaTool
             // Tracks
             foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
             {
-                if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
+                // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
+                // Id maps to Number
+                // StreamOrder maps to Id
+                if (track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
                 {
-                    VideoInfo info = new(track);
-                    mediaInfo.Video.Add(info);
-                }
-                else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Skip sub-tracks e.g. 0-1
+                    // Test for a closed caption tracks
+                    // <track type="Video" typeorder="4">
+                    //     <ID>256</ID>
+                    //     <Format>MPEG Video</Format>
+                    // <track type="Text" typeorder="1">
+                    //     <ID>256-CC1</ID>
+                    //     <Format>EIA-608</Format>
+                    //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
                     if (
-                        string.IsNullOrEmpty(track.CodecId)
-                        && track.Id.Contains('-', StringComparison.OrdinalIgnoreCase)
+                        track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase)
+                        && (
+                            track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
+                            || track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
+                        )
                     )
                     {
-                        Log.Warning("MediaInfo skipping Audio sub-track : {TrackId}", track.Id);
+                        // Parse the number
+                        Match match = TrackRegex().Match(track.Id);
+                        Debug.Assert(match.Success);
+                        int number = int.Parse(
+                            match.Groups["id"].Value,
+                            CultureInfo.InvariantCulture
+                        );
+
+                        // Find the video track matching the number
+                        if (mediaInfo.Video.Find(item => item.Number == number) is { } videoTrack)
+                        {
+                            // Set the closed caption flag
+                            Log.Information(
+                                "MediaInfoToolXmlSchema : Setting closed captions flag from sub-track : Id: {Id}, Sub-Track: {Number}, Format: {Format}",
+                                videoTrack.Id,
+                                track.Id,
+                                track.Format
+                            );
+                            videoTrack.ClosedCaptions = true;
+                        }
+                        else
+                        {
+                            Log.Error(
+                                "MediaInfoToolXmlSchema : Closed caption sub-track track with missing video track : Sub-Track: {Number}, Format: {Format}",
+                                track.Id,
+                                track.Format
+                            );
+                        }
+
+                        // Done with this track
                         continue;
                     }
 
-                    AudioInfo info = new(track);
-                    mediaInfo.Audio.Add(info);
+                    // Skip sub-tacks
+                    Log.Warning(
+                        "MediaInfoToolXmlSchema : Skipping sub-track : Type: {Type}, Id: {Id}, Format: {Format}",
+                        track.Type,
+                        track.Id,
+                        track.Format
+                    );
+                    continue;
                 }
-                else if (track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase))
+
+                // TODO: Filter cover art tracks
+
+                switch (track.Type.ToLowerInvariant())
                 {
-                    SubtitleInfo info = new(track);
-                    mediaInfo.Subtitle.Add(info);
+                    case "general":
+                        if (!string.IsNullOrEmpty(track.Duration))
+                        {
+                            mediaInfo.Duration = TimeSpan.FromMicroseconds(
+                                double.Parse(track.Duration, CultureInfo.InvariantCulture)
+                                    * 1000000.0
+                            );
+                        }
+                        mediaInfo.Container = track.Format;
+                        break;
+                    case "video":
+                        mediaInfo.Video.Add(new(track));
+                        break;
+                    case "audio":
+                        mediaInfo.Audio.Add(new(track));
+                        break;
+                    case "text":
+                        mediaInfo.Subtitle.Add(new(track));
+                        break;
+                    case "menu":
+                        // Ignore
+                        break;
+                    default:
+                        Log.Warning(
+                            "MediaInfoToolXmlSchema : Unknown track type : {TrackType}",
+                            track.Type
+                        );
+                        break;
                 }
             }
 
@@ -167,9 +240,6 @@ public partial class MediaInfoTool : MediaTool
             mediaInfo.HasErrors = mediaInfo.Unsupported;
 
             // TODO: Tags, look in the Extra field, but not reliable
-            // TODO: Duration, too many different formats to parse
-            // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
-            // TODO: ContainerType
             // TODO: Chapters
             // TODO: Attachments
         }
@@ -184,6 +254,9 @@ public partial class MediaInfoTool : MediaTool
 
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
+
+    [GeneratedRegex(@"(?<id>\d+)")]
+    public static partial Regex TrackRegex();
 
     // Common format tags
     public const string HDR10Format = "SMPTE ST 2086";

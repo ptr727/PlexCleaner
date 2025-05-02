@@ -14,9 +14,8 @@ public class SubtitleInfo : TrackInfo
     public SubtitleInfo(MediaInfoToolXmlSchema.Track track)
         : base(track)
     {
-        // We need MuxingMode for VOBSUB else Plex on Nvidia Shield TV will hang on play start
+        // We need MuxingMode to be set for VOBSUB
         // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
-        // https://github.com/mbunkus/mkvtoolnix/issues/2131
         // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2131
         if (
             track.CodecId.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase)
