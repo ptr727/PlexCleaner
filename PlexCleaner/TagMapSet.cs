@@ -14,8 +14,8 @@ public class TagMapSet
 
     public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
     {
-        // Make sure we can do matching
-        Debug.Assert(DoTracksMatch(prime, sec1, sec2));
+        // Warn when we can't do matching
+        _ = DoTracksMatch(prime, sec1, sec2);
 
         // Video
         Add(prime.Video, prime.Parser, sec1.Video, sec1.Parser, sec2.Video, sec2.Parser, Video);
@@ -74,12 +74,6 @@ public class TagMapSet
 
     private static bool DoTracksMatch(MediaInfo mediaInfo, MediaInfo mkvMerge, MediaInfo ffProbe)
     {
-        if (mediaInfo == null || mkvMerge == null || ffProbe == null)
-        {
-            Debug.Assert(false);
-            return false;
-        }
-
         // Verify the track counts match
         if (
             mediaInfo.Video.Count != mkvMerge.Video.Count
@@ -90,7 +84,10 @@ public class TagMapSet
             || mediaInfo.Subtitle.Count != ffProbe.Subtitle.Count
         )
         {
-            Debug.Assert(false);
+            Log.Error("Track counts do not match:");
+            mediaInfo.WriteLine();
+            mkvMerge.WriteLine();
+            ffProbe.WriteLine();
             return false;
         }
 
