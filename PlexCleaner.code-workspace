@@ -250,7 +250,8 @@
             "ms-dotnettools.csdevkit",
             "streetsidesoftware.code-spell-checker",
             "editorconfig.editorconfig",
-            "csharpier.csharpier-vscode"
+            "csharpier.csharpier-vscode",
+            "github.vscode-github-actions"
         ]
     }
 }

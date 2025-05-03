@@ -466,6 +466,12 @@ public class CommandLineOptions
         // Media files or folders option
         command.AddOption(CreateMediaFilesOption());
 
+        // Parallel processing
+        command.AddOption(CreateParallelOption());
+
+        // Parallel processing thread count
+        command.AddOption(CreateThreadCountOption());
+
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
 

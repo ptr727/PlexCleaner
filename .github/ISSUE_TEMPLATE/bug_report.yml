@@ -9,11 +9,11 @@ body:
         Thank you for taking the time to submit a 🐞 bug 🐞 report!\
         Please use [Discussions](https://github.com/ptr727/PlexCleaner/discussions) for general questions.\
         Please search for similar [Issues](https://github.com/ptr727/PlexCleaner/issues) before submitting a new issue.\
-        Please reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest) before submitting an issue.
+        Please reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest) or [Docker](https://hub.docker.com/r/ptr727/plexcleaner) before submitting an issue.
   - type: checkboxes
     attributes:
       label: Is this a new issue that can be reproduced using the latest version?
-      description: Search [Discussions](https://github.com/ptr727/PlexCleaner/discussions) and [Issues](https://github.com/ptr727/PlexCleaner/issues) for similar problems, and reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest).
+      description: Search [Discussions](https://github.com/ptr727/PlexCleaner/discussions) and [Issues](https://github.com/ptr727/PlexCleaner/issues) for similar problems, and reproduce using the latest [Release](https://github.com/ptr727/PlexCleaner/releases/latest) or [Docker](https://hub.docker.com/r/ptr727/plexcleaner).
       options:
         - label: This is a new issue that can be reproduced.
           required: true
@@ -59,7 +59,7 @@ body:
   - type: textarea
     attributes:
       label: Relevant log output.
-      description: Copy and paste any relevant log output (no code block ticks required).
+      description: Copy and paste any relevant log snippets, do not paste the full log, attach it as a gist (no code block ticks required).
       render: Text
     validations:
       required: true
