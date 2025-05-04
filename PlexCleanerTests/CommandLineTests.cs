@@ -10,12 +10,12 @@ public class CommandLineTests(PlexCleanerFixture fixture)
 {
     private readonly PlexCleanerFixture _fixture = fixture;
 
-    // TODO: Figure out how to get the access to command arguments without a local delegate
+    // TODO: Figure out how to get the access to command arguments calling Parse() without a local delegate
     // https://github.com/dotnet/command-line-api/discussions/2552
 
     [Theory]
     [InlineData(
-        "removeclosedcaptions --settingsfile=settings.json --mediafiles=/data/foo --quickscan"
+        "removeclosedcaptions --settingsfile=settings.json --mediafiles=/data/foo --parallel --threadcount=2 --quickscan"
     )]
     public void Parse_Commandline_RemoveClosedCaptions(string commandline)
     {
@@ -26,6 +26,8 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             _ = options.SettingsFile.Should().Be("settings.json");
             _ = options.MediaFiles.Count.Should().Be(1);
             _ = options.MediaFiles[0].Should().Be("/data/foo");
+            _ = options.Parallel.Should().BeTrue();
+            _ = options.ThreadCount.Should().Be(2);
             _ = options.QuickScan.Should().BeTrue();
             didRun = true;
             return 0;

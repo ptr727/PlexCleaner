@@ -120,9 +120,6 @@ public partial class HandBrakeTool : MediaTool
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
 
-        // TODO: How to suppress console output when running in parallel mode?
-        // if (Program.Options.Parallel)
-
         // Input file
         StringBuilder commandline = new();
         _ = commandline.Append(CultureInfo.InvariantCulture, $"--input \"{inputName}\" ");

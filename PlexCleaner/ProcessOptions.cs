@@ -387,6 +387,7 @@ public record ProcessOptions4 : ProcessOptions3
             "*.jpg",
             "*.nfo",
             "*.partial~",
+            "*.png",
             "*.sample.*",
             "*.sample",
             "*.smi",

@@ -58,6 +58,7 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
     [JsonExclude]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
+    // TODO: Remove, never customized
     [JsonRequired]
     [JsonPropertyOrder(5)]
     public MonitorOptions1 MonitorOptions { get; set; } = new();

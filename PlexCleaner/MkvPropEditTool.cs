@@ -8,6 +8,8 @@ using System.Text;
 // mkvpropedit [options] {source-filename} {actions}
 // Use @ designation for track number from matroska header as discovered with mkvmerge identify
 
+// TODO: How to suppress console output?
+
 namespace PlexCleaner;
 
 // Use MkvMerge family
@@ -152,8 +154,6 @@ public class MkvPropEditTool : MkvMergeTool
     }
 
     private static void DefaultArgs(string fileName, StringBuilder commandline) =>
-        // TODO: How to suppress console output?
-        // if (Program.Options.Parallel)
         commandline.Append(CultureInfo.InvariantCulture, $"\"{fileName}\" {EditOptions} ");
 
     private const string EditOptions =

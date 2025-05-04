@@ -259,7 +259,7 @@ public static class ProcessDriver
                     return false;
                 }
 
-                // TODO: Remove cover art in video tracks during load
+                // TODO: Remove or ignore cover art in video tracks during load
                 _ = processFile.MediaInfoInfo.Video.RemoveAll(track => track.IsCoverArt);
                 _ = processFile.FfProbeInfo.Video.RemoveAll(track => track.IsCoverArt);
                 _ = processFile.MkvMergeInfo.Video.RemoveAll(track => track.IsCoverArt);

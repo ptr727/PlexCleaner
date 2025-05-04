@@ -46,7 +46,6 @@ namespace PlexCleaner;
 // Single frame detection: TFF:   560 BFF:  6353 Progressive: 64750 Undetermined:  4771
 // Multi frame detection: TFF:   610 BFF:  6459 Progressive: 69231 Undetermined:   134
 
-// TODO: Why error of another partial declaration existing?
 public partial class FfMpegIdetInfo
 {
     public class Repeated

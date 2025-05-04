@@ -201,7 +201,7 @@ public partial class MediaInfoTool : MediaTool
                     continue;
                 }
 
-                // TODO: Filter cover art tracks
+                // TODO: Identify cover art as video tracks for deletion, or ignore them
 
                 switch (track.Type.ToLowerInvariant())
                 {
