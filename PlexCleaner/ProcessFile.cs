@@ -1011,7 +1011,10 @@ public class ProcessFile
         // If this fails then SetTrackLanguage() will have used the wrong tracks
         if (!MkvMergeInfo.VerifyTrackOrder(postMkvMerge))
         {
-            Log.Error("MkvMerge and HandBrake track metadata does not match");
+            Log.Error(
+                "MkvMerge and HandBrake track metadata does not match : {FileName}",
+                FileInfo.Name
+            );
             Debug.Assert(false);
             return false;
         }
@@ -1228,7 +1231,10 @@ public class ProcessFile
         // If this fails then SetTrackLanguage() will have used the wrong tracks
         if (!MkvMergeInfo.VerifyTrackOrder(postMkvMerge))
         {
-            Log.Error("MkvMerge and FfMpeg track metadata does not match");
+            Log.Error(
+                "MkvMerge and FfMpeg track metadata does not match : {FileName}",
+                FileInfo.Name
+            );
             Debug.Assert(false);
             return false;
         }
@@ -2017,9 +2023,10 @@ public class ProcessFile
             {
                 selectMediaInfo.Move(reEncodeVideo, true);
                 Log.Warning(
-                    "Audio reencoding requires video reencoding : Audio: {FormatA}, Video: {FormatV}",
+                    "Audio reencoding requires video reencoding : Audio: {FormatA}, Video: {FormatV} : {FileName}",
                     selectMediaInfo.Selected.Audio.Select(item => $"{item.Format}:{item.Codec}"),
-                    reEncodeVideo.Select(item => $"{item.Format}:{item.Codec}:{item.Profile}")
+                    reEncodeVideo.Select(item => $"{item.Format}:{item.Codec}:{item.Profile}"),
+                    FileInfo.Name
                 );
             }
         }
@@ -2132,10 +2139,11 @@ public class ProcessFile
             VideoInfo videoInfo = MkvMergeInfo.Video.First();
             selectMediaInfo.Move(videoInfo, true);
             Log.Warning(
-                "No video track matching requested language : {Available} not in {Languages}, selecting {Selected}",
+                "No video track matching requested language : {Available} not in {Languages}, selecting {Selected} : {FileName}",
                 Language.GetLanguageList(MkvMergeInfo.Video),
                 Program.Config.ProcessOptions.KeepLanguages,
-                videoInfo.LanguageIetf
+                videoInfo.LanguageIetf,
+                FileInfo.Name
             );
         }
 
@@ -2146,10 +2154,11 @@ public class ProcessFile
             AudioInfo audioInfo = FindPreferredAudio(selectMediaInfo.NotSelected.Audio);
             selectMediaInfo.Move(audioInfo, true);
             Log.Warning(
-                "No audio track matching requested language : {Available} not in {Languages}, selecting {Selected}",
+                "No audio track matching requested language : {Available} not in {Languages}, selecting {Selected} : {FileName}",
                 Language.GetLanguageList(MkvMergeInfo.Audio),
                 Program.Config.ProcessOptions.KeepLanguages,
-                audioInfo.LanguageIetf
+                audioInfo.LanguageIetf,
+                FileInfo.Name
             );
         }
 
@@ -2157,9 +2166,10 @@ public class ProcessFile
         if (selectMediaInfo.Selected.Subtitle.Count == 0 && MkvMergeInfo.Subtitle.Count > 0)
         {
             Log.Warning(
-                "No subtitle track matching requested language : {Available} not in {Languages}",
+                "No subtitle track matching requested language : {Available} not in {Languages} : {FileName}",
                 Language.GetLanguageList(MkvMergeInfo.Subtitle),
-                Program.Config.ProcessOptions.KeepLanguages
+                Program.Config.ProcessOptions.KeepLanguages,
+                FileInfo.Name
             );
         }
 
