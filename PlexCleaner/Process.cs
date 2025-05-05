@@ -363,10 +363,9 @@ public static class Process
     {
         // Log active options
         Log.Information(
-            "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, RemoveStateFlags: {RemoveStateFlags}, FileIgnoreList: {FileIgnoreList}",
+            "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}",
             Program.Options.TestSnippets,
             Program.Options.QuickScan,
-            Program.Options.RemoveStateFlags,
             Program.Config.ProcessOptions.FileIgnoreList.Count
         );
 

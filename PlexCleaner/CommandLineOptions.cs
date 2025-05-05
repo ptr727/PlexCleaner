@@ -20,7 +20,6 @@ public class CommandLineOptions
     public bool PreProcess { get; set; }
     public string ResultsFile { get; set; }
     public bool QuickScan { get; set; }
-    public List<SidecarFile.StatesType> RemoveStateFlags { get; set; }
 
     // TODO: How to override --version?
     // https://github.com/dotnet/command-line-api/issues/2009
