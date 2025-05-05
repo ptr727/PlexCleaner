@@ -170,23 +170,29 @@ public static class ProcessDriver
                             Interlocked.CompareExchange(ref processedCount, 0, 0),
                             totalCount
                         );
+
+                        // Skip non-MKV files
+                        if (mkvFilesOnly && !SidecarFile.IsMkvFile(fileName))
+                        {
+                            processedPercentage = GetPercentage(
+                                Interlocked.Increment(ref processedCount),
+                                totalCount
+                            );
+                            Log.Verbose(
+                                "{TaskName} ({Processed:F2}%) Skipped non-MKV file : {FileName}",
+                                taskName,
+                                processedPercentage,
+                                fileName
+                            );
+                            continue;
+                        }
+
                         Log.Information(
                             "{TaskName} ({Processed:F2}%) Before : {FileName}",
                             taskName,
                             processedPercentage,
                             fileName
                         );
-
-                        // Skip non-MKV files
-                        if (mkvFilesOnly && !SidecarFile.IsMkvFile(fileName))
-                        {
-                            Log.Verbose(
-                                "{TaskName} Skipped non-MKV file : {FileName}",
-                                taskName,
-                                fileName
-                            );
-                            continue;
-                        }
 
                         // Perform the task
                         bool taskResult = taskFunc(fileName);
