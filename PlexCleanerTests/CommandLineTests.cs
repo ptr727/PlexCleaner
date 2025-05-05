@@ -286,7 +286,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
 
     [Theory]
     [InlineData(
-        "monitor --settingsfile=settings.json --mediafiles=/data/foo --mediafiles=/data/bar --parallel --threadcount=2 --quickscan --resultsfile=results.json --logfile=logfile.log --logappend --logwarning --debug --preprocess"
+        "monitor --settingsfile=settings.json --mediafiles=/data/foo --mediafiles=/data/bar --parallel --threadcount=2 --quickscan --logfile=logfile.log --logappend --logwarning --debug --preprocess"
     )]
     public void Parse_Commandline_Monitor(string commandline)
     {
@@ -303,7 +303,6 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             _ = options.Parallel.Should().BeTrue();
             _ = options.ThreadCount.Should().Be(2);
             _ = options.QuickScan.Should().BeTrue();
-            _ = options.ResultsFile.Should().Be("results.json");
             _ = options.LogFile.Should().Be("logfile.log");
             _ = options.LogAppend.Should().BeTrue();
             _ = options.LogWarning.Should().BeTrue();

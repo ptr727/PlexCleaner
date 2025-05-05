@@ -553,7 +553,6 @@ Options:
   --parallel                                Enable parallel file processing
   --threadcount <threadcount>               Number of threads for parallel file processing
   --quickscan                               Scan only part of the file
-  --resultsfile <resultsfile>               Path to results file
   --preprocess                              Pre-process all monitored folders
   --logfile <logfile>                       Path to log file
   --logappend                               Append to existing log file
