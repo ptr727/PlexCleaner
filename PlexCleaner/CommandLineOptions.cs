@@ -177,8 +177,15 @@ public class CommandLineOptions
         // Process options
         CreateProcessCommandOptions(command);
 
+        // Results file name
+        command.AddOption(
+            new Option<string>("--resultsfile") { Description = "Path to results file" }
+        );
+
         // Create short video clips
-        command.AddOption(CreateTestSnippetsOption());
+        command.AddOption(
+            new Option<bool>("--testsnippets") { Description = "Create short media file clips" }
+        );
 
         return command;
     }
@@ -199,11 +206,6 @@ public class CommandLineOptions
 
         // Scan only part of the file
         command.AddOption(CreateQuickScanOption());
-
-        // Results file name
-        command.AddOption(
-            new Option<string>("--resultsfile") { Description = "Path to results file" }
-        );
     }
 
     private static Command CreateMonitorCommand()
@@ -485,10 +487,6 @@ public class CommandLineOptions
     private static Option<string> CreateSettingsFileOption() =>
         // Path to the settings file
         new("--settingsfile") { Description = "Path to settings file", IsRequired = true };
-
-    private static Option<bool> CreateTestSnippetsOption() =>
-        // Create short video clips
-        new("--testsnippets") { Description = "Create short media file clips" };
 
     private static Option<bool> CreateParallelOption() =>
         // Parallel processing

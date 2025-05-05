@@ -178,8 +178,8 @@ public static class ProcessDriver
                                 Interlocked.Increment(ref processedCount),
                                 totalCount
                             );
-                            Log.Verbose(
-                                "{TaskName} ({Processed:F2}%) Skipped non-MKV file : {FileName}",
+                            Log.Information(
+                                "{TaskName} ({Processed:F2}%) Skipping non-MKV file : {FileName}",
                                 taskName,
                                 processedPercentage,
                                 fileName

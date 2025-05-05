@@ -37,7 +37,7 @@ public static class Process
                 || Program.Config.ProcessOptions.IsFileIgnoreMatch(fileName)
             )
             {
-                Log.Warning("Skipping ignored file : {FileName}", fileName);
+                Log.Information("Skipping ignored file : {FileName}", fileName);
                 // Ok
                 ignored = true;
                 result = true;
