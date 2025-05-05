@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -11,48 +12,37 @@ namespace PlexCleaner;
 
 public partial class MediaInfoTool : MediaTool
 {
-    public override ToolFamily GetToolFamily()
-    {
-        return ToolFamily.MediaInfo;
-    }
+    public override ToolFamily GetToolFamily() => ToolFamily.MediaInfo;
 
-    public override ToolType GetToolType()
-    {
-        return ToolType.MediaInfo;
-    }
+    public override ToolType GetToolType() => ToolType.MediaInfo;
 
-    protected override string GetToolNameWindows()
-    {
-        return "mediainfo.exe";
-    }
+    protected override string GetToolNameWindows() => "mediainfo.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "mediainfo";
-    }
+    protected override string GetToolNameLinux() => "mediainfo";
 
     public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         // Get version
         const string commandline = "--version";
-        var exitCode = Command(commandline, out var output);
+        int exitCode = Command(commandline, out string output);
         if (exitCode != 0)
         {
             return false;
         }
 
-        // Second line as version
+        // Second line of stdout as version
         // E.g. Windows : "MediaInfoLib - v20.09"
         // E.g. Linux : "MediaInfoLib - v20.09"
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        var match = InstalledVersionRegex().Match(lines[1]);
+        Match match = InstalledVersionRegex().Match(lines[1]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();
@@ -70,7 +60,7 @@ public partial class MediaInfoTool : MediaTool
 
     protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         try
@@ -90,7 +80,8 @@ public partial class MediaInfoTool : MediaTool
 
             // Create the download Uri, binaries are not published on GitHub
             // https://mediaarea.net/download/binary/mediainfo/17.10/MediaInfo_CLI_17.10_Windows_x64.zip
-            mediaToolInfo.Url = $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
+            mediaToolInfo.Url =
+                $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -101,25 +92,22 @@ public partial class MediaInfoTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
 
     public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(fileName, out var xml) &&
-               GetMediaInfoFromXml(xml, out mediaInfo);
+        return GetMediaInfoXml(fileName, out string xml) && GetMediaInfoFromXml(xml, out mediaInfo);
     }
 
     public bool GetMediaInfoXml(string fileName, out string xml)
     {
         // Get media info as XML
-        var commandline = $"--Output=XML \"{fileName}\"";
-        var exitCode = Command(commandline, out xml);
+        string commandline = $"--Output=XML \"{fileName}\"";
+        int exitCode = Command(commandline, out xml);
 
         // TODO: No error is returned when the file does not exist
         // https://sourceforge.net/p/mediainfo/bugs/1052/
@@ -137,40 +125,114 @@ public partial class MediaInfoTool : MediaTool
         try
         {
             // Deserialize
-            var xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
-            var xmlMedia = xmInfo.Media;
+            MediaInfoToolXmlSchema.MediaInfo xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
+            MediaInfoToolXmlSchema.MediaElement xmlMedia = xmInfo.Media;
 
             // No tracks
-            if (xmlMedia.Track.Count == 0)
+            if (xmlMedia.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (var track in xmlMedia.Track)
+            foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
             {
-                if (track.Type.Equals("Video", StringComparison.OrdinalIgnoreCase))
+                // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
+                // Id maps to Number
+                // StreamOrder maps to Id
+                if (track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
                 {
-                    VideoInfo info = new(track);
-                    mediaInfo.Video.Add(info);
-                }
-                else if (track.Type.Equals("Audio", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Skip sub-tracks e.g. 0-1
-                    if (string.IsNullOrEmpty(track.CodecId) &&
-                        track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
+                    // Test for a closed caption tracks
+                    // <track type="Video" typeorder="4">
+                    //     <ID>256</ID>
+                    //     <Format>MPEG Video</Format>
+                    // <track type="Text" typeorder="1">
+                    //     <ID>256-CC1</ID>
+                    //     <Format>EIA-608</Format>
+                    //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
+                    if (
+                        track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase)
+                        && (
+                            track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
+                            || track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
+                        )
+                    )
                     {
-                        Log.Logger.Warning("MediaInfo skipping Audio sub-track : {TrackId}", track.Id);
+                        // Parse the number
+                        Match match = TrackRegex().Match(track.Id);
+                        Debug.Assert(match.Success);
+                        int number = int.Parse(
+                            match.Groups["id"].Value,
+                            CultureInfo.InvariantCulture
+                        );
+
+                        // Find the video track matching the number
+                        if (mediaInfo.Video.Find(item => item.Number == number) is { } videoTrack)
+                        {
+                            // Set the closed caption flag
+                            Log.Information(
+                                "MediaInfoToolXmlSchema : Setting closed captions flag from sub-track : Id: {Id}, Sub-Track: {Number}, Format: {Format}",
+                                videoTrack.Id,
+                                track.Id,
+                                track.Format
+                            );
+                            videoTrack.ClosedCaptions = true;
+                        }
+                        else
+                        {
+                            Log.Error(
+                                "MediaInfoToolXmlSchema : Closed caption sub-track track with missing video track : Sub-Track: {Number}, Format: {Format}",
+                                track.Id,
+                                track.Format
+                            );
+                        }
+
+                        // Done with this track
                         continue;
                     }
 
-                    AudioInfo info = new(track);
-                    mediaInfo.Audio.Add(info);
+                    // Skip sub-tacks
+                    Log.Warning(
+                        "MediaInfoToolXmlSchema : Skipping sub-track : Type: {Type}, Id: {Id}, Format: {Format}",
+                        track.Type,
+                        track.Id,
+                        track.Format
+                    );
+                    continue;
                 }
-                else if (track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase))
+
+                // TODO: Identify cover art as video tracks for deletion, or ignore them
+
+                switch (track.Type.ToLowerInvariant())
                 {
-                    SubtitleInfo info = new(track);
-                    mediaInfo.Subtitle.Add(info);
+                    case "general":
+                        if (!string.IsNullOrEmpty(track.Duration))
+                        {
+                            mediaInfo.Duration = TimeSpan.FromMicroseconds(
+                                double.Parse(track.Duration, CultureInfo.InvariantCulture)
+                                    * 1000000.0
+                            );
+                        }
+                        mediaInfo.Container = track.Format;
+                        break;
+                    case "video":
+                        mediaInfo.Video.Add(new(track));
+                        break;
+                    case "audio":
+                        mediaInfo.Audio.Add(new(track));
+                        break;
+                    case "text":
+                        mediaInfo.Subtitle.Add(new(track));
+                        break;
+                    case "menu":
+                        // Ignore
+                        break;
+                    default:
+                        Log.Warning(
+                            "MediaInfoToolXmlSchema : Unknown track type : {TrackType}",
+                            track.Type
+                        );
+                        break;
                 }
             }
 
@@ -178,9 +240,6 @@ public partial class MediaInfoTool : MediaTool
             mediaInfo.HasErrors = mediaInfo.Unsupported;
 
             // TODO: Tags, look in the Extra field, but not reliable
-            // TODO: Duration, too many different formats to parse
-            // https://github.com/MediaArea/MediaInfoLib/blob/master/Source/Resource/Text/Stream/General.csv#L92-L98
-            // TODO: ContainerType
             // TODO: Chapters
             // TODO: Attachments
         }
@@ -192,6 +251,17 @@ public partial class MediaInfoTool : MediaTool
     }
 
     private const string InstalledVersionPattern = @"MediaInfoLib\ -\ v(?<version>.*)";
+
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
+
+    [GeneratedRegex(@"(?<id>\d+)")]
+    public static partial Regex TrackRegex();
+
+    // Common format tags
+    public const string HDR10Format = "SMPTE ST 2086";
+    public const string HDR10PlusFormat = "SMPTE ST 2094";
+    public const string H264Format = "h264";
+    public const string H265Format = "hevc";
+    public const string AV1Format = "av1";
 }

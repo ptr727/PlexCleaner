@@ -1,8 +1,5 @@
-*          text=auto
-*.bash     text eol=lf
-*.fish     text eol=lf
-*.sh       text eol=lf
-*.zsh      text eol=lf
-*.bat      text eol=crlf
-*.cmd      text eol=crlf
-*.ps1      text eol=crlf
+# Leave line endings alone
+# git config --global core.autocrlf false
+# git add --renormalize .
+# git ls-files --eol
+* -text

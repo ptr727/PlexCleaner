@@ -11,7 +11,7 @@ namespace PlexCleaner;
 
 public static class Tools
 {
-    // All the tools
+    // Tool details are populated during VerifyTools() call
     public static readonly FfMpegTool FfMpeg = new();
     public static readonly FfProbeTool FfProbe = new();
     public static readonly MkvMergeTool MkvMerge = new();
@@ -21,55 +21,57 @@ public static class Tools
     public static readonly HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
 
-    public static List<MediaTool> GetToolList() => [
-            FfMpeg,
-            FfProbe,
-            MkvMerge,
-            MkvPropEdit,
-            MkvExtract,
-            MediaInfo,
-            HandBrake,
-            SevenZip
-        ];
+    public static List<MediaTool> GetToolList() =>
+        [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MkvExtract, MediaInfo, HandBrake, SevenZip];
 
-    public static List<MediaTool> GetToolFamilyList() => [
-            FfMpeg,
-            MkvMerge,
-            MediaInfo,
-            HandBrake,
-            SevenZip
-        ];
+    public static List<MediaTool> GetToolFamilyList() =>
+        [FfMpeg, MkvMerge, MediaInfo, HandBrake, SevenZip];
 
     public static bool VerifyTools()
     {
-        // TODO: Folder tools are not currently supported on Linux
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
-            !Program.Config.ToolsOptions.UseSystem)
+        // Folder tools are not supported on Linux
+        if (
+            RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            && !Program.Config.ToolsOptions.UseSystem
+        )
         {
-            Log.Logger.Warning("Folder tools are not supported on Linux");
-            Log.Logger.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
+            Log.Warning("Folder tools are not supported on Linux");
+            Log.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
             Program.Config.ToolsOptions.UseSystem = true;
         }
 
-        // Verify System tools or Tool folder tools
-        return Program.Config.ToolsOptions.UseSystem ? VerifySystemTools() : VerifyFolderTools();
+        // Verify tools populates the tool information
+        if (Program.Config.ToolsOptions.UseSystem ? VerifySystemTools() : VerifyFolderTools())
+        {
+            GetToolList()
+                .ForEach(tool =>
+                    Log.Information(
+                        "{Tool} : Version: {Version}, Path: {FileName}",
+                        tool.GetToolType(),
+                        tool.Info.Version,
+                        tool.Info.FileName
+                    )
+                );
+            return true;
+        }
+        return false;
     }
 
     private static bool VerifySystemTools()
     {
         // Verify each tool
-        List<MediaTool> toolList = GetToolList();
-        foreach (MediaTool mediaTool in toolList)
+        foreach (MediaTool mediaTool in GetToolList())
         {
             // Query the installed version information
             if (!mediaTool.GetInstalledVersion(out MediaToolInfo mediaToolInfo))
             {
-                Log.Logger.Error("{Tool} not found : {FileName}", mediaTool.GetToolType(), mediaTool.GetToolPath());
+                Log.Error(
+                    "{Tool} not found : {FileName}",
+                    mediaTool.GetToolType(),
+                    mediaTool.GetToolPath()
+                );
                 return false;
             }
-            Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}", mediaTool.GetToolType(), mediaToolInfo.Version, mediaToolInfo.FileName);
-
-            // Assign the tool info
             mediaTool.Info = mediaToolInfo;
         }
 
@@ -81,7 +83,7 @@ public static class Tools
         // Make sure the tools root folder exists
         if (!Directory.Exists(GetToolsRoot()))
         {
-            Log.Logger.Error("Tools directory not found : {Directory}", GetToolsRoot());
+            Log.Error("Tools directory not found : {Directory}", GetToolsRoot());
             return false;
         }
 
@@ -89,7 +91,7 @@ public static class Tools
         string toolsFile = GetToolsJsonPath();
         if (!File.Exists(toolsFile))
         {
-            Log.Logger.Error("{FileName} not found, run the 'checkfornewtools' command", toolsFile);
+            Log.Error("{FileName} not found, run the 'checkfornewtools' command", toolsFile);
             return false;
         }
 
@@ -97,17 +99,19 @@ public static class Tools
         ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
         if (toolInfoJson == null)
         {
-            Log.Logger.Error("{FileName} is not a valid JSON file", toolsFile);
+            Log.Error("{FileName} is not a valid JSON file", toolsFile);
             return false;
         }
 
         // Compare schema version
         if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
         {
-            Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+            Log.Error(
+                "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
                 toolInfoJson.SchemaVersion,
                 ToolInfoJsonSchema.CurrentSchemaVersion,
-                toolsFile);
+                toolsFile
+            );
 
             // Upgrade schema
             if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
@@ -117,31 +121,30 @@ public static class Tools
         }
 
         // Verify each tool
-        List<MediaTool> toolList = GetToolList();
-        foreach (MediaTool mediaTool in toolList)
+        foreach (MediaTool mediaTool in GetToolList())
         {
             // Lookup using the tool family
             MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
             if (mediaToolInfo == null)
             {
-                Log.Logger.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
+                Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
                 return false;
             }
 
             // Make sure the tool exists
             // Query the installed version information
-            if (!File.Exists(mediaTool.GetToolPath()) ||
-                !mediaTool.GetInstalledVersion(out mediaToolInfo))
+            if (
+                !File.Exists(mediaTool.GetToolPath())
+                || !mediaTool.GetInstalledVersion(out mediaToolInfo)
+            )
             {
-                Log.Logger.Error("{Tool} not found in path {Directory}", mediaTool.GetToolType(), mediaTool.GetToolPath());
+                Log.Error(
+                    "{Tool} not found in path {Directory}",
+                    mediaTool.GetToolType(),
+                    mediaTool.GetToolPath()
+                );
                 return false;
             }
-            Log.Logger.Information("{Tool} : Version: {Version}, Path: {FileName}",
-                mediaTool.GetToolType(),
-                mediaToolInfo.Version,
-                mediaToolInfo.FileName);
-
-            // Assign the tool info
             mediaTool.Info = mediaToolInfo;
         }
 
@@ -170,30 +173,23 @@ public static class Tools
         return Path.GetFullPath(Path.Combine(toolsRoot!, Program.Config.ToolsOptions.RootPath));
     }
 
-    public static string CombineToolPath(string fileName)
-    {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), fileName));
-    }
+    public static string CombineToolPath(string fileName) =>
+        Path.GetFullPath(Path.Combine(GetToolsRoot(), fileName));
 
-    public static string CombineToolPath(string path, string subPath, string fileName)
-    {
-        return Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, fileName));
-    }
+    public static string CombineToolPath(string path, string subPath, string fileName) =>
+        Path.GetFullPath(Path.Combine(GetToolsRoot(), path, subPath, fileName));
 
-    private static string GetToolsJsonPath()
-    {
-        return CombineToolPath("Tools.json");
-    }
+    private static string GetToolsJsonPath() => CombineToolPath("Tools.json");
 
     public static bool CheckForNewTools()
     {
-        // TODO: Checking for new tools are not currently supported on Linux
+        // Checking for new tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            Log.Logger.Warning("Checking for new tools are not supported on Linux");
+            Log.Warning("Checking for new tools are not supported on Linux");
             if (Program.Config.ToolsOptions.AutoUpdate)
             {
-                Log.Logger.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on Linux");
+                Log.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on Linux");
                 Program.Config.ToolsOptions.AutoUpdate = false;
             }
 
@@ -205,7 +201,11 @@ public static class Tools
         if (!File.Exists(SevenZip.GetToolPath()))
         {
             // Bootstrap the 7-Zip download, only supported on Windows
-            Log.Logger.Warning("Downloading missing {Tool} ... : \"{ToolPath}\"", SevenZip.GetToolType(), SevenZip.GetToolPath());
+            Log.Warning(
+                "Downloading missing {Tool} ... : \"{ToolPath}\"",
+                SevenZip.GetToolType(),
+                SevenZip.GetToolPath()
+            );
             if (!SevenZip.BootstrapDownload())
             {
                 return false;
@@ -213,7 +213,7 @@ public static class Tools
             Debug.Assert(File.Exists(SevenZip.GetToolPath()));
         }
 
-        Log.Logger.Information("Checking for new tools ...");
+        Log.Information("Checking for new tools ...");
 
         try
         {
@@ -226,9 +226,11 @@ public static class Tools
                 toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
                 if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
                 {
-                    Log.Logger.Error("Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}",
+                    Log.Error(
+                        "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}",
                         toolInfoJson.SchemaVersion,
-                        ToolInfoJsonSchema.CurrentSchemaVersion);
+                        ToolInfoJsonSchema.CurrentSchemaVersion
+                    );
 
                     // Upgrade Schema
                     if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
@@ -247,18 +249,26 @@ public static class Tools
             foreach (MediaTool mediaTool in toolList)
             {
                 // Get the latest version of the tool
-                Log.Logger.Information("{Tool} : Getting latest version ...", mediaTool.GetToolFamily());
+                Log.Information("{Tool} : Getting latest version ...", mediaTool.GetToolFamily());
                 if (!mediaTool.GetLatestVersion(out MediaToolInfo latestToolInfo))
                 {
-                    Log.Logger.Error("{Tool} : Failed to get latest version", mediaTool.GetToolFamily());
+                    Log.Error("{Tool} : Failed to get latest version", mediaTool.GetToolFamily());
                     return false;
                 }
 
                 // Get the URL details
-                Log.Logger.Information("{Tool} : Getting download URI details : {Uri}", mediaTool.GetToolFamily(), latestToolInfo.Url);
+                Log.Information(
+                    "{Tool} : Getting download URI details : {Uri}",
+                    mediaTool.GetToolFamily(),
+                    latestToolInfo.Url
+                );
                 if (!GetUrlDetails(latestToolInfo))
                 {
-                    Log.Logger.Error("{Tool} : Failed to get download URI details : {Uri}", mediaTool.GetToolFamily(), latestToolInfo.Url);
+                    Log.Error(
+                        "{Tool} : Failed to get download URI details : {Uri}",
+                        mediaTool.GetToolFamily(),
+                        latestToolInfo.Url
+                    );
                     return false;
                 }
 
@@ -292,7 +302,7 @@ public static class Tools
                 }
 
                 // Download the update file in the tools folder
-                Log.Logger.Information("Downloading {FileName} ...", latestToolInfo.FileName);
+                Log.Information("Downloading {FileName} ...", latestToolInfo.FileName);
                 string downloadFile = CombineToolPath(latestToolInfo.FileName);
                 if (!Download.DownloadFile(new Uri(latestToolInfo.Url), downloadFile))
                 {
@@ -302,7 +312,7 @@ public static class Tools
                 // Update the tool using the downloaded file
                 if (!mediaTool.Update(downloadFile))
                 {
-                    FileEx.DeleteFile(downloadFile);
+                    _ = FileEx.DeleteFile(downloadFile);
                     return false;
                 }
 
@@ -310,7 +320,7 @@ public static class Tools
                 jsonToolInfo.Copy(latestToolInfo);
 
                 // Delete the downloaded update file
-                FileEx.DeleteFile(downloadFile);
+                _ = FileEx.DeleteFile(downloadFile);
 
                 // Next tool
             }
@@ -328,7 +338,13 @@ public static class Tools
     private static bool GetUrlDetails(MediaToolInfo mediaToolInfo)
     {
         // Get URL content details
-        if (!Download.GetContentInfo(new Uri(mediaToolInfo.Url), out long size, out DateTime modified))
+        if (
+            !Download.GetContentInfo(
+                new Uri(mediaToolInfo.Url),
+                out long size,
+                out DateTime modified
+            )
+        )
         {
             return false;
         }

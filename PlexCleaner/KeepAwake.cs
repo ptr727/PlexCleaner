@@ -11,7 +11,9 @@ public static partial class KeepAwake
         // Windows only
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+            _ = SetThreadExecutionState(
+                ExecutionState.EsContinuous | ExecutionState.EsSystemRequired
+            );
         }
     }
 
@@ -20,15 +22,11 @@ public static partial class KeepAwake
         // Windows only
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            SetThreadExecutionState(ExecutionState.EsContinuous);
+            _ = SetThreadExecutionState(ExecutionState.EsContinuous);
         }
     }
 
-    public static void OnTimedEvent(object sender, ElapsedEventArgs e)
-    {
-        PreventSleep();
-    }
-
+    public static void OnTimedEvent(object sender, ElapsedEventArgs e) => PreventSleep();
 
     [LibraryImport("kernel32.dll")]
     private static partial ExecutionState SetThreadExecutionState(ExecutionState esFlags);
@@ -36,11 +34,9 @@ public static partial class KeepAwake
     [Flags]
     private enum ExecutionState : uint
     {
-        // ReSharper disable once UnusedMember.Local
         EsAwayModeRequired = 0x00000040,
         EsContinuous = 0x80000000,
-        // ReSharper disable once UnusedMember.Local
         EsDisplayRequired = 0x00000002,
-        EsSystemRequired = 0x00000001
+        EsSystemRequired = 0x00000001,
     }
 }

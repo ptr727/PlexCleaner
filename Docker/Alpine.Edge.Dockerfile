@@ -1,6 +1,6 @@
-# Description: Alpine Edge (3.20)
+# Description: Alpine development release
 # Based on: alpine:edge
-# .NET: Alpine repository
+# .NET install: Alpine repository
 # Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:alpine-edge
 
@@ -13,12 +13,12 @@
 # docker run -it --rm --pull always --name Testing ptr727/plexcleaner:alpine-edge /bin/sh
 
 # Build Dockerfile
-# docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64 --tag testing:latest --file ./Docker/Alpine.Edge.Dockerfile .
+# docker buildx create --name plexcleaner --use
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Alpine.Edge.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Alpine.Edge.Dockerfile .
-# docker run -it --rm --name Testing testing:latest /bin/sh
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:alpine-edge --file ./Docker/Alpine.Edge.Dockerfile .
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:alpine-edge /bin/sh
 
 
 # Builder layer
@@ -45,8 +45,8 @@ RUN apk update \
     && apk upgrade
 
 # Install .NET SDK
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-sdk
-RUN apk add --no-cache dotnet8-sdk
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet9-sdk
+RUN apk add --no-cache dotnet9-sdk
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -55,17 +55,17 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
-RUN chmod ugo+rwx ./UnitTest.sh
+RUN chmod ug=rwx,o=rx ./UnitTest.sh
 RUN ./UnitTest.sh
 
 # Build
 COPY ./Docker/Build.sh ./
-RUN chmod ugo+rwx ./Build.sh
+RUN chmod ug=rwx,o=rx ./Build.sh
 RUN ./Build.sh
 
 
 # Final layer
-FROM alpine:edge as final
+FROM alpine:edge AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -95,8 +95,8 @@ RUN apk add --no-cache \
         wget
 
 # Install .NET Runtime
-# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet8-runtime
-RUN apk add --no-cache dotnet8-runtime
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/dotnet9-runtime
+RUN apk add --no-cache dotnet9-runtime
 
 # Install media tools
 # https://pkgs.alpinelinux.org/package/edge/community/x86_64/ffmpeg
@@ -114,15 +114,17 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Copy test script
 COPY /Docker/Test.sh /Test/
-RUN chmod -R ugo+rwx /Test
+RUN chmod -R ug=rwx,o=rx /Test
 
-# Copy debug tools installer script
-COPY ./Docker/DebugTools.sh ./
-RUN chmod ugo+rwx ./DebugTools.sh
+# Install debug tools
+COPY ./Docker/InstallDebugTools.sh ./
+RUN chmod ug=rwx,o=rx ./InstallDebugTools.sh \
+    && ./InstallDebugTools.sh \
+    && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/
-RUN chmod ugo+rwx /PlexCleaner/Version.sh
+RUN chmod ug=rwx,o=rx /PlexCleaner/Version.sh
 
 # Print version information
 ARG TARGETPLATFORM \

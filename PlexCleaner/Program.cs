@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Parsing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -14,19 +17,18 @@ using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
-public class Program
+public static class Program
 {
-    enum ExitCode { Success = 0, Error = 1 }
-
-    static int MakeExitCode(ExitCode exitCode)
+    private enum ExitCode
     {
-        return (int)exitCode;
+        Success = 0,
+        Error = 1,
     }
 
-    static int MakeExitCode(bool success)
-    {
-        return success ? (int)ExitCode.Success : (int)ExitCode.Error;
-    }
+    private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
+
+    private static int MakeExitCode(bool success) =>
+        success ? (int)ExitCode.Success : (int)ExitCode.Error;
 
     public static void LogInterruptMessage()
     {
@@ -37,16 +39,25 @@ public class Program
         }
     }
 
-    private static int Main()
+    private static int Main(string[] args)
     {
-        // Wait for debugger to attach
-        WaitForDebugger();
-
-        // Display version information only
-        if (ShowVersionInformation())
+        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
+        ParseResult parseResult = rootCommand.Parse(args);
+        if (parseResult.Errors.Count > 0)
         {
-            // Exit immediately to not print anything else
-            return 0;
+            // TODO Parse does not handle --help and --version
+            // https://github.com/dotnet/command-line-api/discussions/2553
+            // Exit with default error handling
+            return rootCommand.Invoke(args);
+        }
+
+        // Wait for debugger to attach
+        // How to get access to CommandLineOptions containing name binding options to test values?
+        // if (parseResult.HasOption(CommandLineOptions.DebugOption))
+        if (args.Any(arg => arg == "--debug"))
+        {
+            WaitForDebugger();
+            // Continue
         }
 
         // Register cancel handler
@@ -70,8 +81,7 @@ public class Program
         keepAwakeTimer.Start();
 
         // Create the commandline and execute commands
-        LogInterruptMessage();
-        var exitCode = CommandLineOptions.Invoke();
+        int exitCode = parseResult.Invoke();
 
         // Cancel background operations
         Cancel();
@@ -82,7 +92,7 @@ public class Program
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
-        Log.Logger.Information("Exit Code : {ExitCode}", exitCode);
+        Log.Information("Exit Code : {ExitCode}", exitCode);
 
         // Close and flush on process exit
         Log.CloseAndFlush();
@@ -92,9 +102,9 @@ public class Program
 
     public static void VerifyLatestVersion()
     {
-        // TODO: Use AutoUpdate setting to avoid always generating internet IO
         if (!Config.ToolsOptions.AutoUpdate)
         {
+            // Skip
             return;
         }
 
@@ -103,15 +113,19 @@ public class Program
             // Get the latest release version from github releases
             // E.g. 1.2.3
             const string repo = "ptr727/PlexCleaner";
-            var latestVersion = new Version(GitHubRelease.GetLatestRelease(repo));
+            Version latestVersion = new(GitHubRelease.GetLatestRelease(repo));
 
             // Get this version
-            var thisVersion = new Version(AssemblyVersion.GetReleaseVersion());
+            Version thisVersion = new(AssemblyVersion.GetReleaseVersion());
 
             // Compare the versions
             if (thisVersion.CompareTo(latestVersion) < 0)
             {
-                Log.Logger.Warning("Current version is older than latest version : {CurrentVersion} < {LatestVersion}", thisVersion.ToString(), latestVersion.ToString());
+                Log.Warning(
+                    "Current version is older than latest version : {CurrentVersion} < {LatestVersion}",
+                    thisVersion.ToString(),
+                    latestVersion.ToString()
+                );
             }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
@@ -120,16 +134,8 @@ public class Program
         }
     }
 
-    private static bool ShowVersionInformation()
-    {
-        // Use the raw commandline and look for --version
-        if (Environment.CommandLine.Contains("--version"))
-        {
-            Console.WriteLine(AssemblyVersion.GetDetailedVersion());
-            return true;
-        }
-        return false;
-    }
+    private static void ShowVersionInformation() =>
+        Console.WriteLine(AssemblyVersion.GetAppVersion());
 
     private static void KeyPressHandler()
     {
@@ -146,11 +152,13 @@ public class Program
             }
 
             // Read key and hide from console display
-            var keyInfo = Console.ReadKey(true);
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 
             // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
-            if (keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
-                && keyInfo.Modifiers == ConsoleModifiers.Control)
+            if (
+                keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
+                && keyInfo.Modifiers == ConsoleModifiers.Control
+            )
             {
                 // Signal the cancel event
                 Cancel(ConsoleModifiers.Control, keyInfo.Key);
@@ -166,31 +174,25 @@ public class Program
         // Keep running and do graceful exit
         eventArgs.Cancel = true;
 
-        // Signal the cancel event, use Ctrl+C as signal
-        // TODO: ConsoleSpecialKey can be ControlC or ControlBreak, what is the ConsoleKey for Break, VT_CANCEL in WIN32?
-        Cancel(ConsoleModifiers.Control, ConsoleKey.C);
+        // Signal the cancel event, use Ctrl+Break as signal
+        Cancel(ConsoleModifiers.Control, ConsoleKey.Pause);
     }
-
 
     private static void WaitForDebugger()
     {
         // Do not use any dependencies as this code gets called very early in launch
 
-        // Use the raw commandline and look for --debug
-        if (Environment.CommandLine.Contains("--debug"))
+        // Wait for a debugger to be attached
+        Console.WriteLine("Waiting for debugger to attach...");
+        while (!System.Diagnostics.Debugger.IsAttached)
         {
-            // Wait for a debugger to be attached
-            Console.WriteLine("Waiting for debugger to attach...");
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-                // Wait a bit and try again
-                Thread.Sleep(100);
-            }
-            Console.WriteLine("Debugger attached.");
-
-            // Break into the debugger
-            System.Diagnostics.Debugger.Break();
+            // Wait a bit and try again
+            Thread.Sleep(100);
         }
+        Console.WriteLine("Debugger attached.");
+
+        // Break into the debugger
+        System.Diagnostics.Debugger.Break();
     }
 
     private static void CreateLogger(string logfile)
@@ -211,13 +213,16 @@ public class Program
 #if DEBUG
         LogEventLevel logLevelDefault = LogEventLevel.Debug;
 #else
-            LogEventLevel logLevelDefault = LogEventLevel.Information;
+        LogEventLevel logLevelDefault = LogEventLevel.Information;
 #endif
 
         // Log to console
-        loggerConfiguration.WriteTo.Console(theme: AnsiConsoleTheme.Code,
+        loggerConfiguration.WriteTo.Console(
+            theme: AnsiConsoleTheme.Code,
             restrictedToMinimumLevel: logLevelDefault,
-            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}");
+            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+            formatProvider: CultureInfo.InvariantCulture
+        );
 
         // Log to file
         // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
@@ -232,10 +237,15 @@ public class Program
 
             // Write async to file
             // Default max size is 1GB, roll when max size is reached
-            loggerConfiguration.WriteTo.Async(action => action.File(logfile,
-                restrictedToMinimumLevel: logLevelDefault,
-                rollOnFileSizeLimit: true,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}"));
+            loggerConfiguration.WriteTo.Async(action =>
+                action.File(
+                    logfile,
+                    restrictedToMinimumLevel: logLevelDefault,
+                    rollOnFileSizeLimit: true,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+                    formatProvider: CultureInfo.InvariantCulture
+                )
+            );
         }
 
         // Create static Serilog logger
@@ -247,7 +257,7 @@ public class Program
 
     public static int WriteDefaultSettingsCommand(CommandLineOptions options)
     {
-        Log.Logger.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
+        Log.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
 
         // Save default config
         ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
@@ -257,7 +267,7 @@ public class Program
 
     public static int CreateJsonSchemaCommand(CommandLineOptions options)
     {
-        Log.Logger.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
+        Log.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
 
         // Write schema
         ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
@@ -267,9 +277,8 @@ public class Program
 
     public static int CheckForNewToolsCommand(CommandLineOptions options)
     {
-        // Do not verify tools
-        Program program = Create(options, false);
-        if (program == null)
+        // Create but do not verify tools
+        if (!Create(options, false))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -281,235 +290,227 @@ public class Program
 
     public static int ProcessCommand(CommandLineOptions options)
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Process all files and delete empty folders
-        return MakeExitCode(Process.ProcessFiles(program.FileList) && Process.DeleteEmptyFolders(program.DirectoryList));
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> directoryList,
+                out List<string> fileList
+            )
+        )
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Process files
+        if (!Process.ProcessFiles(fileList))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Delete empty folders
+        if (!Process.DeleteEmptyFolders(directoryList))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
     public static int MonitorCommand(CommandLineOptions options)
     {
-        // Create program
-        Program program = Create(options, true);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Monitor and process changes
+        // Monitor and process changes in directories
         Monitor monitor = new();
-        return MakeExitCode(monitor.MonitorFolders(options.MediaFiles));
-    }
-
-    public static int ReMuxCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        if (!monitor.MonitorFolders(options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // ReMux
-        return MakeExitCode(Process.ReMuxFiles(program.FileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int ReEncodeCommand(CommandLineOptions options)
+    private static int ProcessFileList(
+        CommandLineOptions options,
+        Func<List<string>, bool> taskFunc
+    )
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // ReEncode
-        return MakeExitCode(Process.ReEncodeFiles(program.FileList));
-    }
-
-    public static int DeInterlaceCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // DeInterlace
-        return MakeExitCode(Process.DeInterlaceFiles(program.FileList));
-    }
-
-    public static int VerifyCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Call task function with file list
+        if (!taskFunc(fileList))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Verify
-        return MakeExitCode(Process.VerifyFiles(program.FileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CreateSidecarCommand(CommandLineOptions options)
+    private static int ProcessFiles(
+        CommandLineOptions options,
+        bool mkvOnly,
+        string taskName,
+        Func<string, bool> taskFunc
+    )
     {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Create
+        if (!Create(options, true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Create sidecar files
-        return MakeExitCode(Process.CreateSidecarFiles(program.FileList));
-    }
-
-    public static int GetSidecarCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Get sidecar files info
-        return MakeExitCode(Process.GetSidecarFiles(program.FileList));
-    }
-
-    public static int UpdateSidecarCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
+        // Call task function for all files in list
+        if (!ProcessDriver.ProcessFiles(fileList, taskName, mkvOnly, taskFunc))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Update sidecar files
-        return MakeExitCode(Process.UpdateSidecarFiles(program.FileList));
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    public static int GetTagMapCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int ReMuxCommand(CommandLineOptions options) =>
+        ProcessFiles(options, false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
 
-        // Get tag map
-        return MakeExitCode(Process.GetTagMapFiles(program.FileList));
-    }
+    public static int ReEncodeCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
 
-    public static int GetMediaInfoCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int DeInterlaceCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
 
-        // Get media info
-        return MakeExitCode(Process.GetMediaInfoFiles(program.FileList));
-    }
+    public static int VerifyCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(MkvProcess.Verify), MkvProcess.Verify);
 
-    public static int GetToolInfoCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int CreateSidecarCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(SidecarFile.Create), SidecarFile.Create);
 
-        // Get tool info
-        return MakeExitCode(Process.GetToolInfoFiles(program.FileList));
-    }
+    public static int GetSidecarInfoCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
 
-    public static int RemoveSubtitlesCommand(CommandLineOptions options)
-    {
-        // Create program and get file list
-        Program program = CreateFileList(options);
-        if (program == null)
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int UpdateSidecarCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
 
-        // Remove subtitles
-        return MakeExitCode(Process.RemoveSubtitlesFiles(program.FileList));
-    }
+    public static int GetTagMapCommand(CommandLineOptions options) =>
+        ProcessFileList(options, ProcessDriver.GetTagMap);
+
+    public static int GetMediaInfoCommand(CommandLineOptions options) =>
+        ProcessFileList(options, ProcessDriver.GetMediaInfo);
+
+    public static int GetToolInfoCommand(CommandLineOptions options) =>
+        ProcessFileList(options, ProcessDriver.GetToolInfo);
+
+    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
+
+    public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
+        ProcessFiles(
+            options,
+            true,
+            nameof(MkvProcess.RemoveClosedCaptions),
+            MkvProcess.RemoveClosedCaptions
+        );
 
     public static int GetVersionInfoCommand(CommandLineOptions options)
     {
         // Creating the program object will report all version information
-        // Do not verify the tools during create
-        Program program = Create(options, false);
-        if (program == null)
+        if (!Create(options, false))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
         // Verify tools to get tool version information
-        return MakeExitCode(Tools.VerifyTools());
-    }
-
-    private static Program CreateFileList(CommandLineOptions options)
-    {
-        // Create program and enumerate files
-        var program = Create(options, true);
-        if (program == null || !program.CreateFileList(options.MediaFiles))
+        if (!Tools.VerifyTools())
         {
-            return null;
+            return MakeExitCode(ExitCode.Error);
         }
-        return program;
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
     }
 
-    private static Program Create(CommandLineOptions options, bool verifyTools)
+    private static bool Create(CommandLineOptions options, bool verifyTools)
     {
         // Does the file exist
         if (!File.Exists(options.SettingsFile))
         {
-            Log.Logger.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
-            return null;
+            Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
+            return false;
         }
 
         // Load config from JSON
-        Log.Logger.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
+        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
         if (config == null)
         {
-            Log.Logger.Error("Failed to load settings : {FileName}", options.SettingsFile);
-            return null;
+            Log.Error("Failed to load settings : {FileName}", options.SettingsFile);
+            return false;
         }
 
         // Compare the schema version
         if (config.SchemaVersion != ConfigFileJsonSchema.Version)
         {
-            Log.Logger.Warning("Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
+            Log.Warning(
+                "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
-                options.SettingsFile);
+                options.SettingsFile
+            );
 
             // Upgrade the file schema
-            Log.Logger.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
+            Log.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
             ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
         }
 
         // Verify the settings
         if (!config.VerifyValues())
         {
-            Log.Logger.Error("Settings file contains incorrect or missing values : {FileName}", options.SettingsFile);
-            return null;
+            Log.Error(
+                "Settings file contains incorrect or missing values : {FileName}",
+                options.SettingsFile
+            );
+            return false;
         }
 
         // Set the static options from the loaded settings and options
@@ -517,156 +518,77 @@ public class Program
         Config = config;
 
         // Set the FileEx options
-        FileEx.Options.TestNoModify = Options.TestNoModify;
         FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
         FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
 
         // Set the FileEx Cancel object
-        FileEx.Options.Cancel = CancelSource.Token;
+        FileEx.Options.Cancel = s_cancelSource.Token;
 
         // Use log file
         if (!string.IsNullOrEmpty(Options.LogFile))
         {
             // Delete if not in append mode
-            if (!Options.LogAppend &&
-                !FileEx.DeleteFile(Options.LogFile))
+            if (!Options.LogAppend && !FileEx.DeleteFile(Options.LogFile))
             {
-                Log.Logger.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
-                return null;
+                Log.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
+                return false;
             }
 
             // Recreate the logger with a file
             CreateLogger(Options.LogFile);
-            Log.Logger.Information("Logging output to : {LogFile}", Options.LogFile);
+            Log.Information("Logging output to : {LogFile}", Options.LogFile);
         }
 
         // Log app and runtime version
-        Log.Logger.Information("Application Version : {AppVersion}", AssemblyVersion.GetDetailedVersion());
-        Log.Logger.Information("Runtime Version : {FrameWorkDescription} : {RuntimeIdentifier}", RuntimeInformation.FrameworkDescription, RuntimeInformation.RuntimeIdentifier);
-        Log.Logger.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Logger.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
+        Log.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
+        Log.Information("Runtime Version : {RuntimeVersions}", AssemblyVersion.GetRuntimeVersion());
+        Log.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
+        Log.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 
         // Warn if a newer version has been released
         VerifyLatestVersion();
 
-        // Parallel processing config
-        if (Options.Parallel)
-        {
-            // If threadcount is 0 (default) use half the number of processors
-            if (Options.ThreadCount == 0)
-            {
-                Options.ThreadCount = Math.Max(Environment.ProcessorCount / 2, 1);
-            }
-        }
-        else
-        {
-            // If disabled set the threadcount to 1
-            Options.ThreadCount = 1;
-        }
-        Log.Logger.Information("Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}", Options.Parallel, Options.ThreadCount, Environment.ProcessorCount);
+        // Configure thread count for parallel processing
+        Options.ThreadCount = Options.Parallel
+            ? Options.ThreadCount == 0
+                ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+                : Math.Clamp(Options.ThreadCount, 1, Environment.ProcessorCount)
+            : 1;
+        Log.Information(
+            "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
+            Options.Parallel,
+            Options.ThreadCount,
+            Environment.ProcessorCount
+        );
 
         // Verify tools
         if (verifyTools)
         {
             // Upgrade tools if auto update is enabled
-            if (Config.ToolsOptions.AutoUpdate &&
-                !Tools.CheckForNewTools())
+            if (Config.ToolsOptions.AutoUpdate && !Tools.CheckForNewTools())
             {
                 // Ignore error, do not stop execution in case of e.g. a site being down
-                Log.Logger.Error("Checking for new tools failed but continuing with existing tool versions");
+                Log.Error(
+                    "Checking for new tools failed but continuing with existing tool versions"
+                );
             }
 
             // Verify tools
             if (!Tools.VerifyTools())
             {
                 // Error
-                return null;
+                return false;
             }
         }
 
-        // Create program instance
-        return new Program();
-    }
-
-    private bool CreateFileList(List<string> mediaFiles)
-    {
-        Log.Logger.Information("Creating file and folder list ...");
-
-        // Trim quotes from input paths
-        mediaFiles = mediaFiles.Select(file => file.Trim('"')).ToList();
-
-        bool fatalError = false;
-        try
-        {
-            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
-            var lockObject = new Object();
-
-            // Process each input in parallel
-            mediaFiles.AsParallel()
-                .WithDegreeOfParallelism(Options.ThreadCount)
-                .WithCancellation(CancelToken())
-                .ForAll(fileOrFolder =>
-            {
-                // Handle cancel request
-                CancelToken().ThrowIfCancellationRequested();
-
-                // Test for file or a directory
-                var fileAttributes = File.GetAttributes(fileOrFolder);
-                if (fileAttributes.HasFlag(FileAttributes.Directory))
-                {
-                    // Add this directory
-                    lock (lockObject)
-                    {
-                        DirectoryList.Add(fileOrFolder);
-                    }
-
-                    // Create the file list from the directory
-                    Log.Logger.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                    if (!FileEx.EnumerateDirectory(fileOrFolder, out List<FileInfo> fileInfoList, out _))
-                    {
-                        // Abort
-                        Log.Logger.Error("Failed to enumerate files in directory {Directory}", fileOrFolder);
-                        Cancel();
-                        CancelToken().ThrowIfCancellationRequested();
-                    }
-
-                    // Add file list
-                    lock (lockObject)
-                    {
-                        fileInfoList.ForEach(item => FileList.Add(item.FullName));
-                    }
-                }
-                else
-                {
-                    // Add this file
-                    lock (lockObject)
-                    {
-                        FileList.Add(fileOrFolder);
-                    }
-                }
-            });
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancelled
-            fatalError = true;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            // Error
-            fatalError = true;
-        }
-
-        // Report
-        Log.Logger.Information("Discovered {FileListCount} files from {DirectoryListCount} directories", FileList.Count, DirectoryList.Count);
-
-        return !fatalError;
+        // Done
+        return true;
     }
 
     public static bool IsCancelledError()
     {
         // Test immediately
-        if (CancelSource.IsCancellationRequested)
+        if (s_cancelSource.IsCancellationRequested)
         {
             return true;
         }
@@ -676,32 +598,22 @@ public class Program
         return WaitForCancel(100);
     }
 
-    public static bool WaitForCancel(int millisecond)
-    {
-        return CancelSource.Token.WaitHandle.WaitOne(millisecond);
-    }
+    public static bool WaitForCancel(int millisecond) =>
+        s_cancelSource.Token.WaitHandle.WaitOne(millisecond);
 
-    public static bool IsCancelled()
-    {
-        return CancelSource.IsCancellationRequested;
-    }
+    public static bool IsCancelled() => s_cancelSource.IsCancellationRequested;
 
-    public static void Cancel()
-    {
+    public static void Cancel() =>
         // Signal cancel
-        CancelSource.Cancel();
-    }
+        s_cancelSource.Cancel();
 
     public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
     {
-        Log.Logger.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
+        Log.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
         Cancel();
     }
 
-    public static CancellationToken CancelToken()
-    {
-        return CancelSource.Token;
-    }
+    public static CancellationToken CancelToken() => s_cancelSource.Token;
 
     // Commandline options
     public static CommandLineOptions Options { get; set; }
@@ -709,16 +621,12 @@ public class Program
     // Config file options
     public static ConfigFileJsonSchema Config { get; set; }
 
-    // Snippet runtime in seconds
+    // Snippet runtime
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
 
-    // Interlaced detection threshold as percentage
-    public const double InterlacedThreshold = 5.0 / 100.0;
+    // QuickScan runtime
+    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
 
     // Cancellation token
-    private static readonly CancellationTokenSource CancelSource = new();
-
-    // File and directory lists
-    private readonly List<string> DirectoryList = [];
-    private readonly List<string> FileList = [];
+    private static readonly CancellationTokenSource s_cancelSource = new();
 }

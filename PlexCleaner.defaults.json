@@ -27,7 +27,7 @@
     ],
     // Keep all tracks flagged as original language
     "KeepOriginalLanguage": true,
-    // Remove EIA-608 Closed Captions embedded in video streams
+    // Remove EIA-608 and and CTA-708 Closed Captions embedded in video streams
     "RemoveClosedCaptions": true,
     // Set IETF language tags when not set
     "SetIetfLanguageTags": true,
@@ -118,12 +118,12 @@
     ],
     // Delete empty folders
     "DeleteEmptyFolders": true,
-    // Delete non-MKV files not in KeepExtensions or ReMuxExtensions lists
+    // Delete non-MKV files not in FileIgnoreMasks or ReMuxExtensions lists
     "DeleteUnwantedExtensions": true,
     // Re-mux files in ReMuxExtensions list to MKV
     "ReMux": true,
     // De-interlace interlaced media
-    "DeInterlace": true,
+    "DeInterlace": false,
     // Re-encode audio and video tracks as specified in ReEncodeVideo and ReEncodeAudioFormats
     "ReEncode": true,
     // Set tracks with undefined language to DefaultLanguage

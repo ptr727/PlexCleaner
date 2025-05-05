@@ -1,7 +1,7 @@
-# Description: Ubuntu Devel (Oracular)
+# Description: Ubuntu development release
 # Based on: ubuntu:devel
-# .NET: Ubuntu repository
-# Platforms: linux/amd64, linux/arm64, linux/arm/v7
+# .NET install: Ubuntu repository
+# Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:ubuntu-devel
 
 # Docker build debugging:
@@ -15,11 +15,11 @@
 
 # Build Dockerfile
 # docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --tag testing:latest --file ./Docker/Ubuntu.Devel.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Ubuntu.Devel.Dockerfile .
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag testing:latest --file ./Docker/Ubuntu.Devel.Dockerfile .
-# docker run -it --rm --name Testing testing:latest /bin/bash
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:ubuntu-devel --file ./Docker/Ubuntu.Devel.Dockerfile .
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu-devel /bin/bash
 
 
 # Builder layer
@@ -45,12 +45,12 @@ ARG BUILD_CONFIGURATION="Debug" \
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
-RUN apt-get update \
-    && apt-get upgrade -y
+RUN apt update \
+    && apt upgrade -y
 
 # Install .NET SDK
-RUN apt-get install -y --no-install-recommends \
-        dotnet-sdk-8.0
+# https://packages.ubuntu.com/plucky/dotnet-sdk-9.0
+RUN apt install -y --no-install-recommends dotnet-sdk-9.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -59,17 +59,17 @@ COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Unit Test
 COPY ./Docker/UnitTest.sh ./
-RUN chmod ugo+rwx ./UnitTest.sh
+RUN chmod ug=rwx,o=rx ./UnitTest.sh
 RUN ./UnitTest.sh
 
 # Build
 COPY ./Docker/Build.sh ./
-RUN chmod ugo+rwx ./Build.sh
+RUN chmod ug=rwx,o=rx ./Build.sh
 RUN ./Build.sh
 
 
 # Final layer
-FROM --platform=$BUILDPLATFORM ubuntu:devel AS final
+FROM ubuntu:devel AS final
 
 # Image label
 ARG LABEL_VERSION="1.0.0.0"
@@ -82,11 +82,11 @@ LABEL name="PlexCleaner" \
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Upgrade
-RUN apt-get update \
-    && apt-get upgrade -y
+RUN apt update \
+    && apt upgrade -y
 
 # Install dependencies
-RUN apt-get install -y --no-install-recommends \
+RUN apt install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
@@ -103,23 +103,23 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-RUN apt-get install -y --no-install-recommends \
-        dotnet-runtime-8.0
+# https://packages.ubuntu.com/plucky/dotnet-runtime-9.0
+RUN apt install -y --no-install-recommends dotnet-runtime-9.0
 
 # Install media tools
-# https://packages.ubuntu.com/noble/ffmpeg
-# https://packages.ubuntu.com/noble/handbrake-cli
-# https://packages.ubuntu.com/noble/mediainfo
-# https://packages.ubuntu.com/noble/mkvtoolnix
-RUN apt-get install -y --no-install-recommends \
+# https://packages.ubuntu.com/plucky/ffmpeg
+# https://packages.ubuntu.com/plucky/handbrake-cli
+# https://packages.ubuntu.com/plucky/mediainfo
+# https://packages.ubuntu.com/plucky/mkvtoolnix
+RUN apt install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \
         mediainfo \
         mkvtoolnix
 
 # Cleanup
-RUN apt-get autoremove -y \
-    && apt-get clean \
+RUN apt autoremove -y \
+    && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy PlexCleaner from builder layer
@@ -127,15 +127,17 @@ COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Copy test script
 COPY /Docker/Test.sh /Test/
-RUN chmod -R ugo+rwx /Test
+RUN chmod -R ug=rwx,o=rx /Test
 
-# Copy debug tools installer script
-COPY ./Docker/DebugTools.sh ./
-RUN chmod ugo+rwx ./DebugTools.sh
+# Install debug tools
+COPY ./Docker/InstallDebugTools.sh ./
+RUN chmod ug=rwx,o=rx ./InstallDebugTools.sh \
+    && ./InstallDebugTools.sh \
+    && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
 COPY /Docker/Version.sh /PlexCleaner/
-RUN chmod ugo+rwx /PlexCleaner/Version.sh
+RUN chmod ug=rwx,o=rx /PlexCleaner/Version.sh
 
 # Print version information
 ARG TARGETPLATFORM \

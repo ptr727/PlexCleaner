@@ -1,34 +1,27 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using InsaneGenius.Utilities;
 
 // https://mkvtoolnix.download/doc/mkvextract.html
+// mkvextract {source-filename} {mode1} [options] [extraction-spec1] [mode2] [options] [extraction-spec2] [...]
 
 namespace PlexCleaner;
 
 // Use MkvMerge family
 public class MkvExtractTool : MkvMergeTool
 {
-    public override ToolType GetToolType()
-    {
-        return ToolType.MkvExtract;
-    }
+    public override ToolType GetToolType() => ToolType.MkvExtract;
 
-    protected override string GetToolNameWindows()
-    {
-        return "mkvextract.exe";
-    }
+    protected override string GetToolNameWindows() => "mkvextract.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "mkvextract";
-    }
+    protected override string GetToolNameLinux() => "mkvextract";
 
     public bool ExtractToFile(string inputName, int trackId, string outputName)
     {
         // Delete existing output file
-        FileEx.DeleteFile(outputName);
+        _ = FileEx.DeleteFile(outputName);
 
         // Extract track to file
         string commandline = $"\"{inputName}\" tracks {ExtractOptions} {trackId}:\"{outputName}\"";
@@ -36,36 +29,40 @@ public class MkvExtractTool : MkvMergeTool
         return exitCode is 0 or 1;
     }
 
-    public bool ExtractToFiles(string inputName, MediaInfo extractTracks, out Dictionary<int, string> idToFileNames)
+    public bool ExtractToFiles(
+        string inputName,
+        MediaInfo extractTracks,
+        out Dictionary<int, string> idToFileNames
+    )
     {
         // Verify correct data type
         Debug.Assert(extractTracks.Parser == ToolType.MkvMerge);
 
         // Create the track ids and destination filenames using the input name and track ids
         // The track numbers are reported by MkvMerge --identify, use the track.id values
-        idToFileNames = new Dictionary<int, string>();
+        idToFileNames = [];
         StringBuilder output = new();
         string outputFile;
         foreach (VideoInfo info in extractTracks.Video)
         {
             outputFile = $"{inputName}.Track_{info.Id}.video";
-            FileEx.DeleteFile(outputFile);
+            _ = FileEx.DeleteFile(outputFile);
             idToFileNames[info.Id] = outputFile;
-            output.Append($"{info.Id}:\"{outputFile}\" ");
+            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
         }
         foreach (AudioInfo info in extractTracks.Audio)
         {
             outputFile = $"{inputName}.Track_{info.Id}.audio";
-            FileEx.DeleteFile(outputFile);
+            _ = FileEx.DeleteFile(outputFile);
             idToFileNames[info.Id] = outputFile;
-            output.Append($"{info.Id}:\"{outputFile}\" ");
+            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
         }
         foreach (SubtitleInfo info in extractTracks.Subtitle)
         {
             outputFile = $"{inputName}.Track_{info.Id}.subtitle";
-            FileEx.DeleteFile(outputFile);
+            _ = FileEx.DeleteFile(outputFile);
             idToFileNames[info.Id] = outputFile;
-            output.Append($"{info.Id}:\"{outputFile}\" ");
+            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
         }
 
         // Extract

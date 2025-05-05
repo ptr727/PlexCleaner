@@ -30,19 +30,19 @@ public class SidecarFile
         ClearedCaptions = 1 << 13,
         RemovedAttachments = 1 << 14,
         SetFlags = 1 << 15,
-        RemovedCoverArt = 1 << 16
+        RemovedCoverArt = 1 << 16,
     }
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
-        MediaFileInfo = mediaFileInfo;
-        SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
+        _mediaFileInfo = mediaFileInfo;
+        _sidecarFileInfo = new FileInfo(GetSidecarName(_mediaFileInfo));
     }
 
     public SidecarFile(string mediaFileName)
     {
-        MediaFileInfo = new FileInfo(mediaFileName);
-        SidecarFileInfo = new FileInfo(GetSidecarName(MediaFileInfo));
+        _mediaFileInfo = new FileInfo(mediaFileName);
+        _sidecarFileInfo = new FileInfo(GetSidecarName(_mediaFileInfo));
     }
 
     public bool Create()
@@ -67,15 +67,16 @@ public class SidecarFile
             return false;
         }
 
-        Log.Logger.Information("Sidecar created : State: {State} : {FileName}", State, SidecarFileInfo.Name);
+        Log.Information(
+            "Sidecar created : State: {State} : {FileName}",
+            State,
+            _sidecarFileInfo.Name
+        );
 
         return true;
     }
 
-    public bool Read()
-    {
-        return Read(out _);
-    }
+    public bool Read() => Read(out _);
 
     public bool Read(out bool current, bool verify = true)
     {
@@ -107,25 +108,33 @@ public class SidecarFile
         {
             // The media file has been changed
             current = false;
-            Log.Logger.Warning("Sidecar out of sync with media file, clearing state : {FileName}", SidecarFileInfo.Name);
+            Log.Warning(
+                "Sidecar out of sync with media file, clearing state : {FileName}",
+                _sidecarFileInfo.Name
+            );
             State = StatesType.FileModified;
         }
 
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
-        if (!IsToolsCurrent(Program.Config.ProcessOptions.SidecarUpdateOnToolChange) &&
-            Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+        if (
+            !IsToolsCurrent(Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+            && Program.Config.ProcessOptions.SidecarUpdateOnToolChange
+        )
         {
             // Remove the verified state flag if set
             current = false;
             if (State.HasFlag(StatesType.Verified))
             {
-                Log.Logger.Warning("Sidecar out of sync with tools, clearing Verified flag : {FileName}", SidecarFileInfo.Name);
+                Log.Warning(
+                    "Sidecar out of sync with tools, clearing Verified flag : {FileName}",
+                    _sidecarFileInfo.Name
+                );
                 State &= ~StatesType.Verified;
             }
         }
 
-        Log.Logger.Information("Sidecar read : State: {State} : {FileName}", State, SidecarFileInfo.Name);
+        Log.Information("Sidecar read : State: {State} : {FileName}", State, _sidecarFileInfo.Name);
 
         return true;
     }
@@ -133,12 +142,11 @@ public class SidecarFile
     private bool Update(bool modified = false)
     {
         // Create or Read must be called before update
-        Debug.Assert(SidecarJson != null);
+        Debug.Assert(_sidecarJson != null);
 
         // Did the media file or tools change
         // Do not log if not current, updates are intentional
-        if (modified ||
-            !IsMediaAndToolsCurrent(false))
+        if (modified || !IsMediaAndToolsCurrent(false))
         {
             // Get updated tool info
             if (!GetToolInfo())
@@ -159,7 +167,11 @@ public class SidecarFile
             return false;
         }
 
-        Log.Logger.Information("Sidecar updated : State: {State} : {FileName}", State, SidecarFileInfo.Name);
+        Log.Information(
+            "Sidecar updated : State: {State} : {FileName}",
+            State,
+            _sidecarFileInfo.Name
+        );
 
         return true;
     }
@@ -173,9 +185,9 @@ public class SidecarFile
         // If we can't read it, re-create it
         // If it does not exist, create it
         // If it no longer matches, update it
-        if (SidecarJson == null)
+        if (_sidecarJson == null)
         {
-            if (SidecarFileInfo.Exists)
+            if (_sidecarFileInfo.Exists)
             {
                 // Sidecar file exists, read and verify it matches media file
                 if (!Read(out bool current))
@@ -195,11 +207,10 @@ public class SidecarFile
                 return Create();
             }
         }
-        Debug.Assert(SidecarJson != null);
+        Debug.Assert(_sidecarJson != null);
 
         // Update info if media file or tools changed, or if state is not current
-        if (modified ||
-            !IsStateCurrent())
+        if (modified || !IsStateCurrent())
         {
             // Update will write the JSON including state, but only update tool and hash info if modified set
             return Update(modified);
@@ -218,9 +229,7 @@ public class SidecarFile
 
         // Verify the tools matches the json info
         // Ignore changes if SidecarUpdateOnToolChange is not set
-        // ReSharper disable once ConvertIfToOrExpression
-        if (!IsToolsCurrent(log) &&
-            Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
+        if (!IsToolsCurrent(log) && Program.Config.ProcessOptions.SidecarUpdateOnToolChange)
         {
             mismatch = true;
         }
@@ -228,38 +237,29 @@ public class SidecarFile
         return !mismatch;
     }
 
-    private bool IsStateCurrent()
-    {
-        return State == SidecarJson.State;
-    }
+    private bool IsStateCurrent() => State == _sidecarJson.State;
 
-    public bool IsWriteable()
-    {
-        // File must exist and be writeable
-        // TODO: FileEx.IsFileReadWriteable(FileInfo) slows down processing
-        return SidecarFileInfo.Exists && !SidecarFileInfo.IsReadOnly;
-    }
+    public bool IsWriteable() => _sidecarFileInfo.Exists && !_sidecarFileInfo.IsReadOnly;
 
-    public bool Exists()
-    {
-        return SidecarFileInfo.Exists;
-    }
+    public bool Exists() => _sidecarFileInfo.Exists;
 
     private bool GetInfoFromJson()
     {
-        Log.Logger.Information("Reading media info from sidecar : {FileName}", SidecarFileInfo.Name);
+        Log.Information("Reading media info from sidecar : {FileName}", _sidecarFileInfo.Name);
 
         // Decompress the tool data
-        FfProbeInfoJson = StringCompression.Decompress(SidecarJson.FfProbeInfoData);
-        MkvMergeInfoJson = StringCompression.Decompress(SidecarJson.MkvMergeInfoData);
-        MediaInfoXml = StringCompression.Decompress(SidecarJson.MediaInfoData);
+        _ffProbeInfoJson = StringCompression.Decompress(_sidecarJson.FfProbeInfoData);
+        _mkvMergeInfoJson = StringCompression.Decompress(_sidecarJson.MkvMergeInfoData);
+        _mediaInfoXml = StringCompression.Decompress(_sidecarJson.MediaInfoData);
 
         // Deserialize the tool data
-        if (!MediaInfoTool.GetMediaInfoFromXml(MediaInfoXml, out MediaInfo mediaInfoInfo) ||
-            !MkvMergeTool.GetMkvInfoFromJson(MkvMergeInfoJson, out MediaInfo mkvMergeInfo) ||
-            !FfProbeTool.GetFfProbeInfoFromJson(FfProbeInfoJson, out MediaInfo ffProbeInfo))
+        if (
+            !MediaInfoTool.GetMediaInfoFromXml(_mediaInfoXml, out MediaInfo mediaInfoInfo)
+            || !MkvMergeTool.GetMkvInfoFromJson(_mkvMergeInfoJson, out MediaInfo mkvMergeInfo)
+            || !FfProbeTool.GetFfProbeInfoFromJson(_ffProbeInfoJson, out MediaInfo ffProbeInfo)
+        )
         {
-            Log.Logger.Error("Failed to de-serialize tool data : {FileName}", SidecarFileInfo.Name);
+            Log.Error("Failed to de-serialize tool data : {FileName}", _sidecarFileInfo.Name);
             return false;
         }
 
@@ -269,7 +269,7 @@ public class SidecarFile
         MediaInfoInfo = mediaInfoInfo;
 
         // Assign state
-        State = SidecarJson.State;
+        State = _sidecarJson.State;
 
         return true;
     }
@@ -277,44 +277,50 @@ public class SidecarFile
     private bool IsMediaCurrent(bool log)
     {
         // Refresh file info
-        MediaFileInfo.Refresh();
+        _mediaFileInfo.Refresh();
 
         // Compare media attributes
         bool mismatch = false;
-        if (MediaFileInfo.LastWriteTimeUtc != SidecarJson.MediaLastWriteTimeUtc)
+        if (_mediaFileInfo.LastWriteTimeUtc != _sidecarJson.MediaLastWriteTimeUtc)
         {
             // Ignore LastWriteTimeUtc, it is unreliable over SMB
             // mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {FileName}",
-                    SidecarJson.MediaLastWriteTimeUtc,
-                    MediaFileInfo.LastWriteTimeUtc,
-                    SidecarFileInfo.Name);
+                Log.Warning(
+                    "Sidecar LastWriteTimeUtc out of sync with media file : {SidecarJsonMediaLastWriteTimeUtc} != {MediaFileLastWriteTimeUtc} : {FileName}",
+                    _sidecarJson.MediaLastWriteTimeUtc,
+                    _mediaFileInfo.LastWriteTimeUtc,
+                    _sidecarFileInfo.Name
+                );
             }
         }
-        if (MediaFileInfo.Length != SidecarJson.MediaLength)
+        if (_mediaFileInfo.Length != _sidecarJson.MediaLength)
         {
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {FileName}",
-                    SidecarJson.MediaLength,
-                    MediaFileInfo.Length,
-                    SidecarFileInfo.Name);
+                Log.Warning(
+                    "Sidecar FileLength out of sync with media file : {SidecarJsonMediaLength} != {MediaFileLength} : {FileName}",
+                    _sidecarJson.MediaLength,
+                    _mediaFileInfo.Length,
+                    _sidecarFileInfo.Name
+                );
             }
         }
         string hash = ComputeHash();
         Debug.Assert(hash != null);
-        if (!string.Equals(hash, SidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(hash, _sidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {FileName}",
-                    SidecarJson.MediaHash,
+                Log.Warning(
+                    "Sidecar SHA256 out of sync with media file : {SidecarJsonHash} != {MediaFileHash} : {FileName}",
+                    _sidecarJson.MediaHash,
                     hash,
-                    SidecarFileInfo.Name);
+                    _sidecarFileInfo.Name
+                );
             }
         }
 
@@ -325,37 +331,58 @@ public class SidecarFile
     {
         // Compare tool versions
         bool mismatch = false;
-        if (!SidecarJson.FfProbeToolVersion.Equals(Tools.FfProbe.Info.Version, StringComparison.OrdinalIgnoreCase))
+        if (
+            !_sidecarJson.FfProbeToolVersion.Equals(
+                Tools.FfProbe.Info.Version,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar FfProbe tool version mismatch : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
-                    SidecarJson.FfProbeToolVersion,
+                Log.Warning(
+                    "Sidecar FfProbe tool version mismatch : {SidecarJsonFfProbeToolVersion} != {ToolsFfProbeInfoVersion} : {FileName}",
+                    _sidecarJson.FfProbeToolVersion,
                     Tools.FfProbe.Info.Version,
-                    SidecarFileInfo.Name);
+                    _sidecarFileInfo.Name
+                );
             }
         }
-        if (!SidecarJson.MkvMergeToolVersion.Equals(Tools.MkvMerge.Info.Version, StringComparison.OrdinalIgnoreCase))
+        if (
+            !_sidecarJson.MkvMergeToolVersion.Equals(
+                Tools.MkvMerge.Info.Version,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar MkvMerge tool version mismatch : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
-                    SidecarJson.MkvMergeToolVersion,
+                Log.Warning(
+                    "Sidecar MkvMerge tool version mismatch : {SidecarJsonMkvMergeToolVersion} != {ToolsMkvMergeInfoVersion} : {FileName}",
+                    _sidecarJson.MkvMergeToolVersion,
                     Tools.MkvMerge.Info.Version,
-                    SidecarFileInfo.Name);
+                    _sidecarFileInfo.Name
+                );
             }
         }
-        if (!SidecarJson.MediaInfoToolVersion.Equals(Tools.MediaInfo.Info.Version, StringComparison.OrdinalIgnoreCase))
+        if (
+            !_sidecarJson.MediaInfoToolVersion.Equals(
+                Tools.MediaInfo.Info.Version,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             mismatch = true;
             if (log)
             {
-                Log.Logger.Warning("Sidecar MediaInfo tool version mismatch : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
-                    SidecarJson.MediaInfoToolVersion,
+                Log.Warning(
+                    "Sidecar MediaInfo tool version mismatch : {SidecarJsonMediaInfoToolVersion} != {ToolsMediaInfoVersion} : {FileName}",
+                    _sidecarJson.MediaInfoToolVersion,
                     Tools.MediaInfo.Info.Version,
-                    SidecarFileInfo.Name);
+                    _sidecarFileInfo.Name
+                );
             }
         }
 
@@ -367,13 +394,13 @@ public class SidecarFile
         try
         {
             // Get json file
-            var json = File.ReadAllText(SidecarFileInfo.FullName);
+            string json = File.ReadAllText(_sidecarFileInfo.FullName);
 
             // Create the object from json
-            SidecarJson = SidecarFileJsonSchema.FromJson(json);
-            if (SidecarJson == null)
+            _sidecarJson = SidecarFileJsonSchema.FromJson(json);
+            if (_sidecarJson == null)
             {
-                Log.Logger.Error("Failed to read JSON from file : {FileName}", SidecarFileInfo.Name);
+                Log.Error("Failed to read JSON from file : {FileName}", _sidecarFileInfo.Name);
                 return false;
             }
         }
@@ -389,10 +416,10 @@ public class SidecarFile
         try
         {
             // Get json from object
-            var json = SidecarFileJsonSchema.ToJson(SidecarJson);
+            string json = SidecarFileJsonSchema.ToJson(_sidecarJson);
 
             // Write the text to the sidecar file
-            File.WriteAllText(SidecarFileInfo.FullName, json);
+            File.WriteAllText(_sidecarFileInfo.FullName, json);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -404,54 +431,57 @@ public class SidecarFile
     private bool SetJsonInfo()
     {
         // Create the sidecar json object
-        SidecarJson ??= new SidecarFileJsonSchema();
+        _sidecarJson ??= new SidecarFileJsonSchema();
 
         // Schema version
-        SidecarJson.SchemaVersion = SidecarFileJsonSchema.Version;
+        _sidecarJson.SchemaVersion = SidecarFileJsonSchema.Version;
 
         // Media file info
-        MediaFileInfo.Refresh();
-        SidecarJson.MediaLastWriteTimeUtc = MediaFileInfo.LastWriteTimeUtc;
-        SidecarJson.MediaLength = MediaFileInfo.Length;
-        SidecarJson.MediaHash = ComputeHash();
-        Debug.Assert(SidecarJson.MediaHash != null);
+        _mediaFileInfo.Refresh();
+        _sidecarJson.MediaLastWriteTimeUtc = _mediaFileInfo.LastWriteTimeUtc;
+        _sidecarJson.MediaLength = _mediaFileInfo.Length;
+        _sidecarJson.MediaHash = ComputeHash();
+        Debug.Assert(_sidecarJson.MediaHash != null);
 
         // Tool version info
-        SidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
-        SidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
-        SidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
+        _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
+        _sidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
+        _sidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
 
         // Compressed tool info
-        SidecarJson.FfProbeInfoData = StringCompression.Compress(FfProbeInfoJson);
-        SidecarJson.MkvMergeInfoData = StringCompression.Compress(MkvMergeInfoJson);
-        SidecarJson.MediaInfoData = StringCompression.Compress(MediaInfoXml);
+        _sidecarJson.FfProbeInfoData = StringCompression.Compress(_ffProbeInfoJson);
+        _sidecarJson.MkvMergeInfoData = StringCompression.Compress(_mkvMergeInfoJson);
+        _sidecarJson.MediaInfoData = StringCompression.Compress(_mediaInfoXml);
 
         // State
-        // TODO: Only update tool and file info if changed, else just update state
-        SidecarJson.State = State;
+        _sidecarJson.State = State;
 
         return true;
     }
 
     private bool GetToolInfo()
     {
-        Log.Logger.Information("Reading media info from tools : {FileName}", MediaFileInfo.Name);
+        Log.Information("Reading media info from tools : {FileName}", _mediaFileInfo.Name);
 
         // Read the tool data text
-        if (!Tools.MediaInfo.GetMediaInfoXml(MediaFileInfo.FullName, out MediaInfoXml) ||
-            !Tools.MkvMerge.GetMkvInfoJson(MediaFileInfo.FullName, out MkvMergeInfoJson) ||
-            !Tools.FfProbe.GetFfProbeInfoJson(MediaFileInfo.FullName, out FfProbeInfoJson))
+        if (
+            !Tools.MediaInfo.GetMediaInfoXml(_mediaFileInfo.FullName, out _mediaInfoXml)
+            || !Tools.MkvMerge.GetMkvInfoJson(_mediaFileInfo.FullName, out _mkvMergeInfoJson)
+            || !Tools.FfProbe.GetFfProbeInfoJson(_mediaFileInfo.FullName, out _ffProbeInfoJson)
+        )
         {
-            Log.Logger.Error("Failed to read media info : {FileName}", MediaFileInfo.Name);
+            Log.Error("Failed to read media info : {FileName}", _mediaFileInfo.Name);
             return false;
         }
 
         // Deserialize the tool data
-        if (!MediaInfoTool.GetMediaInfoFromXml(MediaInfoXml, out MediaInfo mediaInfoInfo) ||
-            !MkvMergeTool.GetMkvInfoFromJson(MkvMergeInfoJson, out MediaInfo mkvMergeInfo) ||
-            !FfProbeTool.GetFfProbeInfoFromJson(FfProbeInfoJson, out MediaInfo ffProbeInfo))
+        if (
+            !MediaInfoTool.GetMediaInfoFromXml(_mediaInfoXml, out MediaInfo mediaInfoInfo)
+            || !MkvMergeTool.GetMkvInfoFromJson(_mkvMergeInfoJson, out MediaInfo mkvMergeInfo)
+            || !FfProbeTool.GetFfProbeInfoFromJson(_ffProbeInfoJson, out MediaInfo ffProbeInfo)
+        )
         {
-            Log.Logger.Error("Failed to de-serialize tool data : {FileName}", MediaFileInfo.Name);
+            Log.Error("Failed to de-serialize tool data : {FileName}", _mediaFileInfo.Name);
             return false;
         }
 
@@ -461,9 +491,9 @@ public class SidecarFile
         FfProbeInfo = ffProbeInfo;
 
         // Print info
-        MediaInfoInfo.WriteLine("MediaInfo");
-        MkvMergeInfo.WriteLine("MkvMerge");
-        FfProbeInfo.WriteLine("FfProbe");
+        MediaInfoInfo.WriteLine();
+        MkvMergeInfo.WriteLine();
+        FfProbeInfo.WriteLine();
 
         return true;
     }
@@ -472,39 +502,49 @@ public class SidecarFile
     {
         try
         {
-            // TODO: Reuse this object to get value out of reusing the 128KB buffer
+            // TODO: Reuse this object or the buffer without breaking multithreading
             // Allocate buffer to hold data to be hashed
             byte[] hashBuffer = new byte[2 * HashWindowLength];
 
             // Open file
-            using FileStream fileStream = MediaFileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            using FileStream fileStream = _mediaFileInfo.Open(
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read
+            );
 
             // Small files read entire file, big files read front and back
-            if (MediaFileInfo.Length <= hashBuffer.Length)
+            if (_mediaFileInfo.Length <= hashBuffer.Length)
             {
                 // Read the entire file, buffer is already zeroed
-                fileStream.Seek(0, SeekOrigin.Begin);
-                if (fileStream.Read(hashBuffer, 0, (int)MediaFileInfo.Length) != MediaFileInfo.Length)
+                _ = fileStream.Seek(0, SeekOrigin.Begin);
+                if (
+                    fileStream.Read(hashBuffer, 0, (int)_mediaFileInfo.Length)
+                    != _mediaFileInfo.Length
+                )
                 {
-                    Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
+                    Log.Error("Error reading from media file : {FileName}", _mediaFileInfo.Name);
                     return null;
                 }
             }
             else
             {
                 // Read the beginning of the file
-                fileStream.Seek(0, SeekOrigin.Begin);
+                _ = fileStream.Seek(0, SeekOrigin.Begin);
                 if (fileStream.Read(hashBuffer, 0, HashWindowLength) != HashWindowLength)
                 {
-                    Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
+                    Log.Error("Error reading from media file : {FileName}", _mediaFileInfo.Name);
                     return null;
                 }
 
                 // Read the end of the file
-                fileStream.Seek(-HashWindowLength, SeekOrigin.End);
-                if (fileStream.Read(hashBuffer, HashWindowLength, HashWindowLength) != HashWindowLength)
+                _ = fileStream.Seek(-HashWindowLength, SeekOrigin.End);
+                if (
+                    fileStream.Read(hashBuffer, HashWindowLength, HashWindowLength)
+                    != HashWindowLength
+                )
                 {
-                    Log.Logger.Error("Error reading from media file : {FileName}", MediaFileInfo.Name);
+                    Log.Error("Error reading from media file : {FileName}", _mediaFileInfo.Name);
                     return null;
                 }
             }
@@ -521,49 +561,65 @@ public class SidecarFile
         }
     }
 
-    public static bool IsSidecarFile(string sidecarName)
-    {
-        // Compare extension
-        return Path.GetExtension(sidecarName).Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsSidecarFile(string sidecarName) =>
+        IsSidecarExtension(Path.GetExtension(sidecarName));
 
-    public static bool IsSidecarFile(FileInfo sidecarFileInfo)
-    {
-        // Compare extension
-        return sidecarFileInfo.Extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsSidecarFile(FileInfo sidecarFileInfo) =>
+        IsSidecarExtension(sidecarFileInfo.Extension);
 
-    public static string GetSidecarName(string fileName)
-    {
-        // Change extension of media file
-        return Path.ChangeExtension(fileName, SidecarExtension);
-    }
+    public static bool IsSidecarExtension(string extension) =>
+        extension.Equals(SidecarExtension, StringComparison.OrdinalIgnoreCase);
 
-    public static string GetSidecarName(FileInfo mediaFileInfo)
-    {
-        // Change extension of media file
-        return Path.ChangeExtension(mediaFileInfo.FullName, SidecarExtension);
-    }
+    public static bool IsMkvFile(string mkvName) => IsMkvExtension(Path.GetExtension(mkvName));
+
+    public static bool IsMkvFile(FileInfo mkvFileInfo) => IsMkvExtension(mkvFileInfo.Extension);
+
+    public static bool IsMkvExtension(string extension) =>
+        extension.Equals(MkvExtension, StringComparison.OrdinalIgnoreCase);
+
+    public static string GetSidecarName(string mkvName) =>
+        Path.ChangeExtension(mkvName, SidecarExtension);
+
+    public static string GetSidecarName(FileInfo mkvFileInfo) =>
+        Path.ChangeExtension(mkvFileInfo.FullName, SidecarExtension);
+
+    public static string GetMkvName(string sidecarName) =>
+        Path.ChangeExtension(sidecarName, MkvExtension);
+
+    public static string GetMkvName(FileInfo sidecarFileInfo) =>
+        Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
 
     public void WriteLine()
     {
-        Log.Logger.Information("State: {State}", State);
-        Log.Logger.Information("MediaInfoXml: {MediaInfoXml}", MediaInfoXml);
-        Log.Logger.Information("MkvMergeInfoJson: {MkvMergeInfoJson}", MkvMergeInfoJson);
-        Log.Logger.Information("FfProbeInfoJson: {FfProbeInfoJson}", FfProbeInfoJson);
-        Log.Logger.Information("SchemaVersion: {SchemaVersion}", SidecarJson.SchemaVersion);
-        Log.Logger.Information("MediaLastWriteTimeUtc: {MediaLastWriteTimeUtc}", SidecarJson.MediaLastWriteTimeUtc);
-        Log.Logger.Information("MediaLength: {MediaLength}", SidecarJson.MediaLength);
-        Log.Logger.Information("MediaHash: {MediaHash}", SidecarJson.MediaHash);
-        Log.Logger.Information("MediaInfoToolVersion: {MediaInfoToolVersion}", SidecarJson.MediaInfoToolVersion);
-        Log.Logger.Information("MkvMergeToolVersion: {MkvMergeToolVersion}", SidecarJson.MkvMergeToolVersion);
-        Log.Logger.Information("FfProbeToolVersion: {FfProbeToolVersion}", SidecarJson.FfProbeToolVersion);
+        Log.Information("State: {State}", State);
+        Log.Information("MediaInfoXml: {MediaInfoXml}", _mediaInfoXml);
+        Log.Information("MkvMergeInfoJson: {MkvMergeInfoJson}", _mkvMergeInfoJson);
+        Log.Information("FfProbeInfoJson: {FfProbeInfoJson}", _ffProbeInfoJson);
+        Log.Information("SchemaVersion: {SchemaVersion}", _sidecarJson.SchemaVersion);
+        Log.Information(
+            "MediaLastWriteTimeUtc: {MediaLastWriteTimeUtc}",
+            _sidecarJson.MediaLastWriteTimeUtc
+        );
+        Log.Information("MediaLength: {MediaLength}", _sidecarJson.MediaLength);
+        Log.Information("MediaHash: {MediaHash}", _sidecarJson.MediaHash);
+        Log.Information(
+            "MediaInfoToolVersion: {MediaInfoToolVersion}",
+            _sidecarJson.MediaInfoToolVersion
+        );
+        Log.Information(
+            "MkvMergeToolVersion: {MkvMergeToolVersion}",
+            _sidecarJson.MkvMergeToolVersion
+        );
+        Log.Information(
+            "FfProbeToolVersion: {FfProbeToolVersion}",
+            _sidecarJson.FfProbeToolVersion
+        );
     }
 
-    public static bool PrintInformation(string fileName)
+    public static bool GetInformation(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Does a sidecar exist
         if (!File.Exists(GetSidecarName(fileName)))
@@ -588,7 +644,7 @@ public class SidecarFile
     public static bool Create(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Create new or overwrite existing sidecar file
         SidecarFile sidecarFile = new(fileName);
@@ -598,7 +654,7 @@ public class SidecarFile
     public static bool Update(string fileName)
     {
         // Must be a MKV file
-        Debug.Assert(MkvMergeTool.IsMkvFile(fileName));
+        Debug.Assert(IsMkvFile(fileName));
 
         // Create new or update existing sidecar file
         SidecarFile sidecarFile = new(fileName);
@@ -610,15 +666,16 @@ public class SidecarFile
     public MediaInfo MediaInfoInfo { get; private set; }
     public StatesType State { get; set; }
 
-    private readonly FileInfo MediaFileInfo;
-    private readonly FileInfo SidecarFileInfo;
+    private readonly FileInfo _mediaFileInfo;
+    private readonly FileInfo _sidecarFileInfo;
 
-    private string MediaInfoXml;
-    private string MkvMergeInfoJson;
-    private string FfProbeInfoJson;
+    private string _mediaInfoXml;
+    private string _mkvMergeInfoJson;
+    private string _ffProbeInfoJson;
 
-    private SidecarFileJsonSchema SidecarJson;
+    private SidecarFileJsonSchema _sidecarJson;
 
     private const string SidecarExtension = ".PlexCleaner";
+    private const string MkvExtension = ".mkv";
     private const int HashWindowLength = 64 * Format.KiB;
 }

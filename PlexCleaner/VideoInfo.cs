@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Serilog;
 
@@ -15,7 +16,8 @@ namespace PlexCleaner;
 
 public class VideoInfo : TrackInfo
 {
-    public VideoInfo(MkvToolJsonSchema.Track track) : base(track)
+    public VideoInfo(MkvToolJsonSchema.Track track)
+        : base(track)
     {
         // Missing: Profile
         // Missing: Interlaced
@@ -23,76 +25,91 @@ public class VideoInfo : TrackInfo
         // Missing: ClosedCaptions
 
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
-            Log.Logger.Warning("MkvToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+            Log.Warning(
+                "MkvToolJsonSchema : Cover art video track : {Format}:{Codec}",
+                Format,
+                Codec
+            );
         }
     }
 
-    public VideoInfo(FfMpegToolJsonSchema.Stream stream) : base(stream)
+    public VideoInfo(FfMpegToolJsonSchema.Track track)
+        : base(track)
     {
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
-        // Ignore bad tags like 0x0000 / [0][0][0][0]
-        if (!string.IsNullOrEmpty(stream.CodecTagString) &&
-            !stream.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase))
+        // Ignore bad tags like codec_tag: 0x0000 or codec_tag_string: [0][0][0][0]
+        if (
+            !string.IsNullOrEmpty(track.CodecTagString)
+            && !track.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase)
+        )
         {
-            Codec = stream.CodecTagString;
+            Codec = track.CodecTagString;
         }
 
         // Build the Profile
-        Profile = string.IsNullOrEmpty(stream.Profile) switch
+        Profile = string.IsNullOrEmpty(track.Profile) switch
         {
-            false when stream.Level != 0 => $"{stream.Profile}@{stream.Level}",
-            false => stream.Profile,
-            _ => Profile
+            false when track.Level != 0 => $"{track.Profile}@{track.Level}",
+            false => track.Profile,
+            _ => Profile,
         };
 
-        // Test for interlaced
-        // https://ffmpeg.org/ffprobe-all.html
+        // Test for interlaced in field_order
+        // https://ffmpeg.org/ffmpeg-codecs.html
         // Progressive, tt, bb, tb, bt
-        Interlaced = !string.IsNullOrEmpty(stream.FieldOrder) &&
-                     !stream.FieldOrder.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
+        Interlaced = track.FieldOrder.ToLowerInvariant() is "tt" or "bb" or "tb" or "bt";
 
         // ClosedCaptions
-        ClosedCaptions = stream.ClosedCaptions != 0;
+        ClosedCaptions = track.ClosedCaptions != 0;
 
         // Missing: HDR
 
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
-            Log.Logger.Warning("FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+            Log.Warning(
+                "FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}",
+                Format,
+                Codec
+            );
         }
     }
 
-    public VideoInfo(MediaInfoToolXmlSchema.Track track) : base(track)
+    public VideoInfo(MediaInfoToolXmlSchema.Track track)
+        : base(track)
     {
         // Build the Profile
         Profile = string.IsNullOrEmpty(track.FormatProfile) switch
         {
-            false when !string.IsNullOrEmpty(track.FormatLevel) => $"{track.FormatProfile}@{track.FormatLevel}",
+            false when !string.IsNullOrEmpty(track.FormatLevel) =>
+                $"{track.FormatProfile}@{track.FormatLevel}",
             false => track.FormatProfile,
-            _ => Profile
+            _ => Profile,
         };
 
         // Test for interlaced
-        // TODO: Does not currently work for HEVC
-        // https://sourceforge.net/p/mediainfo/bugs/771/
+        // TODO: Does not work for H265
         // https://github.com/MediaArea/MediaInfoLib/issues/1092
-        // Test for Progressive, Interlaced, MBAFF, or empty
-        Interlaced = !string.IsNullOrEmpty(track.ScanType) &&
-                     !track.ScanType.Equals("Progressive", StringComparison.OrdinalIgnoreCase);
+        // Only set when ScanType is Interlaced
+        Interlaced = track.ScanType.Equals("Interlaced", StringComparison.OrdinalIgnoreCase);
 
         // HDR
         FormatHdr = track.HdrFormat;
 
-        // Missing: ClosedCaptions
-
         // Cover art
+        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
-            Log.Logger.Warning("MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}", Format, Codec);
+            Log.Warning(
+                "MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}",
+                Format,
+                Codec
+            );
         }
     }
 
@@ -104,32 +121,35 @@ public class VideoInfo : TrackInfo
 
     public bool ClosedCaptions { get; set; }
 
-    public bool IsCoverArt { get => MatchCoverArt(Codec) || MatchCoverArt(Format); }
+    public bool IsCoverArt => MatchCoverArt(Codec) || MatchCoverArt(Format);
 
-    public static bool MatchCoverArt(string codec)
-    {
-        return CoverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
-    }
+    public static bool MatchCoverArt(string codec) =>
+        s_coverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
 
     public bool CompareVideo(VideoFormat compare)
     {
         // Match the Format, Codec, and Profile
         // Null or empty string is a wildcard match
-        bool formatMatch = string.IsNullOrEmpty(compare.Format) || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);
-        bool codecMatch = string.IsNullOrEmpty(compare.Codec) || compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase);
-        bool profileMatch = string.IsNullOrEmpty(compare.Profile) || compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase);
+        bool formatMatch =
+            string.IsNullOrEmpty(compare.Format)
+            || compare.Format.Equals(Format, StringComparison.OrdinalIgnoreCase);
+        bool codecMatch =
+            string.IsNullOrEmpty(compare.Codec)
+            || compare.Codec.Equals(Codec, StringComparison.OrdinalIgnoreCase);
+        bool profileMatch =
+            string.IsNullOrEmpty(compare.Profile)
+            || compare.Profile.Equals(Profile, StringComparison.OrdinalIgnoreCase);
 
         return formatMatch && codecMatch && profileMatch;
     }
 
-    public override void WriteLine(string prefix)
-    {
-        // Add Profile and Interlaced
+    public override void WriteLine() =>
         // Keep in sync with TrackInfo::WriteLine
-        Log.Logger.Information("{Prefix} : Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, " +
-                               "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, " +
-                               "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
-            prefix,
+        Log.Information(
+            "Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
+            Parser,
             GetType().Name,
             Format,
             FormatHdr,
@@ -146,9 +166,36 @@ public class VideoInfo : TrackInfo
             State,
             HasErrors,
             HasTags,
-            IsCoverArt);
-    }
+            IsCoverArt
+        );
+
+    public override void WriteLine(string prefix) =>
+        // Keep in sync with TrackInfo::WriteLine
+        Log.Information(
+            "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
+            prefix,
+            Parser,
+            GetType().Name,
+            Format,
+            FormatHdr,
+            Codec,
+            Language,
+            LanguageIetf,
+            Id,
+            Number,
+            Title,
+            Flags,
+            Profile,
+            Interlaced,
+            ClosedCaptions,
+            State,
+            HasErrors,
+            HasTags,
+            IsCoverArt
+        );
 
     // Cover art and thumbnail formats
-    private static readonly string[] CoverArtFormat = ["jpg", "jpeg", "png"];
+    private static readonly List<string> s_coverArtFormat = ["jpg", "jpeg", "png"];
 }

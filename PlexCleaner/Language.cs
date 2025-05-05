@@ -11,21 +11,32 @@ public class Language
 {
     public Language()
     {
-        Iso6392 = new Iso6392();
-        Iso6392.Create();
-        Iso6393 = new Iso6393();
-        Iso6393.Create();
-        Rfc5646 = new Rfc5646();
-        Rfc5646.Create();
+        _iso6392 = new Iso6392();
+        _ = _iso6392.Create();
+        _iso6393 = new Iso6393();
+        _ = _iso6393.Create();
+        _rfc5646 = new Rfc5646();
+        _ = _rfc5646.Create();
     }
 
     // Get the RFC-5646 tag from an ISO-639-2B tag
     public string GetIetfTag(string language, bool nullOnFailure)
     {
         // Handle defaults
-        if (string.IsNullOrEmpty(language)) return nullOnFailure ? null : Undefined;
-        if (language.Equals(Undefined, StringComparison.OrdinalIgnoreCase)) return Undefined;
-        if (language.Equals(None, StringComparison.OrdinalIgnoreCase)) return None;
+        if (string.IsNullOrEmpty(language))
+        {
+            return nullOnFailure ? null : Undefined;
+        }
+
+        if (language.Equals(Undefined, StringComparison.OrdinalIgnoreCase))
+        {
+            return Undefined;
+        }
+
+        if (language.Equals(None, StringComparison.OrdinalIgnoreCase))
+        {
+            return None;
+        }
 
         // Handle "chi" as "zho" for Matroska
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
@@ -35,19 +46,19 @@ public class Language
         }
 
         // Find a matching RFC 5646 record
-        var rfc5646 = Rfc5646.Find(language, false);
+        Rfc5646.Record rfc5646 = _rfc5646.Find(language, false);
         if (rfc5646 != null)
         {
             return rfc5646.TagAny;
         }
 
         // Find a matching ISO-639-3 record
-        var iso6393 = Iso6393.Find(language, false);
+        Iso6393.Record iso6393 = _iso6393.Find(language, false);
         if (iso6393 != null)
         {
             // Find a matching RFC 5646 record from the ISO-639-3 or ISO-639-1 tag
-            rfc5646 = Rfc5646.Find(iso6393.Id, false);
-            rfc5646 ??= Rfc5646.Find(iso6393.Part1, false);
+            rfc5646 = _rfc5646.Find(iso6393.Id, false);
+            rfc5646 ??= _rfc5646.Find(iso6393.Part1, false);
             if (rfc5646 != null)
             {
                 return rfc5646.TagAny;
@@ -55,12 +66,12 @@ public class Language
         }
 
         // Find a matching ISO-639-2 record
-        var iso6392 = Iso6392.Find(language, false);
+        Iso6392.Record iso6392 = _iso6392.Find(language, false);
         if (iso6392 != null)
         {
             // Find a matching RFC 5646 record from the ISO-639-2 or ISO-639-1 tag
-            rfc5646 = Rfc5646.Find(iso6392.Id, false);
-            rfc5646 ??= Rfc5646.Find(iso6392.Part1, false);
+            rfc5646 = _rfc5646.Find(iso6392.Id, false);
+            rfc5646 ??= _rfc5646.Find(iso6392.Part1, false);
             if (rfc5646 != null)
             {
                 return rfc5646.TagAny;
@@ -68,21 +79,32 @@ public class Language
         }
 
         // Try CultureInfo
-        var cultureInfo = CreateCultureInfo(language);
-        if (cultureInfo == null)
-        {
-            return nullOnFailure ? null : Undefined;
-        }
-        return cultureInfo.IetfLanguageTag;
+        CultureInfo cultureInfo = CreateCultureInfo(language);
+        return cultureInfo == null
+            ? nullOnFailure
+                ? null
+                : Undefined
+            : cultureInfo.IetfLanguageTag;
     }
 
     // Get the ISO-639-2B tag from a RFC-5646 tag
     public string GetIso639Tag(string language, bool nullOnFailure)
     {
         // Handle defaults
-        if (string.IsNullOrEmpty(language)) return nullOnFailure ? null : Undefined;
-        if (language.Equals(Undefined, StringComparison.OrdinalIgnoreCase)) return Undefined;
-        if (language.Equals(None, StringComparison.OrdinalIgnoreCase)) return None;
+        if (string.IsNullOrEmpty(language))
+        {
+            return nullOnFailure ? null : Undefined;
+        }
+
+        if (language.Equals(Undefined, StringComparison.OrdinalIgnoreCase))
+        {
+            return Undefined;
+        }
+
+        if (language.Equals(None, StringComparison.OrdinalIgnoreCase))
+        {
+            return None;
+        }
 
         // Handle "chi" as "zho" for Matroska
         // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
@@ -92,7 +114,7 @@ public class Language
         }
 
         // Find a matching RFC-5646 record
-        var rfc5646 = Rfc5646.Find(language, false);
+        Rfc5646.Record rfc5646 = _rfc5646.Find(language, false);
         if (rfc5646 != null)
         {
             // Use expanded form if Redundant, or just use TagAny
@@ -108,11 +130,11 @@ public class Language
 
         // Split the parts and use the first part
         // zh-cmn-Hant -> zh
-        var parts = language.Split('-');
+        string[] parts = language.Split('-');
         language = parts[0];
 
         // Get ISO-639-3 record
-        var iso6393 = Iso6393.Find(language, false);
+        Iso6393.Record iso6393 = _iso6393.Find(language, false);
         if (iso6393 != null)
         {
             // Return the Part 2B code
@@ -120,7 +142,7 @@ public class Language
         }
 
         // Get ISO-639-2 record
-        var iso6392 = Iso6392.Find(language, false);
+        Iso6392.Record iso6392 = _iso6392.Find(language, false);
         if (iso6392 != null)
         {
             // Return the Part 2B code
@@ -128,14 +150,14 @@ public class Language
         }
 
         // Try cultureInfo
-        var cultureInfo = CreateCultureInfo(language);
+        CultureInfo cultureInfo = CreateCultureInfo(language);
         if (cultureInfo == null)
         {
             return nullOnFailure ? null : Undefined;
         }
 
         // Get ISO-639-3 record from cultureInfo ISO code
-        iso6393 = Iso6393.Find(cultureInfo.ThreeLetterISOLanguageName, false);
+        iso6393 = _iso6393.Find(cultureInfo.ThreeLetterISOLanguageName, false);
         if (iso6393 != null)
         {
             // Return the Part 2B code
@@ -153,17 +175,19 @@ public class Language
         {
             // Cultures are created on the fly, we can't rely on an exception
             // https://stackoverflow.com/questions/35074033/invalid-cultureinfo-no-longer-throws-culturenotfoundexception/
-            var cultureInfo = CultureInfo.GetCultureInfo(language, true);
+            CultureInfo cultureInfo = CultureInfo.GetCultureInfo(language, true);
 
             // Make sure the culture was not custom created
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (cultureInfo == null ||
-                cultureInfo.ThreeLetterWindowsLanguageName.Equals(Missing, StringComparison.OrdinalIgnoreCase) ||
-                (cultureInfo.CultureTypes & CultureTypes.UserCustomCulture) == CultureTypes.UserCustomCulture)
-            {
-                return null;
-            }
-            return cultureInfo;
+            return
+                cultureInfo == null
+                || cultureInfo.ThreeLetterWindowsLanguageName.Equals(
+                    Missing,
+                    StringComparison.OrdinalIgnoreCase
+                )
+                || (cultureInfo.CultureTypes & CultureTypes.UserCustomCulture)
+                    == CultureTypes.UserCustomCulture
+                ? null
+                : cultureInfo;
         }
         catch (CultureNotFoundException)
         {
@@ -172,10 +196,9 @@ public class Language
         return null;
     }
 
-    public static bool IsUndefined(string language)
-    {
-        return string.IsNullOrEmpty(language) || language.Equals(Undefined, StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsUndefined(string language) =>
+        string.IsNullOrEmpty(language)
+        || language.Equals(Undefined, StringComparison.OrdinalIgnoreCase);
 
     public bool IsMatch(string prefix, string language)
     {
@@ -197,7 +220,10 @@ public class Language
             }
 
             // The language start with the prefix, and the the next character is a -
-            if (language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && language[prefix.Length..].StartsWith('-'))
+            if (
+                language.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && language[prefix.Length..].StartsWith('-')
+            )
             {
                 return true;
             }
@@ -206,7 +232,7 @@ public class Language
             // E.g. cmn-Hant should be expanded to zh-cmn-Hant else zh will not match
 
             // Find a matching RFC 5646 record
-            var rfc5646 = Rfc5646.Find(language, false);
+            Rfc5646.Record rfc5646 = _rfc5646.Find(language, false);
             if (rfc5646 != null)
             {
                 // If the lookup is different then rematch
@@ -223,21 +249,19 @@ public class Language
         }
     }
 
-    public bool IsMatch(string language, IEnumerable<string> prefixList)
-    {
+    public bool IsMatch(string language, IEnumerable<string> prefixList) =>
         // Match language with any of the prefixes
-        return prefixList.Any(prefix => IsMatch(prefix, language));
-    }
+        prefixList.Any(prefix => IsMatch(prefix, language));
 
     public static List<string> GetLanguageList(IEnumerable<TrackInfo> tracks)
     {
         // Create case insensitive set
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (var item in tracks)
+        foreach (TrackInfo item in tracks)
         {
-            languages.Add(item.LanguageIetf);
+            _ = languages.Add(item.LanguageIetf);
         }
-        return languages.ToList();
+        return [.. languages];
     }
 
     public const string Undefined = "und";
@@ -246,9 +270,9 @@ public class Language
     public const string Chinese = "zh";
     public const string English = "en";
 
-    private Iso6392 Iso6392;
-    private Iso6393 Iso6393;
-    private Rfc5646 Rfc5646;
+    private readonly Iso6392 _iso6392;
+    private readonly Iso6393 _iso6393;
+    private readonly Rfc5646 _rfc5646;
 
     public static readonly Language Singleton = new();
 }

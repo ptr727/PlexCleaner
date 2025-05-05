@@ -4,14 +4,8 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class Bitrate
+public class Bitrate(int seconds)
 {
-    public Bitrate(int seconds)
-    {
-        // Set array length to number of seconds
-        Rate = new long[seconds];
-    }
-
     // Threshold is in bytes per second
     public void Calculate(int threshold = 0)
     {
@@ -60,29 +54,28 @@ public class Bitrate
         Average /= Rate.Length;
     }
 
-    public void WriteLine(string prefix)
-    {
-        Log.Logger.Information("{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
+    public void WriteLine(string prefix) =>
+        Log.Information(
+            "{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
             prefix,
             TimeSpan.FromSeconds(Rate.Length),
             ToBitsPerSecond(Minimum),
             ToBitsPerSecond(Maximum),
             ToBitsPerSecond(Average),
             Exceeded,
-            TimeSpan.FromSeconds(Duration));
-    }
+            TimeSpan.FromSeconds(Duration)
+        );
 
-    public static string ToBitsPerSecond(long byteRate)
-    {
-        return Format.BytesToKilo(byteRate * 8, "bps");
-    }
+    public static string ToBitsPerSecond(long byteRate) => Format.BytesToKilo(byteRate * 8, "bps");
 
     // Array of bytes per second
-    public long[] Rate { get; }
+    public long[] Rate { get; } = new long[seconds];
+
     // Bitrate in bytes per second
     public long Minimum { get; set; }
     public long Maximum { get; set; }
     public long Average { get; set; }
+
     // Threshold exceeded instance count and duration in seconds
     public int Exceeded { get; set; }
     public int Duration { get; set; }

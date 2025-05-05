@@ -2,7 +2,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON schema to C# using quicktype.io in VSCode https://marketplace.visualstudio.com/items?itemName=typeguard.quicktype-vs
+// Convert JSON file to C# using app.quicktype.io
+// Set language, framework, namespace, list
+
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
 
 // Use mkvmerge example output:
@@ -12,137 +14,139 @@ using System.Text.Json.Serialization;
 // Change uid long to UInt64
 // Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
-// ReSharper disable once CheckNamespace
-namespace PlexCleaner.MkvToolJsonSchema;
+namespace PlexCleaner;
 
-public class MkvMerge
+public class MkvToolJsonSchema
 {
-    [JsonPropertyName("container")]
-    public Container Container { get; } = new();
-
-    [JsonPropertyName("global_tags")]
-    public List<GlobalTag> GlobalTags { get; } = [];
-
-    [JsonPropertyName("track_tags")]
-    public List<TrackTag> TrackTags { get; } = [];
-
-    [JsonPropertyName("tracks")]
-    public List<Track> Tracks { get; } = [];
-
-    [JsonPropertyName("attachments")]
-    public List<Attachment> Attachments { get; } = [];
-
-    [JsonPropertyName("chapters")]
-    public List<Chapter> Chapters { get; } = [];
-
-    public static MkvMerge FromJson(string json)
+    public class MkvMerge
     {
-        return JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
+        [JsonPropertyName("container")]
+        public Container Container { get; } = new();
+
+        [JsonPropertyName("global_tags")]
+        public List<GlobalTag> GlobalTags { get; } = [];
+
+        [JsonPropertyName("track_tags")]
+        public List<TrackTag> TrackTags { get; } = [];
+
+        [JsonPropertyName("tracks")]
+        public List<Track> Tracks { get; } = [];
+
+        [JsonPropertyName("attachments")]
+        public List<Attachment> Attachments { get; } = [];
+
+        [JsonPropertyName("chapters")]
+        public List<Chapter> Chapters { get; } = [];
+
+        public static MkvMerge FromJson(string json) =>
+            JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
     }
-}
 
-public class Container
-{
-    [JsonPropertyName("properties")]
-    public ContainerProperties Properties { get; } = new();
+    public class Container
+    {
+        [JsonPropertyName("properties")]
+        public ContainerProperties Properties { get; } = new();
 
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "";
-}
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "";
+    }
 
-public class ContainerProperties
-{
-    [JsonPropertyName("duration")]
-    public long Duration { get; set; }
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = "";
-}
+    public class ContainerProperties
+    {
+        [JsonPropertyName("duration")]
+        public long Duration { get; set; }
 
-public class GlobalTag
-{
-    [JsonPropertyName("num_entries")]
-    public int NumEntries { get; set; }
-}
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = "";
+    }
 
-public class TrackTag
-{
-    [JsonPropertyName("num_entries")]
-    public int NumEntries { get; set; }
+    public class GlobalTag
+    {
+        [JsonPropertyName("num_entries")]
+        public int NumEntries { get; set; }
+    }
 
-    [JsonPropertyName("track_id")]
-    public int TrackId { get; set; }
-}
+    // TODO: TrackTag is only used to test for presence, do we need contents?
+    public class TrackTag
+    {
+        [JsonPropertyName("num_entries")]
+        public int NumEntries { get; set; }
 
-public class Track
-{
-    [JsonPropertyName("codec")]
-    public string Codec { get; set; } = "";
+        [JsonPropertyName("track_id")]
+        public int TrackId { get; set; }
+    }
 
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
+    public class Track
+    {
+        [JsonPropertyName("codec")]
+        public string Codec { get; set; } = "";
 
-    [JsonPropertyName("properties")]
-    public TrackProperties Properties { get; } = new();
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
 
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "";
-}
+        [JsonPropertyName("properties")]
+        public TrackProperties Properties { get; } = new();
 
-public class TrackProperties
-{
-    [JsonPropertyName("codec_id")]
-    public string CodecId { get; set; } = "";
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "";
+    }
 
-    [JsonPropertyName("codec_name")]
-    public string CodecName { get; set; } = "";
+    public class TrackProperties
+    {
+        [JsonPropertyName("codec_id")]
+        public string CodecId { get; set; } = "";
 
-    [JsonPropertyName("language")]
-    public string Language { get; set; } = "";
+        [JsonPropertyName("language")]
+        public string Language { get; set; } = "";
 
-    [JsonPropertyName("language_ietf")]
-    public string LanguageIetf { get; set; }
+        [JsonPropertyName("language_ietf")]
+        public string LanguageIetf { get; set; }
 
-    [JsonPropertyName("forced_track")]
-    public bool Forced { get; set; }
+        [JsonPropertyName("forced_track")]
+        public bool Forced { get; set; }
 
-    [JsonPropertyName("tag_language")]
-    public string TagLanguage { get; set; } = "";
+        [JsonPropertyName("tag_language")]
+        public string TagLanguage { get; set; } = "";
 
-    [JsonPropertyName("number")]
-    public int Number { get; set; }
+        [JsonPropertyName("number")]
+        public int Number { get; set; }
 
-    [JsonPropertyName("track_name")]
-    public string TrackName { get; set; } = "";
+        [JsonPropertyName("track_name")]
+        public string TrackName { get; set; } = "";
 
-    [JsonPropertyName("default_track")]
-    public bool DefaultTrack { get; set; }
+        [JsonPropertyName("default_track")]
+        public bool DefaultTrack { get; set; }
 
-    [JsonPropertyName("flag_original")]
-    public bool Original { get; set; }
-    [JsonPropertyName("flag_commentary")]
-    public bool Commentary { get; set; }
+        [JsonPropertyName("flag_original")]
+        public bool Original { get; set; }
 
-    [JsonPropertyName("flag_visual_impaired")]
-    public bool VisualImpaired { get; set; }
+        [JsonPropertyName("flag_commentary")]
+        public bool Commentary { get; set; }
 
-    [JsonPropertyName("flag_hearing_impaired")]
-    public bool HearingImpaired { get; set; }
+        [JsonPropertyName("flag_visual_impaired")]
+        public bool VisualImpaired { get; set; }
 
-    [JsonPropertyName("flag_text_descriptions")]
-    public bool TextDescriptions { get; set; }
-}
+        [JsonPropertyName("flag_hearing_impaired")]
+        public bool HearingImpaired { get; set; }
 
-public class Attachment
-{
-    [JsonPropertyName("content_type")]
-    public string ContentType { get; set; } = "";
+        [JsonPropertyName("flag_text_descriptions")]
+        public bool TextDescriptions { get; set; }
+    }
 
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-}
+    // TODO: As with tracktags, only used for count, do we need contents?
+    public class Attachment
+    {
+        [JsonPropertyName("content_type")]
+        public string ContentType { get; set; } = "";
 
-public class Chapter
-{
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "";
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+    }
+
+    // TODO: As with tracktags, only used for count, do we need contents?
+    public class Chapter
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "";
+    }
 }

@@ -11,7 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		.github\dependabot.yml = .github\dependabot.yml
 		HISTORY.md = HISTORY.md
 		LICENSE = LICENSE
 		PlexCleaner.defaults.json = PlexCleaner.defaults.json
@@ -23,14 +22,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{C560F57F-962E-4C71-8F27-939D06813302}"
 	ProjectSection(SolutionItems) = preProject
 		Docker\Alpine.Edge.Dockerfile = Docker\Alpine.Edge.Dockerfile
-		Docker\Alpine.dotNET.Dockerfile = Docker\Alpine.dotNET.Dockerfile
-		Docker\Arch.Dockerfile = Docker\Arch.Dockerfile
+		Docker\Alpine.Latest.Dockerfile = Docker\Alpine.Latest.Dockerfile
 		Docker\Build.sh = Docker\Build.sh
-		Docker\Debian.dotNET.Dockerfile = Docker\Debian.dotNET.Dockerfile
+		Docker\Debian.Stable.Dockerfile = Docker\Debian.Stable.Dockerfile
 		Docker\Debian.Testing.Dockerfile = Docker\Debian.Testing.Dockerfile
+		Docker\DebugTools.sh = Docker\DebugTools.sh
 		Docker\README.m4 = Docker\README.m4
 		Docker\Test.sh = Docker\Test.sh
-		Docker\Ubuntu.dotNET.Dockerfile = Docker\Ubuntu.dotNET.Dockerfile
+		Docker\Ubuntu.Devel.Dockerfile = Docker\Ubuntu.Devel.Dockerfile
+		Docker\Ubuntu.Rolling.Dockerfile = Docker\Ubuntu.Rolling.Dockerfile
 		Docker\UnitTest.sh = Docker\UnitTest.sh
 		Docker\Version.sh = Docker\Version.sh
 	EndProjectSection
@@ -40,6 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Actions", "Actions", "{CA5B
 		.github\workflows\BuildDockerPush.yml = .github\workflows\BuildDockerPush.yml
 		.github\workflows\BuildGitHubRelease.yml = .github\workflows\BuildGitHubRelease.yml
 		.github\dependabot.yml = .github\dependabot.yml
+		.github\workflows\DependabotAutoMerge.yml = .github\workflows\DependabotAutoMerge.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlexCleanerTests", "PlexCleanerTests\PlexCleanerTests.csproj", "{D6124D3D-CC4F-448F-BF57-C1D7E2FAC226}"

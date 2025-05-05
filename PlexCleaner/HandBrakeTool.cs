@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -9,52 +10,44 @@ using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
+// TODO: What is an equivalent to ffmpeg -nostats to suppress progress output?
+// https://github.com/HandBrake/HandBrake/issues/2000
+
 namespace PlexCleaner;
 
 public partial class HandBrakeTool : MediaTool
 {
-    public override ToolFamily GetToolFamily()
-    {
-        return ToolFamily.HandBrake;
-    }
+    public override ToolFamily GetToolFamily() => ToolFamily.HandBrake;
 
-    public override ToolType GetToolType()
-    {
-        return ToolType.HandBrake;
-    }
+    public override ToolType GetToolType() => ToolType.HandBrake;
 
-    protected override string GetToolNameWindows()
-    {
-        return "HandBrakeCLI.exe";
-    }
+    protected override string GetToolNameWindows() => "HandBrakeCLI.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "HandBrakeCLI";
-    }
+    protected override string GetToolNameLinux() => "HandBrakeCLI";
 
     public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         // Get version
         const string commandline = "--version";
-        var exitCode = Command(commandline, out var output);
+        int exitCode = Command(commandline, out string output);
         if (exitCode != 0)
         {
             return false;
         }
 
-        // First line as version
+        // First line of stdout as version
         // E.g. Windows : "HandBrake 1.3.3"
         // E.g. Linux : "HandBrake 1.3.3"
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
-        var match = InstalledVersionRegex().Match(lines[0]);
+        Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool filename
         mediaToolInfo.FileName = GetToolPath();
@@ -72,7 +65,7 @@ public partial class HandBrakeTool : MediaTool
 
     protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         try
@@ -87,7 +80,11 @@ public partial class HandBrakeTool : MediaTool
             mediaToolInfo.FileName = $"HandBrakeCLI-{mediaToolInfo.Version}-win-x86_64.zip";
 
             // Get the GitHub download Uri
-            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(repo, mediaToolInfo.Version, mediaToolInfo.FileName);
+            mediaToolInfo.Url = GitHubRelease.GetDownloadUri(
+                repo,
+                mediaToolInfo.Version,
+                mediaToolInfo.FileName
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -98,62 +95,83 @@ public partial class HandBrakeTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
 
-    public bool ConvertToMkv(string inputName, string outputName, bool includeSubtitles, bool deInterlace)
+    public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"--start-at seconds:{(int)timeStart.TotalSeconds} --stop-at seconds:{(int)timeEnd.TotalSeconds}";
+
+    public static string GetStartSplit(TimeSpan timeSpan) =>
+        $"--start-at seconds:{(int)timeSpan.TotalSeconds}";
+
+    public static string GetStopSplit(TimeSpan timeSpan) =>
+        $"--stop-at seconds:{(int)timeSpan.TotalSeconds}";
+
+    public bool ConvertToMkv(
+        string inputName,
+        string outputName,
+        bool includeSubtitles,
+        bool deInterlace,
+        out string error
+    )
     {
         // Delete output file
-        FileEx.DeleteFile(outputName);
+        _ = FileEx.DeleteFile(outputName);
 
-        // TODO: How to suppress console output when running in parallel mode?
-        // if (Program.Options.Parallel)
-
-        // Build commandline
+        // Input file
         StringBuilder commandline = new();
-        CreateDefaultArgs(inputName, commandline);
-        commandline.Append($"--output \"{outputName}\" ");
-        commandline.Append("--format av_mkv ");
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--input \"{inputName}\" ");
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // MKV output
+        _ = commandline.Append("--format av_mkv ");
 
         // Video encoder options
         // E.g. --encoder x264 --quality 20 --encoder-preset medium
-        commandline.Append($"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"--encoder {Program.Config.ConvertOptions.HandBrakeOptions.Video} "
+        );
 
-        // Deinterlace using decomb filter
+        // DeInterlace using decomb filter
         if (deInterlace)
         {
-            commandline.Append("--comb-detect --decomb ");
+            _ = commandline.Append("--comb-detect --decomb ");
         }
 
         // All audio with encoder
         // E.g. --all-audio --aencoder copy --audio-fallback ac3
-        commandline.Append($"--all-audio --aencoder {Program.Config.ConvertOptions.HandBrakeOptions.Audio} ");
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"--all-audio --aencoder {Program.Config.ConvertOptions.HandBrakeOptions.Audio} "
+        );
 
         // All or no subtitles
-        commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
+        _ = commandline.Append(includeSubtitles ? "--all-subtitles " : "--subtitle none ");
 
         // Execute
-        var exitCode = Command(commandline.ToString());
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
         return exitCode == 0;
     }
 
-    private static void CreateDefaultArgs(string inputName, StringBuilder commandline)
-    {
-        commandline.Append($"--input \"{inputName}\" ");
-        if (Program.Options.TestSnippets)
-        {
-            commandline.Append($"--start-at seconds:00 --stop-at seconds:{(int)Program.SnippetTimeSpan.TotalSeconds} ");
-        }
-    }
     public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
     public const string DefaultAudioOptions = "copy --audio-fallback ac3";
 
-
     private const string VersionPattern = @"HandBrake\ (?<version>.*)";
+
     [GeneratedRegex(VersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 }

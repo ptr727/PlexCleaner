@@ -10,9 +10,9 @@ Licensed under the [MIT License](https://github.com/ptr727/PlexCleaner/LICENSE)
 
 ## Project
 
-Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).  
-Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).  
-Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).  
+Code and Pipeline is on [GitHub](https://github.com/ptr727/PlexCleaner).\
+Binary releases are published on [GitHub Releases](https://github.com/ptr727/PlexCleaner/releases).\
+Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).\
 Images are updated weekly with the latest upstream updates.
 
 ## Docker Builds and Tags
@@ -20,34 +20,19 @@ Images are updated weekly with the latest upstream updates.
 - `latest`: Alias for `ubuntu`.
 - `develop`: Alias for `ubuntu-develop`.
 - `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
-  - Installs media tools from Ubuntu repository.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
-- `ubuntu-devel`: [Ubuntu Devel](http://archive.ubuntu.com/ubuntu/dists/devel/Release) `ubuntu:devel` pre-release base image.
-  - Installs media tools from Ubuntu repository.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `alpine`: Based on [Alpine Latest](https://alpinelinux.org/releases/) `alpine:latest` latest stable release base image.
-  - Installs media tools from the Alpine repository.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-  - Handbrake on Alpine does not support `linux/arm/v7` builds.
-- `alpine-edge`: [Alpine Edge](https://alpinelinux.org/releases/) `alpine:edge` pre-release base image.
-  - Installs media tools from the Alpine repository.
-  - Multi-architecture image supporting `linux/amd64`, and `linux/arm64`.
-  - Handbrake on Alpine does not support `linux/arm/v7` builds.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
 - `debian`: Based on [Debian Stable](https://www.debian.org/releases/) `debian:stable-slim` latest stable release base image.
-  - Installs media tools from Debian repository.
-  - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
-- `debian-testing`: [Debian Testing](https://www.debian.org/releases/) `debian:testing-slim` pre-release base image.
-  - Installs media tools from Debian repository.
   - Multi-architecture image supporting `linux/amd64`, `linux/arm64`, and `linux/arm/v7` builds.
 - `*-develop` : Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
-  - E.g. `ubuntu-develop`, `debian-testing-develop`, etc.
 
 ## Platform Support
 
 | Tag | `linux/amd64` | `linux/arm64` | `linux/arm/v7` | Size |
 | --- | --- | --- | --- | --- |
-| `ubuntu` | &#9745; | &#9745; | &#9745; | ~320MB |
-| `alpine` | &#9745; | &#9745; | &#9744; | ~160MB |
+| `ubuntu` | &#9745; | &#9745; | &#9744; | ~350MB |
+| `alpine` | &#9745; | &#9745; | &#9744; | ~156MB |
 | `debian` | &#9745; | &#9745; | &#9745; | ~330MB |
 
 ## Media Tool Versions
@@ -58,32 +43,14 @@ Images are updated weekly with the latest upstream updates.
 include({{ubuntu.ver}})
 ```
 
-### `ptr727/plexcleaner:ubuntu-devel`
-
-```text
-include({{ubuntu-devel.ver}})
-```
-
 ### `ptr727/plexcleaner:debian`
 
 ```text
 include({{debian.ver}})
 ```
 
-### `ptr727/plexcleaner:debian-testing`
-
-```text
-include({{debian-testing.ver}})
-```
-
 ### `ptr727/plexcleaner:alpine`
 
 ```text
 include({{alpine.ver}})
-```
-
-### `ptr727/plexcleaner:alpine-edge`
-
-```text
-include({{alpine-edge.ver}})
 ```

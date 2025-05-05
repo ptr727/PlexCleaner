@@ -7,17 +7,12 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class MediaInfo
+public class MediaInfo(MediaTool.ToolType parser)
 {
-    public MediaInfo(MediaTool.ToolType parser)
-    {
-        Parser = parser;
-    }
-
     public MediaInfo Clone()
     {
         // Shallow copy
-        var clonedInfo = (MediaInfo)MemberwiseClone();
+        MediaInfo clonedInfo = (MediaInfo)MemberwiseClone();
 
         // Create new collections containing the old items
         List<VideoInfo> newVideo = [];
@@ -34,27 +29,40 @@ public class MediaInfo
     }
 
     // MkvMerge, FfProbe, MediaInfo
-    public MediaTool.ToolType Parser { get; }
+    public MediaTool.ToolType Parser { get; } = parser;
 
     public List<VideoInfo> Video { get; private set; } = [];
     public List<AudioInfo> Audio { get; private set; } = [];
     public List<SubtitleInfo> Subtitle { get; private set; } = [];
 
     public bool HasTags { get; set; }
-    public bool AnyTags { get => HasTags || Video.Any(item => item.HasTags) || Audio.Any(item => item.HasTags) || Subtitle.Any(item => item.HasTags); }
+    public bool AnyTags =>
+        HasTags
+        || Video.Any(item => item.HasTags)
+        || Audio.Any(item => item.HasTags)
+        || Subtitle.Any(item => item.HasTags);
     public bool HasErrors { get; set; }
-    public bool AnyErrors { get => HasErrors || Video.Any(item => item.HasErrors) || Audio.Any(item => item.HasErrors) || Subtitle.Any(item => item.HasErrors); }
-    public bool Unsupported
-    {
-        get => Video.Any(item => item.State == TrackInfo.StateType.Unsupported) ||
-            Audio.Any(item => item.State == TrackInfo.StateType.Unsupported) ||
-            Subtitle.Any(item => item.State == TrackInfo.StateType.Unsupported);
-    }
+    public bool AnyErrors =>
+        HasErrors
+        || Video.Any(item => item.HasErrors)
+        || Audio.Any(item => item.HasErrors)
+        || Subtitle.Any(item => item.HasErrors);
+    public bool Unsupported =>
+        Video.Any(item => item.State == TrackInfo.StateType.Unsupported)
+        || Audio.Any(item => item.State == TrackInfo.StateType.Unsupported)
+        || Subtitle.Any(item => item.State == TrackInfo.StateType.Unsupported);
     public TimeSpan Duration { get; set; }
     public string Container { get; set; }
     public int Attachments { get; set; }
     public int Chapters { get; set; }
-    public bool HasCovertArt { get => Video.Any(item => item.IsCoverArt); }
+    public bool HasCovertArt => Video.Any(item => item.IsCoverArt);
+
+    public void WriteLine()
+    {
+        Video.ForEach(item => item.WriteLine());
+        Audio.ForEach(item => item.WriteLine());
+        Subtitle.ForEach(item => item.WriteLine());
+    }
 
     public void WriteLine(string prefix)
     {
@@ -72,35 +80,55 @@ public class MediaInfo
         trackLick.AddRange(Subtitle);
 
         // Sort items by Id
-        return trackLick.OrderBy(item => item.Id).ToList();
+        return [.. trackLick.OrderBy(item => item.Id)];
     }
 
     // Combined track count
     public int Count => Video.Count + Audio.Count + Subtitle.Count;
 
-    public static bool GetMediaInfo(FileInfo fileInfo, out MediaInfo ffProbe, out MediaInfo mkvMerge, out MediaInfo mediaInfo)
+    public static bool GetMediaInfo(
+        FileInfo fileInfo,
+        out MediaInfo ffProbe,
+        out MediaInfo mkvMerge,
+        out MediaInfo mediaInfo
+    )
     {
-        ffProbe = null;
         mkvMerge = null;
         mediaInfo = null;
-
-        return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffProbe) &&
-               GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvMerge) &&
-               GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
+        return GetMediaInfo(fileInfo, MediaTool.ToolType.FfProbe, out ffProbe)
+            && GetMediaInfo(fileInfo, MediaTool.ToolType.MkvMerge, out mkvMerge)
+            && GetMediaInfo(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
     }
 
-    public static bool GetMediaInfo(FileInfo fileInfo, MediaTool.ToolType parser, out MediaInfo mediaInfo)
-    {
+    public static bool GetMediaInfo(
+        FileInfo fileInfo,
+        MediaTool.ToolType parser,
+        out MediaInfo mediaInfo
+    ) =>
         // Use the specified stream parser tool
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        return parser switch
+        parser switch
         {
-            MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(fileInfo.FullName, out mediaInfo),
-            MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(fileInfo.FullName, out mediaInfo),
-            MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(fileInfo.FullName, out mediaInfo),
-            _ => throw new NotImplementedException()
+            MediaTool.ToolType.MediaInfo => Tools.MediaInfo.GetMediaInfo(
+                fileInfo.FullName,
+                out mediaInfo
+            ),
+            MediaTool.ToolType.MkvMerge => Tools.MkvMerge.GetMkvInfo(
+                fileInfo.FullName,
+                out mediaInfo
+            ),
+            MediaTool.ToolType.FfProbe => Tools.FfProbe.GetFfProbeInfo(
+                fileInfo.FullName,
+                out mediaInfo
+            ),
+            MediaTool.ToolType.None => throw new NotImplementedException(),
+            MediaTool.ToolType.FfMpeg => throw new NotImplementedException(),
+            MediaTool.ToolType.HandBrake => throw new NotImplementedException(),
+            MediaTool.ToolType.MkvPropEdit => throw new NotImplementedException(),
+            MediaTool.ToolType.SevenZip => throw new NotImplementedException(),
+            MediaTool.ToolType.MkvExtract => throw new NotImplementedException(),
+            _ => throw new NotImplementedException(),
         };
-    }
+
     public void RemoveCoverArt()
     {
         // No video tracks nothing to do
@@ -110,19 +138,24 @@ public class MediaInfo
         }
 
         // Find all tracks with cover art
-        var coverArtTracks = Video.FindAll(item => item.IsCoverArt);
+        List<VideoInfo> coverArtTracks = Video.FindAll(item => item.IsCoverArt);
 
         // Are all tracks cover art
         if (Video.Count == coverArtTracks.Count)
         {
-            Log.Logger.Error("All video tracks are cover art : {Parser}", Parser);
+            Log.Error("All video tracks are cover art : {Parser}", Parser);
         }
 
         // Remove all cover art tracks
-        foreach (var item in coverArtTracks)
+        foreach (VideoInfo item in coverArtTracks)
         {
-            Log.Logger.Warning("Ignoring cover art video track : {Parser}:{Format}:{Codec}", Parser, item.Format, item.Codec);
-            Video.Remove(item);
+            Log.Warning(
+                "Ignoring cover art video track : {Parser}:{Format}:{Codec}",
+                Parser,
+                item.Format,
+                item.Codec
+            );
+            _ = Video.Remove(item);
         }
     }
 
@@ -133,11 +166,15 @@ public class MediaInfo
         Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
 
         // Get a MkvMerge track list
-        var mkvMergeTrackList = GetTrackList();
+        List<TrackInfo> mkvMergeTrackList = GetTrackList();
 
         // Match by MediaInfo.Number == MkvMerge.Number
         List<TrackInfo> matchedTrackList = [];
-        mediaInfoTrackList.ForEach(mediaInfoItem => matchedTrackList.Add(mkvMergeTrackList.Find(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)));
+        mediaInfoTrackList.ForEach(mediaInfoItem =>
+            matchedTrackList.Add(
+                mkvMergeTrackList.Find(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)
+            )
+        );
 
         // Make sure all items matched
         Debug.Assert(mediaInfoTrackList.Count == matchedTrackList.Count);
@@ -160,12 +197,12 @@ public class MediaInfo
         }
 
         // Get track items as list
-        var thisTrackList = GetTrackList();
-        var thatTrackList = mediaInfo.GetTrackList();
-        foreach (var thisItem in thisTrackList)
+        List<TrackInfo> thisTrackList = GetTrackList();
+        List<TrackInfo> thatTrackList = mediaInfo.GetTrackList();
+        foreach (TrackInfo thisItem in thisTrackList)
         {
             // Find the matching item by matroska header number
-            var thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
+            TrackInfo thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
             if (thatItem == null)
             {
                 return false;
@@ -178,7 +215,7 @@ public class MediaInfo
             }
 
             // The ISO693-3 language has to match
-            if (!thisItem.Language.Equals(thatItem.Language))
+            if (!thisItem.Language.Equals(thatItem.Language, StringComparison.Ordinal))
             {
                 return false;
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -12,53 +13,45 @@ using Serilog;
 // https://mkvtoolnix.download/doc/mkvmerge.html
 // mkvmerge [global options] {-o out} [options1] {file1} [[options2] {file2}] [@options-file.json]
 
+// TODO: What is an equivalent to ffmpeg -nostats to suppress progress output?
+// https://help.mkvtoolnix.download/t/option-to-suppress-progress-reporting-but-keep-static-output/1320
+
 namespace PlexCleaner;
 
 public partial class MkvMergeTool : MediaTool
 {
-    public override ToolFamily GetToolFamily()
-    {
-        return ToolFamily.MkvToolNix;
-    }
+    public override ToolFamily GetToolFamily() => ToolFamily.MkvToolNix;
 
-    public override ToolType GetToolType()
-    {
-        return ToolType.MkvMerge;
-    }
+    public override ToolType GetToolType() => ToolType.MkvMerge;
 
-    protected override string GetToolNameWindows()
-    {
-        return "mkvmerge.exe";
-    }
+    protected override string GetToolNameWindows() => "mkvmerge.exe";
 
-    protected override string GetToolNameLinux()
-    {
-        return "mkvmerge";
-    }
+    protected override string GetToolNameLinux() => "mkvmerge";
 
     public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         // Get version
         const string commandline = "--version";
-        var exitCode = Command(commandline, out var output);
+        int exitCode = Command(commandline, out string output);
         if (exitCode != 0)
         {
             return false;
         }
 
-        // First line as version
+        // First line of stdout as version
         // E.g. Windows : "mkvmerge v51.0.0 ('I Wish') 64-bit"
         // E.g. Linux : "mkvmerge v51.0.0 ('I Wish') 64-bit"
-        var lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        string[] lines = output.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         // Extract the short version number
         // Match word for mkvmerge or mkvpropedit
-        var match = InstalledVersionRegex().Match(lines[0]);
+        Match match = InstalledVersionRegex().Match(lines[0]);
         Debug.Assert(match.Success);
         mediaToolInfo.Version = match.Groups["version"].Value;
+        Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
 
         // Get tool fileName
         mediaToolInfo.FileName = GetToolPath();
@@ -76,29 +69,31 @@ public partial class MkvMergeTool : MediaTool
 
     protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
+        // Initialize
         mediaToolInfo = new MediaToolInfo(this);
 
         try
         {
             // Download latest release file
             const string uri = "https://mkvtoolnix.download/latest-release.xml.gz";
-            Log.Logger.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            var releaseStream = Download.GetHttpClient().GetStreamAsync(uri).Result;
+            Log.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+            Stream releaseStream = Download.GetHttpClient().GetStreamAsync(uri).Result;
 
             // Get XML from Gzip
             using GZipStream gzStream = new(releaseStream, CompressionMode.Decompress);
             using StreamReader sr = new(gzStream);
-            var xml = sr.ReadToEnd();
+            string xml = sr.ReadToEnd();
 
             // Get the version number from XML
-            var mkvtools = MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
+            MkvToolXmlSchema.MkvToolnixReleases mkvtools =
+                MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
             mediaToolInfo.Version = mkvtools.LatestSource.Version;
 
             // Create download URL and the output fileName using the version number
             // E.g. https://mkvtoolnix.download/windows/releases/18.0.0/mkvtoolnix-64-bit-18.0.0.7z
             mediaToolInfo.FileName = $"mkvtoolnix-64-bit-{mediaToolInfo.Version}.7z";
-            mediaToolInfo.Url = $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
+            mediaToolInfo.Url =
+                $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
@@ -109,18 +104,24 @@ public partial class MkvMergeTool : MediaTool
 
     protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
     {
-        // Initialize            
-        mediaToolInfo = new MediaToolInfo(this);
-
-        // TODO: Linux implementation
+        // Not implemented
+        mediaToolInfo = null;
         return false;
     }
+
+    public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
+        $"--split parts:{(int)timeStart.TotalSeconds}s-{(int)timeEnd.TotalSeconds}s";
+
+    public static string GetStartSplit(TimeSpan timeSpan) =>
+        $"--split parts:{(int)timeSpan.TotalSeconds}s-";
+
+    public static string GetStopSplit(TimeSpan timeSpan) =>
+        $"--split parts:-{(int)timeSpan.TotalSeconds}s";
 
     public bool GetMkvInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMkvInfoJson(fileName, out var json) &&
-               GetMkvInfoFromJson(json, out mediaInfo);
+        return GetMkvInfoJson(fileName, out string json) && GetMkvInfoFromJson(json, out mediaInfo);
     }
 
     public bool GetMkvInfoJson(string fileName, out string json)
@@ -128,8 +129,11 @@ public partial class MkvMergeTool : MediaTool
         // Get media info as JSON
         StringBuilder commandline = new();
         // Normalize IETF tags to extended format, e.g. zh-cmn-Hant vs. cmn-Hant
-        commandline.Append($"--normalize-language-ietf extlang --identify \"{fileName}\" --identification-format json");
-        var exitCode = Command(commandline.ToString(), out json);
+        _ = commandline.Append(
+            CultureInfo.InvariantCulture,
+            $"--normalize-language-ietf extlang --identify \"{fileName}\" --identification-format json"
+        );
+        int exitCode = Command(commandline.ToString(), out json);
         return exitCode == 0;
     }
 
@@ -142,47 +146,51 @@ public partial class MkvMergeTool : MediaTool
         try
         {
             // Deserialize
-            var mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
-            if (mkvMerge == null)
-            {
-                return false;
-            }
-
-            // No tracks
-            if (mkvMerge.Tracks.Count == 0)
+            MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
+            if (mkvMerge == null || mkvMerge.Tracks.Count == 0)
             {
                 return false;
             }
 
             // Tracks
-            foreach (var track in mkvMerge.Tracks)
+            foreach (MkvToolJsonSchema.Track track in mkvMerge.Tracks)
             {
                 // If the container is not a MKV, ignore missing CodecId's
-                if (!mkvMerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase) &&
-                    string.IsNullOrEmpty(track.Properties.CodecId))
+                if (
+                    !mkvMerge.Container.Type.Equals("Matroska", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrEmpty(track.Properties.CodecId)
+                )
                 {
+                    Log.Warning(
+                        "MkvToolJsonSchema : Overriding unknown codec for non-Matroska container : Codec: {Codec}",
+                        track.Properties.CodecId
+                    );
                     track.Properties.CodecId = "Unknown";
                 }
 
-                if (track.Type.Equals("video", StringComparison.OrdinalIgnoreCase))
+                // Process by track type
+                switch (track.Type.ToLowerInvariant())
                 {
-                    VideoInfo info = new(track);
-                    mediaInfo.Video.Add(info);
-                }
-                else if (track.Type.Equals("audio", StringComparison.OrdinalIgnoreCase))
-                {
-                    AudioInfo info = new(track);
-                    mediaInfo.Audio.Add(info);
-                }
-                else if (track.Type.Equals("subtitles", StringComparison.OrdinalIgnoreCase))
-                {
-                    // TODO: Some variants of DVBSUB are not supported by MkvToolNix
-                    // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1648
-                    // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
-                    // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
-
-                    SubtitleInfo info = new(track);
-                    mediaInfo.Subtitle.Add(info);
+                    case "video":
+                        mediaInfo.Video.Add(new(track));
+                        break;
+                    case "audio":
+                        mediaInfo.Audio.Add(new(track));
+                        break;
+                    case "subtitles":
+                        // TODO: Some variants of DVBSUB are not supported by MkvToolNix
+                        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1648
+                        // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
+                        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
+                        // TODO: Reported fixed, to be verified
+                        mediaInfo.Subtitle.Add(new(track));
+                        break;
+                    default:
+                        Log.Warning(
+                            "MkvToolJsonSchema : Unknown track type : {TrackType}",
+                            track.Type
+                        );
+                        break;
                 }
             }
 
@@ -199,20 +207,26 @@ public partial class MkvMergeTool : MediaTool
             mediaInfo.HasErrors = mediaInfo.Unsupported;
 
             // Unwanted tags
-            mediaInfo.HasTags = mkvMerge.GlobalTags.Count > 0 ||
-                                mkvMerge.TrackTags.Count > 0 ||
-                                mediaInfo.Attachments > 0 ||
-                                !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title);
+            mediaInfo.HasTags =
+                mkvMerge.GlobalTags.Count > 0
+                || mkvMerge.TrackTags.Count > 0
+                || mediaInfo.Attachments > 0
+                || !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title);
 
             // Duration in nanoseconds
-            mediaInfo.Duration = TimeSpan.FromSeconds(mkvMerge.Container.Properties.Duration / 1000000.0);
+            mediaInfo.Duration = TimeSpan.FromSeconds(
+                mkvMerge.Container.Properties.Duration / 1000000.0
+            );
 
             // Must be Matroska type
             if (!IsMkvContainer(mediaInfo))
             {
-                Log.Logger.Warning("MKV container type is not Matroska : {Type}", mkvMerge.Container.Type);
+                Log.Warning(
+                    "MkvToolJsonSchema : MKV file type is not Matroska : {Type}",
+                    mkvMerge.Container.Type
+                );
 
-                // Remux to convert to MKV
+                // ReMux to convert to MKV
                 mediaInfo.HasErrors = true;
                 mediaInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
             }
@@ -224,64 +238,113 @@ public partial class MkvMergeTool : MediaTool
         return true;
     }
 
-    public static bool IsMkvFile(string fileName)
-    {
-        return IsMkvExtension(Path.GetExtension(fileName));
-    }
+    public static bool IsMkvContainer(MediaInfo mediaInfo) =>
+        mediaInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsMkvFile(FileInfo fileInfo)
-    {
-        return IsMkvExtension(fileInfo.Extension);
-    }
-
-    public static bool IsMkvExtension(string extension)
-    {
-        // Case insensitive match, .mkv or .MKV
-        return extension.Equals(".mkv", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static bool IsMkvContainer(MediaInfo mediaInfo)
-    {
-        return mediaInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public bool ReMuxToMkv(string inputName, SelectMediaInfo selectMediaInfo, string outputName)
+    public bool ReMuxToMkv(
+        string inputName,
+        SelectMediaInfo selectMediaInfo,
+        string outputName,
+        out string error
+    )
     {
         // Verify correct media type
         Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.MkvMerge);
 
         // Delete output file
-        FileEx.DeleteFile(outputName);
+        _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
+        StringBuilder commandline = new();
+        _ = commandline.Append($"{MergeOptions} ");
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
         // Selected is Keep
         // NotSelected is Remove
-        StringBuilder commandline = new();
-        CreateDefaultArgs(outputName, commandline);
         CreateTrackArgs(selectMediaInfo.Selected, commandline);
-        commandline.Append($"\"{inputName}\"");
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
-        // Remux tracks
-        var exitCode = Command(commandline.ToString());
+        // ReMux tracks
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
         return exitCode is 0 or 1;
     }
 
-    public bool ReMuxToMkv(string inputName, string outputName)
+    public bool ReMuxToMkv(string inputName, string outputName, out string error)
     {
         // Delete output file
-        FileEx.DeleteFile(outputName);
+        _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
         StringBuilder commandline = new();
-        CreateDefaultArgs(outputName, commandline);
-        commandline.Append($"\"{inputName}\"");
+        _ = commandline.Append($"{MergeOptions} ");
 
-        // Remux all
-        var exitCode = Command(commandline.ToString());
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // Input file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
+
+        // ReMux all
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
         return exitCode is 0 or 1;
     }
 
-    public bool MergeToMkv(string sourceOne, string sourceTwo, MediaInfo keepTwo, string outputName)
+    public bool RemoveSubtitles(string inputName, string outputName, out string error)
+    {
+        // Delete output file
+        _ = FileEx.DeleteFile(outputName);
+
+        // Defaults
+        StringBuilder commandline = new();
+        _ = commandline.Append($"{MergeOptions} ");
+
+        // Snippets
+        if (Program.Options.TestSnippets)
+        {
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
+        }
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // No subtitles and input file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--no-subtitles \"{inputName}\"");
+
+        // ReMux tracks
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
+        return exitCode is 0 or 1;
+    }
+
+    public bool MergeToMkv(
+        string sourceOne,
+        string sourceTwo,
+        MediaInfo keepTwo,
+        string outputName,
+        out string error
+    )
     {
         // Merge all tracks from sourceOne with selected tracks in sourceTwo
 
@@ -289,37 +352,36 @@ public partial class MkvMergeTool : MediaTool
         Debug.Assert(keepTwo.Parser == ToolType.MkvMerge);
 
         // Delete output file
-        FileEx.DeleteFile(outputName);
+        _ = FileEx.DeleteFile(outputName);
 
-        // Build commandline
+        // Defaults
         StringBuilder commandline = new();
-        // Default args
-        CreateDefaultArgs(outputName, commandline);
-        // Source one as is
-        commandline.Append($"\"{sourceOne}\" ");
-        // Source two track options
-        CreateTrackArgs(keepTwo, commandline);
-        // Source two
-        // TODO: Why did I use --no-chapters
-        commandline.Append($"\"{sourceTwo}\"");
-        // Remux tracks
-        var exitCode = Command(commandline.ToString());
-        return exitCode is 0 or 1;
-    }
+        _ = commandline.Append($"{MergeOptions} ");
 
-    private static void CreateDefaultArgs(string outputName, StringBuilder commandline)
-    {
-        commandline.Append($"{MergeOptions} ");
-        if (Program.Options.Parallel)
-        {
-            // Suppress console output
-            commandline.Append("--quiet ");
-        }
+        // Snippets
         if (Program.Options.TestSnippets)
         {
-            commandline.Append($"--split parts:00:00:00-{Program.SnippetTimeSpan:hh\\:mm\\:ss} ");
+            _ = commandline.Append(
+                CultureInfo.InvariantCulture,
+                $"{GetStopSplit(Program.SnippetTimeSpan)} "
+            );
         }
-        commandline.Append($"--output \"{outputName}\" ");
+
+        // Output file
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"--output \"{outputName}\" ");
+
+        // Source one as is
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceOne}\" ");
+
+        // Source two track options
+        CreateTrackArgs(keepTwo, commandline);
+
+        // Source two
+        _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{sourceTwo}\"");
+
+        // ReMux tracks
+        int exitCode = Command(commandline.ToString(), 5, out error, out _);
+        return exitCode is 0 or 1;
     }
 
     private static void CreateTrackArgs(MediaInfo mediaInfo, StringBuilder commandline)
@@ -329,35 +391,34 @@ public partial class MkvMergeTool : MediaTool
 
         // Create the track number filters
         // The track numbers are reported by MkvMerge --identify, use the track.id values
-        if (mediaInfo.Video.Count > 0)
-        {
-            commandline.Append($"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => $"{info.Id}"))} ");
-        }
-        else
-        {
-            commandline.Append("--no-video ");
-        }
-        if (mediaInfo.Audio.Count > 0)
-        {
-            commandline.Append($"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => $"{info.Id}"))} ");
-        }
-        else
-        {
-            commandline.Append("--no-audio ");
-        }
-        if (mediaInfo.Subtitle.Count > 0)
-        {
-            commandline.Append($"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => $"{info.Id}"))} ");
-        }
-        else
-        {
-            commandline.Append("--no-subtitles ");
-        }
+        _ =
+            mediaInfo.Video.Count > 0
+                ? commandline.Append(
+                    CultureInfo.InvariantCulture,
+                    $"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => $"{info.Id}"))} "
+                )
+                : commandline.Append("--no-video ");
+        _ =
+            mediaInfo.Audio.Count > 0
+                ? commandline.Append(
+                    CultureInfo.InvariantCulture,
+                    $"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => $"{info.Id}"))} "
+                )
+                : commandline.Append("--no-audio ");
+        _ =
+            mediaInfo.Subtitle.Count > 0
+                ? commandline.Append(
+                    CultureInfo.InvariantCulture,
+                    $"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => $"{info.Id}"))} "
+                )
+                : commandline.Append("--no-subtitles ");
     }
 
-    private const string MergeOptions = "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
+    private const string MergeOptions =
+        "--disable-track-statistics-tags --no-global-tags --no-track-tags --no-attachments --no-buttons --normalize-language-ietf extlang";
 
     private const string InstalledVersionPattern = @"([^\s]+)\ v(?<version>.*?)\ \(";
+
     [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     public static partial Regex InstalledVersionRegex();
 }

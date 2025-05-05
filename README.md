@@ -1,34 +1,57 @@
 # PlexCleaner
 
-Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## License
 
-Licensed under the [MIT License][license-link]  
+Licensed under the [MIT License][license-link]\
 ![GitHub License][license-shield]
 
 ## Build
 
-Code and Pipeline is on [GitHub][github-link].  
-Binary releases are published on [GitHub Releases][releases-link].  
+Code and Pipeline is on [GitHub][github-link].\
+Binary releases are published on [GitHub Releases][releases-link].\
 Docker images are published on [Docker Hub][docker-link].
 
 ## Status
 
-[![Release Status][release-status-shield]][actions-link]  
-[![Docker Status][docker-status-shield]][actions-link]  
-[![Last Commit][last-commit-shield]][commit-link]  
+[![Release Status][release-status-shield]][actions-link]\
+[![Docker Status][docker-status-shield]][actions-link]\
+[![Last Commit][last-commit-shield]][commit-link]\
 [![Last Build][last-build-shield]][actions-link]
 
 ## Releases
 
-[![GitHub Release][release-version-shield]][releases-link]  
-[![GitHub Pre-Release][pre-release-version-shield]][releases-link]  
-[![Docker Latest][docker-latest-version-shield]][docker-link]  
+[![GitHub Release][release-version-shield]][releases-link]\
+[![GitHub Pre-Release][pre-release-version-shield]][releases-link]\
+[![Docker Latest][docker-latest-version-shield]][docker-link]\
 [![Docker Develop][docker-develop-version-shield]][docker-link]
 
 ## Release Notes
 
+- version 3:12:
+  - Update to .NET 9.0.
+    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
+    - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
+    - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
+    - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
+  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
+  - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
+  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
+    - See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
+    - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
+    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
+  - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
+  - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
+  - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
+  - Added `quickscan` option to limit the scan duration and improve performance, at the potential cost of accuracy.
+  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap set value to CPU count, prevents CPU starvation.
+  - Removed the `reverify` option, it was only partially resetting process state, to reset state and start fresh use the `createsidecar` command.
+  - Removed the `testnomodify` option, some modifying code paths missed and conditional logic became too convoluted to maintain, use `testsnippets` and `quickscan` options with sample media files to test instead.
+  - Modified logic for `reencode`, `remux`, `verify`, `removesubtitles`, and `removeclosedcaptions` commands to use the same logic as used by the `process` command.
+  - Capturing all media tool console output, printing any errors only when encountered.
+  - Added additional unit tests.
+  - General refactoring.
 - Version 3.11:
   - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
 - Version 3:10:
@@ -64,14 +87,6 @@ Docker images are published on [Docker Hub][docker-link].
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
   - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
     - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
-- Version 3.6:
-  - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
-    - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
-    - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases (v3.20 May 2024).
-    - Alpine Edge builds will be tagged as `alpine-edge`.
-- Version 3.5:
-  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
-  - Update Alpine Docker image to 3.19.
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -82,7 +97,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Use Cases
 
-The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html).
+The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html), etc.
 
 Below are examples of issues that can be resolved using the primary `process` command:
 
@@ -98,8 +113,8 @@ Below are examples of issues that can be resolved using the primary `process` co
 - Corrupt media streams cause playback issues, verify stream integrity, and try to automatically repair by re-encoding.
 - Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
 - Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10/HDR10+ displays.
-- EIA-608 Closed Captions embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
-- See the `process` [command](#process-command) for more details.
+- EIA-608 and CTA-708 closed captions (CC) embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
+- See the [`process` command](#process-command) for more details.
 
 ## Performance Considerations
 
@@ -108,13 +123,12 @@ Below are examples of issues that can be resolved using the primary `process` co
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
 - Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
-- When parallel processing is enabled, the default thread count is half the number of system cores, and can be changed using the `--threadcount` option.
-- Processing can be interrupted using `Ctrl-C`, if using sidecar files restarting will skip previously verified files.
+- Processing can be interrupted using `Ctrl-Break`, if using sidecar files restarting will skip previously verified files.
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.  
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.
 Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [MacOS](#macos) following the provided instructions.
 
 ### Docker
@@ -123,11 +137,8 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 - See the [Docker README][docker-link] for full distribution details and current media tool versions.
   - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
   - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
-  - `ptr727/plexcleaner:ubuntu-devel` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:devel`).
   - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
-  - `ptr727/plexcleaner:alpine-edge` is based on [Alpine][alpine-docker-link] (`alpine:edge`).
   - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
-  - `ptr727/plexcleaner:debian-testing` is based on [Debian][debian-hub-link] (`debian:testing-slim`).
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
@@ -136,15 +147,15 @@ Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [Mac
 
 Example, run in an interactive shell:
 
-```bash
+```shell
 # The host "/data/media" directory is mapped to the container "/media" directory
 # Replace the volume mappings to suit your needs
 
-# Make sure the media file permissions allow writing for the executing user
+# If running docker as a non-root user make sure the media file permissions allow writing for the executing user
 # adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
-# Replace the user account to suit your needs
-sudo chown -R nonroot:users /data/media
-sudo chmod -R ugo=rwx /data/media
+# sudo chown -R nonroot:users /data/media
+# sudo chmod -R ug=rwx,o=rx /data/media
+# docker run --user nonroot:users
 
 # Run the bash shell in an interactive session
 docker run \
@@ -152,7 +163,6 @@ docker run \
   --rm \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -177,7 +187,7 @@ exit
 
 Example, run `monitor` command in a screen session:
 
-```bash
+```shell
 # Start a new screen session
 screen
 # Or attach to the existing screen session
@@ -190,7 +200,6 @@ docker run \
   --log-driver json-file --log-opt max-size=10m \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -206,13 +215,12 @@ docker run \
 
 Example, run `process` command:
 
-```bash
+```shell
 # Run the process command
 docker run \
   --rm \
   --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
   --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -282,27 +290,27 @@ services:
 
 ### macOS
 
-- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are untested.
+- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are not tested during CI.
 
 ## Configuration
 
-Create a default JSON configuration file by running:  
+Create a default JSON configuration file by running:
 `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
 
 Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for usage.
 
-## Custom FFmpeg and HandBrake CLI Parameters
+### Custom FFmpeg and HandBrake CLI Parameters
 
 The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific.  
-Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.  
+Note that hardware assisted encoding options are operating system, hardware, and tool version specific.\
+Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.
 The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
-### FFmpeg Options
+#### FFmpeg Options
 
-See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.  
-The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.  
+See the [FFmpeg documentation](https://ffmpeg.org/ffmpeg.html) for complete commandline option details.\
+The typical FFmpeg commandline is `ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}`.
 E.g. `ffmpeg "-analyzeduration 2147483647 -probesize 2147483647 -i "/media/foo.mkv" -max_muxing_queue_size 1024 -abort_on empty_output -hide_banner -nostats -map 0 -c:v libx265 -crf 26 -preset medium -c:a ac3 -c:s copy -f matroska "/media/bar.mkv"`
 
 Settings allows for custom configuration of:
@@ -335,10 +343,10 @@ Example hardware assisted video encoding options:
   - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
   - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
 
-### HandBrake Options
+#### HandBrake Options
 
-See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.  
-The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.  
+See the [HandBrake documentation](https://handbrake.fr/docs/en/latest/cli/command-line-reference.html) for complete commandline option details.
+The typical HandBrake commandline is `HandBrakeCLI [options] -i <source> -o <destination>`.
 E.g. `HandBrakeCLI --input "/media/foo.mkv" --output "/media/bar.mkv" --format av_mkv --encoder x265 --quality 26 --encoder-preset medium --comb-detect --decomb --all-audio --aencoder copy --audio-fallback ac3`
 
 Settings allows for custom configuration of:
@@ -366,35 +374,18 @@ Example hardware assisted video encoding options:
   - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
   - `HandBrakeOptions:Video`: `qsv_h264 --quality 22 --encoder-preset medium`
 
-Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.  
+Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
-
-## Language Matching
-
-Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).  
-During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.  
-If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
-
-Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.  
-E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.  
-E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.  
-E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.  
-E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
-
-Normalized tags will be expanded for matching.  
-E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
-
-See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## Usage
 
-Use the `PlexCleaner --help` commandline option to get a list of commands and options.  
+Use the `PlexCleaner --help` commandline option to get a list of commands and options.\
 To get help for a specific command run `PlexCleaner <command> --help`.
 
 ```text
-> ./PlexCleaner --help
+> PlexCleaner --help
 Description:
-  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin
+  Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 Usage:
   PlexCleaner [command] [options]
@@ -408,27 +399,29 @@ Options:
   -?, -h, --help       Show help and usage information
 
 Commands:
-  defaultsettings   Write default values to settings file
-  checkfornewtools  Check for new tool versions and download if newer
-  process           Process media files
-  monitor           Monitor for file changes and process changed media files
-  remux             Re-Multiplex media files
-  reencode          Re-Encode media files
-  deinterlace       De-Interlace media files
-  removesubtitles   Remove subtitles from media files
-  createsidecar     Create new sidecar files
-  updatesidecar     Update existing sidecar files
-  getversioninfo    Print application and tools version information
-  getsidecarinfo    Print sidecar file information
-  gettagmap         Print media information tag-map
-  getmediainfo      Print media information using sidecar files
-  gettoolinfo       Print media information using media tools
-  createschema      Write settings schema to file
-  ```
+  defaultsettings       Write default values to settings file
+  checkfornewtools      Check for new tool versions and download if newer
+  process               Process media files
+  monitor               Monitor for file changes and process changed media files
+  remux                 Re-Multiplex media files
+  reencode              Re-Encode media files
+  deinterlace           De-Interlace media files
+  removesubtitles       Remove subtitles from media files
+  removeclosedcaptions  Remove closed captions from media files
+  verify                Verify media files
+  createsidecar         Create new sidecar files
+  updatesidecar         Update existing sidecar files
+  getversioninfo        Print application and tools version information
+  getsidecarinfo        Print sidecar file information
+  gettagmap             Print media information tag-map
+  getmediainfo          Print media information using sidecar files
+  gettoolinfo           Print media information using media tools
+  createschema          Write settings schema to file
+```
 
 ### Global Options
 
-Global options apply to all commands.
+Global options apply to all commands:
 
 - `--logfile`:
   - Path to the log file.
@@ -442,7 +435,7 @@ Global options apply to all commands.
 ### Process Command
 
 ```text
-> ./PlexCleaner process --help
+> PlexCleaner process --help
 Description:
   Process media files
 
@@ -452,11 +445,11 @@ Usage:
 Options:
   --settingsfile <settingsfile> (REQUIRED)  Path to settings file
   --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --parallel                                Enable parallel processing
-  --threadcount <threadcount>               Number of threads to use for parallel processing
-  --testsnippets                            Create short media clips
-  --testnomodify                            Do not make any file modifications
-  --reverify                                Re-verify and repair media files in the VerifyFailed state
+  --parallel                                Enable parallel file processing
+  --threadcount <threadcount>               Number of threads for parallel file processing
+  --quickscan                               Scan only part of the file
+  --resultsfile <resultsfile>               Path to results file
+  --testsnippets                            Create short media file clips
   --logfile <logfile>                       Path to log file
   --logappend                               Append to existing log file
   --logwarning                              Log warnings and errors only
@@ -466,41 +459,72 @@ Options:
 
 The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
 
-- Delete files with extensions not in the `KeepExtensions` list.
-- Re-multiplex containers in the `ReMuxExtensions` list to MKV container format.
+- Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for configuration details.
+- Delete unwanted files.
+  - `FileIgnoreMasks`, `ReMuxExtensions`, `DeleteUnwantedExtensions`.
+- Re-multiplex non-MKV containers to MKV format.
+  - `ReMuxExtensions`, `ReMux`.
 - Remove all tags, titles, thumbnails, cover art, and attachments from the media file.
-- Set IETF language tags and Matroska track flags if missing.
-- Set the language to `DefaultLanguage` for any track with an undefined language.
-- If multiple audio tracks of the same language but different encoding formats are present, set the default track based on `PreferredAudioFormats`.
-- Remove tracks with languages not in the `KeepLanguages` list.
+  - `RemoveTags`.
+- Set IETF language tags and Matroska special track flags if missing.
+  - `SetIetfLanguageTags`.
+- Set Matroska special track flags based on track titles.
+  - `SetTrackFlags`.
+- Set the default language for any track with an undefined language.
+  - `SetUnknownLanguage`, `DefaultLanguage`.
+- Remove tracks with unwanted languages.
+  - `KeepLanguages`, `KeepOriginalLanguage`, `RemoveUnwantedLanguageTracks`
 - Remove duplicate tracks, where duplicates are tracks of the same type and language.
-- Re-multiplex the media file if required.
-- Deinterlace the video track if interlaced.
-- Remove EIA-608 Closed Captions from video streams.
-- Re-encode video if video format matches `ReEncodeVideo`.
-- Re-encode audio if audio matches the `ReEncodeAudioFormats` list.
-- Verify the media container and stream integrity, if corrupt try to automatically repair, else conditionally delete the file.
+  - `RemoveDuplicateTracks`, `PreferredAudioFormats`.
+- Re-multiplex the media file if required to fix inconsistencies.
+  - `ReMux`.
+- De-interlace the video stream if interlaced.
+  - `DeInterlace`.
+- Remove EIA-608 and CTA-708 closed captions from video stream if present.
+  - `RemoveClosedCaptions`.
+- Re-encode video and audio based on specified codecs and formats.
+  - `ReEncodeVideo`, `ReEncodeAudioFormats`, `ConvertOptions`, `ReEncode`.
+- Verify the media container and stream integrity.
+  - `MaximumBitrate`, `Verify`.
+- If verification fails attempt repair.
+  - `AutoRepair`.
+- If verification after repair fails delete or mark file to be ignored.
+  - `DeleteInvalidFiles`, `RegisterInvalidFiles`.
+- Restore modified timestamp of modified files to original timestamp.
+  - See `RestoreFileTimestamp`.
+- Delete empty folders.
+  - `DeleteEmptyFolders`.
 
 Options:
 
 - `--settingsfile`: (required)
-  - Path to the settings file.
+  - Path to the JSON settings file.
 - `--mediafiles`: (required)
   - Path to file or folder containing files to process.
   - Paths with spaces should be double quoted.
   - Repeat the option to include multiple files or directories, e.g. `--mediafiles path1 --mediafiles "path with space" --mediafiles file1 --mediafiles file2`.
-- `--reverify`:
-  - Re-verify and repair media files that are in the `VerifyFailed` state.
-  - By default files would be skipped due to processing optimization logic when using sidecar files.
+- `--testsnippets`:
+  - Create shortened output snippets (30s) for any files created during processing.
+  - Useful when testing to speed up processing times.
+  - Can be combined with `--quickscan` to limit file scanning operations.
+  - Use this option only when testing and on test files.
 - `--parallel`:
   - Process multiple files concurrently.
-  - When parallel processing is enabled, the default thread count is half the number of system cores.
+  - Useful when the system has more processing power than being utilized with serial file processing.
 - `--threadcount`:
-  - Override the thread count when the `--parallel` option is enabled.
-- `--testsnippets`:
-  - Create short media clips that limit the processing time required, useful during testing.
-- `--testnomodify`:
-  - Process files but do not make any file modifications, useful during testing.
+  - Concurrent file processing thread count when the `--parallel` option is enabled.
+  - The default thread count is the largest of 1/2 number of logical processors or 4.
+  - Note that media tools internally use multiple threads.
+- `--quickscan`:
+  - Limits the time duration (3min) when scanning media files, applies to:
+    - Stream verification.
+    - Interlaced frame detection.
+    - Closed caption detection.
+    - Bitrate calculation.
+  - Improves processing times, but there is some risk of missing information present in later parts of the stream.
+- `--resultsfile`:
+  - Write processing results to a JSON file.
+  - Useful when comparing results with previous processing runs.
 
 Example:
 
@@ -509,55 +533,322 @@ Example:
   --logfile PlexCleaner.log \
   process \
   --settingsfile PlexCleaner.json \
-  --parallel \
   --mediafiles "C:\Foo With Space\Test.mkv" \
   --mediafiles D:\Media
 ```
 
-### Re-Multiplex, Re-Encode, De-Interlace, Remove Subtitles Commands
+### Monitor Command
 
-These commands have no conditional logic and will process all specified media files.
+```text
+> PlexCleaner monitor --help
+Description:
+  Monitor for file changes and process changed media files
 
+Usage:
+  PlexCleaner monitor [options]
+
+Options:
+  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
+  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
+  --parallel                                Enable parallel file processing
+  --threadcount <threadcount>               Number of threads for parallel file processing
+  --quickscan                               Scan only part of the file
+  --preprocess                              Pre-process all monitored folders
+  --logfile <logfile>                       Path to log file
+  --logappend                               Append to existing log file
+  --logwarning                              Log warnings and errors only
+  --debug                                   Wait for debugger to attach
+  -?, -h, --help                            Show help and usage information
+```
+
+The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
+
+- All the referenced directories will be watched for changes, and any changes will be added to a queue to be periodically processed.
+- Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
+
+Options:
+
+- Most of the `process` command options apply.
+- `--preprocess`:
+  - On startup process all existing media files while watching for new changes.
+- Advanced options are configured in [`MonitorOptions`](PlexCleaner.defaults.json).
+
+### Other Commands
+
+- `defaultsettings`:
+  - Create JSON configuration file using default settings.
+- `checkfornewtools`:
+  - Check for new tool versions and download if newer.
+  - Only supported on Windows.
 - `remux`:
-  - Re-multiplex the media files using MkvMerge.
-  - Useful to update the file with the latest multiplexer.
+  - Re-multiplex non-MKV containers in the `ReMuxExtensions` list to MKV container format.
+  - Same logic as used in the `process` command.
 - `reencode`:
-  - Re-encode the media files using FFmpeg.
+  - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in `ConvertOptions`.
+  - Same logic as used in the `process` command.
 - `deinterlace`:
-  - De-interlace interlaced media files using HandBrake.
+  - De-interlace the video stream if interlaced.
+  - Same logic as used in the `process` command.
 - `removesubtitles`:
-  - Remove all subtitle tracks from the media files.
-  - Useful when subtitles are forced and contains offensive language or advertising.
-
-### Monitor
-
-- `monitor`:
-  - Watch the specified folders for file changes, and periodically run the `process` command on the changed folders.
-  - The `monitor` command honors the `process` options.
-  - Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem.
-
-### Create and Update Sidecar Files
-
+  - Remove all subtitle tracks.
+  - Useful when media players cannot disable output or content is undesirable.
+- `removeclosedcaptions`:
+  - Remove EIA-608 and CTA-708 closed captions from video stream if present.
+  - Useful when media players cannot disable output or content is undesirable.
+  - Same logic as used in the `process` command.
+- `verify`:
+  - Verify the media container and stream integrity.
+  - Same logic as used in the `process` command.
 - `createsidecar`:
-  - Create or overwrite and re-create sidecar files.  
-  - All existing state attributes will be deleted.
+  - Create or re-create sidecar files.
+  - Useful to start fresh and update tool info and remove old processing state.
 - `updatesidecar`:
-  - Update the existing sidecar with current media tool information.
-  - Existing state attributes will be retained unless the media file had been modified.
-
-### Get Information
-
-- `gettagmap`:
-  - Calculate and print media file attribute mappings between between different media tools.
-- `getmediainfo`:
-  - Print media attribute information using the Sidecar file if present.
-  - If sidecar is not present or out of date media tools will be used.
-- `gettoolinfo`:
-  - Print media attribute information using the current media tools.
-- `getsidecarinfo`:
-  - Print sidecar file attribute information.
+  - Create or update sidecar files with current media tool information.
 - `getversioninfo`:
   - Print application version, runtime version, and media tools version information.
+- `getsidecarinfo`:
+  - Print sidecar file information.
+- `gettagmap`:
+  - Print media file attribute mappings between between different media tools.
+- `getmediainfo`:
+  - Print media attribute information from sidecar files.
+- `gettoolinfo`:
+  - Print media attribute information using media tools.
+- `createschema`:
+  - Write JSON settings schema to file.
+
+## IETF Language Matching
+
+Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
+During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
+If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
+
+Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.\
+E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.\
+E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.\
+E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.\
+E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+
+Normalized tags will be expanded for matching.\
+E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
+
+See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
+
+## EIA-608 and CTA-708 Closed Captions
+
+[EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
+While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
+
+Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
+Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
+Note I have no expertise in video engineering, and the following information was gathered by research and experimentation.
+
+FFprobe [never supported](https://github.com/ptr727/PlexCleaner/issues/94) closed caption reporting when using `-print_format json`, and recently [removed reporting](https://github.com/ptr727/PlexCleaner/issues/497) of closed caption presence completely, prompting research into alternatives.\
+E.g.
+
+```text
+Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, progressive), 1920x1080, Closed Captions, SAR 1:1 DAR 16:9, 29.97 fps, 29.97 tbr, 1k tbn (default)
+```
+
+MediaInfo supports closed caption detection, but only for [some container types](https://github.com/MediaArea/MediaInfoLib/issues/2264) (e.g. TS and DV), and [only scans](https://github.com/MediaArea/MediaInfoLib/issues/1881) the first 30s of the video looking for video frames containing closed captions.\
+E.g. `mediainfo --Output=JSON filename`\
+MediaInfo does [not support](https://github.com/MediaArea/MediaInfoLib/issues/1881#issuecomment-2816754336) general input piping (e.g. MKV -> FFmpeg -> TS -> MediaInfo), and requires a temporary TS file to be created on disk and used as standard input.\
+In my testing I found that remuxing 30s of video from MKV to TS did produce reliable results.\
+E.g.
+
+```json
+{
+    "@type": "Text",
+    "ID": "256-CC1",
+    "Format": "EIA-608",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+{
+    "@type": "Text",
+    "ID": "256-1",
+    "Format": "EIA-708",
+    "MuxingMode": "SCTE 128 / DTVCC Transport",
+},
+```
+
+[CCExtractor](https://ccextractor.org/) supports closed caption detection using `-out=report`.\
+E.g. `ccextractor -12 -out=report filename`\
+In my testing I found using MKV containers directly as input produced unreliable results, either no output generated or false negatives.\
+CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires a temporary TS file to be created on disk and used as standard input.\
+Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.\
+E.g.
+
+```text
+EIA-608: Yes
+CEA-708: Yes
+```
+
+FFmpeg [`readeia608` filter](https://ffmpeg.org/ffmpeg-filters.html#readeia608) can be used in FFprobe to report EIA-608 frame information.\
+E.g. `ffprobe -loglevel error -f lavfi -i "movie=filename,readeia608" -show_entries frame=best_effort_timestamp_time,duration_time:frame_tags=lavfi.readeia608.0.line,lavfi.readeia608.0.cc,lavfi.readeia608.1.line,lavfi.readeia608.1.cc -print_format json`\
+Note the `movie=filename[out0+subcc]` convention requires [special escaping](https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena) of the filename to not interfere with commandline or filter graph parsing.\
+In my testing I found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.\
+E.g.
+
+```json
+{
+    "best_effort_timestamp_time": "0.000000",
+    "duration_time": "0.033367",
+    "tags": {
+        "lavfi.readeia608.1.cc": "0x8504",
+        "lavfi.readeia608.0.cc": "0x8080",
+        "lavfi.readeia608.0.line": "28",
+        "lavfi.readeia608.1.line": "29"
+    },
+}
+```
+
+FFmpeg [`subcc` filter](https://www.ffmpeg.org/ffmpeg-devices.html#Options-10) can be used to create subtitle streams from the closed captions in video streams.\
+E.g. `ffprobe -loglevel error -select_streams s:0 -f lavfi -i "movie=filename[out0+subcc]" -show_packets -print_format json`\
+E.g. `ffmpeg -abort_on empty_output -y -f lavfi -i "movie=filename[out0+subcc]" -map 0:s -c:s srt outfilename`\
+Note that `ffmpeg -t` and `ffprobe -read_intervals` options limiting scan time does [not work](https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc) on the input stream when using the `subcc` filter, and scanning the entire file can take a very long time.\
+In my testing I found the results to be reliable.\
+E.g.
+
+```json
+{
+    "codec_type": "subtitle",
+    "stream_index": 1,
+    "pts_time": "0.000000",
+    "dts_time": "0.000000",
+    "size": "60",
+    "pos": "5690",
+    "flags": "K__"
+},
+```
+
+```text
+9
+00:00:35,568 --> 00:00:38,004
+<font face="Monospace">{\an7}No going back now.</font>
+```
+
+FFprobe [recently added](https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01) the `analyze_frames` [option](https://ffmpeg.org/ffprobe.html#toc-Main-options) that reports on the presence of closed captions in video streams.\
+As of writing this functionality has not yet been released, but is in nightly builds.\
+E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %180 filename -print_format json`
+
+```json
+{
+    "index": 0,
+    "codec_name": "h264",
+    "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+    "coded_width": 1920,
+    "coded_height": 1088,
+    "closed_captions": 1,
+    "film_grain": 0,
+}
+```
+
+The currently implemented method of closed caption detection uses FFprobe and the `subcc` filter to detect closed caption frames, but requires scanning of the entire file as there are no options to limit the scan duration when using the `subcc` filter.\
+If the `quickscan` options is enabled a small file snippet is first created, and the snippet is used for analysis reducing processing times.
+
+FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits) can be used to [remove closed captions](https://stackoverflow.com/questions/48177694/removing-eia-608-closed-captions-from-h-264-without-reencode) from video streams.\
+E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v filter_units=remove_types=6 \"{outInfo.FullName}\"`\
+Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.\
+[Note](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [note](https://trac.ffmpeg.org/ticket/5283) that as of writing HDR10+ metadata may be lost when removing closed captions from H265 content.
+
+## Testing
+
+The majority of development and debugging time is spent figuring out how to deal with media file and media processing tool specifics affecting playback.\
+For repetitive test tasks pre-configured on-demand tests are included in VSCode [`tasks.json`](./.vscode/tasks.json) and [`launch.json`](./.vscode/launch.json), and VisualStudio [`launchSettings.json`](./PlexCleaner/Properties/launchSettings.json).\
+Several of the tests reference system local paths containing media files, so you may need to make path changes to match your environment.
+
+### Unit Testing
+
+Unit tests are included for static tests that do not require the use of media files.
+
+```console
+dotnet build
+dotnet format --verify-no-changes --severity=info --verbosity=detailed
+dotnet test
+```
+
+### Docker Testing
+
+the [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.\
+If an external media path is not specified the test will download and use the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip).
+
+```console
+docker run \
+  -it --rm \
+  --name PlexCleaner-Test \
+  docker.io/ptr727/plexcleaner:latest \
+  /Test/Test.sh
+```
+
+### Regression Testing
+
+The behavior of the tool is very dependent on the media files being tested, and the following process can facilitate regressions testing, assuring that the process results between versions remain consistent.
+
+- Maintain a collection of troublesome media files that resulted in functional changes.
+- Create a ZFS snapshot of the media files to test.
+- Process the files, using a known good version, and save the results in JSON format using the `--resultsfile` option.
+- Restore the ZFS snapshot allowing repetitive testing using the original files.
+- Process the files again using the under test version.
+- Compare the JSON results file from the known good version with the version under test.
+- Investigate any file comparison discrepancies.
+
+E.g.
+
+```shell
+# Copy troublesome files
+rsync -av --delete --progress /data/media/Troublesome/. /data/media/test
+chown -R nobody:users /data/media/test
+chmod -R ug=rwx,o=rx /data/media/test
+
+# Take snapshot
+zfs destroy hddpool/media/test@backup
+zfs snapshot hddpool/media/test@backup
+```
+
+```shell
+# Config
+PlexCleanerApp=/PlexCleaner/Debug/PlexCleaner
+MediaPath=/Test/Media
+ConfigPath=/Test/Config
+
+# Test function
+RunContainer () {
+  local Image=$1
+  local Tag=$2
+
+  # Rollback to snapshot
+  sudo zfs rollback hddpool/media/test@backup
+
+  # Process files
+  docker run \
+    -it \
+    --rm \
+    --pull always \
+    --name PlexCleaner-Test \
+    --user nobody:users \
+    --env TZ=America/Los_Angeles \
+    --volume /data/media/test:$MediaPath:rw \
+    --volume /data/media/PlexCleaner:$ConfigPath:rw \
+    $Image:$Tag \
+    $PlexCleanerApp process \
+      --settingsfile=$ConfigPath/PlexCleaner.json \
+      --logfile=$ConfigPath/PlexCleaner-$Tag.log \
+      --mediafiles=$MediaPath \
+      --testsnippets \
+      --quickscan \
+      --resultsfile=$ConfigPath/Results-$Tag.json
+}
+
+# Test release containers
+RunContainer docker.io/ptr727/plexcleaner ubuntu
+RunContainer docker.io/ptr727/plexcleaner debian
+RunContainer docker.io/ptr727/plexcleaner alpine
+
+# Test pre-release containers
+RunContainer docker.io/ptr727/plexcleaner ubuntu-develop
+RunContainer docker.io/ptr727/plexcleaner debian-develop
+RunContainer docker.io/ptr727/plexcleaner alpine-develop
+```
 
 ## 3rd Party Tools
 
@@ -579,6 +870,8 @@ These commands have no conditional logic and will process all specified media fi
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
+- [FluentAssertions](https://fluentassertions.com/)
+- [xUnit.Net](https://xunit.net/)
 
 ## Sample Media Files
 
