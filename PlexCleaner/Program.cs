@@ -71,6 +71,7 @@ public static class Program
         }
 
         // Create default logger
+        // How to get access to CommandLineOptions to create file logger without needing to recreate it later?
         CreateLogger(null);
 
         // Create a timer to keep the system from going to sleep
@@ -92,7 +93,7 @@ public static class Program
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
-        Log.Information("Exit Code : {ExitCode}", exitCode);
+        Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
 
         // Close and flush on process exit
         Log.CloseAndFlush();
@@ -171,6 +172,8 @@ public static class Program
 
     private static void CancelEventHandler(object sender, ConsoleCancelEventArgs eventArgs)
     {
+        Log.Warning("Cancel event triggered : {EventType}", eventArgs.SpecialKey);
+
         // Keep running and do graceful exit
         eventArgs.Cancel = true;
 
@@ -200,48 +203,27 @@ public static class Program
         // Enable Serilog debug output to the console
         SelfLog.Enable(Console.Error);
 
-        // Log to console
-        // outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
-        // Remove lj to quote strings
-        LoggerConfiguration loggerConfiguration = new();
-
-        // Log Thread Id
-        // Need to explicitly add thread id formatting to file and console output
-        loggerConfiguration.Enrich.WithThreadId();
-
-        // Default minimum log level
-#if DEBUG
-        LogEventLevel logLevelDefault = LogEventLevel.Debug;
-#else
-        LogEventLevel logLevelDefault = LogEventLevel.Information;
-#endif
-
-        // Log to console
-        loggerConfiguration.WriteTo.Console(
-            theme: AnsiConsoleTheme.Code,
-            restrictedToMinimumLevel: logLevelDefault,
-            outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-            formatProvider: CultureInfo.InvariantCulture
-        );
+        // Logger configuration
+        LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
+            .MinimumLevel.Is(Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information)
+            // Set minimum to Verbose for LogOverride context
+            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName, LogEventLevel.Verbose)
+            .Enrich.WithThreadId()
+            .WriteTo.Console(
+                theme: AnsiConsoleTheme.Code,
+                // Remove lj from default to quote strings
+                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture
+            );
 
         // Log to file
-        // outputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-        // Remove lj to quote strings
         if (!string.IsNullOrEmpty(logfile))
         {
-            // Set log level
-            if (Options.LogWarning)
-            {
-                logLevelDefault = LogEventLevel.Warning;
-            }
-
-            // Write async to file
-            // Default max size is 1GB, roll when max size is reached
-            loggerConfiguration.WriteTo.Async(action =>
+            _ = loggerConfiguration.WriteTo.Async(action =>
                 action.File(
                     logfile,
-                    restrictedToMinimumLevel: logLevelDefault,
                     rollOnFileSizeLimit: true,
+                    // Remove lj from default to quote strings
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
                     formatProvider: CultureInfo.InvariantCulture
                 )
@@ -536,14 +518,22 @@ public static class Program
 
             // Recreate the logger with a file
             CreateLogger(Options.LogFile);
-            Log.Information("Logging output to : {LogFile}", Options.LogFile);
         }
 
         // Log app and runtime version
-        Log.Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
-        Log.Information("Runtime Version : {RuntimeVersions}", AssemblyVersion.GetRuntimeVersion());
-        Log.Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
+        Log.Logger.LogOverrideContext()
+            .Information("Commandline : \"{Commandline}\"", Environment.CommandLine);
+        Log.Logger.LogOverrideContext()
+            .Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
+        Log.Logger.LogOverrideContext()
+            .Information(
+                "Runtime Version : {RuntimeVersions}",
+                AssemblyVersion.GetRuntimeVersion()
+            );
+        Log.Logger.LogOverrideContext()
+            .Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
+        Log.Logger.LogOverrideContext()
+            .Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 
         // Warn if a newer version has been released
         VerifyLatestVersion();
