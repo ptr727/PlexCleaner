@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -41,6 +42,14 @@ public static class Program
 
     private static int Main(string[] args)
     {
+        // Wait for debugger to attach
+        if (args.Any(arg => arg == "--debug"))
+        {
+            WaitForDebugger();
+            // Continue
+        }
+
+        // TODO: How to get access to commandline arguments in ParseResult before calling Invoke()?
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(args);
         if (parseResult.Errors.Count > 0)
@@ -51,16 +60,14 @@ public static class Program
             return rootCommand.Invoke(args);
         }
 
-        // Wait for debugger to attach
-        // How to get access to CommandLineOptions containing name binding options to test values?
-        // if (parseResult.HasOption(CommandLineOptions.DebugOption))
-        if (args.Any(arg => arg == "--debug"))
-        {
-            WaitForDebugger();
-            // Continue
-        }
+        // Create default logger, will be replaced after commandline is parsed
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console(
+                theme: AnsiConsoleTheme.Code,
+                formatProvider: CultureInfo.InvariantCulture
+            )
+            .CreateLogger();
 
-        // Register cancel handler
         Console.CancelKeyPress += CancelEventHandler;
 
         // Only register keyboard handler if input is not redirected
@@ -70,10 +77,6 @@ public static class Program
             consoleKeyTask = Task.Run(KeyPressHandler);
         }
 
-        // Create default logger
-        // How to get access to CommandLineOptions to create file logger without needing to recreate it later?
-        CreateLogger(null);
-
         // Create a timer to keep the system from going to sleep
         KeepAwake.PreventSleep();
         using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
@@ -81,21 +84,19 @@ public static class Program
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
 
-        // Create the commandline and execute commands
+        // Invoke commands, commandline is parsed and passed to command handlers
         int exitCode = parseResult.Invoke();
 
-        // Cancel background operations
         Cancel();
         consoleKeyTask?.Wait();
         Console.CancelKeyPress -= CancelEventHandler;
 
-        // Stop the timer
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
+        // Override log level and always log exit information
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
 
-        // Close and flush on process exit
         Log.CloseAndFlush();
 
         return exitCode;
@@ -187,7 +188,7 @@ public static class Program
 
         // Wait for a debugger to be attached
         Console.WriteLine("Waiting for debugger to attach...");
-        while (!System.Diagnostics.Debugger.IsAttached)
+        while (!Debugger.IsAttached)
         {
             // Wait a bit and try again
             Thread.Sleep(100);
@@ -195,11 +196,14 @@ public static class Program
         Console.WriteLine("Debugger attached.");
 
         // Break into the debugger
-        System.Diagnostics.Debugger.Break();
+        Debugger.Break();
     }
 
-    private static void CreateLogger(string logfile)
+    private static void CreateLogger()
     {
+        // Commandline must have been parsed and assigned to Options
+        Debug.Assert(Options != null);
+
         // Enable Serilog debug output to the console
         SelfLog.Enable(Console.Error);
 
@@ -217,11 +221,11 @@ public static class Program
             );
 
         // Log to file
-        if (!string.IsNullOrEmpty(logfile))
+        if (!string.IsNullOrEmpty(Options.LogFile))
         {
             _ = loggerConfiguration.WriteTo.Async(action =>
                 action.File(
-                    logfile,
+                    Options.LogFile,
                     rollOnFileSizeLimit: true,
                     // Remove lj from default to quote strings
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
@@ -454,15 +458,25 @@ public static class Program
 
     private static bool Create(CommandLineOptions options, bool verifyTools)
     {
-        // Does the file exist
+        // Set the static commandline options
+        Options = options;
+
+        // Clear log file before creating the logger
+        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
+        {
+            File.Delete(Options.LogFile);
+        }
+
+        // Create the logger
+        CreateLogger();
+
+        // Load config settings from JSON
+        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
         if (!File.Exists(options.SettingsFile))
         {
             Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
             return false;
         }
-
-        // Load config from JSON
-        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
         ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
         if (config == null)
         {
@@ -495,8 +509,7 @@ public static class Program
             return false;
         }
 
-        // Set the static options from the loaded settings and options
-        Options = options;
+        // Set the static settings
         Config = config;
 
         // Set the FileEx options
@@ -506,23 +519,9 @@ public static class Program
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = s_cancelSource.Token;
 
-        // Use log file
-        if (!string.IsNullOrEmpty(Options.LogFile))
-        {
-            // Delete if not in append mode
-            if (!Options.LogAppend && !FileEx.DeleteFile(Options.LogFile))
-            {
-                Log.Error("Failed to clear the logfile : {LogFile}", Options.LogFile);
-                return false;
-            }
-
-            // Recreate the logger with a file
-            CreateLogger(Options.LogFile);
-        }
-
-        // Log app and runtime version
+        // Override log level and always log startup information
         Log.Logger.LogOverrideContext()
-            .Information("Commandline : \"{Commandline}\"", Environment.CommandLine);
+            .Information("Commandline : {Commandline}", Environment.CommandLine);
         Log.Logger.LogOverrideContext()
             .Information("Application Version : {AppVersion}", AssemblyVersion.GetAppVersion());
         Log.Logger.LogOverrideContext()
