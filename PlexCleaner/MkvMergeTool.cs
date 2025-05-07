@@ -121,7 +121,8 @@ public partial class MkvMergeTool : MediaTool
     public bool GetMkvInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMkvInfoJson(fileName, out string json) && GetMkvInfoFromJson(json, out mediaInfo);
+        return GetMkvInfoJson(fileName, out string json)
+            && GetMkvInfoFromJson(json, fileName, out mediaInfo);
     }
 
     public bool GetMkvInfoJson(string fileName, out string json)
@@ -137,7 +138,7 @@ public partial class MkvMergeTool : MediaTool
         return exitCode == 0;
     }
 
-    public static bool GetMkvInfoFromJson(string json, out MediaInfo mediaInfo)
+    public static bool GetMkvInfoFromJson(string json, string fileName, out MediaInfo mediaInfo)
     {
         // Parser type is MkvMerge
         mediaInfo = new MediaInfo(ToolType.MkvMerge);
@@ -162,20 +163,22 @@ public partial class MkvMergeTool : MediaTool
                 )
                 {
                     Log.Warning(
-                        "MkvToolJsonSchema : Overriding unknown codec for non-Matroska container : Codec: {Codec}",
-                        track.Properties.CodecId
+                        "MkvToolJsonSchema : Overriding unknown codec for non-Matroska container : Container: {Container}, Track: {Track} : {FileName}",
+                        mkvMerge.Container.Type,
+                        track.Type,
+                        fileName
                     );
-                    track.Properties.CodecId = "Unknown";
+                    track.Properties.CodecId = mkvMerge.Container.Type;
                 }
 
                 // Process by track type
                 switch (track.Type.ToLowerInvariant())
                 {
                     case "video":
-                        mediaInfo.Video.Add(new(track));
+                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
                         break;
                     case "audio":
-                        mediaInfo.Audio.Add(new(track));
+                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
                         break;
                     case "subtitles":
                         // TODO: Some variants of DVBSUB are not supported by MkvToolNix
@@ -183,12 +186,13 @@ public partial class MkvMergeTool : MediaTool
                         // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
                         // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
                         // TODO: Reported fixed, to be verified
-                        mediaInfo.Subtitle.Add(new(track));
+                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
                         break;
                     default:
                         Log.Warning(
-                            "MkvToolJsonSchema : Unknown track type : {TrackType}",
-                            track.Type
+                            "MkvToolJsonSchema : Unknown track type : {TrackType} : {FileName}",
+                            track.Type,
+                            fileName
                         );
                         break;
                 }
@@ -217,19 +221,6 @@ public partial class MkvMergeTool : MediaTool
             mediaInfo.Duration = TimeSpan.FromSeconds(
                 mkvMerge.Container.Properties.Duration / 1000000.0
             );
-
-            // Must be Matroska type
-            if (!IsMkvContainer(mediaInfo))
-            {
-                Log.Warning(
-                    "MkvToolJsonSchema : MKV file type is not Matroska : {Type}",
-                    mkvMerge.Container.Type
-                );
-
-                // ReMux to convert to MKV
-                mediaInfo.HasErrors = true;
-                mediaInfo.GetTrackList().ForEach(item => item.State = TrackInfo.StateType.ReMux);
-            }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {

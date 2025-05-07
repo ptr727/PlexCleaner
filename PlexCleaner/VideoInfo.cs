@@ -16,29 +16,45 @@ namespace PlexCleaner;
 
 public class VideoInfo : TrackInfo
 {
-    public VideoInfo(MkvToolJsonSchema.Track track)
-        : base(track)
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
+    public VideoInfo(MediaTool.ToolType parser, string fileName)
+        : base(parser, fileName) { }
+
+    public override bool Create(MkvToolJsonSchema.Track track)
     {
+        // Call base first
+        if (!base.Create(track))
+        {
+            return false;
+        }
+
         // Missing: Profile
         // Missing: Interlaced
         // Missing: HDR
         // Missing: ClosedCaptions
 
         // Cover art
-        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
-                "MkvToolJsonSchema : Cover art video track : {Format}:{Codec}",
+                "MkvToolJsonSchema : Cover art video track : {Format}:{Codec} : {FileName}",
                 Format,
-                Codec
+                Codec,
+                FileName
             );
         }
+
+        return true;
     }
 
-    public VideoInfo(FfMpegToolJsonSchema.Track track)
-        : base(track)
+    public override bool Create(FfMpegToolJsonSchema.Track track)
     {
+        // Call base first
+        if (!base.Create(track))
+        {
+            return false;
+        }
+
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
         // Ignore bad tags like codec_tag: 0x0000 or codec_tag_string: [0][0][0][0]
@@ -69,20 +85,27 @@ public class VideoInfo : TrackInfo
         // Missing: HDR
 
         // Cover art
-        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
-                "FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec}",
+                "FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec} : {FileName}",
                 Format,
-                Codec
+                Codec,
+                FileName
             );
         }
+
+        return true;
     }
 
-    public VideoInfo(MediaInfoToolXmlSchema.Track track)
-        : base(track)
+    public override bool Create(MediaInfoToolXmlSchema.Track track)
     {
+        // Call base first
+        if (!base.Create(track))
+        {
+            return false;
+        }
+
         // Build the Profile
         Profile = string.IsNullOrEmpty(track.FormatProfile) switch
         {
@@ -102,22 +125,42 @@ public class VideoInfo : TrackInfo
         FormatHdr = track.HdrFormat;
 
         // Cover art
-        // TODO: Filter out during parsing
         if (IsCoverArt)
         {
             Log.Warning(
-                "MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec}",
+                "MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec} : {fileName}",
                 Format,
-                Codec
+                Codec,
+                FileName
             );
         }
+
+        return true;
     }
 
-    public string Profile { get; set; } = "";
+    public static VideoInfo Create(string fileName, FfMpegToolJsonSchema.Track track)
+    {
+        VideoInfo videoInfo = new(MediaTool.ToolType.FfProbe, fileName);
+        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+    }
+
+    public static VideoInfo Create(string fileName, MediaInfoToolXmlSchema.Track track)
+    {
+        VideoInfo videoInfo = new(MediaTool.ToolType.MediaInfo, fileName);
+        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+    }
+
+    public static VideoInfo Create(string fileName, MkvToolJsonSchema.Track track)
+    {
+        VideoInfo videoInfo = new(MediaTool.ToolType.MkvMerge, fileName);
+        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+    }
+
+    public string Profile { get; set; } = string.Empty;
 
     public bool Interlaced { get; set; }
 
-    public string FormatHdr { get; set; } = "";
+    public string FormatHdr { get; set; } = string.Empty;
 
     public bool ClosedCaptions { get; set; }
 
@@ -148,7 +191,7 @@ public class VideoInfo : TrackInfo
         Log.Information(
             "Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
                 + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt} : {FileName}",
             Parser,
             GetType().Name,
             Format,
@@ -166,7 +209,8 @@ public class VideoInfo : TrackInfo
             State,
             HasErrors,
             HasTags,
-            IsCoverArt
+            IsCoverArt,
+            FileName
         );
 
     public override void WriteLine(string prefix) =>
@@ -174,7 +218,7 @@ public class VideoInfo : TrackInfo
         Log.Information(
             "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
                 + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt}",
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt} : {FileName}",
             prefix,
             Parser,
             GetType().Name,
@@ -193,7 +237,8 @@ public class VideoInfo : TrackInfo
             State,
             HasErrors,
             HasTags,
-            IsCoverArt
+            IsCoverArt,
+            FileName
         );
 
     // Cover art and thumbnail formats

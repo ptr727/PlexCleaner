@@ -100,7 +100,8 @@ public partial class MediaInfoTool : MediaTool
     public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
     {
         mediaInfo = null;
-        return GetMediaInfoXml(fileName, out string xml) && GetMediaInfoFromXml(xml, out mediaInfo);
+        return GetMediaInfoXml(fileName, out string xml)
+            && GetMediaInfoFromXml(xml, fileName, out mediaInfo);
     }
 
     public bool GetMediaInfoXml(string fileName, out string xml)
@@ -116,7 +117,7 @@ public partial class MediaInfoTool : MediaTool
         return exitCode == 0 && xml.Length >= 100;
     }
 
-    public static bool GetMediaInfoFromXml(string xml, out MediaInfo mediaInfo)
+    public static bool GetMediaInfoFromXml(string xml, string fileName, out MediaInfo mediaInfo)
     {
         // Parser type is MediaInfo
         mediaInfo = new MediaInfo(ToolType.MediaInfo);
@@ -127,9 +128,7 @@ public partial class MediaInfoTool : MediaTool
             // Deserialize
             MediaInfoToolXmlSchema.MediaInfo xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(xml);
             MediaInfoToolXmlSchema.MediaElement xmlMedia = xmInfo.Media;
-
-            // No tracks
-            if (xmlMedia.Tracks.Count == 0)
+            if (xmInfo.Media == null || xmlMedia.Tracks.Count == 0)
             {
                 return false;
             }
@@ -138,71 +137,12 @@ public partial class MediaInfoTool : MediaTool
             foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
             {
                 // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
-                // Id maps to Number
-                // StreamOrder maps to Id
-                if (track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
+                if (HandleSubTrack(track, fileName, mediaInfo))
                 {
-                    // Test for a closed caption tracks
-                    // <track type="Video" typeorder="4">
-                    //     <ID>256</ID>
-                    //     <Format>MPEG Video</Format>
-                    // <track type="Text" typeorder="1">
-                    //     <ID>256-CC1</ID>
-                    //     <Format>EIA-608</Format>
-                    //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
-                    if (
-                        track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase)
-                        && (
-                            track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
-                            || track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
-                        )
-                    )
-                    {
-                        // Parse the number
-                        Match match = TrackRegex().Match(track.Id);
-                        Debug.Assert(match.Success);
-                        int number = int.Parse(
-                            match.Groups["id"].Value,
-                            CultureInfo.InvariantCulture
-                        );
-
-                        // Find the video track matching the number
-                        if (mediaInfo.Video.Find(item => item.Number == number) is { } videoTrack)
-                        {
-                            // Set the closed caption flag
-                            Log.Information(
-                                "MediaInfoToolXmlSchema : Setting closed captions flag from sub-track : Id: {Id}, Sub-Track: {Number}, Format: {Format}",
-                                videoTrack.Id,
-                                track.Id,
-                                track.Format
-                            );
-                            videoTrack.ClosedCaptions = true;
-                        }
-                        else
-                        {
-                            Log.Error(
-                                "MediaInfoToolXmlSchema : Closed caption sub-track track with missing video track : Sub-Track: {Number}, Format: {Format}",
-                                track.Id,
-                                track.Format
-                            );
-                        }
-
-                        // Done with this track
-                        continue;
-                    }
-
-                    // Skip sub-tacks
-                    Log.Warning(
-                        "MediaInfoToolXmlSchema : Skipping sub-track : Type: {Type}, Id: {Id}, Format: {Format}",
-                        track.Type,
-                        track.Id,
-                        track.Format
-                    );
                     continue;
                 }
 
-                // TODO: Identify cover art as video tracks for deletion, or ignore them
-
+                // Process by track type
                 switch (track.Type.ToLowerInvariant())
                 {
                     case "general":
@@ -216,21 +156,22 @@ public partial class MediaInfoTool : MediaTool
                         mediaInfo.Container = track.Format;
                         break;
                     case "video":
-                        mediaInfo.Video.Add(new(track));
+                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
                         break;
                     case "audio":
-                        mediaInfo.Audio.Add(new(track));
+                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
                         break;
                     case "text":
-                        mediaInfo.Subtitle.Add(new(track));
+                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
                         break;
                     case "menu":
-                        // Ignore
+                        // TODO: Verify chapters get removed
                         break;
                     default:
                         Log.Warning(
-                            "MediaInfoToolXmlSchema : Unknown track type : {TrackType}",
-                            track.Type
+                            "MediaInfoToolXmlSchema : Unknown track type : {TrackType} : {FileName}",
+                            track.Type,
+                            fileName
                         );
                         break;
                 }
@@ -247,6 +188,82 @@ public partial class MediaInfoTool : MediaTool
         {
             return false;
         }
+        return true;
+    }
+
+    private static bool HandleSubTrack(
+        MediaInfoToolXmlSchema.Track track,
+        string fileName,
+        MediaInfo mediaInfo
+    )
+    {
+        // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
+        if (!track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Id maps to Number
+        // StreamOrder maps to Id
+
+        // Test for a closed caption tracks
+        // <track type="Video" typeorder="4">
+        //     <ID>256</ID>
+        //     <Format>MPEG Video</Format>
+        // <track type="Text" typeorder="1">
+        //     <ID>256-CC1</ID>
+        //     <Format>EIA-608</Format>
+        //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
+        if (
+            track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase)
+            && (
+                track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
+                || track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
+            )
+        )
+        {
+            // Parse the number
+            Match match = TrackRegex().Match(track.Id);
+            Debug.Assert(match.Success);
+            int number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
+
+            // Find the video track matching the number
+            if (mediaInfo.Video.Find(item => item.Number == number) is { } videoTrack)
+            {
+                // Set the closed caption flag
+                Log.Information(
+                    "MediaInfoToolXmlSchema : Setting closed captions flag from sub-track : Id: {Id}, Sub-Track: {Number}, Format: {Format} : {FileName}",
+                    videoTrack.Id,
+                    track.Id,
+                    track.Format,
+                    fileName
+                );
+                videoTrack.ClosedCaptions = true;
+            }
+            else
+            {
+                // Could not find matching video track
+                Log.Error(
+                    "MediaInfoToolXmlSchema : Closed caption sub-track track with missing video track : Sub-Track: {Number}, Format: {Format} : {FileName}",
+                    track.Id,
+                    track.Format,
+                    fileName
+                );
+            }
+
+            // Done with this track
+            return true;
+        }
+
+        // Skip sub-tacks
+        Log.Warning(
+            "MediaInfoToolXmlSchema : Skipping sub-track : Type: {Type}, Id: {Id}, Format: {Format} : {FileName}",
+            track.Type,
+            track.Id,
+            track.Format,
+            fileName
+        );
+
         return true;
     }
 

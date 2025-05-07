@@ -254,9 +254,21 @@ public class SidecarFile
 
         // Deserialize the tool data
         if (
-            !MediaInfoTool.GetMediaInfoFromXml(_mediaInfoXml, out MediaInfo mediaInfoInfo)
-            || !MkvMergeTool.GetMkvInfoFromJson(_mkvMergeInfoJson, out MediaInfo mkvMergeInfo)
-            || !FfProbeTool.GetFfProbeInfoFromJson(_ffProbeInfoJson, out MediaInfo ffProbeInfo)
+            !MediaInfoTool.GetMediaInfoFromXml(
+                _mediaInfoXml,
+                _sidecarFileInfo.Name,
+                out MediaInfo mediaInfoInfo
+            )
+            || !MkvMergeTool.GetMkvInfoFromJson(
+                _mkvMergeInfoJson,
+                _sidecarFileInfo.Name,
+                out MediaInfo mkvMergeInfo
+            )
+            || !FfProbeTool.GetFfProbeInfoFromJson(
+                _ffProbeInfoJson,
+                _sidecarFileInfo.Name,
+                out MediaInfo ffProbeInfo
+            )
         )
         {
             Log.Error("Failed to de-serialize tool data : {FileName}", _sidecarFileInfo.Name);
@@ -476,9 +488,21 @@ public class SidecarFile
 
         // Deserialize the tool data
         if (
-            !MediaInfoTool.GetMediaInfoFromXml(_mediaInfoXml, out MediaInfo mediaInfoInfo)
-            || !MkvMergeTool.GetMkvInfoFromJson(_mkvMergeInfoJson, out MediaInfo mkvMergeInfo)
-            || !FfProbeTool.GetFfProbeInfoFromJson(_ffProbeInfoJson, out MediaInfo ffProbeInfo)
+            !MediaInfoTool.GetMediaInfoFromXml(
+                _mediaInfoXml,
+                _mediaFileInfo.Name,
+                out MediaInfo mediaInfoInfo
+            )
+            || !MkvMergeTool.GetMkvInfoFromJson(
+                _mkvMergeInfoJson,
+                _mediaFileInfo.Name,
+                out MediaInfo mkvMergeInfo
+            )
+            || !FfProbeTool.GetFfProbeInfoFromJson(
+                _ffProbeInfoJson,
+                _mediaFileInfo.Name,
+                out MediaInfo ffProbeInfo
+            )
         )
         {
             Log.Error("Failed to de-serialize tool data : {FileName}", _mediaFileInfo.Name);

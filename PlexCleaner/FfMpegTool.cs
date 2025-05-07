@@ -17,7 +17,6 @@ using Serilog;
 
 // FfMpeg logs to stderr, not stdout
 
-// TODO: Figure out how to capture logs while still allowing ffmpeg to print in color
 // TODO: When using quickscan select a portion of the middle of the file vs, the beginning.
 
 // Typical commandline:

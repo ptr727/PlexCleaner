@@ -127,7 +127,7 @@ public class FfProbeTool : FfMpegTool
             _ = commandline.Append($"{OutputOptions} ");
 
             // Use Matroska for snippet format as it supports more stream formats
-            // E.g. DVCPRO videop streams can be muxed into MKV but not into TS
+            // E.g. DVCPRO video streams can be muxed into MKV but not into TS
             // [mpegts @ 000001543cf744c0] Stream 0, codec dvvideo, is muxed as a private data stream and may not be recognized upon reading.
 
             // Copy only first video stream
@@ -229,7 +229,7 @@ public class FfProbeTool : FfMpegTool
     {
         mediaInfo = null;
         return GetFfProbeInfoJson(fileName, out string json)
-            && GetFfProbeInfoFromJson(json, out mediaInfo);
+            && GetFfProbeInfoFromJson(json, fileName, out mediaInfo);
     }
 
     public bool GetFfProbeInfoJson(string fileName, out string json)
@@ -252,7 +252,7 @@ public class FfProbeTool : FfMpegTool
         return exitCode == 0;
     }
 
-    public static bool GetFfProbeInfoFromJson(string json, out MediaInfo mediaInfo)
+    public static bool GetFfProbeInfoFromJson(string json, string fileName, out MediaInfo mediaInfo)
     {
         // Parser type is FfProbe
         mediaInfo = new MediaInfo(ToolType.FfProbe);
@@ -274,57 +274,19 @@ public class FfProbeTool : FfMpegTool
                 switch (track.CodecType.ToLowerInvariant())
                 {
                     case "video":
-                        mediaInfo.Video.Add(new(track));
+                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
                         break;
                     case "audio":
-                        if (
-                            string.IsNullOrEmpty(track.CodecName)
-                            || string.IsNullOrEmpty(track.CodecLongName)
-                        )
-                        {
-                            // Encrypted / DRM tracks, e.g. QuickTime audio report no codec information
-                            // "codec_tag_string": "enca"
-                            // "codec_tag": "0x61636e65"
-                            if (!string.IsNullOrEmpty(track.CodecTagString))
-                            {
-                                Log.Warning(
-                                    "FfMpegToolJsonSchema : Overriding unknown audio codec : Format: {Format}, Codec: {Codec}, CodecTagString: {CodecTagString}",
-                                    track.CodecLongName,
-                                    track.CodecName,
-                                    track.CodecTagString
-                                );
-                                track.CodecLongName = track.CodecTagString;
-                            }
-                        }
-                        mediaInfo.Audio.Add(new(track));
+                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
                         break;
                     case "subtitle":
-                        if (
-                            string.IsNullOrEmpty(track.CodecName)
-                            || string.IsNullOrEmpty(track.CodecLongName)
-                        )
-                        {
-                            // Some subtitle codecs are not supported by FFmpeg, e.g. S_TEXT / WEBVTT, but are supported by MKVToolNix
-                            Log.Warning(
-                                "FfMpegToolJsonSchema : Overriding unknown subtitle codec : Format: {Format}, Codec: {Codec}",
-                                track.CodecLongName,
-                                track.CodecName
-                            );
-                            if (string.IsNullOrEmpty(track.CodecName))
-                            {
-                                track.CodecName = "unknown";
-                            }
-                            if (string.IsNullOrEmpty(track.CodecLongName))
-                            {
-                                track.CodecLongName = "unknown";
-                            }
-                        }
-                        mediaInfo.Subtitle.Add(new(track));
+                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
                         break;
                     default:
                         Log.Warning(
-                            "FfMpegToolJsonSchema : Unknown track type : {CodecType}",
-                            track.CodecType
+                            "FfMpegToolJsonSchema : Unknown track type : {CodecType} : {FileName}",
+                            track.CodecType,
+                            fileName
                         );
                         break;
                 }
