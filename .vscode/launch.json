@@ -111,6 +111,7 @@
                 "--logfile=PlexCleaner_Parallel_TestSnippets_Quickscan.log",
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results_Parallel_TestSnippets_Quickscan.json",
+                "--logwarning",
                 "--parallel",
                 "--testsnippets",
                 "--quickscan",

@@ -426,9 +426,9 @@ Global options apply to all commands:
 - `--logfile`:
   - Path to the log file.
 - `--logappend`:
-  - Append to the existing log file, default will overwrite the log file.
+  - Append to the existing log file, default will overwrite the log file on startup.
 - `--logwarning`:
-  - Only log errors and warnings to the log file, default will log all information.
+  - Only log warnings and errors, default will log information, warnings, and errors.
 - `--debug`:
   - Launch and wait for a debugger to attach.
 
