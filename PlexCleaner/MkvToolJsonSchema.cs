@@ -66,7 +66,7 @@ public class MkvToolJsonSchema
         public int NumEntries { get; set; }
     }
 
-    // TODO: TrackTag is only used to test for presence, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class TrackTag
     {
         [JsonPropertyName("num_entries")]
@@ -133,7 +133,7 @@ public class MkvToolJsonSchema
         public bool TextDescriptions { get; set; }
     }
 
-    // TODO: As with tracktags, only used for count, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class Attachment
     {
         [JsonPropertyName("content_type")]
@@ -143,7 +143,7 @@ public class MkvToolJsonSchema
         public int Id { get; set; }
     }
 
-    // TODO: As with tracktags, only used for count, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class Chapter
     {
         [JsonPropertyName("type")]

@@ -11,7 +11,7 @@ using System.Text.Json.Serialization;
 // Use MediaInfo example output:
 // mediainfo --Output=JSON file.mkv
 
-// TODO: Evaluate JSON support on old versions of MediaInfo and switch from XML to JSON
+// TODO: Evaluate JSON support availability in older versions and switch from XML to JSON
 
 namespace PlexCleaner;
 
