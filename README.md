@@ -29,7 +29,9 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- version 3:12:
+- Version 3:13:
+  - General refactoring.
+- Version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
     - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
