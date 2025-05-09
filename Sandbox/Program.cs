@@ -45,13 +45,16 @@ public class Program
 
         // Sandbox tests
         int ret = 0;
-        // Program program = new();
+        Program program = new();
+
+        FluentTool fluentTool = new(program);
+        ret = fluentTool.TestAsync().Result;
 
         // ClosedCaptions closedCaptions = new(program);
-        // int ret = closedCaptions.Test();
+        // ret = closedCaptions.Test();
 
         // ProcessFiles processFiles = new(program);
-        // int ret = processFiles.Test();
+        // ret = processFiles.Test();
 
         // Done
         Log.CloseAndFlush();
