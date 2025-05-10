@@ -82,13 +82,13 @@ public class ProcessFiles
             {
                 // Get media information
                 ProcessFile processFile = new(fileName);
-                if (!processFile.GetMediaInfo())
+                if (!processFile.GetMediaProps())
                 {
                     return false;
                 }
 
                 // Must have video stream
-                if (processFile.FfProbeInfo.Video.Count == 0)
+                if (processFile.FfProbeProps.Video.Count == 0)
                 {
                     Log.Warning("No video stream found : {FileName}", processFile.FileInfo.Name);
                     return false;

@@ -237,19 +237,19 @@ public partial class FfMpegTool : MediaTool
     }
 
     private static void CreateTrackArgs(
-        SelectMediaInfo selectMediaInfo,
+        SelectMediaProps selectMediaProps,
         out string inputMap,
         out string outputMap
     )
     {
         // Verify correct media type
-        Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.FfProbe);
-        Debug.Assert(selectMediaInfo.NotSelected.Parser == ToolType.FfProbe);
+        Debug.Assert(selectMediaProps.Selected.Parser == ToolType.FfProbe);
+        Debug.Assert(selectMediaProps.NotSelected.Parser == ToolType.FfProbe);
 
         // Create a list of all the tracks ordered by Id
         // Selected is ReEncode, state is expected to be ReEncode
         // NotSelected is Keep, state is expected to be Keep
-        List<TrackInfo> trackList = selectMediaInfo.GetTrackList();
+        List<TrackProps> trackList = selectMediaProps.GetTrackList();
 
         // Create the input map using all tracks referenced by id
         // https://trac.ffmpeg.org/wiki/Map
@@ -265,22 +265,22 @@ public partial class FfMpegTool : MediaTool
         int videoIndex = 0;
         int audioIndex = 0;
         int subtitleIndex = 0;
-        foreach (TrackInfo trackInfo in trackList)
+        foreach (TrackProps trackProps in trackList)
         {
             // Copy or encode
-            _ = trackInfo switch
+            _ = trackProps switch
             {
-                VideoInfo videoInfo => sb.Append(
-                    videoInfo.State == TrackInfo.StateType.Keep
+                VideoProps videoProps => sb.Append(
+                    videoProps.State == TrackProps.StateType.Keep
                         ? $"-c:v:{videoIndex++} copy "
                         : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
                 ),
-                AudioInfo audioInfo => sb.Append(
-                    audioInfo.State == TrackInfo.StateType.Keep
+                AudioProps audioProps => sb.Append(
+                    audioProps.State == TrackProps.StateType.Keep
                         ? $"-c:a:{audioIndex++} copy "
                         : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
                 ),
-                SubtitleInfo => sb.Append(
+                SubtitleProps => sb.Append(
                     CultureInfo.InvariantCulture,
                     $"-c:s:{subtitleIndex++} copy "
                 ),
@@ -293,12 +293,12 @@ public partial class FfMpegTool : MediaTool
 
     public bool ConvertToMkv(
         string inputName,
-        SelectMediaInfo selectMediaInfo,
+        SelectMediaProps selectMediaProps,
         string outputName,
         out string error
     )
     {
-        if (selectMediaInfo == null)
+        if (selectMediaProps == null)
         {
             // No track selection, use default conversion
             return ConvertToMkv(inputName, outputName, out error);
@@ -310,7 +310,7 @@ public partial class FfMpegTool : MediaTool
         // Create an input and output ignore or copy or convert track map
         // Selected is ReEncode
         // NotSelected is Keep
-        CreateTrackArgs(selectMediaInfo, out string inputMap, out string outputMap);
+        CreateTrackArgs(selectMediaProps, out string inputMap, out string outputMap);
 
         // Default options
         StringBuilder commandline = new();

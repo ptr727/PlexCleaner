@@ -260,21 +260,21 @@ public static class ProcessDriver
             {
                 // Get media information
                 ProcessFile processFile = new(fileName);
-                if (!processFile.GetMediaInfo())
+                if (!processFile.GetMediaProps())
                 {
                     return false;
                 }
 
                 // TODO: Remove or ignore cover art in video tracks during load
-                _ = processFile.MediaInfoInfo.Video.RemoveAll(track => track.IsCoverArt);
-                _ = processFile.FfProbeInfo.Video.RemoveAll(track => track.IsCoverArt);
-                _ = processFile.MkvMergeInfo.Video.RemoveAll(track => track.IsCoverArt);
+                _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.IsCoverArt);
+                _ = processFile.FfProbeProps.Video.RemoveAll(track => track.IsCoverArt);
+                _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.IsCoverArt);
 
                 // Skip media with errors
                 if (
-                    processFile.MediaInfoInfo.HasErrors
-                    || processFile.FfProbeInfo.HasErrors
-                    || processFile.MkvMergeInfo.HasErrors
+                    processFile.MediaInfoProps.HasErrors
+                    || processFile.FfProbeProps.HasErrors
+                    || processFile.MkvMergeProps.HasErrors
                 )
                 {
                     Log.Warning(
@@ -288,19 +288,19 @@ public static class ProcessDriver
                 lock (tagLock)
                 {
                     ffTags.Add(
-                        processFile.FfProbeInfo,
-                        processFile.MkvMergeInfo,
-                        processFile.MediaInfoInfo
+                        processFile.FfProbeProps,
+                        processFile.MkvMergeProps,
+                        processFile.MediaInfoProps
                     );
                     mkTags.Add(
-                        processFile.MkvMergeInfo,
-                        processFile.FfProbeInfo,
-                        processFile.MediaInfoInfo
+                        processFile.MkvMergeProps,
+                        processFile.FfProbeProps,
+                        processFile.MediaInfoProps
                     );
                     miTags.Add(
-                        processFile.MediaInfoInfo,
-                        processFile.FfProbeInfo,
-                        processFile.MkvMergeInfo
+                        processFile.MediaInfoProps,
+                        processFile.FfProbeProps,
+                        processFile.MkvMergeProps
                     );
                 }
 
@@ -332,16 +332,16 @@ public static class ProcessDriver
             {
                 // Get media information
                 ProcessFile processFile = new(fileName);
-                if (!processFile.GetMediaInfo())
+                if (!processFile.GetMediaProps())
                 {
                     return false;
                 }
 
                 // Print info
                 Log.Information("{FileName}", fileName);
-                processFile.MediaInfoInfo.WriteLine();
-                processFile.MkvMergeInfo.WriteLine();
-                processFile.FfProbeInfo.WriteLine();
+                processFile.MediaInfoProps.WriteLine();
+                processFile.MkvMergeProps.WriteLine();
+                processFile.FfProbeProps.WriteLine();
 
                 return true;
             }
@@ -356,9 +356,9 @@ public static class ProcessDriver
             {
                 // Get media tool information
                 if (
-                    !Tools.MediaInfo.GetMediaInfoXml(fileName, out string mediaInfoXml)
-                    || !Tools.MkvMerge.GetMkvInfoJson(fileName, out string mkvMergeInfoJson)
-                    || !Tools.FfProbe.GetFfProbeInfoJson(fileName, out string ffProbeInfoJson)
+                    !Tools.MediaInfo.GetMediaPropsXml(fileName, out string mediaInfoXml)
+                    || !Tools.MkvMerge.GetMediaPropsJson(fileName, out string mkvMergeJson)
+                    || !Tools.FfProbe.GetMediaPropsJson(fileName, out string ffProbeJson)
                 )
                 {
                     Log.Error("Failed to read media tool info : {FileName}", fileName);
@@ -367,11 +367,11 @@ public static class ProcessDriver
 
                 // Print and log info
                 Log.Information("{FileName}", fileName);
-                Log.Information("FfProbe: {FfProbeText}", ffProbeInfoJson);
-                Console.Write(ffProbeInfoJson);
-                Log.Information("MkvMerge: {MkvMergeText}", mkvMergeInfoJson);
-                Console.Write(mkvMergeInfoJson);
-                Log.Information("MediaInfo: {MediaInfoText}", mediaInfoXml);
+                Log.Information("FfProbe: {FfProbeJson}", ffProbeJson);
+                Console.Write(ffProbeJson);
+                Log.Information("MkvMerge: {MkvMergeJson}", mkvMergeJson);
+                Console.Write(mkvMergeJson);
+                Log.Information("MediaInfo: {MediaInfoXml}", mediaInfoXml);
                 Console.Write(mediaInfoXml);
 
                 return true;

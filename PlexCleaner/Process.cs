@@ -126,7 +126,7 @@ public static class Process
             }
 
             // Read the media info
-            if (!processFile.GetMediaInfo() || Program.IsCancelled())
+            if (!processFile.GetMediaProps() || Program.IsCancelled())
             {
                 // Error
                 result = false;

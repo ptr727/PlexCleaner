@@ -20,16 +20,16 @@ public class SidecarFileTests(PlexCleanerFixture fixture)
         Assert.True(sidecarFile.Read(out _, false));
 
         // Test for expected config values
-        Assert.True(sidecarFile.FfProbeInfo.Audio.Count > 0);
-        Assert.True(sidecarFile.FfProbeInfo.Audio.Count > 0);
-        Assert.Equal(MediaTool.ToolType.FfProbe, sidecarFile.FfProbeInfo.Parser);
+        Assert.True(sidecarFile.FfProbeProps.Audio.Count > 0);
+        Assert.True(sidecarFile.FfProbeProps.Audio.Count > 0);
+        Assert.Equal(MediaTool.ToolType.FfProbe, sidecarFile.FfProbeProps.Parser);
 
-        Assert.True(sidecarFile.MkvMergeInfo.Audio.Count > 0);
-        Assert.True(sidecarFile.MkvMergeInfo.Video.Count > 0);
-        Assert.Equal(MediaTool.ToolType.MkvMerge, sidecarFile.MkvMergeInfo.Parser);
+        Assert.True(sidecarFile.MkvMergeProps.Audio.Count > 0);
+        Assert.True(sidecarFile.MkvMergeProps.Video.Count > 0);
+        Assert.Equal(MediaTool.ToolType.MkvMerge, sidecarFile.MkvMergeProps.Parser);
 
-        Assert.True(sidecarFile.MediaInfoInfo.Audio.Count > 0);
-        Assert.True(sidecarFile.MediaInfoInfo.Video.Count > 0);
-        Assert.Equal(MediaTool.ToolType.MediaInfo, sidecarFile.MediaInfoInfo.Parser);
+        Assert.True(sidecarFile.MediaInfoProps.Audio.Count > 0);
+        Assert.True(sidecarFile.MediaInfoProps.Video.Count > 0);
+        Assert.Equal(MediaTool.ToolType.MediaInfo, sidecarFile.MediaInfoProps.Parser);
     }
 }

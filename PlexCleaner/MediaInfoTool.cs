@@ -97,14 +97,14 @@ public partial class MediaInfoTool : MediaTool
         return false;
     }
 
-    public bool GetMediaInfo(string fileName, out MediaInfo mediaInfo)
+    public bool GetMediaProps(string fileName, out MediaProps mediaProps)
     {
-        mediaInfo = null;
-        return GetMediaInfoXml(fileName, out string xml)
-            && GetMediaInfoFromXml(xml, fileName, out mediaInfo);
+        mediaProps = null;
+        return GetMediaPropsXml(fileName, out string xml)
+            && GetMediaPropsFromXml(xml, fileName, out mediaProps);
     }
 
-    public bool GetMediaInfoXml(string fileName, out string xml)
+    public bool GetMediaPropsXml(string fileName, out string xml)
     {
         // Get media info as XML
         string commandline = $"--Output=XML \"{fileName}\"";
@@ -117,10 +117,10 @@ public partial class MediaInfoTool : MediaTool
         return exitCode == 0 && xml.Length >= 100;
     }
 
-    public static bool GetMediaInfoFromXml(string xml, string fileName, out MediaInfo mediaInfo)
+    public static bool GetMediaPropsFromXml(string xml, string fileName, out MediaProps mediaProps)
     {
         // Parser type is MediaInfo
-        mediaInfo = new MediaInfo(ToolType.MediaInfo);
+        mediaProps = new MediaProps(ToolType.MediaInfo);
 
         // Populate the MediaInfo object from the XML string
         try
@@ -137,7 +137,7 @@ public partial class MediaInfoTool : MediaTool
             foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
             {
                 // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
-                if (HandleSubTrack(track, fileName, mediaInfo))
+                if (HandleSubTrack(track, fileName, mediaProps))
                 {
                     continue;
                 }
@@ -148,21 +148,21 @@ public partial class MediaInfoTool : MediaTool
                     case "general":
                         if (!string.IsNullOrEmpty(track.Duration))
                         {
-                            mediaInfo.Duration = TimeSpan.FromMicroseconds(
+                            mediaProps.Duration = TimeSpan.FromMicroseconds(
                                 double.Parse(track.Duration, CultureInfo.InvariantCulture)
                                     * 1000000.0
                             );
                         }
-                        mediaInfo.Container = track.Format;
+                        mediaProps.Container = track.Format;
                         break;
                     case "video":
-                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
+                        mediaProps.Video.Add(VideoProps.Create(fileName, track));
                         break;
                     case "audio":
-                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
+                        mediaProps.Audio.Add(AudioProps.Create(fileName, track));
                         break;
                     case "text":
-                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
+                        mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
                         break;
                     case "menu":
                         // TODO: Verify chapters get removed
@@ -178,7 +178,7 @@ public partial class MediaInfoTool : MediaTool
             }
 
             // Errors, any unsupported tracks
-            mediaInfo.HasErrors = mediaInfo.Unsupported;
+            mediaProps.HasErrors = mediaProps.Unsupported;
 
             // TODO: Tags, look in the Extra field, but not reliable
             // TODO: Chapters
@@ -194,7 +194,7 @@ public partial class MediaInfoTool : MediaTool
     private static bool HandleSubTrack(
         MediaInfoToolXmlSchema.Track track,
         string fileName,
-        MediaInfo mediaInfo
+        MediaProps mediaProps
     )
     {
         // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
@@ -228,7 +228,7 @@ public partial class MediaInfoTool : MediaTool
             int number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
 
             // Find the video track matching the number
-            if (mediaInfo.Video.Find(item => item.Number == number) is { } videoTrack)
+            if (mediaProps.Video.Find(item => item.Number == number) is { } videoTrack)
             {
                 // Set the closed caption flag
                 Log.Information(
