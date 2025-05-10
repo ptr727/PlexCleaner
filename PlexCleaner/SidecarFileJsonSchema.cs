@@ -41,15 +41,18 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
     public long MediaLength { get; set; }
 
     [JsonRequired]
-    public string FfProbeInfoData { get; set; }
+    [JsonPropertyName("FfProbeInfoData")]
+    public string FfProbeData { get; set; }
 
     [JsonRequired]
-    public string MkvMergeInfoData { get; set; }
+    [JsonPropertyName("MkvMergeInfoData")]
+    public string MkvMergeData { get; set; }
 
     [JsonRequired]
     public string MediaInfoToolVersion { get; set; }
 
     [JsonRequired]
+    [JsonPropertyName("MediaInfoData")]
     public string MediaInfoData { get; set; }
 }
 

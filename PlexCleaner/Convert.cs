@@ -13,7 +13,7 @@ public static class Convert
 
     public static bool ConvertToMkv(
         string inputName,
-        SelectMediaInfo selectMediaInfo,
+        SelectMediaProps selectMediaProps,
         out string outputName
     )
     {
@@ -29,7 +29,7 @@ public static class Convert
         // Selected is ReEncode
         // NotSelected is Keep
         Log.Information("Reencode using FfMpeg : {FileName}", inputName);
-        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaInfo, tempName, out string error))
+        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName, out string error))
         {
             Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
             Log.Error("{Error}", error);
@@ -122,19 +122,19 @@ public static class Convert
 
     public static bool ReMuxToMkv(
         string inputName,
-        SelectMediaInfo selectMediaInfo,
+        SelectMediaProps selectMediaProps,
         out string outputName
     )
     {
         // This function will only use MkvMerge
-        if (selectMediaInfo == null)
+        if (selectMediaProps == null)
         {
             // Use version that will try both MkvMerge and FfMpeg
             return ReMuxToMkv(inputName, out outputName);
         }
 
-        // This only works on MKV files and MkvMerge MediaInfo types
-        Debug.Assert(selectMediaInfo.Selected.Parser == MediaTool.ToolType.MkvMerge);
+        // This only works on MKV files and MkvMerge MediaProps types
+        Debug.Assert(selectMediaProps.Selected.Parser == MediaTool.ToolType.MkvMerge);
         Debug.Assert(SidecarFile.IsMkvFile(inputName));
 
         // Match the logic in ConvertToMKV()
@@ -149,7 +149,7 @@ public static class Convert
         // Selected is Keep
         // NotSelected is Remove
         Log.Information("Remux using MkvMerge : {FileName}", inputName);
-        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaInfo, tempName, out string error))
+        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaProps, tempName, out string error))
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
             Log.Error("{Error}", error);

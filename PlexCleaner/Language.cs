@@ -253,11 +253,11 @@ public class Language
         // Match language with any of the prefixes
         prefixList.Any(prefix => IsMatch(prefix, language));
 
-    public static List<string> GetLanguageList(IEnumerable<TrackInfo> tracks)
+    public static List<string> GetLanguageList(IEnumerable<TrackProps> tracks)
     {
         // Create case insensitive set
         HashSet<string> languages = new(StringComparer.OrdinalIgnoreCase);
-        foreach (TrackInfo item in tracks)
+        foreach (TrackProps item in tracks)
         {
             _ = languages.Add(item.LanguageIetf);
         }

@@ -225,14 +225,14 @@ public class FfProbeTool : FfMpegTool
         return true;
     }
 
-    public bool GetFfProbeInfo(string fileName, out MediaInfo mediaInfo)
+    public bool GetMediaProps(string fileName, out MediaProps mediaProps)
     {
-        mediaInfo = null;
-        return GetFfProbeInfoJson(fileName, out string json)
-            && GetFfProbeInfoFromJson(json, fileName, out mediaInfo);
+        mediaProps = null;
+        return GetMediaPropsJson(fileName, out string json)
+            && GetMediaPropsFromJson(json, fileName, out mediaProps);
     }
 
-    public bool GetFfProbeInfoJson(string fileName, out string json)
+    public bool GetMediaPropsJson(string fileName, out string json)
     {
         // TODO: Add analyze_frames when available in all FFmpeg builds
         // https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01
@@ -252,12 +252,16 @@ public class FfProbeTool : FfMpegTool
         return exitCode == 0;
     }
 
-    public static bool GetFfProbeInfoFromJson(string json, string fileName, out MediaInfo mediaInfo)
+    public static bool GetMediaPropsFromJson(
+        string json,
+        string fileName,
+        out MediaProps mediaProps
+    )
     {
         // Parser type is FfProbe
-        mediaInfo = new MediaInfo(ToolType.FfProbe);
+        mediaProps = new MediaProps(ToolType.FfProbe);
 
-        // Populate the MediaInfo object from the JSON string
+        // Populate the MediaProps object from the JSON string
         try
         {
             // Deserialize
@@ -274,13 +278,13 @@ public class FfProbeTool : FfMpegTool
                 switch (track.CodecType.ToLowerInvariant())
                 {
                     case "video":
-                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
+                        mediaProps.Video.Add(VideoProps.Create(fileName, track));
                         break;
                     case "audio":
-                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
+                        mediaProps.Audio.Add(AudioProps.Create(fileName, track));
                         break;
                     case "subtitle":
-                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
+                        mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
                         break;
                     default:
                         Log.Warning(
@@ -293,16 +297,16 @@ public class FfProbeTool : FfMpegTool
             }
 
             // Errors, any unsupported tracks
-            mediaInfo.HasErrors = mediaInfo.Unsupported;
+            mediaProps.HasErrors = mediaProps.Unsupported;
 
             // Unwanted tags
-            mediaInfo.HasTags = HasUnwantedTags(ffProbe.Format.Tags);
+            mediaProps.HasTags = HasUnwantedTags(ffProbe.Format.Tags);
 
             // Duration in seconds
-            mediaInfo.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
+            mediaProps.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
 
             // Container type
-            mediaInfo.Container = ffProbe.Format.FormatName;
+            mediaProps.Container = ffProbe.Format.FormatName;
 
             // TODO: Chapters
             // TODO: Attachments

@@ -14,10 +14,10 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class VideoInfo : TrackInfo
+public class VideoProps : TrackProps
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public VideoInfo(MediaTool.ToolType parser, string fileName)
+    public VideoProps(MediaTool.ToolType parser, string fileName)
         : base(parser, fileName) { }
 
     public override bool Create(MkvToolJsonSchema.Track track)
@@ -138,22 +138,22 @@ public class VideoInfo : TrackInfo
         return true;
     }
 
-    public static VideoInfo Create(string fileName, FfMpegToolJsonSchema.Track track)
+    public static VideoProps Create(string fileName, FfMpegToolJsonSchema.Track track)
     {
-        VideoInfo videoInfo = new(MediaTool.ToolType.FfProbe, fileName);
-        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+        VideoProps videoProps = new(MediaTool.ToolType.FfProbe, fileName);
+        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
     }
 
-    public static VideoInfo Create(string fileName, MediaInfoToolXmlSchema.Track track)
+    public static VideoProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
     {
-        VideoInfo videoInfo = new(MediaTool.ToolType.MediaInfo, fileName);
-        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+        VideoProps videoProps = new(MediaTool.ToolType.MediaInfo, fileName);
+        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
     }
 
-    public static VideoInfo Create(string fileName, MkvToolJsonSchema.Track track)
+    public static VideoProps Create(string fileName, MkvToolJsonSchema.Track track)
     {
-        VideoInfo videoInfo = new(MediaTool.ToolType.MkvMerge, fileName);
-        return videoInfo.Create(track) ? videoInfo : throw new NotSupportedException();
+        VideoProps videoProps = new(MediaTool.ToolType.MkvMerge, fileName);
+        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
     }
 
     public string Profile { get; set; } = string.Empty;

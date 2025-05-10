@@ -3,10 +3,10 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class SubtitleInfo : TrackInfo
+public class SubtitleProps : TrackProps
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public SubtitleInfo(MediaTool.ToolType parser, string fileName)
+    public SubtitleProps(MediaTool.ToolType parser, string fileName)
         : base(parser, fileName) { }
 
     public override bool Create(FfMpegToolJsonSchema.Track track)
@@ -64,21 +64,21 @@ public class SubtitleInfo : TrackInfo
         return true;
     }
 
-    public static SubtitleInfo Create(string fileName, FfMpegToolJsonSchema.Track track)
+    public static SubtitleProps Create(string fileName, FfMpegToolJsonSchema.Track track)
     {
-        SubtitleInfo subtitleInfo = new(MediaTool.ToolType.FfProbe, fileName);
-        return subtitleInfo.Create(track) ? subtitleInfo : throw new NotSupportedException();
+        SubtitleProps subtitleProps = new(MediaTool.ToolType.FfProbe, fileName);
+        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
     }
 
-    public static SubtitleInfo Create(string fileName, MediaInfoToolXmlSchema.Track track)
+    public static SubtitleProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
     {
-        SubtitleInfo subtitleInfo = new(MediaTool.ToolType.MediaInfo, fileName);
-        return subtitleInfo.Create(track) ? subtitleInfo : throw new NotSupportedException();
+        SubtitleProps subtitleProps = new(MediaTool.ToolType.MediaInfo, fileName);
+        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
     }
 
-    public static SubtitleInfo Create(string fileName, MkvToolJsonSchema.Track track)
+    public static SubtitleProps Create(string fileName, MkvToolJsonSchema.Track track)
     {
-        SubtitleInfo subtitleInfo = new(MediaTool.ToolType.MkvMerge, fileName);
-        return subtitleInfo.Create(track) ? subtitleInfo : throw new NotSupportedException();
+        SubtitleProps subtitleProps = new(MediaTool.ToolType.MkvMerge, fileName);
+        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
     }
 }

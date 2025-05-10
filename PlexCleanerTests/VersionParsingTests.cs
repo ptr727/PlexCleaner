@@ -66,6 +66,8 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     [Theory]
     [InlineData("mkvmerge v51.0.0 ('I Wish') 64-bit", "51.0.0")]
     [InlineData("mkvmerge v91.0 ('Signs') 64-bit", "91.0")]
+    [InlineData("mkvpropedit v92.0 ('Everglow') 64-bit", "92.0")]
+    [InlineData("mkvpropedit v74.0.0 ('You Oughta Know') 64-bit", "74.0.0")]
     public void Parse_MkvMerge_Installed_Version(string line, string version)
     {
         System.Text.RegularExpressions.Match match = MkvMergeTool
