@@ -11,7 +11,7 @@ public class TagMapSet
     private Dictionary<string, TagMap> Audio { get; } = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, TagMap> Subtitle { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public void Add(MediaInfo prime, MediaInfo sec1, MediaInfo sec2)
+    public void Add(MediaProps prime, MediaProps sec1, MediaProps sec2)
     {
         if (!DoTracksMatch(prime, sec1, sec2))
         {
@@ -37,11 +37,11 @@ public class TagMapSet
     }
 
     private static void Add(
-        IReadOnlyCollection<TrackInfo> prime,
+        IReadOnlyCollection<TrackProps> prime,
         MediaTool.ToolType primeType,
-        IReadOnlyCollection<TrackInfo> sec1,
+        IReadOnlyCollection<TrackProps> sec1,
         MediaTool.ToolType sec1Type,
-        IReadOnlyCollection<TrackInfo> sec2,
+        IReadOnlyCollection<TrackProps> sec2,
         MediaTool.ToolType sec2Type,
         Dictionary<string, TagMap> dictionary
     )
@@ -73,7 +73,7 @@ public class TagMapSet
         }
     }
 
-    private static bool DoTracksMatch(MediaInfo mediaInfo, MediaInfo mkvMerge, MediaInfo ffProbe)
+    private static bool DoTracksMatch(MediaProps mediaInfo, MediaProps mkvMerge, MediaProps ffProbe)
     {
         // Verify the track counts match
         if (

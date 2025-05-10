@@ -3,10 +3,10 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class AudioInfo : TrackInfo
+public class AudioProps : TrackProps
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public AudioInfo(MediaTool.ToolType parser, string fileName)
+    public AudioProps(MediaTool.ToolType parser, string fileName)
         : base(parser, fileName) { }
 
     public override bool Create(FfMpegToolJsonSchema.Track track)
@@ -34,21 +34,21 @@ public class AudioInfo : TrackInfo
         return base.Create(track);
     }
 
-    public static AudioInfo Create(string fileName, FfMpegToolJsonSchema.Track track)
+    public static AudioProps Create(string fileName, FfMpegToolJsonSchema.Track track)
     {
-        AudioInfo audioInfo = new(MediaTool.ToolType.FfProbe, fileName);
-        return audioInfo.Create(track) ? audioInfo : throw new NotSupportedException();
+        AudioProps audioProps = new(MediaTool.ToolType.FfProbe, fileName);
+        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
     }
 
-    public static AudioInfo Create(string fileName, MediaInfoToolXmlSchema.Track track)
+    public static AudioProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
     {
-        AudioInfo audioInfo = new(MediaTool.ToolType.MediaInfo, fileName);
-        return audioInfo.Create(track) ? audioInfo : throw new NotSupportedException();
+        AudioProps audioProps = new(MediaTool.ToolType.MediaInfo, fileName);
+        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
     }
 
-    public static AudioInfo Create(string fileName, MkvToolJsonSchema.Track track)
+    public static AudioProps Create(string fileName, MkvToolJsonSchema.Track track)
     {
-        AudioInfo audioInfo = new(MediaTool.ToolType.MkvMerge, fileName);
-        return audioInfo.Create(track) ? audioInfo : throw new NotSupportedException();
+        AudioProps audioProps = new(MediaTool.ToolType.MkvMerge, fileName);
+        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
     }
 }

@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Serilog;
 
 namespace PlexCleaner;
 
-public class TrackInfo
+public class TrackProps
 {
     public enum StateType
     {
@@ -55,7 +54,7 @@ public class TrackInfo
     protected string FileName { get; } = string.Empty;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public TrackInfo(MediaTool.ToolType parser, string fileName)
+    public TrackProps(MediaTool.ToolType parser, string fileName)
     {
         Parser = parser;
         FileName = fileName;

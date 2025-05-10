@@ -118,14 +118,14 @@ public partial class MkvMergeTool : MediaTool
     public static string GetStopSplit(TimeSpan timeSpan) =>
         $"--split parts:-{(int)timeSpan.TotalSeconds}s";
 
-    public bool GetMkvInfo(string fileName, out MediaInfo mediaInfo)
+    public bool GetMediaProps(string fileName, out MediaProps mediaProps)
     {
-        mediaInfo = null;
-        return GetMkvInfoJson(fileName, out string json)
-            && GetMkvInfoFromJson(json, fileName, out mediaInfo);
+        mediaProps = null;
+        return GetMediaPropsJson(fileName, out string json)
+            && GetMediaPropsFromJson(json, fileName, out mediaProps);
     }
 
-    public bool GetMkvInfoJson(string fileName, out string json)
+    public bool GetMediaPropsJson(string fileName, out string json)
     {
         // Get media info as JSON
         StringBuilder commandline = new();
@@ -138,12 +138,16 @@ public partial class MkvMergeTool : MediaTool
         return exitCode == 0;
     }
 
-    public static bool GetMkvInfoFromJson(string json, string fileName, out MediaInfo mediaInfo)
+    public static bool GetMediaPropsFromJson(
+        string json,
+        string fileName,
+        out MediaProps mediaProps
+    )
     {
         // Parser type is MkvMerge
-        mediaInfo = new MediaInfo(ToolType.MkvMerge);
+        mediaProps = new MediaProps(ToolType.MkvMerge);
 
-        // Populate the MediaInfo object from the JSON string
+        // Populate the MediaProps object from the JSON string
         try
         {
             // Deserialize
@@ -175,10 +179,10 @@ public partial class MkvMergeTool : MediaTool
                 switch (track.Type.ToLowerInvariant())
                 {
                     case "video":
-                        mediaInfo.Video.Add(VideoInfo.Create(fileName, track));
+                        mediaProps.Video.Add(VideoProps.Create(fileName, track));
                         break;
                     case "audio":
-                        mediaInfo.Audio.Add(AudioInfo.Create(fileName, track));
+                        mediaProps.Audio.Add(AudioProps.Create(fileName, track));
                         break;
                     case "subtitles":
                         // TODO: Some variants of DVBSUB are not supported by MkvToolNix
@@ -186,7 +190,7 @@ public partial class MkvMergeTool : MediaTool
                         // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
                         // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
                         // TODO: Reported fixed, to be verified
-                        mediaInfo.Subtitle.Add(SubtitleInfo.Create(fileName, track));
+                        mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
                         break;
                     default:
                         Log.Warning(
@@ -199,26 +203,26 @@ public partial class MkvMergeTool : MediaTool
             }
 
             // Container type
-            mediaInfo.Container = mkvMerge.Container.Type;
+            mediaProps.Container = mkvMerge.Container.Type;
 
             // Attachments
-            mediaInfo.Attachments = mkvMerge.Attachments.Count;
+            mediaProps.Attachments = mkvMerge.Attachments.Count;
 
             // Chapters
-            mediaInfo.Chapters = mkvMerge.Chapters.Count;
+            mediaProps.Chapters = mkvMerge.Chapters.Count;
 
             // Errors, any unsupported tracks
-            mediaInfo.HasErrors = mediaInfo.Unsupported;
+            mediaProps.HasErrors = mediaProps.Unsupported;
 
             // Unwanted tags
-            mediaInfo.HasTags =
+            mediaProps.HasTags =
                 mkvMerge.GlobalTags.Count > 0
                 || mkvMerge.TrackTags.Count > 0
-                || mediaInfo.Attachments > 0
+                || mediaProps.Attachments > 0
                 || !string.IsNullOrEmpty(mkvMerge.Container.Properties.Title);
 
             // Duration in nanoseconds
-            mediaInfo.Duration = TimeSpan.FromSeconds(
+            mediaProps.Duration = TimeSpan.FromSeconds(
                 mkvMerge.Container.Properties.Duration / 1000000.0
             );
         }
@@ -229,18 +233,18 @@ public partial class MkvMergeTool : MediaTool
         return true;
     }
 
-    public static bool IsMkvContainer(MediaInfo mediaInfo) =>
-        mediaInfo.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
+    public static bool IsMkvContainer(MediaProps mediaProps) =>
+        mediaProps.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
 
     public bool ReMuxToMkv(
         string inputName,
-        SelectMediaInfo selectMediaInfo,
+        SelectMediaProps selectMediaProps,
         string outputName,
         out string error
     )
     {
         // Verify correct media type
-        Debug.Assert(selectMediaInfo.Selected.Parser == ToolType.MkvMerge);
+        Debug.Assert(selectMediaProps.Selected.Parser == ToolType.MkvMerge);
 
         // Delete output file
         _ = FileEx.DeleteFile(outputName);
@@ -263,7 +267,7 @@ public partial class MkvMergeTool : MediaTool
 
         // Selected is Keep
         // NotSelected is Remove
-        CreateTrackArgs(selectMediaInfo.Selected, commandline);
+        CreateTrackArgs(selectMediaProps.Selected, commandline);
         _ = commandline.Append(CultureInfo.InvariantCulture, $"\"{inputName}\"");
 
         // ReMux tracks
@@ -332,7 +336,7 @@ public partial class MkvMergeTool : MediaTool
     public bool MergeToMkv(
         string sourceOne,
         string sourceTwo,
-        MediaInfo keepTwo,
+        MediaProps keepTwo,
         string outputName,
         out string error
     )
@@ -375,32 +379,32 @@ public partial class MkvMergeTool : MediaTool
         return exitCode is 0 or 1;
     }
 
-    private static void CreateTrackArgs(MediaInfo mediaInfo, StringBuilder commandline)
+    private static void CreateTrackArgs(MediaProps mediaProps, StringBuilder commandline)
     {
         // Verify correct media type
-        Debug.Assert(mediaInfo.Parser == ToolType.MkvMerge);
+        Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
 
         // Create the track number filters
         // The track numbers are reported by MkvMerge --identify, use the track.id values
         _ =
-            mediaInfo.Video.Count > 0
+            mediaProps.Video.Count > 0
                 ? commandline.Append(
                     CultureInfo.InvariantCulture,
-                    $"--video-tracks {string.Join(",", mediaInfo.Video.Select(info => $"{info.Id}"))} "
+                    $"--video-tracks {string.Join(",", mediaProps.Video.Select(info => $"{info.Id}"))} "
                 )
                 : commandline.Append("--no-video ");
         _ =
-            mediaInfo.Audio.Count > 0
+            mediaProps.Audio.Count > 0
                 ? commandline.Append(
                     CultureInfo.InvariantCulture,
-                    $"--audio-tracks {string.Join(",", mediaInfo.Audio.Select(info => $"{info.Id}"))} "
+                    $"--audio-tracks {string.Join(",", mediaProps.Audio.Select(info => $"{info.Id}"))} "
                 )
                 : commandline.Append("--no-audio ");
         _ =
-            mediaInfo.Subtitle.Count > 0
+            mediaProps.Subtitle.Count > 0
                 ? commandline.Append(
                     CultureInfo.InvariantCulture,
-                    $"--subtitle-tracks {string.Join(",", mediaInfo.Subtitle.Select(info => $"{info.Id}"))} "
+                    $"--subtitle-tracks {string.Join(",", mediaProps.Subtitle.Select(info => $"{info.Id}"))} "
                 )
                 : commandline.Append("--no-subtitles ");
     }

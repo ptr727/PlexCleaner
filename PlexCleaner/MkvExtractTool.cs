@@ -31,7 +31,7 @@ public class MkvExtractTool : MkvMergeTool
 
     public bool ExtractToFiles(
         string inputName,
-        MediaInfo extractTracks,
+        MediaProps extractTracks,
         out Dictionary<int, string> idToFileNames
     )
     {
@@ -43,26 +43,26 @@ public class MkvExtractTool : MkvMergeTool
         idToFileNames = [];
         StringBuilder output = new();
         string outputFile;
-        foreach (VideoInfo info in extractTracks.Video)
+        foreach (VideoProps item in extractTracks.Video)
         {
-            outputFile = $"{inputName}.Track_{info.Id}.video";
+            outputFile = $"{inputName}.Track_{item.Id}.video";
             _ = FileEx.DeleteFile(outputFile);
-            idToFileNames[info.Id] = outputFile;
-            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
+            idToFileNames[item.Id] = outputFile;
+            _ = output.Append(CultureInfo.InvariantCulture, $"{item.Id}:\"{outputFile}\" ");
         }
-        foreach (AudioInfo info in extractTracks.Audio)
+        foreach (AudioProps item in extractTracks.Audio)
         {
-            outputFile = $"{inputName}.Track_{info.Id}.audio";
+            outputFile = $"{inputName}.Track_{item.Id}.audio";
             _ = FileEx.DeleteFile(outputFile);
-            idToFileNames[info.Id] = outputFile;
-            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
+            idToFileNames[item.Id] = outputFile;
+            _ = output.Append(CultureInfo.InvariantCulture, $"{item.Id}:\"{outputFile}\" ");
         }
-        foreach (SubtitleInfo info in extractTracks.Subtitle)
+        foreach (SubtitleProps item in extractTracks.Subtitle)
         {
-            outputFile = $"{inputName}.Track_{info.Id}.subtitle";
+            outputFile = $"{inputName}.Track_{item.Id}.subtitle";
             _ = FileEx.DeleteFile(outputFile);
-            idToFileNames[info.Id] = outputFile;
-            _ = output.Append(CultureInfo.InvariantCulture, $"{info.Id}:\"{outputFile}\" ");
+            idToFileNames[item.Id] = outputFile;
+            _ = output.Append(CultureInfo.InvariantCulture, $"{item.Id}:\"{outputFile}\" ");
         }
 
         // Extract
