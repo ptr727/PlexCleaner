@@ -104,13 +104,6 @@ public partial class FfMpegTool : MediaTool
         return true;
     }
 
-    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
-    {
-        // Not implemented
-        mediaToolInfo = null;
-        return false;
-    }
-
     public override bool Update(string updateFile)
     {
         // FfMpeg archives have versioned folders in the zip file

@@ -13,7 +13,7 @@ public static class Tools
 {
     // Tool details are populated during VerifyTools() call
     public static readonly FfMpegTool FfMpeg = new();
-    public static readonly FfProbeTool FfProbe = new();
+    public static readonly FfProbe.FfProbeTool FfProbe = new();
     public static readonly MkvMergeTool MkvMerge = new();
     public static readonly MkvPropEditTool MkvPropEdit = new();
     public static readonly MkvExtractTool MkvExtract = new();

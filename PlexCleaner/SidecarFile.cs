@@ -264,7 +264,7 @@ public class SidecarFile
                 _sidecarFileInfo.Name,
                 out MediaProps mkvMergeProps
             )
-            || !FfProbeTool.GetMediaPropsFromJson(
+            || !FfProbe.FfProbeTool.GetMediaPropsFromJson(
                 _ffProbeJson,
                 _sidecarFileInfo.Name,
                 out MediaProps ffProbeProps
@@ -498,7 +498,7 @@ public class SidecarFile
                 _mediaFileInfo.Name,
                 out MediaProps mkvMergeProps
             )
-            || !FfProbeTool.GetMediaPropsFromJson(
+            || !FfProbe.FfProbeTool.GetMediaPropsFromJson(
                 _ffProbeJson,
                 _mediaFileInfo.Name,
                 out MediaProps ffProbeProps

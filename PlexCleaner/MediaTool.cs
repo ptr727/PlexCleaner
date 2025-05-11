@@ -1,4 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using CliWrap;
+using CliWrap.Buffered;
+using CliWrap.Builders;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -41,7 +48,9 @@ public abstract class MediaTool
 
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
-    protected abstract bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo);
+
+    // Tool subfolder, e.g. /x64, /bin
+    protected virtual string GetSubFolder() => "";
 
     // Tools can override the default behavior as needed
     public virtual bool Update(string updateFile)
@@ -57,10 +66,6 @@ public abstract class MediaTool
         Log.Information("Extracting {UpdateFile} ...", updateFile);
         return Tools.SevenZip.UnZip(updateFile, toolPath);
     }
-
-    // Tool subfolder, e.g. /x64, /bin
-    // Used in GetToolPath()
-    protected virtual string GetSubFolder() => "";
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
@@ -81,7 +86,17 @@ public abstract class MediaTool
     public bool GetLatestVersion(out MediaToolInfo mediaToolInfo) =>
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? GetLatestVersionWindows(out mediaToolInfo)
-            : GetLatestVersionLinux(out mediaToolInfo);
+            : throw new NotImplementedException();
+
+    protected string GetLatestGitHubRelease(string repo)
+    {
+        Log.Information(
+            "{Tool} : Getting latest version from GitHub : {Repo}",
+            GetToolFamily(),
+            repo
+        );
+        return GitHubRelease.GetLatestRelease(repo);
+    }
 
     public int Command(string parameters)
     {
@@ -111,13 +126,92 @@ public abstract class MediaTool
         return ProcessEx.Execute(GetToolPath(), parameters, false, limit, out output, out error);
     }
 
-    protected string GetLatestGitHubRelease(string repo)
+    public bool Execute(Command command, out CommandResult commandResult)
     {
-        Log.Information(
-            "{Tool} : Getting latest version from GitHub : {Repo}",
-            GetToolFamily(),
-            repo
-        );
-        return GitHubRelease.GetLatestRelease(repo);
+        commandResult = null;
+        int processId = -1;
+        try
+        {
+            CommandTask<CommandResult> task = command
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteAsync(CancellationToken.None, Program.CancelToken());
+            processId = task.ProcessId;
+            Log.Information(
+                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+
+            commandResult = task.Task.GetAwaiter().GetResult();
+            return task.Task.IsCompletedSuccessfully;
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Error(
+                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            return false;
+        }
     }
+
+    public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult)
+    {
+        bufferedCommandResult = null;
+        int processId = -1;
+        try
+        {
+            CommandTask<BufferedCommandResult> task = command
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteBufferedAsync(
+                    Encoding.Default,
+                    Encoding.Default,
+                    CancellationToken.None,
+                    Program.CancelToken()
+                );
+            processId = task.ProcessId;
+            Log.Information(
+                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+
+            bufferedCommandResult = task.Task.GetAwaiter().GetResult();
+            return task.Task.IsCompletedSuccessfully;
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Error(
+                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            return false;
+        }
+    }
+}
+
+public static class CliExtensions
+{
+    public static ArgumentsBuilder AddOption(
+        this ArgumentsBuilder args,
+        string name,
+        string value
+    ) =>
+        string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value)
+            ? args
+            : args.Add(name).Add(value);
 }

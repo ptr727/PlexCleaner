@@ -30,6 +30,8 @@ Docker images are published on [Docker Hub][docker-link].
 ## Release Notes
 
 - Version 3:13:
+  - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
+  - Converted media tool commandline creation to using fluent builder pattern.
   - General refactoring.
 - Version 3:12:
   - Update to .NET 9.0.
@@ -267,18 +269,26 @@ services:
 - Create a default JSON settings file using the `defaultsettings` command:
   - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
-- Download the required 3rd party tools using the `checkfornewtools` command:
-  - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
-  - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
-  - The tool version information will be stored in `Tools\Tools.json`.
-  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
-- If required, e.g. no internet connectivity, the tools can be manually downloaded and extracted:
-  - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
-  - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
-  - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
-  - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
-  - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
-  - Disable automatic tool updates by setting `ToolsOptions:AutoUpdate` to `false`.
+- Install the required 3rd party tools:
+  - Using the `checkfornewtools` to install tools locally:
+    - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
+    - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
+    - The tool version information will be stored in `Tools\Tools.json`.
+    - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
+  - Using `winget` to install tools system wide:
+    - Note, run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
+    - `winget install --id=Gyan.FFmpeg --exact`.
+    - `winget install --id=MediaArea.MediaInfo --exact`.
+    - `winget install --id=HandBrake.HandBrake.CLI --exact`.
+    - `winget install --id=MoritzBunkus.MKVToolNix --exact --installer-type portable`.
+    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
+  - Manually downloaded and extracted locally:
+    - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+    - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
+    - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
+    - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
+    - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
+    - Set `ToolsOptions:UseSystem` to `false` and `ToolsOptions:AutoUpdate` to `false`.
 
 ### Linux
 
@@ -874,6 +884,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
 - [FluentAssertions](https://fluentassertions.com/)
 - [xUnit.Net](https://xunit.net/)
+- [CliWrap](https://github.com/Tyrrrz/CliWrap)
 
 ## Sample Media Files
 

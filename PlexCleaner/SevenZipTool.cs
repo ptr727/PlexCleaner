@@ -88,13 +88,6 @@ public partial class SevenZipTool : MediaTool
         return true;
     }
 
-    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
-    {
-        // Not implemented
-        mediaToolInfo = null;
-        return false;
-    }
-
     protected override string GetSubFolder() =>
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
 

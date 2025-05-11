@@ -93,13 +93,6 @@ public partial class HandBrakeTool : MediaTool
         return true;
     }
 
-    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
-    {
-        // Not implemented
-        mediaToolInfo = null;
-        return false;
-    }
-
     public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
         $"--start-at seconds:{(int)timeStart.TotalSeconds} --stop-at seconds:{(int)timeEnd.TotalSeconds}";
 

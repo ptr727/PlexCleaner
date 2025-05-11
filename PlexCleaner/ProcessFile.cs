@@ -845,7 +845,7 @@ public class ProcessFile
         // Get packet info using ccsub filter
         Log.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.Name);
         if (
-            !Tools.FfProbe.GetSubCcPacketInfo(
+            !Tools.FfProbe.GetSubCcPacketList(
                 FileInfo.FullName,
                 out List<FfMpegToolJsonSchema.Packet> packetList
             )
@@ -1920,7 +1920,7 @@ public class ProcessFile
         // Get packet info
         bitrateInfo = null;
         if (
-            !Tools.FfProbe.GetBitratePacketInfo(
+            !Tools.FfProbe.GetBitratePacketList(
                 FileInfo.FullName,
                 out List<FfMpegToolJsonSchema.Packet> packetList
             )

@@ -13,7 +13,7 @@ public class GitHubRelease
         // https://api.github.com/repos/ptr727/PlexCleaner/releases/latest
         string uri = $"https://api.github.com/repos/{repo}/releases/latest";
         Log.Information("Getting latest GitHub Release version from : {Uri}", uri);
-        string json = Download.GetHttpClient().GetStringAsync(uri).Result;
+        string json = Download.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
         Debug.Assert(json != null);
 
         // Parse latest version from "tag_name"

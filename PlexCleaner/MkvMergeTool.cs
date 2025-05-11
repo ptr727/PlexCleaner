@@ -77,7 +77,11 @@ public partial class MkvMergeTool : MediaTool
             // Download latest release file
             const string uri = "https://mkvtoolnix.download/latest-release.xml.gz";
             Log.Information("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-            Stream releaseStream = Download.GetHttpClient().GetStreamAsync(uri).Result;
+            Stream releaseStream = Download
+                .GetHttpClient()
+                .GetStreamAsync(uri)
+                .GetAwaiter()
+                .GetResult();
 
             // Get XML from Gzip
             using GZipStream gzStream = new(releaseStream, CompressionMode.Decompress);
@@ -100,13 +104,6 @@ public partial class MkvMergeTool : MediaTool
             return false;
         }
         return true;
-    }
-
-    protected override bool GetLatestVersionLinux(out MediaToolInfo mediaToolInfo)
-    {
-        // Not implemented
-        mediaToolInfo = null;
-        return false;
     }
 
     public static string GetStartStopSplit(TimeSpan timeStart, TimeSpan timeEnd) =>
