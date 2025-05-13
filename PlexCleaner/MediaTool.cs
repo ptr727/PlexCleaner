@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -162,6 +164,16 @@ public abstract class MediaTool
         }
     }
 
+    public bool Execute(
+        Command command,
+        bool summary,
+        out BufferedCommandResult bufferedCommandResult
+    ) =>
+        summary
+            // Default to 2 start lines and 8 end lines
+            ? Execute(command, 2, 8, out bufferedCommandResult)
+            : Execute(command, out bufferedCommandResult);
+
     public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult)
     {
         bufferedCommandResult = null;
@@ -202,6 +214,123 @@ public abstract class MediaTool
             return false;
         }
     }
+
+    public bool Execute(
+        Command command,
+        int startLines,
+        int stopLine,
+        out BufferedCommandResult bufferedCommandResult
+    )
+    {
+        bufferedCommandResult = null;
+        int processId = -1;
+        try
+        {
+            StringBuilder stdOutBuffer = new();
+            PipeTarget stdOutPipe = PipeTarget.Merge(
+                command.StandardOutputPipe,
+                ToStringSummary(stdOutBuffer, startLines, stopLine)
+            );
+
+            StringBuilder stdErrBuffer = new();
+            PipeTarget stdErrPipe = PipeTarget.Merge(
+                command.StandardErrorPipe,
+                ToStringSummary(stdErrBuffer, startLines, stopLine)
+            );
+
+            CommandTask<CommandResult> task = command
+                .WithStandardOutputPipe(stdOutPipe)
+                .WithStandardErrorPipe(stdErrPipe)
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteAsync(CancellationToken.None, Program.CancelToken());
+            processId = task.ProcessId;
+            Log.Information(
+                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+
+            CommandResult commandResult = task.Task.GetAwaiter().GetResult();
+            bufferedCommandResult = new(
+                commandResult.ExitCode,
+                commandResult.StartTime,
+                commandResult.ExitTime,
+                stdOutBuffer.ToString(),
+                stdErrBuffer.ToString()
+            );
+            return task.Task.IsCompletedSuccessfully;
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Error(
+                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            return false;
+        }
+    }
+
+    public static PipeTarget ToStringSummary(
+        StringBuilder stringBuilder,
+        int startLines,
+        int stopLines
+    ) =>
+        PipeTarget.Create(
+            async (origin, cancellationToken) =>
+            {
+                using StreamReader reader = new(
+                    origin,
+                    Encoding.Default,
+                    false,
+                    // BufferSizes.StreamReader
+                    1024,
+                    true
+                );
+
+                List<string> stringList = [];
+                int startLinesRead = 0;
+                int stopLinesRead = 0;
+                string line;
+                while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (startLines == 0 && stopLines == 0)
+                    {
+                        stringList.Add(line);
+                        continue;
+                    }
+
+                    if (startLinesRead < startLines)
+                    {
+                        stringList.Add(line);
+                        startLinesRead++;
+                        continue;
+                    }
+
+                    if (stopLinesRead < stopLines)
+                    {
+                        stringList.Add(line);
+                        stopLinesRead++;
+                        continue;
+                    }
+
+                    stringList.RemoveAt(startLines);
+                    stringList.Add(line);
+                }
+                stringList.ForEach(item => stringBuilder.AppendLine(item));
+            }
+        );
 }
 
 public static class CliExtensions
@@ -210,8 +339,5 @@ public static class CliExtensions
         this ArgumentsBuilder args,
         string name,
         string value
-    ) =>
-        string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value)
-            ? args
-            : args.Add(name).Add(value);
+    ) => string.IsNullOrWhiteSpace(value) ? args : args.Add(name).Add(value);
 }

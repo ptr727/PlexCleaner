@@ -4,17 +4,20 @@ using CliWrap.Builders;
 
 namespace PlexCleaner;
 
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/fftools-common-opts.texi
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.texi
+
 public partial class FfProbe
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public GlobalOptions LogLevel(string option) => Add($"-loglevel {option}");
+        public GlobalOptions LogLevel(string option) => Add("-loglevel").Add(option);
 
-        public GlobalOptions LogLevelError() => Add("-loglevel error");
+        public GlobalOptions LogLevelError() => Add("-loglevel").Add("error");
 
-        public GlobalOptions LogLevelQuiet() => Add("-loglevel quiet");
+        public GlobalOptions LogLevelQuiet() => Add("-loglevel").Add("quiet");
 
         public GlobalOptions HideBanner() => Add("-hide_banner");
 
@@ -22,6 +25,10 @@ public partial class FfProbe
 
         public GlobalOptions Add(string option, bool escape)
         {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
@@ -53,18 +60,18 @@ public partial class FfProbe
 
         public FfProbeOptions ShowEntries(string option) => Add("-show_entries").Add(option);
 
-        public FfProbeOptions ReadIntervals(TimeSpan timeStart, TimeSpan timeEnd) =>
+        public FfProbeOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
             timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals")
                     .Add($"+{(int)timeStart.TotalSeconds}%{(int)timeEnd.TotalSeconds}");
 
-        public FfProbeOptions ReadIntervalsStart(TimeSpan timeSpan) =>
+        public FfProbeOptions SeekStart(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals").Add($"+{(int)timeSpan.TotalSeconds}");
 
-        public FfProbeOptions ReadIntervalsStop(TimeSpan timeSpan) =>
+        public FfProbeOptions SeekStop(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals").Add($"%{(int)timeSpan.TotalSeconds}");
@@ -75,6 +82,10 @@ public partial class FfProbe
 
         public FfProbeOptions Add(string option, bool escape)
         {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
@@ -103,6 +114,9 @@ public partial class FfProbe
     {
         public static IGlobalOptions Create(string targetFilePath) =>
             new FfProbeBuilder(targetFilePath);
+
+        public static Command Version(string targetFilePath) =>
+            new FfProbeBuilder(targetFilePath).WithArguments(args => args.Add("-version").Build());
 
         public IFfProbeOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {

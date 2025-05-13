@@ -4,141 +4,174 @@ using CliWrap.Builders;
 
 namespace PlexCleaner;
 
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/fftools-common-opts.texi
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/formats.texi
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffmpeg.texi
+
+// https://github.com/rosenbjerg/FFMpegCore
+// https://github.com/kkroening/ffmpeg-python
+// https://github.com/fluent-ffmpeg/node-fluent-ffmpeg
+
 public partial class FfMpeg
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public GlobalOptions LogLevel(string option)
-        {
-            _ = _argumentsBuilder.Add($"-loglevel {option}");
-            return this;
-        }
+        public GlobalOptions Default() =>
+            LogLevelError().HideBanner().NoStats().AbortOnEmptyOutput();
 
-        public GlobalOptions LogLevelError()
-        {
-            _ = _argumentsBuilder.Add("-loglevel error");
-            return this;
-        }
+        public GlobalOptions LogLevel(string option) => Add("-loglevel").Add(option);
 
-        public GlobalOptions LogLevelQuiet()
-        {
-            _ = _argumentsBuilder.Add("-loglevel quiet");
-            return this;
-        }
+        public GlobalOptions LogLevelError() => LogLevel("error");
 
-        public GlobalOptions HideBanner()
-        {
-            _ = _argumentsBuilder.Add("-hide_banner");
-            return this;
-        }
+        public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
 
-        public GlobalOptions Add(string option)
-        {
-            _ = _argumentsBuilder.Add(option);
-            return this;
-        }
+        public GlobalOptions HideBanner() => Add("-hide_banner");
+
+        public GlobalOptions NoStats() => Add("-nostats");
+
+        public GlobalOptions ExitOnError() => Add("-xerror");
+
+        public GlobalOptions AbortOn(string option) => Add("-abort_on").Add(option);
+
+        public GlobalOptions AbortOnEmptyOutput() => AbortOn("empty_output");
+
+        public GlobalOptions Add(string option) => Add(option, false);
 
         public GlobalOptions Add(string option, bool escape)
         {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
-    public class FfMpegOptions(ArgumentsBuilder argumentsBuilder)
+    public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public FfMpegOptions OutputFormat(string option)
+        // https://trac.ffmpeg.org/ticket/2622
+        // Error with some PGS subtitles
+        // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
+        // Consider increasing the value for the 'analyzeduration' and 'probesize' options
+        // TODO: Issue is reported fixed, to be verified
+
+        // Add -fflags +genpts to generate missing timestamps
+        // [mpegts @ 0x5713ff02ab40] first pts and dts value must be set
+        // av_interleaved_write_frame(): Invalid data found when processing input
+        // [matroska @ 0x604976cd9dc0] Can't write packet with unknown timestamp
+        // av_interleaved_write_frame(): Invalid argument
+        public InputOptions Default() => Flags("+genpts").AnalyzeDuration("2G").ProbeSize("2G");
+
+        public InputOptions AnalyzeDuration(string option) => Add("-analyzeduration").Add(option);
+
+        public InputOptions ProbeSize(string option) => Add("-probesize").Add(option);
+
+        public InputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
+            timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
+                ? this
+                : Add("-ss")
+                    .Add($"{(int)timeStart.TotalSeconds}")
+                    .Add("-t")
+                    .Add($"{(int)timeEnd.TotalSeconds}");
+
+        public InputOptions SeekStart(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero ? this : Add("-ss").Add($"{(int)timeSpan.TotalSeconds}");
+
+        public InputOptions SeekStop(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero ? this : Add("-t").Add($"{(int)timeSpan.TotalSeconds}");
+
+        public InputOptions Flags(string option) => Add("-fflags").Add(option);
+
+        public InputOptions InputFile(string option) => Add("-i").Add($"\"{option}\"");
+
+        public InputOptions Add(string option) => Add(option, false);
+
+        public InputOptions Add(string option, bool escape)
         {
-            _ = _argumentsBuilder.Add($"-output_format {option}");
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
+            _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
+    }
 
-        public FfMpegOptions OutputFormatJson()
-        {
-            _ = _argumentsBuilder.Add("-output_format json");
-            return this;
-        }
+    public class OutputOptions(ArgumentsBuilder argumentsBuilder)
+    {
+        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public FfMpegOptions ShowStreams()
-        {
-            _ = _argumentsBuilder.Add("-show_streams");
-            return this;
-        }
+        // https://trac.ffmpeg.org/ticket/6375
+        // Too many packets buffered for output stream 0:1
+        // Set max_muxing_queue_size to large value to work around issue
+        // TODO: Issue is reported fixed, to be verified
+        public OutputOptions Default() => MaxMuxingQueueSize("1024");
 
-        public FfMpegOptions ShowPackets()
-        {
-            _ = _argumentsBuilder.Add("-show_packets");
-            return this;
-        }
+        public OutputOptions MaxMuxingQueueSize(string option) =>
+            Add("-max_muxing_queue_size").Add(option);
 
-        public FfMpegOptions ShowFrames()
-        {
-            _ = _argumentsBuilder.Add("-show_frames");
-            return this;
-        }
+        public OutputOptions NoAudio() => Add("-an");
 
-        public FfMpegOptions ShowFormat()
-        {
-            _ = _argumentsBuilder.Add("-show_format");
-            return this;
-        }
+        public OutputOptions NoVideo() => Add("-an");
 
-        public FfMpegOptions AnalyzeFrames()
-        {
-            _ = _argumentsBuilder.Add("-analyze_frames");
-            return this;
-        }
+        public OutputOptions NoSubtitles() => Add("-sn");
 
-        public FfMpegOptions SelectStreams(string option)
-        {
-            _ = _argumentsBuilder.Add($"-select_streams {option}");
-            return this;
-        }
+        public OutputOptions NoData() => Add("-dn");
 
-        public FfMpegOptions ShowEntries(string option)
-        {
-            _ = _argumentsBuilder.Add($"-show_entries {option}");
-            return this;
-        }
+        public OutputOptions Map(string option) => Add("-map").Add(option);
 
-        public FfMpegOptions ReadIntervals(TimeSpan timeStart, TimeSpan timeEnd)
-        {
-            _ = _argumentsBuilder.Add(
-                $"-read_intervals +{(int)timeStart.TotalSeconds}%{(int)timeEnd.TotalSeconds}"
-            );
-            return this;
-        }
+        public OutputOptions MapMetadata(string option) => Add("-map_metadata").Add(option);
 
-        public FfMpegOptions ReadIntervalsStart(TimeSpan timeSpan)
-        {
-            _ = _argumentsBuilder.Add($"-read_intervals +{(int)timeSpan.TotalSeconds}");
-            return this;
-        }
+        public OutputOptions MapAll() => Map("0");
 
-        public FfMpegOptions ReadIntervalsStop(TimeSpan timeSpan)
-        {
-            _ = _argumentsBuilder.Add($"-read_intervals %{(int)timeSpan.TotalSeconds}");
-            return this;
-        }
+        public OutputOptions Codec(string option) => Add("-c").Add(option);
 
-        public FfMpegOptions InputFile(string option)
-        {
-            _ = _argumentsBuilder.Add($"-i {option}");
-            return this;
-        }
+        public OutputOptions CodecCopy() => Codec("copy");
 
-        public FfMpegOptions Add(string option)
-        {
-            _ = _argumentsBuilder.Add(option);
-            return this;
-        }
+        public OutputOptions MapAllCodecCopy() => MapAll().CodecCopy();
 
-        public FfMpegOptions Add(string option, bool escape)
+        public OutputOptions CodecVideo(string option) => Add("-c:v").Add(option);
+
+        public OutputOptions CodecAudio(string option) => Add("-c:a").Add(option);
+
+        public OutputOptions CodecSubtitle(string option) => Add("-c:s").Add(option);
+
+        public OutputOptions Format(string option) => Add("-f").Add(option);
+
+        public OutputOptions FormatMatroska() => Format("matroska");
+
+        public OutputOptions OutputFile(string option) => Add($"\"{option}\"");
+
+        public OutputOptions VideoFilter(string option) => Add("-vf").Add(option);
+
+        public OutputOptions BitstreamFilterVideo(string option) => Add("-bsf:v").Add(option);
+
+        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
+            timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
+                ? this
+                : SeekStart(timeStart).SeekStop(timeEnd);
+
+        public OutputOptions SeekStart(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero ? this : Add("-ss").Add($"{(int)timeSpan.TotalSeconds}");
+
+        public OutputOptions SeekStop(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero ? this : Add("-t").Add($"{(int)timeSpan.TotalSeconds}");
+
+        public OutputOptions NullOutput() => Add("-f").Add("null").Add("-");
+
+        public OutputOptions Add(string option) => Add(option, false);
+
+        public OutputOptions Add(string option, bool escape)
         {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
@@ -146,12 +179,17 @@ public partial class FfMpeg
 
     public interface IGlobalOptions
     {
-        IFfMpegOptions GlobalOptions(Action<GlobalOptions> globalOptions);
+        IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions);
     }
 
-    public interface IFfMpegOptions
+    public interface IInputOptions
     {
-        IFfMpegBuilder FfProbeOptions(Action<FfMpegOptions> ffprobeOptions);
+        IOutputOptions InputOptions(Action<InputOptions> inputOptions);
+    }
+
+    public interface IOutputOptions
+    {
+        IFfMpegBuilder OutputOptions(Action<OutputOptions> outputOptions);
     }
 
     public interface IFfMpegBuilder
@@ -162,21 +200,31 @@ public partial class FfMpeg
     public class FfMpegBuilder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
-            IFfMpegOptions,
+            IInputOptions,
+            IOutputOptions,
             IFfMpegBuilder
     {
         public static IGlobalOptions Create(string targetFilePath) =>
             new FfMpegBuilder(targetFilePath);
 
-        public IFfMpegOptions GlobalOptions(Action<GlobalOptions> globalOptions)
+        public static Command Version(string targetFilePath) =>
+            new FfMpegBuilder(targetFilePath).WithArguments(args => args.Add("-version").Build());
+
+        public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
             globalOptions(new(_argumentsBuilder));
             return this;
         }
 
-        public IFfMpegBuilder FfProbeOptions(Action<FfMpegOptions> ffprobeOptions)
+        public IOutputOptions InputOptions(Action<InputOptions> inputOptions)
         {
-            ffprobeOptions(new(_argumentsBuilder));
+            inputOptions(new(_argumentsBuilder));
+            return this;
+        }
+
+        public IFfMpegBuilder OutputOptions(Action<OutputOptions> outputOptions)
+        {
+            outputOptions(new(_argumentsBuilder));
             return this;
         }
 

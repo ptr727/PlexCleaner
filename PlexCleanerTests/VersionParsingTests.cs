@@ -34,7 +34,9 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     )]
     public void Parse_FfMpeg_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = FfMpegTool.InstalledVersionRegex().Match(line);
+        System.Text.RegularExpressions.Match match = FfMpeg
+            .FfMpegTool.InstalledVersionRegex()
+            .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }

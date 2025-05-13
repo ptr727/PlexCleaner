@@ -19,7 +19,7 @@ public class FileNameEscapingTests(PlexCleanerFixture fixture)
     )]
     public void Escape_Movie_fileName(string fileName, string escapedName)
     {
-        string escapedFileName = FfProbe.FfProbeTool.EscapeMovieFileName(fileName);
+        string escapedFileName = FfProbe.EscapeMovieFileName(fileName);
         Assert.Equal(escapedName, escapedFileName);
     }
 }

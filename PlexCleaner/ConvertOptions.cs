@@ -135,8 +135,8 @@ public record ConvertOptions3 : ConvertOptions2
 
     public void SetDefaults()
     {
-        FfMpegOptions.Video = FfMpegTool.DefaultVideoOptions;
-        FfMpegOptions.Audio = FfMpegTool.DefaultAudioOptions;
+        FfMpegOptions.Video = FfMpeg.FfMpegTool.DefaultVideoOptions;
+        FfMpegOptions.Audio = FfMpeg.FfMpegTool.DefaultAudioOptions;
         FfMpegOptions.Global = "";
 
         HandBrakeOptions.Video = HandBrakeTool.DefaultVideoOptions;

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -21,16 +19,41 @@ namespace PlexCleaner;
 
 public partial class FfProbe
 {
-    // Reuse FfMpeg family
-    public class FfProbeTool : FfMpegTool
+    public class FfProbeTool : MediaTool
     {
+        public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
+
         public override ToolType GetToolType() => ToolType.FfProbe;
 
         protected override string GetToolNameWindows() => "ffprobe.exe";
 
         protected override string GetToolNameLinux() => "ffprobe";
 
+        protected override string GetSubFolder() => "bin";
+
         public IGlobalOptions GetFfProbeBuilder() => FfProbeBuilder.Create(GetToolPath());
+
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
+        {
+            // Get file info
+            mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
+            if (File.Exists(mediaToolInfo.FileName))
+            {
+                FileInfo fileInfo = new(mediaToolInfo.FileName);
+                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
+                mediaToolInfo.Size = fileInfo.Length;
+            }
+
+            // Get version info
+            Command command = FfProbeBuilder.Version(GetToolPath());
+            return Execute(command, out BufferedCommandResult result)
+                && result.ExitCode == 0
+                && result.StandardError.Length == 0
+                && FfMpeg.FfMpegTool.ParseVersion(result.StandardOutput, mediaToolInfo);
+        }
+
+        protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
+            throw new NotImplementedException();
 
         public bool GetPacketList(
             Command command,
@@ -38,85 +61,74 @@ public partial class FfProbe
             out string error
         )
         {
-            // Init
-            packetList = null;
-            error = string.Empty;
-
-            // Write JSON output to gzip memory stream to save memory
-            using MemoryStream memoryStream = new();
-            using GZipStream compressStream = new(memoryStream, CompressionMode.Compress, true);
-            StringBuilder stdErrorBuffer = new();
-
-            // Execute command
-            if (
-                !Execute(
-                    command
-                        .WithStandardOutputPipe(PipeTarget.ToStream(compressStream, true))
-                        .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrorBuffer)),
-                    out CommandResult result
-                )
-                || result.ExitCode != 0
-                || memoryStream.Length == 0
-            )
-            {
-                error = stdErrorBuffer.ToString();
-                return false;
-            }
-
-            // Read JSON from gzip memory stream
-            _ = memoryStream.Seek(0, SeekOrigin.Begin);
-            using GZipStream decompressStream = new(memoryStream, CompressionMode.Decompress, true);
-            FfMpegToolJsonSchema.PacketInfo packetInfo =
-                JsonSerializer.Deserialize<FfMpegToolJsonSchema.PacketInfo>(
-                    decompressStream,
-                    ConfigFileJsonSchema.JsonReadOptions
-                );
-            if (packetInfo == null || packetInfo.Packets == null)
-            {
-                Log.Error("Failed to DeSerialize JSON PacketInfo");
-                return false;
-            }
-            packetList = packetInfo.Packets;
-            return true;
+            (bool result, string error, List<FfMpegToolJsonSchema.Packet> packetList) result =
+                GetPacketListAsync(command).GetAwaiter().GetResult();
+            error = result.error;
+            packetList = result.packetList;
+            return result.result;
         }
 
         public async Task<(bool, string, List<FfMpegToolJsonSchema.Packet>)> GetPacketListAsync(
             Command command
         )
         {
-            // TODO: This does not work
-            // https://github.com/Tyrrrz/CliWrap/discussions/293
-
-            // Write JSON output to memory stream
-            using MemoryStream memoryStream = new();
-            StringBuilder stdErrorBuffer = new();
-            CommandTask<CommandResult> task = command
-                .WithStandardOutputPipe(PipeTarget.ToStream(memoryStream, true))
-                .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrorBuffer))
-                .WithValidation(CommandResultValidation.None)
-                .ExecuteAsync(CancellationToken.None, Program.CancelToken());
-            Log.Information(
-                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                task.ProcessId,
-                command.Arguments
-            );
-
-            // Execute command
-            CommandResult result = await task;
-
-            // Read JSON from memory stream
-            FfMpegToolJsonSchema.PacketInfo packetInfo =
-                await JsonSerializer.DeserializeAsync<FfMpegToolJsonSchema.PacketInfo>(
-                    memoryStream,
-                    ConfigFileJsonSchema.JsonReadOptions,
-                    Program.CancelToken()
-                );
-            if (packetInfo == null || packetInfo.Packets == null)
+            int processId = -1;
+            try
             {
-                Log.Error("Failed to DeSerialize JSON PacketInfo");
+                // TODO: Alternatives for packet by packet reading:
+                // https://stackoverflow.com/questions/58572524/asynchonously-deserializing-a-list-using-system-text-json
+                // https://stackoverflow.com/questions/54983533/parsing-a-json-file-with-net-core-3-0-system-text-json/55429664#55429664
+                // https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer.deserializeasyncenumerable?view=net-9.0
+                // https://github.com/Cysharp/Utf8StreamReader
+
+                // Pipe target to deserialize JSON packets
+                FfMpegToolJsonSchema.PacketInfo packetInfo = null;
+                PipeTarget stdOutTarget = PipeTarget.Create(
+                    async (stdOutStream, cancellationToken) =>
+                    {
+                        packetInfo =
+                            await JsonSerializer.DeserializeAsync<FfMpegToolJsonSchema.PacketInfo>(
+                                stdOutStream,
+                                ConfigFileJsonSchema.JsonReadOptions,
+                                cancellationToken
+                            );
+                    }
+                );
+
+                // Setup redirection
+                StringBuilder stdErrorBuffer = new();
+                CommandTask<CommandResult> task = command
+                    .WithStandardOutputPipe(stdOutTarget)
+                    .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrorBuffer))
+                    .WithValidation(CommandResultValidation.None)
+                    .ExecuteAsync(CancellationToken.None, Program.CancelToken());
+                processId = task.ProcessId;
+                Log.Information(
+                    "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                    GetToolType(),
+                    processId,
+                    command.Arguments
+                );
+
+                // Execute command
+                CommandResult result = await task;
+                return (result.ExitCode == 0, stdErrorBuffer.ToString(), packetInfo?.Packets);
             }
-            return (result.ExitCode == 0, stdErrorBuffer.ToString(), packetInfo?.Packets);
+            catch (OperationCanceledException)
+            {
+                Log.Error(
+                    "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                    GetToolType(),
+                    processId,
+                    command.Arguments
+                );
+                return (false, string.Empty, null);
+            }
+            catch (Exception e)
+                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            {
+                return (false, string.Empty, null);
+            }
         }
 
         public bool GetSubCcPacketList(
@@ -128,8 +140,8 @@ public partial class FfProbe
             // -t and read_intervals do not work with the subcc filter
             // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
             // ReMux using FFmpeg to a snippet file then scan the snippet file
-            StringBuilder commandline = new();
-            string error;
+            Command command;
+            string error = string.Empty;
             if (Program.Options.QuickScan)
             {
                 // Keep in sync with FfMpegTool.ReMuxToFormat()
@@ -139,47 +151,28 @@ public partial class FfProbe
                 Debug.Assert(fileName != tempName);
                 _ = FileEx.DeleteFile(tempName);
 
-                // Default options
-                _ = commandline.Append($"{GlobalOptions} ");
-
-                // Quiet
-                _ = commandline.Append(
-                    CultureInfo.InvariantCulture,
-                    $"{SilentOptions} -loglevel error "
-                );
-
-                // Add -fflags +genpts to generate missing timestamps
-                _ = commandline.Append(CultureInfo.InvariantCulture, $"-fflags +genpts ");
-
-                // Quickscan
-                _ = commandline.Append(
-                    CultureInfo.InvariantCulture,
-                    $"{GetStopSplit(Program.QuickScanTimeSpan)} "
-                );
-
-                // Input filename
-                _ = commandline.Append(CultureInfo.InvariantCulture, $"-i \"{fileName}\" ");
-
-                // Default output options
-                _ = commandline.Append($"{OutputOptions} ");
-
                 // Use Matroska for snippet format as it supports more stream formats
                 // E.g. DVCPRO video streams can be muxed into MKV but not into TS
                 // [mpegts @ 000001543cf744c0] Stream 0, codec dvvideo, is muxed as a private data stream and may not be recognized upon reading.
 
-                // Copy only first video stream
-                _ = commandline.Append(
-                    CultureInfo.InvariantCulture,
-                    $"-map 0:v -c copy -f matroska \"{tempName}\""
-                );
+                // Build command line
+                command = Tools
+                    .FfMpeg.GetFfMpegBuilder()
+                    .GlobalOptions(options => options.Default())
+                    .InputOptions(options =>
+                        options.Default().SeekStop(Program.QuickScanTimeSpan).InputFile(fileName)
+                    )
+                    .OutputOptions(options =>
+                        options.MapAllCodecCopy().Default().FormatMatroska().OutputFile(tempName)
+                    )
+                    .Build();
 
-                // Remux to temp file
+                // Execute command
                 Log.Information("Creating temp media file : {TempFileName}", tempName);
-                int exitCode = Tools.FfMpeg.Command(commandline.ToString(), 5, out _, out error);
-                if (exitCode != 0)
+                if (!Tools.FfMpeg.Execute(command, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
-                    Log.Error("{Error}", error);
+                    Log.Error("{Error}", result.StandardError);
                     _ = FileEx.DeleteFile(tempName);
                     packetList = null;
                     return false;
@@ -192,7 +185,7 @@ public partial class FfProbe
             // Build command line
             // Get packet info using subcc filter
             // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
-            Command command = GetFfProbeBuilder()
+            command = GetFfProbeBuilder()
                 .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
                 .FfProbeOptions(options =>
                     options
@@ -230,7 +223,7 @@ public partial class FfProbe
                 .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
                 .FfProbeOptions(options =>
                     options
-                        .ReadIntervalsStop(
+                        .SeekStop(
                             Program.Options.QuickScan ? Program.QuickScanTimeSpan : TimeSpan.Zero
                         )
                         .ShowPackets()
@@ -239,13 +232,10 @@ public partial class FfProbe
                 )
                 .Build();
 
+            // TODO: Optimize by reading packet by packet and calculating bitrate
+
             // Get packet list
             Log.Information("Getting bitrate packet info : {FileName}", fileName);
-
-            // TODO: Convert to async when working
-            //(bool result, string error, List<FfMpegToolJsonSchema.Packet> packetList) result =
-            //    GetPacketListAsync(command).GetAwaiter().GetResult();
-
             if (!GetPacketList(command, out packetList, out string error))
             {
                 Log.Error("Failed to get bitrate packet info : {FileName}", fileName);
