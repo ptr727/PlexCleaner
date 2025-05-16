@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.9" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
