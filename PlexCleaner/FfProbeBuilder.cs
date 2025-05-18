@@ -13,11 +13,13 @@ public partial class FfProbe
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public GlobalOptions LogLevel(string option) => Add("-loglevel").Add(option);
+        public GlobalOptions LogLevel() => Add("-loglevel");
 
-        public GlobalOptions LogLevelError() => Add("-loglevel").Add("error");
+        public GlobalOptions LogLevel(string option) => LogLevel().Add(option);
 
-        public GlobalOptions LogLevelQuiet() => Add("-loglevel").Add("quiet");
+        public GlobalOptions LogLevelError() => LogLevel("error");
+
+        public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
 
         public GlobalOptions HideBanner() => Add("-hide_banner");
 
@@ -34,13 +36,16 @@ public partial class FfProbe
         }
     }
 
+    // TODO: Rename to input or output options
     public class FfProbeOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public FfProbeOptions OutputFormat(string option) => Add("-output_format").Add(option);
+        public FfProbeOptions OutputFormat() => Add("-output_format");
 
-        public FfProbeOptions OutputFormatJson() => Add("-output_format").Add("json");
+        public FfProbeOptions OutputFormat(string option) => OutputFormat().Add(option);
+
+        public FfProbeOptions OutputFormatJson() => OutputFormat("json");
 
         public FfProbeOptions ShowStreams() => Add("-show_streams");
 
@@ -52,19 +57,27 @@ public partial class FfProbe
 
         public FfProbeOptions AnalyzeFrames() => Add("-analyze_frames");
 
-        public FfProbeOptions SelectStreams(string option) => Add("-select_streams").Add(option);
+        public FfProbeOptions SelectStreams() => Add("-select_streams");
 
-        public FfProbeOptions Format(string option) => Add("-f").Add(option);
+        public FfProbeOptions SelectStreams(string option) => SelectStreams().Add(option);
 
-        public FfProbeOptions Input(string option) => Add("-i").Add(option);
+        public FfProbeOptions Format() => Add("-f");
 
-        public FfProbeOptions ShowEntries(string option) => Add("-show_entries").Add(option);
+        public FfProbeOptions Format(string option) => Format().Add(option);
 
-        public FfProbeOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
-            timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
+        public FfProbeOptions Input() => Add("-i");
+
+        public FfProbeOptions Input(string option) => Input().Add(option);
+
+        public FfProbeOptions ShowEntries() => Add("-show_entries");
+
+        public FfProbeOptions ShowEntries(string option) => ShowEntries().Add(option);
+
+        public FfProbeOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
+            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals")
-                    .Add($"+{(int)timeStart.TotalSeconds}%{(int)timeEnd.TotalSeconds}");
+                    .Add($"+{(int)timeStart.TotalSeconds}%{(int)timeStop.TotalSeconds}");
 
         public FfProbeOptions SeekStart(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero
@@ -75,6 +88,9 @@ public partial class FfProbe
             timeSpan == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals").Add($"%{(int)timeSpan.TotalSeconds}");
+
+        public FfProbeOptions QuickScan() =>
+            Program.Options.QuickScan ? SeekStop(Program.QuickScanTimeSpan) : this;
 
         public FfProbeOptions InputFile(string option) => Add($"\"{option}\"");
 

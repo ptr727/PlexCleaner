@@ -14,15 +14,14 @@ public static class Tools
     // Tool details are populated during VerifyTools() call
     public static readonly FfMpeg.FfMpegTool FfMpeg = new();
     public static readonly FfProbe.FfProbeTool FfProbe = new();
-    public static readonly MkvMergeTool MkvMerge = new();
-    public static readonly MkvPropEditTool MkvPropEdit = new();
-    public static readonly MkvExtractTool MkvExtract = new();
-    public static readonly MediaInfoTool MediaInfo = new();
-    public static readonly HandBrakeTool HandBrake = new();
+    public static readonly MkvMerge.MkvMergeTool MkvMerge = new();
+    public static readonly MkvPropEdit.MkvPropEditTool MkvPropEdit = new();
+    public static readonly MediaInfo.MediaInfoTool MediaInfo = new();
+    public static readonly HandBrake.HandBrakeTool HandBrake = new();
     public static readonly SevenZipTool SevenZip = new();
 
     public static List<MediaTool> GetToolList() =>
-        [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MkvExtract, MediaInfo, HandBrake, SevenZip];
+        [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MediaInfo, HandBrake, SevenZip];
 
     public static List<MediaTool> GetToolFamilyList() =>
         [FfMpeg, MkvMerge, MediaInfo, HandBrake, SevenZip];

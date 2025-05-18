@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using CliWrap;
 using CliWrap.Builders;
 
@@ -10,135 +12,137 @@ public partial class MkvMerge
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public GlobalOptions LogLevel(string option)
-        {
-            _ = _argumentsBuilder.Add($"-loglevel {option}");
-            return this;
-        }
+        public GlobalOptions Default() =>
+            DisableTrackStatisticsTags().NormalizeLanguageIetfExtended();
 
-        public GlobalOptions LogLevelError()
-        {
-            _ = _argumentsBuilder.Add("-loglevel error");
-            return this;
-        }
+        public GlobalOptions Quiet() => Add("--quiet");
 
-        public GlobalOptions LogLevelQuiet()
-        {
-            _ = _argumentsBuilder.Add("-loglevel quiet");
-            return this;
-        }
+        public GlobalOptions NormalizeLanguageIetf(string option) =>
+            Add("--normalize-language-ietf").Add(option);
 
-        public GlobalOptions HideBanner()
-        {
-            _ = _argumentsBuilder.Add("-hide_banner");
-            return this;
-        }
+        // Normalize IETF tags to extended format, cmn-Hant -> zh-cmn-Hant
+        public GlobalOptions NormalizeLanguageIetfExtended() => NormalizeLanguageIetf("extlang");
 
-        public GlobalOptions Add(string option)
-        {
-            _ = _argumentsBuilder.Add(option);
-            return this;
-        }
+        public GlobalOptions DisableTrackStatisticsTags() => Add("--disable-track-statistics-tags");
+
+        public GlobalOptions Add(string option) => Add(option, false);
 
         public GlobalOptions Add(string option, bool escape)
         {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
-    public class MkvMergeOptions(ArgumentsBuilder argumentsBuilder)
+    public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public MkvMergeOptions OutputFormat(string option)
+        public InputOptions Default() => NoGlobalTags().NoTrackTags().NoAttachments().NoButtons();
+
+        public InputOptions Identify(string option) => Add("--identify").Add($"\"{option}\"");
+
+        public InputOptions NoGlobalTags() => Add("--no-global-tags");
+
+        public InputOptions NoTrackTags() => Add("--no-track-tags");
+
+        public InputOptions NoAttachments() => Add("--no-attachments");
+
+        public InputOptions NoButtons() => Add("--no-buttons");
+
+        public InputOptions VideoTracks(string option) => Add("--video-tracks").Add(option);
+
+        public InputOptions AudioTracks(string option) => Add("--audio-tracks").Add(option);
+
+        public InputOptions SubtitleTracks(string option) => Add("--subtitle-tracks").Add(option);
+
+        public InputOptions NoVideo() => Add("--no-video");
+
+        public InputOptions NoAudio() => Add("--no-audio");
+
+        public InputOptions NoSubtitles() => Add("--no-subtitles");
+
+        public InputOptions SelectTracks(MediaProps mediaProps)
         {
-            _ = _argumentsBuilder.Add($"-output_format {option}");
+            // Verify correct media type
+            Debug.Assert(mediaProps.Parser == MediaTool.ToolType.MkvMerge);
+
+            // Create the track number filters
+            // The track numbers are reported by MkvMerge --identify, use the track.id values
+            _ =
+                mediaProps.Video.Count > 0
+                    ? VideoTracks(string.Join(",", mediaProps.Video.Select(item => $"{item.Id}")))
+                    : NoVideo();
+            _ =
+                mediaProps.Audio.Count > 0
+                    ? AudioTracks(string.Join(",", mediaProps.Audio.Select(item => $"{item.Id}")))
+                    : NoAudio();
+            _ =
+                mediaProps.Subtitle.Count > 0
+                    ? SubtitleTracks(
+                        string.Join(",", mediaProps.Subtitle.Select(item => $"{item.Id}"))
+                    )
+                    : NoSubtitles();
             return this;
         }
 
-        public MkvMergeOptions OutputFormatJson()
+        public InputOptions InputFile(string option) => Add($"\"{option}\"");
+
+        public InputOptions Add(string option) => Add(option, false);
+
+        public InputOptions Add(string option, bool escape)
         {
-            _ = _argumentsBuilder.Add("-output_format json");
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
+            _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
+    }
 
-        public MkvMergeOptions ShowStreams()
-        {
-            _ = _argumentsBuilder.Add("-show_streams");
-            return this;
-        }
+    public class OutputOptions(ArgumentsBuilder argumentsBuilder)
+    {
+        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
-        public MkvMergeOptions ShowPackets()
-        {
-            _ = _argumentsBuilder.Add("-show_packets");
-            return this;
-        }
+        public OutputOptions IdentificationFormat(string option) =>
+            Add("--identification-format").Add(option);
 
-        public MkvMergeOptions ShowFrames()
-        {
-            _ = _argumentsBuilder.Add("-show_frames");
-            return this;
-        }
+        public OutputOptions IdentificationFormatJson() => IdentificationFormat("json");
 
-        public MkvMergeOptions ShowFormat()
-        {
-            _ = _argumentsBuilder.Add("-show_format");
-            return this;
-        }
+        public OutputOptions OutputFile(string option) => Add("--output").Add($"\"{option}\"");
 
-        public MkvMergeOptions AnalyzeFrames()
-        {
-            _ = _argumentsBuilder.Add("-analyze_frames");
-            return this;
-        }
+        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
+            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
+                ? this
+                : Add("--split")
+                    .Add($"parts:{(int)timeStart.TotalSeconds}s-{(int)timeStop.TotalSeconds}s");
 
-        public MkvMergeOptions SelectStreams(string option)
-        {
-            _ = _argumentsBuilder.Add($"-select_streams {option}");
-            return this;
-        }
+        public OutputOptions SeekStart(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero
+                ? this
+                : Add("--split").Add($"parts:{(int)timeSpan.TotalSeconds}s-");
 
-        public MkvMergeOptions ShowEntries(string option)
-        {
-            _ = _argumentsBuilder.Add($"-show_entries {option}");
-            return this;
-        }
+        public OutputOptions SeekStop(TimeSpan timeSpan) =>
+            timeSpan == TimeSpan.Zero
+                ? this
+                : Add("--split").Add($"parts:-{(int)timeSpan.TotalSeconds}s");
 
-        public MkvMergeOptions ReadIntervals(TimeSpan timeStart, TimeSpan timeEnd)
-        {
-            _ = _argumentsBuilder.Add(
-                $"-read_intervals +{(int)timeStart.TotalSeconds}%{(int)timeEnd.TotalSeconds}"
-            );
-            return this;
-        }
+        public OutputOptions TestSnippets() =>
+            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
 
-        public MkvMergeOptions ReadIntervalsStart(TimeSpan timeSpan)
-        {
-            _ = _argumentsBuilder.Add($"-read_intervals +{(int)timeSpan.TotalSeconds}");
-            return this;
-        }
+        public OutputOptions Add(string option) => Add(option, false);
 
-        public MkvMergeOptions ReadIntervalsStop(TimeSpan timeSpan)
+        public OutputOptions Add(string option, bool escape)
         {
-            _ = _argumentsBuilder.Add($"-read_intervals %{(int)timeSpan.TotalSeconds}");
-            return this;
-        }
-
-        public MkvMergeOptions InputFile(string option)
-        {
-            _ = _argumentsBuilder.Add($"-i {option}");
-            return this;
-        }
-
-        public MkvMergeOptions Add(string option)
-        {
-            _ = _argumentsBuilder.Add(option);
-            return this;
-        }
-
-        public MkvMergeOptions Add(string option, bool escape)
-        {
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                return this;
+            }
             _ = _argumentsBuilder.Add(option, escape);
             return this;
         }
@@ -146,12 +150,17 @@ public partial class MkvMerge
 
     public interface IGlobalOptions
     {
-        IMkvMergeOptions GlobalOptions(Action<GlobalOptions> globalOptions);
+        IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions);
     }
 
-    public interface IMkvMergeOptions
+    public interface IInputOptions
     {
-        IMkvMergeBuilder MkvMergeOptions(Action<MkvMergeOptions> ffprobeOptions);
+        IOutputOptions InputOptions(Action<InputOptions> inputOptions);
+    }
+
+    public interface IOutputOptions
+    {
+        IMkvMergeBuilder OutputOptions(Action<OutputOptions> outputOptions);
     }
 
     public interface IMkvMergeBuilder
@@ -162,21 +171,33 @@ public partial class MkvMerge
     public class MkvMergeBuilder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
-            IMkvMergeOptions,
+            IInputOptions,
+            IOutputOptions,
             IMkvMergeBuilder
     {
         public static IGlobalOptions Create(string targetFilePath) =>
             new MkvMergeBuilder(targetFilePath);
 
-        public IMkvMergeOptions GlobalOptions(Action<GlobalOptions> globalOptions)
+        public static Command Version(string targetFilePath) =>
+            new MkvMergeBuilder(targetFilePath).WithArguments(args =>
+                args.Add("--version").Build()
+            );
+
+        public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
             globalOptions(new(_argumentsBuilder));
             return this;
         }
 
-        public IMkvMergeBuilder MkvMergeOptions(Action<MkvMergeOptions> ffprobeOptions)
+        public IOutputOptions InputOptions(Action<InputOptions> inputOptions)
         {
-            ffprobeOptions(new(_argumentsBuilder));
+            inputOptions(new(_argumentsBuilder));
+            return this;
+        }
+
+        public IMkvMergeBuilder OutputOptions(Action<OutputOptions> outputOptions)
+        {
+            outputOptions(new(_argumentsBuilder));
             return this;
         }
 

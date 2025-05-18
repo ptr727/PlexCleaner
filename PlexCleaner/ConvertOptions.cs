@@ -139,8 +139,8 @@ public record ConvertOptions3 : ConvertOptions2
         FfMpegOptions.Audio = FfMpeg.FfMpegTool.DefaultAudioOptions;
         FfMpegOptions.Global = "";
 
-        HandBrakeOptions.Video = HandBrakeTool.DefaultVideoOptions;
-        HandBrakeOptions.Audio = HandBrakeTool.DefaultAudioOptions;
+        HandBrakeOptions.Video = HandBrake.HandBrakeTool.DefaultVideoOptions;
+        HandBrakeOptions.Audio = HandBrake.HandBrakeTool.DefaultAudioOptions;
     }
 
     public bool VerifyValues()

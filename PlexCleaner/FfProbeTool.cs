@@ -15,6 +15,8 @@ using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
+// ffprobe [options] input_url
+
 namespace PlexCleaner;
 
 public partial class FfProbe
@@ -35,21 +37,12 @@ public partial class FfProbe
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
-            // Get file info
-            mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            if (File.Exists(mediaToolInfo.FileName))
-            {
-                FileInfo fileInfo = new(mediaToolInfo.FileName);
-                mediaToolInfo.ModifiedTime = fileInfo.LastWriteTimeUtc;
-                mediaToolInfo.Size = fileInfo.Length;
-            }
-
             // Get version info
+            mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
             Command command = FfProbeBuilder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
-                && result.StandardError.Length == 0
-                && FfMpeg.FfMpegTool.ParseVersion(result.StandardOutput, mediaToolInfo);
+                && FfMpeg.FfMpegTool.GetVersion(result.StandardOutput, mediaToolInfo);
         }
 
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
@@ -222,13 +215,7 @@ public partial class FfProbe
             Command command = GetFfProbeBuilder()
                 .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
                 .FfProbeOptions(options =>
-                    options
-                        .SeekStop(
-                            Program.Options.QuickScan ? Program.QuickScanTimeSpan : TimeSpan.Zero
-                        )
-                        .ShowPackets()
-                        .OutputFormatJson()
-                        .InputFile(fileName)
+                    options.QuickScan().ShowPackets().OutputFormatJson().InputFile(fileName)
                 )
                 .Build();
 
@@ -274,7 +261,6 @@ public partial class FfProbe
             }
             if (result.ExitCode != 0 || result.StandardError.Length > 0)
             {
-                // Handle error
                 Log.Error("Failed to to get media info : {FileName}", fileName);
                 Log.Error("{Error}", result.StandardError);
                 return false;
@@ -299,10 +285,8 @@ public partial class FfProbe
             out MediaProps mediaProps
         )
         {
-            // Parser type is FfProbe
-            mediaProps = new MediaProps(ToolType.FfProbe);
-
             // Populate the MediaProps object from the JSON string
+            mediaProps = new MediaProps(ToolType.FfProbe);
             try
             {
                 // Deserialize

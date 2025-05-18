@@ -156,7 +156,7 @@ public class ProcessFile
     public bool RemuxNonMkvContainer(ref bool modified)
     {
         // Make sure that MKV named files are Matroska containers
-        if (MkvMergeTool.IsMkvContainer(MkvMergeProps))
+        if (MkvMerge.MkvMergeTool.IsMkvContainer(MkvMergeProps))
         {
             // Nothing to do
             return true;
@@ -2245,15 +2245,15 @@ public class ProcessFile
     // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
     public static readonly List<string> Hdr10FormatList =
     [
-        MediaInfoTool.HDR10Format,
-        MediaInfoTool.HDR10PlusFormat,
+        MediaInfo.MediaInfoTool.HDR10Format,
+        MediaInfo.MediaInfoTool.HDR10PlusFormat,
     ];
 
     // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
     public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
     [
-        MediaInfoTool.H264Format,
-        MediaInfoTool.H265Format,
-        MediaInfoTool.AV1Format,
+        MediaInfo.MediaInfoTool.H264Format,
+        MediaInfo.MediaInfoTool.H265Format,
+        MediaInfo.MediaInfoTool.AV1Format,
     ];
 }

@@ -21,11 +21,11 @@ public partial class FfMpeg
         public GlobalOptions Default() =>
             LogLevelError().HideBanner().NoStats().AbortOnEmptyOutput();
 
-        public GlobalOptions LogLevel(string option) => Add("-loglevel").Add(option);
+        public GlobalOptions LogLevel() => Add("-loglevel");
+
+        public GlobalOptions LogLevel(string option) => LogLevel().Add(option);
 
         public GlobalOptions LogLevelError() => LogLevel("error");
-
-        public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
 
         public GlobalOptions HideBanner() => Add("-hide_banner");
 
@@ -33,7 +33,9 @@ public partial class FfMpeg
 
         public GlobalOptions ExitOnError() => Add("-xerror");
 
-        public GlobalOptions AbortOn(string option) => Add("-abort_on").Add(option);
+        public GlobalOptions AbortOn() => Add("-abort_on");
+
+        public GlobalOptions AbortOn(string option) => AbortOn().Add(option);
 
         public GlobalOptions AbortOnEmptyOutput() => AbortOn("empty_output");
 
@@ -67,27 +69,42 @@ public partial class FfMpeg
         // av_interleaved_write_frame(): Invalid argument
         public InputOptions Default() => Flags("+genpts").AnalyzeDuration("2G").ProbeSize("2G");
 
-        public InputOptions AnalyzeDuration(string option) => Add("-analyzeduration").Add(option);
+        public InputOptions AnalyzeDuration() => Add("-analyzeduration");
 
-        public InputOptions ProbeSize(string option) => Add("-probesize").Add(option);
+        public InputOptions AnalyzeDuration(string option) => AnalyzeDuration().Add(option);
 
-        public InputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
-            timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
+        public InputOptions ProbeSize() => Add("-probesize");
+
+        public InputOptions ProbeSize(string option) => ProbeSize().Add(option);
+
+        public InputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
+            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this
-                : Add("-ss")
-                    .Add($"{(int)timeStart.TotalSeconds}")
-                    .Add("-t")
-                    .Add($"{(int)timeEnd.TotalSeconds}");
+                : SeekStart(timeStart).SeekStop(timeStop);
+
+        public InputOptions SeekStart() => Add("-ss");
 
         public InputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : Add("-ss").Add($"{(int)timeSpan.TotalSeconds}");
+            timeSpan == TimeSpan.Zero ? this : SeekStart().Add($"{(int)timeSpan.TotalSeconds}");
+
+        public InputOptions SeekStop() => Add("-t");
 
         public InputOptions SeekStop(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : Add("-t").Add($"{(int)timeSpan.TotalSeconds}");
+            timeSpan == TimeSpan.Zero ? this : SeekStop().Add($"{(int)timeSpan.TotalSeconds}");
 
-        public InputOptions Flags(string option) => Add("-fflags").Add(option);
+        public InputOptions TestSnippets() =>
+            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
 
-        public InputOptions InputFile(string option) => Add("-i").Add($"\"{option}\"");
+        public InputOptions QuickScan() =>
+            Program.Options.QuickScan ? SeekStop(Program.QuickScanTimeSpan) : this;
+
+        public InputOptions Flags() => Add("-fflags");
+
+        public InputOptions Flags(string option) => Flags().Add(option);
+
+        public InputOptions Input() => Add("-i");
+
+        public InputOptions InputFile(string option) => Input().Add($"\"{option}\"");
 
         public InputOptions Add(string option) => Add(option, false);
 
@@ -112,57 +129,84 @@ public partial class FfMpeg
         // TODO: Issue is reported fixed, to be verified
         public OutputOptions Default() => MaxMuxingQueueSize("1024");
 
-        public OutputOptions MaxMuxingQueueSize(string option) =>
-            Add("-max_muxing_queue_size").Add(option);
+        public OutputOptions MaxMuxingQueueSize() => Add("-max_muxing_queue_size");
+
+        public OutputOptions MaxMuxingQueueSize(string option) => MaxMuxingQueueSize().Add(option);
 
         public OutputOptions NoAudio() => Add("-an");
 
-        public OutputOptions NoVideo() => Add("-an");
+        public OutputOptions NoVideo() => Add("-vn");
 
         public OutputOptions NoSubtitles() => Add("-sn");
 
         public OutputOptions NoData() => Add("-dn");
 
-        public OutputOptions Map(string option) => Add("-map").Add(option);
+        public OutputOptions Map() => Add("-map");
 
-        public OutputOptions MapMetadata(string option) => Add("-map_metadata").Add(option);
+        public OutputOptions Map(string option) => Map().Add(option);
+
+        public OutputOptions MapMetadata() => Add("-map_metadata");
+
+        public OutputOptions MapMetadata(string option) => MapMetadata().Add(option);
 
         public OutputOptions MapAll() => Map("0");
 
-        public OutputOptions Codec(string option) => Add("-c").Add(option);
+        public OutputOptions Codec() => Add("-c");
+
+        public OutputOptions Codec(string option) => Codec().Add(option);
 
         public OutputOptions CodecCopy() => Codec("copy");
 
         public OutputOptions MapAllCodecCopy() => MapAll().CodecCopy();
 
-        public OutputOptions CodecVideo(string option) => Add("-c:v").Add(option);
+        public OutputOptions CodecVideo() => Add("-c:v");
 
-        public OutputOptions CodecAudio(string option) => Add("-c:a").Add(option);
+        public OutputOptions CodecVideo(string option) => CodecVideo().Add(option);
 
-        public OutputOptions CodecSubtitle(string option) => Add("-c:s").Add(option);
+        public OutputOptions CodecAudio() => Add("-c:a");
 
-        public OutputOptions Format(string option) => Add("-f").Add(option);
+        public OutputOptions CodecAudio(string option) => CodecAudio().Add(option);
+
+        public OutputOptions CodecSubtitle() => Add("-c:s");
+
+        public OutputOptions CodecSubtitle(string option) => CodecSubtitle().Add(option);
+
+        public OutputOptions Format() => Add("-f");
+
+        public OutputOptions Format(string option) => Format().Add(option);
 
         public OutputOptions FormatMatroska() => Format("matroska");
 
         public OutputOptions OutputFile(string option) => Add($"\"{option}\"");
 
-        public OutputOptions VideoFilter(string option) => Add("-vf").Add(option);
+        public OutputOptions VideoFilter() => Add("-vf");
 
-        public OutputOptions BitstreamFilterVideo(string option) => Add("-bsf:v").Add(option);
+        public OutputOptions VideoFilter(string option) => VideoFilter().Add(option);
 
-        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeEnd) =>
-            timeStart == TimeSpan.Zero || timeEnd == TimeSpan.Zero
+        public OutputOptions BitstreamFilterVideo() => Add("-bsf:v");
+
+        public OutputOptions BitstreamFilterVideo(string option) =>
+            BitstreamFilterVideo().Add(option);
+
+        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
+            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this
-                : SeekStart(timeStart).SeekStop(timeEnd);
+                : SeekStart(timeStart).SeekStop(timeStop);
+
+        public OutputOptions SeekStart() => Add("-ss");
 
         public OutputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : Add("-ss").Add($"{(int)timeSpan.TotalSeconds}");
+            timeSpan == TimeSpan.Zero ? this : SeekStart().Add($"{(int)timeSpan.TotalSeconds}");
+
+        public OutputOptions SeekStop() => Add("-t");
 
         public OutputOptions SeekStop(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : Add("-t").Add($"{(int)timeSpan.TotalSeconds}");
+            timeSpan == TimeSpan.Zero ? this : SeekStop().Add($"{(int)timeSpan.TotalSeconds}");
 
-        public OutputOptions NullOutput() => Add("-f").Add("null").Add("-");
+        public OutputOptions TestSnippets() =>
+            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
+
+        public OutputOptions NullOutput() => Format().Add("null").Add("-");
 
         public OutputOptions Add(string option) => Add(option, false);
 

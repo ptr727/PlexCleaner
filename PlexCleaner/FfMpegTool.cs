@@ -13,14 +13,10 @@ using InsaneGenius.Utilities;
 using Serilog;
 
 // https://ffmpeg.org/ffmpeg.html
-// https://trac.ffmpeg.org/wiki/Map
-// https://trac.ffmpeg.org/wiki/Encode/H.264
-// https://trac.ffmpeg.org/wiki/Encode/H.265
+
+// ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
 
 // TODO: When using quickscan select a portion of the middle of the file vs, the beginning.
-
-// Typical commandline:
-// ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
 
 namespace PlexCleaner;
 
@@ -42,8 +38,17 @@ public partial class FfMpeg
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
-            // Get file info
+            // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
+            Command command = FfMpegBuilder.Version(GetToolPath());
+            return Execute(command, out BufferedCommandResult result)
+                && result.ExitCode == 0
+                && GetVersion(result.StandardOutput, mediaToolInfo);
+        }
+
+        public static bool GetVersion(string text, MediaToolInfo mediaToolInfo)
+        {
+            // Get file info
             if (File.Exists(mediaToolInfo.FileName))
             {
                 FileInfo fileInfo = new(mediaToolInfo.FileName);
@@ -51,41 +56,22 @@ public partial class FfMpeg
                 mediaToolInfo.Size = fileInfo.Length;
             }
 
-            // Get version info
-            Command command = FfMpegBuilder.Version(GetToolPath());
-            return Execute(command, out BufferedCommandResult result)
-                && result.ExitCode == 0
-                && result.StandardError.Length == 0
-                && ParseVersion(result.StandardOutput, mediaToolInfo);
-        }
-
-        public static bool ParseVersion(string version, MediaToolInfo mediaToolInfo)
-        {
-            // First line of stderr as version
             // "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers"
             // "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
             // "ffprobe version 7.1.1-full_build-www.gyan.dev Copyright (c) 2007-2025 the FFmpeg developers"
             // "ffprobe version 5.1.6-0+deb12u1 Copyright (c) 2007-2024 the FFmpeg developers"
-            string[] lines = version.Split(
-                Environment.NewLine,
-                StringSplitOptions.RemoveEmptyEntries
-            );
 
-            // Extract the short version number
-            // Match word for ffmpeg or ffprobe
+            // Parse version
+            string[] lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
             Match match = InstalledVersionRegex().Match(lines[0]);
-            Debug.Assert(match.Success);
+            Debug.Assert(match.Success && Version.TryParse(match.Groups["version"].Value, out _));
             mediaToolInfo.Version = match.Groups["version"].Value;
-            Debug.Assert(Version.TryParse(mediaToolInfo.Version, out _));
-
             return true;
         }
 
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo)
         {
-            // Initialize
             mediaToolInfo = new MediaToolInfo(this);
-
             try
             {
                 // Get the latest release version number from github releases
@@ -187,14 +173,7 @@ public partial class FfMpeg
             error = string.Empty;
             Command command = GetFfMpegBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.TestSnippets ? Program.SnippetTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(inputName)
-                )
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
                     options.MapAllCodecCopy().Default().Format(format).OutputFile(outputName)
                 )
@@ -215,6 +194,8 @@ public partial class FfMpeg
             out string outputMap
         )
         {
+            // TODO: Add to builder
+
             // Verify correct media type
             Debug.Assert(selectMediaProps.Selected.Parser == ToolType.FfProbe);
             Debug.Assert(selectMediaProps.NotSelected.Parser == ToolType.FfProbe);
@@ -293,14 +274,7 @@ public partial class FfMpeg
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.TestSnippets ? Program.SnippetTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(inputName)
-                )
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .Add(inputMap)
@@ -331,14 +305,7 @@ public partial class FfMpeg
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.TestSnippets ? Program.SnippetTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(inputName)
-                )
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .MapAll()
@@ -377,14 +344,7 @@ public partial class FfMpeg
             error = string.Empty;
             Command command = GetFfMpegBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.TestSnippets ? Program.SnippetTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(inputName)
-                )
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .MapAllCodecCopy()
@@ -413,14 +373,7 @@ public partial class FfMpeg
             error = string.Empty;
             Command command = GetFfMpegBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.TestSnippets ? Program.SnippetTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(inputName)
-                )
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .MapMetadata("-1")
@@ -451,16 +404,9 @@ public partial class FfMpeg
                 // Leave loglevel at default to get idet output, do not use -loglevel error
                 // Counting can report stream errors, keep going, do not use -xerror
                 .GlobalOptions(options => options.HideBanner().NoStats().AbortOnEmptyOutput())
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .InputFile(fileName)
-                        .SeekStop(
-                            Program.Options.QuickScan ? Program.QuickScanTimeSpan : TimeSpan.Zero
-                        )
-                )
+                .InputOptions(options => options.Default().InputFile(fileName).QuickScan())
                 .OutputOptions(options =>
-                    options.NoAudio().NoVideo().NoData().VideoFilter("idet").NullOutput()
+                    options.NoAudio().NoSubtitles().NoData().VideoFilter("idet").NullOutput()
                 )
                 .Build();
 
@@ -476,9 +422,10 @@ public partial class FfMpeg
         public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
         public const string DefaultAudioOptions = "ac3";
 
-        private const string InstalledVersionPattern = @"version\D+(?<version>([0-9]+(\.[0-9]+)+))";
-
-        [GeneratedRegex(InstalledVersionPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+        [GeneratedRegex(
+            @"version\D+(?<version>([0-9]+(\.[0-9]+)+))",
+            RegexOptions.IgnoreCase | RegexOptions.Multiline
+        )]
         public static partial Regex InstalledVersionRegex();
 
         public static int GetNalUnit(string format) =>
