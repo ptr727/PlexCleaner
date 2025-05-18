@@ -283,6 +283,22 @@
             "justMyCode": false
         },
         {
+            "name": "Check for new Tools",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "checkfornewtools",
+                "--settingsfile=PlexCleaner.json",
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
             "name": "Sandbox",
             "type": "coreclr",
             "request": "launch",

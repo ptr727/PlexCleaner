@@ -12,13 +12,13 @@ namespace PlexCleaner;
 public static class Tools
 {
     // Tool details are populated during VerifyTools() call
-    public static readonly FfMpeg.FfMpegTool FfMpeg = new();
-    public static readonly FfProbe.FfProbeTool FfProbe = new();
-    public static readonly MkvMerge.MkvMergeTool MkvMerge = new();
-    public static readonly MkvPropEdit.MkvPropEditTool MkvPropEdit = new();
-    public static readonly MediaInfo.MediaInfoTool MediaInfo = new();
-    public static readonly HandBrake.HandBrakeTool HandBrake = new();
-    public static readonly SevenZipTool SevenZip = new();
+    public static readonly FfMpeg.Tool FfMpeg = new();
+    public static readonly FfProbe.Tool FfProbe = new();
+    public static readonly MkvMerge.Tool MkvMerge = new();
+    public static readonly MkvPropEdit.Tool MkvPropEdit = new();
+    public static readonly MediaInfo.Tool MediaInfo = new();
+    public static readonly HandBrake.Tool HandBrake = new();
+    public static readonly SevenZip.Tool SevenZip = new();
 
     public static List<MediaTool> GetToolList() =>
         [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MediaInfo, HandBrake, SevenZip];
@@ -201,7 +201,7 @@ public static class Tools
         {
             // Bootstrap the 7-Zip download, only supported on Windows
             Log.Warning(
-                "Downloading missing {Tool} ... : \"{ToolPath}\"",
+                "Downloading missing {Tool} ... : {ToolPath}",
                 SevenZip.GetToolType(),
                 SevenZip.GetToolPath()
             );

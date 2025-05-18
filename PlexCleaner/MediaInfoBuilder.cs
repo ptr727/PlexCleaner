@@ -25,6 +25,7 @@ public partial class MediaInfo
         }
     }
 
+    // TODO: Rename input or output
     public class MediaInfoOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
@@ -57,27 +58,24 @@ public partial class MediaInfo
 
     public interface IMediaInfoOptions
     {
-        IMediaInfoBuilder MediaInfoOptions(Action<MediaInfoOptions> ffprobeOptions);
+        IBuilder MediaInfoOptions(Action<MediaInfoOptions> ffprobeOptions);
     }
 
-    public interface IMediaInfoBuilder
+    public interface IBuilder
     {
         Command Build();
     }
 
-    public class MediaInfoBuilder(string targetFilePath)
+    public class Builder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
             IMediaInfoOptions,
-            IMediaInfoBuilder
+            IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) =>
-            new MediaInfoBuilder(targetFilePath);
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
         public static Command Version(string targetFilePath) =>
-            new MediaInfoBuilder(targetFilePath).WithArguments(args =>
-                args.Add("--version").Build()
-            );
+            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
 
         public IMediaInfoOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -85,7 +83,7 @@ public partial class MediaInfo
             return this;
         }
 
-        public IMediaInfoBuilder MediaInfoOptions(Action<MediaInfoOptions> ffprobeOptions)
+        public IBuilder MediaInfoOptions(Action<MediaInfoOptions> ffprobeOptions)
         {
             ffprobeOptions(new(_argumentsBuilder));
             return this;

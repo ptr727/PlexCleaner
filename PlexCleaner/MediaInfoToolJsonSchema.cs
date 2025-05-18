@@ -13,6 +13,8 @@ using System.Text.Json.Serialization;
 
 // TODO: Evaluate JSON support availability in older versions and switch from XML to JSON
 
+// TODO: Add MediaInfo namespace
+
 namespace PlexCleaner;
 
 public class MediaInfoToolJsonSchema

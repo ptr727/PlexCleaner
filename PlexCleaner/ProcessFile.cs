@@ -156,7 +156,7 @@ public class ProcessFile
     public bool RemuxNonMkvContainer(ref bool modified)
     {
         // Make sure that MKV named files are Matroska containers
-        if (MkvMerge.MkvMergeTool.IsMkvContainer(MkvMergeProps))
+        if (MkvMerge.Tool.IsMkvContainer(MkvMergeProps))
         {
             // Nothing to do
             return true;
@@ -1060,7 +1060,7 @@ public class ProcessFile
         videoProps.WriteLine("Closed Captions");
 
         // Get SEI NAL unit based on video format
-        int nalUnit = FfMpeg.FfMpegTool.GetNalUnit(videoProps.Format);
+        int nalUnit = FfMpeg.GetNalUnit(videoProps.Format);
         if (nalUnit == default)
         {
             // Error
@@ -2245,15 +2245,15 @@ public class ProcessFile
     // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
     public static readonly List<string> Hdr10FormatList =
     [
-        MediaInfo.MediaInfoTool.HDR10Format,
-        MediaInfo.MediaInfoTool.HDR10PlusFormat,
+        MediaInfo.HDR10Format,
+        MediaInfo.HDR10PlusFormat,
     ];
 
     // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
     public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
     [
-        MediaInfo.MediaInfoTool.H264Format,
-        MediaInfo.MediaInfoTool.H265Format,
-        MediaInfo.MediaInfoTool.AV1Format,
+        MediaInfo.H264Format,
+        MediaInfo.H265Format,
+        MediaInfo.AV1Format,
     ];
 }

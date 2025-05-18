@@ -16,7 +16,7 @@ namespace PlexCleaner;
 
 public partial class MkvPropEdit
 {
-    public class MkvPropEditTool : MediaTool
+    public class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.MkvToolNix;
 
@@ -26,16 +26,16 @@ public partial class MkvPropEdit
 
         protected override string GetToolNameLinux() => "mkvpropedit";
 
-        public IGlobalOptions GetMkvPropEditBuilder() => MkvPropEditBuilder.Create(GetToolPath());
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            Command command = MkvPropEditBuilder.Version(GetToolPath());
+            Command command = Builder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
-                && MkvMerge.MkvMergeTool.GetVersion(result.StandardOutput, mediaToolInfo);
+                && MkvMerge.Tool.GetVersion(result.StandardOutput, mediaToolInfo);
         }
 
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
@@ -44,7 +44,7 @@ public partial class MkvPropEdit
         public bool SetTrackLanguage(string fileName, MediaProps mediaProps)
         {
             // Build command line
-            Command command = GetMkvPropEditBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
                     options
@@ -75,7 +75,7 @@ public partial class MkvPropEdit
         public bool SetTrackFlags(string fileName, MediaProps mediaProps)
         {
             // Build command line
-            Command command = GetMkvPropEditBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
                     options
@@ -107,7 +107,7 @@ public partial class MkvPropEdit
         public bool ClearTags(string fileName, MediaProps mediaProps)
         {
             // Build command line
-            Command command = GetMkvPropEditBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
                     options
@@ -144,7 +144,7 @@ public partial class MkvPropEdit
         public bool ClearAttachments(string fileName, MediaProps mediaProps)
         {
             // Build command line
-            Command command = GetMkvPropEditBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
                     options

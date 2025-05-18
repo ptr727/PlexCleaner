@@ -21,7 +21,7 @@ namespace PlexCleaner;
 
 public partial class FfProbe
 {
-    public class FfProbeTool : MediaTool
+    public class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
 
@@ -33,16 +33,16 @@ public partial class FfProbe
 
         protected override string GetSubFolder() => "bin";
 
-        public IGlobalOptions GetFfProbeBuilder() => FfProbeBuilder.Create(GetToolPath());
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            Command command = FfProbeBuilder.Version(GetToolPath());
+            Command command = Builder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
-                && FfMpeg.FfMpegTool.GetVersion(result.StandardOutput, mediaToolInfo);
+                && FfMpeg.Tool.GetVersion(result.StandardOutput, mediaToolInfo);
         }
 
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
@@ -88,11 +88,14 @@ public partial class FfProbe
                     }
                 );
 
+                // Pipe target to capture standard error
+                StringBuilder stdErrBuilder = new();
+                PipeTarget stdErrTarget = ToStringSummary(stdErrBuilder, 2, 8);
+
                 // Setup redirection
-                StringBuilder stdErrorBuffer = new();
                 CommandTask<CommandResult> task = command
                     .WithStandardOutputPipe(stdOutTarget)
-                    .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErrorBuffer))
+                    .WithStandardErrorPipe(stdErrTarget)
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync(CancellationToken.None, Program.CancelToken());
                 processId = task.ProcessId;
@@ -105,7 +108,7 @@ public partial class FfProbe
 
                 // Execute command
                 CommandResult result = await task;
-                return (result.ExitCode == 0, stdErrorBuffer.ToString(), packetInfo?.Packets);
+                return (result.ExitCode == 0, stdErrBuilder.ToString().Trim(), packetInfo?.Packets);
             }
             catch (OperationCanceledException)
             {
@@ -150,7 +153,7 @@ public partial class FfProbe
 
                 // Build command line
                 command = Tools
-                    .FfMpeg.GetFfMpegBuilder()
+                    .FfMpeg.GetBuilder()
                     .GlobalOptions(options => options.Default())
                     .InputOptions(options =>
                         options.Default().SeekStop(Program.QuickScanTimeSpan).InputFile(fileName)
@@ -165,7 +168,7 @@ public partial class FfProbe
                 if (!Tools.FfMpeg.Execute(command, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
-                    Log.Error("{Error}", result.StandardError);
+                    Log.Error("{Error}", result.StandardError.Trim());
                     _ = FileEx.DeleteFile(tempName);
                     packetList = null;
                     return false;
@@ -178,8 +181,8 @@ public partial class FfProbe
             // Build command line
             // Get packet info using subcc filter
             // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
-            command = GetFfProbeBuilder()
-                .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
+            command = GetBuilder()
+                .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
                 .FfProbeOptions(options =>
                     options
                         .SelectStreams("s:0")
@@ -212,8 +215,8 @@ public partial class FfProbe
         )
         {
             // Build command line
-            Command command = GetFfProbeBuilder()
-                .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
                 .FfProbeOptions(options =>
                     options.QuickScan().ShowPackets().OutputFormatJson().InputFile(fileName)
                 )
@@ -246,8 +249,8 @@ public partial class FfProbe
 
             // Build command line
             json = string.Empty;
-            Command command = GetFfProbeBuilder()
-                .GlobalOptions(options => options.LogLevelQuiet().HideBanner())
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default().LogLevelQuiet().HideBanner())
                 .FfProbeOptions(options =>
                     options.ShowStreams().ShowFormat().OutputFormatJson().InputFile(fileName)
                 )
@@ -262,21 +265,13 @@ public partial class FfProbe
             if (result.ExitCode != 0 || result.StandardError.Length > 0)
             {
                 Log.Error("Failed to to get media info : {FileName}", fileName);
-                Log.Error("{Error}", result.StandardError);
+                Log.Error("{Error}", result.StandardError.Trim());
                 return false;
             }
 
             // Get JSON output
             json = result.StandardOutput;
             return true;
-        }
-
-        public bool GetFfProbeInfoText(string fileName, out string text)
-        {
-            // Get media info using default output
-            string commandline = $"-hide_banner \"{fileName}\"";
-            int exitCode = Command(commandline, out _, out text);
-            return exitCode == 0;
         }
 
         public static bool GetMediaPropsFromJson(

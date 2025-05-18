@@ -79,7 +79,7 @@ public static class AssemblyVersion
         // Determine architecture
         if (!rid.Contains('-'))
         {
-            Log.Error("Unable to determine RID architecture : \"{RID}\"", rid);
+            Log.Error("Unable to determine RID architecture : {RID}", rid);
             return rid;
         }
         string architecture = rid[(rid.LastIndexOf('-') + 1)..];
@@ -100,7 +100,7 @@ public static class AssemblyVersion
             return $"osx-{architecture}";
         }
 
-        Log.Error("Unable to determine RID OS variant : \"{RID}\"", rid);
+        Log.Error("Unable to determine RID OS variant : {RID}", rid);
         return rid;
     }
 

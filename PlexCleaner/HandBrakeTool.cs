@@ -20,7 +20,7 @@ namespace PlexCleaner;
 public partial class HandBrake
 {
     // TODO Why partial?
-    public partial class HandBrakeTool : MediaTool
+    public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.HandBrake;
 
@@ -30,13 +30,13 @@ public partial class HandBrake
 
         protected override string GetToolNameLinux() => "HandBrakeCLI";
 
-        public IGlobalOptions GetHandBrakeBuilder() => HandBrakeBuilder.Create(GetToolPath());
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            Command command = HandBrakeBuilder.Version(GetToolPath());
+            Command command = Builder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
                 && GetVersion(result.StandardOutput, mediaToolInfo);
@@ -104,7 +104,7 @@ public partial class HandBrake
 
             // Build command line
             error = string.Empty;
-            Command command = GetHandBrakeBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.InputFile(inputName).TestSnippets())
                 .OutputOptions(options =>
@@ -128,12 +128,9 @@ public partial class HandBrake
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
-
-        public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
-        public const string DefaultAudioOptions = "copy --audio-fallback ac3";
 
         [GeneratedRegex(
             @"HandBrake\ (?<version>.*)",
@@ -141,4 +138,7 @@ public partial class HandBrake
         )]
         public static partial Regex InstalledVersionRegex();
     }
+
+    public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
+    public const string DefaultAudioOptions = "copy --audio-fallback ac3";
 }

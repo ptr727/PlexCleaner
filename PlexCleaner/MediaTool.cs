@@ -226,21 +226,21 @@ public abstract class MediaTool
         int processId = -1;
         try
         {
-            StringBuilder stdOutBuffer = new();
-            PipeTarget stdOutPipe = PipeTarget.Merge(
+            StringBuilder stdOutBuilder = new();
+            PipeTarget stdOutTarget = PipeTarget.Merge(
                 command.StandardOutputPipe,
-                ToStringSummary(stdOutBuffer, startLines, stopLine)
+                ToStringSummary(stdOutBuilder, startLines, stopLine)
             );
 
-            StringBuilder stdErrBuffer = new();
-            PipeTarget stdErrPipe = PipeTarget.Merge(
+            StringBuilder stdErrBuilder = new();
+            PipeTarget stdErrTarget = PipeTarget.Merge(
                 command.StandardErrorPipe,
-                ToStringSummary(stdErrBuffer, startLines, stopLine)
+                ToStringSummary(stdErrBuilder, startLines, stopLine)
             );
 
             CommandTask<CommandResult> task = command
-                .WithStandardOutputPipe(stdOutPipe)
-                .WithStandardErrorPipe(stdErrPipe)
+                .WithStandardOutputPipe(stdOutTarget)
+                .WithStandardErrorPipe(stdErrTarget)
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
@@ -256,8 +256,8 @@ public abstract class MediaTool
                 commandResult.ExitCode,
                 commandResult.StartTime,
                 commandResult.ExitTime,
-                stdOutBuffer.ToString(),
-                stdErrBuffer.ToString()
+                stdOutBuilder.ToString(),
+                stdErrBuilder.ToString()
             );
             return task.Task.IsCompletedSuccessfully;
         }
@@ -331,13 +331,4 @@ public abstract class MediaTool
                 stringList.ForEach(item => stringBuilder.AppendLine(item));
             }
         );
-}
-
-public static class CliExtensions
-{
-    public static ArgumentsBuilder AddOption(
-        this ArgumentsBuilder args,
-        string name,
-        string value
-    ) => string.IsNullOrWhiteSpace(value) ? args : args.Add(name).Add(value);
 }

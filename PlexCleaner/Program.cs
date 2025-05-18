@@ -94,7 +94,6 @@ public static class Program
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
-        // Override log level and always log exit information
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
 
         Log.CloseAndFlush();
@@ -519,7 +518,6 @@ public static class Program
         // Set the FileEx Cancel object
         FileEx.Options.Cancel = s_cancelSource.Token;
 
-        // Override log level and always log startup information
         Log.Logger.LogOverrideContext()
             .Information("Commandline : {Commandline}", Environment.CommandLine);
         Log.Logger.LogOverrideContext()
@@ -543,12 +541,13 @@ public static class Program
                 ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
                 : Math.Clamp(Options.ThreadCount, 1, Environment.ProcessorCount)
             : 1;
-        Log.Information(
-            "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
-            Options.Parallel,
-            Options.ThreadCount,
-            Environment.ProcessorCount
-        );
+        Log.Logger.LogOverrideContext()
+            .Information(
+                "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
+                Options.Parallel,
+                Options.ThreadCount,
+                Environment.ProcessorCount
+            );
 
         // Verify tools
         if (verifyTools)
@@ -582,8 +581,7 @@ public static class Program
             return true;
         }
 
-        // There is a race condition between tools exiting on Ctrl-C and reporting an error, and our app's Ctrl-C handler being called
-        // In case of a suspected Ctrl-C, yield some time for this handler to be called before testing the state
+        // In case of possible Ctrl-C and tool exit, yield some time for this handler to be called before testing the state
         return WaitForCancel(100);
     }
 

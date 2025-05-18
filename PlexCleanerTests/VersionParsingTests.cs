@@ -35,7 +35,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     public void Parse_FfMpeg_Installed_Version(string line, string version)
     {
         System.Text.RegularExpressions.Match match = FfMpeg
-            .FfMpegTool.InstalledVersionRegex()
+            .Tool.InstalledVersionRegex()
             .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
@@ -47,7 +47,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     public void Parse_HandBrake_Installed_Version(string line, string version)
     {
         System.Text.RegularExpressions.Match match = HandBrake
-            .HandBrakeTool.InstalledVersionRegex()
+            .Tool.InstalledVersionRegex()
             .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
@@ -59,7 +59,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     public void Parse_MediaInfo_Installed_Version(string line, string version)
     {
         System.Text.RegularExpressions.Match match = MediaInfo
-            .MediaInfoTool.InstalledVersionRegex()
+            .Tool.InstalledVersionRegex()
             .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
@@ -73,7 +73,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     public void Parse_MkvMerge_Installed_Version(string line, string version)
     {
         System.Text.RegularExpressions.Match match = MkvMerge
-            .MkvMergeTool.InstalledVersionRegex()
+            .Tool.InstalledVersionRegex()
             .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
@@ -96,8 +96,8 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     )]
     public void Parse_SevenZip_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = SevenZipTool
-            .InstalledVersionRegex()
+        System.Text.RegularExpressions.Match match = SevenZip
+            .Tool.InstalledVersionRegex()
             .Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);

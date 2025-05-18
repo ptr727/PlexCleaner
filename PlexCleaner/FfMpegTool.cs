@@ -22,7 +22,7 @@ namespace PlexCleaner;
 
 public partial class FfMpeg
 {
-    public partial class FfMpegTool : MediaTool
+    public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
 
@@ -34,13 +34,13 @@ public partial class FfMpeg
 
         protected override string GetSubFolder() => "bin";
 
-        public IGlobalOptions GetFfMpegBuilder() => FfMpegBuilder.Create(GetToolPath());
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            Command command = FfMpegBuilder.Version(GetToolPath());
+            Command command = Builder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
                 && GetVersion(result.StandardOutput, mediaToolInfo);
@@ -133,7 +133,7 @@ public partial class FfMpeg
         {
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
                 .InputOptions(options =>
@@ -152,7 +152,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0 && error.Length == 0;
         }
 
@@ -171,7 +171,7 @@ public partial class FfMpeg
 
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -184,7 +184,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
 
@@ -270,7 +270,7 @@ public partial class FfMpeg
 
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
@@ -290,7 +290,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
 
@@ -301,7 +301,7 @@ public partial class FfMpeg
 
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
@@ -323,7 +323,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
 
@@ -342,7 +342,7 @@ public partial class FfMpeg
 
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -360,7 +360,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
 
@@ -371,7 +371,7 @@ public partial class FfMpeg
 
             // Build command line
             error = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -389,7 +389,7 @@ public partial class FfMpeg
             {
                 return false;
             }
-            error = result.StandardError;
+            error = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
 
@@ -400,7 +400,7 @@ public partial class FfMpeg
 
             // Build command line
             text = string.Empty;
-            Command command = GetFfMpegBuilder()
+            Command command = GetBuilder()
                 // Leave loglevel at default to get idet output, do not use -loglevel error
                 // Counting can report stream errors, keep going, do not use -xerror
                 .GlobalOptions(options => options.HideBanner().NoStats().AbortOnEmptyOutput())
@@ -415,40 +415,38 @@ public partial class FfMpeg
             {
                 return false;
             }
-            text = result.StandardError;
+            text = result.StandardError.Trim();
             return result.ExitCode == 0;
         }
-
-        public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
-        public const string DefaultAudioOptions = "ac3";
 
         [GeneratedRegex(
             @"version\D+(?<version>([0-9]+(\.[0-9]+)+))",
             RegexOptions.IgnoreCase | RegexOptions.Multiline
         )]
         public static partial Regex InstalledVersionRegex();
-
-        public static int GetNalUnit(string format) =>
-            // Get SEI NAL unit based on video format
-            // H264 = 6, H265 = 9, MPEG2 = 178
-            // Return default(int) if not found
-            s_sEINalUnitList
-                .FirstOrDefault(item =>
-                    item.format.Equals(format, StringComparison.OrdinalIgnoreCase)
-                )
-                .nalunit;
-
-        // Common format tags
-        private const string H264Format = "h264";
-        private const string H265Format = "h265";
-        private const string MPEG2Format = "mpeg2video";
-
-        // SEI NAL units for EIA-608 and CTA-708 content
-        private static readonly List<(string format, int nalunit)> s_sEINalUnitList =
-        [
-            (H264Format, 6),
-            (H265Format, 39),
-            (MPEG2Format, 178),
-        ];
     }
+
+    public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
+    public const string DefaultAudioOptions = "ac3";
+
+    public static int GetNalUnit(string format) =>
+        // Get SEI NAL unit based on video format
+        // H264 = 6, H265 = 9, MPEG2 = 178
+        // Return default(int) if not found
+        s_sEINalUnitList
+            .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
+            .nalunit;
+
+    // Common format tags
+    private const string H264Format = "h264";
+    private const string H265Format = "h265";
+    private const string MPEG2Format = "mpeg2video";
+
+    // SEI NAL units for EIA-608 and CTA-708 content
+    private static readonly List<(string format, int nalunit)> s_sEINalUnitList =
+    [
+        (H264Format, 6),
+        (H265Format, 39),
+        (MPEG2Format, 178),
+    ];
 }

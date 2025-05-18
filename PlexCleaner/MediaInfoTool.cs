@@ -15,7 +15,7 @@ namespace PlexCleaner;
 public partial class MediaInfo
 {
     // TODO: Why partial?
-    public partial class MediaInfoTool : MediaTool
+    public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.MediaInfo;
 
@@ -25,13 +25,13 @@ public partial class MediaInfo
 
         protected override string GetToolNameLinux() => "mediainfo";
 
-        public IGlobalOptions GetMediaInfoBuilder() => MediaInfoBuilder.Create(GetToolPath());
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
             mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
-            Command command = MediaInfoBuilder.Version(GetToolPath());
+            Command command = Builder.Version(GetToolPath());
             return Execute(command, out BufferedCommandResult result)
                 && result.ExitCode == 0
                 && GetVersion(result.StandardOutput, mediaToolInfo);
@@ -100,7 +100,7 @@ public partial class MediaInfo
         {
             // Build command line
             xml = string.Empty;
-            Command command = GetMediaInfoBuilder()
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .MediaInfoOptions(options => options.OutputFormatXml().InputFile(fileName))
                 .Build();
@@ -114,7 +114,7 @@ public partial class MediaInfo
             if (result.ExitCode != 0 || result.StandardError.Length > 0)
             {
                 Log.Error("Failed to to get media info : {FileName}", fileName);
-                Log.Error("{Error}", result.StandardError);
+                Log.Error("{Error}", result.StandardError.Trim());
                 return false;
             }
 
@@ -291,12 +291,12 @@ public partial class MediaInfo
 
         [GeneratedRegex(@"(?<id>\d+)")]
         public static partial Regex TrackRegex();
-
-        // Common format tags
-        public const string HDR10Format = "SMPTE ST 2086";
-        public const string HDR10PlusFormat = "SMPTE ST 2094";
-        public const string H264Format = "h264";
-        public const string H265Format = "hevc";
-        public const string AV1Format = "av1";
     }
+
+    // Common format tags
+    public const string HDR10Format = "SMPTE ST 2086";
+    public const string HDR10PlusFormat = "SMPTE ST 2094";
+    public const string H264Format = "h264";
+    public const string H265Format = "hevc";
+    public const string AV1Format = "av1";
 }

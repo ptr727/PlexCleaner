@@ -457,7 +457,7 @@ public class TrackProps
         // 1
         // 3-CC1
         // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
-        Match match = MediaInfo.MediaInfoTool.TrackRegex().Match(track.Id);
+        Match match = MediaInfo.Tool.TrackRegex().Match(track.Id);
         Debug.Assert(match.Success);
         // Use Number before dash as Matroska TrackNumber
         Number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
@@ -465,7 +465,7 @@ public class TrackProps
         // Use StreamOrder for Id
         // 0
         // 0-1
-        match = MediaInfo.MediaInfoTool.TrackRegex().Match(track.StreamOrder);
+        match = MediaInfo.Tool.TrackRegex().Match(track.StreamOrder);
         Debug.Assert(match.Success);
         Id = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
 

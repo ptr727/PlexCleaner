@@ -13,6 +13,8 @@ public partial class FfProbe
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
+        public GlobalOptions Default() => AnalyzeDuration("2G").ProbeSize("2G");
+
         public GlobalOptions LogLevel() => Add("-loglevel");
 
         public GlobalOptions LogLevel(string option) => LogLevel().Add(option);
@@ -22,6 +24,14 @@ public partial class FfProbe
         public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
 
         public GlobalOptions HideBanner() => Add("-hide_banner");
+
+        public GlobalOptions AnalyzeDuration() => Add("-analyzeduration");
+
+        public GlobalOptions AnalyzeDuration(string option) => AnalyzeDuration().Add(option);
+
+        public GlobalOptions ProbeSize() => Add("-probesize");
+
+        public GlobalOptions ProbeSize(string option) => ProbeSize().Add(option);
 
         public GlobalOptions Add(string option) => Add(option, false);
 
@@ -114,25 +124,24 @@ public partial class FfProbe
 
     public interface IFfProbeOptions
     {
-        IFfProbeBuilder FfProbeOptions(Action<FfProbeOptions> ffprobeOptions);
+        IBuilder FfProbeOptions(Action<FfProbeOptions> ffprobeOptions);
     }
 
-    public interface IFfProbeBuilder
+    public interface IBuilder
     {
         Command Build();
     }
 
-    public class FfProbeBuilder(string targetFilePath)
+    public class Builder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
             IFfProbeOptions,
-            IFfProbeBuilder
+            IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) =>
-            new FfProbeBuilder(targetFilePath);
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
         public static Command Version(string targetFilePath) =>
-            new FfProbeBuilder(targetFilePath).WithArguments(args => args.Add("-version").Build());
+            new Builder(targetFilePath).WithArguments(args => args.Add("-version").Build());
 
         public IFfProbeOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -140,7 +149,7 @@ public partial class FfProbe
             return this;
         }
 
-        public IFfProbeBuilder FfProbeOptions(Action<FfProbeOptions> ffprobeOptions)
+        public IBuilder FfProbeOptions(Action<FfProbeOptions> ffprobeOptions)
         {
             ffprobeOptions(new(_argumentsBuilder));
             return this;

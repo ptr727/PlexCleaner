@@ -94,27 +94,24 @@ public partial class MkvPropEdit
 
     public interface IInputOptions
     {
-        IMkvPropEditBuilder InputOptions(Action<InputOptions> inputOptions);
+        IBuilder InputOptions(Action<InputOptions> inputOptions);
     }
 
-    public interface IMkvPropEditBuilder
+    public interface IBuilder
     {
         Command Build();
     }
 
-    public class MkvPropEditBuilder(string targetFilePath)
+    public class Builder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
             IInputOptions,
-            IMkvPropEditBuilder
+            IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) =>
-            new MkvPropEditBuilder(targetFilePath);
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
         public static Command Version(string targetFilePath) =>
-            new MkvPropEditBuilder(targetFilePath).WithArguments(args =>
-                args.Add("--version").Build()
-            );
+            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -122,7 +119,7 @@ public partial class MkvPropEdit
             return this;
         }
 
-        public IMkvPropEditBuilder InputOptions(Action<InputOptions> inputOptions)
+        public IBuilder InputOptions(Action<InputOptions> inputOptions)
         {
             inputOptions(new(_argumentsBuilder));
             return this;

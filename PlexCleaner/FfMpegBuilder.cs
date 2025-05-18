@@ -233,26 +233,25 @@ public partial class FfMpeg
 
     public interface IOutputOptions
     {
-        IFfMpegBuilder OutputOptions(Action<OutputOptions> outputOptions);
+        IBuilder OutputOptions(Action<OutputOptions> outputOptions);
     }
 
-    public interface IFfMpegBuilder
+    public interface IBuilder
     {
         Command Build();
     }
 
-    public class FfMpegBuilder(string targetFilePath)
+    public class Builder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
             IInputOptions,
             IOutputOptions,
-            IFfMpegBuilder
+            IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) =>
-            new FfMpegBuilder(targetFilePath);
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
         public static Command Version(string targetFilePath) =>
-            new FfMpegBuilder(targetFilePath).WithArguments(args => args.Add("-version").Build());
+            new Builder(targetFilePath).WithArguments(args => args.Add("-version").Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -266,7 +265,7 @@ public partial class FfMpeg
             return this;
         }
 
-        public IFfMpegBuilder OutputOptions(Action<OutputOptions> outputOptions)
+        public IBuilder OutputOptions(Action<OutputOptions> outputOptions)
         {
             outputOptions(new(_argumentsBuilder));
             return this;

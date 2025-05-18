@@ -160,28 +160,25 @@ public partial class MkvMerge
 
     public interface IOutputOptions
     {
-        IMkvMergeBuilder OutputOptions(Action<OutputOptions> outputOptions);
+        IBuilder OutputOptions(Action<OutputOptions> outputOptions);
     }
 
-    public interface IMkvMergeBuilder
+    public interface IBuilder
     {
         Command Build();
     }
 
-    public class MkvMergeBuilder(string targetFilePath)
+    public class Builder(string targetFilePath)
         : Command(targetFilePath),
             IGlobalOptions,
             IInputOptions,
             IOutputOptions,
-            IMkvMergeBuilder
+            IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) =>
-            new MkvMergeBuilder(targetFilePath);
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
         public static Command Version(string targetFilePath) =>
-            new MkvMergeBuilder(targetFilePath).WithArguments(args =>
-                args.Add("--version").Build()
-            );
+            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -195,7 +192,7 @@ public partial class MkvMerge
             return this;
         }
 
-        public IMkvMergeBuilder OutputOptions(Action<OutputOptions> outputOptions)
+        public IBuilder OutputOptions(Action<OutputOptions> outputOptions)
         {
             outputOptions(new(_argumentsBuilder));
             return this;
