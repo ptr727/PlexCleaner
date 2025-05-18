@@ -450,7 +450,7 @@ public class TrackProps
 
         // Leave the Language as is, no need to verify
 
-        // TODO: Sub tracks and sub-id's should already be handled?
+        // TODO: Sub tracks and sub-id's should already be handled in MediaInfo?
 
         // Use Id for Number
         // https://github.com/MediaArea/MediaInfo/issues/201

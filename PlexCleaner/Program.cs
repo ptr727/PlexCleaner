@@ -135,9 +135,6 @@ public static class Program
         }
     }
 
-    private static void ShowVersionInformation() =>
-        Console.WriteLine(AssemblyVersion.GetAppVersion());
-
     private static void KeyPressHandler()
     {
         for (; ; )

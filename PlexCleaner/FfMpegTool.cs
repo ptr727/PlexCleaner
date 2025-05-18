@@ -136,14 +136,7 @@ public partial class FfMpeg
             Command command = GetBuilder()
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
-                .InputOptions(options =>
-                    options
-                        .Default()
-                        .SeekStop(
-                            Program.Options.QuickScan ? Program.QuickScanTimeSpan : TimeSpan.Zero
-                        )
-                        .InputFile(fileName)
-                )
+                .InputOptions(options => options.Default().QuickScan().InputFile(fileName))
                 .OutputOptions(options => options.Default().NullOutput())
                 .Build();
 
@@ -349,35 +342,6 @@ public partial class FfMpeg
                     options
                         .MapAllCodecCopy()
                         .BitstreamFilterVideo($"\"filter_units=remove_types={nalUnit}\"")
-                        .Default()
-                        .FormatMatroska()
-                        .OutputFile(outputName)
-                )
-                .Build();
-
-            // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
-        }
-
-        public bool RemoveMetadata(string inputName, string outputName, out string error)
-        {
-            // Delete output file
-            _ = FileEx.DeleteFile(outputName);
-
-            // Build command line
-            error = string.Empty;
-            Command command = GetBuilder()
-                .GlobalOptions(options => options.Default())
-                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
-                .OutputOptions(options =>
-                    options
-                        .MapMetadata("-1")
-                        .MapAllCodecCopy()
                         .Default()
                         .FormatMatroska()
                         .OutputFile(outputName)

@@ -8,9 +8,6 @@ namespace PlexCleaner;
 
 public static class Convert
 {
-    public static bool ConvertToMkv(string inputName, out string outputName) =>
-        ConvertToMkv(inputName, null, out outputName);
-
     public static bool ConvertToMkv(
         string inputName,
         SelectMediaProps selectMediaProps,

@@ -10,6 +10,7 @@ public partial class MediaInfo
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
+        // TODO: Consolidate
         public GlobalOptions Default() => this;
 
         public GlobalOptions Add(string option) => Add(option, false);

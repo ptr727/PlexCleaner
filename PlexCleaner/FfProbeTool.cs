@@ -137,7 +137,6 @@ public partial class FfProbe
             // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
             // ReMux using FFmpeg to a snippet file then scan the snippet file
             Command command;
-            string error = string.Empty;
             if (Program.Options.QuickScan)
             {
                 // Keep in sync with FfMpegTool.ReMuxToFormat()
@@ -195,7 +194,7 @@ public partial class FfProbe
 
             // Get packet list
             Log.Information("Getting subcc packet info : {FileName}", fileName);
-            bool ret = GetPacketList(command, out packetList, out error);
+            bool ret = GetPacketList(command, out packetList, out string error);
             if (!ret)
             {
                 Log.Error("Failed to get subcc packet info : {FileName}", fileName);
@@ -221,8 +220,6 @@ public partial class FfProbe
                     options.QuickScan().ShowPackets().OutputFormatJson().InputFile(fileName)
                 )
                 .Build();
-
-            // TODO: Optimize by reading packet by packet and calculating bitrate
 
             // Get packet list
             Log.Information("Getting bitrate packet info : {FileName}", fileName);
@@ -250,7 +247,7 @@ public partial class FfProbe
             // Build command line
             json = string.Empty;
             Command command = GetBuilder()
-                .GlobalOptions(options => options.Default().LogLevelQuiet().HideBanner())
+                .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
                 .FfProbeOptions(options =>
                     options.ShowStreams().ShowFormat().OutputFormatJson().InputFile(fileName)
                 )

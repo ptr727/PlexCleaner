@@ -203,9 +203,6 @@ public partial class FfMpeg
         public OutputOptions SeekStop(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero ? this : SeekStop().Add($"{(int)timeSpan.TotalSeconds}");
 
-        public OutputOptions TestSnippets() =>
-            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
-
         public OutputOptions NullOutput() => Format().Add("null").Add("-");
 
         public OutputOptions Add(string option) => Add(option, false);

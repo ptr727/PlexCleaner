@@ -116,7 +116,7 @@ public class VideoProps : TrackProps
         };
 
         // Test for interlaced
-        // TODO: Does not work for H265
+        // TODO: May not not work for H265
         // https://github.com/MediaArea/MediaInfoLib/issues/1092
         // Only set when ScanType is Interlaced
         Interlaced = track.ScanType.Equals("Interlaced", StringComparison.OrdinalIgnoreCase);

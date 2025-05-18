@@ -3,18 +3,10 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class MediaToolInfo
+public class MediaToolInfo(MediaTool mediaTool)
 {
-    public MediaToolInfo() { }
-
-    public MediaToolInfo(MediaTool mediaTool)
-    {
-        ToolType = mediaTool.GetToolType();
-        ToolFamily = mediaTool.GetToolFamily();
-    }
-
-    public MediaTool.ToolType ToolType { get; set; }
-    public MediaTool.ToolFamily ToolFamily { get; set; }
+    public MediaTool.ToolType ToolType { get; set; } = mediaTool.GetToolType();
+    public MediaTool.ToolFamily ToolFamily { get; set; } = mediaTool.GetToolFamily();
     public string FileName { get; set; }
     public DateTime ModifiedTime { get; set; }
     public long Size { get; set; }

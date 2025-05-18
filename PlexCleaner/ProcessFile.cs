@@ -855,8 +855,6 @@ public class ProcessFile
             return false;
         }
 
-        // TODO: Optimize by reading packet by packet and returning on first match
-
         // Any packets means there are subtitles present in the video stream
         if (packetList.Count > 0)
         {
@@ -1061,7 +1059,7 @@ public class ProcessFile
 
         // Get SEI NAL unit based on video format
         int nalUnit = FfMpeg.GetNalUnit(videoProps.Format);
-        if (nalUnit == default)
+        if (nalUnit == 0)
         {
             // Error
             Log.Error(

@@ -45,9 +45,9 @@ public class Program
 
         // Get settings
         Dictionary<string, JsonElement>? settings = null;
-        if (GetSettingsFilePath(JsonConfigFile) is string settingsPath)
+        if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
         {
-            using FileStream jsonStream = File.OpenRead(settingsPath);
+            await using FileStream jsonStream = File.OpenRead(settingsPath);
             settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
                 jsonStream,
                 s_jsonReadOptions
@@ -60,7 +60,7 @@ public class Program
         int ret = await program.Sandbox(args);
 
         // Done
-        Log.CloseAndFlush();
+        await Log.CloseAndFlushAsync();
         return ret;
     }
 

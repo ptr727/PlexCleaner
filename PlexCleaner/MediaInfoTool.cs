@@ -14,7 +14,6 @@ namespace PlexCleaner;
 
 public partial class MediaInfo
 {
-    // TODO: Why partial?
     public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.MediaInfo;

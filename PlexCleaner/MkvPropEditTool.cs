@@ -10,8 +10,6 @@ using CliWrap.Buffered;
 
 // Use @ designation for track number from matroska header as discovered with mkvmerge identify
 
-// TODO: How to suppress console output?
-
 namespace PlexCleaner;
 
 public partial class MkvPropEdit
@@ -50,21 +48,19 @@ public partial class MkvPropEdit
                     options
                         .InputFile(fileName)
                         .Default()
-                        .Add(
-                            (options) =>
-                            {
-                                // Set track language if defined
-                                Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-                                mediaProps
-                                    .GetTrackList()
-                                    .Where(item => !Language.IsUndefined(item.LanguageAny))
-                                    .ToList()
-                                    .ForEach(item =>
-                                        options.EditTrack(item.Number).SetLanguage(item.LanguageAny)
-                                    );
-                                return options;
-                            }
-                        )
+                        .Add(options =>
+                        {
+                            // Set track language if defined
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => !Language.IsUndefined(item.LanguageAny))
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).SetLanguage(item.LanguageAny)
+                                );
+                            return options;
+                        })
                 )
                 .Build();
 
@@ -81,22 +77,20 @@ public partial class MkvPropEdit
                     options
                         .InputFile(fileName)
                         .Default()
-                        .Add(
-                            (options) =>
-                            {
-                                // Set all flags for this track
-                                Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-                                mediaProps
-                                    .GetTrackList()
-                                    .Where(item => item.Flags != TrackProps.FlagsType.None)
-                                    .ToList()
-                                    .ForEach(item =>
-                                        options.EditTrack(item.Number).SetFlags(item.Flags)
-                                    );
+                        .Add(options =>
+                        {
+                            // Set all flags for this track
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => item.Flags != TrackProps.FlagsType.None)
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).SetFlags(item.Flags)
+                                );
 
-                                return options;
-                            }
-                        )
+                            return options;
+                        })
                 )
                 .Build();
 
@@ -118,22 +112,20 @@ public partial class MkvPropEdit
                         .Add("all:")
                         .Delete()
                         .Add("title")
-                        .Add(
-                            (options) =>
-                            {
-                                // Delete track titles if the title is not used as a flag
-                                Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-                                mediaProps
-                                    .GetTrackList()
-                                    .Where(item => !item.TitleContainsFlag())
-                                    .ToList()
-                                    .ForEach(item =>
-                                        options.EditTrack(item.Number).Delete().Add("name")
-                                    );
+                        .Add(options =>
+                        {
+                            // Delete track titles if the title is not used as a flag
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => !item.TitleContainsFlag())
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).Delete().Add("name")
+                                );
 
-                                return options;
-                            }
-                        )
+                            return options;
+                        })
                 )
                 .Build();
 
@@ -150,19 +142,17 @@ public partial class MkvPropEdit
                     options
                         .InputFile(fileName)
                         .Default()
-                        .Add(
-                            (options) =>
+                        .Add(options =>
+                        {
+                            // Delete all attachments
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            for (int i = 0; i < mediaProps.Attachments; i++)
                             {
-                                // Delete all attachments
-                                Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-                                for (int i = 0; i < mediaProps.Attachments; i++)
-                                {
-                                    _ = options.DeleteAttachment(i);
-                                }
-
-                                return options;
+                                _ = options.DeleteAttachment(i);
                             }
-                        )
+
+                            return options;
+                        })
                 )
                 .Build();
 

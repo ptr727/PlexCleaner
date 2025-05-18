@@ -100,6 +100,7 @@ public class MediaProps(MediaTool.ToolType parser)
             && GetMediaProps(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0072:Add missing cases")]
     public static bool GetMediaProps(
         FileInfo fileInfo,
         MediaTool.ToolType parser,
@@ -120,12 +121,6 @@ public class MediaProps(MediaTool.ToolType parser)
                 fileInfo.FullName,
                 out mediaProps
             ),
-            MediaTool.ToolType.None => throw new NotImplementedException(),
-            MediaTool.ToolType.FfMpeg => throw new NotImplementedException(),
-            MediaTool.ToolType.HandBrake => throw new NotImplementedException(),
-            MediaTool.ToolType.MkvPropEdit => throw new NotImplementedException(),
-            MediaTool.ToolType.SevenZip => throw new NotImplementedException(),
-            MediaTool.ToolType.MkvExtract => throw new NotImplementedException(),
             _ => throw new NotImplementedException(),
         };
 
@@ -161,8 +156,7 @@ public class MediaProps(MediaTool.ToolType parser)
 
     public List<TrackProps> MatchMediaInfoToMkvMerge(List<TrackProps> mediaInfoTrackList)
     {
-        // This only works for MkvMerge
-        // TODO: Convert to more generic function, but for now only MediaInfo to MkvMerge is required
+        // This currently only works for MkvMerge
         Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
 
         // Get a MkvMerge track list

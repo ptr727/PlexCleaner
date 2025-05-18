@@ -19,7 +19,6 @@ namespace PlexCleaner;
 
 public partial class HandBrake
 {
-    // TODO Why partial?
     public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.HandBrake;
@@ -112,13 +111,13 @@ public partial class HandBrake
                         .OutputFile(outputName)
                         .FormatMatroska()
                         .VideoEncoder(Program.Config.ConvertOptions.HandBrakeOptions.Video)
-                        .Add(deInterlace, (options) => options.CombDetect().Decomb())
+                        .Add(deInterlace, options => options.CombDetect().Decomb())
                         .AllAudio()
                         .AudioEncoder(Program.Config.ConvertOptions.HandBrakeOptions.Audio)
                         .Add(
                             includeSubtitles,
-                            (options) => options.AllSubtitles(),
-                            (options) => options.NoSubtitles()
+                            options => options.AllSubtitles(),
+                            options => options.NoSubtitles()
                         )
                 )
                 .Build();

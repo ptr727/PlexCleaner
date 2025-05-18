@@ -13,7 +13,7 @@ using Serilog;
 
 // mkvmerge [global options] {-o out} [options1] {file1} [[options2] {file2}] [@options-file.json]
 
-// TODO: There is no option to suppress progress output
+// TODO: There is currently no option to suppress progress output
 // https://help.mkvtoolnix.download/t/option-to-suppress-progress-reporting-but-keep-static-output/1320
 
 namespace PlexCleaner;
