@@ -16,6 +16,8 @@ using Serilog;
 // TODO: There is currently no option to suppress progress output
 // https://help.mkvtoolnix.download/t/option-to-suppress-progress-reporting-but-keep-static-output/1320
 
+// Error output goes to stdout not stderr
+
 namespace PlexCleaner;
 
 public partial class MkvMerge
@@ -124,16 +126,35 @@ public partial class MkvMerge
 
             // Execute command
             Log.Information("Getting media info : {FileName}", fileName);
-            if (!Execute(command, out BufferedCommandResult result))
+            if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                // Handle error
-                Log.Error("Failed to to get media info : {FileName}", fileName);
-                Log.Error("{Error}", result.StandardOutput.Trim());
+                // Handle error, error reported to stdout
+                // stdout is not summarized so summarize it before logging
+                Log.Error(
+                    "{ToolType} : Failed to to get media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Error(
+                    "{ToolType} : {Error}",
+                    GetToolType(),
+                    Summarize(result.StandardOutput).Trim()
+                );
                 return false;
+            }
+            if (result.StandardError.Length > 0)
+            {
+                // TODO: This probably never gets hit due to mkvmerge not using stderr
+                Log.Warning(
+                    "{ToolType} : Warning getting media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get JSON from stdout
@@ -261,7 +282,7 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -283,7 +304,7 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -305,7 +326,7 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -345,7 +366,7 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }

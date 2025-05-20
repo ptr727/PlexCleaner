@@ -79,6 +79,8 @@ public static class Tools
 
     private static bool VerifyFolderTools()
     {
+        // Keep in sync with CheckforNewTools()
+
         // Make sure the tools root folder exists
         if (!Directory.Exists(GetToolsRoot()))
         {
@@ -94,59 +96,57 @@ public static class Tools
             return false;
         }
 
-        // Deserialize
-        ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
-        if (toolInfoJson == null)
+        try
         {
-            Log.Error("{FileName} is not a valid JSON file", toolsFile);
+            // Deserialize and compare the schema version
+            ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
+            if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
+            {
+                // Upgrade schema
+                Log.Error(
+                    "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+                    toolInfoJson.SchemaVersion,
+                    ToolInfoJsonSchema.CurrentSchemaVersion,
+                    toolsFile
+                );
+                if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+                {
+                    return false;
+                }
+            }
+
+            // Verify each tool
+            foreach (MediaTool mediaTool in GetToolList())
+            {
+                // Lookup using the tool family
+                MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
+                if (mediaToolInfo == null)
+                {
+                    Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
+                    return false;
+                }
+
+                // Make sure the tool exists
+                // Query the installed version information
+                if (
+                    !File.Exists(mediaTool.GetToolPath())
+                    || !mediaTool.GetInstalledVersion(out mediaToolInfo)
+                )
+                {
+                    Log.Error(
+                        "{Tool} not found in path {Directory}",
+                        mediaTool.GetToolType(),
+                        mediaTool.GetToolPath()
+                    );
+                    return false;
+                }
+                mediaTool.Info = mediaToolInfo;
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
             return false;
         }
-
-        // Compare schema version
-        if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
-        {
-            Log.Error(
-                "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
-                toolInfoJson.SchemaVersion,
-                ToolInfoJsonSchema.CurrentSchemaVersion,
-                toolsFile
-            );
-
-            // Upgrade schema
-            if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
-            {
-                return false;
-            }
-        }
-
-        // Verify each tool
-        foreach (MediaTool mediaTool in GetToolList())
-        {
-            // Lookup using the tool family
-            MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
-            if (mediaToolInfo == null)
-            {
-                Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
-                return false;
-            }
-
-            // Make sure the tool exists
-            // Query the installed version information
-            if (
-                !File.Exists(mediaTool.GetToolPath())
-                || !mediaTool.GetInstalledVersion(out mediaToolInfo)
-            )
-            {
-                Log.Error(
-                    "{Tool} not found in path {Directory}",
-                    mediaTool.GetToolType(),
-                    mediaTool.GetToolPath()
-                );
-                return false;
-            }
-            mediaTool.Info = mediaToolInfo;
-        }
-
         return true;
     }
 
@@ -182,6 +182,8 @@ public static class Tools
 
     public static bool CheckForNewTools()
     {
+        // Keep in sync with VerifyFolderTools()
+
         // Checking for new tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -225,13 +227,13 @@ public static class Tools
                 toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
                 if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
                 {
-                    Log.Error(
-                        "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}",
-                        toolInfoJson.SchemaVersion,
-                        ToolInfoJsonSchema.CurrentSchemaVersion
-                    );
-
                     // Upgrade Schema
+                    Log.Error(
+                        "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+                        toolInfoJson.SchemaVersion,
+                        ToolInfoJsonSchema.CurrentSchemaVersion,
+                        toolsFile
+                    );
                     if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
                     {
                         toolInfoJson = null;

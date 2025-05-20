@@ -106,15 +106,28 @@ public partial class MediaInfo
 
             // Execute command
             Log.Information("Getting media info : {FileName}", fileName);
-            if (!Execute(command, out BufferedCommandResult result))
+            if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
-            if (result.ExitCode != 0 || result.StandardError.Length > 0)
+            if (result.ExitCode != 0)
             {
-                Log.Error("Failed to to get media info : {FileName}", fileName);
-                Log.Error("{Error}", result.StandardError.Trim());
+                Log.Error(
+                    "{ToolType} : Failed to to get media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Error("{ToolType} : {Error}", GetToolType(), result.StandardError.Trim());
                 return false;
+            }
+            if (result.StandardError.Length > 0)
+            {
+                Log.Warning(
+                    "{ToolType} : Warning getting media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get XML output

@@ -141,7 +141,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -173,7 +173,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -279,7 +279,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -312,7 +312,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -349,7 +349,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }
@@ -375,7 +375,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }

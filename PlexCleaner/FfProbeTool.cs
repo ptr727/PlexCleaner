@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Stream;
 using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
@@ -48,49 +49,110 @@ public partial class FfProbe
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
             throw new NotImplementedException();
 
-        public bool GetPacketList(
+        public bool GetPackets(
             Command command,
-            out List<FfMpegToolJsonSchema.Packet> packetList,
+            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc,
             out string error
         )
         {
-            (bool result, string error, List<FfMpegToolJsonSchema.Packet> packetList) result =
-                GetPacketListAsync(command).GetAwaiter().GetResult();
+            // Wrap async function in a task
+            (bool result, string error) result = GetPacketsAsync(
+                    command,
+                    async (packet) => await Task.FromResult(packetFunc(packet))
+                )
+                .GetAwaiter()
+                .GetResult();
             error = result.error;
-            packetList = result.packetList;
             return result.result;
         }
 
-        public async Task<(bool, string, List<FfMpegToolJsonSchema.Packet>)> GetPacketListAsync(
-            Command command
+        public async Task<(bool result, string error)> GetPacketsAsync(
+            Command command,
+            Func<FfMpegToolJsonSchema.Packet, Task<bool>> packetFunc
         )
         {
             int processId = -1;
             try
             {
-                // TODO: Alternatives for packet by packet reading:
-                // https://stackoverflow.com/questions/58572524/asynchonously-deserializing-a-list-using-system-text-json
-                // https://stackoverflow.com/questions/54983533/parsing-a-json-file-with-net-core-3-0-system-text-json/55429664#55429664
-                // https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer.deserializeasyncenumerable?view=net-9.0
-                // https://github.com/Cysharp/Utf8StreamReader
-
                 // Pipe target to deserialize JSON packets
-                FfMpegToolJsonSchema.PacketInfo packetInfo = null;
+                List<FfMpegToolJsonSchema.Packet> packetList = [];
                 PipeTarget stdOutTarget = PipeTarget.Create(
-                    async (stdOutStream, cancellationToken) =>
+                    async (stream, cancellationToken) =>
                     {
-                        packetInfo =
-                            await JsonSerializer.DeserializeAsync<FfMpegToolJsonSchema.PacketInfo>(
-                                stdOutStream,
-                                ConfigFileJsonSchema.JsonReadOptions,
-                                cancellationToken
-                            );
+                        // Read the stream
+                        Utf8JsonAsyncStreamReader jsonStreamReader = new(stream);
+                        while (await jsonStreamReader.ReadAsync(cancellationToken))
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
+                            // Read until packets property
+                            if (
+                                jsonStreamReader.TokenType == JsonTokenType.PropertyName
+                                && jsonStreamReader
+                                    .GetString()
+                                    .Equals("packets", StringComparison.OrdinalIgnoreCase)
+                            )
+                            {
+                                // Expect array start
+                                if (
+                                    !await jsonStreamReader.ReadAsync(cancellationToken)
+                                    || jsonStreamReader.TokenType != JsonTokenType.StartArray
+                                )
+                                {
+                                    // Unexpected
+                                    break;
+                                }
+
+                                // Read the packet objects
+                                while (await jsonStreamReader.ReadAsync(cancellationToken))
+                                {
+                                    if (cancellationToken.IsCancellationRequested)
+                                    {
+                                        return;
+                                    }
+
+                                    // Expect object start
+                                    if (jsonStreamReader.TokenType != JsonTokenType.StartObject)
+                                    {
+                                        // Or end of array if empty array
+                                        if (jsonStreamReader.TokenType != JsonTokenType.EndArray)
+                                        {
+                                            break;
+                                        }
+
+                                        // Unexpected token
+                                        break;
+                                    }
+
+                                    // Send packet to delegate
+                                    // A false returns means delegate does not want any more packets
+                                    if (
+                                        !await packetFunc(
+                                            await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
+                                                ConfigFileJsonSchema.JsonReadOptions,
+                                                cancellationToken
+                                            )
+                                        )
+                                    )
+                                    {
+                                        // Done
+                                        break;
+                                    }
+                                }
+
+                                // Done
+                                break;
+                            }
+                        }
                     }
                 );
 
                 // Pipe target to capture standard error
                 StringBuilder stdErrBuilder = new();
-                PipeTarget stdErrTarget = ToStringSummary(stdErrBuilder, 2, 8);
+                PipeTarget stdErrTarget = ToStringSummary(stdErrBuilder);
 
                 // Setup redirection
                 CommandTask<CommandResult> task = command
@@ -108,7 +170,7 @@ public partial class FfProbe
 
                 // Execute command
                 CommandResult result = await task;
-                return (result.ExitCode == 0, stdErrBuilder.ToString().Trim(), packetInfo?.Packets);
+                return (result.ExitCode == 0, stdErrBuilder.ToString().Trim());
             }
             catch (OperationCanceledException)
             {
@@ -118,18 +180,18 @@ public partial class FfProbe
                     processId,
                     command.Arguments
                 );
-                return (false, string.Empty, null);
+                return (false, string.Empty);
             }
             catch (Exception e)
                 when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
             {
-                return (false, string.Empty, null);
+                return (false, string.Empty);
             }
         }
 
-        public bool GetSubCcPacketList(
+        public bool GetSubCcPackets(
             string fileName,
-            out List<FfMpegToolJsonSchema.Packet> packetList
+            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
         )
         {
             // Quickscan
@@ -164,12 +226,11 @@ public partial class FfProbe
 
                 // Execute command
                 Log.Information("Creating temp media file : {TempFileName}", tempName);
-                if (!Tools.FfMpeg.Execute(command, true, out BufferedCommandResult result))
+                if (!Tools.FfMpeg.Execute(command, true, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
                     Log.Error("{Error}", result.StandardError.Trim());
                     _ = FileEx.DeleteFile(tempName);
-                    packetList = null;
                     return false;
                 }
 
@@ -194,7 +255,7 @@ public partial class FfProbe
 
             // Get packet list
             Log.Information("Getting subcc packet info : {FileName}", fileName);
-            bool ret = GetPacketList(command, out packetList, out string error);
+            bool ret = GetPackets(command, packetFunc, out string error);
             if (!ret)
             {
                 Log.Error("Failed to get subcc packet info : {FileName}", fileName);
@@ -208,9 +269,9 @@ public partial class FfProbe
             return ret;
         }
 
-        public bool GetBitratePacketList(
+        public bool GetBitratePackets(
             string fileName,
-            out List<FfMpegToolJsonSchema.Packet> packetList
+            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
         )
         {
             // Build command line
@@ -222,10 +283,10 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Information("Getting bitrate packet info : {FileName}", fileName);
-            if (!GetPacketList(command, out packetList, out string error))
+            Log.Information("Getting bitrate packets : {FileName}", fileName);
+            if (!GetPackets(command, packetFunc, out string error))
             {
-                Log.Error("Failed to get bitrate packet info : {FileName}", fileName);
+                Log.Error("Failed to get bitrate packets : {FileName}", fileName);
                 Log.Error("{Error}", error);
                 return false;
             }
@@ -254,16 +315,33 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Information("Getting media info : {FileName}", fileName);
-            if (!Execute(command, out BufferedCommandResult result))
+            Log.Information(
+                "{ToolType} : Getting media info : {FileName}",
+                GetToolType(),
+                fileName
+            );
+            if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
-            if (result.ExitCode != 0 || result.StandardError.Length > 0)
+            if (result.ExitCode != 0)
             {
-                Log.Error("Failed to to get media info : {FileName}", fileName);
-                Log.Error("{Error}", result.StandardError.Trim());
+                Log.Error(
+                    "{ToolType} : Failed to to get media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Error("{ToolType} : {Error}", GetToolType(), result.StandardError.Trim());
                 return false;
+            }
+            if (result.StandardError.Length > 0)
+            {
+                Log.Warning(
+                    "{ToolType} : Warning getting media info : {FileName}",
+                    GetToolType(),
+                    fileName
+                );
+                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get JSON output

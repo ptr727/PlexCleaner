@@ -101,6 +101,28 @@
             "justMyCode": false
         },
         {
+            "name": "Process TestSnippets Quickscan",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--logfile=PlexCleaner_Single_Quickscan.log",
+                "--settingsfile=PlexCleaner.json",
+                "--resultsfile=Results_Single_Quickscan.json",
+                "--testsnippets",
+                "--quickscan",
+                "--mediafiles",
+                "D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
             "name": "Process Parallel TestSnippets Quickscan",
             "type": "coreclr",
             "request": "launch",

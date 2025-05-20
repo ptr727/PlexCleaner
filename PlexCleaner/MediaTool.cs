@@ -135,61 +135,13 @@ public abstract class MediaTool
         }
     }
 
-    public bool Execute(
-        Command command,
-        bool summary,
-        out BufferedCommandResult bufferedCommandResult
-    ) =>
-        summary
-            // Default to 2 start lines and 8 end lines
-            ? Execute(command, 2, 8, out bufferedCommandResult)
-            : Execute(command, out bufferedCommandResult);
-
-    public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult)
-    {
-        bufferedCommandResult = null;
-        int processId = -1;
-        try
-        {
-            CommandTask<BufferedCommandResult> task = command
-                .WithValidation(CommandResultValidation.None)
-                .ExecuteBufferedAsync(
-                    Encoding.Default,
-                    Encoding.Default,
-                    CancellationToken.None,
-                    Program.CancelToken()
-                );
-            processId = task.ProcessId;
-            Log.Information(
-                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                processId,
-                command.Arguments
-            );
-
-            bufferedCommandResult = task.Task.GetAwaiter().GetResult();
-            return task.Task.IsCompletedSuccessfully;
-        }
-        catch (OperationCanceledException)
-        {
-            Log.Error(
-                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                processId,
-                command.Arguments
-            );
-            return false;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            return false;
-        }
-    }
+    public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult) =>
+        Execute(command, false, false, out bufferedCommandResult);
 
     public bool Execute(
         Command command,
-        int startLines,
-        int stopLine,
+        bool stdOutSummary,
+        bool stdErrSummary,
         out BufferedCommandResult bufferedCommandResult
     )
     {
@@ -198,16 +150,13 @@ public abstract class MediaTool
         try
         {
             StringBuilder stdOutBuilder = new();
-            PipeTarget stdOutTarget = PipeTarget.Merge(
-                command.StandardOutputPipe,
-                ToStringSummary(stdOutBuilder, startLines, stopLine)
-            );
-
+            PipeTarget stdOutTarget = stdOutSummary
+                ? ToStringSummary(stdOutBuilder)
+                : ToStringBuilder(stdOutBuilder);
             StringBuilder stdErrBuilder = new();
-            PipeTarget stdErrTarget = PipeTarget.Merge(
-                command.StandardErrorPipe,
-                ToStringSummary(stdErrBuilder, startLines, stopLine)
-            );
+            PipeTarget stdErrTarget = stdErrSummary
+                ? ToStringSummary(stdErrBuilder)
+                : ToStringBuilder(stdErrBuilder);
 
             CommandTask<CommandResult> task = command
                 .WithStandardOutputPipe(stdOutTarget)
@@ -248,16 +197,38 @@ public abstract class MediaTool
         }
     }
 
-    public static PipeTarget ToStringSummary(
-        StringBuilder stringBuilder,
-        int startLines,
-        int stopLines
-    ) =>
+    public static PipeTarget ToStringBuilder(StringBuilder stringBuilder) =>
         PipeTarget.Create(
-            async (origin, cancellationToken) =>
+            async (stream, cancellationToken) =>
             {
                 using StreamReader reader = new(
-                    origin,
+                    stream,
+                    Encoding.Default,
+                    false,
+                    // BufferSizes.StreamReader
+                    1024,
+                    true
+                );
+
+                // Compare with CLiWrap.PipeTarget.ToStringBuilder() that reads character by character
+
+                while (await reader.ReadLineAsync(cancellationToken) is { } line)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    _ = stringBuilder.AppendLine(line);
+                }
+            }
+        );
+
+    public static PipeTarget ToStringSummary(StringBuilder stringBuilder) =>
+        PipeTarget.Create(
+            async (stream, cancellationToken) =>
+            {
+                using StreamReader streamReader = new(
+                    stream,
                     Encoding.Default,
                     false,
                     // BufferSizes.StreamReader
@@ -268,37 +239,66 @@ public abstract class MediaTool
                 List<string> stringList = [];
                 int startLinesRead = 0;
                 int stopLinesRead = 0;
-                while (await reader.ReadLineAsync(cancellationToken) is { } line)
+                while (await streamReader.ReadLineAsync(cancellationToken) is { } line)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        break;
+                        return;
                     }
 
-                    if (startLines == 0 && stopLines == 0)
-                    {
-                        stringList.Add(line);
-                        continue;
-                    }
-
-                    if (startLinesRead < startLines)
+                    if (startLinesRead < StartLines)
                     {
                         stringList.Add(line);
                         startLinesRead++;
                         continue;
                     }
 
-                    if (stopLinesRead < stopLines)
+                    if (stopLinesRead < StopLines)
                     {
                         stringList.Add(line);
                         stopLinesRead++;
                         continue;
                     }
 
-                    stringList.RemoveAt(startLines);
+                    stringList.RemoveAt(StartLines);
                     stringList.Add(line);
                 }
                 stringList.ForEach(item => stringBuilder.AppendLine(item));
             }
         );
+
+    public static string Summarize(string text)
+    {
+        // Use same logic as in ToStringSummary()
+        StringBuilder stringBuilder = new();
+        using StringReader stringReader = new(text);
+        List<string> stringList = [];
+        int startLinesRead = 0;
+        int stopLinesRead = 0;
+        while (stringReader.ReadLine() is { } line)
+        {
+            if (startLinesRead < StartLines)
+            {
+                stringList.Add(line);
+                startLinesRead++;
+                continue;
+            }
+
+            if (stopLinesRead < StopLines)
+            {
+                stringList.Add(line);
+                stopLinesRead++;
+                continue;
+            }
+
+            stringList.RemoveAt(StartLines);
+            stringList.Add(line);
+        }
+        stringList.ForEach(item => stringBuilder.AppendLine(item));
+        return stringBuilder.ToString();
+    }
+
+    // Default to 2 start lines and 8 end lines
+    private const int StartLines = 2;
+    private const int StopLines = 8;
 }

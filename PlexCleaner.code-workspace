@@ -108,6 +108,7 @@
             "libstdc",
             "libsvtav",
             "libx",
+            "listfiles",
             "locproj",
             "logappend",
             "logfile",

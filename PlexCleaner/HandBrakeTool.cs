@@ -123,7 +123,7 @@ public partial class HandBrake
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, out BufferedCommandResult result))
+            if (!Execute(command, true, true, out BufferedCommandResult result))
             {
                 return false;
             }

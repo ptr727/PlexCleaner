@@ -51,6 +51,7 @@
       Include="System.CommandLine.NamingConventionBinder"
       Version="2.0.0-beta4.22272.1"
     />
+    <PackageReference Include="Utf8JsonAsyncStreamReader" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="PlexCleanerTests" />

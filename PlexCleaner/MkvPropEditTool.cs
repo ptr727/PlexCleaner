@@ -65,7 +65,7 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, true, out BufferedCommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
 
         public bool SetTrackFlags(string fileName, MediaProps mediaProps)
@@ -95,7 +95,7 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, true, out BufferedCommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
 
         public bool ClearTags(string fileName, MediaProps mediaProps)
@@ -130,7 +130,7 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, true, out BufferedCommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
 
         public bool ClearAttachments(string fileName, MediaProps mediaProps)
@@ -157,7 +157,7 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, true, out BufferedCommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
     }
 }

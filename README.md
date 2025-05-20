@@ -32,6 +32,7 @@ Docker images are published on [Docker Hub][docker-link].
 - Version 3:13:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Converted media tool commandline creation to using fluent builder pattern.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything to list and then process.
   - General refactoring.
 - Version 3:12:
   - Update to .NET 9.0.
@@ -885,6 +886,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [FluentAssertions](https://fluentassertions.com/)
 - [xUnit.Net](https://xunit.net/)
 - [CliWrap](https://github.com/Tyrrrz/CliWrap)
+- [Utf8JsonAsyncStreamReader](https://github.com/gragra33/Utf8JsonAsyncStreamReader)
 
 ## Sample Media Files
 
