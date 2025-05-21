@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CliWrap;
 using CliWrap.Builders;
 

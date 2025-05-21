@@ -1,4 +1,4 @@
-﻿// Schema update steps (also applies to SidecarFileJsonSchema):
+// Schema update steps (also applies to SidecarFileJsonSchema):
 // Derive new class from previous version
 // Keep all utility functions e.g. Upgrade() in the latest version
 // Add copy constructors to the new class to handle upgrading from the previous version

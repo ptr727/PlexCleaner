@@ -1,4 +1,4 @@
-﻿// TODO: info IDE0005: Using directive is unnecessary.
+// TODO: info IDE0005: Using directive is unnecessary.
 // https://github.com/dotnet/roslyn/discussions/78254
 #pragma warning disable IDE0005 // Using directive is unnecessary.
 // Current schema version is v4

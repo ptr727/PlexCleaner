@@ -1,4 +1,4 @@
-﻿// See ConfigFileJsonSchema.cs for schema update steps
+// See ConfigFileJsonSchema.cs for schema update steps
 
 using System;
 using System.Text.Json;

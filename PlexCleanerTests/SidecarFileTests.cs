@@ -1,4 +1,4 @@
-﻿using PlexCleaner;
+using PlexCleaner;
 using Xunit;
 
 namespace PlexCleanerTests;
