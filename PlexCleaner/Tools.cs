@@ -12,17 +12,16 @@ namespace PlexCleaner;
 public static class Tools
 {
     // Tool details are populated during VerifyTools() call
-    public static readonly FfMpegTool FfMpeg = new();
-    public static readonly FfProbeTool FfProbe = new();
-    public static readonly MkvMergeTool MkvMerge = new();
-    public static readonly MkvPropEditTool MkvPropEdit = new();
-    public static readonly MkvExtractTool MkvExtract = new();
-    public static readonly MediaInfoTool MediaInfo = new();
-    public static readonly HandBrakeTool HandBrake = new();
-    public static readonly SevenZipTool SevenZip = new();
+    public static readonly FfMpeg.Tool FfMpeg = new();
+    public static readonly FfProbe.Tool FfProbe = new();
+    public static readonly MkvMerge.Tool MkvMerge = new();
+    public static readonly MkvPropEdit.Tool MkvPropEdit = new();
+    public static readonly MediaInfo.Tool MediaInfo = new();
+    public static readonly HandBrake.Tool HandBrake = new();
+    public static readonly SevenZip.Tool SevenZip = new();
 
     public static List<MediaTool> GetToolList() =>
-        [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MkvExtract, MediaInfo, HandBrake, SevenZip];
+        [FfMpeg, FfProbe, MkvMerge, MkvPropEdit, MediaInfo, HandBrake, SevenZip];
 
     public static List<MediaTool> GetToolFamilyList() =>
         [FfMpeg, MkvMerge, MediaInfo, HandBrake, SevenZip];
@@ -80,6 +79,8 @@ public static class Tools
 
     private static bool VerifyFolderTools()
     {
+        // Keep in sync with CheckforNewTools()
+
         // Make sure the tools root folder exists
         if (!Directory.Exists(GetToolsRoot()))
         {
@@ -95,59 +96,57 @@ public static class Tools
             return false;
         }
 
-        // Deserialize
-        ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
-        if (toolInfoJson == null)
+        try
         {
-            Log.Error("{FileName} is not a valid JSON file", toolsFile);
+            // Deserialize and compare the schema version
+            ToolInfoJsonSchema toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
+            if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
+            {
+                // Upgrade schema
+                Log.Error(
+                    "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+                    toolInfoJson.SchemaVersion,
+                    ToolInfoJsonSchema.CurrentSchemaVersion,
+                    toolsFile
+                );
+                if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
+                {
+                    return false;
+                }
+            }
+
+            // Verify each tool
+            foreach (MediaTool mediaTool in GetToolList())
+            {
+                // Lookup using the tool family
+                MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
+                if (mediaToolInfo == null)
+                {
+                    Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
+                    return false;
+                }
+
+                // Make sure the tool exists
+                // Query the installed version information
+                if (
+                    !File.Exists(mediaTool.GetToolPath())
+                    || !mediaTool.GetInstalledVersion(out mediaToolInfo)
+                )
+                {
+                    Log.Error(
+                        "{Tool} not found in path {Directory}",
+                        mediaTool.GetToolType(),
+                        mediaTool.GetToolPath()
+                    );
+                    return false;
+                }
+                mediaTool.Info = mediaToolInfo;
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
             return false;
         }
-
-        // Compare schema version
-        if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
-        {
-            Log.Error(
-                "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
-                toolInfoJson.SchemaVersion,
-                ToolInfoJsonSchema.CurrentSchemaVersion,
-                toolsFile
-            );
-
-            // Upgrade schema
-            if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
-            {
-                return false;
-            }
-        }
-
-        // Verify each tool
-        foreach (MediaTool mediaTool in GetToolList())
-        {
-            // Lookup using the tool family
-            MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
-            if (mediaToolInfo == null)
-            {
-                Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
-                return false;
-            }
-
-            // Make sure the tool exists
-            // Query the installed version information
-            if (
-                !File.Exists(mediaTool.GetToolPath())
-                || !mediaTool.GetInstalledVersion(out mediaToolInfo)
-            )
-            {
-                Log.Error(
-                    "{Tool} not found in path {Directory}",
-                    mediaTool.GetToolType(),
-                    mediaTool.GetToolPath()
-                );
-                return false;
-            }
-            mediaTool.Info = mediaToolInfo;
-        }
-
         return true;
     }
 
@@ -183,6 +182,8 @@ public static class Tools
 
     public static bool CheckForNewTools()
     {
+        // Keep in sync with VerifyFolderTools()
+
         // Checking for new tools are not supported on Linux
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -202,7 +203,7 @@ public static class Tools
         {
             // Bootstrap the 7-Zip download, only supported on Windows
             Log.Warning(
-                "Downloading missing {Tool} ... : \"{ToolPath}\"",
+                "Downloading missing {Tool} ... : {ToolPath}",
                 SevenZip.GetToolType(),
                 SevenZip.GetToolPath()
             );
@@ -226,13 +227,13 @@ public static class Tools
                 toolInfoJson = ToolInfoJsonSchema.FromFile(toolsFile);
                 if (toolInfoJson.SchemaVersion != ToolInfoJsonSchema.CurrentSchemaVersion)
                 {
-                    Log.Error(
-                        "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}",
-                        toolInfoJson.SchemaVersion,
-                        ToolInfoJsonSchema.CurrentSchemaVersion
-                    );
-
                     // Upgrade Schema
+                    Log.Error(
+                        "Tool JSON schema mismatch : {JsonSchemaVersion} != {CurrentSchemaVersion}, {FileName}",
+                        toolInfoJson.SchemaVersion,
+                        ToolInfoJsonSchema.CurrentSchemaVersion,
+                        toolsFile
+                    );
                     if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
                     {
                         toolInfoJson = null;

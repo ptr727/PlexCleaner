@@ -1,161 +1,163 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Text;
+using CliWrap;
+using CliWrap.Buffered;
 
 // https://mkvtoolnix.download/doc/mkvpropedit.html
-// mkvpropedit [options] {source-filename} {actions}
-// Use @ designation for track number from matroska header as discovered with mkvmerge identify
 
-// TODO: How to suppress console output?
+// mkvpropedit [options] {source-filename} {actions}
+
+// Use @ designation for track number from matroska header as discovered with mkvmerge identify
 
 namespace PlexCleaner;
 
-// Use MkvMerge family
-public class MkvPropEditTool : MkvMergeTool
+public partial class MkvPropEdit
 {
-    public override ToolType GetToolType() => ToolType.MkvPropEdit;
-
-    protected override string GetToolNameWindows() => "mkvpropedit.exe";
-
-    protected override string GetToolNameLinux() => "mkvpropedit";
-
-    public bool SetTrackLanguage(string fileName, MediaProps mediaProps)
+    public class Tool : MediaTool
     {
-        // Verify correct data type
-        Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+        public override ToolFamily GetToolFamily() => ToolFamily.MkvToolNix;
 
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
+        public override ToolType GetToolType() => ToolType.MkvPropEdit;
 
-        // Set the language property not the language-ietf property
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
+        protected override string GetToolNameWindows() => "mkvpropedit.exe";
 
-        // Only set tracks that are set and not undefined
-        System.Collections.Generic.List<TrackProps> trackList =
-        [
-            .. mediaProps.GetTrackList().Where(item => !Language.IsUndefined(item.LanguageAny)),
-        ];
-        trackList.ForEach(item =>
-            commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"--edit track:@{item.Number} --set language={item.LanguageAny} "
-            )
-        );
+        protected override string GetToolNameLinux() => "mkvpropedit";
 
-        // Set language on all unknown tracks
-        int exitCode = Command(commandline.ToString(), out string _, out string _);
-        return exitCode == 0;
-    }
+        public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
-    public bool SetTrackFlags(string fileName, MediaProps mediaProps)
-    {
-        // Verify correct data type
-        Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-
-        // Build commandline
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
-
-        // Iterate over all tracks
-        foreach (TrackProps item in mediaProps.GetTrackList())
+        public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
-            // Setting a flag does not unset the counter flag, e.g. setting default on one track does not unset default on other tracks
-
-            // Get flags list for this track
-            System.Collections.Generic.List<TrackProps.FlagsType> flagList =
-            [
-                .. TrackProps.GetFlags(item.Flags),
-            ];
-            if (flagList.Count > 0)
-            {
-                // Edit track
-                _ = commandline.Append(
-                    CultureInfo.InvariantCulture,
-                    $"--edit track:@{item.Number} "
-                );
-
-                // Set flag by name
-                flagList.ForEach(item =>
-                    commandline.Append(
-                        CultureInfo.InvariantCulture,
-                        $"--set {GetTrackFlag(item)}=1 "
-                    )
-                );
-            }
+            // Get version info
+            mediaToolInfo = new MediaToolInfo(this) { FileName = GetToolPath() };
+            Command command = Builder.Version(GetToolPath());
+            return Execute(command, out BufferedCommandResult result)
+                && result.ExitCode == 0
+                && MkvMerge.Tool.GetVersion(result.StandardOutput, mediaToolInfo);
         }
 
-        // Set flags
-        int exitCode = Command(commandline.ToString(), out string _, out string _);
-        return exitCode == 0;
-    }
+        protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
+            throw new NotImplementedException();
 
-    public static string GetTrackFlag(TrackProps.FlagsType flagType) =>
-        // mkvpropedit --list-property-names
-        // Enums must be single flag values, not combined flags
-        flagType switch
+        public bool SetTrackLanguage(string fileName, MediaProps mediaProps)
         {
-            TrackProps.FlagsType.Default => "flag-default",
-            TrackProps.FlagsType.Forced => "flag-forced",
-            TrackProps.FlagsType.HearingImpaired => "flag-hearing-impaired",
-            TrackProps.FlagsType.VisualImpaired => "flag-visual-impaired",
-            TrackProps.FlagsType.Descriptions => "flag-text-descriptions",
-            TrackProps.FlagsType.Original => "flag-original",
-            TrackProps.FlagsType.Commentary => "flag-commentary",
-            TrackProps.FlagsType.None => throw new NotImplementedException(),
-            _ => throw new NotImplementedException(),
-        };
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        .Add(options =>
+                        {
+                            // Set track language if defined
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => !Language.IsUndefined(item.LanguageAny))
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).SetLanguage(item.LanguageAny)
+                                );
+                            return options;
+                        })
+                )
+                .Build();
 
-    public bool ClearTags(string fileName, MediaProps mediaProps)
-    {
-        // Verify correct data type
-        Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-
-        // Delete all tags and title
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
-        _ = commandline.Append("--tags all: --delete title ");
-
-        // Delete track titles if the title is not used as a flag
-        System.Collections.Generic.List<TrackProps> trackList =
-        [
-            .. mediaProps.GetTrackList().Where(track => !track.TitleContainsFlag()),
-        ];
-        trackList.ForEach(track =>
-            commandline.Append(
-                CultureInfo.InvariantCulture,
-                $"--edit track:@{track.Number} --delete name "
-            )
-        );
-
-        // Clear all tags and main title and track titles
-        int exitCode = Command(commandline.ToString(), out string _, out string _);
-        return exitCode == 0;
-    }
-
-    public bool ClearAttachments(string fileName, MediaProps mediaProps)
-    {
-        // Verify correct data type
-        Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
-        Debug.Assert(mediaProps.Attachments > 0);
-
-        // Delete all attachments
-        StringBuilder commandline = new();
-        DefaultArgs(fileName, commandline);
-        for (int id = 0; id < mediaProps.Attachments; id++)
-        {
-            _ = commandline.Append(CultureInfo.InvariantCulture, $"--delete-attachment {id + 1} ");
+            // Execute command
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
 
-        int exitCode = Command(commandline.ToString(), out string _, out string _);
-        return exitCode == 0;
+        public bool SetTrackFlags(string fileName, MediaProps mediaProps)
+        {
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        .Add(options =>
+                        {
+                            // Set all flags for this track
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => item.Flags != TrackProps.FlagsType.None)
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).SetFlags(item.Flags)
+                                );
+
+                            return options;
+                        })
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+        }
+
+        public bool ClearTags(string fileName, MediaProps mediaProps)
+        {
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        // Delete all tags and title
+                        .Tags()
+                        .Add("all:")
+                        .Delete()
+                        .Add("title")
+                        .Add(options =>
+                        {
+                            // Delete track titles if the title is not used as a flag
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            mediaProps
+                                .GetTrackList()
+                                .Where(item => !item.TitleContainsFlag())
+                                .ToList()
+                                .ForEach(item =>
+                                    options.EditTrack(item.Number).Delete().Add("name")
+                                );
+
+                            return options;
+                        })
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+        }
+
+        public bool ClearAttachments(string fileName, MediaProps mediaProps)
+        {
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        .Add(options =>
+                        {
+                            // Delete all attachments
+                            Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
+                            for (int i = 0; i < mediaProps.Attachments; i++)
+                            {
+                                _ = options.DeleteAttachment(i);
+                            }
+
+                            return options;
+                        })
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+        }
     }
-
-    private static void DefaultArgs(string fileName, StringBuilder commandline) =>
-        commandline.Append(CultureInfo.InvariantCulture, $"\"{fileName}\" {EditOptions} ");
-
-    private const string EditOptions =
-        "--delete-track-statistics-tags --normalize-language-ietf extlang";
 }

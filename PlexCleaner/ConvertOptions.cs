@@ -135,12 +135,12 @@ public record ConvertOptions3 : ConvertOptions2
 
     public void SetDefaults()
     {
-        FfMpegOptions.Video = FfMpegTool.DefaultVideoOptions;
-        FfMpegOptions.Audio = FfMpegTool.DefaultAudioOptions;
+        FfMpegOptions.Video = FfMpeg.DefaultVideoOptions;
+        FfMpegOptions.Audio = FfMpeg.DefaultAudioOptions;
         FfMpegOptions.Global = "";
 
-        HandBrakeOptions.Video = HandBrakeTool.DefaultVideoOptions;
-        HandBrakeOptions.Audio = HandBrakeTool.DefaultAudioOptions;
+        HandBrakeOptions.Video = HandBrake.DefaultVideoOptions;
+        HandBrakeOptions.Audio = HandBrake.DefaultAudioOptions;
     }
 
     public bool VerifyValues()

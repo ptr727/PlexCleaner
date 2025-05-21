@@ -17,7 +17,7 @@ public static class Extensions
         return true;
     }
 
-    public class LogOverride { }
+    public class LogOverride;
 
     public static ILogger LogOverrideContext(this ILogger logger) =>
         logger.ForContext<LogOverride>();

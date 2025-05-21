@@ -36,11 +36,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.9" />
+    <PackageReference Include="CliWrap" Version="3.8.2" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.12" />
     <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
@@ -50,6 +51,7 @@
       Include="System.CommandLine.NamingConventionBinder"
       Version="2.0.0-beta4.22272.1"
     />
+    <PackageReference Include="Utf8JsonAsyncStreamReader" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="PlexCleanerTests" />

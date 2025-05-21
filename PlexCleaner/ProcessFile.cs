@@ -156,7 +156,7 @@ public class ProcessFile
     public bool RemuxNonMkvContainer(ref bool modified)
     {
         // Make sure that MKV named files are Matroska containers
-        if (MkvMergeTool.IsMkvContainer(MkvMergeProps))
+        if (MkvMerge.Tool.IsMkvContainer(MkvMergeProps))
         {
             // Nothing to do
             return true;
@@ -843,20 +843,27 @@ public class ProcessFile
         }
 
         // Get packet info using ccsub filter
+        bool packetsFound = false;
         Log.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.Name);
         if (
-            !Tools.FfProbe.GetSubCcPacketInfo(
+            !Tools.FfProbe.GetSubCcPackets(
                 FileInfo.FullName,
-                out List<FfMpegToolJsonSchema.Packet> packetList
+                (packet) =>
+                {
+                    // Stop processing more packets
+                    packetsFound = true;
+                    return false;
+                }
             )
         )
         {
             // Error
+            Log.Error("Failed to find Closed Captions in video stream : {FileName}", FileInfo.Name);
             return false;
         }
 
         // Any packets means there are subtitles present in the video stream
-        if (packetList.Count > 0)
+        if (packetsFound)
         {
             // Use the first video track from FfProbe
             videoProps = FfProbeProps.Video.First();
@@ -1058,8 +1065,8 @@ public class ProcessFile
         videoProps.WriteLine("Closed Captions");
 
         // Get SEI NAL unit based on video format
-        int nalUnit = FfMpegTool.GetNalUnit(videoProps.Format);
-        if (nalUnit == default)
+        int nalUnit = FfMpeg.GetNalUnit(videoProps.Format);
+        if (nalUnit == 0)
         {
             // Error
             Log.Error(
@@ -1917,18 +1924,6 @@ public class ProcessFile
 
     public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
     {
-        // Get packet info
-        bitrateInfo = null;
-        if (
-            !Tools.FfProbe.GetBitratePacketInfo(
-                FileInfo.FullName,
-                out List<FfMpegToolJsonSchema.Packet> packetList
-            )
-        )
-        {
-            return false;
-        }
-
         // Use the default track, else the first track
         VideoProps videoProps = FfProbeProps.Video.Find(item =>
             item.Flags.HasFlag(TrackProps.FlagsType.Default)
@@ -1939,15 +1934,31 @@ public class ProcessFile
         );
         audioProps ??= FfProbeProps.Audio.FirstOrDefault();
 
-        // Compute bitrate from packets
-        bitrateInfo = new BitrateInfo();
-        bitrateInfo.Calculate(
-            packetList,
+        // Add all packets
+        bitrateInfo = null;
+        BitrateInfo packetBitrate = new(
             videoProps?.Id ?? -1,
             audioProps?.Id ?? -1,
             Program.Config.VerifyOptions.MaximumBitrate / 8
         );
+        if (
+            !Tools.FfProbe.GetBitratePackets(
+                FileInfo.FullName,
+                (packet) =>
+                {
+                    // Convert from void to bool return
+                    packetBitrate.Add(packet);
+                    return true;
+                }
+            )
+        )
+        {
+            return false;
+        }
 
+        // Calculate bitrate
+        packetBitrate.Calculate();
+        bitrateInfo = packetBitrate;
         return true;
     }
 
@@ -2243,15 +2254,15 @@ public class ProcessFile
     // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
     public static readonly List<string> Hdr10FormatList =
     [
-        MediaInfoTool.HDR10Format,
-        MediaInfoTool.HDR10PlusFormat,
+        MediaInfo.HDR10Format,
+        MediaInfo.HDR10PlusFormat,
     ];
 
     // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
     public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
     [
-        MediaInfoTool.H264Format,
-        MediaInfoTool.H265Format,
-        MediaInfoTool.AV1Format,
+        MediaInfo.H264Format,
+        MediaInfo.H265Format,
+        MediaInfo.AV1Format,
     ];
 }

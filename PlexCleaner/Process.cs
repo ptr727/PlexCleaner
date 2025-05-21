@@ -362,12 +362,13 @@ public static class Process
     public static bool ProcessFiles(List<string> fileList)
     {
         // Log active options
-        Log.Information(
-            "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}",
-            Program.Options.TestSnippets,
-            Program.Options.QuickScan,
-            Program.Config.ProcessOptions.FileIgnoreList.Count
-        );
+        Log.Logger.LogOverrideContext()
+            .Information(
+                "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}",
+                Program.Options.TestSnippets,
+                Program.Options.QuickScan,
+                Program.Config.ProcessOptions.FileIgnoreList.Count
+            );
 
         // Process all the files
         ProcessResultJsonSchema resultsJson = new();
@@ -419,13 +420,14 @@ public static class Process
         );
 
         // Errors
-        // Log.Information("Error files : {Count}", errorCount);
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [
             .. resultsJson.Results.Results.Where(item => !item.Result),
         ];
+        Log.Logger.LogOverrideContext().Information("Error files : {Count}", errorResults.Count);
         errorResults.ForEach(item =>
-            Log.Information("Error: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("Error: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Modified
@@ -433,9 +435,11 @@ public static class Process
         [
             .. resultsJson.Results.Results.Where(item => item.Modified),
         ];
-        Log.Information("Modified files : {Count}", modifiedResults.Count);
+        Log.Logger.LogOverrideContext()
+            .Information("Modified files : {Count}", modifiedResults.Count);
         modifiedResults.ForEach(item =>
-            Log.Information("Modified: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("Modified: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Verify failed
@@ -445,9 +449,11 @@ public static class Process
                 item.State.HasFlag(SidecarFile.StatesType.VerifyFailed)
             ),
         ];
-        Log.Information("VerifyFailed files : {Count}", failedResults.Count);
+        Log.Logger.LogOverrideContext()
+            .Information("VerifyFailed files : {Count}", failedResults.Count);
         failedResults.ForEach(item =>
-            Log.Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Updated ignore file list

@@ -27,6 +27,7 @@ public class AudioProps : TrackProps
                     FileName
                 );
                 track.CodecLongName = track.CodecTagString;
+                track.CodecName = track.CodecTagString;
             }
         }
 

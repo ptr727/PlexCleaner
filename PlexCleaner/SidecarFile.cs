@@ -254,17 +254,17 @@ public class SidecarFile
 
         // Deserialize the tool data
         if (
-            !MediaInfoTool.GetMediaPropsFromXml(
+            !MediaInfo.Tool.GetMediaPropsFromXml(
                 _mediaInfoXml,
                 _sidecarFileInfo.Name,
                 out MediaProps mediaInfoProps
             )
-            || !MkvMergeTool.GetMediaPropsFromJson(
+            || !MkvMerge.Tool.GetMediaPropsFromJson(
                 _mkvMergeJson,
                 _sidecarFileInfo.Name,
                 out MediaProps mkvMergeProps
             )
-            || !FfProbeTool.GetMediaPropsFromJson(
+            || !FfProbe.Tool.GetMediaPropsFromJson(
                 _ffProbeJson,
                 _sidecarFileInfo.Name,
                 out MediaProps ffProbeProps
@@ -488,17 +488,17 @@ public class SidecarFile
 
         // Deserialize the tool data
         if (
-            !MediaInfoTool.GetMediaPropsFromXml(
+            !MediaInfo.Tool.GetMediaPropsFromXml(
                 _mediaInfoXml,
                 _mediaFileInfo.Name,
                 out MediaProps mediaInfoProps
             )
-            || !MkvMergeTool.GetMediaPropsFromJson(
+            || !MkvMerge.Tool.GetMediaPropsFromJson(
                 _mkvMergeJson,
                 _mediaFileInfo.Name,
                 out MediaProps mkvMergeProps
             )
-            || !FfProbeTool.GetMediaPropsFromJson(
+            || !FfProbe.Tool.GetMediaPropsFromJson(
                 _ffProbeJson,
                 _mediaFileInfo.Name,
                 out MediaProps ffProbeProps

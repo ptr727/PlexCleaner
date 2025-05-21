@@ -20,7 +20,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_RemoveClosedCaptions(string commandline)
     {
         bool didRun = false;
-        int removeClosedCaptionsFunc(CommandLineOptions options)
+        int RemoveClosedCaptionsFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -32,7 +32,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_removeClosedCaptionsFunc = removeClosedCaptionsFunc;
+        CommandLineOptions.s_removeClosedCaptionsFunc = RemoveClosedCaptionsFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -47,7 +47,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_GetToolInfo(string commandline)
     {
         bool didRun = false;
-        int getToolInfoFunc(CommandLineOptions options)
+        int GetToolInfoFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -56,7 +56,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_getToolInfoFunc = getToolInfoFunc;
+        CommandLineOptions.s_getToolInfoFunc = GetToolInfoFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -71,7 +71,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_GetMediaInfo(string commandline)
     {
         bool didRun = false;
-        int getMediaInfoFunc(CommandLineOptions options)
+        int GetMediaInfoFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -80,7 +80,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_getMediaInfoFunc = getMediaInfoFunc;
+        CommandLineOptions.s_getMediaInfoFunc = GetMediaInfoFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -95,7 +95,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_GetTagMap(string commandline)
     {
         bool didRun = false;
-        int getTagMapFunc(CommandLineOptions options)
+        int GetTagMapFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -104,7 +104,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_getTagMapFunc = getTagMapFunc;
+        CommandLineOptions.s_getTagMapFunc = GetTagMapFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -119,7 +119,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_UpdateSidecar(string commandline)
     {
         bool didRun = false;
-        int updateSidecarFunc(CommandLineOptions options)
+        int UpdateSidecarFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -128,7 +128,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_updateSidecarFunc = updateSidecarFunc;
+        CommandLineOptions.s_updateSidecarFunc = UpdateSidecarFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -143,7 +143,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_GetSidecarInfo(string commandline)
     {
         bool didRun = false;
-        int getSidecarInfoFunc(CommandLineOptions options)
+        int GetSidecarInfoFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -152,7 +152,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_getSidecarInfoFunc = getSidecarInfoFunc;
+        CommandLineOptions.s_getSidecarInfoFunc = GetSidecarInfoFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -167,7 +167,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_CreateSidecar(string commandline)
     {
         bool didRun = false;
-        int createSidecarFunc(CommandLineOptions options)
+        int CreateSidecarFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -176,7 +176,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_createSidecarFunc = createSidecarFunc;
+        CommandLineOptions.s_createSidecarFunc = CreateSidecarFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -191,7 +191,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_Verify(string commandline)
     {
         bool didRun = false;
-        int verifyFunc(CommandLineOptions options)
+        int VerifyFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -201,7 +201,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_verifyFunc = verifyFunc;
+        CommandLineOptions.s_verifyFunc = VerifyFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -216,7 +216,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_DeInterlace(string commandline)
     {
         bool didRun = false;
-        int deInterlaceFunc(CommandLineOptions options)
+        int DeInterlaceFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -226,7 +226,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_deInterlaceFunc = deInterlaceFunc;
+        CommandLineOptions.s_deInterlaceFunc = DeInterlaceFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -241,7 +241,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_ReEncode(string commandline)
     {
         bool didRun = false;
-        int reEncodeFunc(CommandLineOptions options)
+        int ReEncodeFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -250,7 +250,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_reEncodeFunc = reEncodeFunc;
+        CommandLineOptions.s_reEncodeFunc = ReEncodeFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -265,7 +265,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_ReMux(string commandline)
     {
         bool didRun = false;
-        int reMuxFunc(CommandLineOptions options)
+        int ReMuxFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -274,7 +274,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_reMuxFunc = reMuxFunc;
+        CommandLineOptions.s_reMuxFunc = ReMuxFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -291,7 +291,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_Monitor(string commandline)
     {
         bool didRun = false;
-        int monitorFunc(CommandLineOptions options)
+        int MonitorFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -311,7 +311,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_monitorFunc = monitorFunc;
+        CommandLineOptions.s_monitorFunc = MonitorFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -328,7 +328,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_Process(string commandline)
     {
         bool didRun = false;
-        int processFunc(CommandLineOptions options)
+        int ProcessFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -348,7 +348,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_processFunc = processFunc;
+        CommandLineOptions.s_processFunc = ProcessFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -363,14 +363,14 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_CheckForNewTools(string commandline)
     {
         bool didRun = false;
-        int checkForNewToolsFunc(CommandLineOptions options)
+        int CheckForNewToolsFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_checkForNewToolsFunc = checkForNewToolsFunc;
+        CommandLineOptions.s_checkForNewToolsFunc = CheckForNewToolsFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -385,14 +385,14 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_DefaultSettings(string commandline)
     {
         bool didRun = false;
-        int defaultSettingsFunc(CommandLineOptions options)
+        int DefaultSettingsFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_defaultSettingsFunc = defaultSettingsFunc;
+        CommandLineOptions.s_defaultSettingsFunc = DefaultSettingsFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -407,14 +407,14 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_CreateSchema(string commandline)
     {
         bool didRun = false;
-        int createSchemaFunc(CommandLineOptions options)
+        int CreateSchemaFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SchemaFile.Should().Be("schema.json");
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_createSchemaFunc = createSchemaFunc;
+        CommandLineOptions.s_createSchemaFunc = CreateSchemaFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -429,14 +429,14 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_GetVersionInfo(string commandline)
     {
         bool didRun = false;
-        int getVersionInfoFunc(CommandLineOptions options)
+        int GetVersionInfoFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_getVersionInfoFunc = getVersionInfoFunc;
+        CommandLineOptions.s_getVersionInfoFunc = GetVersionInfoFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);
@@ -451,7 +451,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     public void Parse_Commandline_RemoveSubtitles(string commandline)
     {
         bool didRun = false;
-        int removeSubtitlesFunc(CommandLineOptions options)
+        int RemoveSubtitlesFunc(CommandLineOptions options)
         {
             _ = options.Should().NotBeNull();
             _ = options.SettingsFile.Should().Be("settings.json");
@@ -461,7 +461,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
             didRun = true;
             return 0;
         }
-        CommandLineOptions.s_removeSubtitlesFunc = removeSubtitlesFunc;
+        CommandLineOptions.s_removeSubtitlesFunc = RemoveSubtitlesFunc;
 
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(commandline);

@@ -26,8 +26,8 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
     }
 
     public string Serialize(object value) =>
-        value is FfMpegIdetInfo IdetInfo
-            ? JsonSerializer.Serialize(IdetInfo)
+        value is FfMpegIdetInfo idetInfo
+            ? JsonSerializer.Serialize(idetInfo)
             : throw new InvalidOperationException(
                 $"Invalid type for serialization: {value.GetType().FullName} is not supported by {nameof(FfMpegIdetInfoSerializer)}."
             );

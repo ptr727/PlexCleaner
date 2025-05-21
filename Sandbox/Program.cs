@@ -20,7 +20,7 @@ namespace Sandbox;
 
 public class Program
 {
-    private static int Main()
+    public static async Task<int> Main(string[] args)
     {
         // Create default commandline options and config
         PlexCleaner.Program.Options = new CommandLineOptions();
@@ -43,20 +43,28 @@ public class Program
             .CreateLogger();
         InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
 
-        // Sandbox tests
-        int ret = 0;
-        // Program program = new();
+        // Get settings
+        Dictionary<string, JsonElement>? settings = null;
+        if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
+        {
+            await using FileStream jsonStream = File.OpenRead(settingsPath);
+            settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                jsonStream,
+                s_jsonReadOptions
+            );
+            Log.Information("Settings loaded : {FilePath}", settingsPath);
+        }
 
-        // ClosedCaptions closedCaptions = new(program);
-        // int ret = closedCaptions.Test();
-
-        // ProcessFiles processFiles = new(program);
-        // int ret = processFiles.Test();
+        // Derive from Program and implement Sandbox()
+        Program program = new(settings);
+        int ret = await program.Sandbox(args);
 
         // Done
-        Log.CloseAndFlush();
+        await Log.CloseAndFlushAsync();
         return ret;
     }
+
+    protected virtual Task<int> Sandbox(string[] args) => Task.FromResult(0);
 
     public static void SetRuntimeOptions()
     {
@@ -78,19 +86,7 @@ public class Program
             : 1;
     }
 
-    private Program()
-    {
-        // Get settings
-        if (GetSettingsFilePath(JsonConfigFile) is string settingsPath)
-        {
-            using FileStream jsonStream = File.OpenRead(settingsPath);
-            _settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                jsonStream,
-                s_jsonReadOptions
-            );
-            Log.Information("Settings loaded : {FilePath}", settingsPath);
-        }
-    }
+    private Program(Dictionary<string, JsonElement>? settings) => _settings = settings;
 
     public static string? GetSettingsFilePath(string fileName)
     {
