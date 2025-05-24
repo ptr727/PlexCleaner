@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,8 +7,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using InsaneGenius.Utilities;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 
@@ -310,7 +306,7 @@ public static class Tools
                 // Download the update file in the tools folder
                 Log.Information("Downloading {FileName} ...", latestToolInfo.FileName);
                 string downloadFile = CombineToolPath(latestToolInfo.FileName);
-                if (!Download.DownloadFile(new Uri(latestToolInfo.Url), downloadFile))
+                if (!DownloadFile(new Uri(latestToolInfo.Url), downloadFile))
                 {
                     return false;
                 }
@@ -345,14 +341,13 @@ public static class Tools
     {
         try
         {
-            // Send GET request
             using HttpResponseMessage httpResponse = Program
-                .HttpClient.GetAsync(mediaToolInfo.Url)
+                .GetHttpClient()
+                .GetAsync(mediaToolInfo.Url)
                 .GetAwaiter()
                 .GetResult()
                 .EnsureSuccessStatusCode();
 
-            // Get target info
             mediaToolInfo.Size = (long)httpResponse.Content.Headers.ContentLength;
             mediaToolInfo.ModifiedTime = (DateTime)
                 httpResponse.Content.Headers.LastModified?.DateTime;
@@ -362,6 +357,28 @@ public static class Tools
         {
             return false;
         }
+        return true;
+    }
+
+    public static async void DownloadFileAsync(Uri uri, string fileName)
+    {
+        Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
+        using FileStream fileStream = File.OpenWrite(fileName);
+        await httpStream.CopyToAsync(fileStream);
+    }
+
+    public static bool DownloadFile(Uri uri, string fileName)
+    {
+        try
+        {
+            DownloadFileAsync(uri, fileName);
+        }
+        catch (Exception e)
+            when (LogOptions.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        {
+            return false;
+        }
+
         return true;
     }
 }

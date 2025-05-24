@@ -1,10 +1,6 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
-#endregion
 
 namespace PlexCleaner;
 
@@ -49,6 +45,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
         {
             AudioBitrate.Add(packet.PtsTime, packet.Size);
         }
+
         CombinedBitrate.Add(packet.PtsTime, packet.Size);
     }
 
@@ -93,6 +90,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
         {
             return false;
         }
+
         if (
             !double.IsNaN(packet.DtsTime)
             && (double.IsNegative(packet.DtsTime) || packet.DtsTime == 0.0)

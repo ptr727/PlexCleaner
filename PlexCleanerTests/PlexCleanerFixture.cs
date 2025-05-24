@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -13,8 +11,6 @@ using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Xunit;
-
-#endregion
 
 // Create instance once per assembly
 [assembly: AssemblyFixture(typeof(PlexCleanerFixture))]

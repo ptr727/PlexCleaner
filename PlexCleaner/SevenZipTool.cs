@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,10 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
-
-#endregion
 
 // 7za <command> [<switches>...] <archive_name> [<file_names>...] [<@listfiles...>]
 
@@ -157,7 +152,7 @@ public partial class SevenZip
             // https://www.7-zip.org/a/7zr.exe
             Log.Information("Downloading \"7zr.exe\" ...");
             string sevenZr = Tools.CombineToolPath("7zr.exe");
-            if (!Download.DownloadFile(new Uri("https://www.7-zip.org/a/7zr.exe"), sevenZr))
+            if (!Tools.DownloadFile(new Uri("https://www.7-zip.org/a/7zr.exe"), sevenZr))
             {
                 return false;
             }
@@ -171,7 +166,7 @@ public partial class SevenZip
             // Download the latest version in the tools root folder
             Log.Information("Downloading {FileName} ...", mediaToolInfo.FileName);
             string updateFile = Tools.CombineToolPath(mediaToolInfo.FileName);
-            if (!Download.DownloadFile(new Uri(mediaToolInfo.Url), updateFile))
+            if (!Tools.DownloadFile(new Uri(mediaToolInfo.Url), updateFile))
             {
                 return false;
             }

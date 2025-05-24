@@ -1,10 +1,6 @@
-#region
-
 using System;
 using CliWrap;
 using CliWrap.Builders;
-
-#endregion
 
 namespace PlexCleaner;
 

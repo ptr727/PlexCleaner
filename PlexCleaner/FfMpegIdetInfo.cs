@@ -1,12 +1,8 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -9,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -20,31 +19,38 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Timer = System.Timers.Timer;
 
-#endregion
-
 namespace PlexCleaner;
 
 // TODO: Specialize all catch(Exception) to catch specific expected exceptions only
 
 public static class Program
 {
-    // Snippet runtime
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
-
-    // QuickScan runtime
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
-
-    // Cancellation token
     private static readonly CancellationTokenSource s_cancelSource = new();
-
-    // HTTP client
-    public static readonly HttpClient HttpClient = new();
+    private static HttpClient s_httpClient;
 
     // Commandline options
     public static CommandLineOptions Options { get; set; }
 
     // Config file options
     public static ConfigFileJsonSchema Config { get; set; }
+
+    public static HttpClient GetHttpClient()
+    {
+        if (s_httpClient != null)
+        {
+            return s_httpClient;
+        }
+        s_httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
+        s_httpClient.DefaultRequestHeaders.UserAgent.Add(
+            new ProductInfoHeaderValue(
+                Assembly.GetExecutingAssembly().GetName().Name,
+                Assembly.GetExecutingAssembly().GetName().Version.ToString()
+            )
+        );
+        return s_httpClient;
+    }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 

@@ -1,12 +1,8 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
-
-#endregion
 
 // https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd
 // https://mediaarea.net/en/MediaInfo/Support/Tags

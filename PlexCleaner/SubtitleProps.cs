@@ -1,10 +1,6 @@
-#region
-
 using System;
 using System.Globalization;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

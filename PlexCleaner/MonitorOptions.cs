@@ -1,8 +1,4 @@
-#region
-
 using System.Text.Json.Serialization;
-
-#endregion
 
 namespace PlexCleaner;
 

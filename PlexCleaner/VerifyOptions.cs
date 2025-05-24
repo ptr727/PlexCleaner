@@ -1,11 +1,7 @@
-#region
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Json.Schema.Generation;
-
-#endregion
 
 namespace PlexCleaner;
 

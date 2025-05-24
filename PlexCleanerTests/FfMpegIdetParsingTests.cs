@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
@@ -8,8 +6,6 @@ using PlexCleaner;
 using PlexCleanerTests;
 using Xunit;
 using Xunit.Sdk;
-
-#endregion
 
 [assembly: RegisterXunitSerializer(typeof(FfMpegIdetInfoSerializer))]
 

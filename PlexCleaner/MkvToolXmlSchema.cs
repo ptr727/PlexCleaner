@@ -1,10 +1,6 @@
-#region
-
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
-
-#endregion
 
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
 // https://mkvtoolnix.download/latest-release.xml

@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -9,8 +7,6 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 

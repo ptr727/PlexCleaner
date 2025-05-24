@@ -1,14 +1,10 @@
 // See ConfigFileJsonSchema.cs for schema update steps
 
-#region
-
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Json.Schema.Generation;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

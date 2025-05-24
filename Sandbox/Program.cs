@@ -1,5 +1,3 @@
-#region
-
 using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
@@ -10,8 +8,6 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-
-#endregion
 
 namespace Sandbox;
 

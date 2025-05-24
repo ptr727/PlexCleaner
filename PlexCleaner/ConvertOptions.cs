@@ -1,11 +1,7 @@
-#region
-
 using System;
 using System.Text.Json.Serialization;
 using Json.Schema.Generation;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

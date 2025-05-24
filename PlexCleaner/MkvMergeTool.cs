@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -9,8 +7,6 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -83,7 +79,8 @@ public partial class MkvMerge
                     uri
                 );
                 Stream releaseStream = Program
-                    .HttpClient.GetStreamAsync(uri)
+                    .GetHttpClient()
+                    .GetStreamAsync(uri)
                     .GetAwaiter()
                     .GetResult();
 

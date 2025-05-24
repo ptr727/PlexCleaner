@@ -1,11 +1,7 @@
-#region
-
 using System;
 using System.Linq;
 using CliWrap;
 using CliWrap.Builders;
-
-#endregion
 
 namespace PlexCleaner;
 

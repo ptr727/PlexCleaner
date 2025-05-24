@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,8 +6,6 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 

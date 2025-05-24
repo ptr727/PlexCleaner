@@ -1,12 +1,8 @@
-#region
-
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using FluentAssertions;
 using PlexCleaner;
 using Xunit;
-
-#endregion
 
 namespace PlexCleanerTests;
 

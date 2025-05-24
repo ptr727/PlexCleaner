@@ -7,8 +7,6 @@
 // Update the Upgrade() method to handle upgrading from the previous version
 // Update GlobalUsing.cs global using statements to the latest version
 
-#region
-
 using System;
 using System.IO;
 using System.Text.Json;
@@ -17,8 +15,6 @@ using System.Text.Json.Serialization.Metadata;
 using Json.Schema;
 using Json.Schema.Generation;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

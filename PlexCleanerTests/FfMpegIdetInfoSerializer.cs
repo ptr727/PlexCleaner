@@ -1,12 +1,8 @@
-#region
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using PlexCleaner;
 using Xunit.Sdk;
-
-#endregion
 
 namespace PlexCleanerTests;
 

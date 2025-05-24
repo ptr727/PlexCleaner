@@ -1,9 +1,5 @@
-#region
-
 using PlexCleaner;
 using Xunit;
-
-#endregion
 
 namespace PlexCleanerTests;
 

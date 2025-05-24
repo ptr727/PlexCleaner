@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +5,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Json.Schema.Generation;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

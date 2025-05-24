@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,8 +10,6 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 // https://ffmpeg.org/ffmpeg.html
 

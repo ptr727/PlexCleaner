@@ -1,12 +1,8 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.Linq;
 using CliWrap;
 using CliWrap.Buffered;
-
-#endregion
 
 // https://mkvtoolnix.download/doc/mkvpropedit.html
 

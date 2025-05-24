@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,8 +12,6 @@ using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 // https://ffmpeg.org/ffprobe.html
 

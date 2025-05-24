@@ -1,11 +1,7 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Serilog;
-
-#endregion
 
 // TODO: Find a better way to create profile levels
 // https://trac.ffmpeg.org/ticket/2901

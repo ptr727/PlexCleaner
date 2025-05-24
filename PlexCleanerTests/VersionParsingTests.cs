@@ -1,10 +1,6 @@
-#region
-
 using System.Text.RegularExpressions;
 using PlexCleaner;
 using Xunit;
-
-#endregion
 
 namespace PlexCleanerTests;
 

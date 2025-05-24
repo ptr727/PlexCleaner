@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -7,8 +5,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using InsaneGenius.Utilities;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

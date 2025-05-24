@@ -1,10 +1,6 @@
-#region
-
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 

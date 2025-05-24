@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,8 +8,6 @@ using System.Threading;
 using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
-
-#endregion
 
 namespace PlexCleaner;
 
