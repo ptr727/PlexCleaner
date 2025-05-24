@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,8 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -56,24 +59,15 @@ public static class ProcessDriver
                             localDirectoryList.Add(fileOrFolder);
                         }
 
-                        // Create the file list from the directory
+                        // Enumerate all files in the directory and its subdirectories
                         Log.Information("Enumerating files in {Directory} ...", fileOrFolder);
-                        if (
-                            !FileEx.EnumerateDirectory(
-                                fileOrFolder,
-                                out List<FileInfo> fileInfoList,
-                                out _
-                            )
-                        )
-                        {
-                            // Abort
-                            Log.Error(
-                                "Failed to enumerate files in directory {Directory}",
-                                fileOrFolder
-                            );
-                            Program.Cancel();
-                            Program.CancelToken().ThrowIfCancellationRequested();
-                        }
+                        List<FileInfo> fileInfoList =
+                        [
+                            .. new DirectoryInfo(fileOrFolder).EnumerateFiles(
+                                "*.*",
+                                SearchOption.AllDirectories
+                            ),
+                        ];
 
                         // Add files to file list
                         lock (listLock)
@@ -266,9 +260,9 @@ public static class ProcessDriver
                 }
 
                 // TODO: Remove or ignore cover art in video tracks during load
-                _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.IsCoverArt);
-                _ = processFile.FfProbeProps.Video.RemoveAll(track => track.IsCoverArt);
-                _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.IsCoverArt);
+                _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+                _ = processFile.FfProbeProps.Video.RemoveAll(track => track.CoverArt);
+                _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.CoverArt);
 
                 // Skip media with errors
                 if (
@@ -344,6 +338,48 @@ public static class ProcessDriver
                 processFile.FfProbeProps.WriteLine();
 
                 return true;
+            }
+        );
+
+    public static bool TestMediaInfo(List<string> fileList) =>
+        ProcessFiles(
+            fileList,
+            nameof(TestMediaInfo),
+            false,
+            fileName =>
+            {
+                // Process MKV files or files in the Remux list
+                FileInfo fileInfo = new(fileName);
+
+                if (
+                    !SidecarFile.IsMkvFile(fileName)
+                    && !Program.Config.ProcessOptions.ReMuxExtensions.Contains(
+                        Path.GetExtension(fileName)
+                    )
+                )
+                {
+                    return true;
+                }
+
+                Log.Information("{FileName}", fileName);
+                int ret = 0;
+                if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
+                {
+                    mediaInfoProps.WriteLine();
+                    ret++;
+                }
+                if (Tools.MkvMerge.GetMediaProps(fileInfo.FullName, out MediaProps mkvMergeProps))
+                {
+                    mkvMergeProps.WriteLine();
+                    ret++;
+                }
+                if (Tools.FfProbe.GetMediaProps(fileInfo.FullName, out MediaProps ffProbeProps))
+                {
+                    ffProbeProps.WriteLine();
+                    ret++;
+                }
+
+                return ret == 3;
             }
         );
 

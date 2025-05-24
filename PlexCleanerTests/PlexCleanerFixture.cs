@@ -1,21 +1,33 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using InsaneGenius.Utilities;
 using PlexCleaner;
+using PlexCleanerTests;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Xunit;
 
+#endregion
+
 // Create instance once per assembly
-[assembly: AssemblyFixture(typeof(PlexCleanerTests.PlexCleanerFixture))]
+[assembly: AssemblyFixture(typeof(PlexCleanerFixture))]
 
 namespace PlexCleanerTests;
 
 public class PlexCleanerFixture : IDisposable
 {
+    // Relative path to Samples
+    private const string SamplesDirectory = "../../../../Samples/PlexCleaner";
+
+    private readonly string _samplesDirectory;
+
     public PlexCleanerFixture()
     {
         // Create default commandline options and config
@@ -24,7 +36,7 @@ public class PlexCleanerFixture : IDisposable
         Program.Config.SetDefaults();
 
         // Create default logger
-        Serilog.Debugging.SelfLog.Enable(Console.Error);
+        SelfLog.Enable(Console.Error);
         Log.Logger = new LoggerConfiguration()
             .Enrich.WithThreadId()
             .WriteTo.Console(
@@ -34,7 +46,7 @@ public class PlexCleanerFixture : IDisposable
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
+        LogOptions.Logger = Log.Logger;
 
         // Get the Samples directory
         Assembly? entryAssembly = Assembly.GetEntryAssembly();
@@ -52,9 +64,4 @@ public class PlexCleanerFixture : IDisposable
 
     public string GetSampleFilePath(string fileName) =>
         Path.GetFullPath(Path.Combine(_samplesDirectory, fileName));
-
-    private readonly string _samplesDirectory;
-
-    // Relative path to Samples
-    private const string SamplesDirectory = "../../../../Samples/PlexCleaner";
 }

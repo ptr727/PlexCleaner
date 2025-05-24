@@ -1,28 +1,18 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
-public class TrackProps
+public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
 {
-    public enum StateType
-    {
-        None,
-        Keep,
-        Remove,
-        ReMux,
-        ReEncode,
-        DeInterlace,
-        SetFlags,
-        SetLanguage,
-        Unsupported,
-    }
-
     // https://www.ietf.org/archive/id/draft-ietf-cellar-matroska-15.html#name-track-flags
     [Flags]
     public enum FlagsType
@@ -37,32 +27,83 @@ public class TrackProps
         Commentary = 1 << 6,
     }
 
-    public MediaTool.ToolType Parser { get; } = MediaTool.ToolType.None;
+    public enum StateType
+    {
+        None,
+        Keep,
+        Remove,
+        ReMux,
+        ReEncode,
+        DeInterlace,
+        SetFlags,
+        SetLanguage,
+        Unsupported,
+    }
+
+    public enum TrackType
+    {
+        None,
+        Audio,
+        Subtitle,
+        Video,
+    }
+
+    // Track title to flag mapping
+    private static readonly List<(string Name, FlagsType Flag)> s_titleFlags =
+    [
+        new("SDH", FlagsType.HearingImpaired),
+        new("CC", FlagsType.HearingImpaired),
+        new("Commentary", FlagsType.Commentary),
+        new("Forced", FlagsType.Forced),
+    ];
+
+    public TrackType Type => trackType;
+    public MediaProps Parent => mediaProps;
+
     public string Format { get; set; } = string.Empty;
     public string Codec { get; set; } = string.Empty;
     public string Language { get; set; } = string.Empty;
     public string LanguageIetf { get; set; } = string.Empty;
     public string LanguageAny => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language;
-    public int Id { get; set; }
-    public int Number { get; set; }
+    public long Id { get; set; }
+    public long Number { get; set; }
     public StateType State { get; set; } = StateType.None;
     public string Title { get; set; } = string.Empty;
     public bool HasTags { get; set; }
     public bool HasErrors { get; set; }
     public FlagsType Flags { get; set; } = FlagsType.None;
 
-    protected string FileName { get; } = string.Empty;
-
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public TrackProps(MediaTool.ToolType parser, string fileName)
-    {
-        Parser = parser;
-        FileName = fileName;
-    }
-
+    // Required
+    // Format = track.Codec;
+    // Codec = track.Properties.CodecId;
     public virtual bool Create(MkvToolJsonSchema.Track track)
     {
-        Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
+        Debug.Assert(Parent.Parser == MediaTool.ToolType.MkvMerge);
+
+        // Fixup non-MKV container formats
+        if (!Parent.IsContainerMkv())
+        {
+            if (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId))
+            {
+                if (string.IsNullOrEmpty(track.Codec))
+                {
+                    track.Codec = "unknown";
+                }
+                if (string.IsNullOrEmpty(track.Properties.CodecId))
+                {
+                    track.Properties.CodecId = "unknown";
+                }
+                Log.Warning(
+                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    track.Codec,
+                    track.Properties.CodecId,
+                    Parent.Container,
+                    Parent.FileName
+                );
+            }
+        }
 
         // Required
         Format = track.Codec;
@@ -72,11 +113,13 @@ public class TrackProps
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "MkvToolJsonSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State} : {FileName}",
+                "{Parser} : {Type} : Track is missing required format and codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                State,
-                FileName
+                Parent.Container,
+                Parent.FileName
             );
             return false;
         }
@@ -121,7 +164,7 @@ public class TrackProps
         }
 
         // Use id and number correctly in MkvMerge and MkvPropEdit
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/About-track-UIDs,-track-numbers-and-track-IDs#track-numbers
+        // https://codeberg.org/mbunkus/mkvtoolnix/wiki/About-track-UIDs%2C-track-numbers-and-track-IDs
 
         // Id: 0-based track number internally assigned
         Id = track.Id;
@@ -167,11 +210,13 @@ public class TrackProps
 
                 // Failed to lookup ISO tag from IETF tag
                 Log.Error(
-                    "MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Language,
                     LanguageIetf,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
             else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
@@ -182,12 +227,14 @@ public class TrackProps
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
                 Log.Error(
-                    "MkvToolJsonSchema : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Language,
                     LanguageIetf,
                     isoLookup,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
             // Lookup good and matches
@@ -207,10 +254,12 @@ public class TrackProps
 
                 // Failed to lookup IETF tag from ISO tag
                 Log.Error(
-                    "MkvToolJsonSchema : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Language,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
             else
@@ -222,12 +271,14 @@ public class TrackProps
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
-                Log.Information(
-                    "MkvToolJsonSchema : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                Log.Warning(
+                    "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Language,
                     LanguageIetf,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
         }
@@ -248,10 +299,12 @@ public class TrackProps
             {
                 // Failed to lookup ISO from IETF
                 Log.Error(
-                    "MkvToolJsonSchema : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     LanguageIetf,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
             else
@@ -259,11 +312,13 @@ public class TrackProps
                 // Set ISO from lookup
                 Language = isoLookup;
                 Log.Warning(
-                    "MkvToolJsonSchema : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Language,
                     LanguageIetf,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
         }
@@ -283,20 +338,92 @@ public class TrackProps
             HasErrors = true;
             State = StateType.ReMux;
             Log.Warning(
-                "MkvToolJsonSchema : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State} : {FileName}",
+                "{Parser} : {Type} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State} : {FileName}",
+                Parent.Parser,
+                Type,
                 track.Properties.TagLanguage,
                 track.Properties.Language,
                 State,
-                FileName
+                Parent.FileName
             );
         }
 
         return true;
     }
 
+    // Required
+    // Format = track.CodecName;
+    // Codec = track.CodecLongName;
     public virtual bool Create(FfMpegToolJsonSchema.Track track)
     {
-        Debug.Assert(Parser == MediaTool.ToolType.FfProbe);
+        Debug.Assert(Parent.Parser == MediaTool.ToolType.FfProbe);
+
+        // Fixup non-MKV container formats
+        if (!Parent.IsContainerMkv())
+        {
+            if (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+            {
+                if (string.IsNullOrEmpty(track.CodecName))
+                {
+                    track.CodecName = string.IsNullOrEmpty(track.CodecTagString)
+                        ? track.CodecLongName
+                        : track.CodecTagString;
+                }
+                if (string.IsNullOrEmpty(track.CodecLongName))
+                {
+                    track.CodecLongName = string.IsNullOrEmpty(track.CodecTagString)
+                        ? track.CodecName
+                        : track.CodecTagString;
+                }
+                Log.Warning(
+                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    track.CodecName,
+                    track.CodecLongName,
+                    Parent.Container,
+                    Parent.FileName
+                );
+            }
+        }
+
+        // FFprobe does not identify some codecs
+        // e.g. Subtitle S_TEXT/WEBVTT
+        // "codec_type": "subtitle",
+        // "codec_tag_string": "[0][0][0][0]"
+        // "codec_tag": "0x0000"
+        // E.g. Audio A_QUICKTIME
+        // "codec_type": "audio"
+        // "codec_tag_string": "enca",
+        // "codec_tag": "0x61636e65",
+        if (
+            string.IsNullOrEmpty(track.CodecName)
+            && string.IsNullOrEmpty(track.CodecLongName)
+            && !string.IsNullOrEmpty(track.CodecTagString)
+        )
+        {
+            track.CodecName = track.CodecTagString.Contains(
+                "[0]",
+                StringComparison.OrdinalIgnoreCase
+            )
+                ? "unknown"
+                : track.CodecTagString;
+            track.CodecLongName = track.CodecTagString.Contains(
+                "[0]",
+                StringComparison.OrdinalIgnoreCase
+            )
+                ? "unknown"
+                : track.CodecTagString;
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.CodecName,
+                track.CodecLongName,
+                Parent.Container,
+                Parent.FileName
+            );
+        }
 
         // Required
         Format = track.CodecName;
@@ -306,11 +433,13 @@ public class TrackProps
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "FfMpegToolJsonSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State} : {FileName}",
+                "{Parser} : {Type} : Track is missing required format and codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                State,
-                FileName
+                Parent.Container,
+                Parent.FileName
             );
             return false;
         }
@@ -375,10 +504,12 @@ public class TrackProps
             HasErrors = true;
             State = StateType.ReMux;
             Log.Warning(
-                "FfMpegToolJsonSchema : Invalid Language : Language: {Language}, State: {State} : {FileName}",
+                "{Parser} : {Type} : Invalid language : Language: {Language}, State: {State} : {FileName}",
+                Parent.Parser,
+                Type,
                 Language,
                 State,
-                FileName
+                Parent.FileName
             );
         }
 
@@ -398,9 +529,47 @@ public class TrackProps
         return true;
     }
 
+    // Required
+    // Format = track.Format;
+    // Codec = track.CodecId;
     public virtual bool Create(MediaInfoToolXmlSchema.Track track)
     {
-        Debug.Assert(Parser == MediaTool.ToolType.MediaInfo);
+        Debug.Assert(Parent.Parser == MediaTool.ToolType.MediaInfo);
+
+        // Handle sub-tracks
+        if (!HandleSubTracks(track))
+        {
+            return false;
+        }
+
+        // Fixup non-MKV container formats
+        if (!Parent.IsContainerMkv())
+        {
+            if (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId))
+            {
+                if (string.IsNullOrEmpty(track.Format))
+                {
+                    track.Format = string.IsNullOrEmpty(track.MuxingMode)
+                        ? track.CodecId
+                        : track.MuxingMode;
+                }
+                if (string.IsNullOrEmpty(track.CodecId))
+                {
+                    track.CodecId = string.IsNullOrEmpty(track.MuxingMode)
+                        ? track.Format
+                        : track.MuxingMode;
+                }
+                Log.Warning(
+                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    track.Format,
+                    track.CodecId,
+                    Parent.Container,
+                    Parent.FileName
+                );
+            }
+        }
 
         // Required
         Format = track.Format;
@@ -410,11 +579,13 @@ public class TrackProps
             HasErrors = true;
             State = StateType.Unsupported;
             Log.Error(
-                "MediaInfoToolXmlSchema : Track is missing required codec information : Format: {Format}, Codec: {Codec}, State: {State} : {FileName}",
+                "{Parser} : {Type} : Track is missing required format and codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                State,
-                FileName
+                Parent.Container,
+                Parent.FileName
             );
             return false;
         }
@@ -423,6 +594,8 @@ public class TrackProps
         Title = track.Title;
 
         // Language
+        // MediaInfo uses ab or abc or ab-cd language tags
+        // https://github.com/MediaArea/MediaAreaXml/issues/33
         Language = track.Language;
 
         // TODO: Missing flags
@@ -441,33 +614,24 @@ public class TrackProps
             Flags |= FlagsType.Forced;
         }
 
-        // MediaInfo uses ab or abc or ab-cd language tags
-        // https://github.com/MediaArea/MediaAreaXml/issues/33
-
-        // FfProbe and MkvMerge use chi not zho
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Chinese-not-selectable-as-language
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/1149
-
-        // Leave the Language as is, no need to verify
-
-        // TODO: Sub tracks and sub-id's should already be handled in MediaInfo?
-
-        // Use Id for Number
-        // https://github.com/MediaArea/MediaInfo/issues/201
-        // 1
-        // 3-CC1
-        // 1 / 8876149d-48f0-4148-8225-dc0b53a50b90
-        Match match = MediaInfo.Tool.TrackRegex().Match(track.Id);
-        Debug.Assert(match.Success);
-        // Use Number before dash as Matroska TrackNumber
-        Number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
+        // Sub-tracks should already be filtered out
+        // Id and StreamOrder should be all numeric
 
         // Use StreamOrder for Id
-        // 0
-        // 0-1
-        match = MediaInfo.Tool.TrackRegex().Match(track.StreamOrder);
-        Debug.Assert(match.Success);
-        Id = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
+        if (string.IsNullOrEmpty(track.StreamOrder))
+        {
+            Id = 0;
+        }
+        else
+        {
+            Debug.Assert(track.StreamOrder.All(char.IsDigit));
+            Id = long.Parse(track.StreamOrder, CultureInfo.InvariantCulture);
+        }
+
+        // Use Id for Number
+        Debug.Assert(!string.IsNullOrEmpty(track.Id));
+        Debug.Assert(track.Id.All(char.IsDigit));
+        Number = long.Parse(track.Id, CultureInfo.InvariantCulture);
 
         // Check title for tags
         HasTags = TitleIsTag();
@@ -477,12 +641,40 @@ public class TrackProps
         return true;
     }
 
+    private bool HandleSubTracks(MediaInfoToolXmlSchema.Track track)
+    {
+        // StreamOrder maps to Id
+        // Id maps to Number
+
+        // Only subtitle tracks containing closed captions are handled in SubtitleProps.HandleClosedCaptions()
+        // All other sub-tracks are ignored
+        if (
+            (!string.IsNullOrEmpty(track.StreamOrder) && !track.StreamOrder.All(char.IsDigit))
+            || (!string.IsNullOrEmpty(track.Id) && !track.Id.All(char.IsDigit))
+        )
+        {
+            // Ignoring sub-track
+            Log.Warning(
+                "{Parser} : {Type} : Ignoring sub-track : Id: {Id}, Number: {Id}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.StreamOrder,
+                track.Id,
+                Parent.Container,
+                Parent.FileName
+            );
+            return false;
+        }
+
+        return true;
+    }
+
     public virtual void WriteLine() =>
         Log.Information(
-            "Parser: {Parser}, Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags} : {FileName}",
-            Parser,
-            GetType().Name,
+            "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, Container: {Container} : {FileName}",
+            Parent.Parser,
+            Type,
             Format,
             Codec,
             Language,
@@ -494,16 +686,17 @@ public class TrackProps
             State,
             HasErrors,
             HasTags,
-            FileName
+            Parent.Container,
+            Parent.FileName
         );
 
     public virtual void WriteLine(string prefix) =>
         Log.Information(
-            "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags} : {FileName}",
+            "{Prefix} : {Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, Container: {Container} : {FileName}",
             prefix,
-            Parser,
-            GetType().Name,
+            Parent.Parser,
+            Type,
             Format,
             Codec,
             Language,
@@ -515,7 +708,8 @@ public class TrackProps
             State,
             HasErrors,
             HasTags,
-            FileName
+            Parent.Container,
+            Parent.FileName
         );
 
     public bool TitleIsTag()
@@ -550,12 +744,13 @@ public class TrackProps
                 State = StateType.SetFlags;
                 Flags |= item.Flag;
                 Log.Information(
-                    "{Parser} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, State: {State} : {FileName}",
-                    Parser,
+                    "{Parser} : {Type} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, State: {State} : {FileName}",
+                    Parent.Parser,
+                    Type,
                     Title,
                     item.Flag,
                     State,
-                    FileName
+                    Parent.FileName
                 );
             }
         });
@@ -566,13 +761,4 @@ public class TrackProps
 
     public static IEnumerable<FlagsType> GetFlags() =>
         Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
-
-    // Track title to flag mapping
-    private static readonly List<(string Name, FlagsType Flag)> s_titleFlags =
-    [
-        new("SDH", FlagsType.HearingImpaired),
-        new("CC", FlagsType.HearingImpaired),
-        new("Commentary", FlagsType.Commentary),
-        new("Forced", FlagsType.Forced),
-    ];
 }

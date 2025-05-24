@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -8,12 +10,21 @@ using CliWrap;
 using CliWrap.Buffered;
 using Serilog;
 
+#endregion
+
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 
 namespace PlexCleaner;
 
 public partial class MediaInfo
 {
+    // Common format tags
+    public const string HDR10Format = "SMPTE ST 2086";
+    public const string HDR10PlusFormat = "SMPTE ST 2094";
+    public const string H264Format = "h264";
+    public const string H265Format = "hevc";
+    public const string AV1Format = "av1";
+
     public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.MediaInfo;
@@ -147,7 +158,7 @@ public partial class MediaInfo
         )
         {
             // Populate the MediaInfo object from the XML string
-            mediaProps = new MediaProps(ToolType.MediaInfo);
+            mediaProps = new MediaProps(ToolType.MediaInfo, fileName);
             try
             {
                 // Deserialize
@@ -163,12 +174,6 @@ public partial class MediaInfo
                 // Tracks
                 foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
                 {
-                    // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
-                    if (HandleSubTrack(track, fileName, mediaProps))
-                    {
-                        continue;
-                    }
-
                     // Process by track type
                     switch (track.Type.ToLowerInvariant())
                     {
@@ -183,20 +188,33 @@ public partial class MediaInfo
                             mediaProps.Container = track.Format;
                             break;
                         case "video":
-                            mediaProps.Video.Add(VideoProps.Create(fileName, track));
+                            VideoProps videoProps = new(mediaProps);
+                            if (videoProps.Create(track))
+                            {
+                                mediaProps.Video.Add(videoProps);
+                            }
                             break;
                         case "audio":
-                            mediaProps.Audio.Add(AudioProps.Create(fileName, track));
+                            AudioProps audioProps = new(mediaProps);
+                            if (audioProps.Create(track))
+                            {
+                                mediaProps.Audio.Add(audioProps);
+                            }
                             break;
                         case "text":
-                            mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
+                            SubtitleProps subtitleProps = new(mediaProps);
+                            if (subtitleProps.Create(track))
+                            {
+                                mediaProps.Subtitle.Add(subtitleProps);
+                            }
                             break;
                         case "menu":
                             // TODO: Verify chapters get removed
                             break;
                         default:
                             Log.Warning(
-                                "MediaInfoToolXmlSchema : Unknown track type : {TrackType} : {FileName}",
+                                "{Parser} : Unknown track type : {TrackType} : {FileName}",
+                                mediaProps.Parser,
                                 track.Type,
                                 fileName
                             );
@@ -219,80 +237,12 @@ public partial class MediaInfo
             return true;
         }
 
-        private static bool HandleSubTrack(
-            MediaInfoToolXmlSchema.Track track,
-            string fileName,
-            MediaProps mediaProps
-        )
+        public static bool ParseSubTrack(string text, out long number)
         {
-            // Handle sub-tracks e.g. 0-1, 256-CC1, 256-1
-            if (!track.Id.Contains('-', StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            // Id maps to Number
-            // StreamOrder maps to Id
-
-            // Test for a closed caption tracks
-            // <track type="Video" typeorder="4">
-            //     <ID>256</ID>
-            //     <Format>MPEG Video</Format>
-            // <track type="Text" typeorder="1">
-            //     <ID>256-CC1</ID>
-            //     <Format>EIA-608</Format>
-            //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
-            if (
-                track.Type.Equals("Text", StringComparison.OrdinalIgnoreCase)
-                && (
-                    track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
-                    || track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
-                )
-            )
-            {
-                // Parse the number
-                Match match = TrackRegex().Match(track.Id);
-                Debug.Assert(match.Success);
-                int number = int.Parse(match.Groups["id"].Value, CultureInfo.InvariantCulture);
-
-                // Find the video track matching the number
-                if (mediaProps.Video.Find(item => item.Number == number) is { } videoTrack)
-                {
-                    // Set the closed caption flag
-                    Log.Information(
-                        "MediaInfoToolXmlSchema : Setting closed captions flag from sub-track : Id: {Id}, Sub-Track: {Number}, Format: {Format} : {FileName}",
-                        videoTrack.Id,
-                        track.Id,
-                        track.Format,
-                        fileName
-                    );
-                    videoTrack.ClosedCaptions = true;
-                }
-                else
-                {
-                    // Could not find matching video track
-                    Log.Error(
-                        "MediaInfoToolXmlSchema : Closed caption sub-track track with missing video track : Sub-Track: {Number}, Format: {Format} : {FileName}",
-                        track.Id,
-                        track.Format,
-                        fileName
-                    );
-                }
-
-                // Done with this track
-                return true;
-            }
-
-            // Skip sub-tacks
-            Log.Warning(
-                "MediaInfoToolXmlSchema : Skipping sub-track : Type: {Type}, Id: {Id}, Format: {Format} : {FileName}",
-                track.Type,
-                track.Id,
-                track.Format,
-                fileName
-            );
-
-            return true;
+            // Parse the track number
+            number = -1;
+            Match match = TrackRegex().Match(text);
+            return match.Success && long.TryParse(match.Groups["id"].Value, out number);
         }
 
         [GeneratedRegex(
@@ -304,11 +254,4 @@ public partial class MediaInfo
         [GeneratedRegex(@"(?<id>\d+)")]
         public static partial Regex TrackRegex();
     }
-
-    // Common format tags
-    public const string HDR10Format = "SMPTE ST 2086";
-    public const string HDR10PlusFormat = "SMPTE ST 2094";
-    public const string H264Format = "h264";
-    public const string H265Format = "hevc";
-    public const string AV1Format = "av1";
 }

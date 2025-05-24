@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="8.2.0" />
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.12" />
+    <PackageReference Include="InsaneGenius.Utilities" Version="3.2.17" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="xunit.v3" Version="2.0.2" />

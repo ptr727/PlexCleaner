@@ -1,6 +1,10 @@
+#region
+
 using System;
 using CliWrap;
 using CliWrap.Builders;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -148,10 +152,9 @@ public partial class HandBrake
             IOutputOptions,
             IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
+        private readonly ArgumentsBuilder _argumentsBuilder = new();
 
-        public static Command Version(string targetFilePath) =>
-            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
+        public Command Build() => WithArguments(_argumentsBuilder.Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -171,8 +174,9 @@ public partial class HandBrake
             return this;
         }
 
-        public Command Build() => WithArguments(_argumentsBuilder.Build());
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
-        private readonly ArgumentsBuilder _argumentsBuilder = new();
+        public static Command Version(string targetFilePath) =>
+            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
     }
 }

@@ -1,43 +1,37 @@
+#region
+
 using System;
+using System.Globalization;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
-public class SubtitleProps : TrackProps
+public class SubtitleProps(MediaProps mediaProps) : TrackProps(TrackType.Subtitle, mediaProps)
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public SubtitleProps(MediaTool.ToolType parser, string fileName)
-        : base(parser, fileName) { }
+    // Required
+    // Format = track.Codec;
+    // Codec = track.Properties.CodecId;
+    public override bool Create(MkvToolJsonSchema.Track track) => base.Create(track);
 
-    public override bool Create(FfMpegToolJsonSchema.Track track)
+    // Required
+    // Format = track.CodecName;
+    // Codec = track.CodecLongName;
+    public override bool Create(FfMpegToolJsonSchema.Track track) => base.Create(track);
+
+    // Required
+    // Format = track.Format;
+    // Codec = track.CodecId;
+    public override bool Create(MediaInfoToolXmlSchema.Track track)
     {
-        // Fixup before calling base
-        if (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+        // Handle closed captions
+        if (!HandleClosedCaptions(track))
         {
-            // Some subtitle codecs are not supported by FFmpeg, e.g. S_TEXT / WEBVTT, but are supported by MKVToolNix
-            Log.Warning(
-                "FfMpegToolJsonSchema : Overriding unknown subtitle codec : Format: {Format}, Codec: {Codec} : {FileName}",
-                track.CodecLongName,
-                track.CodecName,
-                FileName
-            );
-            if (string.IsNullOrEmpty(track.CodecName))
-            {
-                track.CodecName = "unknown";
-            }
-            if (string.IsNullOrEmpty(track.CodecLongName))
-            {
-                track.CodecLongName = "unknown";
-            }
+            return false;
         }
 
         // Call base
-        return base.Create(track);
-    }
-
-    public override bool Create(MediaInfoToolXmlSchema.Track track)
-    {
-        // Call base first
         if (!base.Create(track))
         {
             return false;
@@ -45,7 +39,6 @@ public class SubtitleProps : TrackProps
 
         // We need MuxingMode to be set for VOBSUB
         // https://forums.plex.tv/discussion/290723/long-wait-time-before-playing-some-content-player-says-directplay-server-says-transcoding
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/2131
         if (
             track.CodecId.Equals("S_VOBSUB", StringComparison.OrdinalIgnoreCase)
             && string.IsNullOrEmpty(track.MuxingMode)
@@ -55,30 +48,122 @@ public class SubtitleProps : TrackProps
             HasErrors = true;
             State = StateType.Remove;
             Log.Warning(
-                "MediaInfoToolXmlSchema : MuxingMode not specified for S_VOBSUB Codec : State: {State} : {FileName}",
+                "{Parser} : {Type} : MuxingMode not specified for S_VOBSUB Codec : State: {State} : {FileName}",
+                Parent.Parser,
+                Type,
                 State,
-                FileName
+                Parent.FileName
             );
         }
 
         return true;
     }
 
-    public static SubtitleProps Create(string fileName, FfMpegToolJsonSchema.Track track)
+    private bool HandleClosedCaptions(MediaInfoToolXmlSchema.Track track)
     {
-        SubtitleProps subtitleProps = new(MediaTool.ToolType.FfProbe, fileName);
-        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
-    }
+        // Handle closed caption tracks presented as subtitle tracks
+        // return false to abort normal processing
 
-    public static SubtitleProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
-    {
-        SubtitleProps subtitleProps = new(MediaTool.ToolType.MediaInfo, fileName);
-        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
-    }
+        // <track type="Video" typeorder="4">
+        //     <ID>256</ID>
+        //     <Format>MPEG Video</Format>
+        // <track type="Text" typeorder="1">
+        //     <ID>256-CC1</ID>
+        //     <Format>EIA-608</Format>
+        //     <MuxingMode>A/53 / DTVCC Transport</MuxingMode>
+        if (
+            !track.Format.Equals("EIA-608", StringComparison.OrdinalIgnoreCase)
+            && !track.Format.Equals("EIA-708", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            // Not CC track
+            return true;
+        }
 
-    public static SubtitleProps Create(string fileName, MkvToolJsonSchema.Track track)
-    {
-        SubtitleProps subtitleProps = new(MediaTool.ToolType.MkvMerge, fileName);
-        return subtitleProps.Create(track) ? subtitleProps : throw new NotSupportedException();
+        // Parse the track number
+        if (!MediaInfo.Tool.ParseSubTrack(track.Id, out long trackId))
+        {
+            Log.Error(
+                "{Parser} : {Type} : Failed to parse closed caption sub-track number : Id: {Id}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.Id,
+                Parent.Container,
+                Parent.FileName
+            );
+            return false;
+        }
+
+        // Set codec to muxing mode
+        if (string.IsNullOrEmpty(track.CodecId))
+        {
+            track.CodecId = track.MuxingMode;
+        }
+
+        // Set normalized track id
+        string originalId = track.Id;
+        track.Id = trackId.ToString(CultureInfo.InvariantCulture);
+
+        // SCTE 128 / DTVCC Transport : Separate stream
+        // A/53 / DTVCC Transport / MXF : Embedded in video stream
+        // A/53 / DTVCC Transport : Embedded in video stream
+        // https://github.com/MediaArea/MediaInfoLib/issues/2307
+
+        // Separate stream
+        if (track.MuxingMode.Contains("SCTE 128", StringComparison.OrdinalIgnoreCase))
+        {
+            // Not a CC track
+            return true;
+        }
+
+        // If not embedded in video A/53 what is it?
+        if (!track.MuxingMode.Contains("A/53", StringComparison.OrdinalIgnoreCase))
+        {
+            // Final Cut ?
+            Log.Warning(
+                "{Parser} : {Type} : Unknown closed caption format : Format: {Format}, MuxingMode: {MuxingMode}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.Format,
+                track.MuxingMode,
+                Parent.Container,
+                Parent.FileName
+            );
+
+            // Not a CC track
+            return true;
+        }
+
+        // Find the matching video track
+        if (Parent.Video.Find(item => item.Number == trackId) is not { } videoTrack)
+        {
+            // Could not find matching video track
+            Log.Error(
+                "{Parser} : {Type} : Failed to find video track associated with A/53 closed caption subtitle track : Id: {Id}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                originalId,
+                Parent.Container,
+                Parent.FileName
+            );
+            return false;
+        }
+
+        // Set the closed caption flag
+        Log.Information(
+            "{Parser} : {Type} : Setting closed caption flag on video track from A/53 subtitle track : Format: {Format}, MuxingMode: {MuxingMode}, Subtitle Id: {SubtitleId}, Video Id: {VideoId}, Container: {Container} : {FileName}",
+            Parent.Parser,
+            Type,
+            track.Format,
+            track.MuxingMode,
+            originalId,
+            videoTrack.Number,
+            Parent.Container,
+            Parent.FileName
+        );
+        videoTrack.ClosedCaptions = true;
+
+        // Handled
+        return false;
     }
 }

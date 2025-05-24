@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +9,9 @@ using System.Text;
 using System.Threading;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -37,6 +40,14 @@ public abstract class MediaTool
         MkvExtract,
     }
 
+    // Default to 2 start lines and 8 end lines
+    private const int StartLines = 2;
+    private const int StopLines = 8;
+
+    // The tool info must be set during initialization
+    // Version information is used in the sidecar tool logic
+    public MediaToolInfo Info { get; set; }
+
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();
 
@@ -58,19 +69,13 @@ public abstract class MediaTool
     {
         // Make sure the tool folder exists and is empty
         string toolPath = GetToolFolder();
-        if (!FileEx.CreateDirectory(toolPath) || !FileEx.DeleteInsideDirectory(toolPath))
-        {
-            return false;
-        }
+        Directory.Delete(toolPath, true);
+        _ = Directory.CreateDirectory(toolPath);
 
         // Extract the update file
         Log.Information("Extracting {UpdateFile} ...", updateFile);
         return Tools.SevenZip.UnZip(updateFile, toolPath);
     }
-
-    // The tool info must be set during initialization
-    // Version information is used in the sidecar tool logic
-    public MediaToolInfo Info { get; set; }
 
     public string GetToolName() =>
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -89,6 +94,7 @@ public abstract class MediaTool
             ? GetLatestVersionWindows(out mediaToolInfo)
             : throw new NotImplementedException();
 
+    // Can throw HTTP exceptions
     protected string GetLatestGitHubRelease(string repo)
     {
         Log.Information(
@@ -297,8 +303,4 @@ public abstract class MediaTool
         stringList.ForEach(item => stringBuilder.AppendLine(item));
         return stringBuilder.ToString();
     }
-
-    // Default to 2 start lines and 8 end lines
-    private const int StartLines = 2;
-    private const int StopLines = 8;
 }

@@ -1,55 +1,19 @@
-using System;
-using Serilog;
-
 namespace PlexCleaner;
 
-public class AudioProps : TrackProps
+public class AudioProps(MediaProps mediaProps) : TrackProps(TrackType.Audio, mediaProps)
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public AudioProps(MediaTool.ToolType parser, string fileName)
-        : base(parser, fileName) { }
+    // Required
+    // Format = track.Codec;
+    // Codec = track.Properties.CodecId;
+    public override bool Create(MkvToolJsonSchema.Track track) => base.Create(track);
 
-    public override bool Create(FfMpegToolJsonSchema.Track track)
-    {
-        // Fixup before calling base
-        if (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
-        {
-            // DRM tracks, e.g. QuickTime audio report no codec information
-            // "codec_tag_string": "enca"
-            // "codec_tag": "0x61636e65"
-            if (!string.IsNullOrEmpty(track.CodecTagString))
-            {
-                Log.Warning(
-                    "FfMpegToolJsonSchema : Overriding unknown audio codec : Format: {Format}, Codec: {Codec}, CodecTagString: {CodecTagString} : {FileName}",
-                    track.CodecLongName,
-                    track.CodecName,
-                    track.CodecTagString,
-                    FileName
-                );
-                track.CodecLongName = track.CodecTagString;
-                track.CodecName = track.CodecTagString;
-            }
-        }
+    // Required
+    // Format = track.CodecName;
+    // Codec = track.CodecLongName;
+    public override bool Create(FfMpegToolJsonSchema.Track track) => base.Create(track);
 
-        // Call base
-        return base.Create(track);
-    }
-
-    public static AudioProps Create(string fileName, FfMpegToolJsonSchema.Track track)
-    {
-        AudioProps audioProps = new(MediaTool.ToolType.FfProbe, fileName);
-        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
-    }
-
-    public static AudioProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
-    {
-        AudioProps audioProps = new(MediaTool.ToolType.MediaInfo, fileName);
-        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
-    }
-
-    public static AudioProps Create(string fileName, MkvToolJsonSchema.Track track)
-    {
-        AudioProps audioProps = new(MediaTool.ToolType.MkvMerge, fileName);
-        return audioProps.Create(track) ? audioProps : throw new NotSupportedException();
-    }
+    // Required
+    // Format = track.Format;
+    // Codec = track.CodecId;
+    public override bool Create(MediaInfoToolXmlSchema.Track track) => base.Create(track);
 }

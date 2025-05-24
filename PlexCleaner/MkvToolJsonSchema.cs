@@ -1,6 +1,10 @@
+#region
+
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+#endregion
 
 // Convert JSON file to C# using app.quicktype.io
 // Set language, framework, namespace, list
@@ -82,7 +86,7 @@ public class MkvToolJsonSchema
         public string Codec { get; set; } = "";
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         [JsonPropertyName("properties")]
         public TrackProperties Properties { get; } = new();
@@ -109,7 +113,7 @@ public class MkvToolJsonSchema
         public string TagLanguage { get; set; } = "";
 
         [JsonPropertyName("number")]
-        public int Number { get; set; }
+        public long Number { get; set; }
 
         [JsonPropertyName("track_name")]
         public string TrackName { get; set; } = "";

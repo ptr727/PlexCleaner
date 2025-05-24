@@ -1,15 +1,26 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
 public class Monitor
 {
+    private readonly List<FileSystemWatcher> _watcher = [];
+
+    private readonly Dictionary<string, DateTime> _watchFolders = new(
+        StringComparer.OrdinalIgnoreCase
+    );
+
+    private readonly Lock _watchLock = new();
+
     private static void LogMonitorMessage()
     {
         Log.Information("Monitoring folders ...");
@@ -111,7 +122,12 @@ public class Monitor
                         }
 
                         // All files in folder must be readable, e.g. not being written to
-                        if (!FileEx.AreFilesInDirectoryReadable(folder))
+                        DirectoryInfo dirInfo = new(folder);
+                        if (
+                            !dirInfo
+                                .EnumerateFiles("*.*", SearchOption.TopDirectoryOnly)
+                                .All(IsFileReadable)
+                        )
                         {
                             Log.Information(
                                 "Files in folder are not readable, delaying processing : {Folder}",
@@ -154,6 +170,26 @@ public class Monitor
         _watcher.Clear();
 
         // Done
+        return true;
+    }
+
+    private static bool IsFileReadable(FileInfo fileInfo)
+    {
+        try
+        {
+            // Try to open the file for read access with read/write sharing
+            using FileStream stream = fileInfo.Open(
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite
+            );
+            stream.Close();
+        }
+        // Only handle expected IO exceptions
+        catch (IOException)
+        {
+            return false;
+        }
         return true;
     }
 
@@ -296,10 +332,4 @@ public class Monitor
         // The path we get no longer exists, it may be a file, or it may be a folder
         // TODO: How to determine if the deleted path was a file or folder?
         Log.Verbose("OnDeleted : {PathName}", pathname);
-
-    private readonly List<FileSystemWatcher> _watcher = [];
-    private readonly Dictionary<string, DateTime> _watchFolders = new(
-        StringComparer.OrdinalIgnoreCase
-    );
-    private readonly Lock _watchLock = new();
 }

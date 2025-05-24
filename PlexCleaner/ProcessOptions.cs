@@ -1,9 +1,14 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Json.Schema.Generation;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -23,49 +28,49 @@ public record ProcessOptions1
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string ReEncodeVideoFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string ReEncodeVideoCodecs { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string ReEncodeVideoProfiles { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string ReEncodeAudioFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string ReMuxExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string KeepExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string KeepLanguages { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string PreferredAudioFormats { get; set; } = "";
 
     [JsonRequired]
@@ -130,7 +135,7 @@ public record ProcessOptions2 : ProcessOptions1
     // v1 -> v2 : CSV -> HashSet<string>
     // v3 -> v4 : Replaced by FileIgnoreMasks
     [Obsolete("Replaced in v4 with FileIgnoreMasks")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
@@ -198,6 +203,8 @@ public record ProcessOptions4 : ProcessOptions3
 {
     protected new const int Version = 4;
 
+    private readonly List<Regex> _fileIgnoreRegExList = [];
+
     public ProcessOptions4() { }
 
     public ProcessOptions4(ProcessOptions1 processOptions1)
@@ -212,8 +219,6 @@ public record ProcessOptions4 : ProcessOptions3
     // v4 : Added
     [JsonRequired]
     public HashSet<string> FileIgnoreMasks { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-
-    private readonly List<Regex> _fileIgnoreRegExList = [];
 
     private void FileIgnoreMaskToRegex()
     {

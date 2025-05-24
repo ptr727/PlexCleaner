@@ -1,6 +1,11 @@
+#region
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using InsaneGenius.Utilities;
+using Json.Schema.Generation;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -20,17 +25,17 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public int MinimumDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public int VerifyDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public int IdetDuration { get; set; }
 
     [JsonRequired]
@@ -38,7 +43,7 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public int MinimumFileAge { get; set; }
 }
 
@@ -63,13 +68,10 @@ public record VerifyOptions2 : VerifyOptions1
         AutoRepair = true;
         DeleteInvalidFiles = false;
         RegisterInvalidFiles = false;
-        MaximumBitrate = 100 * Format.MB;
+        MaximumBitrate = 100 * 1000 * 1000;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "Performance",
-        "CA1822:Mark members as static"
-    )]
+    [SuppressMessage("Performance", "CA1822:Mark members as static")]
     public bool VerifyValues() =>
         // Nothing to do
         true;

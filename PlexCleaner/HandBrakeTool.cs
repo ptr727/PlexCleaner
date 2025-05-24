@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -5,8 +7,9 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -19,6 +22,9 @@ namespace PlexCleaner;
 
 public partial class HandBrake
 {
+    public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
+    public const string DefaultAudioOptions = "copy --audio-fallback ac3";
+
     public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.HandBrake;
@@ -99,7 +105,7 @@ public partial class HandBrake
         )
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -137,7 +143,4 @@ public partial class HandBrake
         )]
         public static partial Regex InstalledVersionRegex();
     }
-
-    public const string DefaultVideoOptions = "x264 --quality 22 --encoder-preset medium";
-    public const string DefaultAudioOptions = "copy --audio-fallback ac3";
 }

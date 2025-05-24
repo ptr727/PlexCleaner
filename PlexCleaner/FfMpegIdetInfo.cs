@@ -1,9 +1,12 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -48,6 +51,108 @@ namespace PlexCleaner;
 
 public partial class FfMpegIdetInfo
 {
+    private const string IdetRepeatedFields =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
+
+    private const string IdetSingleFrame =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
+
+    private const string IdetMultiFrame =
+        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
+
+    public Repeated RepeatedFields { get; set; } = new();
+
+    public Frames SingleFrame { get; set; } = new();
+    public Frames MultiFrame { get; set; } = new();
+
+    public bool IsInterlaced() => IsInterlaced(out _);
+
+    public bool IsInterlaced(out double percentage) =>
+        MultiFrame.IsInterlaced(out percentage) || SingleFrame.IsInterlaced(out percentage);
+
+    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo idetInfo, out string error)
+    {
+        // Get idet output from ffmpeg
+        idetInfo = null;
+        error = string.Empty;
+        if (!Tools.FfMpeg.GetIdetText(fileName, out string text))
+        {
+            error = text;
+            return false;
+        }
+
+        // Parse the text
+        idetInfo = new FfMpegIdetInfo();
+        return idetInfo.Parse(text);
+    }
+
+    public void WriteLine()
+    {
+        RepeatedFields.WriteLine(nameof(RepeatedFields));
+        SingleFrame.WriteLine(nameof(SingleFrame));
+        MultiFrame.WriteLine(nameof(MultiFrame));
+    }
+
+    internal bool Parse(string text)
+    {
+        // Example output:
+
+        // Stream mapping:
+        //   Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
+        // Press [q] to stop, [?] for help
+        // Output #0, null, to 'pipe:':
+        //   Metadata:
+        //     encoder         : Lavf61.7.100
+        //   Stream #0:0(eng): Video: wrapped_avframe, yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 29.97 fps, 29.97 tbn (default)
+        //       Metadata:
+        //         BPS             : 4969575
+        //         DURATION        : 00:42:30.648000000
+        //         NUMBER_OF_FRAMES: 76434
+        //         NUMBER_OF_BYTES : 1584454580
+        //         _STATISTICS_WRITING_APP: mkvmerge v61.0.0 ('So') 64-bit
+        //         _STATISTICS_WRITING_DATE_UTC: 2022-03-10 12:55:01
+        //         _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
+        //         encoder         : Lavc61.19.101 wrapped_avframe
+        // [Parsed_idet_0 @ 000001c11e8aef00] Repeated Fields: Neither: 76434 Top:     0 Bottom:     0
+        // [Parsed_idet_0 @ 000001c11e8aef00] Single frame detection: TFF:   560 BFF:  6353 Progressive: 64750 Undetermined:  4771
+        // [Parsed_idet_0 @ 000001c11e8aef00] Multi frame detection: TFF:   610 BFF:  6459 Progressive: 69231 Undetermined:   134
+        // [out#0/null @ 000001c11d401040] video:32843KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+        // frame=76434 fps=1114 q=-0.0 Lsize=N/A time=00:42:30.68 bitrate=N/A speed=37.2x
+
+        // Match (regex construction uses \n for new line)
+        Match match = IdetRegex().Match(text.Replace("\r\n", "\n", StringComparison.Ordinal));
+        if (!match.Success)
+        {
+            Log.Error("Failed to parse idet output");
+            return false;
+        }
+
+        // Get the frame counts
+        RepeatedFields.Neither = ParseGroupInt(match, "repeated_neither");
+        RepeatedFields.Top = ParseGroupInt(match, "repeated_top");
+        RepeatedFields.Bottom = ParseGroupInt(match, "repeated_bottom");
+
+        SingleFrame.Tff = ParseGroupInt(match, "single_tff");
+        SingleFrame.Bff = ParseGroupInt(match, "single_bff");
+        SingleFrame.Progressive = ParseGroupInt(match, "single_prog");
+        SingleFrame.Undetermined = ParseGroupInt(match, "single_und");
+
+        MultiFrame.Tff = ParseGroupInt(match, "multi_tff");
+        MultiFrame.Bff = ParseGroupInt(match, "multi_bff");
+        MultiFrame.Progressive = ParseGroupInt(match, "multi_prog");
+        MultiFrame.Undetermined = ParseGroupInt(match, "multi_und");
+        return true;
+    }
+
+    internal static int ParseGroupInt(Match match, string groupName) =>
+        int.Parse(match.Groups[groupName].Value.Trim(), CultureInfo.InvariantCulture);
+
+    [GeneratedRegex(
+        $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}",
+        RegexOptions.IgnoreCase | RegexOptions.Multiline
+    )]
+    public static partial Regex IdetRegex();
+
     public class Repeated
     {
         public int Neither { get; set; }
@@ -64,8 +169,6 @@ public partial class FfMpegIdetInfo
                 Bottom
             );
     }
-
-    public Repeated RepeatedFields { get; set; } = new();
 
     public class Frames
     {
@@ -121,107 +224,4 @@ public partial class FfMpegIdetInfo
             );
         }
     }
-
-    public Frames SingleFrame { get; set; } = new();
-    public Frames MultiFrame { get; set; } = new();
-
-    public bool IsInterlaced() => IsInterlaced(out _);
-
-    public bool IsInterlaced(out double percentage) =>
-        MultiFrame.IsInterlaced(out percentage) || SingleFrame.IsInterlaced(out percentage);
-
-    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo idetInfo, out string error)
-    {
-        // Get idet output from ffmpeg
-        idetInfo = null;
-        error = string.Empty;
-        if (!Tools.FfMpeg.GetIdetText(fileName, out string text))
-        {
-            error = text;
-            return false;
-        }
-
-        // Parse the text
-        idetInfo = new FfMpegIdetInfo();
-        return idetInfo.Parse(text);
-    }
-
-    public void WriteLine()
-    {
-        RepeatedFields.WriteLine(nameof(RepeatedFields));
-        SingleFrame.WriteLine(nameof(SingleFrame));
-        MultiFrame.WriteLine(nameof(MultiFrame));
-    }
-
-    internal bool Parse(string text)
-    {
-        // Parse the text
-        try
-        {
-            // Example output:
-
-            // Stream mapping:
-            //   Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
-            // Press [q] to stop, [?] for help
-            // Output #0, null, to 'pipe:':
-            //   Metadata:
-            //     encoder         : Lavf61.7.100
-            //   Stream #0:0(eng): Video: wrapped_avframe, yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 29.97 fps, 29.97 tbn (default)
-            //       Metadata:
-            //         BPS             : 4969575
-            //         DURATION        : 00:42:30.648000000
-            //         NUMBER_OF_FRAMES: 76434
-            //         NUMBER_OF_BYTES : 1584454580
-            //         _STATISTICS_WRITING_APP: mkvmerge v61.0.0 ('So') 64-bit
-            //         _STATISTICS_WRITING_DATE_UTC: 2022-03-10 12:55:01
-            //         _STATISTICS_TAGS: BPS DURATION NUMBER_OF_FRAMES NUMBER_OF_BYTES
-            //         encoder         : Lavc61.19.101 wrapped_avframe
-            // [Parsed_idet_0 @ 000001c11e8aef00] Repeated Fields: Neither: 76434 Top:     0 Bottom:     0
-            // [Parsed_idet_0 @ 000001c11e8aef00] Single frame detection: TFF:   560 BFF:  6353 Progressive: 64750 Undetermined:  4771
-            // [Parsed_idet_0 @ 000001c11e8aef00] Multi frame detection: TFF:   610 BFF:  6459 Progressive: 69231 Undetermined:   134
-            // [out#0/null @ 000001c11d401040] video:32843KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
-            // frame=76434 fps=1114 q=-0.0 Lsize=N/A time=00:42:30.68 bitrate=N/A speed=37.2x
-
-            // Match in LF not CRLF mode else $ does not work as expected
-            string textLf = text.Replace("\r\n", "\n", StringComparison.Ordinal);
-
-            // Match
-            Match match = IdetRegex().Match(textLf);
-            Debug.Assert(match.Success);
-
-            // Get the frame counts
-            RepeatedFields.Neither = ParseGroupInt(match, "repeated_neither");
-            RepeatedFields.Top = ParseGroupInt(match, "repeated_top");
-            RepeatedFields.Bottom = ParseGroupInt(match, "repeated_bottom");
-
-            SingleFrame.Tff = ParseGroupInt(match, "single_tff");
-            SingleFrame.Bff = ParseGroupInt(match, "single_bff");
-            SingleFrame.Progressive = ParseGroupInt(match, "single_prog");
-            SingleFrame.Undetermined = ParseGroupInt(match, "single_und");
-
-            MultiFrame.Tff = ParseGroupInt(match, "multi_tff");
-            MultiFrame.Bff = ParseGroupInt(match, "multi_bff");
-            MultiFrame.Progressive = ParseGroupInt(match, "multi_prog");
-            MultiFrame.Undetermined = ParseGroupInt(match, "multi_und");
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
-        {
-            return false;
-        }
-        return true;
-    }
-
-    internal static int ParseGroupInt(Match match, string groupName) =>
-        int.Parse(match.Groups[groupName].Value.Trim(), CultureInfo.InvariantCulture);
-
-    private const string IdetRepeatedFields =
-        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Repeated\ Fields:\ Neither:(?<repeated_neither>.*?)Top:(?<repeated_top>.*?)Bottom:(?<repeated_bottom>.*?)$";
-    private const string IdetSingleFrame =
-        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Single\ frame\ detection:\ TFF:(?<single_tff>.*?)BFF:(?<single_bff>.*?)Progressive:(?<single_prog>.*?)Undetermined:(?<single_und>.*?)$";
-    private const string IdetMultiFrame =
-        @"\[Parsed_idet_0\ \@\ (.*?)\]\ Multi\ frame\ detection:\ TFF:(?<multi_tff>.*?)BFF:(?<multi_bff>.*?)Progressive:(?<multi_prog>.*?)Undetermined:(?<multi_und>.*?)$";
-    private const string IdetPattern = $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}";
-
-    [GeneratedRegex(IdetPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
-    public static partial Regex IdetRegex();
 }

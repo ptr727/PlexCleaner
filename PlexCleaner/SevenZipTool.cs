@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +10,8 @@ using CliWrap;
 using CliWrap.Buffered;
 using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 // 7za <command> [<switches>...] <archive_name> [<file_names>...] [<@listfiles...>]
 
@@ -113,14 +117,14 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            if (!FileEx.DeleteDirectory(toolPath, true))
-            {
-                return false;
-            }
+            Directory.Delete(toolPath, true);
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            return FileEx.RenameFolder(extractPath, toolPath);
+            Directory.Delete(toolPath, true);
+            Directory.Move(extractPath, toolPath);
+
+            return true;
         }
 
         public bool UnZip(string inputFile, string outputFolder) =>
@@ -146,10 +150,7 @@ public partial class SevenZip
             if (!Directory.Exists(Tools.GetToolsRoot()))
             {
                 Log.Warning("Creating missing Tools folder : {ToolsRoot}", Tools.GetToolsRoot());
-                if (!FileEx.CreateDirectory(Tools.GetToolsRoot()))
-                {
-                    return false;
-                }
+                _ = Directory.CreateDirectory(Tools.GetToolsRoot());
             }
 
             // Download 7zr.exe in the tools root folder
@@ -190,14 +191,14 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            if (!FileEx.DeleteDirectory(toolPath, true))
-            {
-                return false;
-            }
+            Directory.Delete(toolPath, true);
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            return FileEx.RenameFolder(extractPath, toolPath);
+            Directory.Delete(toolPath, true);
+            Directory.Move(extractPath, toolPath);
+
+            return true;
         }
 
         [GeneratedRegex(

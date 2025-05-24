@@ -1,29 +1,33 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+#endregion
+
 namespace PlexCleaner;
 
 public class SelectMediaProps
 {
-    public SelectMediaProps(MediaTool.ToolType parser)
+    public SelectMediaProps(MediaProps mediaProps)
     {
-        Selected = new MediaProps(parser);
-        NotSelected = new MediaProps(parser);
+        Selected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
+        NotSelected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
     }
 
     public SelectMediaProps(MediaProps mediaProps, Func<TrackProps, bool> selectFunc)
     {
-        Selected = new MediaProps(mediaProps.Parser);
-        NotSelected = new MediaProps(mediaProps.Parser);
+        Selected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
+        NotSelected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
         Add(mediaProps, selectFunc);
     }
 
     public SelectMediaProps(MediaProps mediaProps, bool select)
     {
-        Selected = new MediaProps(mediaProps.Parser);
-        NotSelected = new MediaProps(mediaProps.Parser);
+        Selected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
+        NotSelected = new MediaProps(mediaProps.Parser, mediaProps.FileName);
         Add(mediaProps, select);
     }
 

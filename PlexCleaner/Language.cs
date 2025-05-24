@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -5,10 +7,24 @@ using System.Globalization;
 using System.Linq;
 using InsaneGenius.Utilities;
 
+#endregion
+
 namespace PlexCleaner;
 
 public class Language
 {
+    public const string Undefined = "und";
+    public const string Missing = "zzz";
+    public const string None = "zxx";
+    public const string Chinese = "zh";
+    public const string English = "en";
+
+    public static readonly Language Singleton = new();
+
+    private readonly Iso6392 _iso6392;
+    private readonly Iso6393 _iso6393;
+    private readonly Rfc5646 _rfc5646;
+
     public Language()
     {
         _iso6392 = new Iso6392();
@@ -263,16 +279,4 @@ public class Language
         }
         return [.. languages];
     }
-
-    public const string Undefined = "und";
-    public const string Missing = "zzz";
-    public const string None = "zxx";
-    public const string Chinese = "zh";
-    public const string English = "en";
-
-    private readonly Iso6392 _iso6392;
-    private readonly Iso6393 _iso6393;
-    private readonly Rfc5646 _rfc5646;
-
-    public static readonly Language Singleton = new();
 }

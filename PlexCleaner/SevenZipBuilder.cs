@@ -1,6 +1,10 @@
+#region
+
 using System;
 using CliWrap;
 using CliWrap.Builders;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -88,9 +92,9 @@ public partial class SevenZip
             IOutputOptions,
             IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
+        private readonly ArgumentsBuilder _argumentsBuilder = new();
 
-        public static Command Version(string targetFilePath) => new Builder(targetFilePath).Build();
+        public Command Build() => WithArguments(_argumentsBuilder.Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -110,8 +114,8 @@ public partial class SevenZip
             return this;
         }
 
-        public Command Build() => WithArguments(_argumentsBuilder.Build());
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
-        private readonly ArgumentsBuilder _argumentsBuilder = new();
+        public static Command Version(string targetFilePath) => new Builder(targetFilePath).Build();
     }
 }

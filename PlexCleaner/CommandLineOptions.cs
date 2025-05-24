@@ -1,12 +1,59 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 
+#endregion
+
 namespace PlexCleaner;
 
 public class CommandLineOptions
 {
+    // Default delegates for command handlers, overridden in tests
+    internal static Func<CommandLineOptions, int> s_removeClosedCaptionsFunc =
+        Program.RemoveClosedCaptionsCommand;
+
+    internal static Func<CommandLineOptions, int> s_getToolInfoFunc = Program.GetToolInfoCommand;
+    internal static Func<CommandLineOptions, int> s_getMediaInfoFunc = Program.GetMediaInfoCommand;
+
+    internal static Func<CommandLineOptions, int> s_testMediaInfoFunc =
+        Program.TestMediaInfoCommand;
+
+    internal static Func<CommandLineOptions, int> s_getTagMapFunc = Program.GetTagMapCommand;
+
+    internal static Func<CommandLineOptions, int> s_updateSidecarFunc =
+        Program.UpdateSidecarCommand;
+
+    internal static Func<CommandLineOptions, int> s_getSidecarInfoFunc =
+        Program.GetSidecarInfoCommand;
+
+    internal static Func<CommandLineOptions, int> s_createSidecarFunc =
+        Program.CreateSidecarCommand;
+
+    internal static Func<CommandLineOptions, int> s_verifyFunc = Program.VerifyCommand;
+    internal static Func<CommandLineOptions, int> s_deInterlaceFunc = Program.DeInterlaceCommand;
+    internal static Func<CommandLineOptions, int> s_reEncodeFunc = Program.ReEncodeCommand;
+    internal static Func<CommandLineOptions, int> s_reMuxFunc = Program.ReMuxCommand;
+    internal static Func<CommandLineOptions, int> s_monitorFunc = Program.MonitorCommand;
+    internal static Func<CommandLineOptions, int> s_processFunc = Program.ProcessCommand;
+
+    internal static Func<CommandLineOptions, int> s_checkForNewToolsFunc =
+        Program.CheckForNewToolsCommand;
+
+    internal static Func<CommandLineOptions, int> s_defaultSettingsFunc =
+        Program.WriteDefaultSettingsCommand;
+
+    internal static Func<CommandLineOptions, int> s_createSchemaFunc =
+        Program.CreateJsonSchemaCommand;
+
+    internal static Func<CommandLineOptions, int> s_getVersionInfoFunc =
+        Program.GetVersionInfoCommand;
+
+    internal static Func<CommandLineOptions, int> s_removeSubtitlesFunc =
+        Program.RemoveSubtitlesCommand;
+
     public string SettingsFile { get; set; }
     public List<string> MediaFiles { get; set; }
     public string LogFile { get; set; }
@@ -107,6 +154,9 @@ public class CommandLineOptions
         // Print tool info
         command.AddCommand(CreateGetToolInfoCommand());
 
+        // Test media info
+        command.AddCommand(CreateTestMediaInfoCommand());
+
         // Create JSON schema
         command.AddCommand(CreateCreateSchemaCommand());
 
@@ -118,7 +168,7 @@ public class CommandLineOptions
         // Create settings JSON schema file
         Command command = new("createschema")
         {
-            Description = "Write settings schema to file",
+            Description = "Write JSON settings schema to file",
             Handler = CommandHandler.Create(s_createSchemaFunc),
         };
 
@@ -139,7 +189,7 @@ public class CommandLineOptions
         // Create default settings file
         Command command = new("defaultsettings")
         {
-            Description = "Write default values to settings file",
+            Description = "Create JSON configuration file using default settings",
             Handler = CommandHandler.Create(s_defaultSettingsFunc),
         };
 
@@ -232,7 +282,7 @@ public class CommandLineOptions
         // Re-Mux files
         Command command = new("remux")
         {
-            Description = "Re-Multiplex media files",
+            Description = "Conditionally re-multiplex media files",
             Handler = CommandHandler.Create(s_reMuxFunc),
         };
 
@@ -253,7 +303,7 @@ public class CommandLineOptions
         // Re-Encode files
         Command command = new("reencode")
         {
-            Description = "Re-Encode media files",
+            Description = "Conditionally re-encode media files",
             Handler = CommandHandler.Create(s_reEncodeFunc),
         };
 
@@ -274,7 +324,7 @@ public class CommandLineOptions
         // DeInterlace files
         Command command = new("deinterlace")
         {
-            Description = "De-Interlace media files",
+            Description = "De-interlace the video stream if interlaced",
             Handler = CommandHandler.Create(s_deInterlaceFunc),
         };
 
@@ -295,7 +345,7 @@ public class CommandLineOptions
         // Verify files
         Command command = new("verify")
         {
-            Description = "Verify media files",
+            Description = "Verify media container and stream integrity",
             Handler = CommandHandler.Create(s_verifyFunc),
         };
 
@@ -352,7 +402,7 @@ public class CommandLineOptions
         // Create sidecar files
         Command command = new("updatesidecar")
         {
-            Description = "Update existing sidecar files",
+            Description = "Create or update sidecar files",
             Handler = CommandHandler.Create(s_updateSidecarFunc),
         };
 
@@ -370,7 +420,7 @@ public class CommandLineOptions
         // Create tag-map
         Command command = new("gettagmap")
         {
-            Description = "Print media information tag-map",
+            Description = "Print media file attribute mappings",
             Handler = CommandHandler.Create(s_getTagMapFunc),
         };
 
@@ -388,8 +438,26 @@ public class CommandLineOptions
         // Print media info
         Command command = new("getmediainfo")
         {
-            Description = "Print media information using sidecar files",
+            Description = "Print media file information",
             Handler = CommandHandler.Create(s_getMediaInfoFunc),
+        };
+
+        // Settings file name
+        command.AddOption(CreateSettingsFileOption());
+
+        // Media files or folders option
+        command.AddOption(CreateMediaFilesOption());
+
+        return command;
+    }
+
+    private static Command CreateTestMediaInfoCommand()
+    {
+        // Print media info
+        Command command = new("testmediainfo")
+        {
+            Description = "Test parsing media file information",
+            Handler = CommandHandler.Create(s_testMediaInfoFunc),
         };
 
         // Settings file name
@@ -406,7 +474,7 @@ public class CommandLineOptions
         // Print tool info
         Command command = new("gettoolinfo")
         {
-            Description = "Print media information using media tools",
+            Description = "Print media tool information",
             Handler = CommandHandler.Create(s_getToolInfoFunc),
         };
 
@@ -424,7 +492,7 @@ public class CommandLineOptions
         // Remove subtitles
         Command command = new("removesubtitles")
         {
-            Description = "Remove subtitles from media files",
+            Description = "Remove all subtitle tracks",
             Handler = CommandHandler.Create(s_removeSubtitlesFunc),
         };
 
@@ -457,7 +525,7 @@ public class CommandLineOptions
         // Remove closed captions
         Command command = new("removeclosedcaptions")
         {
-            Description = "Remove closed captions from media files",
+            Description = "Remove closed captions from video stream",
             Handler = CommandHandler.Create(s_removeClosedCaptionsFunc),
         };
 
@@ -498,33 +566,4 @@ public class CommandLineOptions
     private static Option<bool> CreateQuickScanOption() =>
         // Scan only parts of the file
         new("--quickscan") { Description = "Scan only part of the file" };
-
-    // Default delegates for command handlers, overridden in tests
-    internal static Func<CommandLineOptions, int> s_removeClosedCaptionsFunc =
-        Program.RemoveClosedCaptionsCommand;
-    internal static Func<CommandLineOptions, int> s_getToolInfoFunc = Program.GetToolInfoCommand;
-    internal static Func<CommandLineOptions, int> s_getMediaInfoFunc = Program.GetMediaInfoCommand;
-    internal static Func<CommandLineOptions, int> s_getTagMapFunc = Program.GetTagMapCommand;
-    internal static Func<CommandLineOptions, int> s_updateSidecarFunc =
-        Program.UpdateSidecarCommand;
-    internal static Func<CommandLineOptions, int> s_getSidecarInfoFunc =
-        Program.GetSidecarInfoCommand;
-    internal static Func<CommandLineOptions, int> s_createSidecarFunc =
-        Program.CreateSidecarCommand;
-    internal static Func<CommandLineOptions, int> s_verifyFunc = Program.VerifyCommand;
-    internal static Func<CommandLineOptions, int> s_deInterlaceFunc = Program.DeInterlaceCommand;
-    internal static Func<CommandLineOptions, int> s_reEncodeFunc = Program.ReEncodeCommand;
-    internal static Func<CommandLineOptions, int> s_reMuxFunc = Program.ReMuxCommand;
-    internal static Func<CommandLineOptions, int> s_monitorFunc = Program.MonitorCommand;
-    internal static Func<CommandLineOptions, int> s_processFunc = Program.ProcessCommand;
-    internal static Func<CommandLineOptions, int> s_checkForNewToolsFunc =
-        Program.CheckForNewToolsCommand;
-    internal static Func<CommandLineOptions, int> s_defaultSettingsFunc =
-        Program.WriteDefaultSettingsCommand;
-    internal static Func<CommandLineOptions, int> s_createSchemaFunc =
-        Program.CreateJsonSchemaCommand;
-    internal static Func<CommandLineOptions, int> s_getVersionInfoFunc =
-        Program.GetVersionInfoCommand;
-    internal static Func<CommandLineOptions, int> s_removeSubtitlesFunc =
-        Program.RemoveSubtitlesCommand;
 }

@@ -1,11 +1,17 @@
+#region
+
 using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using InsaneGenius.Utilities;
 using PlexCleaner;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+
+#endregion
 
 namespace Sandbox;
 
@@ -20,6 +26,22 @@ namespace Sandbox;
 
 public class Program
 {
+    private const string JsonConfigFile = "Sandbox.json";
+
+    private static readonly JsonSerializerOptions s_jsonReadOptions = new()
+    {
+        AllowTrailingCommas = true,
+        IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    private readonly Dictionary<string, JsonElement>? _settings;
+
+    private Program(Dictionary<string, JsonElement>? settings) => _settings = settings;
+
     public static async Task<int> Main(string[] args)
     {
         // Create default commandline options and config
@@ -31,7 +53,7 @@ public class Program
         SetRuntimeOptions();
 
         // Create logger
-        Serilog.Debugging.SelfLog.Enable(Console.Error);
+        SelfLog.Enable(Console.Error);
         Log.Logger = new LoggerConfiguration()
             .Enrich.WithThreadId()
             .WriteTo.Console(
@@ -41,7 +63,7 @@ public class Program
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
+        LogOptions.Logger = Log.Logger;
 
         // Get settings
         Dictionary<string, JsonElement>? settings = null;
@@ -68,16 +90,8 @@ public class Program
 
     public static void SetRuntimeOptions()
     {
-        InsaneGenius.Utilities.FileEx.Options.RetryCount = PlexCleaner
-            .Program
-            .Config
-            .MonitorOptions
-            .FileRetryCount;
-        InsaneGenius.Utilities.FileEx.Options.RetryWaitTime = PlexCleaner
-            .Program
-            .Config
-            .MonitorOptions
-            .FileRetryWaitTime;
+        FileEx.Options.RetryCount = PlexCleaner.Program.Config.MonitorOptions.FileRetryCount;
+        FileEx.Options.RetryWaitTime = PlexCleaner.Program.Config.MonitorOptions.FileRetryWaitTime;
 
         PlexCleaner.Program.Options.ThreadCount = PlexCleaner.Program.Options.Parallel
             ? PlexCleaner.Program.Options.ThreadCount == 0
@@ -85,8 +99,6 @@ public class Program
                 : Math.Clamp(PlexCleaner.Program.Options.ThreadCount, 1, Environment.ProcessorCount)
             : 1;
     }
-
-    private Program(Dictionary<string, JsonElement>? settings) => _settings = settings;
 
     public static string? GetSettingsFilePath(string fileName)
     {
@@ -111,16 +123,6 @@ public class Program
         return settingsPath;
     }
 
-    private static readonly JsonSerializerOptions s_jsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        PropertyNameCaseInsensitive = true,
-    };
-
     public JsonElement? GetSettingsObject(string key) =>
         _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
 
@@ -132,8 +134,4 @@ public class Program
 
     public T? GetSettings<T>(string key)
         where T : class => GetSettingsObject(key)?.Deserialize<T>();
-
-    private readonly Dictionary<string, JsonElement>? _settings;
-
-    private const string JsonConfigFile = "Sandbox.json";
 }

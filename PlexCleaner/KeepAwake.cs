@@ -1,6 +1,10 @@
+#region
+
 using System;
 using System.Runtime.InteropServices;
 using System.Timers;
+
+#endregion
 
 namespace PlexCleaner;
 

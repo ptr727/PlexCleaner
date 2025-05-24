@@ -1,12 +1,33 @@
+#region
+
 using System;
 using System.Linq;
 using CliWrap;
 using CliWrap.Builders;
 
+#endregion
+
 namespace PlexCleaner;
 
 public partial class MkvPropEdit
 {
+    public static string GetTrackFlag(TrackProps.FlagsType flagType) =>
+        // mkvpropedit --list-property-names
+        // Enums must be single flag values, not combined flags
+        flagType switch
+        {
+            TrackProps.FlagsType.Default => "flag-default",
+            TrackProps.FlagsType.Forced => "flag-forced",
+            TrackProps.FlagsType.HearingImpaired => "flag-hearing-impaired",
+            TrackProps.FlagsType.VisualImpaired => "flag-visual-impaired",
+            TrackProps.FlagsType.Descriptions => "flag-text-descriptions",
+            TrackProps.FlagsType.Original => "flag-original",
+            TrackProps.FlagsType.Commentary => "flag-commentary",
+            // flag-enabled
+            TrackProps.FlagsType.None => throw new NotImplementedException(),
+            _ => throw new NotImplementedException(),
+        };
+
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
@@ -43,9 +64,9 @@ public partial class MkvPropEdit
 
         public InputOptions Edit() => Add("--edit");
 
-        public InputOptions Track(int option) => Add($"track:@{option}");
+        public InputOptions Track(long option) => Add($"track:@{option}");
 
-        public InputOptions EditTrack(int option) => Edit().Track(option);
+        public InputOptions EditTrack(long option) => Edit().Track(option);
 
         public InputOptions Set() => Add("--set");
 
@@ -108,10 +129,9 @@ public partial class MkvPropEdit
             IInputOptions,
             IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
+        private readonly ArgumentsBuilder _argumentsBuilder = new();
 
-        public static Command Version(string targetFilePath) =>
-            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
+        public Command Build() => WithArguments(_argumentsBuilder.Build());
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
@@ -125,25 +145,9 @@ public partial class MkvPropEdit
             return this;
         }
 
-        public Command Build() => WithArguments(_argumentsBuilder.Build());
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
 
-        private readonly ArgumentsBuilder _argumentsBuilder = new();
+        public static Command Version(string targetFilePath) =>
+            new Builder(targetFilePath).WithArguments(args => args.Add("--version").Build());
     }
-
-    public static string GetTrackFlag(TrackProps.FlagsType flagType) =>
-        // mkvpropedit --list-property-names
-        // Enums must be single flag values, not combined flags
-        flagType switch
-        {
-            TrackProps.FlagsType.Default => "flag-default",
-            TrackProps.FlagsType.Forced => "flag-forced",
-            TrackProps.FlagsType.HearingImpaired => "flag-hearing-impaired",
-            TrackProps.FlagsType.VisualImpaired => "flag-visual-impaired",
-            TrackProps.FlagsType.Descriptions => "flag-text-descriptions",
-            TrackProps.FlagsType.Original => "flag-original",
-            TrackProps.FlagsType.Commentary => "flag-commentary",
-            // flag-enabled
-            TrackProps.FlagsType.None => throw new NotImplementedException(),
-            _ => throw new NotImplementedException(),
-        };
 }

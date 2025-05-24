@@ -1,11 +1,16 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -263,7 +268,7 @@ public static class Tools
                     mediaTool.GetToolFamily(),
                     latestToolInfo.Url
                 );
-                if (!GetUrlDetails(latestToolInfo))
+                if (!GetUrlInfo(latestToolInfo))
                 {
                     Log.Error(
                         "{Tool} : Failed to get download URI details : {Uri}",
@@ -313,7 +318,7 @@ public static class Tools
                 // Update the tool using the downloaded file
                 if (!mediaTool.Update(downloadFile))
                 {
-                    _ = FileEx.DeleteFile(downloadFile);
+                    File.Delete(downloadFile);
                     return false;
                 }
 
@@ -321,7 +326,7 @@ public static class Tools
                 jsonToolInfo.Copy(latestToolInfo);
 
                 // Delete the downloaded update file
-                _ = FileEx.DeleteFile(downloadFile);
+                File.Delete(downloadFile);
 
                 // Next tool
             }
@@ -336,24 +341,27 @@ public static class Tools
         return true;
     }
 
-    private static bool GetUrlDetails(MediaToolInfo mediaToolInfo)
+    public static bool GetUrlInfo(MediaToolInfo mediaToolInfo)
     {
-        // Get URL content details
-        if (
-            !Download.GetContentInfo(
-                new Uri(mediaToolInfo.Url),
-                out long size,
-                out DateTime modified
-            )
-        )
+        try
+        {
+            // Send GET request
+            using HttpResponseMessage httpResponse = Program
+                .HttpClient.GetAsync(mediaToolInfo.Url)
+                .GetAwaiter()
+                .GetResult()
+                .EnsureSuccessStatusCode();
+
+            // Get target info
+            mediaToolInfo.Size = (long)httpResponse.Content.Headers.ContentLength;
+            mediaToolInfo.ModifiedTime = (DateTime)
+                httpResponse.Content.Headers.LastModified?.DateTime;
+        }
+        catch (HttpRequestException e)
+            when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
         {
             return false;
         }
-
-        // Set retrieved values
-        mediaToolInfo.Size = size;
-        mediaToolInfo.ModifiedTime = modified;
-
         return true;
     }
 }

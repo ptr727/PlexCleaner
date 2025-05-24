@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -6,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,16 +18,33 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using Timer = System.Timers.Timer;
+
+#endregion
 
 namespace PlexCleaner;
 
+// TODO: Specialize all catch(Exception) to catch specific expected exceptions only
+
 public static class Program
 {
-    private enum ExitCode
-    {
-        Success = 0,
-        Error = 1,
-    }
+    // Snippet runtime
+    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
+
+    // QuickScan runtime
+    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
+
+    // Cancellation token
+    private static readonly CancellationTokenSource s_cancelSource = new();
+
+    // HTTP client
+    public static readonly HttpClient HttpClient = new();
+
+    // Commandline options
+    public static CommandLineOptions Options { get; set; }
+
+    // Config file options
+    public static ConfigFileJsonSchema Config { get; set; }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 
@@ -79,7 +99,7 @@ public static class Program
 
         // Create a timer to keep the system from going to sleep
         KeepAwake.PreventSleep();
-        using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
+        using Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
@@ -414,17 +434,20 @@ public static class Program
     public static int UpdateSidecarCommand(CommandLineOptions options) =>
         ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
 
+    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
+        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
+
     public static int GetTagMapCommand(CommandLineOptions options) =>
         ProcessFileList(options, ProcessDriver.GetTagMap);
 
     public static int GetMediaInfoCommand(CommandLineOptions options) =>
         ProcessFileList(options, ProcessDriver.GetMediaInfo);
 
+    public static int TestMediaInfoCommand(CommandLineOptions options) =>
+        ProcessFileList(options, ProcessDriver.TestMediaInfo);
+
     public static int GetToolInfoCommand(CommandLineOptions options) =>
         ProcessFileList(options, ProcessDriver.GetToolInfo);
-
-    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
 
     public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
         ProcessFiles(
@@ -505,16 +528,10 @@ public static class Program
             return false;
         }
 
-        // Set the static settings
+        // Set the static config
         Config = config;
 
-        // Set the FileEx options
-        FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
-        FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
-
-        // Set the FileEx Cancel object
-        FileEx.Options.Cancel = s_cancelSource.Token;
-
+        // Log runtime information
         Log.Logger.LogOverrideContext()
             .Information("Commandline : {Commandline}", Environment.CommandLine);
         Log.Logger.LogOverrideContext()
@@ -599,18 +616,9 @@ public static class Program
 
     public static CancellationToken CancelToken() => s_cancelSource.Token;
 
-    // Commandline options
-    public static CommandLineOptions Options { get; set; }
-
-    // Config file options
-    public static ConfigFileJsonSchema Config { get; set; }
-
-    // Snippet runtime
-    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
-
-    // QuickScan runtime
-    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
-
-    // Cancellation token
-    private static readonly CancellationTokenSource s_cancelSource = new();
+    private enum ExitCode
+    {
+        Success = 0,
+        Error = 1,
+    }
 }

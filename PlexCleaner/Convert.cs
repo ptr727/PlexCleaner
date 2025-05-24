@@ -1,8 +1,11 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.IO;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -30,19 +33,20 @@ public static class Convert
         {
             Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
         // Rename the temp file to the output file
-        if (!FileEx.RenameFile(tempName, outputName))
-        {
-            return false;
-        }
+        File.Move(tempName, outputName, true);
 
         // If the input and output names are not the same, delete the input
-        return inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase)
-            || FileEx.DeleteFile(inputName);
+        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(inputName);
+        }
+
+        return true;
     }
 
     public static bool ReMuxToMkv(string inputName, out string outputName)
@@ -66,7 +70,7 @@ public static class Convert
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName, out string error))
         {
             // Failed, delete temp file
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
 
             // Cancel requested
             if (Program.IsCancelledError())
@@ -82,7 +86,7 @@ public static class Convert
             if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName, out error))
             {
                 // Failed, delete temp file
-                _ = FileEx.DeleteFile(tempName);
+                File.Delete(tempName);
 
                 // Cancel requested
                 if (Program.IsCancelledError())
@@ -100,21 +104,21 @@ public static class Convert
             // ReMux using MkvMerge after FfMpeg or HandBrake encoding
             if (!ReMux(tempName))
             {
-                _ = FileEx.DeleteFile(tempName);
+                File.Delete(tempName);
                 return false;
             }
         }
 
         // Rename the temp file to the output file
-        if (!FileEx.RenameFile(tempName, outputName))
-        {
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
+        File.Move(tempName, outputName, true);
 
         // If the input and output names are not the same, delete the input
-        return inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase)
-            || FileEx.DeleteFile(inputName);
+        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(inputName);
+        }
+
+        return true;
     }
 
     public static bool ReMuxToMkv(
@@ -150,19 +154,20 @@ public static class Convert
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
         // Rename the temp file to the output file
-        if (!FileEx.RenameFile(tempName, outputName))
-        {
-            return false;
-        }
+        File.Move(tempName, outputName, true);
 
         // If the input and output names are not the same, delete the input
-        return inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase)
-            || FileEx.DeleteFile(inputName);
+        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(inputName);
+        }
+
+        return true;
     }
 
     public static bool ReMux(string fileName)
@@ -173,7 +178,6 @@ public static class Convert
         // Create a temp output filename
         string tempName = Path.ChangeExtension(fileName, ".tmp4");
         Debug.Assert(fileName != tempName);
-        _ = FileEx.DeleteFile(tempName);
 
         // ReMux
         Log.Information("Remux using MkvMerge : {FileName}", fileName);
@@ -181,10 +185,13 @@ public static class Convert
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", fileName);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
-        return FileEx.RenameFile(tempName, fileName);
+        // Rename the temp file to the original file
+        File.Move(tempName, fileName, true);
+
+        return true;
     }
 }

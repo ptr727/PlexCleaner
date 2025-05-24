@@ -1,11 +1,20 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+#endregion
+
 namespace PlexCleaner;
 
-public class BitrateInfo(int videoStream, int audioStream, int maxBps)
+public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 {
+    public Bitrate VideoBitrate { get; } = new();
+    public Bitrate AudioBitrate { get; } = new();
+    public Bitrate CombinedBitrate { get; } = new();
+    public int Duration => CombinedBitrate.Length;
+
     public void Calculate(List<FfMpegToolJsonSchema.Packet> packetList)
     {
         // Add all packets
@@ -49,11 +58,6 @@ public class BitrateInfo(int videoStream, int audioStream, int maxBps)
         AudioBitrate.WriteLine("Audio");
         CombinedBitrate.WriteLine("Combined");
     }
-
-    public Bitrate VideoBitrate { get; } = new();
-    public Bitrate AudioBitrate { get; } = new();
-    public Bitrate CombinedBitrate { get; } = new();
-    public int Duration => CombinedBitrate.Length;
 
     private bool ShouldCompute(FfMpegToolJsonSchema.Packet packet)
     {

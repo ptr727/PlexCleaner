@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -6,12 +8,15 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
 // mkvmerge [global options] {-o out} [options1] {file1} [[options2] {file2}] [@options-file.json]
+
+// https://codeberg.org/mbunkus/mkvtoolnix/wiki/About-track-UIDs,-track-numbers-and-track-IDs
 
 // TODO: There is currently no option to suppress progress output
 // https://help.mkvtoolnix.download/t/option-to-suppress-progress-reporting-but-keep-static-output/1320
@@ -77,9 +82,8 @@ public partial class MkvMerge
                     GetToolFamily(),
                     uri
                 );
-                Stream releaseStream = Download
-                    .GetHttpClient()
-                    .GetStreamAsync(uri)
+                Stream releaseStream = Program
+                    .HttpClient.GetStreamAsync(uri)
                     .GetAwaiter()
                     .GetResult();
 
@@ -169,7 +173,7 @@ public partial class MkvMerge
         )
         {
             // Populate the MediaProps object from the JSON string
-            mediaProps = new MediaProps(ToolType.MkvMerge);
+            mediaProps = new MediaProps(ToolType.MkvMerge, fileName);
             try
             {
                 // Deserialize
@@ -179,34 +183,28 @@ public partial class MkvMerge
                     return false;
                 }
 
+                // Container type
+                mediaProps.Container = mkvMerge.Container.Type;
+
                 // Tracks
                 foreach (MkvToolJsonSchema.Track track in mkvMerge.Tracks)
                 {
-                    // If the container is not a MKV, ignore missing CodecId's
-                    if (
-                        !mkvMerge.Container.Type.Equals(
-                            "Matroska",
-                            StringComparison.OrdinalIgnoreCase
-                        ) && string.IsNullOrEmpty(track.Properties.CodecId)
-                    )
-                    {
-                        Log.Warning(
-                            "MkvToolJsonSchema : Overriding unknown codec for non-Matroska container : Container: {Container}, Track: {Track} : {FileName}",
-                            mkvMerge.Container.Type,
-                            track.Type,
-                            fileName
-                        );
-                        track.Properties.CodecId = mkvMerge.Container.Type;
-                    }
-
                     // Process by track type
                     switch (track.Type.ToLowerInvariant())
                     {
                         case "video":
-                            mediaProps.Video.Add(VideoProps.Create(fileName, track));
+                            VideoProps videoProps = new(mediaProps);
+                            if (videoProps.Create(track))
+                            {
+                                mediaProps.Video.Add(videoProps);
+                            }
                             break;
                         case "audio":
-                            mediaProps.Audio.Add(AudioProps.Create(fileName, track));
+                            AudioProps audioProps = new(mediaProps);
+                            if (audioProps.Create(track))
+                            {
+                                mediaProps.Audio.Add(audioProps);
+                            }
                             break;
                         case "subtitles":
                             // Some variants of DVBSUB are not supported by MkvToolNix
@@ -214,7 +212,11 @@ public partial class MkvMerge
                             // https://github.com/ietf-wg-cellar/matroska-specification/pull/77/
                             // https://gitlab.com/mbunkus/mkvtoolnix/-/issues/3258
                             // TODO: Reported fixed, to be verified
-                            mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
+                            SubtitleProps subtitleProps = new(mediaProps);
+                            if (subtitleProps.Create(track))
+                            {
+                                mediaProps.Subtitle.Add(subtitleProps);
+                            }
                             break;
                         default:
                             Log.Warning(
@@ -225,9 +227,6 @@ public partial class MkvMerge
                             break;
                     }
                 }
-
-                // Container type
-                mediaProps.Container = mkvMerge.Container.Type;
 
                 // Attachments
                 mediaProps.Attachments = mkvMerge.Attachments.Count;
@@ -258,9 +257,6 @@ public partial class MkvMerge
             return true;
         }
 
-        public static bool IsMkvContainer(MediaProps mediaProps) =>
-            mediaProps.Container.Equals("Matroska", StringComparison.OrdinalIgnoreCase);
-
         public bool ReMuxToMkv(
             string inputName,
             SelectMediaProps selectMediaProps,
@@ -269,7 +265,7 @@ public partial class MkvMerge
         )
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -293,7 +289,7 @@ public partial class MkvMerge
         public bool ReMuxToMkv(string inputName, string outputName, out string error)
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -315,7 +311,7 @@ public partial class MkvMerge
         public bool RemoveSubtitles(string inputName, string outputName, out string error)
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -348,7 +344,7 @@ public partial class MkvMerge
             Debug.Assert(keepTwo.Parser == ToolType.MkvMerge);
 
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;

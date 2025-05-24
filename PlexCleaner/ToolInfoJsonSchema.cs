@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,15 +9,18 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Serilog;
 
+#endregion
+
 namespace PlexCleaner;
 
 public class ToolInfoJsonSchema
 {
+    public const int CurrentSchemaVersion = 2;
+
     [DefaultValue(0)]
     [JsonPropertyOrder(-2)]
     [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-    public const int CurrentSchemaVersion = 2;
 
     public DateTime LastCheck { get; set; }
 

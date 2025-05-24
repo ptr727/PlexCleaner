@@ -1,6 +1,10 @@
+#region
+
 using System;
 using CliWrap;
 using CliWrap.Builders;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -9,6 +13,19 @@ namespace PlexCleaner;
 
 public partial class FfProbe
 {
+    public static string EscapeMovieFileName(string fileName) =>
+        // Escape the file name, specifically : \ ' characters
+        // \ -> /
+        // : -> \\:
+        // ' -> \\\'
+        // , -> \\\,
+        // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
+        fileName
+            .Replace(@"\", @"/")
+            .Replace(@":", @"\\:")
+            .Replace(@"'", @"\\\'")
+            .Replace(@",", @"\\\,");
+
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
@@ -138,16 +155,9 @@ public partial class FfProbe
             IFfProbeOptions,
             IBuilder
     {
-        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
+        private readonly ArgumentsBuilder _argumentsBuilder = new();
 
-        public static Command Version(string targetFilePath) =>
-            new Builder(targetFilePath).WithArguments(args => args.Add("-version").Build());
-
-        public IFfProbeOptions GlobalOptions(Action<GlobalOptions> globalOptions)
-        {
-            globalOptions(new(_argumentsBuilder));
-            return this;
-        }
+        public Command Build() => WithArguments(_argumentsBuilder.Build());
 
         public IBuilder FfProbeOptions(Action<FfProbeOptions> ffprobeOptions)
         {
@@ -155,21 +165,15 @@ public partial class FfProbe
             return this;
         }
 
-        public Command Build() => WithArguments(_argumentsBuilder.Build());
+        public IFfProbeOptions GlobalOptions(Action<GlobalOptions> globalOptions)
+        {
+            globalOptions(new(_argumentsBuilder));
+            return this;
+        }
 
-        private readonly ArgumentsBuilder _argumentsBuilder = new();
+        public static IGlobalOptions Create(string targetFilePath) => new Builder(targetFilePath);
+
+        public static Command Version(string targetFilePath) =>
+            new Builder(targetFilePath).WithArguments(args => args.Add("-version").Build());
     }
-
-    public static string EscapeMovieFileName(string fileName) =>
-        // Escape the file name, specifically : \ ' characters
-        // \ -> /
-        // : -> \\:
-        // ' -> \\\'
-        // , -> \\\,
-        // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
-        fileName
-            .Replace(@"\", @"/")
-            .Replace(@":", @"\\:")
-            .Replace(@"'", @"\\\'")
-            .Replace(@",", @"\\\,");
 }

@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -5,8 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -339,7 +342,7 @@ public static class Process
                     // Delete empty folders
                     int deleted = 0;
                     Log.Information("Looking for empty folders in {Folder}", folder);
-                    _ = FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    DeleteEmptyDirectories(folder, ref deleted);
                     _ = Interlocked.Add(ref totalDeleted, deleted);
                 });
         }
@@ -357,6 +360,31 @@ public static class Process
         Log.Information("Deleted folders : {Deleted}", totalDeleted);
 
         return !fatalError;
+    }
+
+    private static void DeleteEmptyDirectories(string directory, ref int deleted)
+    {
+        // Find all directories in this directory, not all subdirectories, we will call recursively
+        DirectoryInfo parentInfo = new(directory);
+        foreach (
+            DirectoryInfo dirInfo in parentInfo.EnumerateDirectories(
+                "*",
+                SearchOption.TopDirectoryOnly
+            )
+        )
+        {
+            // Call recursively for this directory
+            DeleteEmptyDirectories(dirInfo.FullName, ref deleted);
+
+            // Test for files and directories, if none, delete this directory
+            if (dirInfo.GetFiles().Length != 0 || dirInfo.GetDirectories().Length != 0)
+            {
+                continue;
+            }
+            Directory.Delete(dirInfo.FullName);
+
+            deleted++;
+        }
     }
 
     public static bool ProcessFiles(List<string> fileList)

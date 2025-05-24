@@ -1,8 +1,12 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
+
+#endregion
 
 // https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd
 // https://mediaarea.net/en/MediaInfo/Support/Tags
@@ -52,17 +56,19 @@ public class MediaInfoToolXmlSchema
 
         [XmlElement(ElementName = "Default", Namespace = "https://mediaarea.net/mediainfo")]
         public string DefaultString { get; set; } = "";
+
         public bool Default => MediaInfo.StringToBool(DefaultString);
 
         [XmlElement(ElementName = "Forced", Namespace = "https://mediaarea.net/mediainfo")]
         public string ForcedString { get; set; } = "";
+
         public bool Forced => MediaInfo.StringToBool(ForcedString);
 
         [XmlElement(ElementName = "MuxingMode", Namespace = "https://mediaarea.net/mediainfo")]
         public string MuxingMode { get; set; } = "";
 
         [XmlElement(ElementName = "StreamOrder", Namespace = "https://mediaarea.net/mediainfo")]
-        public string StreamOrder { get; set; }
+        public string StreamOrder { get; set; } = "";
 
         [XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
         public string ScanType { get; set; } = "";

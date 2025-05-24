@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -5,6 +7,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -33,6 +37,19 @@ public class SidecarFile
         RemovedCoverArt = 1 << 16,
     }
 
+    private const string SidecarExtension = ".PlexCleaner";
+    private const string MkvExtension = ".mkv";
+    private const int HashWindowLength = 64 * 1024;
+
+    private readonly FileInfo _mediaFileInfo;
+    private readonly FileInfo _sidecarFileInfo;
+    private string _ffProbeJson;
+
+    private string _mediaInfoXml;
+    private string _mkvMergeJson;
+
+    private SidecarFileJsonSchema _sidecarJson;
+
     public SidecarFile(FileInfo mediaFileInfo)
     {
         _mediaFileInfo = mediaFileInfo;
@@ -44,6 +61,11 @@ public class SidecarFile
         _mediaFileInfo = new FileInfo(mediaFileName);
         _sidecarFileInfo = new FileInfo(GetSidecarName(_mediaFileInfo));
     }
+
+    public MediaProps FfProbeProps { get; private set; }
+    public MediaProps MkvMergeProps { get; private set; }
+    public MediaProps MediaInfoProps { get; private set; }
+    public StatesType State { get; set; }
 
     public bool Create()
     {
@@ -248,25 +270,25 @@ public class SidecarFile
         Log.Information("Reading media info from sidecar : {FileName}", _sidecarFileInfo.Name);
 
         // Decompress the tool data
-        _ffProbeJson = StringCompression.Decompress(_sidecarJson.FfProbeData);
-        _mkvMergeJson = StringCompression.Decompress(_sidecarJson.MkvMergeData);
         _mediaInfoXml = StringCompression.Decompress(_sidecarJson.MediaInfoData);
+        _mkvMergeJson = StringCompression.Decompress(_sidecarJson.MkvMergeData);
+        _ffProbeJson = StringCompression.Decompress(_sidecarJson.FfProbeData);
 
         // Deserialize the tool data
         if (
             !MediaInfo.Tool.GetMediaPropsFromXml(
                 _mediaInfoXml,
-                _sidecarFileInfo.Name,
+                _mediaFileInfo.Name,
                 out MediaProps mediaInfoProps
             )
             || !MkvMerge.Tool.GetMediaPropsFromJson(
                 _mkvMergeJson,
-                _sidecarFileInfo.Name,
+                _mediaFileInfo.Name,
                 out MediaProps mkvMergeProps
             )
             || !FfProbe.Tool.GetMediaPropsFromJson(
                 _ffProbeJson,
-                _sidecarFileInfo.Name,
+                _mediaFileInfo.Name,
                 out MediaProps ffProbeProps
             )
         )
@@ -276,9 +298,9 @@ public class SidecarFile
         }
 
         // Assign MediaProps data
-        FfProbeProps = ffProbeProps;
-        MkvMergeProps = mkvMergeProps;
         MediaInfoProps = mediaInfoProps;
+        MkvMergeProps = mkvMergeProps;
+        FfProbeProps = ffProbeProps;
 
         // Assign state
         State = _sidecarJson.State;
@@ -684,22 +706,4 @@ public class SidecarFile
         SidecarFile sidecarFile = new(fileName);
         return sidecarFile.Open(true);
     }
-
-    public MediaProps FfProbeProps { get; private set; }
-    public MediaProps MkvMergeProps { get; private set; }
-    public MediaProps MediaInfoProps { get; private set; }
-    public StatesType State { get; set; }
-
-    private readonly FileInfo _mediaFileInfo;
-    private readonly FileInfo _sidecarFileInfo;
-
-    private string _mediaInfoXml;
-    private string _mkvMergeJson;
-    private string _ffProbeJson;
-
-    private SidecarFileJsonSchema _sidecarJson;
-
-    private const string SidecarExtension = ".PlexCleaner";
-    private const string MkvExtension = ".mkv";
-    private const int HashWindowLength = 64 * Format.KiB;
 }

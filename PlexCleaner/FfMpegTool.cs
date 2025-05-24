@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,8 +11,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 // https://ffmpeg.org/ffmpeg.html
 
@@ -22,6 +25,30 @@ namespace PlexCleaner;
 
 public partial class FfMpeg
 {
+    public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
+    public const string DefaultAudioOptions = "ac3";
+
+    // Common format tags
+    private const string H264Format = "h264";
+    private const string H265Format = "h265";
+    private const string MPEG2Format = "mpeg2video";
+
+    // SEI NAL units for EIA-608 and CTA-708 content
+    private static readonly List<(string format, int nalunit)> s_sEINalUnitList =
+    [
+        (H264Format, 6),
+        (H265Format, 39),
+        (MPEG2Format, 178),
+    ];
+
+    public static int GetNalUnit(string format) =>
+        // Get SEI NAL unit based on video format
+        // H264 = 6, H265 = 9, MPEG2 = 178
+        // Return default(int) if not found
+        s_sEINalUnitList
+            .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
+            .nalunit;
+
     public partial class Tool : MediaTool
     {
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
@@ -115,10 +142,7 @@ public partial class FfMpeg
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            if (!FileEx.DeleteDirectory(toolPath, true))
-            {
-                return false;
-            }
+            Directory.Delete(toolPath, true);
 
             // Build the versioned out folder from the downloaded filename
             // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
@@ -126,7 +150,10 @@ public partial class FfMpeg
 
             // Rename the extract folder to the tool folder
             // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
-            return FileEx.RenameFolder(extractPath, toolPath);
+            Directory.Delete(toolPath, true);
+            Directory.Move(extractPath, toolPath);
+
+            return true;
         }
 
         public bool VerifyMedia(string fileName, out string error)
@@ -160,7 +187,7 @@ public partial class FfMpeg
         )
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -254,7 +281,7 @@ public partial class FfMpeg
             }
 
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Create an input and output ignore or copy or convert track map
             // Selected is ReEncode
@@ -290,7 +317,7 @@ public partial class FfMpeg
         public bool ConvertToMkv(string inputName, string outputName, out string error)
         {
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -331,7 +358,7 @@ public partial class FfMpeg
             // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
 
             // Delete output file
-            _ = FileEx.DeleteFile(outputName);
+            File.Delete(outputName);
 
             // Build command line
             error = string.Empty;
@@ -389,28 +416,4 @@ public partial class FfMpeg
         )]
         public static partial Regex InstalledVersionRegex();
     }
-
-    public const string DefaultVideoOptions = "libx264 -crf 22 -preset medium";
-    public const string DefaultAudioOptions = "ac3";
-
-    public static int GetNalUnit(string format) =>
-        // Get SEI NAL unit based on video format
-        // H264 = 6, H265 = 9, MPEG2 = 178
-        // Return default(int) if not found
-        s_sEINalUnitList
-            .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
-            .nalunit;
-
-    // Common format tags
-    private const string H264Format = "h264";
-    private const string H265Format = "h265";
-    private const string MPEG2Format = "mpeg2video";
-
-    // SEI NAL units for EIA-608 and CTA-708 content
-    private static readonly List<(string format, int nalunit)> s_sEINalUnitList =
-    [
-        (H264Format, 6),
-        (H265Format, 39),
-        (MPEG2Format, 178),
-    ];
 }

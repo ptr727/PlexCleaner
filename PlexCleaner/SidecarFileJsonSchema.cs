@@ -1,9 +1,14 @@
 // See ConfigFileJsonSchema.cs for schema update steps
 
+#region
+
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Json.Schema.Generation;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
@@ -21,17 +26,17 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string MkvToolVersion { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string FfIdetInfoData { get; set; }
 
     [JsonRequired]
@@ -69,7 +74,7 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete("Removed in v4")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public bool Verified { get; set; }
 }
 

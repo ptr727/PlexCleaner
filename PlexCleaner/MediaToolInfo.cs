@@ -1,5 +1,9 @@
+#region
+
 using System;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 

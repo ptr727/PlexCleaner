@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,8 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Buffered;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -24,6 +27,9 @@ public partial class FfProbe
 {
     public class Tool : MediaTool
     {
+        // "Undesirable" tags
+        private static readonly List<string> s_undesirableTags = ["statistics"];
+
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
 
         public override ToolType GetToolType() => ToolType.FfProbe;
@@ -206,7 +212,7 @@ public partial class FfProbe
                 // Create a temp filename based on the input name
                 string tempName = Path.ChangeExtension(fileName, ".tmp13");
                 Debug.Assert(fileName != tempName);
-                _ = FileEx.DeleteFile(tempName);
+                File.Delete(tempName);
 
                 // Use Matroska for snippet format as it supports more stream formats
                 // E.g. DVCPRO video streams can be muxed into MKV but not into TS
@@ -230,7 +236,7 @@ public partial class FfProbe
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
                     Log.Error("{Error}", result.StandardError.Trim());
-                    _ = FileEx.DeleteFile(tempName);
+                    File.Delete(tempName);
                     return false;
                 }
 
@@ -356,7 +362,7 @@ public partial class FfProbe
         )
         {
             // Populate the MediaProps object from the JSON string
-            mediaProps = new MediaProps(ToolType.FfProbe);
+            mediaProps = new MediaProps(ToolType.FfProbe, fileName);
             try
             {
                 // Deserialize
@@ -366,6 +372,9 @@ public partial class FfProbe
                     return false;
                 }
 
+                // Container type
+                mediaProps.Container = ffProbe.Format.FormatName;
+
                 // Tracks
                 foreach (FfMpegToolJsonSchema.Track track in ffProbe.Tracks)
                 {
@@ -373,17 +382,30 @@ public partial class FfProbe
                     switch (track.CodecType.ToLowerInvariant())
                     {
                         case "video":
-                            mediaProps.Video.Add(VideoProps.Create(fileName, track));
+                            VideoProps videoProps = new(mediaProps);
+                            if (videoProps.Create(track))
+                            {
+                                mediaProps.Video.Add(videoProps);
+                            }
                             break;
                         case "audio":
-                            mediaProps.Audio.Add(AudioProps.Create(fileName, track));
+                            AudioProps audioProps = new(mediaProps);
+                            if (audioProps.Create(track))
+                            {
+                                mediaProps.Audio.Add(audioProps);
+                            }
                             break;
                         case "subtitle":
-                            mediaProps.Subtitle.Add(SubtitleProps.Create(fileName, track));
+                            SubtitleProps subtitleProps = new(mediaProps);
+                            if (subtitleProps.Create(track))
+                            {
+                                mediaProps.Subtitle.Add(subtitleProps);
+                            }
                             break;
                         default:
                             Log.Warning(
-                                "FfMpegToolJsonSchema : Unknown track type : {CodecType} : {FileName}",
+                                "{Parser} : Unknown track type : {CodecType} : {FileName}",
+                                mediaProps.Parser,
                                 track.CodecType,
                                 fileName
                             );
@@ -399,9 +421,6 @@ public partial class FfProbe
 
                 // Duration in seconds
                 mediaProps.Duration = TimeSpan.FromSeconds(ffProbe.Format.Duration);
-
-                // Container type
-                mediaProps.Container = ffProbe.Format.FormatName;
 
                 // TODO: Chapters
                 // TODO: Attachments
@@ -436,8 +455,5 @@ public partial class FfProbe
             tags.Keys.Any(key =>
                 s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase))
             );
-
-        // "Undesirable" tags
-        private static readonly List<string> s_undesirableTags = ["statistics"];
     }
 }

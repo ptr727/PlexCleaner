@@ -1,14 +1,56 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Serilog;
 
+#endregion
+
 namespace PlexCleaner;
 
-public class MediaProps(MediaTool.ToolType parser)
+public class MediaProps(MediaTool.ToolType parser, string fileName)
 {
+    public MediaTool.ToolType Parser => parser;
+    public string FileName => fileName;
+
+    public List<VideoProps> Video { get; private set; } = [];
+    public List<AudioProps> Audio { get; private set; } = [];
+    public List<SubtitleProps> Subtitle { get; private set; } = [];
+
+    public bool HasTags { get; set; }
+
+    public bool AnyTags =>
+        HasTags
+        || Video.Any(item => item.HasTags)
+        || Audio.Any(item => item.HasTags)
+        || Subtitle.Any(item => item.HasTags);
+
+    public bool HasErrors { get; set; }
+
+    public bool AnyErrors =>
+        HasErrors
+        || Video.Any(item => item.HasErrors)
+        || Audio.Any(item => item.HasErrors)
+        || Subtitle.Any(item => item.HasErrors);
+
+    public bool Unsupported =>
+        Video.Any(item => item.State == TrackProps.StateType.Unsupported)
+        || Audio.Any(item => item.State == TrackProps.StateType.Unsupported)
+        || Subtitle.Any(item => item.State == TrackProps.StateType.Unsupported);
+
+    public TimeSpan Duration { get; set; }
+    public string Container { get; set; }
+
+    public int Attachments { get; set; }
+    public int Chapters { get; set; }
+
+    // Combined track count
+    public int Count => Video.Count + Audio.Count + Subtitle.Count;
+
     public MediaProps Clone()
     {
         // Shallow copy
@@ -28,34 +70,13 @@ public class MediaProps(MediaTool.ToolType parser)
         return clone;
     }
 
-    // MkvMerge, FfProbe, MediaInfo
-    public MediaTool.ToolType Parser { get; } = parser;
+    // ffprobe reports "matroska,webm"
+    // mkvmerge and mediainfo reports "matroska"
+    public bool IsContainerMkv() =>
+        !string.IsNullOrEmpty(Container)
+        && Container.Contains("matroska", StringComparison.OrdinalIgnoreCase);
 
-    public List<VideoProps> Video { get; private set; } = [];
-    public List<AudioProps> Audio { get; private set; } = [];
-    public List<SubtitleProps> Subtitle { get; private set; } = [];
-
-    public bool HasTags { get; set; }
-    public bool AnyTags =>
-        HasTags
-        || Video.Any(item => item.HasTags)
-        || Audio.Any(item => item.HasTags)
-        || Subtitle.Any(item => item.HasTags);
-    public bool HasErrors { get; set; }
-    public bool AnyErrors =>
-        HasErrors
-        || Video.Any(item => item.HasErrors)
-        || Audio.Any(item => item.HasErrors)
-        || Subtitle.Any(item => item.HasErrors);
-    public bool Unsupported =>
-        Video.Any(item => item.State == TrackProps.StateType.Unsupported)
-        || Audio.Any(item => item.State == TrackProps.StateType.Unsupported)
-        || Subtitle.Any(item => item.State == TrackProps.StateType.Unsupported);
-    public TimeSpan Duration { get; set; }
-    public string Container { get; set; }
-    public int Attachments { get; set; }
-    public int Chapters { get; set; }
-    public bool HasCovertArt => Video.Any(item => item.IsCoverArt);
+    public bool HasCovertArt() => Video.Any(item => item.CoverArt);
 
     public void WriteLine()
     {
@@ -83,9 +104,6 @@ public class MediaProps(MediaTool.ToolType parser)
         return [.. trackLick.OrderBy(item => item.Id)];
     }
 
-    // Combined track count
-    public int Count => Video.Count + Audio.Count + Subtitle.Count;
-
     public static bool GetMediaProps(
         FileInfo fileInfo,
         out MediaProps ffProbe,
@@ -100,7 +118,7 @@ public class MediaProps(MediaTool.ToolType parser)
             && GetMediaProps(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0072:Add missing cases")]
+    [SuppressMessage("Style", "IDE0072:Add missing cases")]
     public static bool GetMediaProps(
         FileInfo fileInfo,
         MediaTool.ToolType parser,
@@ -133,7 +151,7 @@ public class MediaProps(MediaTool.ToolType parser)
         }
 
         // Find all tracks with cover art
-        List<VideoProps> coverArtTracks = Video.FindAll(item => item.IsCoverArt);
+        List<VideoProps> coverArtTracks = Video.FindAll(item => item.CoverArt);
 
         // Are all tracks cover art
         if (Video.Count == coverArtTracks.Count)

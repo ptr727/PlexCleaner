@@ -1,13 +1,33 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using InsaneGenius.Utilities;
 using Serilog;
 
+#endregion
+
 namespace PlexCleaner;
 
 public class Bitrate
 {
+    // List of bytes processed per second
+    private List<long> BytesPerSecond { get; } = [];
+
+    // Length in seconds
+    public int Length => BytesPerSecond.Count;
+
+    // Bitrate in bytes per second
+    public long Minimum { get; private set; }
+    public long Maximum { get; private set; }
+    public long Average { get; private set; }
+
+    // Threshold exceeded instance count and duration in seconds
+    public int Exceeded { get; private set; }
+
+    public int Duration { get; private set; }
+
     // Optional max bytes per second
     public void Calculate(int maxBps = 0)
     {
@@ -98,19 +118,4 @@ public class Bitrate
         );
 
     public static string ToBitsPerSecond(long byteRate) => Format.BytesToKilo(byteRate * 8, "bps");
-
-    // List of bytes processed per second
-    private List<long> BytesPerSecond { get; } = [];
-
-    // Length in seconds
-    public int Length => BytesPerSecond.Count;
-
-    // Bitrate in bytes per second
-    public long Minimum { get; private set; }
-    public long Maximum { get; private set; }
-    public long Average { get; private set; }
-
-    // Threshold exceeded instance count and duration in seconds
-    public int Exceeded { get; private set; }
-    public int Duration { get; private set; }
 }

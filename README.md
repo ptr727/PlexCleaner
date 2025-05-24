@@ -33,7 +33,9 @@ Docker images are published on [Docker Hub][docker-link].
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything to list and then process.
-  - Switched from editorconfig from `charset = utf-8-bom` to `charset = utf-8` as editing or PR merge in GitHub wrote files without the BOM.
+  - Switched editorconfig from `charset = utf-8-bom` to `charset = utf-8` as some tools and PR merge in GitHub always write files without the BOM.
+  - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, e.g. added `testmediainfo` test command.
   - General refactoring.
 - Version 3:12:
   - Update to .NET 9.0.
@@ -335,7 +337,8 @@ Settings allows for custom configuration of:
 
 Get encoder options:
 
-- List all supported encoders: `ffmpeg -encoders`
+- List hardware acceleration methods: `ffmpeg -hwaccels`
+- List supported encoders: `ffmpeg -encoders`
 - List options supported by an encoder: `ffmpeg -h encoder=libsvtav1`
 
 Example video encoder options:
@@ -347,15 +350,15 @@ Example video encoder options:
 Example hardware assisted video encoding options:
 
 - NVidia NVENC:
-  - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
+  - See [FFmpeg NVENC](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
   - View NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
   - `FfMpegOptions:Global`: `-hwaccel cuda -hwaccel_output_format cuda`
-  - `FfMpegOptions:Video`: `h264_nvenc -crf 22 -preset medium`
+  - `FfMpegOptions:Video`: `h264_nvenc -preset medium`
 - Intel QuickSync:
-  - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
+  - See [FFmpeg QuickSync](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
   - View QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
   - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
-  - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
+  - `FfMpegOptions:Video`: `h264_qsv -preset medium`
 
 #### HandBrake Options
 
@@ -370,7 +373,7 @@ Settings allows for custom configuration of:
 
 Get encoder options:
 
-- List all supported encoders: `HandBrakeCLI.exe --help`
+- List all supported encoders: `HandBrakeCLI --help`
 - List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list svt_av1`
 
 Example video encoder options:
@@ -382,11 +385,11 @@ Example video encoder options:
 Example hardware assisted video encoding options:
 
 - NVidia NVENC:
-  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
-  - `HandBrakeOptions:Video`: `nvenc_h264 --quality 22 --encoder-preset medium`
+  - See [HandBrake NVENC](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
+  - `HandBrakeOptions:Video`: `nvenc_h264 --encoder-preset medium`
 - Intel QuickSync:
-  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
-  - `HandBrakeOptions:Video`: `qsv_h264 --quality 22 --encoder-preset medium`
+  - See [HandBrake QuickSync](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
+  - `HandBrakeOptions:Video`: `qsv_h264 --encoder-preset balanced`
 
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
@@ -595,9 +598,11 @@ Options:
   - Check for new tool versions and download if newer.
   - Only supported on Windows.
 - `remux`:
+  - Conditionally re-multiplex media files.
   - Re-multiplex non-MKV containers in the `ReMuxExtensions` list to MKV container format.
   - Same logic as used in the `process` command.
 - `reencode`:
+  - Conditionally re-encode media files.
   - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in `ConvertOptions`.
   - Same logic as used in the `process` command.
 - `deinterlace`:
@@ -605,29 +610,30 @@ Options:
   - Same logic as used in the `process` command.
 - `removesubtitles`:
   - Remove all subtitle tracks.
-  - Useful when media players cannot disable output or content is undesirable.
+  - Useful when media players cannot disable subtitle output, or content is undesirable.
 - `removeclosedcaptions`:
-  - Remove EIA-608 and CTA-708 closed captions from video stream if present.
-  - Useful when media players cannot disable output or content is undesirable.
+  - Remove closed captions from video stream.
+  - Useful when media players cannot disable EIA-608 and CTA-708 embedded in the video stream, or content is undesirable.
   - Same logic as used in the `process` command.
 - `verify`:
-  - Verify the media container and stream integrity.
+  - Verify media container and stream integrity.
   - Same logic as used in the `process` command.
 - `createsidecar`:
-  - Create or re-create sidecar files.
+  - Create new sidecar files.
   - Useful to start fresh and update tool info and remove old processing state.
 - `updatesidecar`:
-  - Create or update sidecar files with current media tool information.
+  - Create or update sidecar files.
 - `getversioninfo`:
-  - Print application version, runtime version, and media tools version information.
+  - Print application and tools version information.
 - `getsidecarinfo`:
   - Print sidecar file information.
 - `gettagmap`:
-  - Print media file attribute mappings between between different media tools.
+  - Print media file attribute mappings.
+  - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
-  - Print media attribute information from sidecar files.
+  - Print media file information.
 - `gettoolinfo`:
-  - Print media attribute information using media tools.
+  - Print media tool information.
 - `createschema`:
   - Write JSON settings schema to file.
 
@@ -651,9 +657,9 @@ See the [W3C Language tags in HTML and XML](https://www.w3.org/International/art
 ## EIA-608 and CTA-708 Closed Captions
 
 [EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
-While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
+Media containers typically contain separate discrete subtitle tracks, but closed captions can be encoded into the primary video stream.
 
-Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
+Removal of closed captions may be desirable for various reasons, including undesirable content, or players that always burn in closed captions during playback.\
 Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
 Note I have no expertise in video engineering, and the following information was gathered by research and experimentation.
 
@@ -673,15 +679,9 @@ E.g.
 ```json
 {
     "@type": "Text",
-    "ID": "256-CC1",
-    "Format": "EIA-608",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
-},
-{
-    "@type": "Text",
     "ID": "256-1",
     "Format": "EIA-708",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
+    "MuxingMode": "A/53 / DTVCC Transport",
 },
 ```
 
@@ -742,7 +742,7 @@ E.g.
 ```
 
 FFprobe [recently added](https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01) the `analyze_frames` [option](https://ffmpeg.org/ffprobe.html#toc-Main-options) that reports on the presence of closed captions in video streams.\
-As of writing this functionality has not yet been released, but is in nightly builds.\
+As of writing this functionality has not yet been released, but is only in nightly builds.\
 E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %180 filename -print_format json`
 
 ```json

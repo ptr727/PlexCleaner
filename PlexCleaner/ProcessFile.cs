@@ -1,20 +1,46 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using InsaneGenius.Utilities;
 using Serilog;
+
+#endregion
 
 namespace PlexCleaner;
 
 public class ProcessFile
 {
+    // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
+    public static readonly List<string> Hdr10FormatList =
+    [
+        MediaInfo.HDR10Format,
+        MediaInfo.HDR10PlusFormat,
+    ];
+
+    // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
+    public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
+    [
+        MediaInfo.H264Format,
+        MediaInfo.H265Format,
+        MediaInfo.AV1Format,
+    ];
+
+    private SidecarFile _sidecarFile;
+
     public ProcessFile(string mediaFile)
     {
         FileInfo = new FileInfo(mediaFile);
         _sidecarFile = new SidecarFile(FileInfo);
     }
+
+    public MediaProps FfProbeProps { get; private set; }
+    public MediaProps MkvMergeProps { get; private set; }
+    public MediaProps MediaInfoProps { get; private set; }
+    public SidecarFile.StatesType State => _sidecarFile.State;
+    public FileInfo FileInfo { get; private set; }
 
     public bool DeleteMismatchedSidecarFile(ref bool modified)
     {
@@ -42,11 +68,7 @@ public class ProcessFile
         );
 
         // Delete the file
-        if (!FileEx.DeleteFile(FileInfo.FullName))
-        {
-            // Error
-            return false;
-        }
+        File.Delete(FileInfo.FullName);
 
         // File deleted, do not continue processing
         modified = true;
@@ -73,11 +95,7 @@ public class ProcessFile
         Log.Warning("Deleting non-MKV file : {FileName}", FileInfo.Name);
 
         // Delete the file
-        if (!FileEx.DeleteFile(FileInfo.FullName))
-        {
-            // Error
-            return false;
-        }
+        File.Delete(FileInfo.FullName);
 
         // File deleted, do not continue processing
         modified = true;
@@ -100,15 +118,11 @@ public class ProcessFile
         // Rename the file
         // Windows is case insensitive, so we need to rename in two steps
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
+        Debug.Assert(tempName != FileInfo.FullName);
+        File.Move(FileInfo.FullName, tempName, true);
         string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
-        if (
-            !FileEx.RenameFile(FileInfo.FullName, tempName)
-            || !FileEx.RenameFile(tempName, lowerName)
-        )
-        {
-            // TODO: Chance of partial failure if only one rename succeeds
-            return false;
-        }
+        Debug.Assert(lowerName != tempName);
+        File.Move(tempName, lowerName, true);
 
         // Modified filename
         modified = true;
@@ -156,7 +170,7 @@ public class ProcessFile
     public bool RemuxNonMkvContainer(ref bool modified)
     {
         // Make sure that MKV named files are Matroska containers
-        if (MkvMerge.Tool.IsMkvContainer(MkvMergeProps))
+        if (MkvMergeProps.IsContainerMkv())
         {
             // Nothing to do
             return true;
@@ -498,9 +512,9 @@ public class ProcessFile
     {
         // Any cover art
         if (
-            !MkvMergeProps.HasCovertArt
-            && !FfProbeProps.HasCovertArt
-            && !MediaInfoProps.HasCovertArt
+            !MkvMergeProps.HasCovertArt()
+            && !FfProbeProps.HasCovertArt()
+            && !MediaInfoProps.HasCovertArt()
         )
         {
             // Nothing to do
@@ -522,14 +536,14 @@ public class ProcessFile
         // Process MkvMerge first, sometimes FfProbe detects attachments, and sometimes it detects video streams
 
         // Any MkvMergeInfo cover art
-        if (MkvMergeProps.HasCovertArt && !RemoveCoverArtMkvMerge(ref modified))
+        if (MkvMergeProps.HasCovertArt() && !RemoveCoverArtMkvMerge(ref modified))
         {
             // Error
             return false;
         }
 
         // Any FfProbe cover art
-        if (FfProbeProps.HasCovertArt && !RemoveCoverArtFfProbe(ref modified))
+        if (FfProbeProps.HasCovertArt() && !RemoveCoverArtFfProbe(ref modified))
         {
             // Error
             return false;
@@ -537,9 +551,9 @@ public class ProcessFile
 
         // Did we get it all?
         Debug.Assert(
-            !MkvMergeProps.HasCovertArt
-                && !FfProbeProps.HasCovertArt
-                && !MediaInfoProps.HasCovertArt
+            !MkvMergeProps.HasCovertArt()
+                && !FfProbeProps.HasCovertArt()
+                && !MediaInfoProps.HasCovertArt()
         );
 
         // Done
@@ -549,7 +563,7 @@ public class ProcessFile
     public bool RemoveCoverArtFfProbe(ref bool modified)
     {
         // Any FfProbeInfo cover art
-        if (!FfProbeProps.HasCovertArt)
+        if (!FfProbeProps.HasCovertArt())
         {
             // No cover art
             return true;
@@ -563,7 +577,7 @@ public class ProcessFile
         }
 
         // Any FfProbeInfo cover art
-        if (!FfProbeProps.HasCovertArt)
+        if (!FfProbeProps.HasCovertArt())
         {
             // No cover art
             return true;
@@ -583,7 +597,7 @@ public class ProcessFile
     public bool RemoveCoverArtMkvMerge(ref bool modified)
     {
         // Any MkvMergeInfo cover art
-        if (!MkvMergeProps.HasCovertArt)
+        if (!MkvMergeProps.HasCovertArt())
         {
             // No cover art
             return true;
@@ -600,7 +614,7 @@ public class ProcessFile
         // Selected is Keep
         // NotSelected is Remove
         SelectMediaProps selectMediaProps = new(MkvMergeProps, true);
-        selectMediaProps.Move(MkvMergeProps.Video.Find(item => item.IsCoverArt), false);
+        selectMediaProps.Move(MkvMergeProps.Video.Find(item => item.CoverArt), false);
 
         // There must be something left to keep
         Debug.Assert(selectMediaProps.Selected.Count > 0);
@@ -912,7 +926,6 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != deintName);
 
         // DeInterlace using HandBrake and ignore subtitles
-        _ = FileEx.DeleteFile(deintName);
         if (
             !Tools.HandBrake.ConvertToMkv(
                 FileInfo.FullName,
@@ -925,7 +938,7 @@ public class ProcessFile
         {
             Log.Error("Failed to deinterlace interlaced media : {FileName}", FileInfo.Name);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(deintName);
+            File.Delete(deintName);
             return false;
         }
 
@@ -937,23 +950,21 @@ public class ProcessFile
         if (MkvMergeProps.Subtitle.Count == 0)
         {
             // No subtitles, just remux all content
-            _ = FileEx.DeleteFile(remuxName);
             Log.Information("Remuxing deinterlaced media : {FileName}", FileInfo.Name);
             if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName, out error))
             {
                 Log.Error("Failed to remux deinterlaced media : {FileName}", FileInfo.Name);
                 Log.Error("{Error}", error);
-                _ = FileEx.DeleteFile(deintName);
-                _ = FileEx.DeleteFile(remuxName);
+                File.Delete(deintName);
+                File.Delete(remuxName);
                 return false;
             }
         }
         else
         {
             // Merge the deinterlaced file with the subtitles from the original file
-            MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge);
+            MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge, FileInfo.Name);
             subtitleProps.Subtitle.AddRange(MkvMergeProps.Subtitle);
-            _ = FileEx.DeleteFile(remuxName);
             Log.Information(
                 "Remuxing subtitles and deinterlaced media : {FileName}",
                 FileInfo.Name
@@ -973,20 +984,15 @@ public class ProcessFile
                     FileInfo.Name
                 );
                 Log.Error("{Error}", error);
-                _ = FileEx.DeleteFile(deintName);
-                _ = FileEx.DeleteFile(remuxName);
+                File.Delete(deintName);
+                File.Delete(remuxName);
                 return false;
             }
         }
 
         // Delete the temp files and rename the output
-        _ = FileEx.DeleteFile(deintName);
-        if (!FileEx.RenameFile(remuxName, FileInfo.FullName))
-        {
-            // Error
-            _ = FileEx.DeleteFile(remuxName);
-            return false;
-        }
+        File.Delete(deintName);
+        File.Move(remuxName, FileInfo.FullName, true);
 
         // Clone the original MkvMergeInfo
         MediaProps postMkvMerge = MkvMergeProps.Clone();
@@ -1102,14 +1108,13 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != tempName);
 
         // Remove Closed Captions
-        _ = FileEx.DeleteFile(tempName);
         Log.Information("Removing closed captions using FfMpeg : {FileName}", FileInfo.Name);
         if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName, out string error))
         {
             // Error
             Log.Error("Failed to remove closed captions using FfMpeg : {FileName}", FileInfo.Name);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
@@ -1117,16 +1122,12 @@ public class ProcessFile
         if (!Convert.ReMux(tempName))
         {
             // Error
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
         // Rename the temp file to the original file
-        if (!FileEx.RenameFile(tempName, FileInfo.FullName))
-        {
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
+        File.Move(tempName, FileInfo.FullName, true);
 
         // Refresh
         modified = true;
@@ -1154,22 +1155,17 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != tempName);
 
         // Remove Subtitles
-        _ = FileEx.DeleteFile(tempName);
         if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName, out string error))
         {
             // Error
             Log.Error("Failed to remove subtitles : {FileName}", FileInfo.Name);
             Log.Error("{Error}", error);
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
         // Rename the temp file to the original file
-        if (!FileEx.RenameFile(tempName, FileInfo.FullName))
-        {
-            _ = FileEx.DeleteFile(tempName);
-            return false;
-        }
+        File.Move(tempName, FileInfo.FullName, true);
 
         // Refresh
         modified = true;
@@ -1382,10 +1378,9 @@ public class ProcessFile
         }
 
         // Delete the media file and sidecar file
-        // Ignore delete errors
         Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
-        _ = FileEx.DeleteFile(FileInfo.FullName);
-        _ = FileEx.DeleteFile(SidecarFile.GetSidecarName(FileInfo));
+        File.Delete(FileInfo.FullName);
+        File.Delete(SidecarFile.GetSidecarName(FileInfo));
 
         // Set the sidecar state as deleted
         // Sidecar file no longer exists, but in-memory state does
@@ -1709,7 +1704,7 @@ public class ProcessFile
         if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName, out string error))
         {
             // Failed, delete temp file
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
 
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1729,7 +1724,7 @@ public class ProcessFile
             if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false, out error))
             {
                 // Failed, delete temp file
-                _ = FileEx.DeleteFile(tempName);
+                File.Delete(tempName);
 
                 // Cancel requested
                 if (Program.IsCancelledError())
@@ -1750,7 +1745,7 @@ public class ProcessFile
         if (!Convert.ReMux(tempName))
         {
             // Failed
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
@@ -1758,15 +1753,12 @@ public class ProcessFile
         if (!VerifyMediaStreams(new FileInfo(tempName)))
         {
             // Failed
-            _ = FileEx.DeleteFile(tempName);
+            File.Delete(tempName);
             return false;
         }
 
         // Verify succeeded, rename the temp file to the original file
-        if (!FileEx.RenameFile(tempName, FileInfo.FullName))
-        {
-            return false;
-        }
+        File.Move(tempName, FileInfo.FullName, true);
 
         // Repair succeeded
         Log.Information("Repair succeeded : {FileName}", FileInfo.Name);
@@ -1889,8 +1881,42 @@ public class ProcessFile
 
     public bool GetMediaProps()
     {
-        // Only MKV files
+        // Only MKV files in production use
         Debug.Assert(SidecarFile.IsMkvFile(FileInfo));
+
+        // Get media info
+        if (!Refresh(false))
+        {
+            Log.Error("Failed to get media tool info : {FileName}", FileInfo.Name);
+            return false;
+        }
+
+        // Verify that all codecs and tracks are supported
+        if (MediaInfoProps.Unsupported || FfProbeProps.Unsupported || MkvMergeProps.Unsupported)
+        {
+            Log.Error("Unsupported media info : {FileName}", FileInfo.Name);
+            if (MediaInfoProps.Unsupported)
+            {
+                MediaInfoProps.WriteLine("Unsupported");
+            }
+            if (MkvMergeProps.Unsupported)
+            {
+                MkvMergeProps.WriteLine("Unsupported");
+            }
+            if (FfProbeProps.Unsupported)
+            {
+                FfProbeProps.WriteLine("Unsupported");
+            }
+            return false;
+        }
+
+        // Done
+        return true;
+    }
+
+    public bool TestMediaProps()
+    {
+        // Only called from test code to verify behavior of parsing logic
 
         // Get media info
         if (!Refresh(false))
@@ -2004,7 +2030,7 @@ public class ProcessFile
         // Start with empty selection
         // Selected is ReEncode
         // NotSelected is Keep
-        SelectMediaProps selectMediaProps = new(MediaTool.ToolType.FfProbe);
+        SelectMediaProps selectMediaProps = new(FfProbeProps);
 
         // Add audio and video tracks
         // Select tracks matching the reencode lists
@@ -2242,27 +2268,4 @@ public class ProcessFile
         // All temp files are to be named tmp[x] where x is an incrementing number
         // All uses of temp files must be uniquely named allowing nested use without overlap in temp file names
         fileInfo.Extension.StartsWith(".tmp", StringComparison.OrdinalIgnoreCase);
-
-    public MediaProps FfProbeProps { get; private set; }
-    public MediaProps MkvMergeProps { get; private set; }
-    public MediaProps MediaInfoProps { get; private set; }
-    public SidecarFile.StatesType State => _sidecarFile.State;
-    public FileInfo FileInfo { get; private set; }
-
-    private SidecarFile _sidecarFile;
-
-    // HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) (Using MediaInfo tags)
-    public static readonly List<string> Hdr10FormatList =
-    [
-        MediaInfo.HDR10Format,
-        MediaInfo.HDR10PlusFormat,
-    ];
-
-    // ReEncode audio unless video is H264, H265 or AV1 (using MediaInfo tags)
-    public static readonly List<string> ReEncodeVideoOnAudioReEncodeList =
-    [
-        MediaInfo.H264Format,
-        MediaInfo.H265Format,
-        MediaInfo.AV1Format,
-    ];
 }

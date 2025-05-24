@@ -1,7 +1,11 @@
+#region
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Serilog;
+
+#endregion
 
 // TODO: Find a better way to create profile levels
 // https://trac.ffmpeg.org/ticket/2901
@@ -14,15 +18,27 @@ using Serilog;
 
 namespace PlexCleaner;
 
-public class VideoProps : TrackProps
+public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, mediaProps)
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor")]
-    public VideoProps(MediaTool.ToolType parser, string fileName)
-        : base(parser, fileName) { }
+    // Cover art and thumbnail formats
+    private static readonly List<string> s_coverArtFormat = ["jpg", "jpeg", "png"];
 
+    public string Profile { get; set; } = string.Empty;
+
+    public bool Interlaced { get; set; }
+
+    public string FormatHdr { get; set; } = string.Empty;
+
+    public bool ClosedCaptions { get; set; }
+
+    public bool CoverArt => MatchCoverArt(Codec) || MatchCoverArt(Format);
+
+    // Required
+    // Format = track.Codec;
+    // Codec = track.Properties.CodecId;
     public override bool Create(MkvToolJsonSchema.Track track)
     {
-        // Call base first
+        // Call base
         if (!base.Create(track))
         {
             return false;
@@ -34,22 +50,27 @@ public class VideoProps : TrackProps
         // Missing: ClosedCaptions
 
         // Cover art
-        if (IsCoverArt)
+        if (CoverArt)
         {
             Log.Warning(
-                "MkvToolJsonSchema : Cover art video track : {Format}:{Codec} : {FileName}",
+                "{Parser} : {Type} : Cover art video track : Format: {Format}, Codec: {Codec} : {FileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                FileName
+                Parent.FileName
             );
         }
 
         return true;
     }
 
+    // Required
+    // Format = track.CodecName;
+    // Codec = track.CodecLongName;
     public override bool Create(FfMpegToolJsonSchema.Track track)
     {
-        // Call base first
+        // Call base
         if (!base.Create(track))
         {
             return false;
@@ -57,7 +78,7 @@ public class VideoProps : TrackProps
 
         // Re-assign Codec to the CodecTagString instead of the CodecLongName
         // We need the tag for sub-formats like DivX / DX50
-        // Ignore bad tags like codec_tag: 0x0000 or codec_tag_string: [0][0][0][0]
+        // Ignore unknown tags like codec_tag: 0x0000 or codec_tag_string: [0][0][0][0]
         if (
             !string.IsNullOrEmpty(track.CodecTagString)
             && !track.CodecTagString.Contains("[0]", StringComparison.OrdinalIgnoreCase)
@@ -85,22 +106,27 @@ public class VideoProps : TrackProps
         // Missing: HDR
 
         // Cover art
-        if (IsCoverArt)
+        if (CoverArt)
         {
             Log.Warning(
-                "FfMpegToolJsonSchema : Cover art video track : {Format}:{Codec} : {FileName}",
+                "{Parser} : {Type} : Cover art video track : Format: {Format}, Codec: {Codec} : {FileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                FileName
+                Parent.FileName
             );
         }
 
         return true;
     }
 
+    // Required
+    // Format = track.Format;
+    // Codec = track.CodecId;
     public override bool Create(MediaInfoToolXmlSchema.Track track)
     {
-        // Call base first
+        // Call base
         if (!base.Create(track))
         {
             return false;
@@ -125,46 +151,20 @@ public class VideoProps : TrackProps
         FormatHdr = track.HdrFormat;
 
         // Cover art
-        if (IsCoverArt)
+        if (CoverArt)
         {
             Log.Warning(
-                "MediaInfoToolXmlSchema : Cover art video track : {Format}:{Codec} : {fileName}",
+                "{Parser} : {Type} : Cover art video track : Format: {Format}, Codec: {Codec} : {fileName}",
+                Parent.Parser,
+                Type,
                 Format,
                 Codec,
-                FileName
+                Parent.FileName
             );
         }
 
         return true;
     }
-
-    public static VideoProps Create(string fileName, FfMpegToolJsonSchema.Track track)
-    {
-        VideoProps videoProps = new(MediaTool.ToolType.FfProbe, fileName);
-        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
-    }
-
-    public static VideoProps Create(string fileName, MediaInfoToolXmlSchema.Track track)
-    {
-        VideoProps videoProps = new(MediaTool.ToolType.MediaInfo, fileName);
-        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
-    }
-
-    public static VideoProps Create(string fileName, MkvToolJsonSchema.Track track)
-    {
-        VideoProps videoProps = new(MediaTool.ToolType.MkvMerge, fileName);
-        return videoProps.Create(track) ? videoProps : throw new NotSupportedException();
-    }
-
-    public string Profile { get; set; } = string.Empty;
-
-    public bool Interlaced { get; set; }
-
-    public string FormatHdr { get; set; } = string.Empty;
-
-    public bool ClosedCaptions { get; set; }
-
-    public bool IsCoverArt => MatchCoverArt(Codec) || MatchCoverArt(Format);
 
     public static bool MatchCoverArt(string codec) =>
         s_coverArtFormat.Any(cover => codec.Contains(cover, StringComparison.OrdinalIgnoreCase));
@@ -189,11 +189,11 @@ public class VideoProps : TrackProps
     public override void WriteLine() =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Information(
-            "Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+            "{Parser} : {Type} : Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
                 + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt} : {FileName}",
-            Parser,
-            GetType().Name,
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, CoverArt: {CoverArt}, Container: {Container} : {FileName}",
+            Parent.Parser,
+            Type,
             Format,
             FormatHdr,
             Codec,
@@ -209,19 +209,20 @@ public class VideoProps : TrackProps
             State,
             HasErrors,
             HasTags,
-            IsCoverArt,
-            FileName
+            CoverArt,
+            Parent.Container,
+            Parent.FileName
         );
 
     public override void WriteLine(string prefix) =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Information(
-            "{Prefix} : Parser: {Parser}, Type: {Type}, Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
+            "{Prefix} : {Parser} : {Type} : Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
                 + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, IsCoverArt: {IsCoverArt} : {FileName}",
+                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, CoverArt: {CoverArt}, Container: {Container} : {FileName}",
             prefix,
-            Parser,
-            GetType().Name,
+            Parent.Parser,
+            Type,
             Format,
             FormatHdr,
             Codec,
@@ -237,10 +238,8 @@ public class VideoProps : TrackProps
             State,
             HasErrors,
             HasTags,
-            IsCoverArt,
-            FileName
+            CoverArt,
+            Parent.Container,
+            Parent.FileName
         );
-
-    // Cover art and thumbnail formats
-    private static readonly List<string> s_coverArtFormat = ["jpg", "jpeg", "png"];
 }
