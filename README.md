@@ -29,6 +29,9 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
+- Version 3.13:
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command.
+    - Fixes #524.
 - version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
