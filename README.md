@@ -29,7 +29,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3:13:
+- Version 3:14:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything to list and then process.
@@ -37,6 +37,8 @@ Docker images are published on [Docker Hub][docker-link].
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
   - Improved media tool parsing resiliency when parsing non-Matroska containers, e.g. added `testmediainfo` test command.
   - General refactoring.
+- Version 3.13:
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.
 - Version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
