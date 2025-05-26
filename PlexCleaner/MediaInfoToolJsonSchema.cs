@@ -46,6 +46,9 @@ public class Track
     [JsonPropertyName("ID")]
     public string Id { get; set; } = "";
 
+    [JsonPropertyName("UniqueID")]
+    public string UniqueId { get; set; } = "";
+
     [JsonPropertyName("Format_Level")]
     public string FormatLevel { get; set; } = "";
 

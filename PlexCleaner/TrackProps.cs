@@ -634,6 +634,17 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(track.Id.All(char.IsDigit));
         Number = long.Parse(track.Id, CultureInfo.InvariantCulture);
 
+        // Use UniqueId for Uid
+        if (string.IsNullOrEmpty(track.UniqueId))
+        {
+            Uid = 0;
+        }
+        else
+        {
+            Debug.Assert(track.UniqueId.All(char.IsDigit));
+            Uid = ulong.Parse(track.UniqueId, CultureInfo.InvariantCulture);
+        }
+
         // Check title for tags
         HasTags = TitleIsTag();
 

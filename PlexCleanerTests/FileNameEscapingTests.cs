@@ -12,10 +12,12 @@ public class FileNameEscapingTests(PlexCleanerFixture fixture)
     [InlineData(@":", @"\\:")]
     [InlineData(@"'", @"\\\'")]
     [InlineData(@",", @"\\\,")]
-    [InlineData(@"D:\Test\Dragons' Den.mkv", @"D\\:/Test/Dragons\\\' Den.mkv")]
+    [InlineData(@";", @"\\\;")]
+    [InlineData(@"[", @"\\\[")]
+    [InlineData(@"]", @"\\\]")]
     [InlineData(
-        @"D:\Test\Dragons' Den, Christmas Special.mkv",
-        @"D\\:/Test/Dragons\\\' Den\\\, Christmas Special.mkv"
+        @"D:\Test\Naming - movie=,.;{}[out0+subcc] (1234) {abc-123} [aaa][bbb][ccc]-def.mkv",
+        @"D\\:/Test/Naming - movie=\\\,.\\\;{}\\\[out0+subcc\\\] (1234) {abc-123} \\\[aaa\\\]\\\[bbb\\\]\\\[ccc\\\]-def.mkv"
     )]
     public void Escape_Movie_fileName(string fileName, string escapedName)
     {

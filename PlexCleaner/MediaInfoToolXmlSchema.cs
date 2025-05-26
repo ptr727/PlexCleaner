@@ -29,6 +29,9 @@ public class MediaInfoToolXmlSchema
         [XmlElement(ElementName = "ID", Namespace = "https://mediaarea.net/mediainfo")]
         public string Id { get; set; } = "";
 
+        [XmlElement(ElementName = "UniqueID", Namespace = "https://mediaarea.net/mediainfo")]
+        public string UniqueId { get; set; } = "";
+
         [XmlElement(ElementName = "Duration", Namespace = "https://mediaarea.net/mediainfo")]
         public string Duration { get; set; } = "";
 
