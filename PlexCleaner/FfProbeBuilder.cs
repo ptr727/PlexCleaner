@@ -10,17 +10,17 @@ namespace PlexCleaner;
 public partial class FfProbe
 {
     public static string EscapeMovieFileName(string fileName) =>
-        // Escape the file name, specifically : \ ' characters
-        // \ -> /
-        // : -> \\:
-        // ' -> \\\'
-        // , -> \\\,
+        // Escape the file name so that it does not interfere with building the filter graph
         // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
+        // See av_get_token() in https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/avstring.c
         fileName
             .Replace(@"\", @"/")
             .Replace(@":", @"\\:")
             .Replace(@"'", @"\\\'")
-            .Replace(@",", @"\\\,");
+            .Replace(@",", @"\\\,")
+            .Replace(@";", @"\\\;")
+            .Replace(@"[", @"\\\[")
+            .Replace(@"]", @"\\\]");
 
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {

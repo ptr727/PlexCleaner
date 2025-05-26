@@ -108,6 +108,9 @@ public class MkvToolJsonSchema
         [JsonPropertyName("tag_language")]
         public string TagLanguage { get; set; } = "";
 
+        [JsonPropertyName("uid")]
+        public ulong Uid { get; set; }
+
         [JsonPropertyName("number")]
         public long Number { get; set; }
 

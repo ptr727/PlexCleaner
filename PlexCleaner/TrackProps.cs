@@ -61,6 +61,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     public string Language { get; set; } = string.Empty;
     public string LanguageIetf { get; set; } = string.Empty;
     public string LanguageAny => !string.IsNullOrEmpty(LanguageIetf) ? LanguageIetf : Language;
+    public ulong Uid { get; set; }
     public long Id { get; set; }
     public long Number { get; set; }
     public StateType State { get; set; } = StateType.None;
@@ -159,13 +160,17 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             return false;
         }
 
-        // Use id and number correctly in MkvMerge and MkvPropEdit
+        // Use uid, id, and number correctly in MkvMerge and MkvPropEdit
         // https://codeberg.org/mbunkus/mkvtoolnix/wiki/About-track-UIDs%2C-track-numbers-and-track-IDs
 
-        // Id: 0-based track number internally assigned
+        // Id: MkvMerge internally assigned id
         Id = track.Id;
 
-        // Number: 1-based track number from Matroska header
+        // Uid: Matroska unique track id
+        // TODO: Consider switching to using uid vs. number as it is unique and deterministic in MkvMerge and MkvPropEdit
+        Uid = track.Properties.Uid;
+
+        // Number: Matroska track number from block header
         Number = track.Properties.Number;
 
         // Check title for tags
