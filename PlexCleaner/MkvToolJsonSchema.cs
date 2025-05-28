@@ -49,6 +49,12 @@ public class MkvToolJsonSchema
 
         [JsonPropertyName("type")]
         public string Type { get; set; } = "";
+
+        [JsonPropertyName("recognized")]
+        public bool Recognized { get; set; }
+
+        [JsonPropertyName("supported")]
+        public bool Supported { get; set; }
     }
 
     public class ContainerProperties

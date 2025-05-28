@@ -363,8 +363,16 @@ public partial class FfProbe
             {
                 // Deserialize
                 FfMpegToolJsonSchema.FfProbe ffProbe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
-                if (ffProbe == null || ffProbe.Tracks.Count == 0)
+                ArgumentNullException.ThrowIfNull(ffProbe);
+                if (ffProbe.Tracks.Count == 0)
                 {
+                    Log.Error(
+                        "{ToolType} : Container not supported : Container: {Container}, Tracks: {Tracks} : {FileName}",
+                        mediaProps.Parser,
+                        ffProbe.Format.FormatName,
+                        ffProbe.Tracks.Count,
+                        fileName
+                    );
                     return false;
                 }
 

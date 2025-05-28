@@ -185,27 +185,29 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
     public override void WriteLine() =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Information(
-            "{Parser} : {Type} : Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, CoverArt: {CoverArt}, Container: {Container} : {FileName}",
+            "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Profile: {Profile}, Interlaced: {Interlaced}, HDR: {HDR}, CC: {CC}, CoverArt: {CoverArt}, "
+                + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             Parent.Parser,
             Type,
             Format,
-            FormatHdr,
             Codec,
             Language,
             LanguageIetf,
-            Id,
-            Number,
             Title,
             Flags,
-            Profile,
-            Interlaced,
-            ClosedCaptions,
             State,
             HasErrors,
             HasTags,
+            Profile,
+            Interlaced,
+            FormatHdr,
+            ClosedCaptions,
             CoverArt,
+            Id,
+            Number,
+            Uid,
             Parent.Container,
             Parent.FileName
         );
@@ -213,28 +215,31 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
     public override void WriteLine(string prefix) =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Information(
-            "{Prefix} : {Parser} : {Type} : Format: {Format}, HDR: {Hdr}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, Profile: {Profile}, Interlaced: {Interlaced}, "
-                + "ClosedCaptions: {ClosedCaptions}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, CoverArt: {CoverArt}, Container: {Container} : {FileName}",
+            "{Prefix} : "
+                + "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Profile: {Profile}, Interlaced: {Interlaced}, HDR: {HDR}, CC: {CC}, CoverArt: {CoverArt}, "
+                + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             prefix,
             Parent.Parser,
             Type,
             Format,
-            FormatHdr,
             Codec,
             Language,
             LanguageIetf,
-            Id,
-            Number,
             Title,
             Flags,
-            Profile,
-            Interlaced,
-            ClosedCaptions,
             State,
             HasErrors,
             HasTags,
+            Profile,
+            Interlaced,
+            FormatHdr,
+            ClosedCaptions,
             CoverArt,
+            Id,
+            Number,
+            Uid,
             Parent.Container,
             Parent.FileName
         );

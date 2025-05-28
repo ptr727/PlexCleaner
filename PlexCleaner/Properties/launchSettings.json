@@ -2,7 +2,7 @@
   "profiles": {
     "Process": {
       "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\SAMBA\\Media\\Series\" --mediafiles \"\\\\SAMBA\\Media\\Movies\" --mediafiles \"\\\\SAMBA\\Media\\Movies-4K\""
     },
     "Version": {
       "commandName": "Project",
@@ -29,7 +29,7 @@
     },
     "Process Parallel": {
       "commandName": "Project",
-      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --parallel --threadcount 2 --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "--logfile \"PlexCleaner.log\" process --parallel --threadcount 2 --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\SAMBA\\Media\\Series\" --mediafiles \"\\\\SAMBA\\Media\\Movies\" --mediafiles \"\\\\SAMBA\\Media\\Movies-4K\""
     },
     "Process Snippets Parallel Test": {
       "commandName": "Project",
@@ -101,11 +101,19 @@
     },
     "GetTagMap": {
       "commandName": "Project",
-      "commandLineArgs": "gettagmap --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\server-1\\Media\\Series\" --mediafiles \"\\\\server-1\\Media\\Movies\" --mediafiles \"\\\\server-1\\Media\\Movies-4K\""
+      "commandLineArgs": "gettagmap --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\SAMBA\\Media\\Series\" --mediafiles \"\\\\SAMBA\\Media\\Movies\" --mediafiles \"\\\\SAMBA\\Media\\Movies-4K\""
     },
     "Verify": {
       "commandName": "Project",
       "commandLineArgs": "verify --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
+    },
+    "TestMediaInfo": {
+      "commandName": "Project",
+      "commandLineArgs": "testmediainfo --settingsfile \"PlexCleaner.json\" --mediafiles \"\\\\SAMBA\\Media\\Series\" --mediafiles \"\\\\SAMBA\\Media\\Movies\" --mediafiles \"\\\\SAMBA\\Media\\Movies-4K\""
+    },
+    "TestMediaInfo Test": {
+      "commandName": "Project",
+      "commandLineArgs": "testmediainfo --settingsfile \"PlexCleaner.json\" --mediafiles \"D:\\Test\""
     }
   }
 }

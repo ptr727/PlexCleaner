@@ -255,7 +255,7 @@ public static class ProcessDriver
                     return false;
                 }
 
-                // TODO: Remove or ignore cover art in video tracks during load
+                // Remove cover art in video tracks
                 _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.CoverArt);
                 _ = processFile.FfProbeProps.Video.RemoveAll(track => track.CoverArt);
                 _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.CoverArt);
@@ -357,7 +357,8 @@ public static class ProcessDriver
                     return true;
                 }
 
-                Log.Information("{FileName}", fileName);
+                // Get media information
+                Log.Information("Reading media information : {FileName}", fileName);
                 int ret = 0;
                 if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
                 {
@@ -374,8 +375,72 @@ public static class ProcessDriver
                     ffProbeProps.WriteLine();
                     ret++;
                 }
+                if (ret != 3)
+                {
+                    return false;
+                }
 
-                return ret == 3;
+                // Skip further validation if any errors
+                if (mediaInfoProps.HasErrors || ffProbeProps.HasErrors || mkvMergeProps.HasErrors)
+                {
+                    Log.Warning("Media metadata has errors : {File}", fileInfo.Name);
+                    return true;
+                }
+
+                // Remove cover art in video tracks
+                _ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+                _ = ffProbeProps.Video.RemoveAll(track => track.CoverArt);
+                _ = mkvMergeProps.Video.RemoveAll(track => track.CoverArt);
+
+                // Do the track counts match
+                if (
+                    ffProbeProps.Audio.Count != mkvMergeProps.Audio.Count
+                    || mkvMergeProps.Audio.Count != mediaInfoProps.Audio.Count
+                    || ffProbeProps.Video.Count != mkvMergeProps.Video.Count
+                    || mkvMergeProps.Video.Count != mediaInfoProps.Video.Count
+                    || ffProbeProps.Subtitle.Count != mkvMergeProps.Subtitle.Count
+                    || mkvMergeProps.Subtitle.Count != mediaInfoProps.Subtitle.Count
+                )
+                {
+                    Log.Warning("Tool track count discrepancy : {File}", fileInfo.Name);
+                }
+
+                // If Matroska container then MkvMerge and MediaInfo track Uid's should match
+                if (mkvMergeProps.IsContainerMkv())
+                {
+                    if (
+                        !mkvMergeProps.Video.All(mkvItem =>
+                            mediaInfoProps.Video.Find(mediaInfoItem =>
+                                mediaInfoItem.Uid == mkvItem.Uid
+                            ) != null
+                        )
+                    )
+                    {
+                        Log.Warning("MkvMerge video track Uid mismatch : {File}", fileInfo.Name);
+                    }
+                    if (
+                        !mkvMergeProps.Audio.All(mkvItem =>
+                            mediaInfoProps.Audio.Find(mediaInfoItem =>
+                                mediaInfoItem.Uid == mkvItem.Uid
+                            ) != null
+                        )
+                    )
+                    {
+                        Log.Warning("MkvMerge audio track Uid mismatch : {File}", fileInfo.Name);
+                    }
+                    if (
+                        !mkvMergeProps.Subtitle.All(mkvItem =>
+                            mediaInfoProps.Subtitle.Find(mediaInfoItem =>
+                                mediaInfoItem.Uid == mkvItem.Uid
+                            ) != null
+                        )
+                    )
+                    {
+                        Log.Warning("MkvMerge subtitle track Uid mismatch : {File}", fileInfo.Name);
+                    }
+                }
+
+                return true;
             }
         );
 

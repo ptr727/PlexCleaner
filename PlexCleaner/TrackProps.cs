@@ -616,7 +616,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Sub-tracks should already be filtered out
-        // Id and StreamOrder should be all numeric
+        // Uid, Id and StreamOrder should be all numeric if set
 
         // Use StreamOrder for Id
         if (string.IsNullOrEmpty(track.StreamOrder))
@@ -630,9 +630,15 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Use Id for Number
-        Debug.Assert(!string.IsNullOrEmpty(track.Id));
-        Debug.Assert(track.Id.All(char.IsDigit));
-        Number = long.Parse(track.Id, CultureInfo.InvariantCulture);
+        if (string.IsNullOrEmpty(track.Id))
+        {
+            Number = 0;
+        }
+        else
+        {
+            Debug.Assert(track.Id.All(char.IsDigit));
+            Number = long.Parse(track.Id, CultureInfo.InvariantCulture);
+        }
 
         // Use UniqueId for Uid
         if (string.IsNullOrEmpty(track.UniqueId))
@@ -657,13 +663,12 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     {
         // StreamOrder maps to Id
         // Id maps to Number
+        // UniqueId maps to Uid
 
         // Only subtitle tracks containing closed captions are handled in SubtitleProps.HandleClosedCaptions()
         // All other sub-tracks are ignored
-        if (
-            (!string.IsNullOrEmpty(track.StreamOrder) && !track.StreamOrder.All(char.IsDigit))
-            || (!string.IsNullOrEmpty(track.Id) && !track.Id.All(char.IsDigit))
-        )
+        // Look for any non-numeric in Id
+        if (!string.IsNullOrEmpty(track.Id) && !track.Id.All(char.IsDigit))
         {
             // Ignoring sub-track
             Log.Warning(
@@ -678,34 +683,56 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             return false;
         }
 
+        // Sanitize StreamOrder
+        if (!string.IsNullOrEmpty(track.StreamOrder) && !track.StreamOrder.All(char.IsDigit))
+        {
+            if (!MediaInfo.Tool.ParseSubTrack(track.StreamOrder, out long trackId))
+            {
+                Log.Error(
+                    "{Parser} : {Type} : Failed to parse sub-track number : Id: {Id}, Container: {Container} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    track.StreamOrder,
+                    Parent.Container,
+                    Parent.FileName
+                );
+                return false;
+            }
+            track.StreamOrder = trackId.ToString(CultureInfo.InvariantCulture);
+        }
+
         return true;
     }
 
     public virtual void WriteLine() =>
         Log.Information(
-            "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, Container: {Container} : {FileName}",
+            "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             Parent.Parser,
             Type,
             Format,
             Codec,
             Language,
             LanguageIetf,
-            Id,
-            Number,
             Title,
             Flags,
             State,
             HasErrors,
             HasTags,
+            Id,
+            Number,
+            Uid,
             Parent.Container,
             Parent.FileName
         );
 
     public virtual void WriteLine(string prefix) =>
         Log.Information(
-            "{Prefix} : {Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, LanguageIetf: {LanguageIetf}, "
-                + "Id: {Id}, Number: {Number}, Title: {Title}, Flags: {Flags}, State: {State}, HasErrors: {HasErrors}, HasTags: {HasTags}, Container: {Container} : {FileName}",
+            "{Prefix} : "
+                + "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             prefix,
             Parent.Parser,
             Type,
@@ -713,13 +740,14 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             Codec,
             Language,
             LanguageIetf,
-            Id,
-            Number,
             Title,
             Flags,
             State,
             HasErrors,
             HasTags,
+            Id,
+            Number,
+            Uid,
             Parent.Container,
             Parent.FileName
         );

@@ -158,12 +158,20 @@ public partial class MediaInfo
             try
             {
                 // Deserialize
-                MediaInfoToolXmlSchema.MediaInfo xmInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(
+                MediaInfoToolXmlSchema.MediaInfo xmlInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(
                     xml
                 );
-                MediaInfoToolXmlSchema.MediaElement xmlMedia = xmInfo.Media;
-                if (xmInfo.Media == null || xmlMedia.Tracks.Count == 0)
+                ArgumentNullException.ThrowIfNull(xmlInfo);
+                MediaInfoToolXmlSchema.MediaElement xmlMedia = xmlInfo.Media;
+                ArgumentNullException.ThrowIfNull(xmlMedia);
+                if (xmlMedia.Tracks.Count == 0)
                 {
+                    Log.Error(
+                        "{ToolType} : Container not supported : Tracks: {Tracks} : {FileName}",
+                        mediaProps.Parser,
+                        xmlMedia.Tracks.Count,
+                        fileName
+                    );
                     return false;
                 }
 

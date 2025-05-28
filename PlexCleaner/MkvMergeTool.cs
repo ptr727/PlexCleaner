@@ -175,8 +175,16 @@ public partial class MkvMerge
             {
                 // Deserialize
                 MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
-                if (mkvMerge == null || mkvMerge.Tracks.Count == 0)
+                ArgumentNullException.ThrowIfNull(mkvMerge);
+                if (!mkvMerge.Container.Supported || mkvMerge.Tracks.Count == 0)
                 {
+                    Log.Error(
+                        "{ToolType} : Container not supported : Container:  {Container}, Tracks: {Tracks} : {FileName}",
+                        mediaProps.Parser,
+                        mkvMerge.Container.Type,
+                        mkvMerge.Tracks.Count,
+                        fileName
+                    );
                     return false;
                 }
 

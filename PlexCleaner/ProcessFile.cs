@@ -1847,9 +1847,8 @@ public class ProcessFile
 
     public bool VerifyMediaInfo()
     {
-        // TODO: Mixing anything other than MvMerge to MkvMerge requires the track numbers to be the same
-        // Id's are unique to the tool, numbers come from the Matroska header
-        // FfProbe does not report numbers, only id's
+        // Comparing track ids generated between media tools are not directly possible
+        // MkvMerge and MediaInfo Uid's are the same when reported, Number's and Id's are tool specific
 
         // Make sure the track counts match
         if (
