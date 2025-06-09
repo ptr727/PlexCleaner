@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using FluentAssertions;
+using AwesomeAssertions;
 using PlexCleaner;
 using PlexCleanerTests;
 using Xunit;

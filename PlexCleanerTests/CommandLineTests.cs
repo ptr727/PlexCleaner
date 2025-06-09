@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using FluentAssertions;
+using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
 

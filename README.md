@@ -32,10 +32,10 @@ Docker images are published on [Docker Hub][docker-link].
 - Version 3:14:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Converted media tool commandline creation to using fluent builder pattern.
-  - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything to list and then process.
-  - Switched editorconfig from `charset = utf-8-bom` to `charset = utf-8` as some tools and PR merge in GitHub always write files without the BOM.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything into memory and then process.
+  - Switched editorconfig `charset` from `uf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
-  - Improved media tool parsing resiliency when parsing non-Matroska containers, e.g. added `testmediainfo` test command.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing many media types.
   - General refactoring.
 - Version 3.13:
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.
@@ -886,7 +886,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [FluentAssertions](https://fluentassertions.com/)
+- [AwesomeAssertions](https://awesomeassertions.org/)
 - [xUnit.Net](https://xunit.net/)
 - [CliWrap](https://github.com/Tyrrrz/CliWrap)
 - [Utf8JsonAsyncStreamReader](https://github.com/gragra33/Utf8JsonAsyncStreamReader)
