@@ -2161,10 +2161,7 @@ public class ProcessFile
         SelectMediaProps selectMediaProps = new(
             MkvMergeProps,
             item =>
-                Language.Singleton.IsMatch(
-                    item.LanguageIetf,
-                    Program.Config.ProcessOptions.KeepLanguages
-                )
+                Language.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages)
                 || (
                     Program.Config.ProcessOptions.KeepOriginalLanguage
                     && item.Flags.HasFlag(TrackProps.FlagsType.Original)

@@ -2,11 +2,6 @@
 
 Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
-## License
-
-Licensed under the [MIT License][license-link]\
-![GitHub License][license-shield]
-
 ## Build
 
 Code and Pipeline is on [GitHub][github-link].\
@@ -899,7 +894,10 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [MPlayer](https://samples.mplayerhq.hu/)
 - [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
 
-***
+## License
+
+Licensed under the [MIT License][license-link]\
+![GitHub License][license-shield]
 
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [alpine-docker-link]: https://hub.docker.com/_/alpine

@@ -8,6 +8,7 @@ namespace PlexCleaner;
 // https://github.com/FFmpeg/FFmpeg/blob/master/doc/formats.texi
 // https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffmpeg.texi
 
+// https://github.com/livingbio/typed-ffmpeg
 // https://github.com/rosenbjerg/FFMpegCore
 // https://github.com/kkroening/ffmpeg-python
 // https://github.com/fluent-ffmpeg/node-fluent-ffmpeg

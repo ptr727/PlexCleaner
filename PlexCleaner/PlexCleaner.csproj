@@ -17,7 +17,7 @@
     <Version>1.1.1</Version>
     <FileVersion>1.1.1.1</FileVersion>
     <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <PackageId>InsaneGenius.PlexCleaner</PackageId>
+    <PackageId>ptr727.PlexCleaner</PackageId>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -41,6 +41,7 @@
     <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.3" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="ptr727.LanguageTags" Version="1.0.14" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />

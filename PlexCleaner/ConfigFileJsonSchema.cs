@@ -134,6 +134,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             ExcludeObsoletePropertiesModifier
         ),
         WriteIndented = true,
+        NewLine = "\r\n",
     };
 
     public ConfigFileJsonSchema4() { }

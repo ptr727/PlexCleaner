@@ -201,7 +201,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         if (languageSet && languageIetfSet)
         {
             // Get the ISO tag from the IETF tag
-            string isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
+            string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
 
             if (string.IsNullOrEmpty(isoLookup))
             {
@@ -245,7 +245,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         if (languageSet && !languageIetfSet)
         {
             // Get the IETF tag from the ISO tag
-            string ietfLookup = PlexCleaner.Language.Singleton.GetIetfTag(Language, true);
+            string ietfLookup = PlexCleaner.Language.Lookup.GetIetfFromIso(Language);
 
             if (string.IsNullOrEmpty(ietfLookup))
             {
@@ -294,7 +294,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             State = StateType.ReMux;
 
             // Get the ISO tag from the IETF tag
-            string isoLookup = PlexCleaner.Language.Singleton.GetIso639Tag(LanguageIetf, true);
+            string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
 
             if (string.IsNullOrEmpty(isoLookup))
             {
