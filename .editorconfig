@@ -16,7 +16,6 @@ root = true
 # Defaults
 [*]
 charset = utf-8
-end_of_line = crlf
 indent_size = 4
 indent_style = space
 insert_final_newline = true
@@ -24,15 +23,23 @@ trim_trailing_whitespace = true
 
 # Markdown files
 [*.{md}]
+end_of_line = crlf
 trim_trailing_whitespace = false
 
 # Xml files
 [*.{xml,csproj,props,targets}]
+end_of_line = crlf
 indent_size = 2
 
-# YAML files
+# Yaml files
 [*.{yml,yaml}]
+end_of_line = crlf
 indent_size = 2
+
+# Json files
+[*.json]
+end_of_line = crlf
+indent_size = 4
 
 # Linux scripts
 [*.sh]
@@ -44,10 +51,8 @@ end_of_line = crlf
 
 # C# files
 [*.cs]
-
-# Default to suggestion severity
+end_of_line = crlf
 dotnet_analyzer_diagnostic.severity = suggestion
-
 csharp_indent_block_contents = true
 csharp_indent_braces = false
 csharp_indent_case_contents = true

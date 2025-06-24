@@ -5,6 +5,7 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using Serilog;
 
@@ -360,10 +361,10 @@ public static class Tools
         return true;
     }
 
-    public static async void DownloadFileAsync(Uri uri, string fileName)
+    public static async Task DownloadFileAsync(Uri uri, string fileName)
     {
-        Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
-        using FileStream fileStream = File.OpenWrite(fileName);
+        using Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
+        await using FileStream fileStream = File.OpenWrite(fileName);
         await httpStream.CopyToAsync(fileStream);
     }
 
@@ -371,7 +372,7 @@ public static class Tools
     {
         try
         {
-            DownloadFileAsync(uri, fileName);
+            DownloadFileAsync(uri, fileName).GetAwaiter().GetResult();
         }
         catch (Exception e)
             when (LogOptions.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))

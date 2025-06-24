@@ -29,9 +29,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
+      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build
+      - name: Build
+        run: dotnet build
+
+        # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: Run unit tests
         run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
+
+      - name: Format checks
+        run: |
+          dotnet tool restore
+          dotnet csharpier check --log-level=debug .
+          dotnet format --verify-no-changes --severity=info --verbosity=detailed
 
   version:
     name: Version

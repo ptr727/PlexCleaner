@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;

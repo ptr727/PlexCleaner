@@ -35,6 +35,12 @@ jobs:
       - name: Run unit tests
         run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
 
+      - name: Format checks
+        run: |
+          dotnet tool restore
+          dotnet csharpier check --log-level=debug .
+          dotnet format --verify-no-changes --severity=info --verbosity=detailed
+
   version:
     name: Version
     runs-on: ubuntu-latest

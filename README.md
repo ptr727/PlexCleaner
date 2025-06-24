@@ -31,6 +31,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Switched editorconfig `charset` from `uf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
   - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing many media types.
+  - Add Husky.Net for pre-commit formatting.
   - General refactoring.
 - Version 3.13:
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.
@@ -864,35 +865,38 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 ## 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
-- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
-- [HandBrake](https://handbrake.fr/)
-- [MKVToolNix](https://mkvtoolnix.download/)
+- [AwesomeAssertions](https://awesomeassertions.org/)
+- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
+- [CliWrap](https://github.com/Tyrrrz/CliWrap)
+- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
+- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
 - [FFmpeg](https://www.ffmpeg.org/)
+- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
+- [GitHub Actions](https://github.com/actions)
+- [GitHub Dependabot](https://github.com/dependabot)
+- [HandBrake](https://handbrake.fr/)
+- [Husky.Net](https://alirezanet.github.io/Husky.Net/)
 - [ISO 639-2 language tags](https://www.loc.gov/standards/iso639-2/langhome.html)
 - [ISO 639-3 language tags](https://iso639-3.sil.org/)
-- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
-- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
+- [JsonSchema.Net.Generation][jsonschema-link]
+- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
+- [MKVToolNix](https://mkvtoolnix.download/)
+- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
-- [JsonSchema.Net.Generation][jsonschema-link]
+- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
 - [Serilog](https://serilog.net/)
-- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
-- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
-- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
-- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
-- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [AwesomeAssertions](https://awesomeassertions.org/)
-- [xUnit.Net](https://xunit.net/)
-- [CliWrap](https://github.com/Tyrrrz/CliWrap)
 - [Utf8JsonAsyncStreamReader](https://github.com/gragra33/Utf8JsonAsyncStreamReader)
+- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
+- [xUnit.Net](https://xunit.net/)
 
 ## Sample Media Files
 
-- [Kodi](https://kodi.wiki/view/Samples)
-- [JellyFish](http://jell.yfish.us/)
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
-- [MPlayer](https://samples.mplayerhq.hu/)
+- [JellyFish](http://jell.yfish.us/)
+- [Kodi](https://kodi.wiki/view/Samples)
 - [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
+- [MPlayer](https://samples.mplayerhq.hu/)
 
 ## License
 

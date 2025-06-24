@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -75,16 +74,17 @@ public static class Program
             // Continue
         }
 
-        // TODO: How to get access to commandline arguments in ParseResult before calling Invoke()?
+        // Parse commandline options
         RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
         ParseResult parseResult = rootCommand.Parse(args);
         if (parseResult.Errors.Count > 0)
         {
-            // TODO Parse does not handle --help and --version
-            // https://github.com/dotnet/command-line-api/discussions/2553
             // Exit with default error handling
-            return rootCommand.Invoke(args);
+            return parseResult.Invoke();
         }
+
+        // TODO: Get options requires exposing all options
+        // parseResult.GetValue(CommandLineOptions.LogWarningOption, out bool logWarning);
 
         // Create default logger, will be replaced after commandline is parsed
         Log.Logger = new LoggerConfiguration()
