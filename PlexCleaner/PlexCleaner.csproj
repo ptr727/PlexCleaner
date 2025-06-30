@@ -39,9 +39,9 @@
     <PackageReference Include="CliWrap" Version="3.9.0" />
     <PackageReference Include="InsaneGenius.Utilities" Version="3.2.22" />
     <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
-    <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.3" />
+    <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.4" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <PackageReference Include="ptr727.LanguageTags" Version="1.0.19" />
+    <PackageReference Include="ptr727.LanguageTags" Version="1.0.21" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
