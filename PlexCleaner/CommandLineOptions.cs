@@ -9,12 +9,14 @@ namespace PlexCleaner;
 // https://github.com/dotnet/command-line-api/issues/2576
 // https://learn.microsoft.com/en-us/dotnet/standard/commandline/migration-guide-2.0.0-beta5
 
-// Alternatives:
+// TODO: NamingConventionBinder is being deprecated, alternatives:
 // https://github.com/mayuki/Cocona
 // https://github.com/Cysharp/ConsoleAppFramework
 // https://github.com/spectreconsole/spectre.console
 // https://github.com/dotmake-build/command-line
 // https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#command-line-configuration-provider
+
+// TODO: https://github.com/dotnet/command-line-api/issues/2593
 
 public class CommandLineOptions
 {
@@ -75,23 +77,16 @@ public class CommandLineOptions
     public string ResultsFile { get; set; }
     public bool QuickScan { get; set; }
 
-    // TODO: How to override --version?
-    // https://github.com/dotnet/command-line-api/issues/2009
-    // https://github.com/dotnet/command-line-api/issues/1691
-
     public static RootCommand CreateRootCommand()
     {
         // Root command
         // TODO: .Net Format thinks this is a collection initializer?
+        // https://github.com/dotnet/command-line-api/issues/2597
 #pragma warning disable IDE0028 // Simplify collection initialization
         RootCommand command = new(
             "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc."
         );
 #pragma warning restore IDE0028 // Simplify collection initialization
-
-        // TODO: Add custom help and version options
-        //command.HelpOption()
-        //command.VersionOption()
 
         // Global options applying to all commands
 

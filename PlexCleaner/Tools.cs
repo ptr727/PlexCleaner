@@ -363,7 +363,7 @@ public static class Tools
 
     public static async Task DownloadFileAsync(Uri uri, string fileName)
     {
-        using Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
+        await using Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
         await using FileStream fileStream = File.OpenWrite(fileName);
         await httpStream.CopyToAsync(fileStream);
     }

@@ -90,11 +90,9 @@ public class Bitrate
                 BytesPerSecond.Add(size);
                 return;
             }
-            else
-            {
-                // Add range of new indexes with 0 values
-                BytesPerSecond.AddRange(new long[index - BytesPerSecond.Count + 1]);
-            }
+
+            // Add range of new indexes with 0 values
+            BytesPerSecond.AddRange(new long[index - BytesPerSecond.Count + 1]);
         }
 
         // Update size at packet index

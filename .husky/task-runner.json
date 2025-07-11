@@ -3,9 +3,16 @@
     "tasks": [
         {
             "name": "CSharpier Format",
-            "command": "csharpier",
-            "args": ["format", "--log-level=debug", "${staged}"],
-            "include": ["**/*.cs"]
+            "command": "dotnet",
+            "args": [
+                "csharpier",
+                "format",
+                "--log-level=debug",
+                "${staged}"
+            ],
+            "include": [
+                "**/*.cs"
+            ]
         },
         {
             "name": ".Net Format",
@@ -16,7 +23,9 @@
                 "--severity=info",
                 "--verbosity=detailed"
             ],
-            "include": ["**/*.cs"]
+            "include": [
+                "**/*.cs"
+            ]
         }
     ]
 }

@@ -44,8 +44,9 @@
         {
             "label": "CSharpier Format",
             "type": "process",
-            "command": "csharpier",
+            "command": "dotnet",
             "args": [
+                "csharpier",
                 "format",
                 "--log-level=debug",
                 "."

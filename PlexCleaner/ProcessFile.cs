@@ -858,7 +858,7 @@ public class ProcessFile
         if (
             !Tools.FfProbe.GetSubCcPackets(
                 FileInfo.FullName,
-                (packet) =>
+                _ =>
                 {
                     // Stop processing more packets
                     packetsFound = true;
@@ -1965,7 +1965,7 @@ public class ProcessFile
         if (
             !Tools.FfProbe.GetBitratePackets(
                 FileInfo.FullName,
-                (packet) =>
+                packet =>
                 {
                     // Convert from void to bool return
                     packetBitrate.Add(packet);

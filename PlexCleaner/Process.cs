@@ -9,6 +9,24 @@ using Serilog;
 
 namespace PlexCleaner;
 
+// TODO: Cleanup chapters
+/*
+[2025-07-01 12:41:03.875 -07:00] [INF] [39] Emby.Server.Implementations.Chapters.ChapterManager: Skipping chapter image extraction for "Alone in the Wilderness Part II 2011 (2011)" as the average chapter duration 7505000 was lower than the minimum threshold 10000000
+[2025-07-01 12:43:10.169 -07:00] [INF] [55] Emby.Server.Implementations.Chapters.ChapterManager: Stopping chapter extraction for "Annie (1982)" because a chapter was found with a position greater than the runtime.
+[2025-07-01 12:44:28.022 -07:00] [INF] [83] Emby.Server.Implementations.Chapters.ChapterManager: Stopping chapter extraction for "Armed and Dangerous (1986)" because a chapter was found with a position greater than the runtime.
+[2025-07-01 12:44:31.440 -07:00] [INF] [43] Emby.Server.Implementations.Chapters.ChapterManager: Skipping chapter image extraction for "Argylle (2024)" as the average chapter duration 0 was lower than the minimum threshold 10000000
+*/
+
+// TODO: Cleanup NFO files, artworks invalid, returns XML body with access denied message
+// grep -r --include=*.nfo "artworks.thetvdb.com" /data/media
+/*
+[2025-07-01 19:13:51.644 -07:00] [WRN] [25] Emby.Server.Implementations.Library.LibraryManager: Cannot fetch image from "https://artworks.thetvdb.com/banners/person/418586/626ab64c3973c.jpg"
+*/
+
+// TODO: Change encoding on external subtitle files to UTF8
+// 'ISO-8859-10' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
+// https://ssojet.com/character-encoding-decoding/iso-8859-16-in-c/
+
 public static class Process
 {
     private static bool ProcessFile(

@@ -60,7 +60,7 @@ public partial class FfProbe
             // Wrap async function in a task
             (bool result, string error) result = GetPacketsAsync(
                     command,
-                    async (packet) => await Task.FromResult(packetFunc(packet))
+                    async packet => await Task.FromResult(packetFunc(packet))
                 )
                 .GetAwaiter()
                 .GetResult();
@@ -77,12 +77,12 @@ public partial class FfProbe
             try
             {
                 // Pipe target to deserialize JSON packets
-                List<FfMpegToolJsonSchema.Packet> packetList = [];
                 PipeTarget stdOutTarget = PipeTarget.Create(
                     async (stream, cancellationToken) =>
                     {
                         // Read the stream
                         Utf8JsonAsyncStreamReader jsonStreamReader = new(stream);
+                        ArgumentNullException.ThrowIfNull(jsonStreamReader);
                         while (await jsonStreamReader.ReadAsync(cancellationToken))
                         {
                             if (cancellationToken.IsCancellationRequested)

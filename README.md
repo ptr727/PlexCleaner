@@ -862,6 +862,13 @@ RunContainer docker.io/ptr727/plexcleaner debian-develop
 RunContainer docker.io/ptr727/plexcleaner alpine-develop
 ```
 
+## TODO
+
+- Cleanup chapters, e.g. chapter markers that exceed the media play time.
+- Cleanup NFO files, e.g. verify schema, verify image URL's.
+- Cleanup text based subtitle files, e.g. convert file encoding to UTF8.
+- Process external subtitle files, e.g. merge or extract.
+
 ## 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
