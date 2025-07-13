@@ -1,7 +1,9 @@
 using System.CommandLine;
 using AwesomeAssertions;
+using DotMake.CommandLine;
 using PlexCleaner;
 using Xunit;
+using static PlexCleaner.CliRootCommand;
 
 namespace PlexCleanerTests;
 
@@ -9,278 +11,176 @@ public class CommandLineTests(PlexCleanerFixture fixture)
 {
     private readonly PlexCleanerFixture _fixture = fixture;
 
-    // TODO: Figure out how to get the access to command arguments calling Parse() without a local delegate
-    // https://github.com/dotnet/command-line-api/discussions/2552
-
     [Theory]
     [InlineData(
         "removeclosedcaptions --settingsfile=settings.json --mediafiles=/data/foo --parallel --threadcount=2 --quickscan"
     )]
     public void Parse_Commandline_RemoveClosedCaptions(string commandline)
     {
-        bool didRun = false;
-        int RemoveClosedCaptionsFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            _ = options.Parallel.Should().BeTrue();
-            _ = options.ThreadCount.Should().Be(2);
-            _ = options.QuickScan.Should().BeTrue();
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_removeClosedCaptionsFunc = RemoveClosedCaptionsFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("removeclosedcaptions");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        RemoveClosedCaptionsCommand command = parseResult.Bind<RemoveClosedCaptionsCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
+        _ = command.Options.Parallel.Should().BeTrue();
+        _ = command.Options.ThreadCount.Should().Be(2);
+        _ = command.Options.QuickScan.Should().BeTrue();
     }
 
     [Theory]
     [InlineData("gettoolinfo --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_GetToolInfo(string commandline)
     {
-        bool didRun = false;
-        int GetToolInfoFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_getToolInfoFunc = GetToolInfoFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("gettoolinfo");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        GetToolInfoCommand command = parseResult.Bind<GetToolInfoCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("getmediainfo --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_GetMediaInfo(string commandline)
     {
-        bool didRun = false;
-        int GetMediaInfoFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_getMediaInfoFunc = GetMediaInfoFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("getmediainfo");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        GetMediaInfoCommand command = parseResult.Bind<GetMediaInfoCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("gettagmap --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_GetTagMap(string commandline)
     {
-        bool didRun = false;
-        int GetTagMapFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_getTagMapFunc = GetTagMapFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("gettagmap");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        GetTagMapCommand command = parseResult.Bind<GetTagMapCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("updatesidecar --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_UpdateSidecar(string commandline)
     {
-        bool didRun = false;
-        int UpdateSidecarFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_updateSidecarFunc = UpdateSidecarFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("updatesidecar");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        UpdateSidecarCommand command = parseResult.Bind<UpdateSidecarCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
-    [InlineData("getsidecarinfo --settingsfile=settings.json --mediafiles=/data/foo")]
-    public void Parse_Commandline_GetSidecarInfo(string commandline)
+    [InlineData("getsidecar --settingsfile=settings.json --mediafiles=/data/foo")]
+    public void Parse_Commandline_GetSidecar(string commandline)
     {
-        bool didRun = false;
-        int GetSidecarInfoFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_getSidecarInfoFunc = GetSidecarInfoFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
-        _ = parseResult.CommandResult.Command.Name.Should().Be("getsidecarinfo");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+        _ = parseResult.CommandResult.Command.Name.Should().Be("getsidecar");
+
+        GetSidecarCommand command = parseResult.Bind<GetSidecarCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("createsidecar --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_CreateSidecar(string commandline)
     {
-        bool didRun = false;
-        int CreateSidecarFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_createSidecarFunc = CreateSidecarFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("createsidecar");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        CreateSidecarCommand command = parseResult.Bind<CreateSidecarCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("verify --settingsfile=settings.json --mediafiles=/data/foo --quickscan")]
     public void Parse_Commandline_Verify(string commandline)
     {
-        bool didRun = false;
-        int VerifyFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            _ = options.QuickScan.Should().BeTrue();
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_verifyFunc = VerifyFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("verify");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        VerifyCommand command = parseResult.Bind<VerifyCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
+        _ = command.Options.QuickScan.Should().BeTrue();
     }
 
     [Theory]
     [InlineData("deinterlace --settingsfile=settings.json --mediafiles=/data/foo --quickscan")]
     public void Parse_Commandline_DeInterlace(string commandline)
     {
-        bool didRun = false;
-        int DeInterlaceFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            _ = options.QuickScan.Should().BeTrue();
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_deInterlaceFunc = DeInterlaceFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("deinterlace");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        DeInterlaceCommand command = parseResult.Bind<DeInterlaceCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
+        _ = command.Options.QuickScan.Should().BeTrue();
     }
 
     [Theory]
     [InlineData("reencode --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_ReEncode(string commandline)
     {
-        bool didRun = false;
-        int ReEncodeFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_reEncodeFunc = ReEncodeFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("reencode");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        ReEncodeCommand command = parseResult.Bind<ReEncodeCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
     [InlineData("remux --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_ReMux(string commandline)
     {
-        bool didRun = false;
-        int ReMuxFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_reMuxFunc = ReMuxFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("remux");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        ReMuxCommand command = parseResult.Bind<ReMuxCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 
     [Theory]
@@ -289,35 +189,26 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     )]
     public void Parse_Commandline_Monitor(string commandline)
     {
-        bool didRun = false;
-        int MonitorFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Should().NotBeNullOrEmpty();
-            _ = options.MediaFiles.Count.Should().Be(2);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            _ = options.MediaFiles[1].Should().Be("/data/bar");
-            _ = options.TestSnippets.Should().BeFalse();
-            _ = options.Parallel.Should().BeTrue();
-            _ = options.ThreadCount.Should().Be(2);
-            _ = options.QuickScan.Should().BeTrue();
-            _ = options.LogFile.Should().Be("logfile.log");
-            _ = options.LogAppend.Should().BeTrue();
-            _ = options.LogWarning.Should().BeTrue();
-            _ = options.Debug.Should().BeTrue();
-            _ = options.PreProcess.Should().BeTrue();
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_monitorFunc = MonitorFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("monitor");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        MonitorCommand command = parseResult.Bind<MonitorCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Should().NotBeNullOrEmpty();
+        _ = command.Options.MediaFiles.Count.Should().Be(2);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
+        _ = command.Options.MediaFiles[1].Should().Be("/data/bar");
+        _ = command.Options.TestSnippets.Should().BeFalse();
+        _ = command.Options.Parallel.Should().BeTrue();
+        _ = command.Options.ThreadCount.Should().Be(2);
+        _ = command.Options.QuickScan.Should().BeTrue();
+        _ = command.Options.LogFile.Should().Be("logfile.log");
+        _ = command.Options.LogAppend.Should().BeTrue();
+        _ = command.Options.LogWarning.Should().BeTrue();
+        _ = command.Options.Debug.Should().BeTrue();
+        _ = command.Options.PreProcess.Should().BeTrue();
     }
 
     [Theory]
@@ -326,147 +217,93 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     )]
     public void Parse_Commandline_Process(string commandline)
     {
-        bool didRun = false;
-        int ProcessFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Should().NotBeNullOrEmpty();
-            _ = options.MediaFiles.Count.Should().Be(2);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            _ = options.MediaFiles[1].Should().Be("/data/bar");
-            _ = options.TestSnippets.Should().BeTrue();
-            _ = options.Parallel.Should().BeTrue();
-            _ = options.ThreadCount.Should().Be(2);
-            _ = options.QuickScan.Should().BeTrue();
-            _ = options.ResultsFile.Should().Be("results.json");
-            _ = options.LogFile.Should().Be("logfile.log");
-            _ = options.LogAppend.Should().BeTrue();
-            _ = options.LogWarning.Should().BeTrue();
-            _ = options.Debug.Should().BeTrue();
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_processFunc = ProcessFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("process");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        ProcessCommand command = parseResult.Bind<ProcessCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Should().NotBeNullOrEmpty();
+        _ = command.Options.MediaFiles.Count.Should().Be(2);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
+        _ = command.Options.MediaFiles[1].Should().Be("/data/bar");
+        _ = command.Options.TestSnippets.Should().BeTrue();
+        _ = command.Options.Parallel.Should().BeTrue();
+        _ = command.Options.ThreadCount.Should().Be(2);
+        _ = command.Options.QuickScan.Should().BeTrue();
+        _ = command.Options.ResultsFile.Should().Be("results.json");
+        _ = command.Options.LogFile.Should().Be("logfile.log");
+        _ = command.Options.LogAppend.Should().BeTrue();
+        _ = command.Options.LogWarning.Should().BeTrue();
+        _ = command.Options.Debug.Should().BeTrue();
     }
 
     [Theory]
     [InlineData("checkfornewtools --settingsfile=settings.json")]
     public void Parse_Commandline_CheckForNewTools(string commandline)
     {
-        bool didRun = false;
-        int CheckForNewToolsFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_checkForNewToolsFunc = CheckForNewToolsFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("checkfornewtools");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        CheckForNewToolsCommand command = parseResult.Bind<CheckForNewToolsCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
     }
 
     [Theory]
     [InlineData("defaultsettings --settingsfile=settings.json")]
     public void Parse_Commandline_DefaultSettings(string commandline)
     {
-        bool didRun = false;
-        int DefaultSettingsFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_defaultSettingsFunc = DefaultSettingsFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("defaultsettings");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        DefaultSettingsCommand command = parseResult.Bind<DefaultSettingsCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
     }
 
     [Theory]
     [InlineData("createschema --schemafile=schema.json")]
     public void Parse_Commandline_CreateSchema(string commandline)
     {
-        bool didRun = false;
-        int CreateSchemaFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SchemaFile.Should().Be("schema.json");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_createSchemaFunc = CreateSchemaFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("createschema");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        CreateSchemaCommand command = parseResult.Bind<CreateSchemaCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SchemaFile.Should().Be("schema.json");
     }
 
     [Theory]
     [InlineData("getversioninfo --settingsfile=settings.json")]
     public void Parse_Commandline_GetVersionInfo(string commandline)
     {
-        bool didRun = false;
-        int GetVersionInfoFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_getVersionInfoFunc = GetVersionInfoFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("getversioninfo");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        GetVersionInfoCommand command = parseResult.Bind<GetVersionInfoCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
     }
 
     [Theory]
     [InlineData("removesubtitles --settingsfile=settings.json --mediafiles=/data/foo")]
     public void Parse_Commandline_RemoveSubtitles(string commandline)
     {
-        bool didRun = false;
-        int RemoveSubtitlesFunc(CommandLineOptions options)
-        {
-            _ = options.Should().NotBeNull();
-            _ = options.SettingsFile.Should().Be("settings.json");
-            _ = options.MediaFiles.Should().NotBeNullOrEmpty();
-            _ = options.MediaFiles.Count.Should().Be(1);
-            _ = options.MediaFiles[0].Should().Be("/data/foo");
-            didRun = true;
-            return 0;
-        }
-        CommandLineOptions.s_removeSubtitlesFunc = RemoveSubtitlesFunc;
-
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(commandline);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(commandline);
         _ = parseResult.Errors.Should().BeEmpty();
         _ = parseResult.CommandResult.Command.Name.Should().Be("removesubtitles");
-        _ = parseResult.Invoke().Should().Be(0);
-        _ = didRun.Should().BeTrue();
+
+        RemoveSubtitlesCommand command = parseResult.Bind<RemoveSubtitlesCommand>();
+        _ = command.Options.Should().NotBeNull();
+        _ = command.Options.SettingsFile.Should().Be("settings.json");
+        _ = command.Options.MediaFiles.Should().NotBeNullOrEmpty();
+        _ = command.Options.MediaFiles.Count.Should().Be(1);
+        _ = command.Options.MediaFiles[0].Should().Be("/data/foo");
     }
 }

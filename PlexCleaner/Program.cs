@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using DotMake.CommandLine;
 using InsaneGenius.Utilities;
 using Serilog;
 using Serilog.Debugging;
@@ -21,6 +22,7 @@ using Timer = System.Timers.Timer;
 namespace PlexCleaner;
 
 // TODO: Specialize all catch(Exception) to catch specific expected exceptions only
+// TODO: Replace async Task.Run() wrappers with native async/await methods
 
 public static class Program
 {
@@ -51,7 +53,12 @@ public static class Program
         return s_httpClient;
     }
 
+    private static Task<int> MakeExitResult(ExitCode exitCode) =>
+        Task.FromResult(MakeExitCode(exitCode));
+
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
+
+    private static Task<int> MakeExitResult(bool success) => Task.FromResult(MakeExitCode(success));
 
     private static int MakeExitCode(bool success) =>
         success ? (int)ExitCode.Success : (int)ExitCode.Error;
@@ -65,9 +72,10 @@ public static class Program
         }
     }
 
-    private static int Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         // Wait for debugger to attach
+        // Evaluate args directly to avoid calling any dependencies before the debugger is attached
         if (args.Any(arg => arg == "--debug"))
         {
             WaitForDebugger();
@@ -75,54 +83,47 @@ public static class Program
         }
 
         // Parse commandline options
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(args);
+        ParseResult parseResult = Cli.Parse<CliRootCommand>(args);
         if (parseResult.Errors.Count > 0)
         {
             // Exit with default error handling
-            return parseResult.Invoke();
+            return await parseResult.InvokeAsync();
         }
 
-        // TODO: Get options requires exposing all options
-        // parseResult.GetValue(CommandLineOptions.LogWarningOption, out bool logWarning);
+        // Bind parsed commandline options
+        CliRootCommand rootCommand = parseResult.Bind<CliRootCommand>();
+        Options = rootCommand.Options;
 
-        // Create default logger, will be replaced after commandline is parsed
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console(
-                theme: AnsiConsoleTheme.Code,
-                formatProvider: CultureInfo.InvariantCulture
-            )
-            .CreateLogger();
+        // Create logger
+        CreateLogger();
 
+        // Console handlers
         Console.CancelKeyPress += CancelEventHandler;
-
-        // Only register keyboard handler if input is not redirected
         Task consoleKeyTask = null;
         if (!Console.IsInputRedirected)
         {
             consoleKeyTask = Task.Run(KeyPressHandler);
         }
 
-        // Create a timer to keep the system from going to sleep
+        // Keep system awake
         KeepAwake.PreventSleep();
         using Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
 
-        // Invoke commands, commandline is parsed and passed to command handlers
-        int exitCode = parseResult.Invoke();
+        // Call command handler
+        int exitCode = await parseResult.InvokeAsync();
 
+        // Cleanup
         Cancel();
         consoleKeyTask?.Wait();
         Console.CancelKeyPress -= CancelEventHandler;
-
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
-
-        Log.CloseAndFlush();
+        await Log.CloseAndFlushAsync();
 
         return exitCode;
     }
@@ -226,6 +227,12 @@ public static class Program
         // Commandline must have been parsed and assigned to Options
         Debug.Assert(Options != null);
 
+        // Clear log file before creating the logger
+        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
+        {
+            File.Delete(Options.LogFile);
+        }
+
         // Enable Serilog debug output to the console
         SelfLog.Enable(Console.Error);
 
@@ -263,249 +270,176 @@ public static class Program
         LogOptions.Logger = Log.Logger;
     }
 
-    public static int WriteDefaultSettingsCommand(CommandLineOptions options)
+    public static async Task<int> DefaultSettingsCommandAsync()
     {
-        Log.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
-
         // Save default config
-        ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
+        Log.Information("Writing default settings to {SettingsFile}", Options.SettingsFile);
+        await ConfigFileJsonSchema.WriteDefaultsToFileAsync(Options.SettingsFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CreateJsonSchemaCommand(CommandLineOptions options)
+    public static async Task<int> CreateSchemaCommandAsync()
     {
-        Log.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
-
-        // Write schema
-        ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
+        // Write schema to file
+        Log.Information("Writing settings JSON schema to {SchemaFile}", Options.SchemaFile);
+        await ConfigFileJsonSchema.WriteSchemaToFileAsync(Options.SchemaFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CheckForNewToolsCommand(CommandLineOptions options)
+    public static async Task<int> CheckForNewToolsCommandAsync()
     {
-        // Create but do not verify tools
-        if (!Create(options, false))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Update tools
-        // Make sure that the tools exist
-        return MakeExitCode(Tools.CheckForNewTools() && Tools.VerifyTools());
+        ExitCode exitCode = await Task.Run(async () =>
+            !await CreateAsync(false) || !Tools.CheckForNewTools() || !Tools.VerifyTools()
+                ? ExitCode.Error
+                : ExitCode.Success
+        );
+        return MakeExitCode(exitCode);
     }
 
-    public static int ProcessCommand(CommandLineOptions options)
+    public static async Task<int> ProcessCommandAsync()
     {
-        // Create
-        if (!Create(options, true))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Get file and directory list
-        if (
-            !ProcessDriver.GetFiles(
-                options.MediaFiles,
+        ExitCode exitCode = await Task.Run(async () =>
+            !await CreateAsync(true)
+            || !ProcessDriver.GetFiles(
+                Options.MediaFiles,
                 out List<string> directoryList,
                 out List<string> fileList
             )
-        )
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Process files
-        if (!Process.ProcessFiles(fileList))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Delete empty folders
-        if (!Process.DeleteEmptyFolders(directoryList))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Done
-        return MakeExitCode(ExitCode.Success);
+            || !await Process.ProcessFilesAsync(fileList)
+            || !Process.DeleteEmptyFolders(directoryList)
+                ? ExitCode.Error
+                : ExitCode.Success
+        );
+        return MakeExitCode(exitCode);
     }
 
-    public static int MonitorCommand(CommandLineOptions options)
+    public static async Task<int> MonitorCommandAsync()
     {
-        // Create
-        if (!Create(options, true))
+        ExitCode exitCode = await Task.Run(async () =>
         {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Monitor and process changes in directories
-        Monitor monitor = new();
-        if (!monitor.MonitorFolders(options.MediaFiles))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Done
-        return MakeExitCode(ExitCode.Success);
+            // Create
+            // Monitor folders
+            Monitor monitor = new();
+            return
+                !await CreateAsync(true) || !await monitor.MonitorFoldersAsync(Options.MediaFiles)
+                ? ExitCode.Error
+                : ExitCode.Success;
+        });
+        return MakeExitCode(exitCode);
     }
 
-    private static int ProcessFileList(
-        CommandLineOptions options,
-        Func<List<string>, bool> taskFunc
-    )
+    private static async Task<int> ProcessFileListAsync(Func<List<string>, bool> taskFunc)
     {
-        // Create
-        if (!Create(options, true))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Get file and directory list
-        if (
-            !ProcessDriver.GetFiles(
-                options.MediaFiles,
+        ExitCode exitCode = await Task.Run(async () =>
+            !await CreateAsync(true)
+            || !ProcessDriver.GetFiles(
+                Options.MediaFiles,
                 out List<string> _,
                 out List<string> fileList
             )
-        )
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Call task function with file list
-        if (!taskFunc(fileList))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Done
-        return MakeExitCode(ExitCode.Success);
+            || !taskFunc(fileList)
+                ? ExitCode.Error
+                : ExitCode.Success
+        );
+        return MakeExitCode(exitCode);
     }
 
-    private static int ProcessFiles(
-        CommandLineOptions options,
+    private static async Task<int> ProcessFilesAsync(
         bool mkvOnly,
         string taskName,
         Func<string, bool> taskFunc
     )
     {
-        // Create
-        if (!Create(options, true))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Get file and directory list
-        if (
-            !ProcessDriver.GetFiles(
-                options.MediaFiles,
+        ExitCode exitCode = await Task.Run(async () =>
+            !await CreateAsync(true)
+            || !ProcessDriver.GetFiles(
+                Options.MediaFiles,
                 out List<string> _,
                 out List<string> fileList
             )
-        )
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Call task function for all files in list
-        if (!ProcessDriver.ProcessFiles(fileList, taskName, mkvOnly, taskFunc))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Done
-        return MakeExitCode(ExitCode.Success);
+            || !ProcessDriver.ProcessFiles(fileList, taskName, mkvOnly, taskFunc)
+                ? ExitCode.Error
+                : ExitCode.Success
+        );
+        return MakeExitCode(exitCode);
     }
 
-    public static int ReMuxCommand(CommandLineOptions options) =>
-        ProcessFiles(options, false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
+    public static async Task<int> ReMuxCommandAsync() =>
+        await ProcessFilesAsync(false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
 
-    public static int ReEncodeCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
+    public static async Task<int> ReEncodeCommandAsync() =>
+        await ProcessFilesAsync(true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
 
-    public static int DeInterlaceCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
+    public static async Task<int> DeInterlaceCommandAsync() =>
+        await ProcessFilesAsync(true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
 
-    public static int VerifyCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.Verify), MkvProcess.Verify);
+    public static async Task<int> VerifyCommandAsync() =>
+        await ProcessFilesAsync(true, nameof(MkvProcess.Verify), MkvProcess.Verify);
 
-    public static int CreateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.Create), SidecarFile.Create);
+    public static async Task<int> CreateSidecarCommandAsync() =>
+        await ProcessFilesAsync(true, nameof(SidecarFile.Create), SidecarFile.Create);
 
-    public static int GetSidecarInfoCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
+    public static async Task<int> GetSidecarCommandAsync() =>
+        await ProcessFilesAsync(
+            true,
+            nameof(SidecarFile.GetInformation),
+            SidecarFile.GetInformation
+        );
 
-    public static int UpdateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
+    public static async Task<int> UpdateSidecarCommandAsync() =>
+        await ProcessFilesAsync(true, nameof(SidecarFile.Update), SidecarFile.Update);
 
-    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
+    public static async Task<int> RemoveSubtitlesCommandAsync() =>
+        await ProcessFilesAsync(
+            true,
+            nameof(MkvProcess.RemoveSubtitles),
+            MkvProcess.RemoveSubtitles
+        );
 
-    public static int GetTagMapCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetTagMap);
+    public static async Task<int> GetTagMapCommandAsync() =>
+        await ProcessFileListAsync(ProcessDriver.GetTagMap);
 
-    public static int GetMediaInfoCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetMediaInfo);
+    public static async Task<int> GetMediaInfoCommandAsync() =>
+        await ProcessFileListAsync(ProcessDriver.GetMediaInfo);
 
-    public static int TestMediaInfoCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.TestMediaInfo);
+    public static async Task<int> TestMediaInfoCommandAsync() =>
+        await ProcessFileListAsync(ProcessDriver.TestMediaInfo);
 
-    public static int GetToolInfoCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetToolInfo);
+    public static async Task<int> GetToolInfoCommandAsync() =>
+        await ProcessFileListAsync(ProcessDriver.GetToolInfo);
 
-    public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
-        ProcessFiles(
-            options,
+    public static async Task<int> RemoveClosedCaptionsCommandAsync() =>
+        await ProcessFilesAsync(
             true,
             nameof(MkvProcess.RemoveClosedCaptions),
             MkvProcess.RemoveClosedCaptions
         );
 
-    public static int GetVersionInfoCommand(CommandLineOptions options)
+    public static async Task<int> GetVersionInfoCommandAsync()
     {
-        // Creating the program object will report all version information
-        if (!Create(options, false))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Verify tools to get tool version information
-        if (!Tools.VerifyTools())
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
-
-        // Done
-        return MakeExitCode(ExitCode.Success);
+        ExitCode exitCode = await Task.Run(async () =>
+            !await CreateAsync(true) || !Tools.VerifyTools() ? ExitCode.Error : ExitCode.Success
+        );
+        return MakeExitCode(exitCode);
     }
 
-    private static bool Create(CommandLineOptions options, bool verifyTools)
+    private static async Task<bool> CreateAsync(bool verifyTools)
     {
-        // Set the static commandline options
-        Options = options;
-
-        // Clear log file before creating the logger
-        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
-        {
-            File.Delete(Options.LogFile);
-        }
-
-        // Create the logger
-        CreateLogger();
-
         // Load config settings from JSON
-        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
-        if (!File.Exists(options.SettingsFile))
+        Log.Information("Loading settings from : {SettingsFile}", Options.SettingsFile);
+        if (!File.Exists(Options.SettingsFile))
         {
-            Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
+            Log.Error("Settings file not found : {SettingsFile}", Options.SettingsFile);
             return false;
         }
-        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
+        ConfigFileJsonSchema config = await ConfigFileJsonSchema.FromFileAsync(
+            Options.SettingsFile
+        );
         if (config == null)
         {
-            Log.Error("Failed to load settings : {FileName}", options.SettingsFile);
+            Log.Error("Failed to load settings : {FileName}", Options.SettingsFile);
             return false;
         }
 
@@ -516,12 +450,12 @@ public static class Program
                 "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
-                options.SettingsFile
+                Options.SettingsFile
             );
 
             // Upgrade the file schema
-            Log.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
+            Log.Information("Writing upgraded settings file : {FileName}", Options.SettingsFile);
+            await ConfigFileJsonSchema.ToFileAsync(Options.SettingsFile, config);
         }
 
         // Verify the settings
@@ -529,7 +463,7 @@ public static class Program
         {
             Log.Error(
                 "Settings file contains incorrect or missing values : {FileName}",
-                options.SettingsFile
+                Options.SettingsFile
             );
             return false;
         }

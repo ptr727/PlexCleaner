@@ -12,6 +12,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Json.Schema;
 using Json.Schema.Generation;
 using Serilog;
@@ -58,7 +59,7 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
     [JsonExclude]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
-    // TODO: Remove, never customized
+    // TODO: Remove in next version bump, never customized
     [JsonRequired]
     [JsonPropertyOrder(5)]
     public MonitorOptions1 MonitorOptions { get; set; } = new();
@@ -239,25 +240,28 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         && MonitorOptions.VerifyValues()
         && VerifyOptions.VerifyValues();
 
-    public static void WriteDefaultsToFile(string path)
+    public static async Task WriteDefaultsToFileAsync(string path)
     {
         // Set defaults
         ConfigFileJsonSchema config = new();
         config.SetDefaults();
 
         // Write to file
-        ToFile(path, config);
+        await ToFileAsync(path, config);
     }
 
     public static ConfigFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
-    public static void ToFile(string path, ConfigFileJsonSchema json)
+    public static async Task<ConfigFileJsonSchema> FromFileAsync(string path) =>
+        FromJson(await File.ReadAllTextAsync(path));
+
+    public static async Task ToFileAsync(string path, ConfigFileJsonSchema json)
     {
         // Set the schema version to the current version
         json.SchemaVersion = Version;
 
         // Write JSON to file
-        File.WriteAllText(path, ToJson(json));
+        await File.WriteAllTextAsync(path, ToJson(json));
     }
 
     private static string ToJson(ConfigFileJsonSchema json) =>
@@ -299,7 +303,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         };
     }
 
-    public static void WriteSchemaToFile(string path)
+    public static async Task WriteSchemaToFileAsync(string path)
     {
         // Create JSON schema
         const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
@@ -314,7 +318,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         string jsonSchema = JsonSerializer.Serialize(schemaBuilder, JsonWriteOptions);
 
         // Write to file
-        File.WriteAllText(path, jsonSchema);
+        await File.WriteAllTextAsync(path, jsonSchema);
     }
 
     private static void ExcludeObsoletePropertiesModifier(JsonTypeInfo typeInfo)

@@ -27,7 +27,7 @@
             "type": "process",
             "command": "dotnet",
             "args": [
-                "format",
+                "format", // whitespace, style, analyzers
                 "--verify-no-changes",
                 "--severity=info",
                 "--verbosity=detailed"

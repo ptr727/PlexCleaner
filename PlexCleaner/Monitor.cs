@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Serilog;
 
 namespace PlexCleaner;
@@ -23,7 +24,7 @@ public class Monitor
         Program.LogInterruptMessage();
     }
 
-    public bool MonitorFolders(List<string> folders)
+    public async Task<bool> MonitorFoldersAsync(List<string> folders)
     {
         LogMonitorMessage();
 
@@ -152,7 +153,7 @@ public class Monitor
             }
 
             // Process changes in the watched folders
-            if (!ProcessChanges(watchList))
+            if (!await ProcessChangesAsync(watchList))
             {
                 // Fatal error
                 return false;
@@ -189,7 +190,7 @@ public class Monitor
         return true;
     }
 
-    private static bool ProcessChanges(List<string> folderList)
+    private static async Task<bool> ProcessChangesAsync(List<string> folderList)
     {
         // Get file and directory list
         if (
@@ -205,7 +206,7 @@ public class Monitor
         directoryList.ForEach(item => Log.Information("Processing changes in : {Folder}", item));
 
         // Process files
-        if (!Process.ProcessFiles(fileList))
+        if (!await Process.ProcessFilesAsync(fileList))
         {
             return false;
         }

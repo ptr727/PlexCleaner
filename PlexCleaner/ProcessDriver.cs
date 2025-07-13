@@ -409,30 +409,30 @@ public static class ProcessDriver
                 if (mkvMergeProps.IsContainerMkv())
                 {
                     if (
-                        !mkvMergeProps.Video.All(mkvItem =>
+                        mkvMergeProps.Video.Any(mkvItem =>
                             mediaInfoProps.Video.Find(mediaInfoItem =>
                                 mediaInfoItem.Uid == mkvItem.Uid
-                            ) != null
+                            ) == null
                         )
                     )
                     {
                         Log.Warning("MkvMerge video track Uid mismatch : {File}", fileInfo.Name);
                     }
                     if (
-                        !mkvMergeProps.Audio.All(mkvItem =>
+                        mkvMergeProps.Audio.Any(mkvItem =>
                             mediaInfoProps.Audio.Find(mediaInfoItem =>
                                 mediaInfoItem.Uid == mkvItem.Uid
-                            ) != null
+                            ) == null
                         )
                     )
                     {
                         Log.Warning("MkvMerge audio track Uid mismatch : {File}", fileInfo.Name);
                     }
                     if (
-                        !mkvMergeProps.Subtitle.All(mkvItem =>
+                        mkvMergeProps.Subtitle.Any(mkvItem =>
                             mediaInfoProps.Subtitle.Find(mediaInfoItem =>
                                 mediaInfoItem.Uid == mkvItem.Uid
-                            ) != null
+                            ) == null
                         )
                     )
                     {

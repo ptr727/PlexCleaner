@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Serilog;
 
 namespace PlexCleaner;
@@ -401,7 +402,7 @@ public static class Process
         }
     }
 
-    public static bool ProcessFiles(List<string> fileList)
+    public static async Task<bool> ProcessFilesAsync(List<string> fileList)
     {
         // Log active options
         Log.Logger.LogOverrideContext()
@@ -417,7 +418,7 @@ public static class Process
         Lock resultLock = new();
         bool ret = ProcessDriver.ProcessFiles(
             fileList,
-            nameof(ProcessFiles),
+            nameof(ProcessFilesAsync),
             false,
             fileName =>
             {
@@ -520,7 +521,10 @@ public static class Process
                     Program.Config.ProcessOptions.FileIgnoreList.Count,
                     Program.Options.SettingsFile
                 );
-                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
+                await ConfigFileJsonSchema.ToFileAsync(
+                    Program.Options.SettingsFile,
+                    Program.Config
+                );
             }
         }
 
