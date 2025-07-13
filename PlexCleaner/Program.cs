@@ -226,6 +226,12 @@ public static class Program
         // Commandline must have been parsed and assigned to Options
         Debug.Assert(Options != null);
 
+        // Clear log file before creating the logger
+        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
+        {
+            File.Delete(Options.LogFile);
+        }
+
         // Enable Serilog debug output to the console
         SelfLog.Enable(Console.Error);
 
@@ -485,12 +491,6 @@ public static class Program
     {
         // Set the static commandline options
         Options = options;
-
-        // Clear log file before creating the logger
-        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
-        {
-            File.Delete(Options.LogFile);
-        }
 
         // Create the logger
         CreateLogger();

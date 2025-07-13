@@ -254,7 +254,7 @@
         "dotnet.formatting.organizeImportsOnFormat": true,
         "csharp.debug.symbolOptions.searchNuGetOrgSymbolServer": true,
         "csharp.debug.symbolOptions.searchMicrosoftSymbolServer": true,
-        "files.encoding": "utf8bom"
+        "files.encoding": "utf8"
     },
     "extensions": {
         "recommendations": [

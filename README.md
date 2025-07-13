@@ -30,8 +30,8 @@ Docker images are published on [Docker Hub][docker-link].
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything into memory and then process.
   - Switched editorconfig `charset` from `uf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
-  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing many media types.
-  - Add Husky.Net for pre-commit formatting.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
+  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook and formatting.
   - General refactoring.
 - Version 3.13:
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.

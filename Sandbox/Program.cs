@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using PlexCleaner;
 using Serilog;
@@ -34,9 +38,9 @@ public class Program
         PropertyNameCaseInsensitive = true,
     };
 
-    private readonly Dictionary<string, JsonElement>? _settings;
+    private readonly Dictionary<string, JsonElement> _settings;
 
-    private Program(Dictionary<string, JsonElement>? settings) => _settings = settings;
+    private Program(Dictionary<string, JsonElement> settings) => _settings = settings;
 
     public static async Task<int> Main(string[] args)
     {
@@ -62,7 +66,7 @@ public class Program
         LogOptions.Logger = Log.Logger;
 
         // Get settings
-        Dictionary<string, JsonElement>? settings = null;
+        Dictionary<string, JsonElement> settings = null;
         if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
         {
             await using FileStream jsonStream = File.OpenRead(settingsPath);
@@ -96,7 +100,7 @@ public class Program
             : 1;
     }
 
-    public static string? GetSettingsFilePath(string fileName)
+    public static string GetSettingsFilePath(string fileName)
     {
         // Load settings file from current working directory
         string settingsPath = Path.GetFullPath(fileName);
@@ -128,6 +132,6 @@ public class Program
             StringComparer.OrdinalIgnoreCase
         );
 
-    public T? GetSettings<T>(string key)
+    public T GetSettings<T>(string key)
         where T : class => GetSettingsObject(key)?.Deserialize<T>();
 }

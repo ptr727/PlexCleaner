@@ -10,8 +10,8 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
 {
     public bool IsSerializable(
         Type type,
-        object? value,
-        [NotNullWhen(false)] out string? failureReason
+        object value,
+        [NotNullWhen(false)] out string failureReason
     )
     {
         if (type == typeof(FfMpegIdetInfo) && value is FfMpegIdetInfo)
