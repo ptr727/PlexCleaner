@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipelines;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -92,7 +89,9 @@ public class Program
 
     protected virtual Task<int> Sandbox(string[] args)
     {
+#pragma warning disable IDE0028 // Simplify collection initialization
         RootCommand root = new("Test command");
+#pragma warning restore IDE0028 // Simplify collection initialization
         ParseResult result = root.Parse(["--version"]);
         if (result.Errors.Count > 0)
         {
@@ -100,7 +99,9 @@ public class Program
             return Task.FromResult(1);
         }
 
+#pragma warning disable IDE0028 // Simplify collection initialization
         root = new("Test command");
+#pragma warning restore IDE0028 // Simplify collection initialization
         Option<string> option = new("--settingsfile") { Recursive = true };
         root.Options.Add(option);
         Command command = new("defaultsettings")

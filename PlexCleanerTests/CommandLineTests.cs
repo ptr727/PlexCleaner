@@ -1,4 +1,3 @@
-using System.CommandLine;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
