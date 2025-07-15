@@ -2,25 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
+using System.Linq;
 
 namespace PlexCleaner;
-
-// TODO: Migrate to System.CommandLine Beta 5
-// https://github.com/dotnet/command-line-api/issues/2576
-// https://github.com/dotnet/command-line-api/issues/2628
-// https://learn.microsoft.com/en-us/dotnet/standard/commandline/migration-guide-2.0.0-beta5
-
-// TODO: NamingConventionBinder is being deprecated, alternatives:
-// https://github.com/mayuki/Cocona
-//  Not updated
-// https://github.com/Cysharp/ConsoleAppFramework
-//  https://github.com/Cysharp/ConsoleAppFramework/issues/140
-// https://github.com/spectreconsole/spectre.console
-// https://github.com/dotmake-build/command-line
-//  https://github.com/dotmake-build/command-line/issues/40
-// https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-providers#command-line-configuration-provider
-
-// TODO: https://github.com/dotnet/command-line-api/issues/2593
 
 public class CommandLineOptions
 {
@@ -39,17 +24,27 @@ public class CommandLineOptions
     public string SettingsFile { get; set; } = string.Empty;
 }
 
+// TODO: https://github.com/dotnet/command-line-api/issues/2593
 public class CommandLineParser
 {
     public CommandLineParser(string[] args)
     {
-        Root = CreateRootCommand();
-        Result = Root.Parse(args);
+        _root = CreateRootCommand();
+        Result = _root.Parse(args);
     }
 
-    public RootCommand Root { get; init; }
     public ParseResult Result { get; init; }
+    public bool BypassStartup =>
+        Result.Errors.Count > 0
+        || Result.CommandResult.Children.Any(symbolResult =>
+            symbolResult is OptionResult optionResult
+            && s_cliBypassList.Contains(optionResult.Option.Name, StringComparer.OrdinalIgnoreCase)
+        );
 
+    private static readonly List<string> s_cliBypassList = ["--help", "--version"];
+    private RootCommand _root { get; init; }
+
+    // TODO: https://github.com/dotnet/command-line-api/discussions/2627
     private class CommandHandler(Func<ParseResult, int> action) : SynchronousCommandLineAction
     {
         public override int Invoke(ParseResult parseResult) => action(parseResult);
@@ -146,7 +141,7 @@ public class CommandLineParser
         rootCommand.Subcommands.Add(
             new("defaultsettings")
             {
-                Description = "Create JSON configuration file using default settings",
+                Description = "Create default JSON settings file",
                 Action = new CommandHandler(_ => Program.DefaultSettingsCommand()),
                 Options = { _settingsFileOption },
             }
@@ -154,7 +149,7 @@ public class CommandLineParser
         rootCommand.Subcommands.Add(
             new("checkfornewtools")
             {
-                Description = "Check for new tool versions and download if newer",
+                Description = "Check for and download new tool versions",
                 Action = new CommandHandler(_ => Program.CheckForNewToolsCommand()),
                 Options = { _settingsFileOption },
             }
@@ -179,7 +174,7 @@ public class CommandLineParser
         rootCommand.Subcommands.Add(
             new("monitor")
             {
-                Description = "Monitor for file changes and process changed media files",
+                Description = "Monitor file changes and process changed files",
                 Action = new CommandHandler(_ => Program.MonitorCommand()),
                 Options =
                 {
@@ -189,6 +184,21 @@ public class CommandLineParser
                     _threadCountOption,
                     _quickScanOption,
                     _preProcessOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("verify")
+            {
+                Description = "Verify media container and stream integrity",
+                Action = new CommandHandler(_ => Program.VerifyCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
                 },
             }
         );
@@ -252,23 +262,8 @@ public class CommandLineParser
         rootCommand.Subcommands.Add(
             new("removeclosedcaptions")
             {
-                Description = "Remove all closed captions",
+                Description = "Remove all closed caption tracks",
                 Action = new CommandHandler(_ => Program.RemoveClosedCaptionsCommand()),
-                Options =
-                {
-                    _settingsFileOption,
-                    _mediaFilesOption,
-                    _parallelOption,
-                    _threadCountOption,
-                    _quickScanOption,
-                },
-            }
-        );
-        rootCommand.Subcommands.Add(
-            new("verify")
-            {
-                Description = "Verify media container and stream integrity",
-                Action = new CommandHandler(_ => Program.VerifyCommand()),
                 Options =
                 {
                     _settingsFileOption,
@@ -308,10 +303,10 @@ public class CommandLineParser
             }
         );
         rootCommand.Subcommands.Add(
-            new("getsidecar")
+            new("getsidecarinfo")
             {
-                Description = "Print sidecar file information",
-                Action = new CommandHandler(_ => Program.GetSidecarCommand()),
+                Description = "Print media sidecar information",
+                Action = new CommandHandler(_ => Program.GetSidecarInfoCommand()),
                 Options =
                 {
                     _settingsFileOption,
@@ -336,34 +331,6 @@ public class CommandLineParser
             }
         );
         rootCommand.Subcommands.Add(
-            new("gettagmap")
-            {
-                Description = "Print media file attribute mappings",
-                Action = new CommandHandler(_ => Program.GetTagMapCommand()),
-                Options =
-                {
-                    _settingsFileOption,
-                    _mediaFilesOption,
-                    _parallelOption,
-                    _threadCountOption,
-                },
-            }
-        );
-        rootCommand.Subcommands.Add(
-            new("testmediainfo")
-            {
-                Description = "Test parsing media file information",
-                Action = new CommandHandler(_ => Program.TestMediaInfoCommand()),
-                Options =
-                {
-                    _settingsFileOption,
-                    _mediaFilesOption,
-                    _parallelOption,
-                    _threadCountOption,
-                },
-            }
-        );
-        rootCommand.Subcommands.Add(
             new("gettoolinfo")
             {
                 Description = "Print media tool information",
@@ -378,9 +345,37 @@ public class CommandLineParser
             }
         );
         rootCommand.Subcommands.Add(
+            new("gettagmap")
+            {
+                Description = "Print media tool attribute mappings",
+                Action = new CommandHandler(_ => Program.GetTagMapCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("testmediainfo")
+            {
+                Description = "Test parsing media tool information",
+                Action = new CommandHandler(_ => Program.TestMediaInfoCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
             new("getversioninfo")
             {
-                Description = "Print application and tools version information",
+                Description = "Print application and media tool version information",
                 Action = new CommandHandler(_ => Program.GetVersionInfoCommand()),
                 Options = { _settingsFileOption },
             }
@@ -388,7 +383,7 @@ public class CommandLineParser
         rootCommand.Subcommands.Add(
             new("createschema")
             {
-                Description = "Write JSON settings schema to file",
+                Description = "Create JSON settings schema file",
                 Action = new CommandHandler(_ => Program.CreateSchemaCommand()),
                 Options = { _schemaFileOption },
             }

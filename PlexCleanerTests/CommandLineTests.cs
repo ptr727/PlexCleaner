@@ -339,7 +339,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
 
     [Theory]
     [InlineData("--help")]
-    [InlineData("--version")]
+    [InlineData("--version")] // TODO: https://github.com/dotnet/command-line-api/issues/2628
     [InlineData("defaultsettings", "--help")]
     [InlineData("checkfornewtools", "--help")]
     [InlineData("process", "--help")]
