@@ -20,6 +20,20 @@
             "stopAtEntry": false
         },
         {
+            "name": "Process Help",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": ".Net Build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0/PlexCleaner.dll",
+            "args": [
+                "process",
+                "--help",
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net9.0",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
             "name": "Version",
             "type": "coreclr",
             "request": "launch",

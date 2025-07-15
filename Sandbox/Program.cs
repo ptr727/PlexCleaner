@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -86,7 +87,39 @@ public class Program
         return ret;
     }
 
-    protected virtual Task<int> Sandbox(string[] args) => Task.FromResult(0);
+    protected virtual Task<int> Sandbox(string[] args)
+    {
+#pragma warning disable IDE0028 // Simplify collection initialization
+        RootCommand root = new("Test command");
+#pragma warning restore IDE0028 // Simplify collection initialization
+        ParseResult result = root.Parse(["--version"]);
+        if (result.Errors.Count > 0)
+        {
+            Log.Error("Commandline parsing failed: {Errors}", result.Errors);
+            return Task.FromResult(1);
+        }
+
+#pragma warning disable IDE0028 // Simplify collection initialization
+        root = new("Test command");
+#pragma warning restore IDE0028 // Simplify collection initialization
+        Option<string> option = new("--settingsfile") { Recursive = true };
+        root.Options.Add(option);
+        Command command = new("defaultsettings")
+        {
+            Description = "Create JSON configuration file using default settings",
+            Options = { option },
+        };
+        command.SetAction(_ => 0);
+        root.Subcommands.Add(command);
+        result = root.Parse(["--version"]);
+        if (result.Errors.Count > 0)
+        {
+            Log.Error("Commandline parsing with sub-command failed: {Errors}", result.Errors);
+            return Task.FromResult(1);
+        }
+
+        return Task.FromResult(0);
+    }
 
     public static void SetRuntimeOptions()
     {
