@@ -71,7 +71,7 @@ FROM alpine:edge AS final
 ARG LABEL_VERSION="1.0.0.0"
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
-    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
+    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc." \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
 # Enable .NET globalization, set default locale to en_US.UTF-8, and timezone to UTC

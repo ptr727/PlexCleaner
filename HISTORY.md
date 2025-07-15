@@ -1,6 +1,6 @@
 # PlexCleaner
 
-Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
@@ -101,7 +101,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
     - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
     - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
 - Version 2.9:
-  - Added remote docker container debug support.  
+  - Added remote docker container debug support.
     - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.
     - Added a `--debug` command line option that will wait for a debugger to be attached on launch.
     - Remote debugging in docker over SSH can be done using [VSCode](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes) or [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/attach-to-process-running-in-docker-container?view=vs-2022).
