@@ -338,15 +338,26 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     }
 
     [Theory]
-    [InlineData()]
-    public void Parse_Commandline_Empty(params string[] args)
-    {
-        CommandLineParser parser = new(args);
-        _ = parser.Result.Errors.Should().NotBeEmpty();
-    }
-
-    [Theory]
     [InlineData("--help")]
+    [InlineData("--version")]
+    [InlineData("defaultsettings", "--help")]
+    [InlineData("checkfornewtools", "--help")]
+    [InlineData("process", "--help")]
+    [InlineData("remux", "--help")]
+    [InlineData("reencode", "--help")]
+    [InlineData("deinterlace", "--help")]
+    [InlineData("removesubtitles", "--help")]
+    [InlineData("removeclosedcaptions", "--help")]
+    [InlineData("verify", "--help")]
+    [InlineData("createsidecar", "--help")]
+    [InlineData("updatesidecar", "--help")]
+    [InlineData("getsidecar", "--help")]
+    [InlineData("getmediainfo", "--help")]
+    [InlineData("gettagmap", "--help")]
+    [InlineData("testmediainfo", "--help")]
+    [InlineData("gettoolinfo", "--help")]
+    [InlineData("getversioninfo", "--help")]
+    [InlineData("createschema", "--help")]
     public void Parse_Commandline_Help(params string[] args)
     {
         CommandLineParser parser = new(args);
@@ -354,10 +365,31 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     }
 
     [Theory]
-    [InlineData("--version")]
-    public void Parse_Commandline_Version(params string[] args)
+    [InlineData()]
+    [InlineData("--foo")]
+    [InlineData("foo")]
+    [InlineData("defaultsettings", "--settingsfile=settings.json", "--foo")]
+    [InlineData("defaultsettings")]
+    [InlineData("checkfornewtools")]
+    [InlineData("process")]
+    [InlineData("remux")]
+    [InlineData("reencode")]
+    [InlineData("deinterlace")]
+    [InlineData("removesubtitles")]
+    [InlineData("removeclosedcaptions")]
+    [InlineData("verify")]
+    [InlineData("createsidecar")]
+    [InlineData("updatesidecar")]
+    [InlineData("getsidecar")]
+    [InlineData("getmediainfo")]
+    [InlineData("gettagmap")]
+    [InlineData("testmediainfo")]
+    [InlineData("gettoolinfo")]
+    [InlineData("getversioninfo")]
+    [InlineData("createschema")]
+    public void Parse_Commandline_Fail(params string[] args)
     {
         CommandLineParser parser = new(args);
-        _ = parser.Result.Errors.Should().BeEmpty();
+        _ = parser.Result.Errors.Should().NotBeEmpty();
     }
 }

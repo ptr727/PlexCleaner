@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -20,14 +21,16 @@ using Timer = System.Timers.Timer;
 namespace PlexCleaner;
 
 // TODO: Specialize all catch(Exception) to catch specific expected exceptions only
+// TODO: Adopt async where it makes sense
 
 public static class Program
 {
-    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
-    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     private static readonly CancellationTokenSource s_cancelSource = new();
     private static HttpClient s_httpClient;
+    private static readonly List<string> s_cliBypassList = ["--help", "--version"];
 
+    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; }
     public static ConfigFileJsonSchema Config { get; set; }
 
@@ -64,7 +67,6 @@ public static class Program
     private static int Main(string[] args)
     {
         // Wait for debugger to attach
-        // Use direct args access to avoid early commandline parsing
         if (args.Any(arg => arg == "--debug"))
         {
             WaitForDebugger();
@@ -73,11 +75,23 @@ public static class Program
 
         // Parse commandline options
         CommandLineParser commandLineParser = new(args);
-        if (commandLineParser.Result.Errors.Count > 0)
+
+        // Bypass startup if parsing error or --help or --version
+        if (
+            commandLineParser.Result.Errors.Count > 0
+            || commandLineParser.Result.CommandResult.Children.Any(symbolResult =>
+                symbolResult is OptionResult optionResult
+                && s_cliBypassList.Contains(
+                    optionResult.Option.Name,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            )
+        )
         {
-            // Exit with default error handling
             return commandLineParser.Result.Invoke();
         }
+
+        // Bind all commandline options
         Options = commandLineParser.Bind();
 
         // Setup
