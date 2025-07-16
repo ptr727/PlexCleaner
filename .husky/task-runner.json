@@ -17,11 +17,14 @@
         {
             "name": ".Net Format",
             "command": "dotnet",
+            // TODO: https://github.com/dotnet/format/issues/2262
             "args": [
                 "format",
+                "style",
                 "--verify-no-changes",
                 "--severity=info",
-                "--verbosity=detailed"
+                "--verbosity=detailed",
+                "--exclude-diagnostics=IDE0055"
             ],
             "include": [
                 "**/*.cs"

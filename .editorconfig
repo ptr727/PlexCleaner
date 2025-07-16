@@ -52,6 +52,7 @@ end_of_line = crlf
 # C# files
 [*.cs]
 end_of_line = crlf
+dotnet_diagnostic.IDE0055.severity = none # TODO: https://github.com/dotnet/format/issues/2262
 dotnet_analyzer_diagnostic.severity = suggestion
 csharp_indent_block_contents = true
 csharp_indent_braces = false

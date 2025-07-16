@@ -38,8 +38,7 @@ jobs:
       - name: Format checks
         run: |
           dotnet tool restore
-          dotnet csharpier check --log-level=debug .
-          dotnet format --verify-no-changes --severity=info --verbosity=detailed
+          dotnet husky run
 
   version:
     name: Version
