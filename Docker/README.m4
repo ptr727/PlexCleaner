@@ -1,7 +1,7 @@
 changequote(`{{', `}}')
 # PlexCleaner
 
-Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## License
 

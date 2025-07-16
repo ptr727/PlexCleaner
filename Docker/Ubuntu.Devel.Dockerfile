@@ -75,7 +75,7 @@ FROM ubuntu:devel AS final
 ARG LABEL_VERSION="1.0.0.0"
 LABEL name="PlexCleaner" \
     version=${LABEL_VERSION} \
-    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin" \
+    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc." \
     maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
 
 # Prevent EULA and confirmation prompts in installers

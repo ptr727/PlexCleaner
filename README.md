@@ -26,6 +26,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 - Version 3:14:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
+  - Replaced dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` with direct commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything into memory and then process.
   - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.

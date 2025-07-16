@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -27,7 +26,6 @@ public static class Program
 {
     private static readonly CancellationTokenSource s_cancelSource = new();
     private static HttpClient s_httpClient;
-    private static readonly List<string> s_cliBypassList = ["--help", "--version"];
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
@@ -75,18 +73,7 @@ public static class Program
 
         // Parse commandline options
         CommandLineParser commandLineParser = new(args);
-
-        // Bypass startup if parsing error or --help or --version
-        if (
-            commandLineParser.Result.Errors.Count > 0
-            || commandLineParser.Result.CommandResult.Children.Any(symbolResult =>
-                symbolResult is OptionResult optionResult
-                && s_cliBypassList.Contains(
-                    optionResult.Option.Name,
-                    StringComparer.OrdinalIgnoreCase
-                )
-            )
-        )
+        if (commandLineParser.BypassStartup)
         {
             return commandLineParser.Result.Invoke();
         }
@@ -424,7 +411,7 @@ public static class Program
     public static int CreateSidecarCommand() =>
         ProcessFiles(true, nameof(SidecarFile.Create), SidecarFile.Create);
 
-    public static int GetSidecarCommand() =>
+    public static int GetSidecarInfoCommand() =>
         ProcessFiles(true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
 
     public static int UpdateSidecarCommand() =>
