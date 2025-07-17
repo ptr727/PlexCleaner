@@ -31,14 +31,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
-      - name: Run unit tests
-        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-
+      # Format checks
       - name: Format checks
         run: |
           dotnet tool restore
           dotnet husky run
+
+      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
+      - name: Run unit tests
+        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
+
 
   version:
     name: Version
