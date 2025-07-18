@@ -10,24 +10,21 @@ concurrency:
 jobs:
 
   dependabot:
-    name: Dependabot auto-merge
+    name: Merge dependabot PRs
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-
     if: github.actor == 'dependabot[bot]'
 
     steps:
 
-      # https://github.com/marketplace/actions/fetch-metadata-from-dependabot-prs
-      # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions#enable-auto-merge-on-a-pull-request
-      - name: Dependabot metadata
+      - name: Get dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Auto-merge dependabot non-major updates
+      - name: Merge dependabot PR
         if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: gh pr merge --auto --merge "$PR_URL"
         env:

@@ -1,0 +1,41 @@
+name: Get version information task
+
+on:
+  workflow_call:
+    outputs:
+      SemVer2:
+        value: ${{ jobs.get-version.outputs.SemVer2 }}
+      AssemblyVersion:
+        value: ${{ jobs.get-version.outputs.AssemblyVersion }}
+      AssemblyFileVersion:
+        value: ${{ jobs.get-version.outputs.AssemblyFileVersion }}
+      AssemblyInformationalVersion:
+        value: ${{ jobs.get-version.outputs.AssemblyInformationalVersion }}
+  workflow_dispatch:
+
+jobs:
+
+  get-version:
+    name: Get version information
+    runs-on: ubuntu-latest
+    outputs:
+      SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}
+      AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
+      AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
+      AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+
+    steps:
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Nerdbank.GitVersioning tool
+        id: nbgv
+        uses: dotnet/nbgv@master

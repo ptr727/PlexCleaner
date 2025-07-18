@@ -3,8 +3,8 @@ name: Build and publish release
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    paths-ignore:
+      - 'Docker/**'
   workflow_dispatch:
 
 concurrency:
@@ -13,65 +13,21 @@ concurrency:
 
 jobs:
 
-  test:
-    name: Test
+  test-build:
+    name: Run build tests
+    uses: ./.github/workflows/TestBuildTask.yml
+    secrets: inherit
+
+  get-version:
+    name: Get version information
+    uses: ./.github/workflows/GetVersionTask.yml
+    secrets: inherit
+
+  build-matrix:
+    name: Build matrix
     runs-on: ubuntu-latest
-
-    steps:
-
-      # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "9.x"
-
-      # https://github.com/marketplace/actions/checkout
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-     # Format checks
-      - name: Format checks
-        run: |
-          dotnet tool restore
-          dotnet husky run
-
-        # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
-      - name: Run unit tests
-        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-
-  version:
-    name: Version
-    runs-on: ubuntu-latest
-    needs: test
-
-    outputs:
-      SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}
-      AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
-      AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
-      AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
-
-    steps:
-
-      # https://github.com/marketplace/actions/checkout
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # https://github.com/marketplace/actions/nerdbank-gitversioning
-      - name: Run Nerdbank.GitVersioning tool
-        id: nbgv
-        uses: dotnet/nbgv@master
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: version
-
+    needs: [test-build, get-version]
     strategy:
-
-      # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
-      # https://learn.microsoft.com/en-us/dotnet/core/rid-catalog
         matrix:
           include:
           - runtime: win-x64
@@ -84,47 +40,40 @@ jobs:
 
     steps:
 
-      # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.x"
 
-      # https://github.com/marketplace/actions/checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
-      - name: Build
+      - name: Build project
         run: >-
             dotnet publish ./PlexCleaner/PlexCleaner.csproj
             --runtime ${{ matrix.runtime }}
             --self-contained false
             --output ${{ runner.temp }}/publish/${{ matrix.runtime }}
             --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-            -property:Version=${{ needs.version.outputs.AssemblyVersion }}
-            -property:FileVersion=${{ needs.version.outputs.AssemblyFileVersion }}
-            -property:AssemblyVersion=${{ needs.version.outputs.AssemblyVersion }}
-            -property:InformationalVersion=${{ needs.version.outputs.AssemblyInformationalVersion }}
-            -property:PackageVersion=${{ needs.version.outputs.SemVer2 }}
+            -property:Version=${{ needs.get-version.outputs.AssemblyVersion }}
+            -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }}
+            -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }}
+            -property:InformationalVersion=${{ needs.get-version.outputs.AssemblyInformationalVersion }}
+            -property:PackageVersion=${{ needs.get-version.outputs.SemVer2 }}
 
-      # https://github.com/marketplace/actions/upload-a-build-artifact
       - name: Upload build artifacts
-        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: publish-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
 
-  publish:
-    name: Publish
+  github-release:
+    name: Create GitHub release
     runs-on: ubuntu-latest
-    needs: [ build, version ]
-    if: ${{ github.event_name != 'pull_request' }}
+    needs: [ build-matrix, get-version ]
 
     steps:
 
-    # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
@@ -135,11 +84,10 @@ jobs:
     - name: Zip build output
       run: 7z a -t7z ${{ runner.temp }}/publish/PlexCleaner.7z ${{ runner.temp }}/publish/*
 
-    # https://github.com/marketplace/actions/gh-release
     - name: Create GitHub release
       uses: softprops/action-gh-release@v2
       with:
         generate_release_notes: true
-        tag_name: ${{ needs.version.outputs.SemVer2 }}
+        tag_name: ${{ needs.get-version.outputs.SemVer2 }}
         prerelease: ${{ !endsWith(github.ref, 'refs/heads/main') }}
         files: ${{ runner.temp }}/publish/PlexCleaner.7z

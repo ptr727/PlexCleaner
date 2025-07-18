@@ -1,0 +1,81 @@
+name: Build docker image task
+
+on:
+  workflow_call:
+    inputs:
+      push:
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+
+jobs:
+
+  get-version:
+    name: Get version information
+    uses: ./.github/workflows/GetVersionTask.yml
+    secrets: inherit
+
+  build-matrix:
+    name: Build docker matrix
+    runs-on: ubuntu-latest
+    needs: [get-version]
+    strategy:
+      matrix:
+        include:
+          - file: ./Docker/Debian.Stable.Dockerfile
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            cache-scope: debian
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
+          - file: ./Docker/Alpine.Latest.Dockerfile
+            platforms: linux/amd64,linux/arm64
+            cache-scope: alpine
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
+          - file: ./Docker/Ubuntu.Rolling.Dockerfile
+            platforms: linux/amd64,linux/arm64
+            cache-scope: ubuntu
+            tags: |
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
+              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+              docker.io/ptr727/plexcleaner:${{ needs.get-version.outputs.SemVer2 }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Docker build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          push: ${{ inputs.push }}
+          tags: ${{ matrix.tags }}
+          platforms: ${{ matrix.platforms }}
+          build-args: |
+            LABEL_VERSION=${{ needs.get-version.outputs.SemVer2 }}
+            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
+            BUILD_VERSION=${{ needs.get-version.outputs.AssemblyVersion }}
+            BUILD_FILE_VERSION=${{ needs.get-version.outputs.AssemblyFileVersion }}
+            BUILD_ASSEMBLY_VERSION=${{ needs.get-version.outputs.AssemblyFileVersion }}
+            BUILD_INFORMATION_VERSION=${{ needs.get-version.outputs.AssemblyInformationalVersion }}
+            BUILD_PACKAGE_VERSION=${{ needs.get-version.outputs.SemVer2 }}

@@ -1,0 +1,40 @@
+name: Test build task
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+
+  test-build:
+    name: Run build tests
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check code style
+        run: |
+          dotnet tool restore
+          dotnet csharpier check --log-level=debug .
+          dotnet format style --verify-no-changes --severity=info --verbosity=detailed --exclude-diagnostics=IDE0055
+
+      # TODO: https://github.com/alirezanet/Husky.Net/issues/137
+      - name: Check code style (using Husky, ignore errors)
+        run: |
+          dotnet tool restore
+          git status
+          dotnet husky run || true
+
+      - name: Run unit tests
+        run: dotnet test
+
+      - name: Build solution
+        run: dotnet build

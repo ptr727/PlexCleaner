@@ -8,7 +8,7 @@
 # https://github.com/dotnet/runtime/blob/main/.editorconfig
 
 # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format
-# dotnet format --verify-no-changes --severity=info --verbosity=detailed
+# dotnet format style --verify-no-changes --severity=info --verbosity=detailed --exclude-diagnostics=IDE0055
 
 # Root config
 root = true
@@ -52,7 +52,7 @@ end_of_line = crlf
 # C# files
 [*.cs]
 end_of_line = crlf
-dotnet_diagnostic.IDE0055.severity = none # TODO: https://github.com/dotnet/format/issues/2262
+dotnet_diagnostic.IDE0055.severity = none
 dotnet_analyzer_diagnostic.severity = suggestion
 csharp_indent_block_contents = true
 csharp_indent_braces = false

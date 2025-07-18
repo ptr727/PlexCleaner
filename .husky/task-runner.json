@@ -17,7 +17,6 @@
         {
             "name": ".Net Format",
             "command": "dotnet",
-            // TODO: https://github.com/dotnet/format/issues/2262
             "args": [
                 "format",
                 "style",
