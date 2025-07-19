@@ -39,21 +39,19 @@ public class CommandLineOptions
 }
 
 // TODO: https://github.com/dotmake-build/command-line/issues/42
-[CliCommand]
+// TODO: https://github.com/dotmake-build/command-line/issues/46
+[CliCommand] // TODO: Remove, required else exception at runtime
 public class CommandLineParser
 {
-    internal CommandLineParser() { }
+    internal CommandLineParser() { } // TODO: Remove, required because of CliCommand attribute
 
-    public CommandLineParser(string[] args) => Result = Cli.Parse<CliRootCommand>(args);
+    private readonly CliResult _cliResult;
 
-    public ParseResult Result { get; init; }
+    public CommandLineParser(string[] args) => _cliResult = Cli.Parse<CliRootCommand>(args);
 
-    public CommandLineOptions Bind()
-    {
-        // TODO: https://github.com/dotmake-build/command-line/issues/46
-        CliRootCommand rootCommand = Result.Bind<CliRootCommand>();
-        return rootCommand.Options;
-    }
+    public ParseResult Result => _cliResult.ParseResult;
+
+    public CommandLineOptions Bind() => _cliResult.Bind<CliRootCommand>().Options;
 
     public interface IGlobalOptions
     {
@@ -269,6 +267,26 @@ public class CommandLineParser
     public class CliRootCommand : CliOptionsBase, IGlobalOptions
     {
         public override CommandLineOptions Options { get; set; } = new();
+
+        public DefaultSettingsCommand DefaultSettings { get; set; }
+        public CheckForNewToolsCommand CheckForNewTools { get; set; }
+        public CreateSchemaCommand CreateSchema { get; set; }
+        public ProcessCommand Process { get; set; }
+        public MonitorCommand Monitor { get; set; }
+        public ReMuxCommand ReMux { get; set; }
+        public ReEncodeCommand ReEncode { get; set; }
+        public DeInterlaceCommand DeInterlace { get; set; }
+        public VerifyCommand Verify { get; set; }
+        public CreateSidecarCommand CreateSidecar { get; set; }
+        public GetSidecarCommand GetSidecar { get; set; }
+        public UpdateSidecarCommand UpdateSidecar { get; set; }
+        public GetTagMapCommand GetTagMap { get; set; }
+        public GetMediaInfoCommand GetMediaInfo { get; set; }
+        public TestMediaInfoCommand TestMediaInfo { get; set; }
+        public GetToolInfoCommand GetToolInfo { get; set; }
+        public RemoveSubtitlesCommand RemoveSubtitles { get; set; }
+        public RemoveClosedCaptionsCommand RemoveClosedCaptions { get; set; }
+        public GetVersionInfoCommand GetVersionInfo { get; set; }
 
         [CliCommand(
             Description = "Create JSON configuration file using default settings",

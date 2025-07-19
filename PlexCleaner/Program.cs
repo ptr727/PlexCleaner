@@ -91,7 +91,7 @@ public static class Program
             return commandLineParser.Result.Invoke();
         }
 
-        // Bind all commandline options
+        // Set commandline options
         Options = commandLineParser.Bind();
 
         // Setup
