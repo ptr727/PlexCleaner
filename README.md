@@ -26,13 +26,13 @@ Docker images are published on [Docker Hub][docker-link].
 
 - Version 3:14:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
-  - Replaced dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` with direct commandline options binding.
+  - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything into memory and then process.
   - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
   - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
-  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook and formatting.
+  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
   - General refactoring.
 - Version 3.13:
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.

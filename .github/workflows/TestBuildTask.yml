@@ -23,15 +23,8 @@ jobs:
       - name: Check code style
         run: |
           dotnet tool restore
-          dotnet csharpier check --log-level=debug .
-          dotnet format style --verify-no-changes --severity=info --verbosity=detailed --exclude-diagnostics=IDE0055
-
-      # TODO: https://github.com/alirezanet/Husky.Net/issues/137
-      - name: Check code style (using Husky, ignore errors)
-        run: |
-          dotnet tool restore
-          git status
-          dotnet husky run || true
+          dotnet husky install
+          dotnet husky run
 
       - name: Run unit tests
         run: dotnet test
