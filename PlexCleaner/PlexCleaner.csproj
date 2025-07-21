@@ -38,7 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CliWrap" Version="3.9.0" />
-    <PackageReference Include="DotMake.CommandLine" Version="2.6.2" />
+    <PackageReference Include="DotMake.CommandLine" Version="2.6.6" />
     <PackageReference Include="InsaneGenius.Utilities" Version="3.2.28" />
     <PackageReference Include="JsonSchema.Net.Generation" Version="5.0.4" />
     <PackageReference Include="JsonSchema.Net" Version="7.3.4" />
