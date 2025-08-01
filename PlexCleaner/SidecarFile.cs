@@ -339,7 +339,7 @@ public class SidecarFile
             }
         }
         string hash = ComputeHash();
-        Debug.Assert(hash != null);
+        Debug.Assert(!string.IsNullOrEmpty(hash));
         if (!string.Equals(hash, _sidecarJson.MediaHash, StringComparison.OrdinalIgnoreCase))
         {
             mismatch = true;
@@ -471,7 +471,7 @@ public class SidecarFile
         _sidecarJson.MediaLastWriteTimeUtc = _mediaFileInfo.LastWriteTimeUtc;
         _sidecarJson.MediaLength = _mediaFileInfo.Length;
         _sidecarJson.MediaHash = ComputeHash();
-        Debug.Assert(_sidecarJson.MediaHash != null);
+        Debug.Assert(!string.IsNullOrEmpty(_sidecarJson.MediaHash));
 
         // Tool version info
         _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;

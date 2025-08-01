@@ -525,7 +525,7 @@ public static class Process
         }
 
         // Write the process results to file
-        if (Program.Options.ResultsFile != null)
+        if (!string.IsNullOrEmpty(Program.Options.ResultsFile))
         {
             // Add result summaries
             errorResults.ForEach(item => resultsJson.Results.Errors.Files.Add(item.NewFileName));

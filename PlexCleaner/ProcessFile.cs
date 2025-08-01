@@ -1782,7 +1782,7 @@ public class ProcessFile
     {
         // Media filename changed
         // Compare case sensitive for Linux support
-        Debug.Assert(fileName != null);
+        Debug.Assert(!string.IsNullOrEmpty(fileName));
         if (!FileInfo.FullName.Equals(fileName, StringComparison.Ordinal))
         {
             // Refresh sidecar file info but preserve existing state, mark as renamed

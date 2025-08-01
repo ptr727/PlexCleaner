@@ -48,7 +48,7 @@ public class PlexCleanerFixture : IDisposable
         Assembly entryAssembly = Assembly.GetEntryAssembly();
         Debug.Assert(entryAssembly != null);
         string assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
-        Debug.Assert(assemblyDirectory != null);
+        Debug.Assert(!string.IsNullOrEmpty(assemblyDirectory));
         _samplesDirectory = Path.GetFullPath(Path.Combine(assemblyDirectory, SamplesDirectory));
     }
 

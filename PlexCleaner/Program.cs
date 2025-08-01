@@ -253,6 +253,7 @@ public static class Program
     public static int DefaultSettingsCommand()
     {
         // Save default config
+        Debug.Assert(!string.IsNullOrEmpty(Options.SettingsFile));
         Log.Information("Writing default settings to {SettingsFile}", Options.SettingsFile);
         ConfigFileJsonSchema.WriteDefaultsToFile(Options.SettingsFile);
 
@@ -262,6 +263,7 @@ public static class Program
     public static int CreateSchemaCommand()
     {
         // Write schema
+        Debug.Assert(!string.IsNullOrEmpty(Options.SchemaFile));
         Log.Information("Writing settings JSON schema to {SchemaFile}", Options.SchemaFile);
         ConfigFileJsonSchema.WriteSchemaToFile(Options.SchemaFile);
 

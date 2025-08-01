@@ -170,7 +170,6 @@
                 "monitor",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
-                "--resultsfile=Results.json",
                 "--preprocess",
                 "--mediafiles",
                 "D:\\Test"
