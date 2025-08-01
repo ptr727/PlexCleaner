@@ -406,10 +406,12 @@ public static class Process
         // Log active options
         Log.Logger.LogOverrideContext()
             .Information(
-                "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}",
+                "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}, ThreadCount: {ThreadCount}, Process file count: {Count}",
                 Program.Options.TestSnippets,
                 Program.Options.QuickScan,
-                Program.Config.ProcessOptions.FileIgnoreList.Count
+                Program.Config.ProcessOptions.FileIgnoreList.Count,
+                Program.Options.ThreadCount,
+                fileList.Count
             );
 
         // Process all the files
