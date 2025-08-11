@@ -66,7 +66,7 @@ RUN apt install -y --no-install-recommends \
         libc6 \
         libgcc-s1 \
         libicu76 \
-        libssl3 \
+        libssl3t64 \
         libstdc++6 \
         tzdata \
         wget \
@@ -138,7 +138,7 @@ RUN apt install -y --no-install-recommends \
         libc6 \
         libgcc-s1 \
         libicu76 \
-        libssl3 \
+        libssl3t64 \
         libstdc++6 \
         tzdata \
         wget \
