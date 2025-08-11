@@ -65,7 +65,7 @@ RUN apt install -y --no-install-recommends \
         curl \
         libc6 \
         libgcc-s1 \
-        libicu72 \
+        libicu76 \
         libssl3 \
         libstdc++6 \
         tzdata \
@@ -137,7 +137,7 @@ RUN apt install -y --no-install-recommends \
         curl \
         libc6 \
         libgcc-s1 \
-        libicu72 \
+        libicu76 \
         libssl3 \
         libstdc++6 \
         tzdata \
