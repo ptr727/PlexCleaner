@@ -24,7 +24,6 @@ public class CommandLineOptions
     public string SettingsFile { get; set; } = string.Empty;
 }
 
-// TODO: https://github.com/dotnet/command-line-api/issues/2593
 public class CommandLineParser
 {
     public CommandLineParser(string[] args)
@@ -44,7 +43,6 @@ public class CommandLineParser
     private static readonly List<string> s_cliBypassList = ["--help", "--version"];
     private RootCommand _root { get; init; }
 
-    // TODO: https://github.com/dotnet/command-line-api/discussions/2627
     private class CommandHandler(Func<ParseResult, int> action) : SynchronousCommandLineAction
     {
         public override int Invoke(ParseResult parseResult) => action(parseResult);
@@ -53,73 +51,86 @@ public class CommandLineParser
     private readonly Option<string> _logFileOption = new("--logfile")
     {
         Description = "Path to log file",
+        HelpName = "filepath",
         Recursive = true,
     };
 
     private readonly Option<bool> _logAppendOption = new("--logappend")
     {
         Description = "Append to existing log file",
+        HelpName = "boolean",
         Recursive = true,
     };
 
     private readonly Option<bool> _logWarningOption = new("--logwarning")
     {
         Description = "Log warnings and errors only",
+        HelpName = "boolean",
         Recursive = true,
     };
 
     private readonly Option<bool> _debugOption = new("--debug")
     {
         Description = "Wait for debugger to attach",
+        HelpName = "boolean",
         Recursive = true,
     };
 
     private readonly Option<string> _schemaFileOption = new("--schemafile")
     {
         Description = "Path to schema file",
+        HelpName = "filepath",
         Required = true,
     };
 
     private readonly Option<string> _resultsFileOption = new("--resultsfile")
     {
         Description = "Path to results file",
+        HelpName = "filepath",
     };
 
     private readonly Option<bool> _testSnippetsOption = new("--testsnippets")
     {
         Description = "Create short media file clips",
+        HelpName = "boolean",
     };
 
     private readonly Option<bool> _preProcessOption = new("--preprocess")
     {
         Description = "Pre-process all monitored folders",
+        HelpName = "boolean",
     };
 
     private readonly Option<List<string>> _mediaFilesOption = new("--mediafiles")
     {
         Description = "Path to media file or folder",
+        HelpName = "filepath",
         Required = true,
     };
 
     private readonly Option<string> _settingsFileOption = new("--settingsfile")
     {
         Description = "Path to settings file",
+        HelpName = "filepath",
         Required = true,
     };
 
     private readonly Option<bool> _parallelOption = new("--parallel")
     {
         Description = "Enable parallel file processing",
+        HelpName = "boolean",
     };
 
     private readonly Option<int> _threadCountOption = new("--threadcount")
     {
         Description = "Number of threads for parallel file processing",
+        HelpName = "integer",
     };
 
     private readonly Option<bool> _quickScanOption = new("--quickscan")
     {
         Description = "Scan only part of the file",
+        HelpName = "boolean",
     };
 
     private RootCommand CreateRootCommand()

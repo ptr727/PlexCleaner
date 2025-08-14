@@ -349,32 +349,33 @@ Usage:
   PlexCleaner [command] [options]
 
 Options:
-  --logfile <logfile>  Path to log file
-  --logappend          Append to existing log file
-  --logwarning         Log warnings and errors only
-  --debug              Wait for debugger to attach
-  --version            Show version information
-  -?, -h, --help       Show help and usage information
+  -?, -h, --help          Show help and usage information
+  --version               Show version information
+  --logfile <filepath>    Path to log file
+  --logappend <boolean>   Append to existing log file
+  --logwarning <boolean>  Log warnings and errors only
+  --debug <boolean>       Wait for debugger to attach
 
 Commands:
-  defaultsettings       Write default values to settings file
-  checkfornewtools      Check for new tool versions and download if newer
+  defaultsettings       Create default JSON settings file
+  checkfornewtools      Check for and download new tool versions
   process               Process media files
-  monitor               Monitor for file changes and process changed media files
-  remux                 Re-Multiplex media files
-  reencode              Re-Encode media files
-  deinterlace           De-Interlace media files
-  removesubtitles       Remove subtitles from media files
-  removeclosedcaptions  Remove closed captions from media files
-  verify                Verify media files
+  monitor               Monitor file changes and process changed files
+  verify                Verify media container and stream integrity
+  remux                 Conditionally re-multiplex media files
+  reencode              Conditionally re-encode media files
+  deinterlace           Conditionally de-interlace media files
+  removesubtitles       Remove all subtitle tracks
+  removeclosedcaptions  Remove all closed caption tracks
   createsidecar         Create new sidecar files
-  updatesidecar         Update existing sidecar files
-  getversioninfo        Print application and tools version information
-  getsidecarinfo        Print sidecar file information
-  gettagmap             Print media information tag-map
-  getmediainfo          Print media information using sidecar files
-  gettoolinfo           Print media information using media tools
-  createschema          Write settings schema to file
+  updatesidecar         Create or update sidecar files
+  getsidecarinfo        Print media sidecar information
+  getmediainfo          Print media file information
+  gettoolinfo           Print media tool information
+  gettagmap             Print media tool attribute mappings
+  testmediainfo         Test parsing media tool information
+  getversioninfo        Print application and media tool version information
+  createschema          Create JSON settings schema file
 ```
 
 ### Global Options
@@ -401,18 +402,18 @@ Usage:
   PlexCleaner process [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --parallel                                Enable parallel file processing
-  --threadcount <threadcount>               Number of threads for parallel file processing
-  --quickscan                               Scan only part of the file
-  --resultsfile <resultsfile>               Path to results file
-  --testsnippets                            Create short media file clips
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to existing log file
-  --logwarning                              Log warnings and errors only
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
+  --settingsfile <filepath> (REQUIRED)  Path to settings file
+  --mediafiles <filepath> (REQUIRED)    Path to media file or folder
+  --parallel <boolean>                  Enable parallel file processing
+  --threadcount <integer>               Number of threads for parallel file processing
+  --quickscan <boolean>                 Scan only part of the file
+  --resultsfile <filepath>              Path to results file
+  --testsnippets <boolean>              Create short media file clips
+  -?, -h, --help                        Show help and usage information
+  --logfile <filepath>                  Path to log file
+  --logappend <boolean>                 Append to existing log file
+  --logwarning <boolean>                Log warnings and errors only
+  --debug <boolean>                     Wait for debugger to attach
 ```
 
 The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
@@ -500,23 +501,23 @@ Example:
 ```text
 > PlexCleaner monitor --help
 Description:
-  Monitor for file changes and process changed media files
+  Monitor file changes and process changed files
 
 Usage:
   PlexCleaner monitor [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --parallel                                Enable parallel file processing
-  --threadcount <threadcount>               Number of threads for parallel file processing
-  --quickscan                               Scan only part of the file
-  --preprocess                              Pre-process all monitored folders
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to existing log file
-  --logwarning                              Log warnings and errors only
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
+  --settingsfile <filepath> (REQUIRED)  Path to settings file
+  --mediafiles <filepath> (REQUIRED)    Path to media file or folder
+  --parallel <boolean>                  Enable parallel file processing
+  --threadcount <integer>               Number of threads for parallel file processing
+  --quickscan <boolean>                 Scan only part of the file
+  --preprocess <boolean>                Pre-process all monitored folders
+  -?, -h, --help                        Show help and usage information
+  --logfile <filepath>                  Path to log file
+  --logappend <boolean>                 Append to existing log file
+  --logwarning <boolean>                Log warnings and errors only
+  --debug <boolean>                     Wait for debugger to attach
 ```
 
 The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
