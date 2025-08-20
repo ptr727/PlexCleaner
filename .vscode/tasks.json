@@ -1,11 +1,13 @@
 // dotnet new tool-manifest
 // dotnet tool install csharpier
 // dotnet tool install husky
+// dotnet tool install dotnet-outdated-tool
 // dotnet husky install
 // dotnet husky add pre-commit -c "dotnet husky run"
 // winget install nektos.act
 
 // dotnet tool update --all
+// dotnet outdated --upgrade:prompt
 // winget upgrade nektos.act
 
 {

@@ -821,6 +821,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [CliWrap](https://github.com/Tyrrrz/CliWrap)
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
+- [dotnet-outdated](https://github.com/dotnet-outdated/dotnet-outdated)
 - [FFmpeg](https://www.ffmpeg.org/)
 - [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
 - [GitHub Actions](https://github.com/actions)
