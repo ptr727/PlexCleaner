@@ -5,11 +5,9 @@
 // dotnet husky install
 // dotnet husky add pre-commit -c "dotnet husky run"
 // winget install nektos.act
-
 // dotnet tool update --all
 // dotnet outdated --upgrade:prompt
 // winget upgrade nektos.act
-
 {
     "version": "2.0.0",
     "tasks": [
