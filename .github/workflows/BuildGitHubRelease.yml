@@ -21,13 +21,13 @@ jobs:
 
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9.x"
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: Run unit tests
@@ -48,7 +48,7 @@ jobs:
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -80,13 +80,13 @@ jobs:
 
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9.x"
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
       - name: Build
@@ -120,7 +120,7 @@ jobs:
 
     # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download build artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: publish-*
         merge-multiple: true
