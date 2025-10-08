@@ -88,7 +88,7 @@ jobs:
       run: m4 --include=${{ runner.temp }}/versions ./Docker/README.m4 > ${{ runner.temp }}/README.md
 
     - name: Update Docker Hub README.md
-      uses: peter-evans/dockerhub-description@v4
+      uses: peter-evans/dockerhub-description@v5
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
