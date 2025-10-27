@@ -23,13 +23,13 @@ jobs:
 
       # https://github.com/marketplace/actions/setup-net-core-sdk
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9.x"
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
       - name: Run unit tests
@@ -50,7 +50,7 @@ jobs:
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -94,7 +94,7 @@ jobs:
 
       # https://github.com/marketplace/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # https://github.com/marketplace/actions/docker-setup-qemu
       - name: Setup QEMU
@@ -182,7 +182,7 @@ jobs:
 
     # https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload version artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
@@ -197,11 +197,11 @@ jobs:
 
     # https://github.com/marketplace/actions/checkout
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download version artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         pattern: versions-*
         merge-multiple: true
@@ -212,7 +212,7 @@ jobs:
 
     # https://github.com/marketplace/actions/docker-hub-description
     - name: Update Docker Hub README.md
-      uses: peter-evans/dockerhub-description@v4
+      uses: peter-evans/dockerhub-description@v5
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
