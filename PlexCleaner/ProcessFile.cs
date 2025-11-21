@@ -2229,12 +2229,10 @@ public class ProcessFile
         }
 
         // Iterate through the preferred codecs in order and return on first match
-        AudioProps audioProps = Program
-            .Config.ProcessOptions.PreferredAudioFormats.Select(format =>
-                audioPropsList.Find(item =>
-                    item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
-                )
-            )
+        AudioProps audioProps = Program.Config.ProcessOptions.PreferredAudioFormats
+            .Select(format => audioPropsList.Find(item =>
+                item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
+            ))
             .FirstOrDefault(props => props != null);
         if (audioProps != null)
         {
