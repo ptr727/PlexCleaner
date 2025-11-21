@@ -130,14 +130,14 @@ public class SelectMediaProps
     public List<TrackProps> GetTrackList()
     {
         // Add all tracks to list
-        List<TrackProps> trackLick = [];
-        trackLick.AddRange(Selected.GetTrackList());
-        trackLick.AddRange(NotSelected.GetTrackList());
+        List<TrackProps> trackList = [];
+        trackList.AddRange(Selected.GetTrackList());
+        trackList.AddRange(NotSelected.GetTrackList());
 
         // There should be no track id duplicates
-        Debug.Assert(trackLick.GroupBy(item => item.Id).All(group => group.Count() == 1));
+        Debug.Assert(trackList.GroupBy(item => item.Id).All(group => group.Count() == 1));
 
-        return [.. trackLick.OrderBy(item => item.Id)];
+        return [.. trackList.OrderBy(item => item.Id)];
     }
 
     public void WriteLine(string selected, string notSelected)
