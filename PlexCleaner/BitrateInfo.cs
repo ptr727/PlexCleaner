@@ -86,12 +86,12 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
         }
 
         // If PTS or DTS is set, it must not be zero and not negative
-        if (!double.IsNaN(packet.PtsTime) && packet.PtsTime <= epsilon)
+        if (!double.IsNaN(packet.PtsTime) && packet.PtsTime < epsilon)
         {
             return false;
         }
 
-        if (!double.IsNaN(packet.DtsTime) && packet.DtsTime <= epsilon)
+        if (!double.IsNaN(packet.DtsTime) && packet.DtsTime < epsilon)
         {
             return false;
         }
@@ -104,7 +104,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 
         // Timestamp must be set, and not be zero, and not negative
         Debug.Assert(!double.IsNaN(packet.PtsTime));
-        Debug.Assert(packet.PtsTime > epsilon);
+        Debug.Assert(packet.PtsTime >= epsilon);
 
         // If duration is set it must not be more than 1 second
         if (!double.IsNaN(packet.DurationTime) && packet.DurationTime > 1.0)
