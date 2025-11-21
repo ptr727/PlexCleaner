@@ -68,7 +68,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases (v3.20 May 2024).
     - Alpine Edge builds will be tagged as `alpine-edge`.
 - Version 3.5:
-  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
+  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [#324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.
 - Version 3.4:
   - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
@@ -81,7 +81,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
     - The `verify` command is useful when testing or selecting from multiple available media sources.
 - Version 3.3:
-  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
+  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [#214](https://github.com/ptr727/PlexCleaner/issues/214).
   - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
   - Add "legacy" `osx.13-arm64` build.
   - Make Rider 2023.2.1 happy with current C# linter rules.

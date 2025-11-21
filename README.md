@@ -35,7 +35,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
   - General refactoring.
 - Version 3.13:
-  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes #524.
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -811,7 +811,6 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 ### Fresh Install
 
 ```shell
-winget install Microsoft.DotNet.SDK.9
 winget install Microsoft.DotNet.SDK.10
 winget install Microsoft.VisualStudioCode
 winget install nektos.act
@@ -829,7 +828,6 @@ dotnet husky add pre-commit -c "dotnet husky run"
 ### Update Dependencies
 
 ```shell
-winget upgrade Microsoft.DotNet.SDK.9
 winget upgrade Microsoft.DotNet.SDK.10
 winget upgrade Microsoft.VisualStudioCode
 winget upgrade nektos.act
