@@ -2228,22 +2228,22 @@ public class ProcessFile
             return audioPropsList.First();
         }
 
-        // Iterate through the preferred codecs in order
-        foreach (string format in Program.Config.ProcessOptions.PreferredAudioFormats)
+        // Iterate through the preferred codecs in order and return on first match
+        AudioProps audioProps = Program
+            .Config.ProcessOptions.PreferredAudioFormats.Select(format =>
+                audioPropsList.Find(item =>
+                    item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
+                )
+            )
+            .FirstOrDefault(props => props != null);
+        if (audioProps != null)
         {
-            // Return on first match
-            AudioProps audioProps = audioPropsList.Find(item =>
-                item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
+            Log.Information(
+                "Preferred audio format selected : {Preferred} in {Formats}",
+                audioProps.Format,
+                audioPropsList.Select(item => item.Format)
             );
-            if (audioProps != null)
-            {
-                Log.Information(
-                    "Preferred audio format selected : {Preferred} in {Formats}",
-                    audioProps.Format,
-                    audioPropsList.Select(item => item.Format)
-                );
-                return audioProps;
-            }
+            return audioProps;
         }
 
         // Return first item
