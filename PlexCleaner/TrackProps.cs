@@ -360,32 +360,29 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.FfProbe);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv())
+        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName)))
         {
-            if (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+            if (string.IsNullOrEmpty(track.CodecName))
             {
-                if (string.IsNullOrEmpty(track.CodecName))
-                {
-                    track.CodecName = string.IsNullOrEmpty(track.CodecTagString)
-                        ? track.CodecLongName
-                        : track.CodecTagString;
-                }
-                if (string.IsNullOrEmpty(track.CodecLongName))
-                {
-                    track.CodecLongName = string.IsNullOrEmpty(track.CodecTagString)
-                        ? track.CodecName
-                        : track.CodecTagString;
-                }
-                Log.Warning(
-                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    track.CodecName,
-                    track.CodecLongName,
-                    Parent.Container,
-                    Parent.FileName
-                );
+                track.CodecName = string.IsNullOrEmpty(track.CodecTagString)
+                    ? track.CodecLongName
+                    : track.CodecTagString;
             }
+            if (string.IsNullOrEmpty(track.CodecLongName))
+            {
+                track.CodecLongName = string.IsNullOrEmpty(track.CodecTagString)
+                    ? track.CodecName
+                    : track.CodecTagString;
+            }
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.CodecName,
+                track.CodecLongName,
+                Parent.Container,
+                Parent.FileName
+            );
         }
 
         // FFprobe does not identify some codecs
