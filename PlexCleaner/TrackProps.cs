@@ -544,32 +544,29 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv())
+        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId)))
         {
-            if (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId))
+            if (string.IsNullOrEmpty(track.Format))
             {
-                if (string.IsNullOrEmpty(track.Format))
-                {
-                    track.Format = string.IsNullOrEmpty(track.MuxingMode)
-                        ? track.CodecId
-                        : track.MuxingMode;
-                }
-                if (string.IsNullOrEmpty(track.CodecId))
-                {
-                    track.CodecId = string.IsNullOrEmpty(track.MuxingMode)
-                        ? track.Format
-                        : track.MuxingMode;
-                }
-                Log.Warning(
-                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    track.Format,
-                    track.CodecId,
-                    Parent.Container,
-                    Parent.FileName
-                );
+                track.Format = string.IsNullOrEmpty(track.MuxingMode)
+                    ? track.CodecId
+                    : track.MuxingMode;
             }
+            if (string.IsNullOrEmpty(track.CodecId))
+            {
+                track.CodecId = string.IsNullOrEmpty(track.MuxingMode)
+                    ? track.Format
+                    : track.MuxingMode;
+            }
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.Format,
+                track.CodecId,
+                Parent.Container,
+                Parent.FileName
+            );
         }
 
         // Required
