@@ -1,0 +1,33 @@
+name: Test build task
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+
+  test-build:
+    name: Run build tests
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "9"
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Check code style
+        run: |
+          dotnet tool restore
+          dotnet husky install
+          dotnet husky run
+
+      - name: Run unit tests
+        run: dotnet test
+
+      - name: Build solution
+        run: dotnet build

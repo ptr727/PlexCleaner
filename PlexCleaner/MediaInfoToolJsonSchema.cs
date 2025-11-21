@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 // Convert JSON file to C# using app.quicktype.io
@@ -11,7 +11,9 @@ using System.Text.Json.Serialization;
 // Use MediaInfo example output:
 // mediainfo --Output=JSON file.mkv
 
-// TODO: Evaluate JSON support on old versions of MediaInfo and switch from XML to JSON
+// TODO: Evaluate JSON support availability in older versions and switch from XML to JSON
+
+// TODO: Add MediaInfo namespace
 
 namespace PlexCleaner;
 
@@ -43,6 +45,9 @@ public class Track
 
     [JsonPropertyName("ID")]
     public string Id { get; set; } = "";
+
+    [JsonPropertyName("UniqueID")]
+    public string UniqueId { get; set; } = "";
 
     [JsonPropertyName("Format_Level")]
     public string FormatLevel { get; set; } = "";

@@ -1,4 +1,4 @@
-﻿namespace PlexCleaner;
+namespace PlexCleaner;
 
 public static class MkvProcess
 {
@@ -12,7 +12,7 @@ public static class MkvProcess
     public static bool ReEncode(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        if (!processFile.GetMediaInfo())
+        if (!processFile.GetMediaProps())
         {
             return false;
         }
@@ -23,13 +23,13 @@ public static class MkvProcess
     public static bool Verify(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        return processFile.GetMediaInfo() && processFile.Verify(false, out _);
+        return processFile.GetMediaProps() && processFile.Verify(false, out _);
     }
 
     public static bool DeInterlace(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        if (!processFile.GetMediaInfo())
+        if (!processFile.GetMediaProps())
         {
             return false;
         }
@@ -40,7 +40,7 @@ public static class MkvProcess
     public static bool RemoveSubtitles(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        if (!processFile.GetMediaInfo())
+        if (!processFile.GetMediaProps())
         {
             return false;
         }
@@ -51,7 +51,7 @@ public static class MkvProcess
     public static bool RemoveClosedCaptions(string fileName)
     {
         ProcessFile processFile = new(fileName);
-        if (!processFile.GetMediaInfo())
+        if (!processFile.GetMediaProps())
         {
             return false;
         }

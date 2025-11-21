@@ -1,0 +1,14 @@
+name: Test docker task
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+
+  build-docker:
+    name: Build docker images
+    uses: ./.github/workflows/BuildDockerTask.yml
+    secrets: inherit
+    with:
+      push: false

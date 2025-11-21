@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -45,7 +45,7 @@ public class FfMpegToolJsonSchema
     public class Track
     {
         [JsonPropertyName("index")]
-        public int Index { get; set; }
+        public long Index { get; set; }
 
         [JsonPropertyName("codec_name")]
         public string CodecName { get; set; } = "";

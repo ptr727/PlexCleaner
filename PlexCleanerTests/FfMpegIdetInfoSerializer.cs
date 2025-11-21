@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using PlexCleaner;
@@ -10,8 +10,8 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
 {
     public bool IsSerializable(
         Type type,
-        object? value,
-        [NotNullWhen(false)] out string? failureReason
+        object value,
+        [NotNullWhen(false)] out string failureReason
     )
     {
         if (type == typeof(FfMpegIdetInfo) && value is FfMpegIdetInfo)
@@ -26,8 +26,8 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
     }
 
     public string Serialize(object value) =>
-        value is FfMpegIdetInfo IdetInfo
-            ? JsonSerializer.Serialize(IdetInfo)
+        value is FfMpegIdetInfo idetInfo
+            ? JsonSerializer.Serialize(idetInfo)
             : throw new InvalidOperationException(
                 $"Invalid type for serialization: {value.GetType().FullName} is not supported by {nameof(FfMpegIdetInfoSerializer)}."
             );

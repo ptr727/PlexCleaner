@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Serilog;
 
 namespace PlexCleaner;
@@ -17,8 +17,8 @@ public static class Extensions
         return true;
     }
 
-    public class LogOverride { }
-
     public static ILogger LogOverrideContext(this ILogger logger) =>
         logger.ForContext<LogOverride>();
+
+    public class LogOverride;
 }

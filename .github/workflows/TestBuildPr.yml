@@ -1,0 +1,19 @@
+name: Test build PRs
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'Docker/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  test-build:
+    name: Run build tests
+    uses: ./.github/workflows/TestBuildTask.yml
+    secrets: inherit

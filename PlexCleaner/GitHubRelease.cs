@@ -1,19 +1,19 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json.Nodes;
-using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
 
 public class GitHubRelease
 {
+    // Can throw HTTP exceptions
     public static string GetLatestRelease(string repo)
     {
         // Get the latest release version number from github releases
         // https://api.github.com/repos/ptr727/PlexCleaner/releases/latest
         string uri = $"https://api.github.com/repos/{repo}/releases/latest";
         Log.Information("Getting latest GitHub Release version from : {Uri}", uri);
-        string json = Download.GetHttpClient().GetStringAsync(uri).Result;
+        string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
         Debug.Assert(json != null);
 
         // Parse latest version from "tag_name"

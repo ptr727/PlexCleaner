@@ -1,4 +1,4 @@
-﻿// Schema update steps (also applies to SidecarFileJsonSchema):
+// Schema update steps (also applies to SidecarFileJsonSchema):
 // Derive new class from previous version
 // Keep all utility functions e.g. Upgrade() in the latest version
 // Add copy constructors to the new class to handle upgrading from the previous version
@@ -21,6 +21,10 @@ namespace PlexCleaner;
 // Base
 public record ConfigFileJsonSchemaBase
 {
+    // Schema Id
+    protected const string SchemaUri =
+        "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
+
     [JsonPropertyName("$schema")]
     [JsonPropertyOrder(-3)]
     public string Schema { get; } = SchemaUri;
@@ -28,10 +32,6 @@ public record ConfigFileJsonSchemaBase
     [JsonRequired]
     [JsonPropertyOrder(-2)]
     public int SchemaVersion { get; set; } = ConfigFileJsonSchema.Version;
-
-    // Schema Id
-    protected const string SchemaUri =
-        "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json";
 }
 
 // v1
@@ -116,6 +116,26 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
 public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 {
     public new const int Version = 4;
+
+    public static readonly JsonSerializerOptions JsonReadOptions = new()
+    {
+        AllowTrailingCommas = true,
+        IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+    };
+
+    public static readonly JsonSerializerOptions JsonWriteOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IncludeFields = true,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver().WithAddedModifier(
+            ExcludeObsoletePropertiesModifier
+        ),
+        WriteIndented = true,
+        NewLine = "\r\n",
+    };
 
     public ConfigFileJsonSchema4() { }
 
@@ -296,25 +316,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         // Write to file
         File.WriteAllText(path, jsonSchema);
     }
-
-    public static readonly JsonSerializerOptions JsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-    };
-
-    public static readonly JsonSerializerOptions JsonWriteOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        IncludeFields = true,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver().WithAddedModifier(
-            ExcludeObsoletePropertiesModifier
-        ),
-        WriteIndented = true,
-    };
 
     private static void ExcludeObsoletePropertiesModifier(JsonTypeInfo typeInfo)
     {

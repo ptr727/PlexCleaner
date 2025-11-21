@@ -1,4 +1,5 @@
-﻿using PlexCleaner;
+using System.Text.RegularExpressions;
+using PlexCleaner;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -34,7 +35,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     )]
     public void Parse_FfMpeg_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = FfMpegTool.InstalledVersionRegex().Match(line);
+        Match match = FfMpeg.Tool.InstalledVersionRegex().Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }
@@ -44,9 +45,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     [InlineData("HandBrake 20230223192356-5c2b5d2d0-1.6.x", "20230223192356-5c2b5d2d0-1.6.x")]
     public void Parse_HandBrake_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = HandBrakeTool
-            .InstalledVersionRegex()
-            .Match(line);
+        Match match = HandBrake.Tool.InstalledVersionRegex().Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }
@@ -56,9 +55,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     [InlineData("MediaInfoLib - v25.03", "25.03")]
     public void Parse_MediaInfo_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = MediaInfoTool
-            .InstalledVersionRegex()
-            .Match(line);
+        Match match = MediaInfo.Tool.InstalledVersionRegex().Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }
@@ -66,11 +63,11 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     [Theory]
     [InlineData("mkvmerge v51.0.0 ('I Wish') 64-bit", "51.0.0")]
     [InlineData("mkvmerge v91.0 ('Signs') 64-bit", "91.0")]
+    [InlineData("mkvpropedit v92.0 ('Everglow') 64-bit", "92.0")]
+    [InlineData("mkvpropedit v74.0.0 ('You Oughta Know') 64-bit", "74.0.0")]
     public void Parse_MkvMerge_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = MkvMergeTool
-            .InstalledVersionRegex()
-            .Match(line);
+        Match match = MkvMerge.Tool.InstalledVersionRegex().Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }
@@ -92,9 +89,7 @@ public class VersionParsingTests(PlexCleanerFixture fixture)
     )]
     public void Parse_SevenZip_Installed_Version(string line, string version)
     {
-        System.Text.RegularExpressions.Match match = SevenZipTool
-            .InstalledVersionRegex()
-            .Match(line);
+        Match match = SevenZip.Tool.InstalledVersionRegex().Match(line);
         Assert.True(match.Success);
         Assert.Equal(version, match.Groups["version"].Value);
     }

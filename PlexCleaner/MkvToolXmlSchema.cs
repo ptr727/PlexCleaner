@@ -1,9 +1,9 @@
-﻿using System.IO;
+using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
 // Convert XML to C# using http://xmltocsharp.azurewebsites.net/
-// https://mkvtoolnix.download/latest-release.xml.gz
+// https://mkvtoolnix.download/latest-release.xml
 
 namespace PlexCleaner;
 

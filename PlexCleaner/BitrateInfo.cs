@@ -1,108 +1,52 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using Serilog;
 
 namespace PlexCleaner;
 
-public class BitrateInfo
+public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 {
-    public void Calculate(
-        List<FfMpegToolJsonSchema.Packet> packetList,
-        int videoStream,
-        int audioStream,
-        int threshold
-    )
+    public Bitrate VideoBitrate { get; } = new();
+    public Bitrate AudioBitrate { get; } = new();
+    public Bitrate CombinedBitrate { get; } = new();
+    public int Duration => CombinedBitrate.Length;
+
+    public void Calculate(List<FfMpegToolJsonSchema.Packet> packetList)
     {
-        // Calculate the media playback duration from timestamps
-        Duration = 0;
-        foreach (
-            FfMpegToolJsonSchema.Packet packet in packetList.Where(packet =>
-                ShouldCompute(packet, videoStream, audioStream)
-            )
-        )
-        {
-            // Use DTS if PTS not set
-            if (double.IsNaN(packet.PtsTime))
-            {
-                packet.PtsTime = packet.DtsTime;
-            }
-
-            // Timestamp must be set, and not be zero, and not negative
-            Debug.Assert(!double.IsNaN(packet.PtsTime));
-            Debug.Assert(packet.PtsTime != 0.0);
-            Debug.Assert(!double.IsNegative(packet.PtsTime));
-
-            // Update duration
-            int packetTime = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
-            if (packetTime > Duration)
-            {
-                Duration = packetTime;
-            }
-        }
-
-        // Add 1 for index offset
-        Duration++;
-
-        // Set the bitrate array size to the duration in seconds
-        VideoBitrate = new Bitrate(Duration);
-        AudioBitrate = new Bitrate(Duration);
-        CombinedBitrate = new Bitrate(Duration);
-
-        // Iterate through all the packets and calculate the bitrate
-        long videoPackets = 0;
-        long audioPackets = 0;
-        foreach (
-            FfMpegToolJsonSchema.Packet packet in packetList.Where(packet =>
-                ShouldCompute(packet, videoStream, audioStream)
-            )
-        )
-        {
-            // Find packet timestamp index entry, round down
-            int index = System.Convert.ToInt32(Math.Floor(packet.PtsTime));
-            Debug.Assert(index >= 0 && index < VideoBitrate.Rate.Length);
-
-            // Stream must match expected types
-            Debug.Assert(
-                (
-                    packet.StreamIndex == videoStream
-                    && packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase)
-                )
-                    || (
-                        packet.StreamIndex == audioStream
-                        && packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
-                    )
-            );
-
-            // Update byte count at packet index
-            if (packet.StreamIndex == videoStream)
-            {
-                videoPackets++;
-                VideoBitrate.Rate[index] += packet.Size;
-            }
-            if (packet.StreamIndex == audioStream)
-            {
-                audioPackets++;
-                AudioBitrate.Rate[index] += packet.Size;
-            }
-            CombinedBitrate.Rate[index] += packet.Size;
-        }
-
-        // If there are no packets the stream is empty
-        if (videoPackets == 0 || audioPackets == 0)
-        {
-            Log.Error(
-                "Empty stream detected : VideoPackets: {VideoPackets}, AudioPackets: {AudioPackets}",
-                videoPackets,
-                audioPackets
-            );
-        }
+        // Add all packets
+        packetList.ForEach(Add);
 
         // Calculate the stream bitrate
-        VideoBitrate.Calculate(threshold);
-        AudioBitrate.Calculate(threshold);
-        CombinedBitrate.Calculate(threshold);
+        Calculate();
+    }
+
+    public void Calculate()
+    {
+        // Calculate the stream bitrate
+        VideoBitrate.Calculate(maxBps);
+        AudioBitrate.Calculate(maxBps);
+        CombinedBitrate.Calculate(maxBps);
+    }
+
+    public void Add(FfMpegToolJsonSchema.Packet packet)
+    {
+        // Check if the packet is valid
+        if (!ShouldCompute(packet))
+        {
+            return;
+        }
+
+        // Add the packet
+        if (packet.StreamIndex == videoStream)
+        {
+            VideoBitrate.Add(packet.PtsTime, packet.Size);
+        }
+        else if (packet.StreamIndex == audioStream)
+        {
+            AudioBitrate.Add(packet.PtsTime, packet.Size);
+        }
+
+        CombinedBitrate.Add(packet.PtsTime, packet.Size);
     }
 
     public void WriteLine()
@@ -112,23 +56,28 @@ public class BitrateInfo
         CombinedBitrate.WriteLine("Combined");
     }
 
-    public Bitrate VideoBitrate { get; set; }
-    public Bitrate AudioBitrate { get; set; }
-    public Bitrate CombinedBitrate { get; set; }
-
-    public int Duration { get; set; }
-
-    private static bool ShouldCompute(
-        FfMpegToolJsonSchema.Packet packet,
-        int videoStream,
-        int audioStream
-    )
+    private bool ShouldCompute(FfMpegToolJsonSchema.Packet packet)
     {
+        // Epsilon for floating-point comparisons
+        const double epsilon = 1e-9;
+
         // Stream index must match the audio or video stream index
         if (packet.StreamIndex != videoStream && packet.StreamIndex != audioStream)
         {
             return false;
         }
+
+        // Stream must match expected types
+        Debug.Assert(
+            packet.StreamIndex
+                == videoStream
+                == packet.CodecType.Equals("video", StringComparison.OrdinalIgnoreCase)
+        );
+        Debug.Assert(
+            packet.StreamIndex
+                == audioStream
+                == packet.CodecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
+        );
 
         // Must have PTS or DTS timestamps
         if (double.IsNaN(packet.PtsTime) && double.IsNaN(packet.DtsTime))
@@ -139,18 +88,29 @@ public class BitrateInfo
         // If PTS or DTS is set, it must not be zero and not negative
         if (
             !double.IsNaN(packet.PtsTime)
-            && (double.IsNegative(packet.PtsTime) || packet.PtsTime == 0.0)
+            && (double.IsNegative(packet.PtsTime) || Math.Abs(packet.PtsTime) < epsilon)
         )
         {
             return false;
         }
+
         if (
             !double.IsNaN(packet.DtsTime)
-            && (double.IsNegative(packet.DtsTime) || packet.DtsTime == 0.0)
+            && (double.IsNegative(packet.DtsTime) || Math.Abs(packet.DtsTime) < epsilon)
         )
         {
             return false;
         }
+
+        // Use DTS if PTS not set
+        if (double.IsNaN(packet.PtsTime))
+        {
+            packet.PtsTime = packet.DtsTime;
+        }
+
+        // Timestamp must be set, and not be zero, and not negative
+        Debug.Assert(!double.IsNaN(packet.PtsTime));
+        Debug.Assert(packet.PtsTime >= epsilon);
 
         // If duration is set it must not be more than 1 second
         if (!double.IsNaN(packet.DurationTime) && packet.DurationTime > 1.0)

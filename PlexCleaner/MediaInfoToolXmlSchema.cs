@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
@@ -29,6 +29,9 @@ public class MediaInfoToolXmlSchema
         [XmlElement(ElementName = "ID", Namespace = "https://mediaarea.net/mediainfo")]
         public string Id { get; set; } = "";
 
+        [XmlElement(ElementName = "UniqueID", Namespace = "https://mediaarea.net/mediainfo")]
+        public string UniqueId { get; set; } = "";
+
         [XmlElement(ElementName = "Duration", Namespace = "https://mediaarea.net/mediainfo")]
         public string Duration { get; set; } = "";
 
@@ -52,17 +55,19 @@ public class MediaInfoToolXmlSchema
 
         [XmlElement(ElementName = "Default", Namespace = "https://mediaarea.net/mediainfo")]
         public string DefaultString { get; set; } = "";
+
         public bool Default => MediaInfo.StringToBool(DefaultString);
 
         [XmlElement(ElementName = "Forced", Namespace = "https://mediaarea.net/mediainfo")]
         public string ForcedString { get; set; } = "";
+
         public bool Forced => MediaInfo.StringToBool(ForcedString);
 
         [XmlElement(ElementName = "MuxingMode", Namespace = "https://mediaarea.net/mediainfo")]
         public string MuxingMode { get; set; } = "";
 
         [XmlElement(ElementName = "StreamOrder", Namespace = "https://mediaarea.net/mediainfo")]
-        public string StreamOrder { get; set; }
+        public string StreamOrder { get; set; } = "";
 
         [XmlElement(ElementName = "ScanType", Namespace = "https://mediaarea.net/mediainfo")]
         public string ScanType { get; set; } = "";

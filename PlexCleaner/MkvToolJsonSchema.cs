@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -49,6 +49,12 @@ public class MkvToolJsonSchema
 
         [JsonPropertyName("type")]
         public string Type { get; set; } = "";
+
+        [JsonPropertyName("recognized")]
+        public bool Recognized { get; set; }
+
+        [JsonPropertyName("supported")]
+        public bool Supported { get; set; }
     }
 
     public class ContainerProperties
@@ -66,7 +72,7 @@ public class MkvToolJsonSchema
         public int NumEntries { get; set; }
     }
 
-    // TODO: TrackTag is only used to test for presence, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class TrackTag
     {
         [JsonPropertyName("num_entries")]
@@ -82,7 +88,7 @@ public class MkvToolJsonSchema
         public string Codec { get; set; } = "";
 
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         [JsonPropertyName("properties")]
         public TrackProperties Properties { get; } = new();
@@ -108,8 +114,11 @@ public class MkvToolJsonSchema
         [JsonPropertyName("tag_language")]
         public string TagLanguage { get; set; } = "";
 
+        [JsonPropertyName("uid")]
+        public ulong Uid { get; set; }
+
         [JsonPropertyName("number")]
-        public int Number { get; set; }
+        public long Number { get; set; }
 
         [JsonPropertyName("track_name")]
         public string TrackName { get; set; } = "";
@@ -133,7 +142,7 @@ public class MkvToolJsonSchema
         public bool TextDescriptions { get; set; }
     }
 
-    // TODO: As with tracktags, only used for count, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class Attachment
     {
         [JsonPropertyName("content_type")]
@@ -143,7 +152,7 @@ public class MkvToolJsonSchema
         public int Id { get; set; }
     }
 
-    // TODO: As with tracktags, only used for count, do we need contents?
+    // TODO: Only used to for presence, do we need contents?
     public class Chapter
     {
         [JsonPropertyName("type")]

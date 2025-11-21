@@ -1,13 +1,31 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
 
-public class Bitrate(int seconds)
+public class Bitrate
 {
-    // Threshold is in bytes per second
-    public void Calculate(int threshold = 0)
+    // List of bytes processed per second
+    private List<long> BytesPerSecond { get; } = [];
+
+    // Length in seconds
+    public int Length => BytesPerSecond.Count;
+
+    // Bitrate in bytes per second
+    public long Minimum { get; private set; }
+    public long Maximum { get; private set; }
+    public long Average { get; private set; }
+
+    // Threshold exceeded instance count and duration in seconds
+    public int Exceeded { get; private set; }
+
+    public int Duration { get; private set; }
+
+    // Optional max bytes per second
+    public void Calculate(int maxBps = 0)
     {
         Minimum = 0;
         Maximum = 0;
@@ -15,25 +33,26 @@ public class Bitrate(int seconds)
         Exceeded = 0;
         Duration = 0;
         int exceeded = 0;
-        foreach (long bitrate in Rate)
+        ulong total = 0;
+        BytesPerSecond.ForEach(item =>
         {
             // Min, max, average
-            if (bitrate > Maximum)
+            if (item > Maximum)
             {
-                Maximum = bitrate;
+                Maximum = item;
             }
 
-            if (bitrate < Minimum || Minimum == 0)
+            if (item < Minimum || Minimum == 0)
             {
-                Minimum = bitrate;
+                Minimum = item;
             }
-            Average = checked(Average + bitrate);
+            total += (ulong)item;
 
             // Thresholds
-            if (threshold > 0)
+            if (maxBps > 0)
             {
                 // Bitrate exceeds threshold
-                if (bitrate > threshold)
+                if (item > maxBps)
                 {
                     Exceeded++;
                     exceeded++;
@@ -50,15 +69,41 @@ public class Bitrate(int seconds)
                     exceeded = 0;
                 }
             }
+        });
+        Average = BytesPerSecond.Count == 0 ? 0 : (long)(total / (ulong)BytesPerSecond.Count);
+    }
+
+    public void Add(double time, long size)
+    {
+        Debug.Assert(time >= 0);
+        Debug.Assert(size >= 0);
+
+        // Find packet timestamp index entry, round down
+        int index = System.Convert.ToInt32(Math.Floor(time));
+
+        // Ensure the list is large enough
+        if (index >= BytesPerSecond.Count)
+        {
+            if (index == BytesPerSecond.Count)
+            {
+                // Add size at new index
+                BytesPerSecond.Add(size);
+                return;
+            }
+
+            // Add range of new indexes with 0 values
+            BytesPerSecond.AddRange(new long[index - BytesPerSecond.Count + 1]);
         }
-        Average /= Rate.Length;
+
+        // Update size at packet index
+        BytesPerSecond[index] += size;
     }
 
     public void WriteLine(string prefix) =>
         Log.Information(
             "{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
             prefix,
-            TimeSpan.FromSeconds(Rate.Length),
+            TimeSpan.FromSeconds(BytesPerSecond.Count),
             ToBitsPerSecond(Minimum),
             ToBitsPerSecond(Maximum),
             ToBitsPerSecond(Average),
@@ -67,16 +112,4 @@ public class Bitrate(int seconds)
         );
 
     public static string ToBitsPerSecond(long byteRate) => Format.BytesToKilo(byteRate * 8, "bps");
-
-    // Array of bytes per second
-    public long[] Rate { get; } = new long[seconds];
-
-    // Bitrate in bytes per second
-    public long Minimum { get; set; }
-    public long Maximum { get; set; }
-    public long Average { get; set; }
-
-    // Threshold exceeded instance count and duration in seconds
-    public int Exceeded { get; set; }
-    public int Duration { get; set; }
 }

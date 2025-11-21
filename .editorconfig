@@ -8,15 +8,14 @@
 # https://github.com/dotnet/runtime/blob/main/.editorconfig
 
 # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format
-# dotnet format --verify-no-changes --severity=info --verbosity=detailed
+# dotnet format style --verify-no-changes --severity=info --verbosity=detailed --exclude-diagnostics=IDE0055
 
 # Root config
 root = true
 
 # Defaults
 [*]
-charset = utf-8-bom
-end_of_line = crlf
+charset = utf-8
 indent_size = 4
 indent_style = space
 insert_final_newline = true
@@ -24,15 +23,23 @@ trim_trailing_whitespace = true
 
 # Markdown files
 [*.{md}]
+end_of_line = crlf
 trim_trailing_whitespace = false
 
 # Xml files
 [*.{xml,csproj,props,targets}]
+end_of_line = crlf
 indent_size = 2
 
-# YAML files
+# Yaml files
 [*.{yml,yaml}]
+end_of_line = crlf
 indent_size = 2
+
+# Json files
+[*.json]
+end_of_line = crlf
+indent_size = 4
 
 # Linux scripts
 [*.sh]
@@ -44,10 +51,9 @@ end_of_line = crlf
 
 # C# files
 [*.cs]
-
-# Default to suggestion severity
+end_of_line = crlf
+dotnet_diagnostic.IDE0055.severity = none
 dotnet_analyzer_diagnostic.severity = suggestion
-
 csharp_indent_block_contents = true
 csharp_indent_braces = false
 csharp_indent_case_contents = true

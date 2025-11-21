@@ -1,9 +1,15 @@
-﻿using System.Globalization;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using InsaneGenius.Utilities;
 using PlexCleaner;
 using Serilog;
+using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -20,7 +26,23 @@ namespace Sandbox;
 
 public class Program
 {
-    private static int Main()
+    private const string JsonConfigFile = "Sandbox.json";
+
+    private static readonly JsonSerializerOptions s_jsonReadOptions = new()
+    {
+        AllowTrailingCommas = true,
+        IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    private readonly Dictionary<string, JsonElement> _settings;
+
+    private Program(Dictionary<string, JsonElement> settings) => _settings = settings;
+
+    public static async Task<int> Main(string[] args)
     {
         // Create default commandline options and config
         PlexCleaner.Program.Options = new CommandLineOptions();
@@ -31,7 +53,7 @@ public class Program
         SetRuntimeOptions();
 
         // Create logger
-        Serilog.Debugging.SelfLog.Enable(Console.Error);
+        SelfLog.Enable(Console.Error);
         Log.Logger = new LoggerConfiguration()
             .Enrich.WithThreadId()
             .WriteTo.Console(
@@ -41,35 +63,35 @@ public class Program
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        InsaneGenius.Utilities.LogOptions.Logger = Log.Logger;
+        LogOptions.Logger = Log.Logger;
 
-        // Sandbox tests
-        int ret = 0;
-        // Program program = new();
+        // Get settings
+        Dictionary<string, JsonElement> settings = null;
+        if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
+        {
+            await using FileStream jsonStream = File.OpenRead(settingsPath);
+            settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                jsonStream,
+                s_jsonReadOptions
+            );
+            Log.Information("Settings loaded : {FilePath}", settingsPath);
+        }
 
-        // ClosedCaptions closedCaptions = new(program);
-        // int ret = closedCaptions.Test();
-
-        // ProcessFiles processFiles = new(program);
-        // int ret = processFiles.Test();
+        // Derive from Program and implement Sandbox()
+        Program program = new(settings);
+        int ret = await program.Sandbox(args);
 
         // Done
-        Log.CloseAndFlush();
+        await Log.CloseAndFlushAsync();
         return ret;
     }
 
+    protected virtual Task<int> Sandbox(string[] args) => Task.FromResult(0);
+
     public static void SetRuntimeOptions()
     {
-        InsaneGenius.Utilities.FileEx.Options.RetryCount = PlexCleaner
-            .Program
-            .Config
-            .MonitorOptions
-            .FileRetryCount;
-        InsaneGenius.Utilities.FileEx.Options.RetryWaitTime = PlexCleaner
-            .Program
-            .Config
-            .MonitorOptions
-            .FileRetryWaitTime;
+        FileEx.Options.RetryCount = PlexCleaner.Program.Config.MonitorOptions.FileRetryCount;
+        FileEx.Options.RetryWaitTime = PlexCleaner.Program.Config.MonitorOptions.FileRetryWaitTime;
 
         PlexCleaner.Program.Options.ThreadCount = PlexCleaner.Program.Options.Parallel
             ? PlexCleaner.Program.Options.ThreadCount == 0
@@ -78,21 +100,7 @@ public class Program
             : 1;
     }
 
-    private Program()
-    {
-        // Get settings
-        if (GetSettingsFilePath(JsonConfigFile) is string settingsPath)
-        {
-            using FileStream jsonStream = File.OpenRead(settingsPath);
-            _settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                jsonStream,
-                s_jsonReadOptions
-            );
-            Log.Information("Settings loaded : {FilePath}", settingsPath);
-        }
-    }
-
-    public static string? GetSettingsFilePath(string fileName)
+    public static string GetSettingsFilePath(string fileName)
     {
         // Load settings file from current working directory
         string settingsPath = Path.GetFullPath(fileName);
@@ -115,16 +123,6 @@ public class Program
         return settingsPath;
     }
 
-    private static readonly JsonSerializerOptions s_jsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        PropertyNameCaseInsensitive = true,
-    };
-
     public JsonElement? GetSettingsObject(string key) =>
         _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
 
@@ -134,10 +132,6 @@ public class Program
             StringComparer.OrdinalIgnoreCase
         );
 
-    public T? GetSettings<T>(string key)
+    public T GetSettings<T>(string key)
         where T : class => GetSettingsObject(key)?.Deserialize<T>();
-
-    private readonly Dictionary<string, JsonElement>? _settings;
-
-    private const string JsonConfigFile = "Sandbox.json";
 }

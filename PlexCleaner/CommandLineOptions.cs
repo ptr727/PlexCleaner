@@ -1,530 +1,427 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.NamingConventionBinder;
+using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
+using System.Linq;
 
 namespace PlexCleaner;
 
 public class CommandLineOptions
 {
-    public string SettingsFile { get; set; }
-    public List<string> MediaFiles { get; set; }
-    public string LogFile { get; set; }
+    public bool Debug { get; set; }
     public bool LogAppend { get; set; }
     public bool LogWarning { get; set; }
-    public bool TestSnippets { get; set; }
     public bool Parallel { get; set; }
-    public int ThreadCount { get; set; }
-    public bool Debug { get; set; }
-    public string SchemaFile { get; set; }
     public bool PreProcess { get; set; }
-    public string ResultsFile { get; set; }
     public bool QuickScan { get; set; }
+    public bool TestSnippets { get; set; }
+    public int ThreadCount { get; set; }
+    public List<string> MediaFiles { get; set; } = [];
+    public string LogFile { get; set; } = string.Empty;
+    public string ResultsFile { get; set; } = string.Empty;
+    public string SchemaFile { get; set; } = string.Empty;
+    public string SettingsFile { get; set; } = string.Empty;
+}
 
-    // TODO: How to override --version?
-    // https://github.com/dotnet/command-line-api/issues/2009
-    // https://github.com/dotnet/command-line-api/issues/1691
-
-    public static RootCommand CreateRootCommand()
+public class CommandLineParser
+{
+    public CommandLineParser(string[] args)
     {
-        // Root command
-        RootCommand command = new(
-            "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc."
-        );
-
-        // Global options applying to all commands
-
-        // Path to the log file
-        command.AddGlobalOption(
-            new Option<string>("--logfile") { Description = "Path to log file" }
-        );
-
-        // Append to log vs. overwrite
-        command.AddGlobalOption(
-            new Option<bool>("--logappend") { Description = "Append to existing log file" }
-        );
-
-        // Log warnings and errors
-        command.AddGlobalOption(
-            new Option<bool>("--logwarning") { Description = "Log warnings and errors only" }
-        );
-
-        // Wait for debugger to attach
-        command.AddGlobalOption(
-            new Option<bool>("--debug") { Description = "Wait for debugger to attach" }
-        );
-
-        // Commands
-
-        // Create default settings
-        command.AddCommand(CreateDefaultSettingsCommand());
-
-        // Check for new tools
-        command.AddCommand(CreateCheckForNewToolsCommand());
-
-        // Process files
-        command.AddCommand(CreateProcessCommand());
-
-        // Monitor and process files
-        command.AddCommand(CreateMonitorCommand());
-
-        // Re-Multiplex files
-        command.AddCommand(CreateReMuxCommand());
-
-        // Re-Encode files
-        command.AddCommand(CreateReEncodeCommand());
-
-        // De-Interlace files
-        command.AddCommand(CreateDeInterlaceCommand());
-
-        // Remove subtitles
-        command.AddCommand(CreateRemoveSubtitlesCommand());
-
-        // Remove closed captions
-        command.AddCommand(CreateRemoveClosedCaptionsCommand());
-
-        // Verify files
-        command.AddCommand(CreateVerifyCommand());
-
-        // Create sidecar files
-        command.AddCommand(CreateCreateSidecarCommand());
-
-        // Update sidecar files
-        command.AddCommand(CreateUpdateSidecarCommand());
-
-        // Print version information
-        command.AddCommand(CreateGetVersionInfoCommand());
-
-        // Print sidecar files
-        command.AddCommand(CreateGetSidecarInfoCommand());
-
-        // Print tag-map
-        command.AddCommand(CreateGetTagMapCommand());
-
-        // Print media info
-        command.AddCommand(CreateGetMediaInfoCommand());
-
-        // Print tool info
-        command.AddCommand(CreateGetToolInfoCommand());
-
-        // Create JSON schema
-        command.AddCommand(CreateCreateSchemaCommand());
-
-        return command;
+        _root = CreateRootCommand();
+        Result = _root.Parse(args);
     }
 
-    private static Command CreateCreateSchemaCommand()
-    {
-        // Create settings JSON schema file
-        Command command = new("createschema")
-        {
-            Description = "Write settings schema to file",
-            Handler = CommandHandler.Create(s_createSchemaFunc),
-        };
+    public ParseResult Result { get; init; }
+    public bool BypassStartup =>
+        Result.Errors.Count > 0
+        || Result.CommandResult.Children.Any(symbolResult =>
+            symbolResult is OptionResult optionResult
+            && s_cliBypassList.Contains(optionResult.Option.Name, StringComparer.OrdinalIgnoreCase)
+        );
 
-        // Schema file name
-        command.AddOption(
-            new Option<string>("--schemafile")
+    private static readonly List<string> s_cliBypassList = ["--help", "--version"];
+    private RootCommand _root { get; init; }
+
+    private class CommandHandler(Func<ParseResult, int> action) : SynchronousCommandLineAction
+    {
+        public override int Invoke(ParseResult parseResult) => action(parseResult);
+    }
+
+    private readonly Option<string> _logFileOption = new("--logfile")
+    {
+        Description = "Path to log file",
+        HelpName = "filepath",
+        Recursive = true,
+    };
+
+    private readonly Option<bool> _logAppendOption = new("--logappend")
+    {
+        Description = "Append to existing log file",
+        HelpName = "boolean",
+        Recursive = true,
+    };
+
+    private readonly Option<bool> _logWarningOption = new("--logwarning")
+    {
+        Description = "Log warnings and errors only",
+        HelpName = "boolean",
+        Recursive = true,
+    };
+
+    private readonly Option<bool> _debugOption = new("--debug")
+    {
+        Description = "Wait for debugger to attach",
+        HelpName = "boolean",
+        Recursive = true,
+    };
+
+    private readonly Option<string> _schemaFileOption = new("--schemafile")
+    {
+        Description = "Path to schema file",
+        HelpName = "filepath",
+        Required = true,
+    };
+
+    private readonly Option<string> _resultsFileOption = new("--resultsfile")
+    {
+        Description = "Path to results file",
+        HelpName = "filepath",
+    };
+
+    private readonly Option<bool> _testSnippetsOption = new("--testsnippets")
+    {
+        Description = "Create short media file clips",
+        HelpName = "boolean",
+    };
+
+    private readonly Option<bool> _preProcessOption = new("--preprocess")
+    {
+        Description = "Pre-process all monitored folders",
+        HelpName = "boolean",
+    };
+
+    private readonly Option<List<string>> _mediaFilesOption = new("--mediafiles")
+    {
+        Description = "Path to media file or folder",
+        HelpName = "filepath",
+        Required = true,
+    };
+
+    private readonly Option<string> _settingsFileOption = new("--settingsfile")
+    {
+        Description = "Path to settings file",
+        HelpName = "filepath",
+        Required = true,
+    };
+
+    private readonly Option<bool> _parallelOption = new("--parallel")
+    {
+        Description = "Enable parallel file processing",
+        HelpName = "boolean",
+    };
+
+    private readonly Option<int> _threadCountOption = new("--threadcount")
+    {
+        Description = "Number of threads for parallel file processing",
+        HelpName = "integer",
+    };
+
+    private readonly Option<bool> _quickScanOption = new("--quickscan")
+    {
+        Description = "Scan only part of the file",
+        HelpName = "boolean",
+    };
+
+    private RootCommand CreateRootCommand()
+    {
+        // TODO: https://github.com/dotnet/command-line-api/issues/2597
+#pragma warning disable IDE0028 // Simplify collection initialization
+        RootCommand rootCommand = new(
+            "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc."
+        );
+#pragma warning restore IDE0028 // Simplify collection initialization
+
+        // Global options
+        rootCommand.Options.Add(_logFileOption);
+        rootCommand.Options.Add(_logAppendOption);
+        rootCommand.Options.Add(_logWarningOption);
+        rootCommand.Options.Add(_debugOption);
+
+        // Commands
+        rootCommand.Subcommands.Add(
+            new("defaultsettings")
             {
-                Description = "Path to schema file",
-                IsRequired = true,
+                Description = "Create default JSON settings file",
+                Action = new CommandHandler(_ => Program.DefaultSettingsCommand()),
+                Options = { _settingsFileOption },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("checkfornewtools")
+            {
+                Description = "Check for and download new tool versions",
+                Action = new CommandHandler(_ => Program.CheckForNewToolsCommand()),
+                Options = { _settingsFileOption },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("process")
+            {
+                Description = "Process media files",
+                Action = new CommandHandler(_ => Program.ProcessCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
+                    _resultsFileOption,
+                    _testSnippetsOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("monitor")
+            {
+                Description = "Monitor file changes and process changed files",
+                Action = new CommandHandler(_ => Program.MonitorCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
+                    _preProcessOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("verify")
+            {
+                Description = "Verify media container and stream integrity",
+                Action = new CommandHandler(_ => Program.VerifyCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("remux")
+            {
+                Description = "Conditionally re-multiplex media files",
+                Action = new CommandHandler(_ => Program.ReMuxCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("reencode")
+            {
+                Description = "Conditionally re-encode media files",
+                Action = new CommandHandler(_ => Program.ReEncodeCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("deinterlace")
+            {
+                Description = "Conditionally de-interlace media files",
+                Action = new CommandHandler(_ => Program.DeInterlaceCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("removesubtitles")
+            {
+                Description = "Remove all subtitle tracks",
+                Action = new CommandHandler(_ => Program.RemoveSubtitlesCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("removeclosedcaptions")
+            {
+                Description = "Remove all closed caption tracks",
+                Action = new CommandHandler(_ => Program.RemoveClosedCaptionsCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                    _quickScanOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("createsidecar")
+            {
+                Description = "Create new sidecar files",
+                Action = new CommandHandler(_ => Program.CreateSidecarCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("updatesidecar")
+            {
+                Description = "Create or update sidecar files",
+                Action = new CommandHandler(_ => Program.UpdateSidecarCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("getsidecarinfo")
+            {
+                Description = "Print media sidecar information",
+                Action = new CommandHandler(_ => Program.GetSidecarInfoCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("getmediainfo")
+            {
+                Description = "Print media file information",
+                Action = new CommandHandler(_ => Program.GetMediaInfoCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("gettoolinfo")
+            {
+                Description = "Print media tool information",
+                Action = new CommandHandler(_ => Program.GetToolInfoCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("gettagmap")
+            {
+                Description = "Print media tool attribute mappings",
+                Action = new CommandHandler(_ => Program.GetTagMapCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("testmediainfo")
+            {
+                Description = "Test parsing media tool information",
+                Action = new CommandHandler(_ => Program.TestMediaInfoCommand()),
+                Options =
+                {
+                    _settingsFileOption,
+                    _mediaFilesOption,
+                    _parallelOption,
+                    _threadCountOption,
+                },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("getversioninfo")
+            {
+                Description = "Print application and media tool version information",
+                Action = new CommandHandler(_ => Program.GetVersionInfoCommand()),
+                Options = { _settingsFileOption },
+            }
+        );
+        rootCommand.Subcommands.Add(
+            new("createschema")
+            {
+                Description = "Create JSON settings schema file",
+                Action = new CommandHandler(_ => Program.CreateSchemaCommand()),
+                Options = { _schemaFileOption },
             }
         );
 
-        return command;
+        return rootCommand;
     }
 
-    private static Command CreateDefaultSettingsCommand()
+    public CommandLineOptions Bind()
     {
-        // Create default settings file
-        Command command = new("defaultsettings")
+        CommandLineOptions options = new()
         {
-            Description = "Write default values to settings file",
-            Handler = CommandHandler.Create(s_defaultSettingsFunc),
+            Debug = Result.GetValue(_debugOption),
+            LogAppend = Result.GetValue(_logAppendOption),
+            LogWarning = Result.GetValue(_logWarningOption),
+            Parallel = Result.GetValue(_parallelOption),
+            PreProcess = Result.GetValue(_preProcessOption),
+            QuickScan = Result.GetValue(_quickScanOption),
+            TestSnippets = Result.GetValue(_testSnippetsOption),
+            ThreadCount = Result.GetValue(_threadCountOption),
+            MediaFiles = Result.GetValue(_mediaFilesOption) ?? [],
+            LogFile = Result.GetValue(_logFileOption) ?? string.Empty,
+            ResultsFile = Result.GetValue(_resultsFileOption) ?? string.Empty,
+            SchemaFile = Result.GetValue(_schemaFileOption) ?? string.Empty,
+            SettingsFile = Result.GetValue(_settingsFileOption) ?? string.Empty,
         };
 
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        return command;
+        return options;
     }
-
-    private static Command CreateCheckForNewToolsCommand()
-    {
-        // Check for new tools
-        Command command = new("checkfornewtools")
-        {
-            Description = "Check for new tool versions and download if newer",
-            Handler = CommandHandler.Create(s_checkForNewToolsFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        return command;
-    }
-
-    private static Command CreateProcessCommand()
-    {
-        // Process files
-        Command command = new("process")
-        {
-            Description = "Process media files",
-            Handler = CommandHandler.Create(s_processFunc),
-        };
-
-        // Process options
-        CreateProcessCommandOptions(command);
-
-        // Results file name
-        command.AddOption(
-            new Option<string>("--resultsfile") { Description = "Path to results file" }
-        );
-
-        // Create short video clips
-        command.AddOption(
-            new Option<bool>("--testsnippets") { Description = "Create short media file clips" }
-        );
-
-        return command;
-    }
-
-    private static void CreateProcessCommandOptions(Command command)
-    {
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Parallel processing
-        command.AddOption(CreateParallelOption());
-
-        // Parallel processing thread count
-        command.AddOption(CreateThreadCountOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-    }
-
-    private static Command CreateMonitorCommand()
-    {
-        // Monitor and process files
-        Command command = new("monitor")
-        {
-            Description = "Monitor for file changes and process changed media files",
-            Handler = CommandHandler.Create(s_monitorFunc),
-        };
-
-        // Process options
-        CreateProcessCommandOptions(command);
-
-        //  Pre-process
-        command.AddOption(
-            new Option<bool>("--preprocess") { Description = "Pre-process all monitored folders" }
-        );
-
-        return command;
-    }
-
-    private static Command CreateReMuxCommand()
-    {
-        // Re-Mux files
-        Command command = new("remux")
-        {
-            Description = "Re-Multiplex media files",
-            Handler = CommandHandler.Create(s_reMuxFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-
-        return command;
-    }
-
-    private static Command CreateReEncodeCommand()
-    {
-        // Re-Encode files
-        Command command = new("reencode")
-        {
-            Description = "Re-Encode media files",
-            Handler = CommandHandler.Create(s_reEncodeFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-
-        return command;
-    }
-
-    private static Command CreateDeInterlaceCommand()
-    {
-        // DeInterlace files
-        Command command = new("deinterlace")
-        {
-            Description = "De-Interlace media files",
-            Handler = CommandHandler.Create(s_deInterlaceFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-
-        return command;
-    }
-
-    private static Command CreateVerifyCommand()
-    {
-        // Verify files
-        Command command = new("verify")
-        {
-            Description = "Verify media files",
-            Handler = CommandHandler.Create(s_verifyFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-
-        return command;
-    }
-
-    private static Command CreateCreateSidecarCommand()
-    {
-        // Create sidecar files
-        Command command = new("createsidecar")
-        {
-            Description = "Create new sidecar files",
-            Handler = CommandHandler.Create(s_createSidecarFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateGetSidecarInfoCommand()
-    {
-        // Read sidecar files
-        Command command = new("getsidecarinfo")
-        {
-            Description = "Print sidecar file information",
-            Handler = CommandHandler.Create(s_getSidecarInfoFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateUpdateSidecarCommand()
-    {
-        // Create sidecar files
-        Command command = new("updatesidecar")
-        {
-            Description = "Update existing sidecar files",
-            Handler = CommandHandler.Create(s_updateSidecarFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateGetTagMapCommand()
-    {
-        // Create tag-map
-        Command command = new("gettagmap")
-        {
-            Description = "Print media information tag-map",
-            Handler = CommandHandler.Create(s_getTagMapFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateGetMediaInfoCommand()
-    {
-        // Print media info
-        Command command = new("getmediainfo")
-        {
-            Description = "Print media information using sidecar files",
-            Handler = CommandHandler.Create(s_getMediaInfoFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateGetToolInfoCommand()
-    {
-        // Print tool info
-        Command command = new("gettoolinfo")
-        {
-            Description = "Print media information using media tools",
-            Handler = CommandHandler.Create(s_getToolInfoFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateRemoveSubtitlesCommand()
-    {
-        // Remove subtitles
-        Command command = new("removesubtitles")
-        {
-            Description = "Remove subtitles from media files",
-            Handler = CommandHandler.Create(s_removeSubtitlesFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        return command;
-    }
-
-    private static Command CreateGetVersionInfoCommand()
-    {
-        // Get version information
-        Command command = new("getversioninfo")
-        {
-            Description = "Print application and tools version information",
-            Handler = CommandHandler.Create(s_getVersionInfoFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        return command;
-    }
-
-    private static Command CreateRemoveClosedCaptionsCommand()
-    {
-        // Remove closed captions
-        Command command = new("removeclosedcaptions")
-        {
-            Description = "Remove closed captions from media files",
-            Handler = CommandHandler.Create(s_removeClosedCaptionsFunc),
-        };
-
-        // Settings file name
-        command.AddOption(CreateSettingsFileOption());
-
-        // Media files or folders option
-        command.AddOption(CreateMediaFilesOption());
-
-        // Parallel processing
-        command.AddOption(CreateParallelOption());
-
-        // Parallel processing thread count
-        command.AddOption(CreateThreadCountOption());
-
-        // Scan only part of the file
-        command.AddOption(CreateQuickScanOption());
-
-        return command;
-    }
-
-    private static Option<List<string>> CreateMediaFilesOption() =>
-        // Media files or folders option
-        new("--mediafiles") { Description = "Path to media file or folder", IsRequired = true };
-
-    private static Option<string> CreateSettingsFileOption() =>
-        // Path to the settings file
-        new("--settingsfile") { Description = "Path to settings file", IsRequired = true };
-
-    private static Option<bool> CreateParallelOption() =>
-        // Parallel processing
-        new("--parallel") { Description = "Enable parallel file processing" };
-
-    private static Option<int> CreateThreadCountOption() =>
-        // Parallel processing thread count
-        new("--threadcount") { Description = "Number of threads for parallel file processing" };
-
-    private static Option<bool> CreateQuickScanOption() =>
-        // Scan only parts of the file
-        new("--quickscan") { Description = "Scan only part of the file" };
-
-    // Default delegates for command handlers, overridden in tests
-    internal static Func<CommandLineOptions, int> s_removeClosedCaptionsFunc =
-        Program.RemoveClosedCaptionsCommand;
-    internal static Func<CommandLineOptions, int> s_getToolInfoFunc = Program.GetToolInfoCommand;
-    internal static Func<CommandLineOptions, int> s_getMediaInfoFunc = Program.GetMediaInfoCommand;
-    internal static Func<CommandLineOptions, int> s_getTagMapFunc = Program.GetTagMapCommand;
-    internal static Func<CommandLineOptions, int> s_updateSidecarFunc =
-        Program.UpdateSidecarCommand;
-    internal static Func<CommandLineOptions, int> s_getSidecarInfoFunc =
-        Program.GetSidecarInfoCommand;
-    internal static Func<CommandLineOptions, int> s_createSidecarFunc =
-        Program.CreateSidecarCommand;
-    internal static Func<CommandLineOptions, int> s_verifyFunc = Program.VerifyCommand;
-    internal static Func<CommandLineOptions, int> s_deInterlaceFunc = Program.DeInterlaceCommand;
-    internal static Func<CommandLineOptions, int> s_reEncodeFunc = Program.ReEncodeCommand;
-    internal static Func<CommandLineOptions, int> s_reMuxFunc = Program.ReMuxCommand;
-    internal static Func<CommandLineOptions, int> s_monitorFunc = Program.MonitorCommand;
-    internal static Func<CommandLineOptions, int> s_processFunc = Program.ProcessCommand;
-    internal static Func<CommandLineOptions, int> s_checkForNewToolsFunc =
-        Program.CheckForNewToolsCommand;
-    internal static Func<CommandLineOptions, int> s_defaultSettingsFunc =
-        Program.WriteDefaultSettingsCommand;
-    internal static Func<CommandLineOptions, int> s_createSchemaFunc =
-        Program.CreateJsonSchemaCommand;
-    internal static Func<CommandLineOptions, int> s_getVersionInfoFunc =
-        Program.GetVersionInfoCommand;
-    internal static Func<CommandLineOptions, int> s_removeSubtitlesFunc =
-        Program.RemoveSubtitlesCommand;
 }

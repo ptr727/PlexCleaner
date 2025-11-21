@@ -1,8 +1,9 @@
-﻿// See ConfigFileJsonSchema.cs for schema update steps
+// See ConfigFileJsonSchema.cs for schema update steps
 
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -21,17 +22,17 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string MkvToolVersion { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string FfIdetInfoData { get; set; }
 
     [JsonRequired]
@@ -41,15 +42,18 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
     public long MediaLength { get; set; }
 
     [JsonRequired]
-    public string FfProbeInfoData { get; set; }
+    [JsonPropertyName("FfProbeInfoData")]
+    public string FfProbeData { get; set; }
 
     [JsonRequired]
-    public string MkvMergeInfoData { get; set; }
+    [JsonPropertyName("MkvMergeInfoData")]
+    public string MkvMergeData { get; set; }
 
     [JsonRequired]
     public string MediaInfoToolVersion { get; set; }
 
     [JsonRequired]
+    [JsonPropertyName("MediaInfoData")]
     public string MediaInfoData { get; set; }
 }
 
@@ -66,7 +70,7 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete("Removed in v4")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public bool Verified { get; set; }
 }
 

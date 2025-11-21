@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,15 +15,37 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using Timer = System.Timers.Timer;
 
 namespace PlexCleaner;
 
+// TODO: Specialize all catch(Exception) to catch specific expected exceptions only
+// TODO: Adopt async where it makes sense
+
 public static class Program
 {
-    private enum ExitCode
+    private static readonly CancellationTokenSource s_cancelSource = new();
+    private static HttpClient s_httpClient;
+
+    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
+    public static CommandLineOptions Options { get; set; }
+    public static ConfigFileJsonSchema Config { get; set; }
+
+    public static HttpClient GetHttpClient()
     {
-        Success = 0,
-        Error = 1,
+        if (s_httpClient != null)
+        {
+            return s_httpClient;
+        }
+        s_httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
+        s_httpClient.DefaultRequestHeaders.UserAgent.Add(
+            new ProductInfoHeaderValue(
+                Assembly.GetExecutingAssembly().GetName().Name,
+                Assembly.GetExecutingAssembly().GetName().Version.ToString()
+            )
+        );
+        return s_httpClient;
     }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
@@ -49,54 +71,43 @@ public static class Program
             // Continue
         }
 
-        // TODO: How to get access to commandline arguments in ParseResult before calling Invoke()?
-        RootCommand rootCommand = CommandLineOptions.CreateRootCommand();
-        ParseResult parseResult = rootCommand.Parse(args);
-        if (parseResult.Errors.Count > 0)
+        // Parse commandline options
+        CommandLineParser commandLineParser = new(args);
+        if (commandLineParser.BypassStartup)
         {
-            // TODO Parse does not handle --help and --version
-            // https://github.com/dotnet/command-line-api/discussions/2553
-            // Exit with default error handling
-            return rootCommand.Invoke(args);
+            return commandLineParser.Result.Invoke();
         }
 
-        // Create default logger, will be replaced after commandline is parsed
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console(
-                theme: AnsiConsoleTheme.Code,
-                formatProvider: CultureInfo.InvariantCulture
-            )
-            .CreateLogger();
+        // Bind all commandline options
+        Options = commandLineParser.Bind();
 
+        // Setup
+        CreateLogger();
         Console.CancelKeyPress += CancelEventHandler;
-
-        // Only register keyboard handler if input is not redirected
         Task consoleKeyTask = null;
         if (!Console.IsInputRedirected)
         {
             consoleKeyTask = Task.Run(KeyPressHandler);
         }
 
-        // Create a timer to keep the system from going to sleep
+        // Keep the system from going to sleep
         KeepAwake.PreventSleep();
-        using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
+        using Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
 
-        // Invoke commands, commandline is parsed and passed to command handlers
-        int exitCode = parseResult.Invoke();
+        // Invoke command
+        int exitCode = commandLineParser.Result.Invoke();
 
+        // Cleanup
         Cancel();
         consoleKeyTask?.Wait();
         Console.CancelKeyPress -= CancelEventHandler;
-
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
-        // Override log level and always log exit information
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
-
         Log.CloseAndFlush();
 
         return exitCode;
@@ -135,9 +146,6 @@ public static class Program
             // Nothing to do
         }
     }
-
-    private static void ShowVersionInformation() =>
-        Console.WriteLine(AssemblyVersion.GetAppVersion());
 
     private static void KeyPressHandler()
     {
@@ -184,8 +192,6 @@ public static class Program
 
     private static void WaitForDebugger()
     {
-        // Do not use any dependencies as this code gets called very early in launch
-
         // Wait for a debugger to be attached
         Console.WriteLine("Waiting for debugger to attach...");
         while (!Debugger.IsAttached)
@@ -201,8 +207,11 @@ public static class Program
 
     private static void CreateLogger()
     {
-        // Commandline must have been parsed and assigned to Options
-        Debug.Assert(Options != null);
+        // Clear log file before creating the logger
+        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
+        {
+            File.Delete(Options.LogFile);
+        }
 
         // Enable Serilog debug output to the console
         SelfLog.Enable(Console.Error);
@@ -241,30 +250,30 @@ public static class Program
         LogOptions.Logger = Log.Logger;
     }
 
-    public static int WriteDefaultSettingsCommand(CommandLineOptions options)
+    public static int DefaultSettingsCommand()
     {
-        Log.Information("Writing default settings to {SettingsFile}", options.SettingsFile);
-
         // Save default config
-        ConfigFileJsonSchema.WriteDefaultsToFile(options.SettingsFile);
+        Debug.Assert(!string.IsNullOrEmpty(Options.SettingsFile));
+        Log.Information("Writing default settings to {SettingsFile}", Options.SettingsFile);
+        ConfigFileJsonSchema.WriteDefaultsToFile(Options.SettingsFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CreateJsonSchemaCommand(CommandLineOptions options)
+    public static int CreateSchemaCommand()
     {
-        Log.Information("Writing settings JSON schema to {SchemaFile}", options.SchemaFile);
-
         // Write schema
-        ConfigFileJsonSchema.WriteSchemaToFile(options.SchemaFile);
+        Debug.Assert(!string.IsNullOrEmpty(Options.SchemaFile));
+        Log.Information("Writing settings JSON schema to {SchemaFile}", Options.SchemaFile);
+        ConfigFileJsonSchema.WriteSchemaToFile(Options.SchemaFile);
 
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int CheckForNewToolsCommand(CommandLineOptions options)
+    public static int CheckForNewToolsCommand()
     {
         // Create but do not verify tools
-        if (!Create(options, false))
+        if (!Create(false))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -274,10 +283,10 @@ public static class Program
         return MakeExitCode(Tools.CheckForNewTools() && Tools.VerifyTools());
     }
 
-    public static int ProcessCommand(CommandLineOptions options)
+    public static int ProcessCommand()
     {
         // Create
-        if (!Create(options, true))
+        if (!Create(true))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -285,7 +294,7 @@ public static class Program
         // Get file and directory list
         if (
             !ProcessDriver.GetFiles(
-                options.MediaFiles,
+                Options.MediaFiles,
                 out List<string> directoryList,
                 out List<string> fileList
             )
@@ -310,17 +319,17 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int MonitorCommand(CommandLineOptions options)
+    public static int MonitorCommand()
     {
         // Create
-        if (!Create(options, true))
+        if (!Create(true))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
         // Monitor and process changes in directories
         Monitor monitor = new();
-        if (!monitor.MonitorFolders(options.MediaFiles))
+        if (!monitor.MonitorFolders(Options.MediaFiles))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -329,13 +338,10 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    private static int ProcessFileList(
-        CommandLineOptions options,
-        Func<List<string>, bool> taskFunc
-    )
+    private static int ProcessFileList(Func<List<string>, bool> taskFunc)
     {
         // Create
-        if (!Create(options, true))
+        if (!Create(true))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -343,7 +349,7 @@ public static class Program
         // Get file and directory list
         if (
             !ProcessDriver.GetFiles(
-                options.MediaFiles,
+                Options.MediaFiles,
                 out List<string> _,
                 out List<string> fileList
             )
@@ -362,15 +368,10 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    private static int ProcessFiles(
-        CommandLineOptions options,
-        bool mkvOnly,
-        string taskName,
-        Func<string, bool> taskFunc
-    )
+    private static int ProcessFiles(bool mkvOnly, string taskName, Func<string, bool> taskFunc)
     {
         // Create
-        if (!Create(options, true))
+        if (!Create(true))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -378,7 +379,7 @@ public static class Program
         // Get file and directory list
         if (
             !ProcessDriver.GetFiles(
-                options.MediaFiles,
+                Options.MediaFiles,
                 out List<string> _,
                 out List<string> fileList
             )
@@ -397,51 +398,49 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    public static int ReMuxCommand(CommandLineOptions options) =>
-        ProcessFiles(options, false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
+    public static int ReMuxCommand() =>
+        ProcessFiles(false, nameof(MkvProcess.ReMux), MkvProcess.ReMux);
 
-    public static int ReEncodeCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
+    public static int ReEncodeCommand() =>
+        ProcessFiles(true, nameof(MkvProcess.ReEncode), MkvProcess.ReEncode);
 
-    public static int DeInterlaceCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
+    public static int DeInterlaceCommand() =>
+        ProcessFiles(true, nameof(MkvProcess.DeInterlace), MkvProcess.DeInterlace);
 
-    public static int VerifyCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.Verify), MkvProcess.Verify);
+    public static int VerifyCommand() =>
+        ProcessFiles(true, nameof(MkvProcess.Verify), MkvProcess.Verify);
 
-    public static int CreateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.Create), SidecarFile.Create);
+    public static int CreateSidecarCommand() =>
+        ProcessFiles(true, nameof(SidecarFile.Create), SidecarFile.Create);
 
-    public static int GetSidecarInfoCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
+    public static int GetSidecarInfoCommand() =>
+        ProcessFiles(true, nameof(SidecarFile.GetInformation), SidecarFile.GetInformation);
 
-    public static int UpdateSidecarCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(SidecarFile.Update), SidecarFile.Update);
+    public static int UpdateSidecarCommand() =>
+        ProcessFiles(true, nameof(SidecarFile.Update), SidecarFile.Update);
 
-    public static int GetTagMapCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetTagMap);
+    public static int RemoveSubtitlesCommand() =>
+        ProcessFiles(true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
 
-    public static int GetMediaInfoCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetMediaInfo);
+    public static int GetTagMapCommand() => ProcessFileList(ProcessDriver.GetTagMap);
 
-    public static int GetToolInfoCommand(CommandLineOptions options) =>
-        ProcessFileList(options, ProcessDriver.GetToolInfo);
+    public static int GetMediaInfoCommand() => ProcessFileList(ProcessDriver.GetMediaInfo);
 
-    public static int RemoveSubtitlesCommand(CommandLineOptions options) =>
-        ProcessFiles(options, true, nameof(MkvProcess.RemoveSubtitles), MkvProcess.RemoveSubtitles);
+    public static int TestMediaInfoCommand() => ProcessFileList(ProcessDriver.TestMediaInfo);
 
-    public static int RemoveClosedCaptionsCommand(CommandLineOptions options) =>
+    public static int GetToolInfoCommand() => ProcessFileList(ProcessDriver.GetToolInfo);
+
+    public static int RemoveClosedCaptionsCommand() =>
         ProcessFiles(
-            options,
             true,
             nameof(MkvProcess.RemoveClosedCaptions),
             MkvProcess.RemoveClosedCaptions
         );
 
-    public static int GetVersionInfoCommand(CommandLineOptions options)
+    public static int GetVersionInfoCommand()
     {
         // Creating the program object will report all version information
-        if (!Create(options, false))
+        if (!Create(false))
         {
             return MakeExitCode(ExitCode.Error);
         }
@@ -456,31 +455,19 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    private static bool Create(CommandLineOptions options, bool verifyTools)
+    private static bool Create(bool verifyTools)
     {
-        // Set the static commandline options
-        Options = options;
-
-        // Clear log file before creating the logger
-        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
-        {
-            File.Delete(Options.LogFile);
-        }
-
-        // Create the logger
-        CreateLogger();
-
         // Load config settings from JSON
-        Log.Information("Loading settings from : {SettingsFile}", options.SettingsFile);
-        if (!File.Exists(options.SettingsFile))
+        Log.Information("Loading settings from : {SettingsFile}", Options.SettingsFile);
+        if (!File.Exists(Options.SettingsFile))
         {
-            Log.Error("Settings file not found : {SettingsFile}", options.SettingsFile);
+            Log.Error("Settings file not found : {SettingsFile}", Options.SettingsFile);
             return false;
         }
-        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(options.SettingsFile);
+        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(Options.SettingsFile);
         if (config == null)
         {
-            Log.Error("Failed to load settings : {FileName}", options.SettingsFile);
+            Log.Error("Failed to load settings : {FileName}", Options.SettingsFile);
             return false;
         }
 
@@ -491,12 +478,12 @@ public static class Program
                 "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
                 config.SchemaVersion,
                 ConfigFileJsonSchema.Version,
-                options.SettingsFile
+                Options.SettingsFile
             );
 
             // Upgrade the file schema
-            Log.Information("Writing upgraded settings file : {FileName}", options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(options.SettingsFile, config);
+            Log.Information("Writing upgraded settings file : {FileName}", Options.SettingsFile);
+            ConfigFileJsonSchema.ToFile(Options.SettingsFile, config);
         }
 
         // Verify the settings
@@ -504,22 +491,15 @@ public static class Program
         {
             Log.Error(
                 "Settings file contains incorrect or missing values : {FileName}",
-                options.SettingsFile
+                Options.SettingsFile
             );
             return false;
         }
 
-        // Set the static settings
+        // Set the static config
         Config = config;
 
-        // Set the FileEx options
-        FileEx.Options.RetryCount = Config.MonitorOptions.FileRetryCount;
-        FileEx.Options.RetryWaitTime = Config.MonitorOptions.FileRetryWaitTime;
-
-        // Set the FileEx Cancel object
-        FileEx.Options.Cancel = s_cancelSource.Token;
-
-        // Override log level and always log startup information
+        // Log runtime information
         Log.Logger.LogOverrideContext()
             .Information("Commandline : {Commandline}", Environment.CommandLine);
         Log.Logger.LogOverrideContext()
@@ -543,12 +523,13 @@ public static class Program
                 ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
                 : Math.Clamp(Options.ThreadCount, 1, Environment.ProcessorCount)
             : 1;
-        Log.Information(
-            "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
-            Options.Parallel,
-            Options.ThreadCount,
-            Environment.ProcessorCount
-        );
+        Log.Logger.LogOverrideContext()
+            .Information(
+                "Parallel Processing: {Parallel} : Thread Count: {ThreadCount}, Processor Count: {ProcessorCount}",
+                Options.Parallel,
+                Options.ThreadCount,
+                Environment.ProcessorCount
+            );
 
         // Verify tools
         if (verifyTools)
@@ -582,8 +563,7 @@ public static class Program
             return true;
         }
 
-        // There is a race condition between tools exiting on Ctrl-C and reporting an error, and our app's Ctrl-C handler being called
-        // In case of a suspected Ctrl-C, yield some time for this handler to be called before testing the state
+        // In case of possible Ctrl-C and tool exit, yield some time for this handler to be called before testing the state
         return WaitForCancel(100);
     }
 
@@ -604,18 +584,9 @@ public static class Program
 
     public static CancellationToken CancelToken() => s_cancelSource.Token;
 
-    // Commandline options
-    public static CommandLineOptions Options { get; set; }
-
-    // Config file options
-    public static ConfigFileJsonSchema Config { get; set; }
-
-    // Snippet runtime
-    public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
-
-    // QuickScan runtime
-    public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
-
-    // Cancellation token
-    private static readonly CancellationTokenSource s_cancelSource = new();
+    private enum ExitCode
+    {
+        Success = 0,
+        Error = 1,
+    }
 }

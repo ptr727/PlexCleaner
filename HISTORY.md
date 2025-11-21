@@ -1,16 +1,74 @@
 # PlexCleaner
 
-Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
+Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3:12:
+  - Update to .NET 9.0.
+    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
+    - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
+    - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
+    - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
+  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
+  - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
+  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
+    - See the [EIA-608 and CTA-708 Closed Captions](./README.md#eia-608-and-cta-708-closed-captions) section for details.
+    - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
+    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
+  - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
+  - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
+  - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
+  - Added `quickscan` option to limit the scan duration and improve performance, at the potential cost of accuracy.
+  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap set value to CPU count, prevents CPU starvation.
+  - Removed the `reverify` option, it was only partially resetting process state, to reset state and start fresh use the `createsidecar` command.
+  - Removed the `testnomodify` option, some modifying code paths missed and conditional logic became too convoluted to maintain, use `testsnippets` and `quickscan` options with sample media files to test instead.
+  - Modified logic for `reencode`, `remux`, `verify`, `removesubtitles`, and `removeclosedcaptions` commands to use the same logic as used by the `process` command.
+  - Capturing all media tool console output, printing any errors only when encountered.
+  - Added additional unit tests.
+  - General refactoring.
+- Version 3.11:
+  - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
+- Version 3:10:
+  - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
+    - The builds would periodically break due to incompatible or missing libraries.
+    - The `ubuntu` docker tag (alias for `latest`) uses `ubuntu:rolling` as upstream and does include the latest released media tools.
+    - If "bleeding edge" media tools are required consider using `ubuntu-devel` (based on `ubuntu:devel`), `alpine-edge` (based on `alpine:edge`) or `debian-testing` (based on `debian:testing-slim`) tags.
+    - If you are currently using the `ptr727/plexcleaner:savoury` docker tag, please switch to `ptr727/plexcleaner:ubuntu`.
+- Version 3.9:
+  - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
+  - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
+- Version 3.8:
+  - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
+  - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
+  - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
+  - Alpine Stable builds are still [disabled](https://github.com/ptr727/PlexCleaner/issues/344), waiting for Alpine 3.20 to be released, ETA 1 June 2024.
+  - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
+    - Pinning `savoury` docker builds to Jammy 22.04 LTS.
+    - Switching `latest` docker tag from `savoury` to an alias for `ubuntu` builds, i.e. the latest released version of Ubuntu, currently Noble 24.04 LTS.
+  - Updated `savoury` docker builds to FfMpeg v7, currently the only docker build supporting FfMpeg v7.
+- Version 3.7:
+  - Added `ProcessOptions:FileIgnoreMasks` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
+    - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
+    - Wildcard support now also allows excluding temporary UnRaid FuseFS files, e.g. `*.fuse_hidden*`.
+  - Settings JSON schema changed from v3 to v4.
+    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:FileIgnoreMasks`.
+      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:FileIgnoreMasks` : `*.nfo`.
+    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need for user configurable values.
+    - `ConvertOptions:FfMpegOptions:Global` no longer requires defaults values and will only be used during encoding, only add custom values for e.g. hardware acceleration, existing values will be converted.
+      - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
+  - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
+  - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
+  - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
+  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
+    - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
 - Version 3.6:
   - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
     - Handbrake is only available on Edge, and mixing released and Edge versions cause too many [issues](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15949).
     - Alpine stable release builds will no longer be built, or not until Handbrake is supported on stable releases (v3.20 May 2024).
     - Alpine Edge builds will be tagged as `alpine-edge`.
 - Version 3.5:
-  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [issue #324](https://github.com/ptr727/PlexCleaner/issues/324).
+  - Download 7-Zip builds from [GitHub](https://github.com/ip7z/7zip/releases), fixes [#324](https://github.com/ptr727/PlexCleaner/issues/324).
   - Update Alpine Docker image to 3.19.
 - Version 3.4:
   - Updated to [.NET 8.0](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8).
@@ -23,7 +81,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
     - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
     - The `verify` command is useful when testing or selecting from multiple available media sources.
 - Version 3.3:
-  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [issue #214](https://github.com/ptr727/PlexCleaner/issues/214).
+  - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [#214](https://github.com/ptr727/PlexCleaner/issues/214).
   - Install Alpine media tools from `latest-stable` to match the v3.18 base image version, resolves [MediaInfo segfault](https://github.com/ptr727/PlexCleaner/issues/208).
   - Add "legacy" `osx.13-arm64` build.
   - Make Rider 2023.2.1 happy with current C# linter rules.
@@ -101,7 +159,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
     - The alternative was to use `--reprocess=2`, but that would re-process all media, while this option only re-processes media in a failed state.
     - As with the `--reprocess` option, this option is useful when the tooling changed, and may now be better equipped to verify or repair broken media.
 - Version 2.9:
-  - Added remote docker container debug support.  
+  - Added remote docker container debug support.
     - `develop` tagged docker builds use the `Debug` build target, and will now install the .NET SDK and the [VsDbg](https://aka.ms/getvsdbgsh) .NET Debugger.
     - Added a `--debug` command line option that will wait for a debugger to be attached on launch.
     - Remote debugging in docker over SSH can be done using [VSCode](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes) or [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/attach-to-process-running-in-docker-container?view=vs-2022).
@@ -239,3 +297,4 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin.
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [savoury-link]: https://launchpad.net/~savoury1
 [github-release-notification]: https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/managing-subscriptions-for-activity-on-github/viewing-your-subscriptions
+[jsonschema-link]: https://json-everything.net/json-schema/

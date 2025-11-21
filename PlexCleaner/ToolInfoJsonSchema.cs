@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -11,11 +11,12 @@ namespace PlexCleaner;
 
 public class ToolInfoJsonSchema
 {
+    public const int CurrentSchemaVersion = 2;
+
     [DefaultValue(0)]
     [JsonPropertyOrder(-2)]
     [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
-    public const int CurrentSchemaVersion = 2;
 
     public DateTime LastCheck { get; set; }
 

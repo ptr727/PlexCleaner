@@ -1,4 +1,4 @@
-﻿namespace PlexCleaner;
+namespace PlexCleaner;
 
 public class TagMap
 {

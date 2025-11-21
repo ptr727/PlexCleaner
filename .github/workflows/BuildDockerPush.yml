@@ -3,8 +3,6 @@ name: Build and push docker images
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
   workflow_dispatch:
   schedule:
     - cron: '0 2 * * MON'
@@ -15,135 +13,18 @@ concurrency:
 
 jobs:
 
-  test:
-    name: Test
+  build-docker:
+    name: Build docker images
+    uses: ./.github/workflows/BuildDockerTask.yml
+    secrets: inherit
+    with:
+      push: true
+
+  tool-version-matrix:
+    name: Get tool versions
     runs-on: ubuntu-latest
-
-    steps:
-
-      # https://github.com/marketplace/actions/setup-net-core-sdk
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "9.x"
-
-      # https://github.com/marketplace/actions/checkout
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test
-      - name: Run unit tests
-        run: dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
-
-  version:
-    name: Version
-    runs-on: ubuntu-latest
-    needs: test
-
-    outputs:
-      SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}
-      AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
-      AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
-      AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
-
-    steps:
-
-      # https://github.com/marketplace/actions/checkout
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # https://github.com/marketplace/actions/nerdbank-gitversioning
-      - name: Run Nerdbank.GitVersioning tool
-        id: nbgv
-        uses: dotnet/nbgv@master
-
-  buildpush:
-    name: Build and push
-    runs-on: ubuntu-latest
-    needs: version
-
+    needs: build-docker
     strategy:
-
-      # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
-      matrix:
-        include:
-
-          - file: ./Docker/Debian.Stable.Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
-            cache-scope: debian
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-
-          - file: ./Docker/Alpine.Latest.Dockerfile
-            platforms: linux/amd64,linux/arm64
-            cache-scope: alpine
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-
-          - file: ./Docker/Ubuntu.Rolling.Dockerfile
-            platforms: linux/amd64,linux/arm64
-            cache-scope: ubuntu
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
-              docker.io/ptr727/plexcleaner:${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
-              docker.io/ptr727/plexcleaner:${{ needs.version.outputs.SemVer2 }}
-
-    steps:
-
-      # https://github.com/marketplace/actions/checkout
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # https://github.com/marketplace/actions/docker-setup-qemu
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-
-      # https://github.com/marketplace/actions/docker-setup-buildx
-      - name: Setup Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-
-      # https://github.com/marketplace/actions/docker-login
-      - name: Login to Docker Hub
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      # https://github.com/marketplace/actions/build-and-push-docker-images
-      - name: Docker build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.file }}
-          push: ${{ (github.event_name != 'pull_request') }}
-          tags: ${{ matrix.tags }}
-          platforms: ${{ matrix.platforms }}
-          build-args: |
-            LABEL_VERSION=${{ needs.version.outputs.SemVer2 }}
-            BUILD_CONFIGURATION=${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-            BUILD_VERSION=${{ needs.version.outputs.AssemblyVersion }}
-            BUILD_FILE_VERSION=${{ needs.version.outputs.AssemblyFileVersion }}
-            BUILD_ASSEMBLY_VERSION=${{ needs.version.outputs.AssemblyFileVersion }}
-            BUILD_INFORMATION_VERSION=${{ needs.version.outputs.AssemblyInformationalVersion }}
-            BUILD_PACKAGE_VERSION=${{ needs.version.outputs.SemVer2 }}
-
-  toolversions:
-    name: Tool versions
-    runs-on: ubuntu-latest
-    needs: buildpush
-    if: ${{ github.event_name != 'pull_request' }}
-
-    strategy:
-
-      # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
       matrix:
         include:
           - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
@@ -162,7 +43,6 @@ jobs:
         echo Image: docker.io/ptr727/plexcleaner:${{ matrix.tag }} >> ${{ runner.temp }}/versions/${{ matrix.file }}
         echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec) >> ${{ runner.temp }}/versions/${{ matrix.file }}
 
-    # https://github.com/marketplace/actions/docker-run-action
     - name: Write tool versions to file
       uses: addnab/docker-run-action@v3
       with:
@@ -180,28 +60,25 @@ jobs:
     - name: Print versions
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
-    # https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload version artifacts
       uses: actions/upload-artifact@v4
       with:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
 
-  updatereadme:
+  update-readme:
     name: Create Docker README.md
     runs-on: ubuntu-latest
-    needs: toolversions
-    if: ${{ (github.event_name != 'pull_request') && (endsWith(github.ref, 'refs/heads/main')) }}
+    needs: tool-version-matrix
+    if: ${{ endsWith(github.ref, 'refs/heads/main') }}
 
     steps:
 
-    # https://github.com/marketplace/actions/checkout
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
-    # https://github.com/marketplace/actions/download-a-build-artifact
     - name: Download version artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: versions-*
         merge-multiple: true
@@ -210,9 +87,8 @@ jobs:
     - name: Create README.md from README.m4
       run: m4 --include=${{ runner.temp }}/versions ./Docker/README.m4 > ${{ runner.temp }}/README.md
 
-    # https://github.com/marketplace/actions/docker-hub-description
     - name: Update Docker Hub README.md
-      uses: peter-evans/dockerhub-description@v4
+      uses: peter-evans/dockerhub-description@v5
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
@@ -220,11 +96,11 @@ jobs:
         short-description: ${{ github.event.repository.description }}
         readme-filepath: ${{ runner.temp }}/README.md
 
-  datebadge:
-    name: Date badge
+  date-badge:
+    name: Create date badge
     runs-on: ubuntu-latest
-    needs: buildpush
-    if: ${{ (github.event_name != 'pull_request') && (endsWith(github.ref, 'refs/heads/main')) }}
+    needs: build-docker
+    if: ${{ endsWith(github.ref, 'refs/heads/main') }}
 
     steps:
 
@@ -232,7 +108,6 @@ jobs:
         run: |
           echo "date=$(date)" >> $GITHUB_OUTPUT
 
-      # https://github.com/marketplace/actions/bring-your-own-badge
       - name: Build date badge
         uses: RubbaBoy/BYOB@v1
         with:

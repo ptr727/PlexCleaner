@@ -1,14 +1,31 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
+
+// TODO: Cleanup chapters
+/*
+[2025-07-01 12:41:03.875 -07:00] [INF] [39] Emby.Server.Implementations.Chapters.ChapterManager: Skipping chapter image extraction for "Alone in the Wilderness Part II 2011 (2011)" as the average chapter duration 7505000 was lower than the minimum threshold 10000000
+[2025-07-01 12:43:10.169 -07:00] [INF] [55] Emby.Server.Implementations.Chapters.ChapterManager: Stopping chapter extraction for "Annie (1982)" because a chapter was found with a position greater than the runtime.
+[2025-07-01 12:44:28.022 -07:00] [INF] [83] Emby.Server.Implementations.Chapters.ChapterManager: Stopping chapter extraction for "Armed and Dangerous (1986)" because a chapter was found with a position greater than the runtime.
+[2025-07-01 12:44:31.440 -07:00] [INF] [43] Emby.Server.Implementations.Chapters.ChapterManager: Skipping chapter image extraction for "Argylle (2024)" as the average chapter duration 0 was lower than the minimum threshold 10000000
+*/
+
+// TODO: Cleanup NFO files, artworks invalid, returns XML body with access denied message
+// grep -r --include=*.nfo "artworks.thetvdb.com" /data/media
+/*
+[2025-07-01 19:13:51.644 -07:00] [WRN] [25] Emby.Server.Implementations.Library.LibraryManager: Cannot fetch image from "https://artworks.thetvdb.com/banners/person/418586/626ab64c3973c.jpg"
+*/
+
+// TODO: Change encoding on external subtitle files to UTF8
+// 'ISO-8859-10' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
+// https://ssojet.com/character-encoding-decoding/iso-8859-16-in-c/
 
 public static class Process
 {
@@ -126,7 +143,7 @@ public static class Process
             }
 
             // Read the media info
-            if (!processFile.GetMediaInfo() || Program.IsCancelled())
+            if (!processFile.GetMediaProps() || Program.IsCancelled())
             {
                 // Error
                 result = false;
@@ -339,7 +356,7 @@ public static class Process
                     // Delete empty folders
                     int deleted = 0;
                     Log.Information("Looking for empty folders in {Folder}", folder);
-                    _ = FileEx.DeleteEmptyDirectories(folder, ref deleted);
+                    DeleteEmptyDirectories(folder, ref deleted);
                     _ = Interlocked.Add(ref totalDeleted, deleted);
                 });
         }
@@ -359,15 +376,43 @@ public static class Process
         return !fatalError;
     }
 
+    private static void DeleteEmptyDirectories(string directory, ref int deleted)
+    {
+        // Find all directories in this directory, not all subdirectories, we will call recursively
+        DirectoryInfo parentInfo = new(directory);
+        foreach (
+            DirectoryInfo dirInfo in parentInfo.EnumerateDirectories(
+                "*",
+                SearchOption.TopDirectoryOnly
+            )
+        )
+        {
+            // Call recursively for this directory
+            DeleteEmptyDirectories(dirInfo.FullName, ref deleted);
+
+            // Test for files and directories, if none, delete this directory
+            if (dirInfo.GetFiles().Length != 0 || dirInfo.GetDirectories().Length != 0)
+            {
+                continue;
+            }
+            Directory.Delete(dirInfo.FullName);
+
+            deleted++;
+        }
+    }
+
     public static bool ProcessFiles(List<string> fileList)
     {
         // Log active options
-        Log.Information(
-            "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}",
-            Program.Options.TestSnippets,
-            Program.Options.QuickScan,
-            Program.Config.ProcessOptions.FileIgnoreList.Count
-        );
+        Log.Logger.LogOverrideContext()
+            .Information(
+                "Process Options: TestSnippets: {TestSnippets}, QuickScan: {QuickScan}, FileIgnoreList: {FileIgnoreList}, ThreadCount: {ThreadCount}, Process file count: {Count}",
+                Program.Options.TestSnippets,
+                Program.Options.QuickScan,
+                Program.Config.ProcessOptions.FileIgnoreList.Count,
+                Program.Options.ThreadCount,
+                fileList.Count
+            );
 
         // Process all the files
         ProcessResultJsonSchema resultsJson = new();
@@ -419,13 +464,14 @@ public static class Process
         );
 
         // Errors
-        // Log.Information("Error files : {Count}", errorCount);
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [
             .. resultsJson.Results.Results.Where(item => !item.Result),
         ];
+        Log.Logger.LogOverrideContext().Information("Error files : {Count}", errorResults.Count);
         errorResults.ForEach(item =>
-            Log.Information("Error: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("Error: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Modified
@@ -433,9 +479,11 @@ public static class Process
         [
             .. resultsJson.Results.Results.Where(item => item.Modified),
         ];
-        Log.Information("Modified files : {Count}", modifiedResults.Count);
+        Log.Logger.LogOverrideContext()
+            .Information("Modified files : {Count}", modifiedResults.Count);
         modifiedResults.ForEach(item =>
-            Log.Information("Modified: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("Modified: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Verify failed
@@ -445,9 +493,11 @@ public static class Process
                 item.State.HasFlag(SidecarFile.StatesType.VerifyFailed)
             ),
         ];
-        Log.Information("VerifyFailed files : {Count}", failedResults.Count);
+        Log.Logger.LogOverrideContext()
+            .Information("VerifyFailed files : {Count}", failedResults.Count);
         failedResults.ForEach(item =>
-            Log.Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName)
+            Log.Logger.LogOverrideContext()
+                .Information("VerifyFailed: {State} : {FileName}", item.State, item.NewFileName)
         );
 
         // Updated ignore file list
@@ -477,7 +527,7 @@ public static class Process
         }
 
         // Write the process results to file
-        if (Program.Options.ResultsFile != null)
+        if (!string.IsNullOrEmpty(Program.Options.ResultsFile))
         {
             // Add result summaries
             errorResults.ForEach(item => resultsJson.Results.Errors.Files.Add(item.NewFileName));

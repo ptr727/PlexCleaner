@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": ".Net Build",
             "type": "dotnet",
             "task": "build",
             "group": "build",
@@ -15,14 +15,37 @@
             }
         },
         {
-            "label": ".NET Build PlexCleaner",
+            "label": ".Net Format",
             "type": "process",
             "command": "dotnet",
             "args": [
-                "build",
-                "${workspaceFolder}/PlexCleaner/PlexCleaner.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "format",
+                "style",
+                "--verify-no-changes",
+                "--severity=info",
+                "--verbosity=detailed",
+                "--exclude-diagnostics=IDE0055"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "dependsOn": [
+                ".Net Build"
+            ]
+        },
+        {
+            "label": "CSharpier Format",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "csharpier",
+                "format",
+                "--log-level=debug",
+                "."
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -33,14 +56,29 @@
             }
         },
         {
-            "label": ".NET Build PlexCleanerTests",
+            "label": ".Net Tool Update",
             "type": "process",
             "command": "dotnet",
             "args": [
-                "build",
-                "${workspaceFolder}/PlexCleanerTests/PlexCleanerTests.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "tool",
+                "update",
+                "--all"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Husky.Net Run",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "husky",
+                "run"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -494,23 +532,6 @@
                 "--verify-no-changes",
                 "--severity=info",
                 "--verbosity=detailed"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true,
-                "panel": "dedicated"
-            }
-        },
-        {
-            "label": "CSharpier Format",
-            "type": "process",
-            "command": "csharpier",
-            "args": [
-                "format",
-                ".",
             ],
             "problemMatcher": [
                 "$msCompile"

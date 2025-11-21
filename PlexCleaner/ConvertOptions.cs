@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
+using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -29,7 +30,7 @@ public record FfMpegOptions
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string Output { get; set; } = "";
 }
 
@@ -40,15 +41,15 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public bool EnableH265Encoder { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public int VideoEncodeQuality { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [Json.Schema.Generation.JsonExclude]
+    [JsonExclude]
     public string AudioEncodeCodec { get; set; } = "";
 }
 
@@ -135,12 +136,12 @@ public record ConvertOptions3 : ConvertOptions2
 
     public void SetDefaults()
     {
-        FfMpegOptions.Video = FfMpegTool.DefaultVideoOptions;
-        FfMpegOptions.Audio = FfMpegTool.DefaultAudioOptions;
+        FfMpegOptions.Video = FfMpeg.DefaultVideoOptions;
+        FfMpegOptions.Audio = FfMpeg.DefaultAudioOptions;
         FfMpegOptions.Global = "";
 
-        HandBrakeOptions.Video = HandBrakeTool.DefaultVideoOptions;
-        HandBrakeOptions.Audio = HandBrakeTool.DefaultAudioOptions;
+        HandBrakeOptions.Video = HandBrake.DefaultVideoOptions;
+        HandBrakeOptions.Audio = HandBrake.DefaultAudioOptions;
     }
 
     public bool VerifyValues()

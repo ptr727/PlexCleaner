@@ -2,11 +2,6 @@
 
 Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
-## License
-
-Licensed under the [MIT License][license-link]\
-![GitHub License][license-shield]
-
 ## Build
 
 Code and Pipeline is on [GitHub][github-link].\
@@ -29,67 +24,18 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3.13:
-  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command.
-    - Fixes #524.
-- version 3:12:
-  - Update to .NET 9.0.
-    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
-    - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
-    - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
-    - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
-  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
-  - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
-  - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
-    - See the [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions) section for details.
-    - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
-    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
-  - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
-  - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
-  - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
-  - Added `quickscan` option to limit the scan duration and improve performance, at the potential cost of accuracy.
-  - When `parallel` is enabled and `threadcount` is not specified, cap the default of 1/2 CPU cores to max 4, and cap set value to CPU count, prevents CPU starvation.
-  - Removed the `reverify` option, it was only partially resetting process state, to reset state and start fresh use the `createsidecar` command.
-  - Removed the `testnomodify` option, some modifying code paths missed and conditional logic became too convoluted to maintain, use `testsnippets` and `quickscan` options with sample media files to test instead.
-  - Modified logic for `reencode`, `remux`, `verify`, `removesubtitles`, and `removeclosedcaptions` commands to use the same logic as used by the `process` command.
-  - Capturing all media tool console output, printing any errors only when encountered.
-  - Added additional unit tests.
+- Version 3:14:
+  - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
+  - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
+  - Converted media tool commandline creation to using fluent builder pattern.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
+  - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
+  - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
+  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
   - General refactoring.
-- Version 3.11:
-  - Add `resultsfile` option to `process` command, useful for regression testing in new versions.
-- Version 3:10:
-  - Removed [Rob Savoury's][savoury-link] Ubuntu Jammy 22.04 LTS builds with backported media tools.
-    - The builds would periodically break due to incompatible or missing libraries.
-    - The `ubuntu` docker tag (alias for `latest`) uses `ubuntu:rolling` as upstream and does include the latest released media tools.
-    - If "bleeding edge" media tools are required consider using `ubuntu-devel` (based on `ubuntu:devel`), `alpine-edge` (based on `alpine:edge`) or `debian-testing` (based on `debian:testing-slim`) tags.
-    - If you are currently using the `ptr727/plexcleaner:savoury` docker tag, please switch to `ptr727/plexcleaner:ubuntu`.
-- Version 3.9:
-  - Re-enabling Alpine Stable builds now that Alpine 3.20 has been [released](https://alpinelinux.org/posts/Alpine-3.20.0-released.html).
-  - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
-- Version 3.8:
-  - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
-  - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
-  - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
-  - Alpine Stable builds are still [disabled](https://github.com/ptr727/PlexCleaner/issues/344), waiting for Alpine 3.20 to be released, ETA 1 June 2024.
-  - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
-    - Pinning `savoury` docker builds to Jammy 22.04 LTS.
-    - Switching `latest` docker tag from `savoury` to an alias for `ubuntu` builds, i.e. the latest released version of Ubuntu, currently Noble 24.04 LTS.
-  - Updated `savoury` docker builds to FfMpeg v7, currently the only docker build supporting FfMpeg v7.
-- Version 3.7:
-  - Added `ProcessOptions:FileIgnoreMasks` to support skipping (not deleting) sample files per [discussions request](https://github.com/ptr727/PlexCleaner/discussions/341).
-    - Wildcard characters `*` and `?` are supported, e.g. `*.sample` or `*.sample.*`.
-    - Wildcard support now also allows excluding temporary UnRaid FuseFS files, e.g. `*.fuse_hidden*`.
-  - Settings JSON schema changed from v3 to v4.
-    - `ProcessOptions:KeepExtensions` has been deprecated, existing values will be converted to `ProcessOptions:FileIgnoreMasks`.
-      - E.g. `ProcessOptions:KeepExtensions` : `.nfo` will be converted to `ProcessOptions:FileIgnoreMasks` : `*.nfo`.
-    - `ConvertOptions:FfMpegOptions:Output` has been deprecated, no need for user configurable values.
-    - `ConvertOptions:FfMpegOptions:Global` no longer requires defaults values and will only be used during encoding, only add custom values for e.g. hardware acceleration, existing values will be converted.
-      - E.g. `-analyzeduration 2147483647 -probesize 2147483647 -hwaccel cuda -hwaccel_output_format cuda` will be converted to `-hwaccel cuda -hwaccel_output_format cuda`.
-  - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
-  - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
-  - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
-  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
-    - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
+- Version 3.13:
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -268,18 +214,26 @@ services:
 - Create a default JSON settings file using the `defaultsettings` command:
   - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
-- Download the required 3rd party tools using the `checkfornewtools` command:
-  - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
-  - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
-  - The tool version information will be stored in `Tools\Tools.json`.
-  - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
-- If required, e.g. no internet connectivity, the tools can be manually downloaded and extracted:
-  - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
-  - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
-  - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
-  - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
-  - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
-  - Disable automatic tool updates by setting `ToolsOptions:AutoUpdate` to `false`.
+- Install the required 3rd party tools:
+  - Using the `checkfornewtools` to install tools locally:
+    - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
+    - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
+    - The tool version information will be stored in `Tools\Tools.json`.
+    - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
+  - Using `winget` to install tools system wide:
+    - Note, run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
+    - `winget install --id=Gyan.FFmpeg --exact`.
+    - `winget install --id=MediaArea.MediaInfo --exact`.
+    - `winget install --id=HandBrake.HandBrake.CLI --exact`.
+    - `winget install --id=MoritzBunkus.MKVToolNix --exact --installer-type portable`.
+    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
+  - Manually downloaded and extracted locally:
+    - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+    - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
+    - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
+    - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
+    - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
+    - Set `ToolsOptions:UseSystem` to `false` and `ToolsOptions:AutoUpdate` to `false`.
 
 ### Linux
 
@@ -324,7 +278,8 @@ Settings allows for custom configuration of:
 
 Get encoder options:
 
-- List all supported encoders: `ffmpeg -encoders`
+- List hardware acceleration methods: `ffmpeg -hwaccels`
+- List supported encoders: `ffmpeg -encoders`
 - List options supported by an encoder: `ffmpeg -h encoder=libsvtav1`
 
 Example video encoder options:
@@ -336,15 +291,15 @@ Example video encoder options:
 Example hardware assisted video encoding options:
 
 - NVidia NVENC:
-  - See [NVidia](https://developer.nvidia.com/blog/nvidia-ffmpeg-transcoding-guide/) and [FFmpeg](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
+  - See [FFmpeg NVENC](https://trac.ffmpeg.org/wiki/HWAccelIntro#CUDANVENCNVDEC) documentation.
   - View NVENC encoder options: `ffmpeg -h encoder=h264_nvenc`
   - `FfMpegOptions:Global`: `-hwaccel cuda -hwaccel_output_format cuda`
-  - `FfMpegOptions:Video`: `h264_nvenc -crf 22 -preset medium`
+  - `FfMpegOptions:Video`: `h264_nvenc -preset medium`
 - Intel QuickSync:
-  - See [FFmpeg](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
+  - See [FFmpeg QuickSync](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) documentation.
   - View QuickSync encoder options: `ffmpeg -h encoder=h264_qsv`
   - `FfMpegOptions:Global`: `-hwaccel qsv -hwaccel_output_format qsv`
-  - `FfMpegOptions:Video`: `h264_qsv -crf 22 -preset medium`
+  - `FfMpegOptions:Video`: `h264_qsv -preset medium`
 
 #### HandBrake Options
 
@@ -359,7 +314,7 @@ Settings allows for custom configuration of:
 
 Get encoder options:
 
-- List all supported encoders: `HandBrakeCLI.exe --help`
+- List all supported encoders: `HandBrakeCLI --help`
 - List presets supported by an encoder: `HandBrakeCLI --encoder-preset-list svt_av1`
 
 Example video encoder options:
@@ -371,11 +326,11 @@ Example video encoder options:
 Example hardware assisted video encoding options:
 
 - NVidia NVENC:
-  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
-  - `HandBrakeOptions:Video`: `nvenc_h264 --quality 22 --encoder-preset medium`
+  - See [HandBrake NVENC](https://handbrake.fr/docs/en/latest/technical/video-nvenc.html) documentation.
+  - `HandBrakeOptions:Video`: `nvenc_h264 --encoder-preset medium`
 - Intel QuickSync:
-  - See [HandBrake](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
-  - `HandBrakeOptions:Video`: `qsv_h264 --quality 22 --encoder-preset medium`
+  - See [HandBrake QuickSync](https://handbrake.fr/docs/en/latest/technical/video-qsv.html) documentation.
+  - `HandBrakeOptions:Video`: `qsv_h264 --encoder-preset balanced`
 
 Note that HandBrake is primarily used for video deinterlacing, and only as backup encoder when FFmpeg fails.\
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
@@ -394,32 +349,33 @@ Usage:
   PlexCleaner [command] [options]
 
 Options:
-  --logfile <logfile>  Path to log file
-  --logappend          Append to existing log file
-  --logwarning         Log warnings and errors only
-  --debug              Wait for debugger to attach
-  --version            Show version information
-  -?, -h, --help       Show help and usage information
+  -?, -h, --help          Show help and usage information
+  --version               Show version information
+  --logfile <filepath>    Path to log file
+  --logappend <boolean>   Append to existing log file
+  --logwarning <boolean>  Log warnings and errors only
+  --debug <boolean>       Wait for debugger to attach
 
 Commands:
-  defaultsettings       Write default values to settings file
-  checkfornewtools      Check for new tool versions and download if newer
+  defaultsettings       Create default JSON settings file
+  checkfornewtools      Check for and download new tool versions
   process               Process media files
-  monitor               Monitor for file changes and process changed media files
-  remux                 Re-Multiplex media files
-  reencode              Re-Encode media files
-  deinterlace           De-Interlace media files
-  removesubtitles       Remove subtitles from media files
-  removeclosedcaptions  Remove closed captions from media files
-  verify                Verify media files
+  monitor               Monitor file changes and process changed files
+  verify                Verify media container and stream integrity
+  remux                 Conditionally re-multiplex media files
+  reencode              Conditionally re-encode media files
+  deinterlace           Conditionally de-interlace media files
+  removesubtitles       Remove all subtitle tracks
+  removeclosedcaptions  Remove all closed caption tracks
   createsidecar         Create new sidecar files
-  updatesidecar         Update existing sidecar files
-  getversioninfo        Print application and tools version information
-  getsidecarinfo        Print sidecar file information
-  gettagmap             Print media information tag-map
-  getmediainfo          Print media information using sidecar files
-  gettoolinfo           Print media information using media tools
-  createschema          Write settings schema to file
+  updatesidecar         Create or update sidecar files
+  getsidecarinfo        Print media sidecar information
+  getmediainfo          Print media file information
+  gettoolinfo           Print media tool information
+  gettagmap             Print media tool attribute mappings
+  testmediainfo         Test parsing media tool information
+  getversioninfo        Print application and media tool version information
+  createschema          Create JSON settings schema file
 ```
 
 ### Global Options
@@ -446,18 +402,18 @@ Usage:
   PlexCleaner process [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --parallel                                Enable parallel file processing
-  --threadcount <threadcount>               Number of threads for parallel file processing
-  --quickscan                               Scan only part of the file
-  --resultsfile <resultsfile>               Path to results file
-  --testsnippets                            Create short media file clips
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to existing log file
-  --logwarning                              Log warnings and errors only
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
+  --settingsfile <filepath> (REQUIRED)  Path to settings file
+  --mediafiles <filepath> (REQUIRED)    Path to media file or folder
+  --parallel <boolean>                  Enable parallel file processing
+  --threadcount <integer>               Number of threads for parallel file processing
+  --quickscan <boolean>                 Scan only part of the file
+  --resultsfile <filepath>              Path to results file
+  --testsnippets <boolean>              Create short media file clips
+  -?, -h, --help                        Show help and usage information
+  --logfile <filepath>                  Path to log file
+  --logappend <boolean>                 Append to existing log file
+  --logwarning <boolean>                Log warnings and errors only
+  --debug <boolean>                     Wait for debugger to attach
 ```
 
 The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
@@ -545,23 +501,23 @@ Example:
 ```text
 > PlexCleaner monitor --help
 Description:
-  Monitor for file changes and process changed media files
+  Monitor file changes and process changed files
 
 Usage:
   PlexCleaner monitor [options]
 
 Options:
-  --settingsfile <settingsfile> (REQUIRED)  Path to settings file
-  --mediafiles <mediafiles> (REQUIRED)      Path to media file or folder
-  --parallel                                Enable parallel file processing
-  --threadcount <threadcount>               Number of threads for parallel file processing
-  --quickscan                               Scan only part of the file
-  --preprocess                              Pre-process all monitored folders
-  --logfile <logfile>                       Path to log file
-  --logappend                               Append to existing log file
-  --logwarning                              Log warnings and errors only
-  --debug                                   Wait for debugger to attach
-  -?, -h, --help                            Show help and usage information
+  --settingsfile <filepath> (REQUIRED)  Path to settings file
+  --mediafiles <filepath> (REQUIRED)    Path to media file or folder
+  --parallel <boolean>                  Enable parallel file processing
+  --threadcount <integer>               Number of threads for parallel file processing
+  --quickscan <boolean>                 Scan only part of the file
+  --preprocess <boolean>                Pre-process all monitored folders
+  -?, -h, --help                        Show help and usage information
+  --logfile <filepath>                  Path to log file
+  --logappend <boolean>                 Append to existing log file
+  --logwarning <boolean>                Log warnings and errors only
+  --debug <boolean>                     Wait for debugger to attach
 ```
 
 The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
@@ -584,9 +540,11 @@ Options:
   - Check for new tool versions and download if newer.
   - Only supported on Windows.
 - `remux`:
+  - Conditionally re-multiplex media files.
   - Re-multiplex non-MKV containers in the `ReMuxExtensions` list to MKV container format.
   - Same logic as used in the `process` command.
 - `reencode`:
+  - Conditionally re-encode media files.
   - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in `ConvertOptions`.
   - Same logic as used in the `process` command.
 - `deinterlace`:
@@ -594,29 +552,30 @@ Options:
   - Same logic as used in the `process` command.
 - `removesubtitles`:
   - Remove all subtitle tracks.
-  - Useful when media players cannot disable output or content is undesirable.
+  - Useful when media players cannot disable subtitle output, or content is undesirable.
 - `removeclosedcaptions`:
-  - Remove EIA-608 and CTA-708 closed captions from video stream if present.
-  - Useful when media players cannot disable output or content is undesirable.
+  - Remove closed captions from video stream.
+  - Useful when media players cannot disable EIA-608 and CTA-708 embedded in the video stream, or content is undesirable.
   - Same logic as used in the `process` command.
 - `verify`:
-  - Verify the media container and stream integrity.
+  - Verify media container and stream integrity.
   - Same logic as used in the `process` command.
 - `createsidecar`:
-  - Create or re-create sidecar files.
+  - Create new sidecar files.
   - Useful to start fresh and update tool info and remove old processing state.
 - `updatesidecar`:
-  - Create or update sidecar files with current media tool information.
+  - Create or update sidecar files.
 - `getversioninfo`:
-  - Print application version, runtime version, and media tools version information.
+  - Print application and tools version information.
 - `getsidecarinfo`:
   - Print sidecar file information.
 - `gettagmap`:
-  - Print media file attribute mappings between between different media tools.
+  - Print media file attribute mappings.
+  - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
-  - Print media attribute information from sidecar files.
+  - Print media file information.
 - `gettoolinfo`:
-  - Print media attribute information using media tools.
+  - Print media tool information.
 - `createschema`:
   - Write JSON settings schema to file.
 
@@ -640,9 +599,9 @@ See the [W3C Language tags in HTML and XML](https://www.w3.org/International/art
 ## EIA-608 and CTA-708 Closed Captions
 
 [EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
-While media containers contain separate tracks for audio, video, subtitles, etc., these closed captions are not separate tracks, they are embedded in the actual video stream.
+Media containers typically contain separate discrete subtitle tracks, but closed captions can be encoded into the primary video stream.
 
-Removal of closed captions may be desirable for various reasons, including sensitive content, and players that always burn in closed captions during playback.\
+Removal of closed captions may be desirable for various reasons, including undesirable content, or players that always burn in closed captions during playback.\
 Unlike normal subtitle tracks, detection and removal of closed captions are non-trivial.\
 Note I have no expertise in video engineering, and the following information was gathered by research and experimentation.
 
@@ -662,15 +621,9 @@ E.g.
 ```json
 {
     "@type": "Text",
-    "ID": "256-CC1",
-    "Format": "EIA-608",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
-},
-{
-    "@type": "Text",
     "ID": "256-1",
     "Format": "EIA-708",
-    "MuxingMode": "SCTE 128 / DTVCC Transport",
+    "MuxingMode": "A/53 / DTVCC Transport",
 },
 ```
 
@@ -731,7 +684,7 @@ E.g.
 ```
 
 FFprobe [recently added](https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01) the `analyze_frames` [option](https://ffmpeg.org/ffprobe.html#toc-Main-options) that reports on the presence of closed captions in video streams.\
-As of writing this functionality has not yet been released, but is in nightly builds.\
+As of writing this functionality has not yet been released, but is only in nightly builds.\
 E.g. `ffprobe -loglevel error -show_streams -analyze_frames -read_intervals %180 filename -print_format json`
 
 ```json
@@ -853,38 +806,83 @@ RunContainer docker.io/ptr727/plexcleaner debian-develop
 RunContainer docker.io/ptr727/plexcleaner alpine-develop
 ```
 
+## Development Tooling
+
+### Fresh Install
+
+```shell
+winget install Microsoft.DotNet.SDK.10
+winget install Microsoft.VisualStudioCode
+winget install nektos.act
+```
+
+```shell
+dotnet new tool-manifest
+dotnet tool install csharpier
+dotnet tool install husky
+dotnet tool install dotnet-outdated-tool
+dotnet husky install
+dotnet husky add pre-commit -c "dotnet husky run"
+```
+
+### Update Dependencies
+
+```shell
+winget upgrade Microsoft.DotNet.SDK.10
+winget upgrade Microsoft.VisualStudioCode
+winget upgrade nektos.act
+dotnet tool update --all
+dotnet outdated --upgrade:prompt
+```
+
+## Feature Ideas
+
+- Cleanup chapters, e.g. chapter markers that exceed the media play time.
+- Cleanup NFO files, e.g. verify schema, verify image URL's.
+- Cleanup text based subtitle files, e.g. convert file encoding to UTF8.
+- Process external subtitle files, e.g. merge or extract.
+
 ## 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
-- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
-- [HandBrake](https://handbrake.fr/)
-- [MKVToolNix](https://mkvtoolnix.download/)
+- [AwesomeAssertions](https://awesomeassertions.org/)
+- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
+- [CliWrap](https://github.com/Tyrrrz/CliWrap)
+- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
+- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
+- [dotnet-outdated](https://github.com/dotnet-outdated/dotnet-outdated)
 - [FFmpeg](https://www.ffmpeg.org/)
+- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
+- [GitHub Actions](https://github.com/actions)
+- [GitHub Dependabot](https://github.com/dependabot)
+- [HandBrake](https://handbrake.fr/)
+- [Husky.Net](https://alirezanet.github.io/Husky.Net/)
 - [ISO 639-2 language tags](https://www.loc.gov/standards/iso639-2/langhome.html)
 - [ISO 639-3 language tags](https://iso639-3.sil.org/)
-- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
-- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
+- [JsonSchema.Net.Generation][jsonschema-link]
+- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
+- [MKVToolNix](https://mkvtoolnix.download/)
+- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
 - [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
-- [JsonSchema.Net.Generation][jsonschema-link]
+- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
 - [Serilog](https://serilog.net/)
-- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
-- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
-- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
-- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
-- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [FluentAssertions](https://fluentassertions.com/)
+- [Utf8JsonAsyncStreamReader][utf8jsonasync-link]
+- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [xUnit.Net](https://xunit.net/)
 
 ## Sample Media Files
 
-- [Kodi](https://kodi.wiki/view/Samples)
-- [JellyFish](http://jell.yfish.us/)
 - [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
-- [MPlayer](https://samples.mplayerhq.hu/)
+- [JellyFish](http://jell.yfish.us/)
+- [Kodi](https://kodi.wiki/view/Samples)
 - [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
+- [MPlayer](https://samples.mplayerhq.hu/)
 
-***
+## License
+
+Licensed under the [MIT License][license-link]\
+![GitHub License][license-shield]
 
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [alpine-docker-link]: https://hub.docker.com/_/alpine
@@ -907,5 +905,5 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 [release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/BuildGitHubRelease.yml?logo=github&label=Releases%20Build
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
 [releases-link]: https://github.com/ptr727/PlexCleaner/releases
-[savoury-link]: https://launchpad.net/~savoury1
 [ubuntu-hub-link]: https://hub.docker.com/_/ubuntu
+[utf8jsonasync-link]: https://github.com/gragra33/Utf8JsonAsyncStreamReader
