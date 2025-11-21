@@ -2089,12 +2089,17 @@ public class ProcessFile
 
         // Get a list of all the IETF track languages
         List<string> languageList = Language.GetLanguageList(trackList);
-        foreach (string language in languageList)
+
+        // Map each language to its corresponding track list
+        List<List<TrackProps>> tracksByLanguage = [.. languageList
+            .Select(language =>
+                trackList.FindAll(item =>
+                    language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
+                )
+            )];
+
+        foreach (List<TrackProps> trackLanguageList in tracksByLanguage)
         {
-            // Get all tracks matching this language
-            List<TrackProps> trackLanguageList = trackList.FindAll(item =>
-                language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
-            );
 
             // If multiple audio tracks exist for this language, keep the preferred audio codec track
             List<TrackProps> audioTrackList = trackLanguageList.FindAll(item =>
