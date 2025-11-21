@@ -58,6 +58,9 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 
     private bool ShouldCompute(FfMpegToolJsonSchema.Packet packet)
     {
+        // Epsilon for floating-point comparisons
+        const double epsilon = 1e-9;
+
         // Stream index must match the audio or video stream index
         if (packet.StreamIndex != videoStream && packet.StreamIndex != audioStream)
         {
@@ -85,7 +88,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
         // If PTS or DTS is set, it must not be zero and not negative
         if (
             !double.IsNaN(packet.PtsTime)
-            && (double.IsNegative(packet.PtsTime) || packet.PtsTime == 0.0)
+            && (double.IsNegative(packet.PtsTime) || Math.Abs(packet.PtsTime) < epsilon)
         )
         {
             return false;
@@ -93,7 +96,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 
         if (
             !double.IsNaN(packet.DtsTime)
-            && (double.IsNegative(packet.DtsTime) || packet.DtsTime == 0.0)
+            && (double.IsNegative(packet.DtsTime) || Math.Abs(packet.DtsTime) < epsilon)
         )
         {
             return false;
@@ -107,8 +110,7 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
 
         // Timestamp must be set, and not be zero, and not negative
         Debug.Assert(!double.IsNaN(packet.PtsTime));
-        Debug.Assert(packet.PtsTime != 0.0);
-        Debug.Assert(!double.IsNegative(packet.PtsTime));
+        Debug.Assert(packet.PtsTime >= epsilon);
 
         // If duration is set it must not be more than 1 second
         if (!double.IsNaN(packet.DurationTime) && packet.DurationTime > 1.0)

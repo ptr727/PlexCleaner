@@ -78,28 +78,25 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.MkvMerge);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv())
+        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId)))
         {
-            if (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId))
+            if (string.IsNullOrEmpty(track.Codec))
             {
-                if (string.IsNullOrEmpty(track.Codec))
-                {
-                    track.Codec = "unknown";
-                }
-                if (string.IsNullOrEmpty(track.Properties.CodecId))
-                {
-                    track.Properties.CodecId = "unknown";
-                }
-                Log.Warning(
-                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    track.Codec,
-                    track.Properties.CodecId,
-                    Parent.Container,
-                    Parent.FileName
-                );
+                track.Codec = "unknown";
             }
+            if (string.IsNullOrEmpty(track.Properties.CodecId))
+            {
+                track.Properties.CodecId = "unknown";
+            }
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.Codec,
+                track.Properties.CodecId,
+                Parent.Container,
+                Parent.FileName
+            );
         }
 
         // Required
@@ -360,32 +357,29 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.FfProbe);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv())
+        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName)))
         {
-            if (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+            if (string.IsNullOrEmpty(track.CodecName))
             {
-                if (string.IsNullOrEmpty(track.CodecName))
-                {
-                    track.CodecName = string.IsNullOrEmpty(track.CodecTagString)
-                        ? track.CodecLongName
-                        : track.CodecTagString;
-                }
-                if (string.IsNullOrEmpty(track.CodecLongName))
-                {
-                    track.CodecLongName = string.IsNullOrEmpty(track.CodecTagString)
-                        ? track.CodecName
-                        : track.CodecTagString;
-                }
-                Log.Warning(
-                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    track.CodecName,
-                    track.CodecLongName,
-                    Parent.Container,
-                    Parent.FileName
-                );
+                track.CodecName = string.IsNullOrEmpty(track.CodecTagString)
+                    ? track.CodecLongName
+                    : track.CodecTagString;
             }
+            if (string.IsNullOrEmpty(track.CodecLongName))
+            {
+                track.CodecLongName = string.IsNullOrEmpty(track.CodecTagString)
+                    ? track.CodecName
+                    : track.CodecTagString;
+            }
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.CodecName,
+                track.CodecLongName,
+                Parent.Container,
+                Parent.FileName
+            );
         }
 
         // FFprobe does not identify some codecs
@@ -544,32 +538,29 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv())
+        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId)))
         {
-            if (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId))
+            if (string.IsNullOrEmpty(track.Format))
             {
-                if (string.IsNullOrEmpty(track.Format))
-                {
-                    track.Format = string.IsNullOrEmpty(track.MuxingMode)
-                        ? track.CodecId
-                        : track.MuxingMode;
-                }
-                if (string.IsNullOrEmpty(track.CodecId))
-                {
-                    track.CodecId = string.IsNullOrEmpty(track.MuxingMode)
-                        ? track.Format
-                        : track.MuxingMode;
-                }
-                Log.Warning(
-                    "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    track.Format,
-                    track.CodecId,
-                    Parent.Container,
-                    Parent.FileName
-                );
+                track.Format = string.IsNullOrEmpty(track.MuxingMode)
+                    ? track.CodecId
+                    : track.MuxingMode;
             }
+            if (string.IsNullOrEmpty(track.CodecId))
+            {
+                track.CodecId = string.IsNullOrEmpty(track.MuxingMode)
+                    ? track.Format
+                    : track.MuxingMode;
+            }
+            Log.Warning(
+                "{Parser} : {Type} : Overriding unknown format or codec : Format: {Format}, Codec: {Codec}, Container: {Container} : {FileName}",
+                Parent.Parser,
+                Type,
+                track.Format,
+                track.CodecId,
+                Parent.Container,
+                Parent.FileName
+            );
         }
 
         // Required
