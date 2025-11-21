@@ -81,7 +81,7 @@ public partial class FfProbe
                     async (stream, cancellationToken) =>
                     {
                         // Read the stream
-                        Utf8JsonAsyncStreamReader jsonStreamReader = new(stream);
+                        using Utf8JsonAsyncStreamReader jsonStreamReader = new(stream);
                         ArgumentNullException.ThrowIfNull(jsonStreamReader);
                         while (await jsonStreamReader.ReadAsync(cancellationToken))
                         {
