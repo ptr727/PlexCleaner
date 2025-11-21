@@ -2091,11 +2091,12 @@ public class ProcessFile
         List<string> languageList = Language.GetLanguageList(trackList);
 
         // Map each language to its corresponding track list
-        IEnumerable<List<TrackProps>> tracksByLanguage = languageList.Select(language =>
-            trackList.FindAll(item =>
-                language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
-            )
-        );
+        List<List<TrackProps>> tracksByLanguage = [.. languageList
+            .Select(language =>
+                trackList.FindAll(item =>
+                    language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
+                )
+            )];
 
         foreach (List<TrackProps> trackLanguageList in tracksByLanguage)
         {
