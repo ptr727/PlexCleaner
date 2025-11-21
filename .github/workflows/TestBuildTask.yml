@@ -15,9 +15,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: |
-            "9.x"
-            "10.x"
+          dotnet-version: "9"
 
       - name: Checkout code
         uses: actions/checkout@v5
