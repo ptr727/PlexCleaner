@@ -28,7 +28,7 @@ Docker images are published on [Docker Hub][docker-link].
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
-  - Converted FFprobe JSON packet parsing to using streaming per-packet processing vs. read everything into memory and then process.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
   - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
   - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
   - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
@@ -806,7 +806,38 @@ RunContainer docker.io/ptr727/plexcleaner debian-develop
 RunContainer docker.io/ptr727/plexcleaner alpine-develop
 ```
 
-## TODO
+## Development Tooling
+
+### Fresh Install
+
+```shell
+winget install Microsoft.DotNet.SDK.9
+winget install Microsoft.DotNet.SDK.10
+winget install Microsoft.VisualStudioCode
+winget install nektos.act
+```
+
+```shell
+dotnet new tool-manifest
+dotnet tool install csharpier
+dotnet tool install husky
+dotnet tool install dotnet-outdated-tool
+dotnet husky install
+dotnet husky add pre-commit -c "dotnet husky run"
+```
+
+### Update Dependencies
+
+```shell
+winget upgrade Microsoft.DotNet.SDK.9
+winget upgrade Microsoft.DotNet.SDK.10
+winget upgrade Microsoft.VisualStudioCode
+winget upgrade nektos.act
+dotnet tool update --all
+dotnet outdated --upgrade:prompt
+```
+
+## Feature Ideas
 
 - Cleanup chapters, e.g. chapter markers that exceed the media play time.
 - Cleanup NFO files, e.g. verify schema, verify image URL's.
@@ -838,7 +869,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 - [regex101.com](https://regex101.com/)
 - [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
 - [Serilog](https://serilog.net/)
-- [Utf8JsonAsyncStreamReader](https://github.com/gragra33/Utf8JsonAsyncStreamReader)
+- [Utf8JsonAsyncStreamReader][utf8jsonasync-link]
 - [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
 - [xUnit.Net](https://xunit.net/)
 
@@ -877,3 +908,4 @@ Licensed under the [MIT License][license-link]\
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
 [releases-link]: https://github.com/ptr727/PlexCleaner/releases
 [ubuntu-hub-link]: https://hub.docker.com/_/ubuntu
+[utf8jsonasync-link]: https://github.com/gragra33/Utf8JsonAsyncStreamReader
