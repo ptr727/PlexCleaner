@@ -86,12 +86,18 @@ public class BitrateInfo(long videoStream, long audioStream, int maxBps)
         }
 
         // If PTS or DTS is set, it must not be zero and not negative
-        if (!double.IsNaN(packet.PtsTime) && packet.PtsTime < epsilon)
+        if (
+            !double.IsNaN(packet.PtsTime)
+            && (double.IsNegative(packet.PtsTime) || Math.Abs(packet.PtsTime) < epsilon)
+        )
         {
             return false;
         }
 
-        if (!double.IsNaN(packet.DtsTime) && packet.DtsTime < epsilon)
+        if (
+            !double.IsNaN(packet.DtsTime)
+            && (double.IsNegative(packet.DtsTime) || Math.Abs(packet.DtsTime) < epsilon)
+        )
         {
             return false;
         }
