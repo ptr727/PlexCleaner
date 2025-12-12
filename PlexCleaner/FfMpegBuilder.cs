@@ -20,7 +20,7 @@ public partial class FfMpeg
         private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
 
         public GlobalOptions Default() =>
-            LogLevelError().HideBanner().NoStats().AbortOnEmptyOutput();
+            NoStdIn().LogLevelError().HideBanner().NoStats().AbortOnEmptyOutput();
 
         public GlobalOptions LogLevel() => Add("-loglevel");
 
@@ -39,6 +39,8 @@ public partial class FfMpeg
         public GlobalOptions AbortOn(string option) => AbortOn().Add(option);
 
         public GlobalOptions AbortOnEmptyOutput() => AbortOn("empty_output");
+
+        public GlobalOptions NoStdIn() => Add("-nostdin");
 
         public GlobalOptions Add(string option) => Add(option, false);
 
