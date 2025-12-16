@@ -61,7 +61,7 @@ jobs:
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
     - name: Upload version artifacts
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
@@ -78,7 +78,7 @@ jobs:
       uses: actions/checkout@v6
 
     - name: Download version artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         pattern: versions-*
         merge-multiple: true
