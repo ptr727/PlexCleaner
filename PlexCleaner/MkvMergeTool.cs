@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
@@ -100,8 +99,7 @@ public partial class MkvMerge
                 mediaToolInfo.Url =
                     $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -254,8 +252,7 @@ public partial class MkvMerge
                     mkvMerge.Container.Properties.Duration / 1000000.0
                 );
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }

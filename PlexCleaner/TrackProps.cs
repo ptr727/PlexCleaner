@@ -78,7 +78,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.MkvMerge);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId))
+        )
         {
             if (string.IsNullOrEmpty(track.Codec))
             {
@@ -357,7 +360,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.FfProbe);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+        )
         {
             if (string.IsNullOrEmpty(track.CodecName))
             {
@@ -475,7 +481,8 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 .Tags.FirstOrDefault(item =>
                     item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)
                 )
-                .Value ?? "";
+                .Value
+            ?? "";
 
         // Language
         Language =
@@ -483,7 +490,8 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 .Tags.FirstOrDefault(item =>
                     item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)
                 )
-                .Value ?? "";
+                .Value
+            ?? "";
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
@@ -538,7 +546,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId))
+        )
         {
             if (string.IsNullOrEmpty(track.Format))
             {

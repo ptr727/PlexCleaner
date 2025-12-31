@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Security.Cryptography;
 using InsaneGenius.Utilities;
 using Serilog;
@@ -434,7 +433,7 @@ public class SidecarFile
                 return false;
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -451,7 +450,7 @@ public class SidecarFile
             // Write the text to the sidecar file
             File.WriteAllText(_sidecarFileInfo.FullName, json);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -597,7 +596,7 @@ public class SidecarFile
             // Calculate the hash and convert to string
             return System.Convert.ToBase64String(SHA256.HashData(hashBuffer));
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return null;
         }

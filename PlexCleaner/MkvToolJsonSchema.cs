@@ -39,7 +39,7 @@ public class MkvToolJsonSchema
         public List<Chapter> Chapters { get; } = [];
 
         public static MkvMerge FromJson(string json) =>
-            JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
+            JsonSerializer.Deserialize(json, MkvToolJsonContext.Default.MkvMerge);
     }
 
     public class Container
@@ -159,3 +159,13 @@ public class MkvToolJsonSchema
         public string Type { get; set; } = "";
     }
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(MkvToolJsonSchema.MkvMerge))]
+internal partial class MkvToolJsonContext : JsonSerializerContext;

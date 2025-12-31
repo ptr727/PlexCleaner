@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CliWrap;
@@ -84,8 +83,7 @@ public partial class SevenZip
                     mediaToolInfo.FileName
                 );
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }

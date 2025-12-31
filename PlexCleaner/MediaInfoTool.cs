@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
@@ -86,8 +85,7 @@ public partial class MediaInfo
                 mediaToolInfo.Url =
                     $"https://mediaarea.net/download/binary/mediainfo/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -233,8 +231,7 @@ public partial class MediaInfo
                 // TODO: Chapters
                 // TODO: Attachments
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }

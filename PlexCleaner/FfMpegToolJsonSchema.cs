@@ -27,7 +27,7 @@ public class FfMpegToolJsonSchema
         public FormatInfo Format { get; } = new();
 
         public static FfProbe FromJson(string json) =>
-            JsonSerializer.Deserialize<FfProbe>(json, ConfigFileJsonSchema.JsonReadOptions);
+            JsonSerializer.Deserialize(json, FfMpegToolJsonContext.Default.FfProbe);
     }
 
     public class FormatInfo
@@ -130,3 +130,13 @@ public class FfMpegToolJsonSchema
         public long Size { get; set; } = -1;
     }
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(FfMpegToolJsonSchema.FfProbe))]
+internal partial class FfMpegToolJsonContext : JsonSerializerContext;

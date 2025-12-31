@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using InsaneGenius.Utilities;
@@ -145,7 +144,7 @@ public static class Tools
                 mediaTool.Info = mediaToolInfo;
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -168,7 +167,7 @@ public static class Tools
         }
 
         // Get the assembly directory
-        string toolsRoot = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+        string toolsRoot = Path.GetDirectoryName(AppContext.BaseDirectory);
 
         // Create the root from the relative directory
         return Path.GetFullPath(Path.Combine(toolsRoot!, Program.Config.ToolsOptions.RootPath));
@@ -331,7 +330,7 @@ public static class Tools
             // Write updated JSON to file
             ToolInfoJsonSchema.ToFile(toolsFile, toolInfoJson);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -353,8 +352,7 @@ public static class Tools
             mediaToolInfo.ModifiedTime = (DateTime)
                 httpResponse.Content.Headers.LastModified?.DateTime;
         }
-        catch (HttpRequestException e)
-            when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (HttpRequestException e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -374,8 +372,7 @@ public static class Tools
         {
             DownloadFileAsync(uri, fileName).GetAwaiter().GetResult();
         }
-        catch (Exception e)
-            when (LogOptions.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (LogOptions.Logger.LogAndHandle(e))
         {
             return false;
         }

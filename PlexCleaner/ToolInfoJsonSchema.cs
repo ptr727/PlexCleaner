@@ -31,10 +31,10 @@ public class ToolInfoJsonSchema
         File.WriteAllText(path, ToJson(json));
 
     private static string ToJson(ToolInfoJsonSchema tools) =>
-        JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
+        JsonSerializer.Serialize(tools, ToolInfoJsonContext.Default.ToolInfoJsonSchema);
 
     public static ToolInfoJsonSchema FromJson(string json) =>
-        JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
+        JsonSerializer.Deserialize(json, ToolInfoJsonContext.Default.ToolInfoJsonSchema);
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {
@@ -55,3 +55,18 @@ public class ToolInfoJsonSchema
         return false;
     }
 }
+
+// TODO:
+// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n"
+)]
+[JsonSerializable(typeof(ToolInfoJsonSchema))]
+internal partial class ToolInfoJsonContext : JsonSerializerContext;

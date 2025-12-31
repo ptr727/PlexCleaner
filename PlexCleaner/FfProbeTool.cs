@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Stream;
 using System.Threading;
 using System.Threading.Tasks;
@@ -134,7 +134,7 @@ public partial class FfProbe
                                     if (
                                         !await packetFunc(
                                             await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
-                                                ConfigFileJsonSchema.JsonReadOptions,
+                                                JsonReadOptions,
                                                 cancellationToken
                                             )
                                         )
@@ -184,8 +184,7 @@ public partial class FfProbe
                 );
                 return (false, string.Empty);
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return (false, string.Empty);
             }
@@ -429,8 +428,7 @@ public partial class FfProbe
                 // TODO: Chapters
                 // TODO: Attachments
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -460,4 +458,15 @@ public partial class FfProbe
                 s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase))
             );
     }
+
+    // TODO: Replace with AOT JsonSerializerContext
+    public static readonly JsonSerializerOptions JsonReadOptions = new()
+    {
+        AllowTrailingCommas = true,
+        IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        TypeInfoResolver = ConfigFileJsonContext.Default,
+    };
 }

@@ -22,6 +22,7 @@ public class MkvToolXmlSchema
         [XmlElement(ElementName = "latest-source")]
         public LatestSource LatestSource { get; set; }
 
+        // TODO: https://github.com/dotnet/runtime/issues/122719
         public static MkvToolnixReleases FromXml(string xml)
         {
             XmlSerializer xmlSerializer = new(typeof(MkvToolnixReleases));

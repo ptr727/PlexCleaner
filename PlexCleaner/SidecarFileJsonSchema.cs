@@ -169,16 +169,15 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     }
 
     public static string ToJson(SidecarFileJsonSchema json) =>
-        JsonSerializer.Serialize(json, ConfigFileJsonSchema.JsonWriteOptions);
+        JsonSerializer.Serialize(json, SidecarFileJsonContext.Default.SidecarFileJsonSchema4);
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase =
-            JsonSerializer.Deserialize<SidecarFileJsonSchemaBase>(
-                json,
-                ConfigFileJsonSchema.JsonReadOptions
-            );
+        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize(
+            json,
+            SidecarFileJsonContext.Default.SidecarFileJsonSchemaBase
+        );
         if (sidecarFileJsonSchemaBase == null)
         {
             return null;
@@ -197,28 +196,48 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
         return sidecarFileJsonSchemaBase.SchemaVersion switch
         {
             SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize<SidecarFileJsonSchema1>(
+                JsonSerializer.Deserialize(
                     json,
-                    ConfigFileJsonSchema.JsonReadOptions
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema1
                 )
             ),
             SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize<SidecarFileJsonSchema2>(
+                JsonSerializer.Deserialize(
                     json,
-                    ConfigFileJsonSchema.JsonReadOptions
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema2
                 )
             ),
             SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize<SidecarFileJsonSchema3>(
+                JsonSerializer.Deserialize(
                     json,
-                    ConfigFileJsonSchema.JsonReadOptions
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema3
                 )
             ),
-            Version => JsonSerializer.Deserialize<SidecarFileJsonSchema>(
+            Version => JsonSerializer.Deserialize(
                 json,
-                ConfigFileJsonSchema.JsonReadOptions
+                SidecarFileJsonContext.Default.SidecarFileJsonSchema4
             ),
             _ => throw new NotImplementedException(),
         };
     }
 }
+
+// TODO:
+// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n"
+)]
+[JsonSerializable(typeof(SidecarFileJsonSchemaBase))]
+[JsonSerializable(typeof(SidecarFileJsonSchema1))]
+[JsonSerializable(typeof(SidecarFileJsonSchema2))]
+[JsonSerializable(typeof(SidecarFileJsonSchema3))]
+[JsonSerializable(typeof(SidecarFileJsonSchema))] // SidecarFileJsonSchema4
+[JsonSerializable(typeof(SidecarFile.StatesType))]
+internal partial class SidecarFileJsonContext : JsonSerializerContext;

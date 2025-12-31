@@ -24,7 +24,10 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3:14:
+- Version 3.15:
+  - Convert to .NET 10.
+  - Enable Native AOT compilation.
+- Version 3.14:
   - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
   - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
@@ -808,7 +811,7 @@ RunContainer docker.io/ptr727/plexcleaner alpine-develop
 
 ## Development Tooling
 
-### Fresh Install
+### Install
 
 ```shell
 winget install Microsoft.DotNet.SDK.10
@@ -825,13 +828,18 @@ dotnet husky install
 dotnet husky add pre-commit -c "dotnet husky run"
 ```
 
-### Update Dependencies
+### Update
 
 ```shell
 winget upgrade Microsoft.DotNet.SDK.10
 winget upgrade Microsoft.VisualStudioCode
 winget upgrade nektos.act
+```
+
+```shell
+dotnet tool restore
 dotnet tool update --all
+dotnet husky install
 dotnet outdated --upgrade:prompt
 ```
 

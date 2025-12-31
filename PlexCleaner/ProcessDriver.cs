@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Serilog;
 
@@ -86,7 +85,7 @@ public static class ProcessDriver
             // Cancelled
             error = true;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Error
             error = true;
@@ -217,7 +216,7 @@ public static class ProcessDriver
             // Cancelled
             error = true;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Error
             error = true;

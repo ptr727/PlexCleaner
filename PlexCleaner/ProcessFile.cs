@@ -2091,16 +2091,17 @@ public class ProcessFile
         List<string> languageList = Language.GetLanguageList(trackList);
 
         // Map each language to its corresponding track list
-        List<List<TrackProps>> tracksByLanguage = [.. languageList
-            .Select(language =>
+        List<List<TrackProps>> tracksByLanguage =
+        [
+            .. languageList.Select(language =>
                 trackList.FindAll(item =>
                     language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
                 )
-            )];
+            ),
+        ];
 
         foreach (List<TrackProps> trackLanguageList in tracksByLanguage)
         {
-
             // If multiple audio tracks exist for this language, keep the preferred audio codec track
             List<TrackProps> audioTrackList = trackLanguageList.FindAll(item =>
                 item.GetType() == typeof(AudioProps)
@@ -2234,10 +2235,12 @@ public class ProcessFile
         }
 
         // Iterate through the preferred codecs in order and return on first match
-        AudioProps audioProps = Program.Config.ProcessOptions.PreferredAudioFormats
-            .Select(format => audioPropsList.Find(item =>
-                item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
-            ))
+        AudioProps audioProps = Program
+            .Config.ProcessOptions.PreferredAudioFormats.Select(format =>
+                audioPropsList.Find(item =>
+                    item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
+                )
+            )
             .FirstOrDefault(props => props != null);
         if (audioProps != null)
         {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -131,7 +130,7 @@ public abstract class MediaTool
             );
             return false;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -193,7 +192,7 @@ public abstract class MediaTool
             );
             return false;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }

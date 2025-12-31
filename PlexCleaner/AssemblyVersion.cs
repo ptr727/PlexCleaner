@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -39,10 +37,12 @@ public static class AssemblyVersion
         // Use major.minor.build from informational version
         GetInformationalVersion().Split('+', '-')[0];
 
-    public static DateTime GetBuildDate() =>
-        // Use assembly modified time as build date
-        // https://stackoverflow.com/questions/1600962/displaying-the-build-date
-        File.GetLastWriteTime(GetAssembly().Location).ToLocalTime();
+    // TODO: info IL3000: 'System.Reflection.Assembly.Location.get' always returns an empty string for assemblies embedded in a single-file app.
+    // // If the path to the app directory is needed, consider calling 'System.AppContext.BaseDirectory'.
+    // public static DateTime GetBuildDate() =>
+    //     // Use assembly modified time as build date
+    //     // https://stackoverflow.com/questions/1600962/displaying-the-build-date
+    //     File.GetLastWriteTime(GetAssembly().Location).ToLocalTime();
 
     private static Assembly GetAssembly()
     {

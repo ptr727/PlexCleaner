@@ -141,7 +141,7 @@ public static class Program
                 );
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Nothing to do
         }
@@ -511,8 +511,8 @@ public static class Program
             );
         Log.Logger.LogOverrideContext()
             .Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Logger.LogOverrideContext()
-            .Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
+        //Log.Logger.LogOverrideContext()
+        //    .Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 
         // Warn if a newer version has been released
         VerifyLatestVersion();
