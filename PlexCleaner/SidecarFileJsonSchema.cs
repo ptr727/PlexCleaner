@@ -3,6 +3,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
@@ -189,10 +190,11 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
             SidecarFileJsonSchema4 sidecarFileJsonSchema4 = this;
 
             // v5: Changed MediaInfo from XML to JSON
-            // Reset all media info data to force re-check
-            sidecarFileJsonSchema4.MediaInfoData = "";
-            sidecarFileJsonSchema4.MkvMergeData = "";
-            sidecarFileJsonSchema4.FfProbeData = "";
+            sidecarFileJsonSchema4.MediaInfoData = StringCompression.Compress(
+                MediaInfoXmlToJson(
+                    StringCompression.Decompress(sidecarFileJsonSchema4.MediaInfoData)
+                )
+            );
         }
 #pragma warning restore CS0618 // Type or member is obsolete
     }
@@ -254,6 +256,43 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
             ),
             _ => throw new NotImplementedException(),
         };
+    }
+
+    private static string MediaInfoXmlToJson(string mediaInfoXml)
+    {
+        // Serialize from XML
+        MediaInfoToolXmlSchema.MediaInfo xmlMediaInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(
+            mediaInfoXml
+        );
+
+        // Copy to JSON schema
+        MediaInfoToolJsonSchema.MediaInfo jsonMediaInfo = new();
+        foreach (MediaInfoToolXmlSchema.Track xmlTrack in xmlMediaInfo.Media.Tracks)
+        {
+            MediaInfoToolJsonSchema.Track jsonTrack = new()
+            {
+                Type = xmlTrack.Type,
+                Id = xmlTrack.Id,
+                UniqueId = xmlTrack.UniqueId,
+                Duration = xmlTrack.Duration,
+                Format = xmlTrack.Format,
+                FormatProfile = xmlTrack.FormatProfile,
+                FormatLevel = xmlTrack.FormatLevel,
+                HdrFormat = xmlTrack.HdrFormat,
+                CodecId = xmlTrack.CodecId,
+                Language = xmlTrack.Language,
+                Default = xmlTrack.Default,
+                Forced = xmlTrack.Forced,
+                MuxingMode = xmlTrack.MuxingMode,
+                StreamOrder = xmlTrack.StreamOrder,
+                ScanType = xmlTrack.ScanType,
+                Title = xmlTrack.Title,
+            };
+            jsonMediaInfo.Media.Tracks.Add(jsonTrack);
+        }
+
+        // Serialize to JSON
+        return JsonSerializer.Serialize(jsonMediaInfo, MediaInfoToolJsonContext.Default.MediaInfo);
     }
 }
 

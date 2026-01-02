@@ -85,8 +85,7 @@
                 "--logfile=PlexCleaner_Single.log",
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results_Single.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "stopAtEntry": false,
@@ -105,8 +104,7 @@
                 "--settingsfile=PlexCleaner.json",
                 "--resultsfile=Results_Single_Quickscan.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -127,8 +125,7 @@
                 "--resultsfile=Results_Single_Quickscan.json",
                 "--testsnippets",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -151,8 +148,7 @@
                 "--parallel",
                 "--testsnippets",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -171,8 +167,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--preprocess",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -191,8 +186,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -211,8 +205,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -231,8 +224,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -251,8 +243,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -270,8 +261,7 @@
                 "removesubtitles",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -290,8 +280,7 @@
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--quickscan",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -308,8 +297,7 @@
             "args": [
                 "gettagmap",
                 "--settingsfile=PlexCleaner.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -326,8 +314,7 @@
             "args": [
                 "getmediainfo",
                 "--settingsfile=PlexCleaner.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -345,8 +332,7 @@
                 "testmediainfo",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,
@@ -363,8 +349,7 @@
             "args": [
                 "gettoolinfo",
                 "--settingsfile=PlexCleaner.json",
-                "--mediafiles",
-                "D:\\Test"
+                "--mediafiles=D:\\Test"
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "externalConsole": false,

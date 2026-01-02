@@ -31,9 +31,8 @@ Docker images are published on [Docker Hub][docker-link].
     - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
     - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
   - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
-    - Attempts to use `Microsoft.XmlSerializer.Generator` for AOT compatible XML code generation was unsuccessful, and I opted to remove XML in favor of JSON.
     - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
-    - All sidecars will be recreated to load new media info on the first run.
+    - Schema will automatically be migrated and XML converted to JSON equivalent.
   - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
 - Version 3.14:
   - Switch to using [CliWrap](cliwrap-link) for commandline tool process execution.

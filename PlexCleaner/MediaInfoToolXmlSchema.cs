@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -14,26 +13,13 @@ namespace PlexCleaner;
 
 public class MediaInfoToolXmlSchema
 {
-    [Serializable]
-    [XmlType(Namespace = "https://mediaarea.net/mediainfo")]
     [XmlRoot("MediaInfo", Namespace = "https://mediaarea.net/mediainfo", IsNullable = false)]
     public class MediaInfo
     {
         [XmlElement("media", IsNullable = false)]
         public Media Media { get; set; } = new();
 
-        public static MediaInfo FromXml(string xml)
-        {
-            XmlSerializer xmlSerializer = new(typeof(MediaInfo));
-            using TextReader textReader = new StringReader(xml);
-            XmlReaderSettings xmlSettings = new()
-            {
-                DtdProcessing = DtdProcessing.Prohibit,
-                XmlResolver = null,
-            };
-            using XmlReader xmlReader = XmlReader.Create(textReader, xmlSettings);
-            return xmlSerializer.Deserialize(xmlReader) as MediaInfo;
-        }
+        public static MediaInfo FromXml(string xml) => MediaInfoXmlParser.ParseXml(xml);
 
         public static bool StringToBool(string value) =>
             value != null

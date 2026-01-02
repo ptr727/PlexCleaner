@@ -8,19 +8,11 @@ namespace PlexCleanerTests;
 
 public class SidecarFileTests(PlexCleanerFixture fixture)
 {
-    // v5 schema is no longer backwards compatible due to XML to JSON change
     [Theory]
     [InlineData("Sidecar.v1.mkv")]
     [InlineData("Sidecar.v2.mkv")]
     [InlineData("Sidecar.v3.mkv")]
     [InlineData("Sidecar.v4.mkv")]
-    public void Open_Old_Schema_Fail(string fileName)
-    {
-        SidecarFile sidecarFile = new(fixture.GetSampleFilePath(fileName));
-        Assert.False(sidecarFile.Read(out _, false));
-    }
-
-    [Theory]
     [InlineData("Sidecar.v5.mkv")]
     public void Open_Old_Schema_Open(string fileName)
     {
