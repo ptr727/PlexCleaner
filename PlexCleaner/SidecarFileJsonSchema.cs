@@ -1,6 +1,7 @@
 // See ConfigFileJsonSchema.cs for schema update steps
 
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using InsaneGenius.Utilities;
@@ -189,20 +190,35 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
             // Get v4 schema
             SidecarFileJsonSchema4 sidecarFileJsonSchema4 = this;
 
-            // v5: Changed MediaInfo from XML to JSON
+            // v5: Changed MediaInfo schema from XML to JSON
+            // Convert MediaInfo XML attributes to JSON
             sidecarFileJsonSchema4.MediaInfoData = StringCompression.Compress(
-                MediaInfoXmlToJson(
+                MediaInfoXmlParser.GenericXmlToJson(
                     StringCompression.Decompress(sidecarFileJsonSchema4.MediaInfoData)
                 )
             );
         }
 #pragma warning restore CS0618 // Type or member is obsolete
+
+        // Set schema version to current
+        SchemaVersion = Version;
     }
 
-    public static string ToJson(SidecarFileJsonSchema json) =>
+    public static SidecarFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
+
+    public static void ToFile(string path, SidecarFileJsonSchema json)
+    {
+        // Set the schema version to the current version
+        json.SchemaVersion = Version;
+
+        // Write JSON to file
+        File.WriteAllText(path, ToJson(json));
+    }
+
+    private static string ToJson(SidecarFileJsonSchema json) =>
         JsonSerializer.Serialize(json, SidecarFileJsonContext.Default.SidecarFileJsonSchema5);
 
-    public static SidecarFileJsonSchema FromJson(string json)
+    private static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
         SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize(
@@ -256,43 +272,6 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
             ),
             _ => throw new NotImplementedException(),
         };
-    }
-
-    private static string MediaInfoXmlToJson(string mediaInfoXml)
-    {
-        // Serialize from XML
-        MediaInfoToolXmlSchema.MediaInfo xmlMediaInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(
-            mediaInfoXml
-        );
-
-        // Copy to JSON schema
-        MediaInfoToolJsonSchema.MediaInfo jsonMediaInfo = new();
-        foreach (MediaInfoToolXmlSchema.Track xmlTrack in xmlMediaInfo.Media.Tracks)
-        {
-            MediaInfoToolJsonSchema.Track jsonTrack = new()
-            {
-                Type = xmlTrack.Type,
-                Id = xmlTrack.Id,
-                UniqueId = xmlTrack.UniqueId,
-                Duration = xmlTrack.Duration,
-                Format = xmlTrack.Format,
-                FormatProfile = xmlTrack.FormatProfile,
-                FormatLevel = xmlTrack.FormatLevel,
-                HdrFormat = xmlTrack.HdrFormat,
-                CodecId = xmlTrack.CodecId,
-                Language = xmlTrack.Language,
-                Default = xmlTrack.Default,
-                Forced = xmlTrack.Forced,
-                MuxingMode = xmlTrack.MuxingMode,
-                StreamOrder = xmlTrack.StreamOrder,
-                ScanType = xmlTrack.ScanType,
-                Title = xmlTrack.Title,
-            };
-            jsonMediaInfo.Media.Tracks.Add(jsonTrack);
-        }
-
-        // Serialize to JSON
-        return JsonSerializer.Serialize(jsonMediaInfo, MediaInfoToolJsonContext.Default.MediaInfo);
     }
 }
 

@@ -194,6 +194,9 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         }
 
         // v4
+
+        // Set schema version to current
+        SchemaVersion = Version;
     }
 
     public void SetDefaults()

@@ -19,7 +19,7 @@ public class MediaInfoToolXmlSchema
         [XmlElement("media", IsNullable = false)]
         public Media Media { get; set; } = new();
 
-        public static MediaInfo FromXml(string xml) => MediaInfoXmlParser.ParseXml(xml);
+        public static MediaInfo FromXml(string xml) => MediaInfoXmlParser.MediaInfoFromXml(xml);
 
         public static bool StringToBool(string value) =>
             value != null

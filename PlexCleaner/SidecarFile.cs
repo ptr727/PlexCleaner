@@ -434,11 +434,8 @@ public class SidecarFile
     {
         try
         {
-            // Get json file
-            string json = File.ReadAllText(_sidecarFileInfo.FullName);
-
-            // Create the object from json
-            _sidecarJson = SidecarFileJsonSchema.FromJson(json);
+            // Create the object from the sidecar file
+            _sidecarJson = SidecarFileJsonSchema.FromFile(_sidecarFileInfo.FullName);
             if (_sidecarJson == null)
             {
                 Log.Error("Failed to read JSON from file : {FileName}", _sidecarFileInfo.Name);
@@ -456,11 +453,8 @@ public class SidecarFile
     {
         try
         {
-            // Get json from object
-            string json = SidecarFileJsonSchema.ToJson(_sidecarJson);
-
-            // Write the text to the sidecar file
-            File.WriteAllText(_sidecarFileInfo.FullName, json);
+            // Write the object to the sidecar file
+            SidecarFileJsonSchema.ToFile(_sidecarFileInfo.FullName, _sidecarJson);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
