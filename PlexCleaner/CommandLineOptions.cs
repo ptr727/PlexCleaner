@@ -28,8 +28,8 @@ public class CommandLineParser
 {
     public CommandLineParser(string[] args)
     {
-        _root = CreateRootCommand();
-        Result = _root.Parse(args);
+        Root = CreateRootCommand();
+        Result = Root.Parse(args);
     }
 
     public ParseResult Result { get; init; }
@@ -41,7 +41,7 @@ public class CommandLineParser
         );
 
     private static readonly List<string> s_cliBypassList = ["--help", "--version"];
-    private RootCommand _root { get; init; }
+    private RootCommand Root { get; init; }
 
     private class CommandHandler(Func<ParseResult, int> action) : SynchronousCommandLineAction
     {

@@ -94,19 +94,18 @@ public partial class MediaInfo
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            // TODO: Switch to JSON version
             mediaProps = null;
-            return GetMediaPropsXml(fileName, out string xml)
-                && GetMediaPropsFromXml(xml, fileName, out mediaProps);
+            return GetMediaPropsJson(fileName, out string json)
+                && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
 
-        public bool GetMediaPropsXml(string fileName, out string xml)
+        public bool GetMediaPropsJson(string fileName, out string json)
         {
             // Build command line
-            xml = string.Empty;
+            json = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
-                .MediaInfoOptions(options => options.OutputFormatXml().InputFile(fileName))
+                .MediaInfoOptions(options => options.OutputFormatJson().InputFile(fileName))
                 .Build();
 
             // Execute command
@@ -135,46 +134,44 @@ public partial class MediaInfo
                 Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
-            // Get XML output
-            xml = result.StandardOutput;
+            // Get JSON output
+            json = result.StandardOutput;
 
             // TODO: No error is returned when the file does not exist
             // https://sourceforge.net/p/mediainfo/bugs/1052/
-            // Empty XML files are around 86 bytes
+            // Empty files are around 86 bytes
             // Match size check with ProcessSidecarFile()
-            return xml.Length >= 100;
+            return json.Length >= 100;
         }
 
-        public static bool GetMediaPropsFromXml(
-            string xml,
+        public static bool GetMediaPropsFromJson(
+            string json,
             string fileName,
             out MediaProps mediaProps
         )
         {
-            // Populate the MediaInfo object from the XML string
+            // Populate the MediaInfo object from the JSON string
             mediaProps = new MediaProps(ToolType.MediaInfo, fileName);
             try
             {
                 // Deserialize
-                MediaInfoToolXmlSchema.MediaInfo xmlInfo = MediaInfoToolXmlSchema.MediaInfo.FromXml(
-                    xml
-                );
-                ArgumentNullException.ThrowIfNull(xmlInfo);
-                MediaInfoToolXmlSchema.MediaElement xmlMedia = xmlInfo.Media;
-                ArgumentNullException.ThrowIfNull(xmlMedia);
-                if (xmlMedia.Tracks.Count == 0)
+                MediaInfoToolJsonSchema.MediaInfo jsonInfo =
+                    MediaInfoToolJsonSchema.MediaInfo.FromJson(json);
+                ArgumentNullException.ThrowIfNull(jsonInfo);
+                ArgumentNullException.ThrowIfNull(jsonInfo.Media);
+                if (jsonInfo.Media.Tracks.Count == 0)
                 {
                     Log.Error(
                         "{ToolType} : Container not supported : Tracks: {Tracks} : {FileName}",
                         mediaProps.Parser,
-                        xmlMedia.Tracks.Count,
+                        jsonInfo.Media.Tracks.Count,
                         fileName
                     );
                     return false;
                 }
 
                 // Tracks
-                foreach (MediaInfoToolXmlSchema.Track track in xmlMedia.Tracks)
+                foreach (MediaInfoToolJsonSchema.Track track in jsonInfo.Media.Tracks)
                 {
                     // Process by track type
                     switch (track.Type.ToLowerInvariant())

@@ -11,6 +11,7 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 namespace Sandbox;
 
@@ -29,7 +30,7 @@ public class Program
 
     private readonly Dictionary<string, JsonElement> _settings;
 
-    private Program(Dictionary<string, JsonElement> settings) => _settings = settings;
+    protected Program(Dictionary<string, JsonElement> settings) => _settings = settings;
 
     public static async Task<int> Main(string[] args)
     {
@@ -67,7 +68,7 @@ public class Program
         }
 
         // Derive from Program and implement Sandbox()
-        Program program = new(settings);
+        TestSomething program = new(settings);
         int ret = await program.Sandbox(args);
 
         // Done

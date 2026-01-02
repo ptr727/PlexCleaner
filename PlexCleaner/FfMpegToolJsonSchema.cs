@@ -2,9 +2,6 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON file to C# using app.quicktype.io
-// Set language, framework, namespace, list
-
 // No JSON schema, use XML schema
 // https://github.com/FFmpeg/FFmpeg/blob/master/doc/ffprobe.xsd
 
@@ -83,24 +80,31 @@ public class FfMpegToolJsonSchema
     {
         [JsonPropertyName("default")]
         public int Default { get; set; }
+        public bool IsDefault => Default != 0;
 
         [JsonPropertyName("forced")]
         public int Forced { get; set; }
+        public bool IsForced => Forced != 0;
 
         [JsonPropertyName("original")]
         public int Original { get; set; }
+        public bool IsOriginal => Original != 0;
 
         [JsonPropertyName("comment")]
         public int Comment { get; set; }
+        public bool IsCommentary => Comment != 0;
 
         [JsonPropertyName("hearing_impaired")]
         public int HearingImpaired { get; set; }
+        public bool IsHearingImpaired => HearingImpaired != 0;
 
         [JsonPropertyName("visual_impaired")]
         public int VisualImpaired { get; set; }
+        public bool IsVisualImpaired => VisualImpaired != 0;
 
         [JsonPropertyName("descriptions")]
         public int Descriptions { get; set; }
+        public bool IsDescriptions => Descriptions != 0;
     }
 
     public class PacketInfo
@@ -139,4 +143,5 @@ public class FfMpegToolJsonSchema
     ReadCommentHandling = JsonCommentHandling.Skip
 )]
 [JsonSerializable(typeof(FfMpegToolJsonSchema.FfProbe))]
+[JsonSerializable(typeof(FfMpegToolJsonSchema.Packet))]
 internal partial class FfMpegToolJsonContext : JsonSerializerContext;

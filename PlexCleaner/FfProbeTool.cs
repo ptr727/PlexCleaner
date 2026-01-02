@@ -94,7 +94,7 @@ public partial class FfProbe
                             if (
                                 jsonStreamReader.TokenType == JsonTokenType.PropertyName
                                 && jsonStreamReader
-                                    .GetString()
+                                    .GetString()!
                                     .Equals("packets", StringComparison.OrdinalIgnoreCase)
                             )
                             {
@@ -133,6 +133,7 @@ public partial class FfProbe
                                     // A false returns means delegate does not want any more packets
                                     if (
                                         !await packetFunc(
+                                            // TODO: Replace with AOT version taking JsonSerializerContext
                                             await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
                                                 JsonReadOptions,
                                                 cancellationToken
@@ -467,6 +468,6 @@ public partial class FfProbe
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
         PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
         ReadCommentHandling = JsonCommentHandling.Skip,
-        TypeInfoResolver = ConfigFileJsonContext.Default,
+        TypeInfoResolver = FfMpegToolJsonContext.Default,
     };
 }

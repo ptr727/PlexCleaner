@@ -8,8 +8,6 @@ public partial class MediaInfo
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         // TODO: Consolidate
         public GlobalOptions Default() => this;
 
@@ -21,7 +19,7 @@ public partial class MediaInfo
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
@@ -29,8 +27,6 @@ public partial class MediaInfo
     // TODO: Rename input or output
     public class MediaInfoOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public MediaInfoOptions OutputFormat(string option) => Add($"--Output={option}");
 
         public MediaInfoOptions OutputFormatXml() => OutputFormat("XML");
@@ -47,7 +43,7 @@ public partial class MediaInfo
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

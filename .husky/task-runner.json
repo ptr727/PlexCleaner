@@ -22,8 +22,7 @@
                 "style",
                 "--verify-no-changes",
                 "--severity=info",
-                "--verbosity=detailed",
-                "--exclude-diagnostics=IDE0055"
+                "--verbosity=detailed"
             ],
             "include": [
                 "**/*.cs"

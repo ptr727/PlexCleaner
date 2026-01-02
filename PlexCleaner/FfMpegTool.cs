@@ -136,7 +136,10 @@ public partial class FfMpeg
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Build the versioned out folder from the downloaded filename
             // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
@@ -144,7 +147,6 @@ public partial class FfMpeg
 
             // Rename the extract folder to the tool folder
             // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;

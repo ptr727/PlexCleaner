@@ -17,6 +17,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
-    <Compile Include="..\PlexCleaner\GlobalUsing.cs" Link="GlobalUsing.cs" />
   </ItemGroup>
 </Project>

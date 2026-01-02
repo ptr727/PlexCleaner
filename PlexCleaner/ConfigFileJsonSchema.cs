@@ -10,9 +10,9 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
-using Json.Schema;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -26,7 +26,7 @@ public record ConfigFileJsonSchemaBase
 
     [JsonPropertyName("$schema")]
     [JsonPropertyOrder(-3)]
-    public string Schema { get; } = SchemaUri;
+    public static string Schema => SchemaUri;
 
     [JsonRequired]
     [JsonPropertyOrder(-2)]
@@ -44,17 +44,14 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 
     // v2 : Replaced with ProcessOptions2
     [Obsolete("Replaced with ProcessOptions2 in v2.")]
-    [JsonExclude]
     public ProcessOptions1 ProcessOptions { get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
     [Obsolete("Replaced with ConvertOptions2 in v3.")]
-    [JsonExclude]
     public ConvertOptions1 ConvertOptions { get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
     [Obsolete("Replaced with VerifyOptions2 in v3.")]
-    [JsonExclude]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
     // TODO: Remove, never customized
@@ -76,7 +73,6 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
     [Obsolete("Replaced with ProcessOptions3 in v3.")]
-    [JsonExclude]
     public new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
@@ -96,13 +92,11 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
     [Obsolete("Replaced with ProcessOptions4 in v4.")]
-    [JsonExclude]
     public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
     // v4 : Replaced with ConvertOptions3
     [Obsolete("Replaced with ConvertOptions3 in v4.")]
-    [JsonExclude]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
@@ -294,13 +288,14 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     public static void WriteSchemaToFile(string path)
     {
-        // TODO: Add descriptions to properties
-        //JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
-        //    typeof(ConfigFileJsonSchema)
-        //);
-        // string schemaJson = schemaNode.ToJsonString(ConfigFileJsonContext.Default.Options);
-
         // Create JSON schema
+        // TODO: https://github.com/json-everything/json-everything/issues/975
+        JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
+            typeof(ConfigFileJsonSchema)
+        );
+        string schemaJson = schemaNode.ToJsonString(ConfigFileJsonContext.Default.Options);
+
+        /*
         const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
         JsonSchema schemaBuilder = new JsonSchemaBuilder()
             //.FromType<ConfigFileJsonSchema>(
@@ -316,6 +311,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             schemaBuilder,
             ConfigFileJsonContext.Default.ConfigFileJsonSchema4
         );
+        */
 
         // Write to file
         File.WriteAllText(path, schemaJson);
@@ -338,9 +334,5 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 [JsonSerializable(typeof(ConfigFileJsonSchema1))]
 [JsonSerializable(typeof(ConfigFileJsonSchema2))]
 [JsonSerializable(typeof(ConfigFileJsonSchema3))]
-[JsonSerializable(typeof(ConfigFileJsonSchema))] // ConfigFileJsonSchema4
-[JsonSerializable(typeof(ProcessOptions4))]
-[JsonSerializable(typeof(ConvertOptions3))]
-[JsonSerializable(typeof(VerifyOptions2))]
-[JsonSerializable(typeof(MonitorOptions1))]
+[JsonSerializable(typeof(ConfigFileJsonSchema))]
 internal partial class ConfigFileJsonContext : JsonSerializerContext;

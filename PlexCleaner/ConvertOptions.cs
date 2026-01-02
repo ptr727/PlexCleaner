@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json.Serialization;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -30,7 +29,6 @@ public record FfMpegOptions
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [JsonExclude]
     public string Output { get; set; } = "";
 }
 
@@ -41,15 +39,12 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
     public bool EnableH265Encoder { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
     public int VideoEncodeQuality { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
     public string AudioEncodeCodec { get; set; } = "";
 }
 

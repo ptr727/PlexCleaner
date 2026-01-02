@@ -1,12 +1,11 @@
 using PlexCleaner;
 using Xunit;
+using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 namespace PlexCleanerTests;
 
 public class ConfigFileTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
     [Theory]
     [InlineData("PlexCleaner.v1.json")]
     [InlineData("PlexCleaner.v2.json")]
@@ -16,7 +15,7 @@ public class ConfigFileTests(PlexCleanerFixture fixture)
     {
         // Deserialize
         ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(
-            _fixture.GetSampleFilePath(fileName)
+            fixture.GetSampleFilePath(fileName)
         );
         Assert.NotNull(configFileJsonSchema);
 

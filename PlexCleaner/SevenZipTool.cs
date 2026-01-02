@@ -110,11 +110,13 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;
@@ -184,11 +186,13 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;

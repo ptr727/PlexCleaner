@@ -3,7 +3,6 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -22,17 +21,14 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [JsonExclude]
     public string FfMpegToolVersion { get; set; }
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [JsonExclude]
     public string MkvToolVersion { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string FfIdetInfoData { get; set; }
 
     [JsonRequired]
@@ -70,7 +66,6 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete("Removed in v4")]
-    [JsonExclude]
     public bool Verified { get; set; }
 }
 
@@ -99,18 +94,18 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 // v4
 public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 {
-    public new const int Version = 4;
+    protected new const int Version = 4;
 
     public SidecarFileJsonSchema4() { }
 
     public SidecarFileJsonSchema4(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
-        : base(sidecarFileJsonSchema1) => Upgrade(SidecarFileJsonSchema1.Version);
+        : base(sidecarFileJsonSchema1) { }
 
     public SidecarFileJsonSchema4(SidecarFileJsonSchema2 sidecarFileJsonSchema2)
-        : base(sidecarFileJsonSchema2) => Upgrade(SidecarFileJsonSchema2.Version);
+        : base(sidecarFileJsonSchema2) { }
 
     public SidecarFileJsonSchema4(SidecarFileJsonSchema3 sidecarFileJsonSchema3)
-        : base(sidecarFileJsonSchema3) => Upgrade(SidecarFileJsonSchema3.Version);
+        : base(sidecarFileJsonSchema3) { }
 
     // v4 : Added
     [JsonRequired]
@@ -119,6 +114,29 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
     // v4 : Added
     [JsonRequired]
     public string MediaHash { get; set; }
+}
+
+// v5
+public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
+{
+    public new const int Version = 5;
+
+    public SidecarFileJsonSchema5() { }
+
+    public SidecarFileJsonSchema5(SidecarFileJsonSchema1 sidecarFileJsonSchema1)
+        : base(sidecarFileJsonSchema1) => Upgrade(SidecarFileJsonSchema1.Version);
+
+    public SidecarFileJsonSchema5(SidecarFileJsonSchema2 sidecarFileJsonSchema2)
+        : base(sidecarFileJsonSchema2) => Upgrade(SidecarFileJsonSchema2.Version);
+
+    public SidecarFileJsonSchema5(SidecarFileJsonSchema3 sidecarFileJsonSchema3)
+        : base(sidecarFileJsonSchema3) => Upgrade(SidecarFileJsonSchema3.Version);
+
+    public SidecarFileJsonSchema5(SidecarFileJsonSchema4 sidecarFileJsonSchema4)
+        : base(sidecarFileJsonSchema4) => Upgrade(SidecarFileJsonSchema4.Version);
+
+    // v5: Changed MediaInfo from XML to JSON
+    // No schema change
 
     private void Upgrade(int version)
     {
@@ -163,13 +181,24 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
             // Defaults
             MediaHash = "";
         }
-#pragma warning restore CS0618 // Type or member is obsolete
 
         // v4
+        if (version <= SidecarFileJsonSchema4.Version)
+        {
+            // Get v4 schema
+            SidecarFileJsonSchema4 sidecarFileJsonSchema4 = this;
+
+            // v5: Changed MediaInfo from XML to JSON
+            // Reset all media info data to force re-check
+            sidecarFileJsonSchema4.MediaInfoData = "";
+            sidecarFileJsonSchema4.MkvMergeData = "";
+            sidecarFileJsonSchema4.FfProbeData = "";
+        }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public static string ToJson(SidecarFileJsonSchema json) =>
-        JsonSerializer.Serialize(json, SidecarFileJsonContext.Default.SidecarFileJsonSchema4);
+        JsonSerializer.Serialize(json, SidecarFileJsonContext.Default.SidecarFileJsonSchema5);
 
     public static SidecarFileJsonSchema FromJson(string json)
     {
@@ -213,9 +242,15 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
                     SidecarFileJsonContext.Default.SidecarFileJsonSchema3
                 )
             ),
+            SidecarFileJsonSchema4.Version => new SidecarFileJsonSchema(
+                JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema4
+                )
+            ),
             Version => JsonSerializer.Deserialize(
                 json,
-                SidecarFileJsonContext.Default.SidecarFileJsonSchema4
+                SidecarFileJsonContext.Default.SidecarFileJsonSchema5
             ),
             _ => throw new NotImplementedException(),
         };
@@ -238,6 +273,6 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 [JsonSerializable(typeof(SidecarFileJsonSchema1))]
 [JsonSerializable(typeof(SidecarFileJsonSchema2))]
 [JsonSerializable(typeof(SidecarFileJsonSchema3))]
-[JsonSerializable(typeof(SidecarFileJsonSchema))] // SidecarFileJsonSchema4
-[JsonSerializable(typeof(SidecarFile.StatesType))]
+[JsonSerializable(typeof(SidecarFileJsonSchema4))]
+[JsonSerializable(typeof(SidecarFileJsonSchema))]
 internal partial class SidecarFileJsonContext : JsonSerializerContext;

@@ -4,6 +4,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.13:
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - Version 3:12:
   - Update to .NET 9.0.
     - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.

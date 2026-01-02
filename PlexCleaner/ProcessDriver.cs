@@ -345,7 +345,6 @@ public static class ProcessDriver
             {
                 // Process MKV files or files in the Remux list
                 FileInfo fileInfo = new(fileName);
-
                 if (
                     !SidecarFile.IsMkvFile(fileName)
                     && !Program.Config.ProcessOptions.ReMuxExtensions.Contains(
@@ -387,7 +386,7 @@ public static class ProcessDriver
                 }
 
                 // Remove cover art in video tracks
-                _ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+                //_ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
                 _ = ffProbeProps.Video.RemoveAll(track => track.CoverArt);
                 _ = mkvMergeProps.Video.RemoveAll(track => track.CoverArt);
 
@@ -452,7 +451,7 @@ public static class ProcessDriver
             {
                 // Get media tool information
                 if (
-                    !Tools.MediaInfo.GetMediaPropsXml(fileName, out string mediaInfoXml)
+                    !Tools.MediaInfo.GetMediaPropsJson(fileName, out string mediaInfoXml)
                     || !Tools.MkvMerge.GetMediaPropsJson(fileName, out string mkvMergeJson)
                     || !Tools.FfProbe.GetMediaPropsJson(fileName, out string ffProbeJson)
                 )

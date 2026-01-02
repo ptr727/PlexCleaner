@@ -2,9 +2,6 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON file to C# using app.quicktype.io
-// Set language, framework, namespace, list
-
 // JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
 
 // Use mkvmerge example output:
@@ -158,6 +155,28 @@ public class MkvToolJsonSchema
         [JsonPropertyName("type")]
         public string Type { get; set; } = "";
     }
+
+    // https://mkvtoolnix.download/latest-release.json
+    public class LatestRelease
+    {
+        [JsonPropertyName("mkvtoolnix-releases")]
+        public MkvtoolnixReleases MkvToolnixReleases { get; } = new();
+
+        public static LatestRelease FromJson(string json) =>
+            JsonSerializer.Deserialize(json, MkvToolJsonContext.Default.LatestRelease);
+    }
+
+    public class MkvtoolnixReleases
+    {
+        [JsonPropertyName("latest-source")]
+        public LatestSource LatestSource { get; } = new();
+    }
+
+    public class LatestSource
+    {
+        [JsonPropertyName("version")]
+        public string Version { get; set; } = "";
+    }
 }
 
 [JsonSourceGenerationOptions(
@@ -168,4 +187,5 @@ public class MkvToolJsonSchema
     ReadCommentHandling = JsonCommentHandling.Skip
 )]
 [JsonSerializable(typeof(MkvToolJsonSchema.MkvMerge))]
+[JsonSerializable(typeof(MkvToolJsonSchema.LatestRelease))]
 internal partial class MkvToolJsonContext : JsonSerializerContext;

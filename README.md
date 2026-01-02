@@ -24,11 +24,19 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3.15:
-  - Convert to .NET 10.
-  - Enable Native AOT compilation.
+- Version 3.20:
+  - Updated from .NET 9 to .NET 10.
+  - Enable Native [AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) compilation support.
+    - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
+    - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
+    - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
+  - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
+    - Attempts to use `Microsoft.XmlSerializer.Generator` for AOT compatible XML code generation was unsuccessful, and I opted to remove XML in favor of JSON.
+    - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
+    - All sidecars will be recreated to load new media info on the first run.
+  - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
 - Version 3.14:
-  - Switch to using [CliWrap](https://github.com/Tyrrrz/CliWrap) for commandline tool process execution.
+  - Switch to using [CliWrap](cliwrap-link) for commandline tool process execution.
   - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
@@ -37,8 +45,6 @@ Docker images are published on [Docker Hub][docker-link].
   - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
   - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
   - General refactoring.
-- Version 3.13:
-  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - See [Release History](./HISTORY.md) for older Release Notes.
 
 ## Questions or Issues
@@ -855,7 +861,7 @@ dotnet outdated --upgrade:prompt
 - [7-Zip](https://www.7-zip.org/)
 - [AwesomeAssertions](https://awesomeassertions.org/)
 - [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
-- [CliWrap](https://github.com/Tyrrrz/CliWrap)
+- [CliWrap](cliwrap-link)
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
 - [dotnet-outdated](https://github.com/dotnet-outdated/dotnet-outdated)
@@ -867,11 +873,10 @@ dotnet outdated --upgrade:prompt
 - [Husky.Net](https://alirezanet.github.io/Husky.Net/)
 - [ISO 639-2 language tags](https://www.loc.gov/standards/iso639-2/langhome.html)
 - [ISO 639-3 language tags](https://iso639-3.sil.org/)
-- [JsonSchema.Net.Generation][jsonschema-link]
+- [JSON2CSharp][json2csharp-link]
 - [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
 - [MKVToolNix](https://mkvtoolnix.download/)
 - [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
-- [quicktype](https://quicktype.io/)
 - [regex101.com](https://regex101.com/)
 - [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
 - [Serilog](https://serilog.net/)
@@ -894,6 +899,7 @@ Licensed under the [MIT License][license-link]\
 
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [alpine-docker-link]: https://hub.docker.com/_/alpine
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
 [commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
 [debian-hub-link]: https://hub.docker.com/_/debian
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
@@ -904,7 +910,7 @@ Licensed under the [MIT License][license-link]\
 [github-link]: https://github.com/ptr727/PlexCleaner
 [plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
-[jsonschema-link]: https://json-everything.net/json-schema/
+[json2csharp-link]: https://json2csharp.com
 [last-build-shield]: https://byob.yarr.is/ptr727/PlexCleaner/lastbuild
 [last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
 [license-link]: ./LICENSE

@@ -4,15 +4,9 @@ using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
-// https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd
-// https://mediaarea.net/en/MediaInfo/Support/Tags
+namespace Sandbox;
 
-// Use mediainfo example output:
-// mediainfo --Output=XML file.mkv
-
-namespace PlexCleaner;
-
-public class MediaInfoToolXmlSchema
+public class TestXml
 {
     [Serializable]
     [XmlType(Namespace = "https://mediaarea.net/mediainfo")]

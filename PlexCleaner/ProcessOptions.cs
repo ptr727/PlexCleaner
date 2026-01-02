@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -24,49 +23,41 @@ public record ProcessOptions1
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string ReEncodeVideoFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string ReEncodeVideoCodecs { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string ReEncodeVideoProfiles { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string ReEncodeAudioFormats { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string ReMuxExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string KeepExtensions { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string KeepLanguages { get; set; } = "";
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public string PreferredAudioFormats { get; set; } = "";
 
     [JsonRequired]
@@ -131,7 +122,6 @@ public record ProcessOptions2 : ProcessOptions1
     // v1 -> v2 : CSV -> HashSet<string>
     // v3 -> v4 : Replaced by FileIgnoreMasks
     [Obsolete("Replaced in v4 with FileIgnoreMasks")]
-    [JsonExclude]
     public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added

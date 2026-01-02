@@ -3,23 +3,30 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
+// Read the JSON file but do not verify the MKV media attributes
+// TODO: Use media files that match the JSON, currently dummy files
+
 public class SidecarFileTests(PlexCleanerFixture fixture)
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
+    // v5 schema is no longer backwards compatible due to XML to JSON change
     [Theory]
     [InlineData("Sidecar.v1.mkv")]
     [InlineData("Sidecar.v2.mkv")]
     [InlineData("Sidecar.v3.mkv")]
     [InlineData("Sidecar.v4.mkv")]
+    public void Open_Old_Schema_Fail(string fileName)
+    {
+        SidecarFile sidecarFile = new(fixture.GetSampleFilePath(fileName));
+        Assert.False(sidecarFile.Read(out _, false));
+    }
+
+    [Theory]
+    [InlineData("Sidecar.v5.mkv")]
     public void Open_Old_Schema_Open(string fileName)
     {
-        SidecarFile sidecarFile = new(_fixture.GetSampleFilePath(fileName));
-        // Read the JSON file but do not verify the MKV media attributes
-        // TODO: Use media files that match the JSON, currently dummy files
+        SidecarFile sidecarFile = new(fixture.GetSampleFilePath(fileName));
         Assert.True(sidecarFile.Read(out _, false));
 
-        // Test for expected config values
         Assert.True(sidecarFile.FfProbeProps.Audio.Count > 0);
         Assert.True(sidecarFile.FfProbeProps.Audio.Count > 0);
         Assert.Equal(MediaTool.ToolType.FfProbe, sidecarFile.FfProbeProps.Parser);

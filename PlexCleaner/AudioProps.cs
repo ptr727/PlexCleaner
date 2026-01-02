@@ -15,5 +15,5 @@ public class AudioProps(MediaProps mediaProps) : TrackProps(TrackType.Audio, med
     // Required
     // Format = track.Format;
     // Codec = track.CodecId;
-    public override bool Create(MediaInfoToolXmlSchema.Track track) => base.Create(track);
+    public override bool Create(MediaInfoToolJsonSchema.Track track) => base.Create(track);
 }

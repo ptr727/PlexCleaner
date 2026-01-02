@@ -64,7 +64,10 @@ public abstract class MediaTool
     {
         // Make sure the tool folder exists and is empty
         string toolPath = GetToolFolder();
-        Directory.Delete(toolPath, true);
+        if (Directory.Exists(toolPath))
+        {
+            Directory.Delete(toolPath, true);
+        }
         _ = Directory.CreateDirectory(toolPath);
 
         // Extract the update file

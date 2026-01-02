@@ -446,31 +446,31 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Flags
-        if (track.Disposition.Default != 0)
+        if (track.Disposition.IsDefault)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Disposition.Forced != 0)
+        if (track.Disposition.IsForced)
         {
             Flags |= FlagsType.Forced;
         }
-        if (track.Disposition.Original != 0)
+        if (track.Disposition.IsOriginal)
         {
             Flags |= FlagsType.Original;
         }
-        if (track.Disposition.Comment != 0)
+        if (track.Disposition.IsCommentary)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (track.Disposition.HearingImpaired != 0)
+        if (track.Disposition.IsHearingImpaired)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (track.Disposition.VisualImpaired != 0)
+        if (track.Disposition.IsVisualImpaired)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (track.Disposition.Descriptions != 0)
+        if (track.Disposition.IsDescriptions)
         {
             Flags |= FlagsType.Descriptions;
         }
@@ -535,7 +535,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     // Required
     // Format = track.Format;
     // Codec = track.CodecId;
-    public virtual bool Create(MediaInfoToolXmlSchema.Track track)
+    public virtual bool Create(MediaInfoToolJsonSchema.Track track)
     {
         Debug.Assert(Parent.Parser == MediaTool.ToolType.MediaInfo);
 
@@ -608,11 +608,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         // HearingImpaired
         // Descriptions
 
-        if (track.Default)
+        if (track.IsDefault)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Forced)
+        if (track.IsForced)
         {
             Flags |= FlagsType.Forced;
         }
@@ -661,7 +661,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    private bool HandleSubTracks(MediaInfoToolXmlSchema.Track track)
+    private bool HandleSubTracks(MediaInfoToolJsonSchema.Track track)
     {
         // StreamOrder maps to Id
         // Id maps to Number
@@ -674,7 +674,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         {
             // Ignoring sub-track
             Log.Warning(
-                "{Parser} : {Type} : Ignoring sub-track : Id: {Id}, Number: {Id}, Container: {Container} : {FileName}",
+                "{Parser} : {Type} : Ignoring sub-track : Id: {Id}, Number: {Number}, Container: {Container} : {FileName}",
                 Parent.Parser,
                 Type,
                 track.StreamOrder,

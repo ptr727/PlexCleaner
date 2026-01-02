@@ -15,7 +15,6 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using Timer = System.Timers.Timer;
 
 namespace PlexCleaner;
 
@@ -92,7 +91,7 @@ public static class Program
 
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();
-        using Timer keepAwakeTimer = new(30 * 1000);
+        using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();

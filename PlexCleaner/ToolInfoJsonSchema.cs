@@ -56,8 +56,7 @@ public class ToolInfoJsonSchema
     }
 }
 
-// TODO:
-// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
+// TODO: TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
 [JsonSourceGenerationOptions(
     AllowTrailingCommas = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

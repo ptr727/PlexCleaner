@@ -365,7 +365,7 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     }
 
     [Theory]
-    [InlineData()]
+    [InlineData]
     [InlineData("--foo")]
     [InlineData("foo")]
     [InlineData("defaultsettings", "--settingsfile=settings.json", "--foo")]

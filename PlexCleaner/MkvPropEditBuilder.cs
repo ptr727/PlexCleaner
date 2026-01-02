@@ -26,8 +26,6 @@ public partial class MkvPropEdit
 
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Default() => NormalizeLanguageIetfExtended();
 
         public GlobalOptions NormalizeLanguageIetf(string option) =>
@@ -43,15 +41,13 @@ public partial class MkvPropEdit
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public InputOptions Default() => DeleteTrackStatisticsTags();
 
         public InputOptions InputFile(string option) => Add($"\"{option}\"");
@@ -99,7 +95,7 @@ public partial class MkvPropEdit
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

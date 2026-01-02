@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
@@ -38,9 +39,9 @@ public class SidecarFile
 
     private readonly FileInfo _mediaFileInfo;
     private readonly FileInfo _sidecarFileInfo;
-    private string _ffProbeJson;
 
-    private string _mediaInfoXml;
+    private string _ffProbeJson;
+    private string _mediaInfoJson;
     private string _mkvMergeJson;
 
     private SidecarFileJsonSchema _sidecarJson;
@@ -265,14 +266,25 @@ public class SidecarFile
         Log.Information("Reading media info from sidecar : {FileName}", _sidecarFileInfo.Name);
 
         // Decompress the tool data
-        _mediaInfoXml = StringCompression.Decompress(_sidecarJson.MediaInfoData);
+        _mediaInfoJson = StringCompression.Decompress(_sidecarJson.MediaInfoData);
         _mkvMergeJson = StringCompression.Decompress(_sidecarJson.MkvMergeData);
         _ffProbeJson = StringCompression.Decompress(_sidecarJson.FfProbeData);
 
+        // Must have data to deserialize
+        if (
+            string.IsNullOrEmpty(_mediaInfoJson)
+            || string.IsNullOrEmpty(_mkvMergeJson)
+            || string.IsNullOrEmpty(_ffProbeJson)
+        )
+        {
+            Log.Error("Media info tool data is missing : {FileName}", _sidecarFileInfo.Name);
+            return false;
+        }
+
         // Deserialize the tool data
         if (
-            !MediaInfo.Tool.GetMediaPropsFromXml(
-                _mediaInfoXml,
+            !MediaInfo.Tool.GetMediaPropsFromJson(
+                _mediaInfoJson,
                 _mediaFileInfo.Name,
                 out MediaProps mediaInfoProps
             )
@@ -480,7 +492,7 @@ public class SidecarFile
         // Compressed tool info
         _sidecarJson.FfProbeData = StringCompression.Compress(_ffProbeJson);
         _sidecarJson.MkvMergeData = StringCompression.Compress(_mkvMergeJson);
-        _sidecarJson.MediaInfoData = StringCompression.Compress(_mediaInfoXml);
+        _sidecarJson.MediaInfoData = StringCompression.Compress(_mediaInfoJson);
 
         // State
         _sidecarJson.State = State;
@@ -494,7 +506,7 @@ public class SidecarFile
 
         // Read the tool data text
         if (
-            !Tools.MediaInfo.GetMediaPropsXml(_mediaFileInfo.FullName, out _mediaInfoXml)
+            !Tools.MediaInfo.GetMediaPropsJson(_mediaFileInfo.FullName, out _mediaInfoJson)
             || !Tools.MkvMerge.GetMediaPropsJson(_mediaFileInfo.FullName, out _mkvMergeJson)
             || !Tools.FfProbe.GetMediaPropsJson(_mediaFileInfo.FullName, out _ffProbeJson)
         )
@@ -505,8 +517,8 @@ public class SidecarFile
 
         // Deserialize the tool data
         if (
-            !MediaInfo.Tool.GetMediaPropsFromXml(
-                _mediaInfoXml,
+            !MediaInfo.Tool.GetMediaPropsFromJson(
+                _mediaInfoJson,
                 _mediaFileInfo.Name,
                 out MediaProps mediaInfoProps
             )
@@ -541,11 +553,14 @@ public class SidecarFile
 
     private string ComputeHash()
     {
+        byte[] hashBuffer = null;
         try
         {
-            // TODO: Reuse this object or the buffer without breaking multithreading
-            // Allocate buffer to hold data to be hashed
-            byte[] hashBuffer = new byte[2 * HashWindowLength];
+            // Rent buffer from shared pool for efficient memory reuse
+            hashBuffer = ArrayPool<byte>.Shared.Rent(2 * HashWindowLength);
+
+            // Clear the rented buffer
+            Array.Clear(hashBuffer, 0, 2 * HashWindowLength);
 
             // Open file
             using FileStream fileStream = _mediaFileInfo.Open(
@@ -555,7 +570,7 @@ public class SidecarFile
             );
 
             // Small files read entire file, big files read front and back
-            if (_mediaFileInfo.Length <= hashBuffer.Length)
+            if (_mediaFileInfo.Length <= 2 * HashWindowLength)
             {
                 // Read the entire file, buffer is already zeroed
                 _ = fileStream.Seek(0, SeekOrigin.Begin);
@@ -594,11 +609,22 @@ public class SidecarFile
             fileStream.Close();
 
             // Calculate the hash and convert to string
-            return System.Convert.ToBase64String(SHA256.HashData(hashBuffer));
+            // Only hash the relevant portion (2 * HashWindowLength)
+            return System.Convert.ToBase64String(
+                SHA256.HashData(hashBuffer.AsSpan(0, 2 * HashWindowLength))
+            );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return null;
+        }
+        finally
+        {
+            // Always return buffer to pool
+            if (hashBuffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(hashBuffer);
+            }
         }
     }
 
@@ -633,7 +659,7 @@ public class SidecarFile
     public void WriteLine()
     {
         Log.Information("State: {State}", State);
-        Log.Information("MediaInfoXml: {MediaInfoXml}", _mediaInfoXml);
+        Log.Information("MediaInfoJson: {MediaInfoJson}", _mediaInfoJson);
         Log.Information("MkvMergeJson: {MkvMergeJson}", _mkvMergeJson);
         Log.Information("FfProbeJson: {FfProbeJson}", _ffProbeJson);
         Log.Information("SchemaVersion: {SchemaVersion}", _sidecarJson.SchemaVersion);
