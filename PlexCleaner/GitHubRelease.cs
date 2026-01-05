@@ -4,6 +4,7 @@ using Serilog;
 
 namespace PlexCleaner;
 
+// TODO: Convert to JSON Schema class
 public class GitHubRelease
 {
     // Can throw HTTP exceptions
@@ -17,9 +18,9 @@ public class GitHubRelease
         Debug.Assert(json != null);
 
         // Parse latest version from "tag_name"
-        JsonNode releases = JsonNode.Parse(json);
+        JsonNode? releases = JsonNode.Parse(json);
         Debug.Assert(releases != null);
-        JsonNode versionTag = releases["tag_name"];
+        JsonNode? versionTag = releases["tag_name"];
         Debug.Assert(versionTag != null);
         return versionTag.ToString();
     }

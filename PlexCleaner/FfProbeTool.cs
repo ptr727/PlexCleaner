@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Stream;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,7 +94,7 @@ public partial class FfProbe
                             if (
                                 jsonStreamReader.TokenType == JsonTokenType.PropertyName
                                 && jsonStreamReader
-                                    .GetString()
+                                    .GetString()!
                                     .Equals("packets", StringComparison.OrdinalIgnoreCase)
                             )
                             {
@@ -131,14 +131,13 @@ public partial class FfProbe
 
                                     // Send packet to delegate
                                     // A false returns means delegate does not want any more packets
-                                    if (
-                                        !await packetFunc(
-                                            await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
-                                                ConfigFileJsonSchema.JsonReadOptions,
-                                                cancellationToken
-                                            )
-                                        )
-                                    )
+                                    FfMpegToolJsonSchema.Packet? packet =
+                                        await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
+                                            JsonReadOptions,
+                                            cancellationToken
+                                        );
+
+                                    if (packet == null || !await packetFunc(packet))
                                     {
                                         // Done
                                         break;
@@ -184,8 +183,7 @@ public partial class FfProbe
                 );
                 return (false, string.Empty);
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return (false, string.Empty);
             }
@@ -196,7 +194,10 @@ public partial class FfProbe
             Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
         )
         {
-            // Quickscan
+            // TODO: Switch to ffprobe and analyze_frames (when available in the shipping version).
+            // `ffprobe -i FILE -show_entries stream=closed_captions -select_streams v:0 -analyze_frames -read_intervals %X`
+
+            // Quickscan is not supported with subcc filter
             // -t and read_intervals do not work with the subcc filter
             // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
             // ReMux using FFmpeg to a snippet file then scan the snippet file
@@ -297,7 +298,7 @@ public partial class FfProbe
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            mediaProps = null;
+            mediaProps = null!;
             return GetMediaPropsJson(fileName, out string json)
                 && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
@@ -363,7 +364,6 @@ public partial class FfProbe
             {
                 // Deserialize
                 FfMpegToolJsonSchema.FfProbe ffProbe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
-                ArgumentNullException.ThrowIfNull(ffProbe);
                 if (ffProbe.Tracks.Count == 0)
                 {
                     Log.Error(
@@ -429,8 +429,7 @@ public partial class FfProbe
                 // TODO: Chapters
                 // TODO: Attachments
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -460,4 +459,15 @@ public partial class FfProbe
                 s_undesirableTags.Any(tag => tag.Equals(key, StringComparison.OrdinalIgnoreCase))
             );
     }
+
+    // TODO: Replace with AOT JsonSerializerContext
+    public static readonly JsonSerializerOptions JsonReadOptions = new()
+    {
+        AllowTrailingCommas = true,
+        IncludeFields = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        TypeInfoResolver = FfMpegToolJsonContext.Default,
+    };
 }

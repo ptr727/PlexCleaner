@@ -29,21 +29,15 @@ jobs:
     needs: [test-build, get-version]
     strategy:
         matrix:
-          include:
-          - runtime: win-x64
-          - runtime: linux-x64
-          - runtime: linux-musl-x64
-          - runtime: linux-arm
-          - runtime: linux-arm64
-          - runtime: osx-x64
-          - runtime: osx-arm64
+          aot: [ true, false ]
+          runtime: [ win-x64, linux-x64, linux-musl-x64, linux-arm, linux-arm64, osx-x64, osx-arm64 ]
 
     steps:
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: "9"
+          dotnet-version: "10"
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -52,9 +46,9 @@ jobs:
         run: >-
             dotnet publish ./PlexCleaner/PlexCleaner.csproj
             --runtime ${{ matrix.runtime }}
-            --self-contained false
-            --output ${{ runner.temp }}/publish/${{ matrix.runtime }}
+            --output ${{ runner.temp }}/publish/${{ matrix.runtime }}${{ matrix.aot && '-aot' || '-net' }}
             --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
+            -property:PublishAot=${{ matrix.aot }}
             -property:Version=${{ needs.get-version.outputs.AssemblyVersion }}
             -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }}

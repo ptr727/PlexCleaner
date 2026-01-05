@@ -15,11 +15,11 @@ public class MediaToolInfo
 
     public MediaTool.ToolType ToolType { get; set; }
     public MediaTool.ToolFamily ToolFamily { get; set; }
-    public string FileName { get; set; }
+    public string FileName { get; set; } = string.Empty;
     public DateTime ModifiedTime { get; set; }
     public long Size { get; set; }
-    public string Url { get; set; }
-    public string Version { get; set; }
+    public string Url { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
 
     public void WriteLine(string prefix) =>
         Log.Information(

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -42,7 +41,8 @@ public abstract class MediaTool
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
-    public MediaToolInfo Info { get; set; }
+    // TODO: Improve nullable logic
+    public MediaToolInfo Info { get; set; } = null!;
 
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();
@@ -58,14 +58,17 @@ public abstract class MediaTool
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
     // Tool subfolder, e.g. /x64, /bin
-    protected virtual string GetSubFolder() => "";
+    protected virtual string GetSubFolder() => string.Empty;
 
     // Tools can override the default behavior as needed
     public virtual bool Update(string updateFile)
     {
         // Make sure the tool folder exists and is empty
         string toolPath = GetToolFolder();
-        Directory.Delete(toolPath, true);
+        if (Directory.Exists(toolPath))
+        {
+            Directory.Delete(toolPath, true);
+        }
         _ = Directory.CreateDirectory(toolPath);
 
         // Extract the update file
@@ -103,7 +106,7 @@ public abstract class MediaTool
 
     public bool Execute(Command command, out CommandResult commandResult)
     {
-        commandResult = null;
+        commandResult = null!;
         int processId = -1;
         try
         {
@@ -131,7 +134,7 @@ public abstract class MediaTool
             );
             return false;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -147,7 +150,7 @@ public abstract class MediaTool
         out BufferedCommandResult bufferedCommandResult
     )
     {
-        bufferedCommandResult = null;
+        bufferedCommandResult = null!;
         int processId = -1;
         try
         {
@@ -193,7 +196,7 @@ public abstract class MediaTool
             );
             return false;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }

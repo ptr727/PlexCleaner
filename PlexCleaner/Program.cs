@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,37 +14,31 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using Timer = System.Timers.Timer;
 
 namespace PlexCleaner;
-
-// TODO: Specialize all catch(Exception) to catch specific expected exceptions only
-// TODO: Adopt async where it makes sense
 
 public static class Program
 {
     private static readonly CancellationTokenSource s_cancelSource = new();
-    private static HttpClient s_httpClient;
+    private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
-    public static CommandLineOptions Options { get; set; }
-    public static ConfigFileJsonSchema Config { get; set; }
+    public static CommandLineOptions Options { get; set; } = null!;
+    public static ConfigFileJsonSchema Config { get; set; } = null!;
 
-    public static HttpClient GetHttpClient()
+    public static HttpClient GetHttpClient() => s_httpClient.Value;
+
+    private static HttpClient CreateHttpClient()
     {
-        if (s_httpClient != null)
-        {
-            return s_httpClient;
-        }
-        s_httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
-        s_httpClient.DefaultRequestHeaders.UserAgent.Add(
+        HttpClient httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
+        httpClient.DefaultRequestHeaders.UserAgent.Add(
             new ProductInfoHeaderValue(
-                Assembly.GetExecutingAssembly().GetName().Name,
-                Assembly.GetExecutingAssembly().GetName().Version.ToString()
+                AssemblyVersion.GetName(),
+                AssemblyVersion.GetInformationalVersion()
             )
         );
-        return s_httpClient;
+        return httpClient;
     }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
@@ -84,7 +77,7 @@ public static class Program
         // Setup
         CreateLogger();
         Console.CancelKeyPress += CancelEventHandler;
-        Task consoleKeyTask = null;
+        Task? consoleKeyTask = null;
         if (!Console.IsInputRedirected)
         {
             consoleKeyTask = Task.Run(KeyPressHandler);
@@ -92,7 +85,7 @@ public static class Program
 
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();
-        using Timer keepAwakeTimer = new(30 * 1000);
+        using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
         keepAwakeTimer.Elapsed += KeepAwake.OnTimedEvent;
         keepAwakeTimer.AutoReset = true;
         keepAwakeTimer.Start();
@@ -141,7 +134,7 @@ public static class Program
                 );
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Nothing to do
         }
@@ -179,7 +172,7 @@ public static class Program
         }
     }
 
-    private static void CancelEventHandler(object sender, ConsoleCancelEventArgs eventArgs)
+    private static void CancelEventHandler(object? sender, ConsoleCancelEventArgs eventArgs)
     {
         Log.Warning("Cancel event triggered : {EventType}", eventArgs.SpecialKey);
 
@@ -220,7 +213,7 @@ public static class Program
         LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information)
             // Set minimum to Verbose for LogOverride context
-            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName, LogEventLevel.Verbose)
+            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName!, LogEventLevel.Verbose)
             .Enrich.WithThreadId()
             .WriteTo.Console(
                 theme: AnsiConsoleTheme.Code,
@@ -455,7 +448,7 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
-    private static bool Create(bool verifyTools)
+    private static bool LoadSettings()
     {
         // Load config settings from JSON
         Log.Information("Loading settings from : {SettingsFile}", Options.SettingsFile);
@@ -464,40 +457,58 @@ public static class Program
             Log.Error("Settings file not found : {SettingsFile}", Options.SettingsFile);
             return false;
         }
-        ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(Options.SettingsFile);
-        if (config == null)
+
+        try
         {
-            Log.Error("Failed to load settings : {FileName}", Options.SettingsFile);
+            // Load the settings file
+            ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(Options.SettingsFile);
+
+            // Compare the schema version
+            if (config.SchemaVersion != ConfigFileJsonSchema.Version)
+            {
+                Log.Warning(
+                    "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
+                    config.SchemaVersion,
+                    ConfigFileJsonSchema.Version,
+                    Options.SettingsFile
+                );
+
+                // Upgrade the file schema
+                Log.Information(
+                    "Writing upgraded settings file : {FileName}",
+                    Options.SettingsFile
+                );
+                ConfigFileJsonSchema.ToFile(Options.SettingsFile, config);
+            }
+
+            // Verify the settings
+            if (!config.VerifyValues())
+            {
+                Log.Error(
+                    "Settings file contains incorrect or missing values : {FileName}",
+                    Options.SettingsFile
+                );
+                return false;
+            }
+
+            // Set the static config
+            Config = config;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error("Error opening settings file : {FileName}", Options.SettingsFile);
             return false;
         }
+        return true;
+    }
 
-        // Compare the schema version
-        if (config.SchemaVersion != ConfigFileJsonSchema.Version)
+    private static bool Create(bool verifyTools)
+    {
+        // Load config settings from JSON
+        if (!LoadSettings())
         {
-            Log.Warning(
-                "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
-                config.SchemaVersion,
-                ConfigFileJsonSchema.Version,
-                Options.SettingsFile
-            );
-
-            // Upgrade the file schema
-            Log.Information("Writing upgraded settings file : {FileName}", Options.SettingsFile);
-            ConfigFileJsonSchema.ToFile(Options.SettingsFile, config);
-        }
-
-        // Verify the settings
-        if (!config.VerifyValues())
-        {
-            Log.Error(
-                "Settings file contains incorrect or missing values : {FileName}",
-                Options.SettingsFile
-            );
             return false;
         }
-
-        // Set the static config
-        Config = config;
 
         // Log runtime information
         Log.Logger.LogOverrideContext()
@@ -511,8 +522,6 @@ public static class Program
             );
         Log.Logger.LogOverrideContext()
             .Information("OS Version : {OsDescription}", RuntimeInformation.OSDescription);
-        Log.Logger.LogOverrideContext()
-            .Information("Build Date : {BuildDate}", AssemblyVersion.GetBuildDate().ToLocalTime());
 
         // Warn if a newer version has been released
         VerifyLatestVersion();

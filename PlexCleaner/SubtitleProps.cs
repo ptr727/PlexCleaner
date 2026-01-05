@@ -19,7 +19,7 @@ public class SubtitleProps(MediaProps mediaProps) : TrackProps(TrackType.Subtitl
     // Required
     // Format = track.Format;
     // Codec = track.CodecId;
-    public override bool Create(MediaInfoToolXmlSchema.Track track)
+    public override bool Create(MediaInfoToolJsonSchema.Track track)
     {
         // Handle closed captions
         if (!HandleClosedCaptions(track))
@@ -55,7 +55,7 @@ public class SubtitleProps(MediaProps mediaProps) : TrackProps(TrackType.Subtitl
         return true;
     }
 
-    private bool HandleClosedCaptions(MediaInfoToolXmlSchema.Track track)
+    private bool HandleClosedCaptions(MediaInfoToolJsonSchema.Track track)
     {
         // Handle closed caption tracks presented as subtitle tracks
         // return false to abort normal processing

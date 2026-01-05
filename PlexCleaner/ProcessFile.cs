@@ -32,9 +32,10 @@ public class ProcessFile
         _sidecarFile = new SidecarFile(FileInfo);
     }
 
-    public MediaProps FfProbeProps { get; private set; }
-    public MediaProps MkvMergeProps { get; private set; }
-    public MediaProps MediaInfoProps { get; private set; }
+    // TODO: Improve nullable logic
+    public MediaProps FfProbeProps { get; private set; } = null!;
+    public MediaProps MkvMergeProps { get; private set; } = null!;
+    public MediaProps MediaInfoProps { get; private set; } = null!;
     public SidecarFile.StatesType State => _sidecarFile.State;
     public FileInfo FileInfo { get; private set; }
 
@@ -125,7 +126,7 @@ public class ProcessFile
         return Refresh(lowerName);
     }
 
-    public bool IsWriteable() => FileInfo.Exists && !FileInfo.IsReadOnly;
+    public bool IsWriteable() => FileInfo is { Exists: true, IsReadOnly: false };
 
     public bool IsSidecarAvailable() => _sidecarFile.Exists();
 
@@ -610,7 +611,7 @@ public class ProcessFile
         // Selected is Keep
         // NotSelected is Remove
         SelectMediaProps selectMediaProps = new(MkvMergeProps, true);
-        selectMediaProps.Move(MkvMergeProps.Video.Find(item => item.CoverArt), false);
+        selectMediaProps.Move(MkvMergeProps.Video.First(item => item.CoverArt), false);
 
         // There must be something left to keep
         Debug.Assert(selectMediaProps.Selected.Count > 0);
@@ -751,7 +752,7 @@ public class ProcessFile
         return Refresh(outputName);
     }
 
-    private bool FindInterlacedTracks(bool conditional, out VideoProps videoProps)
+    private bool FindInterlacedTracks(bool conditional, out VideoProps? videoProps)
     {
         // Return false on error
         // Set videoProps if interlaced
@@ -789,7 +790,7 @@ public class ProcessFile
         }
 
         // Count the frame types using the idet filter, expensive
-        if (!GetIdetInfo(out FfMpegIdetInfo idetInfo))
+        if (!GetIdetInfo(out FfMpegIdetInfo? idetInfo) || idetInfo == null)
         {
             // Error
             return false;
@@ -815,7 +816,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptionTracks(bool conditional, out VideoProps videoProps)
+    private bool FindClosedCaptionTracks(bool conditional, out VideoProps? videoProps)
     {
         // Return false on error
         // Set videoProps if contains closed captions
@@ -892,7 +893,7 @@ public class ProcessFile
         }
 
         // Do we have any interlaced video
-        if (!FindInterlacedTracks(conditional, out VideoProps videoProps))
+        if (!FindInterlacedTracks(conditional, out VideoProps? videoProps))
         {
             // Error
             return false;
@@ -1046,7 +1047,7 @@ public class ProcessFile
         }
 
         // Do we have any closed captions
-        if (!FindClosedCaptionTracks(conditional, out VideoProps videoProps))
+        if (!FindClosedCaptionTracks(conditional, out VideoProps? videoProps))
         {
             // Error
             return false;
@@ -1490,7 +1491,7 @@ public class ProcessFile
 
         // Calculate bitrate
         Log.Information("Calculating bitrate info : {FileName}", FileInfo.Name);
-        if (!GetBitrateInfo(out BitrateInfo bitrateInfo))
+        if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
             // Error
             Log.Error("Failed to calculate bitrate info : {FileName}", FileInfo.Name);
@@ -1943,14 +1944,14 @@ public class ProcessFile
         return true;
     }
 
-    public bool GetBitrateInfo(out BitrateInfo bitrateInfo)
+    public bool GetBitrateInfo(out BitrateInfo? bitrateInfo)
     {
         // Use the default track, else the first track
-        VideoProps videoProps = FfProbeProps.Video.Find(item =>
+        VideoProps? videoProps = FfProbeProps.Video.Find(item =>
             item.Flags.HasFlag(TrackProps.FlagsType.Default)
         );
         videoProps ??= FfProbeProps.Video.FirstOrDefault();
-        AudioProps audioProps = FfProbeProps.Audio.Find(item =>
+        AudioProps? audioProps = FfProbeProps.Audio.Find(item =>
             item.Flags.HasFlag(TrackProps.FlagsType.Default)
         );
         audioProps ??= FfProbeProps.Audio.FirstOrDefault();
@@ -1983,11 +1984,14 @@ public class ProcessFile
         return true;
     }
 
-    private bool GetIdetInfo(out FfMpegIdetInfo idetInfo)
+    private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
         Log.Information("Counting interlaced frames : {FileName}", FileInfo.Name);
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo, out string error))
+        if (
+            !FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo, out string error)
+            || idetInfo == null
+        )
         {
             // Cancel requested
             if (Program.IsCancelledError())
@@ -2091,16 +2095,17 @@ public class ProcessFile
         List<string> languageList = Language.GetLanguageList(trackList);
 
         // Map each language to its corresponding track list
-        List<List<TrackProps>> tracksByLanguage = [.. languageList
-            .Select(language =>
+        List<List<TrackProps>> tracksByLanguage =
+        [
+            .. languageList.Select(language =>
                 trackList.FindAll(item =>
                     language.Equals(item.LanguageIetf, StringComparison.OrdinalIgnoreCase)
                 )
-            )];
+            ),
+        ];
 
         foreach (List<TrackProps> trackLanguageList in tracksByLanguage)
         {
-
             // If multiple audio tracks exist for this language, keep the preferred audio codec track
             List<TrackProps> audioTrackList = trackLanguageList.FindAll(item =>
                 item.GetType() == typeof(AudioProps)
@@ -2234,10 +2239,12 @@ public class ProcessFile
         }
 
         // Iterate through the preferred codecs in order and return on first match
-        AudioProps audioProps = Program.Config.ProcessOptions.PreferredAudioFormats
-            .Select(format => audioPropsList.Find(item =>
-                item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
-            ))
+        AudioProps? audioProps = Program
+            .Config.ProcessOptions.PreferredAudioFormats.Select(format =>
+                audioPropsList.Find(item =>
+                    item.Format.Equals(format, StringComparison.OrdinalIgnoreCase)
+                )
+            )
             .FirstOrDefault(props => props != null);
         if (audioProps != null)
         {

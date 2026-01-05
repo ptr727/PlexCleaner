@@ -10,10 +10,9 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-using Json.Schema;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -27,7 +26,7 @@ public record ConfigFileJsonSchemaBase
 
     [JsonPropertyName("$schema")]
     [JsonPropertyOrder(-3)]
-    public string Schema { get; } = SchemaUri;
+    public static string Schema => SchemaUri;
 
     [JsonRequired]
     [JsonPropertyOrder(-2)]
@@ -45,17 +44,14 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 
     // v2 : Replaced with ProcessOptions2
     [Obsolete("Replaced with ProcessOptions2 in v2.")]
-    [JsonExclude]
     public ProcessOptions1 ProcessOptions { get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
     [Obsolete("Replaced with ConvertOptions2 in v3.")]
-    [JsonExclude]
     public ConvertOptions1 ConvertOptions { get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
     [Obsolete("Replaced with VerifyOptions2 in v3.")]
-    [JsonExclude]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
     // TODO: Remove, never customized
@@ -77,7 +73,6 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
     [Obsolete("Replaced with ProcessOptions3 in v3.")]
-    [JsonExclude]
     public new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
@@ -97,13 +92,11 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
     [Obsolete("Replaced with ProcessOptions4 in v4.")]
-    [JsonExclude]
     public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
     // v4 : Replaced with ConvertOptions3
     [Obsolete("Replaced with ConvertOptions3 in v4.")]
-    [JsonExclude]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
@@ -116,26 +109,6 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
 public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 {
     public new const int Version = 4;
-
-    public static readonly JsonSerializerOptions JsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-    };
-
-    public static readonly JsonSerializerOptions JsonWriteOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        IncludeFields = true,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver().WithAddedModifier(
-            ExcludeObsoletePropertiesModifier
-        ),
-        WriteIndented = true,
-        NewLine = "\r\n",
-    };
 
     public ConfigFileJsonSchema4() { }
 
@@ -221,6 +194,9 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         }
 
         // v4
+
+        // Set schema version to current
+        SchemaVersion = Version;
     }
 
     public void SetDefaults()
@@ -261,17 +237,15 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     }
 
     private static string ToJson(ConfigFileJsonSchema json) =>
-        JsonSerializer.Serialize(json, JsonWriteOptions);
+        JsonSerializer.Serialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchema4);
 
+    // Will throw on failure to deserialize
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
         ConfigFileJsonSchemaBase configFileJsonSchemaBase =
-            JsonSerializer.Deserialize<ConfigFileJsonSchemaBase>(json, JsonReadOptions);
-        if (configFileJsonSchemaBase == null)
-        {
-            return null;
-        }
+            JsonSerializer.Deserialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchemaBase)
+            ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchemaBase");
 
         if (configFileJsonSchemaBase.SchemaVersion != Version)
         {
@@ -283,56 +257,72 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         }
 
         // Deserialize the correct version
-        return configFileJsonSchemaBase.SchemaVersion switch
+        switch (configFileJsonSchemaBase.SchemaVersion)
         {
-            ConfigFileJsonSchema1.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize<ConfigFileJsonSchema1>(json, JsonReadOptions)
-            ),
-            ConfigFileJsonSchema2.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize<ConfigFileJsonSchema2>(json, JsonReadOptions)
-            ),
-            ConfigFileJsonSchema3.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize<ConfigFileJsonSchema3>(json, JsonReadOptions)
-            ),
-            Version => JsonSerializer.Deserialize<ConfigFileJsonSchema>(json, JsonReadOptions),
-            _ => throw new NotImplementedException(),
-        };
+            case ConfigFileJsonSchema1.Version:
+                ConfigFileJsonSchema1 configFileJsonSchema1 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema1
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema1");
+                return new ConfigFileJsonSchema(configFileJsonSchema1);
+            case ConfigFileJsonSchema2.Version:
+                ConfigFileJsonSchema2 configFileJsonSchema2 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema2
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema2");
+                return new ConfigFileJsonSchema(configFileJsonSchema2);
+            case ConfigFileJsonSchema3.Version:
+                ConfigFileJsonSchema3 configFileJsonSchema3 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema3
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema3");
+                return new ConfigFileJsonSchema(configFileJsonSchema3);
+            case Version:
+                ConfigFileJsonSchema configFileJsonSchema4 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema4
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema4");
+                return configFileJsonSchema4;
+            default:
+                throw new NotSupportedException(
+                    $"Unsupported schema version: {configFileJsonSchemaBase.SchemaVersion}"
+                );
+        }
     }
 
     public static void WriteSchemaToFile(string path)
     {
         // Create JSON schema
-        const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
-        JsonSchema schemaBuilder = new JsonSchemaBuilder()
-            .FromType<ConfigFileJsonSchema>(
-                new SchemaGeneratorConfiguration { PropertyOrder = PropertyOrder.ByName }
-            )
-            .Title("PlexCleaner Configuration Schema")
-            .Id(new Uri(SchemaUri))
-            .Schema(new Uri(schemaVersion))
-            .Build();
-        string jsonSchema = JsonSerializer.Serialize(schemaBuilder, JsonWriteOptions);
+        // TODO: https://github.com/json-everything/json-everything/issues/975
+        JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
+            typeof(ConfigFileJsonSchema)
+        );
+        string schemaJson = schemaNode.ToJsonString(ConfigFileJsonContext.Default.Options);
 
         // Write to file
-        File.WriteAllText(path, jsonSchema);
-    }
-
-    private static void ExcludeObsoletePropertiesModifier(JsonTypeInfo typeInfo)
-    {
-        // Only process objects
-        if (typeInfo.Kind != JsonTypeInfoKind.Object)
-        {
-            return;
-        }
-
-        // Iterate over all properties
-        foreach (JsonPropertyInfo property in typeInfo.Properties)
-        {
-            // Do not serialize [Obsolete] items
-            if (property.AttributeProvider?.IsDefined(typeof(ObsoleteAttribute), true) == true)
-            {
-                property.ShouldSerialize = (_, _) => false;
-            }
-        }
+        File.WriteAllText(path, schemaJson);
     }
 }
+
+// TODO:
+// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n"
+)]
+[JsonSerializable(typeof(ConfigFileJsonSchemaBase))]
+[JsonSerializable(typeof(ConfigFileJsonSchema1))]
+[JsonSerializable(typeof(ConfigFileJsonSchema2))]
+[JsonSerializable(typeof(ConfigFileJsonSchema3))]
+[JsonSerializable(typeof(ConfigFileJsonSchema))]
+internal partial class ConfigFileJsonContext : JsonSerializerContext;

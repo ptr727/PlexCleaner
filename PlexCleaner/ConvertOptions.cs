@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json.Serialization;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -9,29 +8,28 @@ namespace PlexCleaner;
 public record HandBrakeOptions
 {
     [JsonRequired]
-    public string Video { get; set; } = "";
+    public string Video { get; set; } = string.Empty;
 
     [JsonRequired]
-    public string Audio { get; set; } = "";
+    public string Audio { get; set; } = string.Empty;
 }
 
 // v2 : Added
 public record FfMpegOptions
 {
     [JsonRequired]
-    public string Video { get; set; } = "";
+    public string Video { get; set; } = string.Empty;
 
     [JsonRequired]
-    public string Audio { get; set; } = "";
+    public string Audio { get; set; } = string.Empty;
 
     // v3 : Value no longer needs defaults
     [JsonRequired]
-    public string Global { get; set; } = "";
+    public string Global { get; set; } = string.Empty;
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    [JsonExclude]
-    public string Output { get; set; } = "";
+    public string Output { get; set; } = string.Empty;
 }
 
 // v1
@@ -41,16 +39,13 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
     public bool EnableH265Encoder { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
     public int VideoEncodeQuality { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
-    [JsonExclude]
-    public string AudioEncodeCodec { get; set; } = "";
+    public string AudioEncodeCodec { get; set; } = string.Empty;
 }
 
 // v2
@@ -122,7 +117,7 @@ public record ConvertOptions3 : ConvertOptions2
 
             // Obsolete
 #pragma warning disable CS0618 // Type or member is obsolete
-            convertOptions2.FfMpegOptions.Output = "";
+            convertOptions2.FfMpegOptions.Output = string.Empty;
 #pragma warning restore CS0618 // Type or member is obsolete
 
             // Remove old default global options
@@ -138,7 +133,7 @@ public record ConvertOptions3 : ConvertOptions2
     {
         FfMpegOptions.Video = FfMpeg.DefaultVideoOptions;
         FfMpegOptions.Audio = FfMpeg.DefaultAudioOptions;
-        FfMpegOptions.Global = "";
+        FfMpegOptions.Global = string.Empty;
 
         HandBrakeOptions.Video = HandBrake.DefaultVideoOptions;
         HandBrakeOptions.Audio = HandBrake.DefaultAudioOptions;

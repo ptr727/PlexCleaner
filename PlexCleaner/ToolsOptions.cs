@@ -13,7 +13,7 @@ public record ToolsOptions1
     public bool UseSystem { get; set; }
 
     [JsonRequired]
-    public string RootPath { get; set; } = "";
+    public string RootPath { get; set; } = string.Empty;
 
     [JsonRequired]
     public bool RootRelative { get; set; }
@@ -34,7 +34,7 @@ public record ToolsOptions1
         else
         {
             UseSystem = true;
-            RootPath = "";
+            RootPath = string.Empty;
             RootRelative = false;
             AutoUpdate = false;
         }

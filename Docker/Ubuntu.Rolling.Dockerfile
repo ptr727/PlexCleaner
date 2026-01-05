@@ -49,8 +49,8 @@ RUN apt update \
     && apt upgrade -y
 
 # Install .NET SDK
-# https://packages.ubuntu.com/oracular/dotnet-sdk-9.0
-RUN apt install -y --no-install-recommends dotnet-sdk-9.0
+# https://packages.ubuntu.com/questing/dotnet-sdk-10.0
+RUN apt install -y --no-install-recommends dotnet-sdk-10.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -103,14 +103,14 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-# https://packages.ubuntu.com/oracular/dotnet-runtime-9.0
-RUN apt install -y --no-install-recommends dotnet-runtime-9.0
+# https://packages.ubuntu.com/questing/dotnet-runtime-10.0
+RUN apt install -y --no-install-recommends dotnet-runtime-10.0
 
 # Install media tools
-# https://packages.ubuntu.com/oracular/ffmpeg
-# https://packages.ubuntu.com/oracular/handbrake-cli
-# https://packages.ubuntu.com/oracular/mediainfo
-# https://packages.ubuntu.com/oracular/mkvtoolnix
+# https://packages.ubuntu.com/questing/ffmpeg
+# https://packages.ubuntu.com/questing/handbrake-cli
+# https://packages.ubuntu.com/questing/mediainfo
+# https://packages.ubuntu.com/questing/mkvtoolnix
 RUN apt install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \

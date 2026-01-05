@@ -120,7 +120,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
     // Required
     // Format = track.Format;
     // Codec = track.CodecId;
-    public override bool Create(MediaInfoToolXmlSchema.Track track)
+    public override bool Create(MediaInfoToolJsonSchema.Track track)
     {
         // Call base
         if (!base.Create(track))

@@ -278,7 +278,7 @@ public class Monitor
     private void OnChanged(string pathname)
     {
         // File
-        string folderName = null;
+        string folderName = string.Empty;
         if (File.Exists(pathname))
         {
             // Get the file details
@@ -287,7 +287,7 @@ public class Monitor
             // Ignore sidecar and temp files
             if (!ProcessFile.IsTempFile(fileInfo) && !SidecarFile.IsSidecarFile(fileInfo))
             {
-                folderName = fileInfo.DirectoryName;
+                folderName = fileInfo.DirectoryName ?? string.Empty;
             }
         }
         // Or directory

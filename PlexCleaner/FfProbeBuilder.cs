@@ -24,8 +24,6 @@ public partial class FfProbe
 
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Default() => AnalyzeDuration("2G").ProbeSize("2G");
 
         public GlobalOptions LogLevel() => Add("-loglevel");
@@ -54,7 +52,7 @@ public partial class FfProbe
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
@@ -62,8 +60,6 @@ public partial class FfProbe
     // TODO: Rename to input or output options
     public class FfProbeOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public FfProbeOptions OutputFormat() => Add("-output_format");
 
         public FfProbeOptions OutputFormat(string option) => OutputFormat().Add(option);
@@ -125,7 +121,7 @@ public partial class FfProbe
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

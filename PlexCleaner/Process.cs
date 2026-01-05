@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Serilog;
 
@@ -42,7 +41,7 @@ public static class Process
         ignored = false;
         state = SidecarFile.StatesType.None;
         processName = fileName;
-        ProcessFile processFile = null;
+        ProcessFile? processFile = null;
         bool result;
 
         // Process in jump loop
@@ -365,7 +364,7 @@ public static class Process
             // Cancelled
             fatalError = true;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Error
             fatalError = true;

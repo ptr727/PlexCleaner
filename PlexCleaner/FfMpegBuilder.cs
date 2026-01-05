@@ -17,8 +17,6 @@ public partial class FfMpeg
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Default() =>
             NoStdIn().LogLevelError().HideBanner().NoStats().AbortOnEmptyOutput();
 
@@ -50,15 +48,13 @@ public partial class FfMpeg
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         // https://trac.ffmpeg.org/ticket/2622
         // Error with some PGS subtitles
         // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
@@ -117,15 +113,13 @@ public partial class FfMpeg
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class OutputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         // https://trac.ffmpeg.org/ticket/6375
         // Too many packets buffered for output stream 0:1
         // Set max_muxing_queue_size to large value to work around issue
@@ -216,7 +210,7 @@ public partial class FfMpeg
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

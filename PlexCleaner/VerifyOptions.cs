@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Json.Schema.Generation;
 
 namespace PlexCleaner;
 
@@ -21,17 +20,14 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public int MinimumDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public int VerifyDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public int IdetDuration { get; set; }
 
     [JsonRequired]
@@ -39,7 +35,6 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    [JsonExclude]
     public int MinimumFileAge { get; set; }
 }
 

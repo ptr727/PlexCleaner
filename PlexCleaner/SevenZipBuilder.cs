@@ -8,8 +8,6 @@ public partial class SevenZip
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Add(string option) => Add(option, false);
 
         public GlobalOptions Add(string option, bool escape)
@@ -18,15 +16,13 @@ public partial class SevenZip
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public InputOptions InputFile(string option) => Add($"\"{option}\"");
 
         public InputOptions Add(string option) => Add(option, false);
@@ -37,15 +33,13 @@ public partial class SevenZip
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class OutputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public OutputOptions OutputFolder(string option) => Add($"-o\"{option}\"");
 
         public OutputOptions Add(string option) => Add(option, false);
@@ -56,7 +50,7 @@ public partial class SevenZip
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
@@ -94,7 +88,7 @@ public partial class SevenZip
 
         public IInputOptions GlobalOptions(Action<GlobalOptions> globalOptions)
         {
-            globalOptions(new(_argumentsBuilder));
+            globalOptions(new GlobalOptions(_argumentsBuilder));
             return this;
         }
 

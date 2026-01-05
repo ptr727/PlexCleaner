@@ -11,6 +11,7 @@ using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Xunit;
+using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 // Create instance once per assembly
 [assembly: AssemblyFixture(typeof(PlexCleanerFixture))]

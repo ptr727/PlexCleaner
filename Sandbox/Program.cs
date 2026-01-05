@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -12,6 +11,7 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 namespace Sandbox;
 
@@ -28,19 +28,9 @@ public class Program
 {
     private const string JsonConfigFile = "Sandbox.json";
 
-    private static readonly JsonSerializerOptions s_jsonReadOptions = new()
-    {
-        AllowTrailingCommas = true,
-        IncludeFields = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        PropertyNameCaseInsensitive = true,
-    };
-
     private readonly Dictionary<string, JsonElement> _settings;
 
-    private Program(Dictionary<string, JsonElement> settings) => _settings = settings;
+    protected Program(Dictionary<string, JsonElement> settings) => _settings = settings;
 
     public static async Task<int> Main(string[] args)
     {
@@ -70,15 +60,15 @@ public class Program
         if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
         {
             await using FileStream jsonStream = File.OpenRead(settingsPath);
-            settings = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+            settings = JsonSerializer.Deserialize(
                 jsonStream,
-                s_jsonReadOptions
+                ConfigJsonContext.Default.DictionaryStringJsonElement
             );
             Log.Information("Settings loaded : {FilePath}", settingsPath);
         }
 
         // Derive from Program and implement Sandbox()
-        Program program = new(settings);
+        TestSomething program = new(settings);
         int ret = await program.Sandbox(args);
 
         // Done
@@ -107,13 +97,7 @@ public class Program
         if (!File.Exists(settingsPath))
         {
             // Try to load settings file from assembly directory
-            if (
-                Assembly.GetEntryAssembly() is { } entryAssembly
-                && Path.GetDirectoryName(entryAssembly.Location) is { } assemblyDirectory
-            )
-            {
-                settingsPath = Path.GetFullPath(Path.Combine(assemblyDirectory, fileName));
-            }
+            settingsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, fileName));
         }
         if (!File.Exists(settingsPath))
         {
@@ -128,10 +112,29 @@ public class Program
 
     public Dictionary<string, string> GetSettingsDictionary(string key) =>
         new(
-            GetSettingsObject(key)?.Deserialize<Dictionary<string, string>>() ?? [],
+            GetSettingsObject(key)?.Deserialize(ConfigJsonContext.Default.DictionaryStringString)
+                ?? [],
             StringComparer.OrdinalIgnoreCase
         );
-
-    public T GetSettings<T>(string key)
-        where T : class => GetSettingsObject(key)?.Deserialize<T>();
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n",
+    PropertyNameCaseInsensitive = true
+)]
+[JsonSerializable(
+    typeof(Dictionary<string, JsonElement>),
+    TypeInfoPropertyName = "DictionaryStringJsonElement"
+)]
+[JsonSerializable(
+    typeof(Dictionary<string, string>),
+    TypeInfoPropertyName = "DictionaryStringString"
+)]
+internal sealed partial class ConfigJsonContext : JsonSerializerContext;

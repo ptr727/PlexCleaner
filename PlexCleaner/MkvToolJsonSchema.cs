@@ -2,17 +2,11 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Convert JSON file to C# using app.quicktype.io
-// Set language, framework, namespace, list
-
-// JSON Schema: https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
+// https://gitlab.com/mbunkus/mkvtoolnix/-/blob/main/doc/json-schema/mkvmerge-identification-output-schema-v17.json
+// https://mkvtoolnix.download/latest-release.json
 
 // Use mkvmerge example output:
 // mkvmerge --identify file.mkv --identification-format json
-
-// Convert array[] to List<>
-// Change uid long to UInt64
-// Remove per item NullValueHandling = NullValueHandling.Ignore and add to Converter settings
 
 namespace PlexCleaner;
 
@@ -38,8 +32,10 @@ public class MkvToolJsonSchema
         [JsonPropertyName("chapters")]
         public List<Chapter> Chapters { get; } = [];
 
+        // Will throw on failure to deserialize
         public static MkvMerge FromJson(string json) =>
-            JsonSerializer.Deserialize<MkvMerge>(json, ConfigFileJsonSchema.JsonReadOptions);
+            JsonSerializer.Deserialize(json, MkvToolJsonContext.Default.MkvMerge)
+            ?? throw new JsonException("Failed to deserialize MkvMerge");
     }
 
     public class Container
@@ -48,7 +44,7 @@ public class MkvToolJsonSchema
         public ContainerProperties Properties { get; } = new();
 
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
 
         [JsonPropertyName("recognized")]
         public bool Recognized { get; set; }
@@ -63,7 +59,7 @@ public class MkvToolJsonSchema
         public long Duration { get; set; }
 
         [JsonPropertyName("title")]
-        public string Title { get; set; } = "";
+        public string Title { get; set; } = string.Empty;
     }
 
     public class GlobalTag
@@ -72,7 +68,6 @@ public class MkvToolJsonSchema
         public int NumEntries { get; set; }
     }
 
-    // TODO: Only used to for presence, do we need contents?
     public class TrackTag
     {
         [JsonPropertyName("num_entries")]
@@ -85,7 +80,7 @@ public class MkvToolJsonSchema
     public class Track
     {
         [JsonPropertyName("codec")]
-        public string Codec { get; set; } = "";
+        public string Codec { get; set; } = string.Empty;
 
         [JsonPropertyName("id")]
         public long Id { get; set; }
@@ -94,25 +89,25 @@ public class MkvToolJsonSchema
         public TrackProperties Properties { get; } = new();
 
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
     }
 
     public class TrackProperties
     {
         [JsonPropertyName("codec_id")]
-        public string CodecId { get; set; } = "";
+        public string CodecId { get; set; } = string.Empty;
 
         [JsonPropertyName("language")]
-        public string Language { get; set; } = "";
+        public string Language { get; set; } = string.Empty;
 
         [JsonPropertyName("language_ietf")]
-        public string LanguageIetf { get; set; }
+        public string LanguageIetf { get; set; } = string.Empty;
 
         [JsonPropertyName("forced_track")]
         public bool Forced { get; set; }
 
         [JsonPropertyName("tag_language")]
-        public string TagLanguage { get; set; } = "";
+        public string TagLanguage { get; set; } = string.Empty;
 
         [JsonPropertyName("uid")]
         public ulong Uid { get; set; }
@@ -121,7 +116,7 @@ public class MkvToolJsonSchema
         public long Number { get; set; }
 
         [JsonPropertyName("track_name")]
-        public string TrackName { get; set; } = "";
+        public string TrackName { get; set; } = string.Empty;
 
         [JsonPropertyName("default_track")]
         public bool DefaultTrack { get; set; }
@@ -142,20 +137,52 @@ public class MkvToolJsonSchema
         public bool TextDescriptions { get; set; }
     }
 
-    // TODO: Only used to for presence, do we need contents?
     public class Attachment
     {
         [JsonPropertyName("content_type")]
-        public string ContentType { get; set; } = "";
+        public string ContentType { get; set; } = string.Empty;
 
         [JsonPropertyName("id")]
         public int Id { get; set; }
     }
 
-    // TODO: Only used to for presence, do we need contents?
     public class Chapter
     {
         [JsonPropertyName("type")]
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class LatestRelease
+    {
+        [JsonPropertyName("mkvtoolnix-releases")]
+        public MkvtoolnixReleases MkvToolnixReleases { get; } = new();
+
+        // Will throw on failure to deserialize
+        public static LatestRelease FromJson(string json) =>
+            JsonSerializer.Deserialize(json, MkvToolJsonContext.Default.LatestRelease)
+            ?? throw new JsonException("Failed to deserialize LatestRelease");
+    }
+
+    public class MkvtoolnixReleases
+    {
+        [JsonPropertyName("latest-source")]
+        public LatestSource LatestSource { get; } = new();
+    }
+
+    public class LatestSource
+    {
+        [JsonPropertyName("version")]
+        public string Version { get; set; } = string.Empty;
     }
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip
+)]
+[JsonSerializable(typeof(MkvToolJsonSchema.MkvMerge))]
+[JsonSerializable(typeof(MkvToolJsonSchema.LatestRelease))]
+internal partial class MkvToolJsonContext : JsonSerializerContext;
