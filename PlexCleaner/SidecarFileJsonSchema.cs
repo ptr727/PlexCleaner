@@ -289,8 +289,6 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
     }
 }
 
-// TODO:
-// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
 [JsonSourceGenerationOptions(
     AllowTrailingCommas = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

@@ -54,7 +54,6 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
     [Obsolete("Replaced with VerifyOptions2 in v3.")]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
-    // TODO: Remove, never customized
     [JsonRequired]
     [JsonPropertyOrder(5)]
     public MonitorOptions1 MonitorOptions { get; set; } = new();
@@ -297,7 +296,8 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     public static void WriteSchemaToFile(string path)
     {
         // Create JSON schema
-        // TODO: https://github.com/json-everything/json-everything/issues/975
+        // TODO: Compare with old schema generation method that excluded obsolete properties
+        // TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
         JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
             typeof(ConfigFileJsonSchema)
         );
@@ -308,8 +308,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     }
 }
 
-// TODO:
-// TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
 [JsonSourceGenerationOptions(
     AllowTrailingCommas = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

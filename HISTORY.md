@@ -8,11 +8,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - Version 3:12:
   - Update to .NET 9.0.
-    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
+    - ⚠️ Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
     - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
     - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
     - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
-  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
+  - ⚠️ Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
   - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
     - See the [EIA-608 and CTA-708 Closed Captions](./README.md#eia-608-and-cta-708-closed-captions) section for details.
@@ -42,7 +42,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
 - Version 3.8:
   - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
-  - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
+  - ⚠️ Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
   - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
   - Alpine Stable builds are still [disabled](https://github.com/ptr727/PlexCleaner/issues/344), waiting for Alpine 3.20 to be released, ETA 1 June 2024.
   - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
@@ -62,7 +62,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
   - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
-  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
+  - ⚠️ Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
     - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
 - Version 3.6:
   - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
@@ -143,8 +143,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Changed the process exit code to return `1` vs. `-1` in case of error, more conformant with standard exit codes, `0` remains success.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
-  - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
-  - *Breaking Change* Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+  - ⚠️ Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
+  - ⚠️ Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
       - `--settingsfile` used by several commands.
@@ -283,7 +283,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Support for H.265 encoding added.
   - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
   - Windows systems will be kept awake during processing.
-  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
+  - ⚠️ Schema version numbers were added to JSON config files, breaking backwards compatibility.
     - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
     - Tools JSON will be invalid and `checkfortools` should be used to update tools.
   - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.

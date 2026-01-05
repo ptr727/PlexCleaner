@@ -15,34 +15,21 @@ Binary releases are published on [GitHub Releases](https://github.com/ptr727/Ple
 Docker images are published on [Docker Hub](https://hub.docker.com/r/ptr727/plexcleaner).\
 Images are updated weekly with the latest upstream updates.
 
-## Docker Builds and Tags
+## Usage
 
-- `latest`: Alias for `ubuntu`.
-- `develop`: Alias for `ubuntu-develop`.
-- `ubuntu`: Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
-  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
-- `alpine`: Based on [Alpine Latest](https://alpinelinux.org/releases/) `alpine:latest` latest stable release base image.
-  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
-- `debian`: Based on [Debian Stable](https://www.debian.org/releases/) `debian:stable-slim` latest stable release base image.
-  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
-- `*-develop` : Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
+Refer to the [project](https://github.com/ptr727/PlexCleaner) page.
 
-## Media Tool Versions
+## Docker Tags
 
-### `ptr727/plexcleaner:ubuntu`
+- `latest`:
+  - Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
+  - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
+  - Builds from the release [main branch](https://github.com/ptr727/PlexCleaner/tree/main).
+- `develop`:
+  - Builds from the pre-release [develop branch](https://github.com/ptr727/PlexCleaner/tree/develop).
+
+## Image Information
 
 ```text
-include({{ubuntu.ver}})
-```
-
-### `ptr727/plexcleaner:debian`
-
-```text
-include({{debian.ver}})
-```
-
-### `ptr727/plexcleaner:alpine`
-
-```text
-include({{alpine.ver}})
+include({{latest.ver}})
 ```

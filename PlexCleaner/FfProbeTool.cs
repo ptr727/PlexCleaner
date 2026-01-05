@@ -460,7 +460,6 @@ public partial class FfProbe
             );
     }
 
-    // TODO: Replace with AOT JsonSerializerContext
     public static readonly JsonSerializerOptions JsonReadOptions = new()
     {
         AllowTrailingCommas = true,

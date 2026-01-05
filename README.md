@@ -25,23 +25,30 @@ Docker images are published on [Docker Hub][docker-link].
 ## Release Notes
 
 - Version 3.20:
+  - This is primarily a code refactoring release.
   - Updated from .NET 9 to .NET 10.
   - Added [Nullable types](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types) support.
   - Added [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) support.
     - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
     - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
     - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
-    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) and AOT binaries are not published as part of the release.
+    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](#aot) if needed.
   - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
     - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
     - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
     - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
     - Schema will automatically be upgraded and convert XML to JSON equivalent on reading.
   - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
-  - No longer publishing any `linux/arm/v7` docker images, standalone `linux-arm` binaries are still published.
-  - TODO: What linux distro to keep?
+  - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
+    - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
+    - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
+  - TODO:
+    - Async refactoring.
+    - Cleanup Sandbox project.
+    - Use ffprobe analyze frames for CC detection.
+    - Test schema generation.
 - Version 3.14:
-  - Switch to using [CliWrap](cliwrap-link) for commandline tool process execution.
+  - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.
   - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
   - Converted media tool commandline creation to using fluent builder pattern.
   - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.

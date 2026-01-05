@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml;
 
-// TODO: XML serializer is not AOT compatible
+// Standard XML serializer is not AOT compatible
 // https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator
 // https://github.com/dotnet/runtime/issues/106580
 
