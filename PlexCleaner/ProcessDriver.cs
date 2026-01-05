@@ -386,7 +386,8 @@ public static class ProcessDriver
                 }
 
                 // Remove cover art in video tracks
-                //_ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+                // TODO: mediaInfoProps was not having cover art removed previously, is this a change in behavior?
+                _ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
                 _ = ffProbeProps.Video.RemoveAll(track => track.CoverArt);
                 _ = mkvMergeProps.Video.RemoveAll(track => track.CoverArt);
 
