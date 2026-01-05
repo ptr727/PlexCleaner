@@ -117,7 +117,6 @@ ENV TZ=Etc/UTC \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# TODO: Runtime is not required when publishing AOT
 # Install .NET runtime
 # Keep dependencies in sync with SDK install step
 # https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian

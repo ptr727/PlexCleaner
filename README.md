@@ -31,7 +31,7 @@ Docker images are published on [Docker Hub][docker-link].
     - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
     - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
     - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
-    - Release package now includes single file AOT and .NET runtime dependent binaries.
+    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) and AOT binaries are not published as part of the release.
   - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
     - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
     - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
@@ -91,7 +91,7 @@ Below are examples of issues that can be resolved using the primary `process` co
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64`, `linux/arm64`, or `linux/arm/v7` architectures.
+[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64` or `linux/arm64` architectures.
 Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [MacOS](#macos) following the provided instructions.
 
 ### Docker
@@ -262,6 +262,20 @@ services:
 ### macOS
 
 - macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are not tested during CI.
+
+### AOT
+
+AOT single binary builds are platform specific, and can be built for the [target platform](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) using [`dotnet publish`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish).
+
+```shell
+# Install .NET SDK and native code compiler
+apt install -y dotnet-sdk-10.0 clang zlib1g-dev
+
+# Publish standalone executable
+dotnet publish ./PlexCleaner/PlexCleaner.csproj \
+    --runtime linux-x64 \
+    -property:PublishAot=true
+```
 
 ## Configuration
 

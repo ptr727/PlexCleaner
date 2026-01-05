@@ -6,25 +6,6 @@ set -x
 # Exit on error
 set -e
 
-# https://learn.microsoft.com/en-us/dotnet/core/deploying/?pivots=cli
-
-# Disable AOT (if enabled in VCPROJ)
-# -property:PublishAot=false
-
-# AOT
-# -property:PublishAot=true
-
-# Framework dependent
-# --self-contained false
-
-# Single file
-# -property:PublishSingleFile=true
-
-# Ready to run
-# -property:PublishReadyToRun=true
-
-# TODO: AOT or runtime?
-
 # Build release and debug builds
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \

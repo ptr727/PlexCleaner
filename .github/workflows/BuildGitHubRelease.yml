@@ -29,7 +29,6 @@ jobs:
     needs: [test-build, get-version]
     strategy:
         matrix:
-          aot: [ true, false ]
           runtime: [ win-x64, linux-x64, linux-musl-x64, linux-arm, linux-arm64, osx-x64, osx-arm64 ]
 
     steps:
@@ -46,9 +45,9 @@ jobs:
         run: >-
             dotnet publish ./PlexCleaner/PlexCleaner.csproj
             --runtime ${{ matrix.runtime }}
-            --output ${{ runner.temp }}/publish/${{ matrix.runtime }}${{ matrix.aot && '-aot' || '-net' }}
+            --output ${{ runner.temp }}/publish/${{ matrix.runtime }}
             --configuration ${{ endsWith(github.ref, 'refs/heads/main') && 'Release' || 'Debug' }}
-            -property:PublishAot=${{ matrix.aot }}
+            -property:PublishAot=false
             -property:Version=${{ needs.get-version.outputs.AssemblyVersion }}
             -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }}
             -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }}
