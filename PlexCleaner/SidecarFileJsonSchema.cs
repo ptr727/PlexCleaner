@@ -23,15 +23,15 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    public string FfMpegToolVersion { get; set; }
+    public string FfMpegToolVersion { get; set; } = string.Empty;
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
-    public string MkvToolVersion { get; set; }
+    public string MkvToolVersion { get; set; } = string.Empty;
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
-    public string FfIdetInfoData { get; set; }
+    public string FfIdetInfoData { get; set; } = string.Empty;
 
     [JsonRequired]
     public DateTime MediaLastWriteTimeUtc { get; set; }
@@ -41,18 +41,18 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     [JsonRequired]
     [JsonPropertyName("FfProbeInfoData")]
-    public string FfProbeData { get; set; }
+    public string FfProbeData { get; set; } = string.Empty;
 
     [JsonRequired]
     [JsonPropertyName("MkvMergeInfoData")]
-    public string MkvMergeData { get; set; }
+    public string MkvMergeData { get; set; } = string.Empty;
 
     [JsonRequired]
-    public string MediaInfoToolVersion { get; set; }
+    public string MediaInfoToolVersion { get; set; } = string.Empty;
 
     [JsonRequired]
     [JsonPropertyName("MediaInfoData")]
-    public string MediaInfoData { get; set; }
+    public string MediaInfoData { get; set; } = string.Empty;
 }
 
 // v2
@@ -86,11 +86,11 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 
     // v3 : Added
     [JsonRequired]
-    public string FfProbeToolVersion { get; set; }
+    public string FfProbeToolVersion { get; set; } = string.Empty;
 
     // v3 : Added
     [JsonRequired]
-    public string MkvMergeToolVersion { get; set; }
+    public string MkvMergeToolVersion { get; set; } = string.Empty;
 }
 
 // v4
@@ -115,7 +115,7 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 
     // v4 : Added
     [JsonRequired]
-    public string MediaHash { get; set; }
+    public string MediaHash { get; set; } = string.Empty;
 }
 
 // v5
@@ -151,7 +151,7 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
 
             // Defaults
             State = SidecarFile.StatesType.None;
-            MediaHash = "";
+            MediaHash = string.Empty;
         }
 
         // v2
@@ -166,7 +166,7 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
 
             // Defaults
             State = SidecarFile.StatesType.None;
-            MediaHash = "";
+            MediaHash = string.Empty;
         }
 
         // v3
@@ -181,7 +181,7 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
                 : SidecarFile.StatesType.None;
 
             // Defaults
-            MediaHash = "";
+            MediaHash = string.Empty;
         }
 
         // v4
@@ -192,11 +192,11 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
 
             // v5: Changed MediaInfo schema from XML to JSON
             // Convert MediaInfo XML attributes to JSON
-            sidecarFileJsonSchema4.MediaInfoData = StringCompression.Compress(
-                MediaInfoXmlParser.GenericXmlToJson(
-                    StringCompression.Decompress(sidecarFileJsonSchema4.MediaInfoData)
-                )
+            string decompressedXml = StringCompression.Decompress(
+                sidecarFileJsonSchema4.MediaInfoData
             );
+            string jsonData = MediaInfoXmlParser.GenericXmlToJson(decompressedXml);
+            sidecarFileJsonSchema4.MediaInfoData = StringCompression.Compress(jsonData);
         }
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -204,7 +204,11 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
         SchemaVersion = Version;
     }
 
-    public static SidecarFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
+    public static SidecarFileJsonSchema FromFile(string path)
+    {
+        string json = File.ReadAllText(path);
+        return FromJson(json);
+    }
 
     public static void ToFile(string path, SidecarFileJsonSchema json)
     {
@@ -218,17 +222,15 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
     private static string ToJson(SidecarFileJsonSchema json) =>
         JsonSerializer.Serialize(json, SidecarFileJsonContext.Default.SidecarFileJsonSchema5);
 
+    // Will throw on failure to deserialize
     private static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize(
-            json,
-            SidecarFileJsonContext.Default.SidecarFileJsonSchemaBase
-        );
-        if (sidecarFileJsonSchemaBase == null)
-        {
-            return null;
-        }
+        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase =
+            JsonSerializer.Deserialize(
+                json,
+                SidecarFileJsonContext.Default.SidecarFileJsonSchemaBase
+            ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchemaBase");
 
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
@@ -240,38 +242,50 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
         }
 
         // Deserialize the correct version
-        return sidecarFileJsonSchemaBase.SchemaVersion switch
+        switch (sidecarFileJsonSchemaBase.SchemaVersion)
         {
-            SidecarFileJsonSchema1.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    SidecarFileJsonContext.Default.SidecarFileJsonSchema1
-                )
-            ),
-            SidecarFileJsonSchema2.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    SidecarFileJsonContext.Default.SidecarFileJsonSchema2
-                )
-            ),
-            SidecarFileJsonSchema3.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    SidecarFileJsonContext.Default.SidecarFileJsonSchema3
-                )
-            ),
-            SidecarFileJsonSchema4.Version => new SidecarFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    SidecarFileJsonContext.Default.SidecarFileJsonSchema4
-                )
-            ),
-            Version => JsonSerializer.Deserialize(
-                json,
-                SidecarFileJsonContext.Default.SidecarFileJsonSchema5
-            ),
-            _ => throw new NotImplementedException(),
-        };
+            case SidecarFileJsonSchema1.Version:
+                SidecarFileJsonSchema1 sidecarFileJsonSchema1 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        SidecarFileJsonContext.Default.SidecarFileJsonSchema1
+                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema1");
+                return new SidecarFileJsonSchema(sidecarFileJsonSchema1);
+
+            case SidecarFileJsonSchema2.Version:
+                SidecarFileJsonSchema2 sidecarFileJsonSchema2 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        SidecarFileJsonContext.Default.SidecarFileJsonSchema2
+                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema2");
+                return new SidecarFileJsonSchema(sidecarFileJsonSchema2);
+            case SidecarFileJsonSchema3.Version:
+                SidecarFileJsonSchema3 sidecarFileJsonSchema3 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        SidecarFileJsonContext.Default.SidecarFileJsonSchema3
+                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema3");
+                return new SidecarFileJsonSchema(sidecarFileJsonSchema3);
+
+            case SidecarFileJsonSchema4.Version:
+                SidecarFileJsonSchema4 sidecarFileJsonSchema4 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        SidecarFileJsonContext.Default.SidecarFileJsonSchema4
+                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema4");
+                return new SidecarFileJsonSchema(sidecarFileJsonSchema4);
+            case Version:
+                SidecarFileJsonSchema sidecarFileJsonSchema =
+                    JsonSerializer.Deserialize(
+                        json,
+                        SidecarFileJsonContext.Default.SidecarFileJsonSchema5
+                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema5");
+                return sidecarFileJsonSchema;
+            default:
+                throw new NotSupportedException(
+                    $"Unsupported schema version: {sidecarFileJsonSchemaBase.SchemaVersion}"
+                );
+        }
     }
 }
 

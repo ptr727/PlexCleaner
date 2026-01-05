@@ -131,15 +131,13 @@ public partial class FfProbe
 
                                     // Send packet to delegate
                                     // A false returns means delegate does not want any more packets
-                                    if (
-                                        !await packetFunc(
-                                            // TODO: Replace with AOT version taking JsonSerializerContext
-                                            await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
-                                                JsonReadOptions,
-                                                cancellationToken
-                                            )
-                                        )
-                                    )
+                                    FfMpegToolJsonSchema.Packet? packet =
+                                        await jsonStreamReader.DeserializeAsync<FfMpegToolJsonSchema.Packet>(
+                                            JsonReadOptions,
+                                            cancellationToken
+                                        );
+
+                                    if (packet == null || !await packetFunc(packet))
                                     {
                                         // Done
                                         break;
@@ -196,7 +194,10 @@ public partial class FfProbe
             Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
         )
         {
-            // Quickscan
+            // TODO: Switch to ffprobe and analyze_frames (when available in the shipping version).
+            // `ffprobe -i FILE -show_entries stream=closed_captions -select_streams v:0 -analyze_frames -read_intervals %X`
+
+            // Quickscan is not supported with subcc filter
             // -t and read_intervals do not work with the subcc filter
             // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
             // ReMux using FFmpeg to a snippet file then scan the snippet file
@@ -297,7 +298,7 @@ public partial class FfProbe
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            mediaProps = null;
+            mediaProps = null!;
             return GetMediaPropsJson(fileName, out string json)
                 && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
@@ -363,7 +364,6 @@ public partial class FfProbe
             {
                 // Deserialize
                 FfMpegToolJsonSchema.FfProbe ffProbe = FfMpegToolJsonSchema.FfProbe.FromJson(json);
-                ArgumentNullException.ThrowIfNull(ffProbe);
                 if (ffProbe.Tracks.Count == 0)
                 {
                     Log.Error(

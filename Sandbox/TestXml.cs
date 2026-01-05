@@ -49,57 +49,57 @@ public class TestXml
     public class Track
     {
         [XmlAttribute("type")]
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
 
         [XmlElement("ID")]
-        public string Id { get; set; } = "";
+        public string Id { get; set; } = string.Empty;
 
         [XmlElement("UniqueID")]
-        public string UniqueId { get; set; } = "";
+        public string UniqueId { get; set; } = string.Empty;
 
         [XmlElement("Duration")]
-        public string Duration { get; set; } = "";
+        public string Duration { get; set; } = string.Empty;
 
         [XmlElement("Format")]
-        public string Format { get; set; } = "";
+        public string Format { get; set; } = string.Empty;
 
         [XmlElement("Format_Profile")]
-        public string FormatProfile { get; set; } = "";
+        public string FormatProfile { get; set; } = string.Empty;
 
         [XmlElement("Format_Level")]
-        public string FormatLevel { get; set; } = "";
+        public string FormatLevel { get; set; } = string.Empty;
 
         [XmlElement("HDR_Format")]
-        public string HdrFormat { get; set; } = "";
+        public string HdrFormat { get; set; } = string.Empty;
 
         [XmlElement("CodecID")]
-        public string CodecId { get; set; } = "";
+        public string CodecId { get; set; } = string.Empty;
 
         [XmlElement("Language")]
-        public string Language { get; set; } = "";
+        public string Language { get; set; } = string.Empty;
 
         [XmlElement("Default")]
-        public string Default { get; set; } = "";
+        public string Default { get; set; } = string.Empty;
 
         [XmlIgnore]
         public bool IsDefault => MediaInfo.StringToBool(Default);
 
         [XmlElement("Forced")]
-        public string Forced { get; set; } = "";
+        public string Forced { get; set; } = string.Empty;
 
         [XmlIgnore]
         public bool IsForced => MediaInfo.StringToBool(Forced);
 
         [XmlElement("MuxingMode")]
-        public string MuxingMode { get; set; } = "";
+        public string MuxingMode { get; set; } = string.Empty;
 
         [XmlElement("StreamOrder")]
-        public string StreamOrder { get; set; } = "";
+        public string StreamOrder { get; set; } = string.Empty;
 
         [XmlElement("ScanType")]
-        public string ScanType { get; set; } = "";
+        public string ScanType { get; set; } = string.Empty;
 
         [XmlElement("Title")]
-        public string Title { get; set; } = "";
+        public string Title { get; set; } = string.Empty;
     }
 }

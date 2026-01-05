@@ -24,7 +24,7 @@ public partial class SevenZip
         protected override string GetToolNameLinux() => "7z";
 
         protected override string GetSubFolder() =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : string.Empty;
 
         public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 

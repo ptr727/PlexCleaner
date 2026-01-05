@@ -135,12 +135,9 @@ public class CommandLineParser
 
     private RootCommand CreateRootCommand()
     {
-        // TODO: https://github.com/dotnet/command-line-api/issues/2597
-#pragma warning disable IDE0028 // Simplify collection initialization
         RootCommand rootCommand = new(
             "Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc."
         );
-#pragma warning restore IDE0028 // Simplify collection initialization
 
         // Global options
         rootCommand.Options.Add(_logFileOption);

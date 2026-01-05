@@ -31,7 +31,7 @@ public static class ProcessDriver
         List<string> localFileList = [];
         try
         {
-            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
+            // Lock when adding results
             Lock listLock = new();
 
             // Process each input in parallel

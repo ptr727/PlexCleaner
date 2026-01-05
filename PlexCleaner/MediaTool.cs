@@ -41,7 +41,8 @@ public abstract class MediaTool
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
-    public MediaToolInfo Info { get; set; }
+    // TODO: Improve nullable logic
+    public MediaToolInfo Info { get; set; } = null!;
 
     public abstract ToolFamily GetToolFamily();
     public abstract ToolType GetToolType();
@@ -57,7 +58,7 @@ public abstract class MediaTool
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
     // Tool subfolder, e.g. /x64, /bin
-    protected virtual string GetSubFolder() => "";
+    protected virtual string GetSubFolder() => string.Empty;
 
     // Tools can override the default behavior as needed
     public virtual bool Update(string updateFile)
@@ -105,7 +106,7 @@ public abstract class MediaTool
 
     public bool Execute(Command command, out CommandResult commandResult)
     {
-        commandResult = null;
+        commandResult = null!;
         int processId = -1;
         try
         {
@@ -149,7 +150,7 @@ public abstract class MediaTool
         out BufferedCommandResult bufferedCommandResult
     )
     {
-        bufferedCommandResult = null;
+        bufferedCommandResult = null!;
         int processId = -1;
         try
         {

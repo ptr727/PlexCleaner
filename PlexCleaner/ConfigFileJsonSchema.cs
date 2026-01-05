@@ -239,17 +239,13 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     private static string ToJson(ConfigFileJsonSchema json) =>
         JsonSerializer.Serialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchema4);
 
+    // Will throw on failure to deserialize
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonSerializer.Deserialize(
-            json,
-            ConfigFileJsonContext.Default.ConfigFileJsonSchemaBase
-        );
-        if (configFileJsonSchemaBase == null)
-        {
-            return null;
-        }
+        ConfigFileJsonSchemaBase configFileJsonSchemaBase =
+            JsonSerializer.Deserialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchemaBase)
+            ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchemaBase");
 
         if (configFileJsonSchemaBase.SchemaVersion != Version)
         {
@@ -261,32 +257,41 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         }
 
         // Deserialize the correct version
-        return configFileJsonSchemaBase.SchemaVersion switch
+        switch (configFileJsonSchemaBase.SchemaVersion)
         {
-            ConfigFileJsonSchema1.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    ConfigFileJsonContext.Default.ConfigFileJsonSchema1
-                )
-            ),
-            ConfigFileJsonSchema2.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    ConfigFileJsonContext.Default.ConfigFileJsonSchema2
-                )
-            ),
-            ConfigFileJsonSchema3.Version => new ConfigFileJsonSchema(
-                JsonSerializer.Deserialize(
-                    json,
-                    ConfigFileJsonContext.Default.ConfigFileJsonSchema3
-                )
-            ),
-            Version => JsonSerializer.Deserialize(
-                json,
-                ConfigFileJsonContext.Default.ConfigFileJsonSchema4
-            ),
-            _ => throw new NotImplementedException(),
-        };
+            case ConfigFileJsonSchema1.Version:
+                ConfigFileJsonSchema1 configFileJsonSchema1 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema1
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema1");
+                return new ConfigFileJsonSchema(configFileJsonSchema1);
+            case ConfigFileJsonSchema2.Version:
+                ConfigFileJsonSchema2 configFileJsonSchema2 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema2
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema2");
+                return new ConfigFileJsonSchema(configFileJsonSchema2);
+            case ConfigFileJsonSchema3.Version:
+                ConfigFileJsonSchema3 configFileJsonSchema3 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema3
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema3");
+                return new ConfigFileJsonSchema(configFileJsonSchema3);
+            case Version:
+                ConfigFileJsonSchema configFileJsonSchema4 =
+                    JsonSerializer.Deserialize(
+                        json,
+                        ConfigFileJsonContext.Default.ConfigFileJsonSchema4
+                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema4");
+                return configFileJsonSchema4;
+            default:
+                throw new NotSupportedException(
+                    $"Unsupported schema version: {configFileJsonSchemaBase.SchemaVersion}"
+                );
+        }
     }
 
     public static void WriteSchemaToFile(string path)
@@ -297,24 +302,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
             typeof(ConfigFileJsonSchema)
         );
         string schemaJson = schemaNode.ToJsonString(ConfigFileJsonContext.Default.Options);
-
-        /*
-        const string schemaVersion = "https://json-schema.org/draft/2020-12/schema";
-        JsonSchema schemaBuilder = new JsonSchemaBuilder()
-            //.FromType<ConfigFileJsonSchema>(
-            .FromType(
-                typeof(ConfigFileJsonSchema),
-                new SchemaGeneratorConfiguration { PropertyOrder = PropertyOrder.ByName }
-            )
-            .Title("PlexCleaner Configuration Schema")
-            .Id(new Uri(SchemaUri))
-            .Schema(new Uri(schemaVersion))
-            .Build();
-        string schemaJson = JsonSerializer.Serialize(
-            schemaBuilder,
-            ConfigFileJsonContext.Default.ConfigFileJsonSchema4
-        );
-        */
 
         // Write to file
         File.WriteAllText(path, schemaJson);

@@ -119,7 +119,7 @@ public static class Convert
 
     public static bool ReMuxToMkv(
         string inputName,
-        SelectMediaProps selectMediaProps,
+        SelectMediaProps? selectMediaProps,
         out string outputName
     )
     {

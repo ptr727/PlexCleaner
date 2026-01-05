@@ -19,8 +19,10 @@ public class MediaInfoToolJsonSchema
         [JsonPropertyName("media")]
         public Media Media { get; } = new();
 
+        // Will throw on failure to deserialize
         public static MediaInfo FromJson(string json) =>
-            JsonSerializer.Deserialize(json, MediaInfoToolJsonContext.Default.MediaInfo);
+            JsonSerializer.Deserialize(json, MediaInfoToolJsonContext.Default.MediaInfo)
+            ?? throw new JsonException("Failed to deserialize MediaInfo");
     }
 
     public class Media
@@ -32,59 +34,61 @@ public class MediaInfoToolJsonSchema
     public class Track
     {
         [JsonPropertyName("@type")]
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
 
         [JsonPropertyName("Format")]
-        public string Format { get; set; } = "";
+        public string Format { get; set; } = string.Empty;
 
         [JsonPropertyName("Format_Profile")]
-        public string FormatProfile { get; set; } = "";
+        public string FormatProfile { get; set; } = string.Empty;
 
         [JsonPropertyName("Format_Level")]
-        public string FormatLevel { get; set; } = "";
+        public string FormatLevel { get; set; } = string.Empty;
 
         [JsonPropertyName("HDR_Format")]
-        public string HdrFormat { get; set; } = "";
+        public string HdrFormat { get; set; } = string.Empty;
 
         [JsonPropertyName("CodecID")]
-        public string CodecId { get; set; } = "";
+        public string CodecId { get; set; } = string.Empty;
 
         [JsonPropertyName("ID")]
-        public string Id { get; set; } = "";
+        public string Id { get; set; } = string.Empty;
 
         [JsonPropertyName("UniqueID")]
-        public string UniqueId { get; set; } = "";
+        public string UniqueId { get; set; } = string.Empty;
 
         [JsonPropertyName("Duration")]
-        public string Duration { get; set; } = "";
+        public string Duration { get; set; } = string.Empty;
 
         [JsonPropertyName("Language")]
-        public string Language { get; set; } = "";
+        public string Language { get; set; } = string.Empty;
 
         [JsonPropertyName("Default")]
-        public string Default { get; set; } = "";
+        public string Default { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public bool IsDefault => StringToBool(Default);
 
         [JsonPropertyName("Forced")]
-        public string Forced { get; set; } = "";
+        public string Forced { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public bool IsForced => StringToBool(Forced);
 
         [JsonPropertyName("MuxingMode")]
-        public string MuxingMode { get; set; } = "";
+        public string MuxingMode { get; set; } = string.Empty;
 
         [JsonPropertyName("StreamOrder")]
-        public string StreamOrder { get; set; } = "";
+        public string StreamOrder { get; set; } = string.Empty;
 
         [JsonPropertyName("ScanType")]
-        public string ScanType { get; set; } = "";
+        public string ScanType { get; set; } = string.Empty;
 
         [JsonPropertyName("Title")]
-        public string Title { get; set; } = "";
+        public string Title { get; set; } = string.Empty;
 
         private static bool StringToBool(string value) =>
-            value != null
+            !string.IsNullOrEmpty(value)
             && (
                 value.Equals("yes", StringComparison.OrdinalIgnoreCase)
                 || value.Equals("true", StringComparison.OrdinalIgnoreCase)

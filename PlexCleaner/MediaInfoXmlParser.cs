@@ -79,7 +79,7 @@ public static class MediaInfoXmlParser
         MediaInfoToolXmlSchema.Track track = new();
         if (reader.HasAttributes)
         {
-            track.Type = reader.GetAttribute("type") ?? "";
+            track.Type = reader.GetAttribute("type") ?? string.Empty;
         }
 
         int trackDepth = reader.Depth;
@@ -209,7 +209,7 @@ public static class MediaInfoXmlParser
                 if (reader.Depth == elementDepth + 1 && reader.NodeType == XmlNodeType.Element)
                 {
                     ElementData elementData = ReadElementData(reader);
-                    if (!childrenByName.TryGetValue(elementData.Name, out List<ElementData> value))
+                    if (!childrenByName.TryGetValue(elementData.Name, out List<ElementData>? value))
                     {
                         value = [];
                         childrenByName[elementData.Name] = value;
@@ -276,19 +276,44 @@ public static class MediaInfoXmlParser
             {
                 if (reader.Depth == elementDepth + 1)
                 {
-                    if (reader.NodeType == XmlNodeType.Element)
+                    switch (reader.NodeType)
                     {
-                        ElementData childData = ReadElementData(reader);
-                        if (!data.Children.TryGetValue(childData.Name, out List<ElementData> value))
+                        case XmlNodeType.Element:
                         {
-                            value = [];
-                            data.Children[childData.Name] = value;
+                            ElementData childData = ReadElementData(reader);
+                            if (
+                                !data.Children.TryGetValue(
+                                    childData.Name,
+                                    out List<ElementData>? value
+                                )
+                            )
+                            {
+                                value = [];
+                                data.Children[childData.Name] = value;
+                            }
+                            value.Add(childData);
+                            break;
                         }
-                        value.Add(childData);
-                    }
-                    else if (reader.NodeType is XmlNodeType.Text or XmlNodeType.CDATA)
-                    {
-                        data.TextContent = reader.Value;
+                        case XmlNodeType.Text or XmlNodeType.CDATA:
+                            data.TextContent = reader.Value;
+                            break;
+                        case XmlNodeType.None:
+                        case XmlNodeType.Attribute:
+                        case XmlNodeType.EntityReference:
+                        case XmlNodeType.Entity:
+                        case XmlNodeType.ProcessingInstruction:
+                        case XmlNodeType.Comment:
+                        case XmlNodeType.Document:
+                        case XmlNodeType.DocumentType:
+                        case XmlNodeType.DocumentFragment:
+                        case XmlNodeType.Notation:
+                        case XmlNodeType.Whitespace:
+                        case XmlNodeType.SignificantWhitespace:
+                        case XmlNodeType.EndElement:
+                        case XmlNodeType.EndEntity:
+                        case XmlNodeType.XmlDeclaration:
+                        default:
+                            break;
                     }
                 }
             }
@@ -318,10 +343,8 @@ public static class MediaInfoXmlParser
         }
 
         // Write child elements as properties
-        foreach (KeyValuePair<string, List<ElementData>> kvp in element.Children)
+        foreach ((string propertyName, List<ElementData> children) in element.Children)
         {
-            string propertyName = kvp.Key;
-            List<ElementData> children = kvp.Value;
             bool isArray = children.Count > 1;
 
             // Check if all children have only text content (no attributes, no nested children)

@@ -265,7 +265,7 @@ public partial class FfMpeg
 
         public bool ConvertToMkv(
             string inputName,
-            SelectMediaProps selectMediaProps,
+            SelectMediaProps? selectMediaProps,
             string outputName,
             out string error
         )

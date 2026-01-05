@@ -83,7 +83,6 @@ public partial class MkvMerge
                 // Get the version number from JSON
                 MkvToolJsonSchema.LatestRelease latestRelease =
                     MkvToolJsonSchema.LatestRelease.FromJson(json);
-                Debug.Assert(latestRelease != null);
                 Debug.Assert(
                     !string.IsNullOrEmpty(latestRelease.MkvToolnixReleases.LatestSource.Version)
                 );
@@ -104,7 +103,7 @@ public partial class MkvMerge
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            mediaProps = null;
+            mediaProps = null!;
             return GetMediaPropsJson(fileName, out string json)
                 && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
@@ -169,7 +168,6 @@ public partial class MkvMerge
             {
                 // Deserialize
                 MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
-                ArgumentNullException.ThrowIfNull(mkvMerge);
                 if (!mkvMerge.Container.Supported || mkvMerge.Tracks.Count == 0)
                 {
                     Log.Error(

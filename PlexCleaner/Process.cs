@@ -41,7 +41,7 @@ public static class Process
         ignored = false;
         state = SidecarFile.StatesType.None;
         processName = fileName;
-        ProcessFile processFile = null;
+        ProcessFile? processFile = null;
         bool result;
 
         // Process in jump loop

@@ -20,33 +20,28 @@ public static class AssemblyVersion
         return build;
     }
 
-    public static string GetName() => GetAssembly().GetName().Name;
+    public static string GetName() => GetAssembly().GetName().Name ?? string.Empty;
 
     public static string GetInformationalVersion() =>
         // E.g. 1.2.3+abc123.abc123
         GetAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion;
+            ?.InformationalVersion
+        ?? string.Empty;
 
     public static string GetFileVersion() =>
         // E.g. 1.2.3.4
-        GetAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+        GetAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version
+        ?? string.Empty;
 
     public static string GetReleaseVersion() =>
         // E.g. 1.2.3 part of 1.2.3+abc123.abc123
         // Use major.minor.build from informational version
         GetInformationalVersion().Split('+', '-')[0];
 
-    // TODO: info IL3000: 'System.Reflection.Assembly.Location.get' always returns an empty string for assemblies embedded in a single-file app.
-    // // If the path to the app directory is needed, consider calling 'System.AppContext.BaseDirectory'.
-    // public static DateTime GetBuildDate() =>
-    //     // Use assembly modified time as build date
-    //     // https://stackoverflow.com/questions/1600962/displaying-the-build-date
-    //     File.GetLastWriteTime(GetAssembly().Location).ToLocalTime();
-
     private static Assembly GetAssembly()
     {
-        Assembly assembly = Assembly.GetEntryAssembly();
+        Assembly? assembly = Assembly.GetEntryAssembly();
         assembly ??= Assembly.GetExecutingAssembly();
         return assembly;
     }

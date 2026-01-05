@@ -94,7 +94,7 @@ public partial class MediaInfo
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            mediaProps = null;
+            mediaProps = null!;
             return GetMediaPropsJson(fileName, out string json)
                 && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
@@ -157,8 +157,6 @@ public partial class MediaInfo
                 // Deserialize
                 MediaInfoToolJsonSchema.MediaInfo jsonInfo =
                     MediaInfoToolJsonSchema.MediaInfo.FromJson(json);
-                ArgumentNullException.ThrowIfNull(jsonInfo);
-                ArgumentNullException.ThrowIfNull(jsonInfo.Media);
                 if (jsonInfo.Media.Tracks.Count == 0)
                 {
                     Log.Error(
