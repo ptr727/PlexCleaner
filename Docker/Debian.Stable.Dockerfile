@@ -1,7 +1,7 @@
 # Description: Debian latest release
 # Based on: debian:stable-slim
-# .NET install: Install script
-# Platforms: linux/amd64, linux/arm64, linux/arm/v7
+# .NET install: Microsoft repository
+# Platforms: linux/amd64, linux/arm64
 # Tag: ptr727/plexcleaner:debian
 
 # Docker build debugging:
@@ -15,7 +15,7 @@
 
 # Build Dockerfile
 # docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --file ./Docker/Debian.Stable.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Debian.Stable.Dockerfile .
 
 # Test linux/amd64 target
 # docker buildx build --load --platform linux/amd64 --tag plexcleaner:debian --file ./Docker/Debian.Stable.Dockerfile .
@@ -51,32 +51,19 @@ RUN apt update \
 # Install dependencies
 RUN apt install -y --no-install-recommends \
         ca-certificates \
+        clang \
         lsb-release \
-        wget
+        wget \
+        zlib1g-dev
 
 # Install .NET SDK
-# https://learn.microsoft.com/en-us/dotnet/core/install/linux-scripted-manual
-# https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script
-# https://github.com/dotnet/core/blob/main/release-notes/9.0/os-packages.md
-# https://github.com/dotnet/dotnet-docker/blob/main/src/sdk/9.0/bookworm-slim/amd64/Dockerfile
-# https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/9.0/bookworm-slim/amd64/Dockerfile
-RUN apt install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        libc6 \
-        libgcc-s1 \
-        libicu76 \
-        libssl3t64 \
-        libstdc++6 \
-        tzdata \
-        wget \
-    && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
-    && chmod ug=rwx,o=rx dotnet-install.sh \
-    && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --channel 9.0 \
-    && rm dotnet-install.sh
-ENV DOTNET_ROOT=/usr/local/bin/dotnet \
-    PATH=$PATH:/usr/local/bin/dotnet:/usr/local/bin/dotnet/tools \
-    DOTNET_USE_POLLING_FILE_WATCHER=true \
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt update \
+    && apt install -y --no-install-recommends dotnet-sdk-10.0
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true \
     DOTNET_RUNNING_IN_CONTAINER=true
 
 # Copy source and unit tests
@@ -130,25 +117,16 @@ ENV TZ=Etc/UTC \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+# TODO: Runtime is not required when publishing AOT
 # Install .NET runtime
 # Keep dependencies in sync with SDK install step
-RUN apt install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        libc6 \
-        libgcc-s1 \
-        libicu76 \
-        libssl3t64 \
-        libstdc++6 \
-        tzdata \
-        wget \
-&& wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
-    && chmod ug=rwx,o=rx dotnet-install.sh \
-    && ./dotnet-install.sh --install-dir /usr/local/bin/dotnet --runtime dotnet --channel 9.0 \
-    && rm dotnet-install.sh
-ENV DOTNET_ROOT=/usr/local/bin/dotnet \
-    PATH=$PATH:/usr/local/bin/dotnet:/usr/local/bin/dotnet/tools \
-    DOTNET_USE_POLLING_FILE_WATCHER=true \
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian
+RUN wget https://packages.microsoft.com/config/debian/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt update \
+    && apt install -y --no-install-recommends dotnet-runtime-10.0
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true \
     DOTNET_RUNNING_IN_CONTAINER=true
 
 # Install media tools

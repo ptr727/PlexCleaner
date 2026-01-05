@@ -63,13 +63,15 @@
     <Exec
       Command="dotnet tool restore"
       StandardOutputImportance="Low"
-      StandardErrorImportance="High"
+      StandardErrorImportance="Low"
+      ContinueOnError="true"
     />
     <Exec
       Command="dotnet husky install"
       StandardOutputImportance="Low"
-      StandardErrorImportance="High"
+      StandardErrorImportance="Low"
       WorkingDirectory=".."
+      ContinueOnError="true"
     />
   </Target>
 </Project>
