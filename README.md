@@ -8,41 +8,40 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - **Binary Releases**: [GitHub Releases][releases-link] - Pre-compiled executables for Windows, Linux, and macOS.
 - **Docker Images**: [Docker Hub][docker-link] - Container images with all tools pre-installed.
 
-## Status
+### Build Status
 
 [![Release Status][release-status-shield]][actions-link]\
 [![Docker Status][docker-status-shield]][actions-link]\
 [![Last Commit][last-commit-shield]][commit-link]\
 [![Last Build][last-build-shield]][actions-link]
 
-## Releases
+### Releases
 
 [![GitHub Release][release-version-shield]][releases-link]\
 [![GitHub Pre-Release][pre-release-version-shield]][releases-link]\
 [![Docker Latest][docker-latest-version-shield]][docker-link]\
 [![Docker Develop][docker-develop-version-shield]][docker-link]
 
-## Prerequisites
+### Release Notes
 
-**For Docker users** (recommended):
+**Version: 3.15**:
 
-- Docker or compatible container runtime installed and running.
-- Basic familiarity with Docker volume mapping.
-- Media files in common formats (MKV, MP4, AVI, etc.).
+**Summary:**
 
-**For native binary users**:
+- Updated from .NET 9 to .NET 10.
+- Refactored code to support Nullable types and Native AOT.
+- Changed MediaInfo output from XML to JSON for AOT compatibility.
+- Documentation structure update.
 
-- .NET 10.0 Runtime (or SDK for building from source).
-- Supported media processing tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo).
-- Windows, Linux, or macOS operating system.
+> **⚠️ Docker Breaking Changes:**
+>
+> - Only `ubuntu:rolling` images are published (Alpine and Debian discontinued).
+> - Only `linux/amd64` and `linux/arm64` architectures supported (`linux/arm/v7` discontinued).
+> - Update compose files: Use `docker.io/ptr727/plexcleaner:latest` (Based on `ubuntu:rolling`).
 
-**For all users**:
+See [Release History](./HISTORY.md) for complete release notes and older versions.
 
-- Backup your media files before processing (PlexCleaner modifies files in place).
-- Read access to media files for analysis.
-- Write access to create sidecar files and modify media files.
-
-## Quick Start
+## Getting Started
 
 Get started with PlexCleaner in three easy steps using Docker (recommended):
 
@@ -70,12 +69,11 @@ See [Installation](#installation) for detailed setup instructions and other plat
 
 - [PlexCleaner](#plexcleaner)
   - [Build and Distribution](#build-and-distribution)
-  - [Status](#status)
-  - [Releases](#releases)
-  - [Prerequisites](#prerequisites)
-  - [Quick Start](#quick-start)
+    - [Build Status](#build-status)
+    - [Releases](#releases)
+    - [Release Notes](#release-notes)
+  - [Getting Started](#getting-started)
   - [Table of Contents](#table-of-contents)
-  - [Release Notes](#release-notes)
   - [Questions or Issues](#questions-or-issues)
   - [Use Cases](#use-cases)
   - [Performance Considerations](#performance-considerations)
@@ -108,24 +106,6 @@ See [Installation](#installation) for detailed setup instructions and other plat
   - [3rd Party Tools](#3rd-party-tools)
   - [Sample Media Files](#sample-media-files)
   - [License](#license)
-
-## Release Notes
-
-**Version: 3.15**:
-
-**Summary:**
-
-- Updated from .NET 9 to .NET 10.
-- Refactored code to support Nullable types and Native AOT.
-- Changed MediaInfo output from XML to JSON for AOT compatibility.
-
-> **⚠️ Docker Breaking Changes:**
->
-> - Only `ubuntu:rolling` images are published (Alpine and Debian discontinued).
-> - Only `linux/amd64` and `linux/arm64` architectures supported (`linux/arm/v7` discontinued).
-> - Update compose files: Use `docker.io/ptr727/plexcleaner:latest` (Based on `ubuntu:rolling`).
-
-See [Release History](./HISTORY.md) for complete release notes and older versions.
 
 ## Questions or Issues
 
