@@ -24,7 +24,7 @@ Docker images are published on [Docker Hub][docker-link].
 
 ## Release Notes
 
-- Version 3.20:
+- Version 3.15:
   - This is primarily a code refactoring release.
   - Updated from .NET 9 to .NET 10.
   - Added [Nullable types](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types) support.
@@ -43,9 +43,7 @@ Docker images are published on [Docker Hub][docker-link].
     - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
     - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
   - TODO:
-    - Async refactoring.
     - Cleanup Sandbox project.
-    - Use ffprobe analyze frames for CC detection.
     - Test schema generation.
 - Version 3.14:
   - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.

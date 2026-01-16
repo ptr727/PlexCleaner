@@ -77,9 +77,9 @@ $PlexCleanerApp gettoolinfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp createsidecar --settingsfile $SettingsFile --mediafiles $MediaPath
 
 # Processing commands
-$PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
-$PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
-$PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath --testsnippets
+$PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath
+$PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath
+$PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $MediaPath
 
 # Not readily testable
