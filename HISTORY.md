@@ -134,7 +134,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
   - Added support for [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag formats.
     - See the [Language Matching](./README.md#language-matching) section usage for details.
-    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
+    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix).
       - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
       - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
     - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` from ISO 639-2B to RFC 5646 format, e.g. `eng` to `en`.

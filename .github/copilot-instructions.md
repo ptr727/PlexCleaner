@@ -12,6 +12,15 @@ PlexCleaner is a .NET 10.0 CLI utility that optimizes media files for Direct Pla
 
 The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) via CLI wrappers.
 
+## Documentation
+
+User-facing documentation is organized as follows:
+- **[README.md](../README.md)**: Main project documentation, quick start, installation, usage, and FAQ.
+- **[Docs/LanguageMatching.md](../Docs/LanguageMatching.md)**: Technical details on IETF/RFC 5646 language tag matching and configuration.
+- **[Docs/CustomOptions.md](../Docs/CustomOptions.md)**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
+- **[Docs/ClosedCaptions.md](../Docs/ClosedCaptions.md)**: Detailed technical analysis of EIA-608/CTA-708 closed caption detection methods and tools.
+- **[HISTORY.md](../HISTORY.md)**: Release notes and version history.
+
 ## Architecture
 
 ### Command Structure

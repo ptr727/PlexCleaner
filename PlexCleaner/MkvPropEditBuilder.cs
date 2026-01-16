@@ -71,7 +71,7 @@ public partial class MkvPropEdit
         public InputOptions DeleteAttachment(int option) => DeleteAttachment().Add($"{option + 1}");
 
         // Set the language property not the language-ietf property
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
+        // https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
         public InputOptions Language(string option) => Add($"language={option}");
 
         public InputOptions SetLanguage(string option) => Set().Language(option);
