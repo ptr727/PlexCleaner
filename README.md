@@ -67,45 +67,42 @@ See [Installation](#installation) for detailed setup instructions and other plat
 
 ## Table of Contents
 
-- [PlexCleaner](#plexcleaner)
-  - [Build and Distribution](#build-and-distribution)
-    - [Build Status](#build-status)
-    - [Releases](#releases)
-    - [Release Notes](#release-notes)
-  - [Getting Started](#getting-started)
-  - [Table of Contents](#table-of-contents)
-  - [Questions or Issues](#questions-or-issues)
-  - [Use Cases](#use-cases)
-  - [Performance Considerations](#performance-considerations)
-  - [Installation](#installation)
-    - [Docker](#docker)
-      - [Docker Compose (Recommended for Monitor Mode)](#docker-compose-recommended-for-monitor-mode)
-      - [Docker Run Examples](#docker-run-examples)
-    - [Windows](#windows)
-    - [Linux](#linux)
-    - [macOS](#macos)
-    - [AOT](#aot)
-  - [Configuration](#configuration)
-    - [Default Settings](#default-settings)
-    - [Common Configuration Examples](#common-configuration-examples)
-    - [IETF Language Matching](#ietf-language-matching)
-    - [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions)
-    - [Custom FFmpeg and Handbrake Encoding Settings](#custom-ffmpeg-and-handbrake-encoding-settings)
-  - [Usage](#usage)
-    - [Common Commands Quick Reference](#common-commands-quick-reference)
-    - [Global Options](#global-options)
-    - [Process Command](#process-command)
-    - [Monitor Command](#monitor-command)
-    - [Other Commands](#other-commands)
-  - [Testing](#testing)
-    - [Unit Testing](#unit-testing)
-    - [Docker Testing](#docker-testing)
-    - [Regression Testing](#regression-testing)
-  - [Development Tooling](#development-tooling)
-  - [Feature Ideas](#feature-ideas)
-  - [3rd Party Tools](#3rd-party-tools)
-  - [Sample Media Files](#sample-media-files)
-  - [License](#license)
+- [Build and Distribution](#build-and-distribution)
+  - [Build Status](#build-status)
+  - [Releases](#releases)
+  - [Release Notes](#release-notes)
+- [Getting Started](#getting-started)
+- [Table of Contents](#table-of-contents)
+- [Questions or Issues](#questions-or-issues)
+- [Use Cases](#use-cases)
+- [Performance Considerations](#performance-considerations)
+- [Installation](#installation)
+  - [Docker](#docker)
+  - [Windows](#windows)
+  - [Linux](#linux)
+  - [macOS](#macos)
+  - [AOT](#aot)
+- [Configuration](#configuration)
+  - [Default Settings](#default-settings)
+  - [Common Configuration Examples](#common-configuration-examples)
+  - [IETF Language Matching](#ietf-language-matching)
+  - [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions)
+  - [Custom FFmpeg and Handbrake Encoding Settings](#custom-ffmpeg-and-handbrake-encoding-settings)
+- [Usage](#usage)
+  - [Common Commands Quick Reference](#common-commands-quick-reference)
+  - [Global Options](#global-options)
+  - [Process Command](#process-command)
+  - [Monitor Command](#monitor-command)
+  - [Other Commands](#other-commands)
+- [Testing](#testing)
+  - [Unit Testing](#unit-testing)
+  - [Docker Testing](#docker-testing)
+  - [Regression Testing](#regression-testing)
+- [Development Tooling](#development-tooling)
+- [Feature Ideas](#feature-ideas)
+- [3rd Party Tools](#3rd-party-tools)
+- [Sample Media Files](#sample-media-files)
+- [License](#license)
 
 ## Questions or Issues
 
@@ -250,7 +247,7 @@ services:
 
 #### Docker Run Examples
 
-For a simple one-time process operation, see the [Quick Start](#quick-start) example.
+For a simple one-time process operation, see the [Getting Started](#getting-started) example.
 
 **Setup Permissions** (if running as non-root user):
 
@@ -297,7 +294,7 @@ docker run -it --rm --pull always \
 
 **Process Command:**
 
-For one-time processing, see the [Quick Start](#quick-start) example or use similar syntax as above, replacing `monitor` with `process`.
+For one-time processing, see the [Getting Started](#getting-started) example or use similar syntax as above, replacing `monitor` with `process`.
 
 ### Windows
 
