@@ -321,7 +321,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
 
    **Option B: System-wide installation via winget**
-   - Note: Run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
+   - Run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
    - `winget install --id=Gyan.FFmpeg --exact`
    - `winget install --id=MediaArea.MediaInfo --exact`
    - `winget install --id=HandBrake.HandBrake.CLI --exact`
@@ -355,7 +355,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
 Ahead-of-time compiled self-contained binaries do not require any .NET runtime components to be installed.\
 AOT builds are [platform specific](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot), require a platform native compiler, and are created using [`dotnet publish`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish).
 
-Note; AOT binaries are not published in CI/CD due to being platform specific, and cross compilation of AOT binaries are not supported.
+> **ℹ️ Note**: AOT binaries are not published in CI/CD due to being platform specific, and cross compilation of AOT binaries are not supported.
 
 ```shell
 # Install .NET SDK and native code compiler
@@ -698,7 +698,7 @@ Options:
 - `--threadcount`:
   - Concurrent file processing thread count when the `--parallel` option is enabled.
   - The default thread count is the largest of 1/2 number of logical processors or 4.
-  - Note that media tools internally use multiple threads.
+  - Media tools internally use multiple threads.
 - `--quickscan`:
   - Limits the time duration (3min) when scanning media files, applies to:
     - Stream verification.
@@ -748,7 +748,7 @@ Options:
 The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
 
 - All the referenced directories will be watched for changes, and any changes will be added to a queue to be periodically processed.
-- Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
+- The [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
 
 Options:
 

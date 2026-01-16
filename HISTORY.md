@@ -12,7 +12,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
     - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
     - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
-    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](./README.md#aot) if needed.
+    - AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](./README.md#aot) if needed.
   - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
     - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
     - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
@@ -45,7 +45,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
     - See the [EIA-608 and CTA-708 Closed Captions](./README.md#eia-608-and-cta-708-closed-captions) section for details.
     - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
-    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
+    - Detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
   - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
   - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
@@ -108,7 +108,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Updating the tool itself is still a manual process.
     - Alternatively subscribe to GitHub [Release Notifications][github-release-notification].
   - Added `verify` command option to verify media streams in files.
-    - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
+    - Only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
     - The `verify` command is useful when testing or selecting from multiple available media sources.
 - Version 3.3:
   - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [#214](https://github.com/ptr727/PlexCleaner/issues/214).
@@ -315,7 +315,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
     - Tools JSON will be invalid and `checkfortools` should be used to update tools.
   - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.
-  - Processing of the same media can be mixed between Windows, Linux, and Docker, note that the paths in the `FileIgnoreList` setting are platform specific.
+  - Processing of the same media can be mixed between Windows, Linux, and Docker, but the paths in the `FileIgnoreList` setting are platform specific.
   - New options were added to the JSON config file.
     - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
     - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.

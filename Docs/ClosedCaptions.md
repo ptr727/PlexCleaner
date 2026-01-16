@@ -119,7 +119,7 @@ E.g.
 ffmpeg -abort_on empty_output -y -f lavfi -i "movie=filename[out0+subcc]" -map 0:s -c:s srt outfilename
 ```
 
-Note that `ffmpeg -t` and `ffprobe -read_intervals` options limiting scan time does [not work](https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc) on the input stream when using the `subcc` filter, and scanning the entire file can take a very long time.
+The `ffmpeg -t` and `ffprobe -read_intervals` options limiting scan time does [not work](https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc) on the input stream when using the `subcc` filter, and scanning the entire file can take a very long time.
 
 In my testing I found the results to be reliable across a wide variety of files.
 
