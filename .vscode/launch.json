@@ -374,6 +374,73 @@
             "justMyCode": false
         },
         {
+            "name": "Create Sidecar",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": ".Net Build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "args": [
+                "createsidecar",
+                "--settingsfile=PlexCleaner.json",
+                "--mediafiles=D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Update Sidecar",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": ".Net Build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "args": [
+                "updatesidecar",
+                "--settingsfile=PlexCleaner.json",
+                "--mediafiles=D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Get Sidecar Info",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": ".Net Build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "args": [
+                "getsidecarinfo",
+                "--settingsfile=PlexCleaner.json",
+                "--mediafiles=D:\\Test"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
+            "name": "Create Schema",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": ".Net Build",
+            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "args": [
+                "createschema",
+                "--schemafile=PlexCleaner.schema.json"
+            ],
+            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "enableStepFiltering": false,
+            "justMyCode": false
+        },
+        {
             "name": "Sandbox",
             "type": "coreclr",
             "request": "launch",

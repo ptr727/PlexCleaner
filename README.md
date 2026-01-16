@@ -42,9 +42,6 @@ Docker images are published on [Docker Hub][docker-link].
   - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
     - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
     - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
-  - TODO:
-    - Cleanup Sandbox project.
-    - Test schema generation.
 - Version 3.14:
   - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.
   - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.

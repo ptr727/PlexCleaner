@@ -5,15 +5,9 @@
     <PublishAot>false</PublishAot>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Microsoft.XmlSerializer.Generator" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <SGenVerbose>true</SGenVerbose>
-    <SGenTypes>Sandbox.TestXml</SGenTypes>
-  </PropertyGroup>
 </Project>
