@@ -66,7 +66,9 @@ $PlexCleanerApp getversioninfo --settingsfile $SettingsFile
 # Run process command first
 $PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets --resultsfile $TestPath/Results.json
 
-# Info commands
+# Info/Testing commands
+$PlexCleanerApp verify --settingsfile $SettingsFile --mediafiles $MediaPath --quickscan
+$PlexCleanerApp testmediainfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp updatesidecar --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp getsidecarinfo --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp gettagmap --settingsfile $SettingsFile --mediafiles $MediaPath
@@ -81,6 +83,7 @@ $PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath
 $PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $MediaPath
+$PlexCleanerApp removeclosedcaptions --settingsfile $SettingsFile --mediafiles $MediaPath --quickscan
 
 # Not readily testable
 # $PlexCleanerApp monitor --settingsfile $SettingsFile --mediafiles $MediaPath

@@ -338,6 +338,54 @@ public class CommandLineTests(PlexCleanerFixture fixture)
     }
 
     [Theory]
+    [InlineData(
+        "removeclosedcaptions",
+        "--settingsfile=settings.json",
+        "--mediafiles=/data/foo",
+        "--parallel",
+        "--threadcount=4",
+        "--quickscan"
+    )]
+    public void Parse_Commandline_RemoveClosedCaptions_Full(params string[] args)
+    {
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().BeEmpty();
+        _ = parser.Result.CommandResult.Command.Name.Should().Be("removeclosedcaptions");
+
+        CommandLineOptions options = parser.Bind();
+        _ = options.Should().NotBeNull();
+        _ = options.SettingsFile.Should().Be("settings.json");
+        _ = options.MediaFiles.Count.Should().Be(1);
+        _ = options.MediaFiles[0].Should().Be("/data/foo");
+        _ = options.Parallel.Should().BeTrue();
+        _ = options.ThreadCount.Should().Be(4);
+        _ = options.QuickScan.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(
+        "testmediainfo",
+        "--settingsfile=settings.json",
+        "--mediafiles=/data/foo",
+        "--parallel",
+        "--threadcount=2"
+    )]
+    public void Parse_Commandline_TestMediaInfo(params string[] args)
+    {
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().BeEmpty();
+        _ = parser.Result.CommandResult.Command.Name.Should().Be("testmediainfo");
+
+        CommandLineOptions options = parser.Bind();
+        _ = options.Should().NotBeNull();
+        _ = options.SettingsFile.Should().Be("settings.json");
+        _ = options.MediaFiles.Count.Should().Be(1);
+        _ = options.MediaFiles[0].Should().Be("/data/foo");
+        _ = options.Parallel.Should().BeTrue();
+        _ = options.ThreadCount.Should().Be(2);
+    }
+
+    [Theory]
     [InlineData("--help")]
     [InlineData("--version")]
     [InlineData("defaultsettings", "--help")]
