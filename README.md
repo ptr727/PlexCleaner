@@ -2,11 +2,11 @@
 
 Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
-## Build
+## Build and Distribution
 
-Code and Pipeline is on [GitHub][github-link].\
-Binary releases are published on [GitHub Releases][releases-link].\
-Docker images are published on [Docker Hub][docker-link].
+- **Source Code**: [GitHub][github-link] - Full source code, issues, and CI/CD pipelines.
+- **Binary Releases**: [GitHub Releases][releases-link] - Pre-compiled executables for Windows, Linux, and macOS.
+- **Docker Images**: [Docker Hub][docker-link] - Container images with all tools pre-installed.
 
 ## Status
 
@@ -22,234 +22,368 @@ Docker images are published on [Docker Hub][docker-link].
 [![Docker Latest][docker-latest-version-shield]][docker-link]\
 [![Docker Develop][docker-develop-version-shield]][docker-link]
 
+## Prerequisites
+
+**For Docker users** (recommended):
+
+- Docker or compatible container runtime installed and running.
+- Basic familiarity with Docker volume mapping.
+- Media files in common formats (MKV, MP4, AVI, etc.).
+
+**For native binary users**:
+
+- .NET 10.0 Runtime (or SDK for building from source).
+- Supported media processing tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo).
+- Windows, Linux, or macOS operating system.
+
+**For all users**:
+
+- Backup your media files before processing (PlexCleaner modifies files in place).
+- Read access to media files for analysis.
+- Write access to create sidecar files and modify media files.
+
+## Quick Start
+
+Get started with PlexCleaner in three easy steps using Docker (recommended):
+
+> **⚠️ Important**: PlexCleaner modifies media files in place. Always maintain backups of your media library before processing. Consider testing with the `--testsnippets` option on sample files first.
+>
+> **Note**: Replace `/data/media` with your actual media directory path. All examples map your host directory to `/media` inside the container.
+
+```shell
+# 1. Create a default settings file
+docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+  /PlexCleaner/PlexCleaner defaultsettings --settingsfile /media/PlexCleaner/PlexCleaner.json
+
+# 2. Edit /data/media/PlexCleaner/PlexCleaner.json to suit your needs
+
+# 3. Process your media files
+docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+  /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log \
+  process --settingsfile /media/PlexCleaner/PlexCleaner.json \
+  --mediafiles /media/Movies --mediafiles /media/Series
+```
+
+See [Installation](#installation) for detailed setup instructions and other platforms.
+
+## Table of Contents
+
+- [PlexCleaner](#plexcleaner)
+  - [Build and Distribution](#build-and-distribution)
+  - [Status](#status)
+  - [Releases](#releases)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+  - [Table of Contents](#table-of-contents)
+  - [Release Notes](#release-notes)
+  - [Questions or Issues](#questions-or-issues)
+  - [Use Cases](#use-cases)
+  - [Performance Considerations](#performance-considerations)
+  - [Installation](#installation)
+    - [Docker](#docker)
+      - [Docker Compose (Recommended for Monitor Mode)](#docker-compose-recommended-for-monitor-mode)
+      - [Docker Run Examples](#docker-run-examples)
+    - [Windows](#windows)
+    - [Linux](#linux)
+    - [macOS](#macos)
+    - [AOT](#aot)
+  - [Configuration](#configuration)
+    - [Common Configuration Examples](#common-configuration-examples)
+    - [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters)
+      - [FFmpeg Options](#ffmpeg-options)
+      - [HandBrake Options](#handbrake-options)
+  - [Usage](#usage)
+    - [Common Commands Quick Reference](#common-commands-quick-reference)
+    - [Global Options](#global-options)
+    - [Process Command](#process-command)
+    - [Monitor Command](#monitor-command)
+    - [Other Commands](#other-commands)
+  - [IETF Language Matching](#ietf-language-matching)
+  - [EIA-608 and CTA-708 Closed Captions](#eia-608-and-cta-708-closed-captions)
+  - [Troubleshooting](#troubleshooting)
+    - [Processing Failures](#processing-failures)
+    - [Docker Issues](#docker-issues)
+    - [Sidecar File Issues](#sidecar-file-issues)
+    - [Tool Version Issues](#tool-version-issues)
+    - [Getting Help](#getting-help)
+  - [Testing](#testing)
+    - [Unit Testing](#unit-testing)
+    - [Docker Testing](#docker-testing)
+    - [Regression Testing](#regression-testing)
+  - [Development Tooling](#development-tooling)
+    - [Install](#install)
+    - [Update](#update)
+  - [Frequently Asked Questions](#frequently-asked-questions)
+  - [Feature Ideas](#feature-ideas)
+  - [3rd Party Tools](#3rd-party-tools)
+  - [Sample Media Files](#sample-media-files)
+  - [License](#license)
+
 ## Release Notes
 
-- Version 3.15:
-  - This is primarily a code refactoring release.
-  - Updated from .NET 9 to .NET 10.
-  - Added [Nullable types](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types) support.
-  - Added [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) support.
-    - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
-    - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
-    - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
-    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](#aot) if needed.
-  - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
-    - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
-    - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
-    - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
-    - Schema will automatically be upgraded and convert XML to JSON equivalent on reading.
-  - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
-  - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
-    - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
-    - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
-- Version 3.14:
-  - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.
-  - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
-  - Converted media tool commandline creation to using fluent builder pattern.
-  - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
-  - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
-  - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
-  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
-  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
-  - General refactoring.
-- See [Release History](./HISTORY.md) for older Release Notes.
+**Current Version: 3.15** - Code refactoring with .NET 10, Native AOT support, and Ubuntu-only Docker images.
+
+> **⚠️ What's New in 3.15 - Breaking Changes:**
+>
+> **Docker Users:**
+>
+> - Only `ubuntu:rolling` images are published (Alpine and Debian discontinued).
+> - Only `linux/amd64` and `linux/arm64` architectures supported (`linux/arm/v7` discontinued).
+> - Update your compose files: Use `docker.io/ptr727/plexcleaner:latest` (Ubuntu only).
+>
+> **All Users:**
+>
+> - SidecarFile schema changed from v4 to v5 (MediaInfo XML → JSON).
+> - Existing `.PlexCleaner` sidecar files will be automatically migrated on first run.
+> - Files may be re-analyzed during first processing after upgrade.
+
+**Key Highlights:**
+
+- Updated from .NET 9 to .NET 10.
+- Added Nullable types and Native AOT support.
+- Changed MediaInfo output from XML to JSON for better AOT compatibility.
+- Improved performance and reduced binary size with Native AOT.
+
+See [Release History](./HISTORY.md) for complete release notes and older versions.
 
 ## Questions or Issues
 
-- Use the [Discussions][discussions-link] forum for general questions.
-- Refer to the [Issues][issues-link] tracker for known problems.
-- Report bugs in the [Issues][issues-link] tracker.
+**For General Questions:**
+
+- Use the [Discussions][discussions-link] forum for general questions, feature requests, and sharing configurations.
+
+**For Bug Reports:**
+
+- Check the [Issues][issues-link] tracker for known problems first.
+- When reporting a new bug, please include:
+  - PlexCleaner version (`PlexCleaner --version`)
+  - Operating system and architecture (Windows/Linux/Docker, x64/arm64)
+  - Media tool versions (`PlexCleaner gettoolinfo`)
+  - Complete command line and relevant configuration settings
+  - Full log output with `--debug` flag enabled
+  - Sample media file information (`PlexCleaner getmediainfo --mediafiles <file>`)
+  - Steps to reproduce the issue
+
+**For Feature Requests:**
+
+- Search [Discussions][discussions-link] and [Issues][issues-link] to see if already proposed.
+- Describe the use case and expected behavior clearly.
 
 ## Use Cases
 
 The objective of PlexCleaner is to modify media content such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html), etc.
 
-Below are examples of issues that can be resolved using the primary `process` command:
+Common issues resolved by the `process` command:
 
-- Container file formats other than MKV are not supported by all platforms, re-multiplex to MKV.
-- Licensing for some codecs like MPEG-2 prevents hardware decoding, re-encode to H.264.
-- Some video codecs like MPEG-4 or VC-1 cause playback issues, re-encode to H.264.
-- Some H.264 video profiles like `Constrained Baseline@30` cause playback issues, re-encode to H.264 `High@40`.
-- On some displays interlaced video cause playback issues, deinterlace using HandBrake and the `--comb-detect --decomb` options.
-- Some audio codecs like Vorbis or WMAPro are not supported by the client platform, re-encode to AC3.
-- Some subtitle tracks like VOBsub cause hangs when the `MuxingMode` attribute is not set, re-multiplex to set the correct `MuxingMode`.
-- Automatic audio and subtitle track selection requires the track language to be set, set the language for unknown tracks.
-- Duplicate audio or subtitle tracks of the same language cause issues with player track selection, delete duplicate tracks, and keep the best quality audio tracks.
-- Corrupt media streams cause playback issues, verify stream integrity, and try to automatically repair by re-encoding.
-- Some WiFi or 100Mbps Ethernet connected devices with small read buffers hang when playing high bitrate content, warn when media bitrate exceeds the network bitrate.
-- Dolby Vision is only supported on DV capable displays, warn when the HDR profile is `Dolby Vision` (profile 5) vs. `Dolby Vision / SMPTE ST 2086` (profile 7) that supports DV and HDR10/HDR10+ displays.
-- EIA-608 and CTA-708 closed captions (CC) embedded in video streams can't be disabled or managed from the player, remove embedded closed captions from video streams.
-- See the [`process` command](#process-command) for more details.
+**Container & Codec Issues:**
+
+- Non-MKV containers → Re-multiplex to MKV.
+- MPEG-2 video → Re-encode to H.264 (licensing prevents hardware decoding).
+- MPEG-4 or VC-1 video → Re-encode to H.264 (playback issues).
+- H.264 `Constrained Baseline@30` → Re-encode to H.264 `High@40` (playback issues).
+- Vorbis or WMAPro audio → Re-encode to AC3 (platform compatibility).
+
+**Track Management:**
+
+- Missing language tags → Set language for unknown tracks (enables automatic selection).
+- Duplicate audio/subtitle tracks → Remove duplicates, keep best quality.
+- VOBsub subtitles without `MuxingMode` → Re-multiplex to set correct attribute (prevents hangs).
+
+**Video Quality:**
+
+- Interlaced video → Deinterlace using HandBrake `--comb-detect --decomb`.
+- Embedded closed captions (EIA-608/CTA-708) → Remove from video streams (can't be managed by player).
+- Dolby Vision profile 5 → Warn when not profile 7 (DV/HDR10 compatibility).
+
+**Performance & Integrity:**
+
+- Corrupt media streams → Verify integrity and attempt automatic repair.
+- High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
+
+See the [`process` command](#process-command) for detailed workflow and the [Common Configuration Examples](#common-configuration-examples) for quick setup examples.
 
 ## Performance Considerations
+
+PlexCleaner is optimized for processing large media libraries efficiently. Key performance features and tips:
+
+> **⚡ Performance Tips:**
+>
+> - **Large libraries**: Use `--parallel` to process multiple files concurrently.
+> - **Testing**: Combine `--testsnippets` and `--quickscan` for faster test iterations.
+> - **Network storage**: Process files locally when possible to avoid network bottlenecks.
+> - **Interruptions**: Use `Ctrl-Break` to stop; sidecar files allow resuming without re-processing verified files.
+> - **Docker logging**: Configure [log rotation](https://docs.docker.com/config/containers/logging/configure/) to prevent large log files.
+> - **Thread count**: Default is half of CPU cores (min 4); adjust with `--threadcount` if needed.
+
+**Sidecar Files:**
 
 - To improve processing performance of large media collections, the media file attributes and processing state is cached in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
 - Sidecar files allow re-processing of the same files to be very fast as the state will be read from the sidecar vs. re-computed from the media file.
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
+
+**Processing Operations:**
+
 - Re-multiplexing is an IO intensive operation and re-encoding is a CPU intensive operation.
 - Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
 - Processing can be interrupted using `Ctrl-Break`, if using sidecar files restarting will skip previously verified files.
+
+**Docker Considerations:**
+
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
 
 ## Installation
 
-[Docker](#docker) builds are the easiest and most up to date way to run, and can be used on any platform that supports `linux/amd64` or `linux/arm64` architectures.
-Alternatively, install directly on [Windows](#windows), [Linux](#linux), or [MacOS](#macos) following the provided instructions.
+Choose an installation method based on your platform and requirements:
+
+- **[Docker](#docker)** (Recommended): Easiest and most up-to-date option.
+  - ✅ All tools pre-installed and automatically updated.
+  - ✅ Consistent experience across platforms.
+  - ✅ Supports `linux/amd64` and `linux/arm64` architectures.
+  - Best for: Linux, NAS devices, servers, cross-platform deployments.
+
+- **[Windows](#windows)**: Native installation with automatic tool updates.
+  - ✅ Automatic tool downloads and updates via `checkfornewtools` command.
+  - ✅ Or use `winget` for system-wide tool installation.
+  - Best for: Windows desktops and servers.
+
+- **[Linux](#linux)**: Manual installation.
+  - ⚠️ Requires manual tool installation via package manager.
+  - ⚠️ No automatic tool updates.
+  - Best for: Users who prefer native binaries over Docker.
+
+- **[macOS](#macos)**: Limited support.
+  - ⚠️ Binaries built but not tested in CI.
+  - ⚠️ Manual tool installation required.
 
 ### Docker
 
 - Builds are published on [Docker Hub][plexcleaner-hub-link].
-- See the [Docker README][docker-link] for full distribution details and current media tool versions.
-  - `ptr727/plexcleaner:latest` is an alias for the `ubuntu` tag.
-  - `ptr727/plexcleaner:ubuntu` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`).
-  - `ptr727/plexcleaner:alpine` is based on [Alpine][alpine-docker-link] (`alpine:latest`).
-  - `ptr727/plexcleaner:debian` is based on [Debian][debian-hub-link] (`debian:stable-slim`).
+- See the [Docker README][docker-link] for distribution details and current media tool versions.
+- `ptr727/plexcleaner:latest` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `main` branch.
+- `ptr727/plexcleaner:develop` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `develop` branch.
 - Images are updated weekly with the latest upstream updates.
 - The container has all the prerequisite 3rd party tools pre-installed.
 - Map your host volumes, and make sure the user has permission to access and modify media files.
 - The container is intended to be used in interactive mode, for long running operations run in a `screen` session.
-- See examples below for instructions on getting started.
 
-Example, run in an interactive shell:
+**Path Mapping Convention**: All examples use `/data/media` as the host path mapped to `/media` inside the container. Replace `/data/media` with your actual media location.
 
-```shell
-# The host "/data/media" directory is mapped to the container "/media" directory
-# Replace the volume mappings to suit your needs
+#### Docker Compose (Recommended for Monitor Mode)
 
-# If running docker as a non-root user make sure the media file permissions allow writing for the executing user
-# adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
-# sudo chown -R nonroot:users /data/media
-# sudo chmod -R ug=rwx,o=rx /data/media
-# docker run --user nonroot:users
-
-# Run the bash shell in an interactive session
-docker run \
-  -it \
-  --rm \
-  --pull always \
-  --name PlexCleaner \
-  --volume /data/media:/media:rw \
-  docker.io/ptr727/plexcleaner \
-  /bin/bash
-
-# Create default settings file
-# Edit the settings file to suit your needs
-/PlexCleaner/PlexCleaner \
-  defaultsettings \
-  --settingsfile /media/PlexCleaner/PlexCleaner.json
-
-# Process media files
-/PlexCleaner/PlexCleaner \
-  --logfile /media/PlexCleaner/PlexCleaner.log \
-  process \
-  --settingsfile /media/PlexCleaner/PlexCleaner.json \
-  --mediafiles /media/Movies \
-  --mediafiles /media/Series
-
-# Exit the interactive session
-exit
-```
-
-Example, run `monitor` command in a screen session:
-
-```shell
-# Start a new screen session
-screen
-# Or attach to the existing screen session
-# screen -rd
-
-# Run the monitor command in an interactive session
-docker run \
-  -it \
-  --rm \
-  --log-driver json-file --log-opt max-size=10m \
-  --pull always \
-  --name PlexCleaner \
-  --env TZ=America/Los_Angeles \
-  --volume /data/media:/media:rw \
-  docker.io/ptr727/plexcleaner \
-  /PlexCleaner/PlexCleaner \
-    --logfile /media/PlexCleaner/PlexCleaner.log \
-    --logwarning \
-    monitor \
-    --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --parallel \
-    --mediafiles /media/Movies \
-    --mediafiles /media/Series
-```
-
-Example, run `process` command:
-
-```shell
-# Run the process command
-docker run \
-  --rm \
-  --pull always \
-  --name PlexCleaner \
-  --env TZ=America/Los_Angeles \
-  --volume /data/media:/media:rw \
-  docker.io/ptr727/plexcleaner \
-  /PlexCleaner/PlexCleaner \
-    --logfile /media/PlexCleaner/PlexCleaner.log \
-    --logwarning \
-    process \
-    --settingsfile /media/PlexCleaner/PlexCleaner.json \
-    --mediafiles /media/Movies \
-    --mediafiles /media/Series
-```
-
-Example, run `monitor` command as a docker compose stack:
+For continuous monitoring of media folders, use Docker Compose.
 
 ```yaml
 services:
 
   plexcleaner:
-    image: docker.io/ptr727/plexcleaner:latest
+    image: docker.io/ptr727/plexcleaner:latest  # Use :develop for pre-release builds
     container_name: PlexCleaner
     restart: unless-stopped
-    user: nonroot:users
+    user: nonroot:users  # Change to match your user:group (e.g., 1000:1000)
     command:
       - /PlexCleaner/PlexCleaner
       - monitor
-      - --settingsfile=/media/PlexCleaner/PlexCleaner.json
-      - --logfile=/media/PlexCleaner/PlexCleaner.log
-      - --preprocess
-      - --mediafiles=/media/Series
-      - --mediafiles=/media/Movies
+      - --settingsfile=/media/PlexCleaner/PlexCleaner.json  # Path inside container
+      - --logfile=/media/PlexCleaner/PlexCleaner.log        # Path inside container
+      - --preprocess  # Process all existing files on startup
+      - --mediafiles=/media/Series  # Add multiple --mediafiles for each folder to monitor
+      - --mediafiles=/media/Movies  # Paths inside container (mapped from host volumes)
     environment:
-      - TZ=America/Los_Angeles
+      - TZ=America/Los_Angeles  # Set your timezone
     volumes:
-      - /data/media:/media
+      - /data/media:/media  # Map host path /data/media to container /media (read/write)
 ```
+
+#### Docker Run Examples
+
+For a simple one-time process operation, see the [Quick Start](#quick-start) example.
+
+**Setup Permissions** (if running as non-root user):
+
+```shell
+# Create nonroot user and set media directory permissions
+sudo adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
+sudo chown -R nonroot:users /data/media
+sudo chmod -R ug=rwx,o=rx /data/media
+```
+
+**Interactive Shell Access:**
+
+```shell
+# Replace /data/media with your actual media directory
+docker run \
+  -it --rm --pull always \
+  --name PlexCleaner \
+  --user nonroot:users \
+  --volume /data/media:/media:rw \
+  docker.io/ptr727/plexcleaner \
+  /bin/bash
+
+# Inside the container, run PlexCleaner commands (see Quick Start)
+exit
+```
+
+**Monitor Command in Screen Session:**
+
+```shell
+# Start or attach to screen session
+screen
+# Or: screen -rd
+
+# Run monitor (adjust paths as needed)
+docker run -it --rm --pull always \
+  --log-driver json-file --log-opt max-size=10m \
+  --name PlexCleaner --env TZ=America/Los_Angeles \
+  --volume /data/media:/media:rw \
+  docker.io/ptr727/plexcleaner \
+  /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --logwarning \
+  monitor --settingsfile /media/PlexCleaner/PlexCleaner.json --parallel \
+  --mediafiles /media/Movies --mediafiles /media/Series
+```
+
+**Process Command:**
+
+For one-time processing, see the [Quick Start](#quick-start) example or use similar syntax as above, replacing `monitor` with `process`.
 
 ### Windows
 
-- Install the [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows).
-- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) or the [.NET SDK](https://dotnet.microsoft.com/download).
-- Create a default JSON settings file using the `defaultsettings` command:
-  - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
-  - Modify the settings to suit your needs.
-- Install the required 3rd party tools:
-  - Using the `checkfornewtools` to install tools locally:
-    - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
-    - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
-    - The tool version information will be stored in `Tools\Tools.json`.
-    - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
-  - Using `winget` to install tools system wide:
-    - Note, run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
-    - `winget install --id=Gyan.FFmpeg --exact`.
-    - `winget install --id=MediaArea.MediaInfo --exact`.
-    - `winget install --id=HandBrake.HandBrake.CLI --exact`.
-    - `winget install --id=MoritzBunkus.MKVToolNix --exact --installer-type portable`.
-    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
-  - Manually downloaded and extracted locally:
-    - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
-    - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
-    - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
-    - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
-    - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
-    - Set `ToolsOptions:UseSystem` to `false` and `ToolsOptions:AutoUpdate` to `false`.
+**Prerequisites:**
+
+- For pre-compiled binaries: Install [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows) (smaller, runtime only).
+- For compiling from source: Install [.NET SDK](https://dotnet.microsoft.com/download) (includes build tools).
+
+**Installation Steps:**
+
+1. Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
+   - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) with the .NET SDK.
+
+2. Create a default JSON settings file using the `defaultsettings` command:
+   - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
+   - Modify the settings to suit your needs.
+
+3. Install the required 3rd party tools (choose one method):
+
+   **Option A: Automatic download (Recommended)**
+   - `PlexCleaner checkfornewtools --settingsfile PlexCleaner.json`
+   - The default `Tools` folder will be created in the same folder as the `PlexCleaner` binary file.
+   - The tool version information will be stored in `Tools\Tools.json`.
+   - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
+
+   **Option B: System-wide installation via winget**
+   - Note: Run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
+   - `winget install --id=Gyan.FFmpeg --exact`
+   - `winget install --id=MediaArea.MediaInfo --exact`
+   - `winget install --id=HandBrake.HandBrake.CLI --exact`
+   - `winget install --id=MoritzBunkus.MKVToolNix --exact --installer-type portable`
+   - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
+
+   **Option C: Manual download**
+   - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+   - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
+   - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
+   - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
+   - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
+   - Set `ToolsOptions:UseSystem` to `false` and `ToolsOptions:AutoUpdate` to `false`.
 
 ### Linux
 
@@ -282,15 +416,103 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
 ## Configuration
 
 Create a default JSON configuration file by running:
-`PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
 
-Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for usage.
+```shell
+PlexCleaner defaultsettings --settingsfile PlexCleaner.json
+```
+
+> **⚠️ Important**: The default settings file must be edited to match your requirements before processing media files.
+> **Required Changes**:
+>
+> - Review and adjust `ProcessOptions:KeepLanguages` for your preferred languages
+> - Review codec and processing options in `ConvertOptions`
+> - Adjust tool paths if not using default locations
+
+Refer to the commented default JSON [settings file](./PlexCleaner.defaults.json) for detailed configuration options and explanations.
+
+### Common Configuration Examples
+
+Quick configuration examples for common use cases. Edit your `PlexCleaner.json` file:
+
+**Keep Only English Audio and Subtitles:**
+
+```json
+"ProcessOptions": {
+  "KeepLanguages": ["en"],
+  "RemoveUnwantedLanguageTracks": true
+}
+```
+
+**Keep English and Spanish:**
+
+```json
+"ProcessOptions": {
+  "KeepLanguages": ["en", "es"],
+  "RemoveUnwantedLanguageTracks": true
+}
+```
+
+**Re-encode MPEG-2 Video to H.264:**
+
+```json
+"ProcessOptions": {
+  "ReEncodeVideo": true
+},
+"ConvertOptions": {
+  "ReEncodeVideoFormats": ["MPEG Video"],
+  "FfMpegOptions": {
+    "Video": "libx264 -crf 22 -preset medium"
+  }
+}
+```
+
+**Re-encode Vorbis and WMAPro Audio to AC3:**
+
+```json
+"ProcessOptions": {
+  "ReEncode": true
+},
+"ConvertOptions": {
+  "ReEncodeAudioFormats": ["Vorbis", "WMA"],
+  "FfMpegOptions": {
+    "Audio": "ac3"
+  }
+}
+```
+
+**Remove Duplicate Tracks (Keep Best Quality):**
+
+```json
+"ProcessOptions": {
+  "RemoveDuplicateTracks": true,
+  "PreferredAudioFormats": ["TrueHD", "DTS-HD MA", "DTS", "AC-3", "AAC"]
+}
+```
+
+**Verify Media Integrity and Auto-Repair:**
+
+```json
+"ProcessOptions": {
+  "Verify": true,
+  "AutoRepair": true,
+  "DeleteInvalidFiles": false,
+  "RegisterInvalidFiles": true
+}
+```
+
+See the [Custom FFmpeg and HandBrake CLI Parameters](#custom-ffmpeg-and-handbrake-cli-parameters) section for advanced encoding options.
 
 ### Custom FFmpeg and HandBrake CLI Parameters
 
-The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allows for custom CLI parameters to be used during processing.
+> **ℹ️ Note**: The default encoding settings work well for most users and provide good compatibility with Plex/Emby/Jellyfin. Only customize these settings if you have specific requirements (e.g., hardware encoding, different quality targets, or specific codec preferences).
 
-Note that hardware assisted encoding options are operating system, hardware, and tool version specific.\
+The `ConvertOptions:FfMpegOptions` and `ConvertOptions:HandBrakeOptions` settings allow custom CLI parameters for media processing. This is useful for:
+
+- Hardware-accelerated encoding (GPU encoding via NVENC, QuickSync, etc.).
+- Custom quality/speed tradeoffs (CRF values, presets).
+- Alternative codecs (AV1, VP9, etc.).
+
+Note that hardware encoding options are operating system, hardware, and tool version specific.\
 Refer to the Jellyfin hardware acceleration [docs](https://jellyfin.org/docs/general/administration/hardware-acceleration/) for hints on usage.
 The example configurations are from documentation and minimal testing with Intel QuickSync on Windows only, please discuss and post working configurations in [Discussions][discussions-link].
 
@@ -366,6 +588,24 @@ Note that HandBrake is primarily used for video deinterlacing, and only as backu
 The default `HandBrakeOptions:Audio` configuration is set to `copy --audio-fallback ac3` that will copy all supported audio tracks as is, and only encode to `ac3` if the audio codec is not natively supported.
 
 ## Usage
+
+### Common Commands Quick Reference
+
+| Command | Purpose | When to Use |
+| ------- | ------- | ----------- |
+| `defaultsettings` | Create default configuration file | First time setup |
+| `process` | Batch process media files | One-time processing of media library |
+| `monitor` | Watch folders and auto-process changes | Continuous monitoring of active media folders |
+| `verify` | Verify media integrity without processing | Test media files or check for corruption |
+| `remux` | Re-multiplex to MKV without re-encoding | Fix container issues, faster than full processing |
+| `reencode` | Re-encode video/audio tracks | Fix codec compatibility issues |
+| `deinterlace` | Remove interlacing artifacts | Fix interlaced video playback issues |
+| `removeclosedcaptions` | Remove embedded closed captions | Remove unwanted CC from video streams |
+| `checkfornewtools` | Download/update media tools (Windows only) | Keep tools up-to-date |
+
+See detailed command documentation below for all options and usage examples.
+
+---
 
 Use the `PlexCleaner --help` commandline option to get a list of commands and options.\
 To get help for a specific command run `PlexCleaner <command> --help`.
@@ -446,43 +686,71 @@ Options:
   --debug <boolean>                     Wait for debugger to attach
 ```
 
-The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments:
+The `process` command will process the media content using options as defined in the settings file and the optional commandline arguments.
 
-- Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for configuration details.
-- Delete unwanted files.
-  - `FileIgnoreMasks`, `ReMuxExtensions`, `DeleteUnwantedExtensions`.
+Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete configuration details, or see [Common Configuration Examples](#common-configuration-examples) for quick setup examples.
+
+**Processing Workflow (in order):**
+
+**1. File Management:**
+
+- Delete unwanted files based on patterns.
+  - `FileIgnoreMasks`, `ReMuxExtensions`, `DeleteUnwantedExtensions`
+
+**2. Container Operations:**
+
 - Re-multiplex non-MKV containers to MKV format.
-  - `ReMuxExtensions`, `ReMux`.
-- Remove all tags, titles, thumbnails, cover art, and attachments from the media file.
-  - `RemoveTags`.
+  - `ReMuxExtensions`, `ReMux`
+- Remove all tags, titles, thumbnails, cover art, and attachments.
+  - `RemoveTags`
+
+**3. Track Language and Metadata:**
+
 - Set IETF language tags and Matroska special track flags if missing.
-  - `SetIetfLanguageTags`.
+  - `SetIetfLanguageTags`
 - Set Matroska special track flags based on track titles.
-  - `SetTrackFlags`.
+  - `SetTrackFlags`
 - Set the default language for any track with an undefined language.
-  - `SetUnknownLanguage`, `DefaultLanguage`.
+  - `SetUnknownLanguage`, `DefaultLanguage`
+
+**4. Track Selection:**
+
 - Remove tracks with unwanted languages.
   - `KeepLanguages`, `KeepOriginalLanguage`, `RemoveUnwantedLanguageTracks`
-- Remove duplicate tracks, where duplicates are tracks of the same type and language.
-  - `RemoveDuplicateTracks`, `PreferredAudioFormats`.
-- Re-multiplex the media file if required to fix inconsistencies.
-  - `ReMux`.
+- Remove duplicate tracks (same type and language, keep best quality).
+  - `RemoveDuplicateTracks`, `PreferredAudioFormats`
+
+**5. Video Processing:**
+
 - De-interlace the video stream if interlaced.
-  - `DeInterlace`.
-- Remove EIA-608 and CTA-708 closed captions from video stream if present.
-  - `RemoveClosedCaptions`.
-- Re-encode video and audio based on specified codecs and formats.
-  - `ReEncodeVideo`, `ReEncodeAudioFormats`, `ConvertOptions`, `ReEncode`.
+  - `DeInterlace`
+- Remove EIA-608 and CTA-708 closed captions from video stream.
+  - `RemoveClosedCaptions`
+- Re-encode video based on specified codecs and formats.
+  - `ReEncodeVideo`, `ReEncodeVideoFormats`, `ConvertOptions`
+
+**6. Audio Processing:**
+
+- Re-encode audio based on specified formats.
+  - `ReEncode`, `ReEncodeAudioFormats`, `ConvertOptions`
+
+**7. Integrity and Verification:**
+
+- Re-multiplex the media file if required to fix inconsistencies.
+  - `ReMux`
 - Verify the media container and stream integrity.
-  - `MaximumBitrate`, `Verify`.
-- If verification fails attempt repair.
-  - `AutoRepair`.
-- If verification after repair fails delete or mark file to be ignored.
-  - `DeleteInvalidFiles`, `RegisterInvalidFiles`.
+  - `MaximumBitrate`, `Verify`
+- If verification fails, attempt automatic repair.
+  - `AutoRepair`
+- If repair fails, delete or mark file to be ignored.
+  - `DeleteInvalidFiles`, `RegisterInvalidFiles`
+
+**8. Finalization:**
+
 - Restore modified timestamp of modified files to original timestamp.
-  - See `RestoreFileTimestamp`.
-- Delete empty folders.
-  - `DeleteEmptyFolders`.
+  - `RestoreFileTimestamp`
+- Delete empty folders after processing.
+  - `DeleteEmptyFolders`
 
 Options:
 
@@ -554,6 +822,7 @@ The `monitor` command will watch the specified folders for file changes, and per
 
 - All the referenced directories will be watched for changes, and any changes will be added to a queue to be periodically processed.
 - Note that the [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
+- See [Troubleshooting - File changes not detected](#docker-issues) for more details on monitor mode limitations.
 
 Options:
 
@@ -564,18 +833,32 @@ Options:
 
 ### Other Commands
 
+Additional commands for specific tasks, organized by category:
+
+**Configuration:**
+
 - `defaultsettings`:
   - Create JSON configuration file using default settings.
+- `createschema`:
+  - Write JSON settings schema to file for validation.
+
+**Tool Management:**
+
 - `checkfornewtools`:
   - Check for new tool versions and download if newer.
   - Only supported on Windows.
+- `gettoolinfo`:
+  - Print media tool information and versions.
+
+**File Operations:**
+
 - `remux`:
   - Conditionally re-multiplex media files.
   - Re-multiplex non-MKV containers in the `ReMuxExtensions` list to MKV container format.
   - Same logic as used in the `process` command.
 - `reencode`:
   - Conditionally re-encode media files.
-  - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in `ConvertOptions`.
+  - Re-encode video and audio if format matches `ReEncodeVideo` or `ReEncodeAudioFormats` to formats set in [`ConvertOptions`](#custom-ffmpeg-and-handbrake-cli-parameters).
   - Same logic as used in the `process` command.
 - `deinterlace`:
   - De-interlace the video stream if interlaced.
@@ -587,6 +870,9 @@ Options:
   - Remove closed captions from video stream.
   - Useful when media players cannot disable EIA-608 and CTA-708 embedded in the video stream, or content is undesirable.
   - Same logic as used in the `process` command.
+
+**Information and Debugging:**
+
 - `verify`:
   - Verify media container and stream integrity.
   - Same logic as used in the `process` command.
@@ -603,23 +889,34 @@ Options:
   - Print media file attribute mappings.
   - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
-  - Print media file information.
-- `gettoolinfo`:
-  - Print media tool information.
-- `createschema`:
-  - Write JSON settings schema to file.
+  - Print media file information and track details.
 
 ## IETF Language Matching
 
-Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).\
-During processing the absence of IETF language tags will treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
-If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
+Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
 
-Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right.\
-E.g. `pt` will match `pt` Portuguese, or `pt-BR` Brazilian Portuguese, or `pt-PT` European Portuguese.\
-E.g. `pt-BR` will only match only `pt-BR` Brazilian Portuguese.\
-E.g. `zh` will match `zh` Chinese, or `zh-Hans` simplified Chinese, or `zh-Hant` for traditional Chinese, and other variants.\
-E.g. `zh-Hans` will only match `zh-Hans` simplified Chinese.
+**Quick Start - Most Common Use Cases:**
+
+- **Keep only English**: Set `ProcessOptions:KeepLanguages` to `["en"]`.
+- **Keep English and Spanish**: Set `ProcessOptions:KeepLanguages` to `["en", "es"]`.
+- **Keep all Portuguese variants**: Use `"pt"` to match `pt`, `pt-BR` (Brazilian), `pt-PT` (European), etc.
+- **Keep only Brazilian Portuguese**: Use `"pt-BR"` to match specifically Brazilian Portuguese.
+
+**Understanding Language Matching:**
+
+Tags are in the form of `language-extlang-script-region-variant-extension-privateuse`, and matching happens left to right (most specific to least specific).
+
+Examples:
+
+- `pt` matches: `pt` Portuguese, `pt-BR` Brazilian Portuguese, `pt-PT` European Portuguese.
+- `pt-BR` matches: only `pt-BR` Brazilian Portuguese.
+- `zh` matches: `zh` Chinese, `zh-Hans` simplified Chinese, `zh-Hant` traditional Chinese, and other variants.
+- `zh-Hans` matches: only `zh-Hans` simplified Chinese.
+
+**Technical details:**
+
+During processing the absence of IETF language tags will be treated as a track warning, and an RFC 5646 IETF language will be temporarily assigned based on the ISO639-2B tag.\
+If `ProcessOptions.SetIetfLanguageTags` is enabled MkvMerge will be used to remux the file using the `--normalize-language-ietf extlang` option, see the [MkvMerge docs](https://mkvtoolnix.download/doc/mkvpropedit.html) for more details.
 
 Normalized tags will be expanded for matching.\
 E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
@@ -627,6 +924,8 @@ E.g. `cmn-Hant` will be expanded to `zh-cmn-Hant` allowing matching with `zh`.
 See the [W3C Language tags in HTML and XML](https://www.w3.org/International/articles/language-tags/) and [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/) for more details.
 
 ## EIA-608 and CTA-708 Closed Captions
+
+> **TL;DR**: Closed captions (CC) are subtitles embedded in the video stream (not separate tracks). They can cause issues with some players that always display them or cannot disable them. PlexCleaner can detect and remove them using the `RemoveClosedCaptions` option, but detection requires scanning the entire file (use `--quickscan` for faster testing with reduced accuracy).
 
 [EIA-608](https://en.wikipedia.org/wiki/EIA-608) and [CTA-708](https://en.wikipedia.org/wiki/CTA-708) subtitles, commonly referred to as Closed Captions (CC), are typically used for broadcast television.\
 Media containers typically contain separate discrete subtitle tracks, but closed captions can be encoded into the primary video stream.
@@ -737,7 +1036,106 @@ E.g. `ffmpeg -loglevel error -i \"{fileInfo.FullName}\" -c copy -map 0 -bsf:v fi
 Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.\
 [Note](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [note](https://trac.ffmpeg.org/ticket/5283) that as of writing HDR10+ metadata may be lost when removing closed captions from H265 content.
 
+## Troubleshooting
+
+### Processing Failures
+
+**Verification fails:**
+
+- Check the log file for detailed error messages from FFmpeg.
+- Files with bitrate exceeding `MaximumBitrate` will fail verification.
+- Stream integrity errors indicate corrupted or malformed media files.
+- If `AutoRepair` is enabled, PlexCleaner will attempt automatic repair using FFmpeg.
+- If repair fails and `DeleteInvalidFiles` is enabled, invalid files will be deleted.
+- Alternatively, if `RegisterInvalidFiles` is enabled, files will be marked as failed in the sidecar file to prevent re-processing.
+
+**Re-encoding fails:**
+
+- FFmpeg is the primary encoder; HandBrake is used as fallback for deinterlacing or if FFmpeg fails.
+- Check encoder options in [`ConvertOptions`](#custom-ffmpeg-and-handbrake-cli-parameters) match your hardware capabilities.
+- Hardware encoding may fail on unsupported GPUs or missing drivers.
+- Try software encoding first by using default settings.
+
+### Docker Issues
+
+**Permission denied errors:**
+
+- Ensure the container user has read/write permissions on mapped volumes.
+- Check ownership: `chown -R <user>:<group> /data/media`.
+- Check permissions: `chmod -R ug=rwx,o=rx /data/media`.
+- The container runs as `nonroot:users` by default; adjust `user:` in compose file to match your system.
+
+**File changes not detected in monitor mode:**
+
+- `FileSystemWatcher` may not work correctly with network filesystems (NFS, SMB) when changes occur directly on the underlying storage.
+- Test by running monitor directly on the storage system instead of through network mounts.
+- Consider using periodic `process` command execution instead of continuous monitoring.
+- See the [Monitor Command](#monitor-command) documentation for limitations.
+
+### Sidecar File Issues
+
+**Files being re-processed unnecessarily:**
+
+- Delete `.PlexCleaner` sidecar files to force re-analysis.
+- Sidecar files contain processing state and file hash (first/last 64KB).
+- File modifications invalidate the sidecar; timestamp changes alone do not.
+- Use `createsidecar` command to rebuild all sidecar files.
+
+**Sidecar schema version mismatch:**
+
+- Newer PlexCleaner versions may use updated sidecar schemas.
+- Old sidecar files are automatically migrated or recreated.
+- Check log for schema version warnings.
+
+### Tool Version Issues
+
+**Tool version outdated or incompatible:**
+
+- Windows: Run `checkfornewtools` or enable `ToolsOptions:AutoUpdate`.
+- Linux/Docker: Update the container image to get latest tool versions.
+- Tool versions are cached in `Tools/Tools.json` (Windows) or embedded in container.
+- Mismatched tool versions between Windows and Docker may produce different results.
+
+**Tools not found:**
+
+- Windows: Ensure tools are installed via `checkfornewtools`, winget, or manual download.
+- Set `ToolsOptions:UseSystem` to `true` for system-installed tools, `false` for local `Tools` folder.
+- Linux: Install tools via package manager (apt, yum, etc.).
+- Check log file for tool execution errors and paths.
+
+### Getting Help
+
+If you're still experiencing issues:
+
+1. **Check existing resources:**
+   - Review [Release Notes](#release-notes) and [HISTORY.md](HISTORY.md) for known issues and changes.
+   - Search [GitHub Discussions][discussions-link] for similar problems and solutions.
+   - Check [GitHub Issues][issues-link] for reported bugs.
+
+2. **Gather diagnostic information:**
+   - Log file (specify location with `--logfile` option).
+   - PlexCleaner version: Run `PlexCleaner getversioninfo`.
+   - Tool versions: Run `PlexCleaner gettoolinfo --settingsfile <path>`.
+   - Configuration file (redact sensitive paths if needed).
+   - Media file information: Run `PlexCleaner getmediainfo --mediafiles <path>`.
+   - Sidecar file (if relevant): Run `PlexCleaner getsidecarinfo --mediafiles <path>`.
+
+3. **Report the issue:**
+   - For questions or general help: Start a [Discussion][discussions-link].
+   - For confirmed bugs: Open an [Issue][issues-link] with:
+     - Clear description of the problem.
+     - Steps to reproduce.
+     - Expected vs actual behavior.
+     - All diagnostic information from step 2.
+     - Sample media files (if possible) or MediaInfo output.
+
 ## Testing
+
+PlexCleaner includes multiple testing approaches for different scenarios:
+
+- **Unit Tests**: Fast automated tests for code logic (no media files required).
+- **Docker Tests**: Validate container functionality with sample media files.
+- **Regression Tests**: Compare processing results across versions using real media files.
 
 The majority of development and debugging time is spent figuring out how to deal with media file and media processing tool specifics affecting playback.\
 For repetitive test tasks pre-configured on-demand tests are included in VSCode [`tasks.json`](./.vscode/tasks.json) and [`launch.json`](./.vscode/launch.json), and VisualStudio [`launchSettings.json`](./PlexCleaner/Properties/launchSettings.json).\
@@ -745,7 +1143,7 @@ Several of the tests reference system local paths containing media files, so you
 
 ### Unit Testing
 
-Unit tests are included for static tests that do not require the use of media files.
+Unit tests validate core functionality without requiring media files. Run locally or in CI/CD pipelines.
 
 ```console
 dotnet build
@@ -755,7 +1153,9 @@ dotnet test
 
 ### Docker Testing
 
-the [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.\
+The [`Test.sh`](./Docker/Test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
+
+The [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.\
 If an external media path is not specified the test will download and use the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip).
 
 ```console
@@ -767,6 +1167,8 @@ docker run \
 ```
 
 ### Regression Testing
+
+Regression testing ensures consistent behavior across versions by comparing processing results on the same media files.
 
 The behavior of the tool is very dependent on the media files being tested, and the following process can facilitate regressions testing, assuring that the process results between versions remain consistent.
 
@@ -825,64 +1227,151 @@ RunContainer () {
       --resultsfile=$ConfigPath/Results-$Tag.json
 }
 
-# Test release containers
-RunContainer docker.io/ptr727/plexcleaner ubuntu
-RunContainer docker.io/ptr727/plexcleaner debian
-RunContainer docker.io/ptr727/plexcleaner alpine
-
-# Test pre-release containers
-RunContainer docker.io/ptr727/plexcleaner ubuntu-develop
-RunContainer docker.io/ptr727/plexcleaner debian-develop
-RunContainer docker.io/ptr727/plexcleaner alpine-develop
+# Test containers
+RunContainer docker.io/ptr727/plexcleaner latest
+RunContainer docker.io/ptr727/plexcleaner develop
 ```
 
 ## Development Tooling
 
+**Prerequisites**: .NET SDK 10, Visual Studio Code, and Git.
+
 ### Install
 
-```shell
-winget install Microsoft.DotNet.SDK.10
-winget install Microsoft.VisualStudioCode
-winget install nektos.act
-```
+Install development tools using winget (Windows):
 
 ```shell
+# Core development tools
+winget install Microsoft.DotNet.SDK.10      # .NET 10 SDK for building
+winget install Microsoft.VisualStudioCode  # IDE
+winget install nektos.act                   # Local GitHub Actions testing
+```
+
+Install .NET development tools:
+
+```shell
+# Initialize tool manifest
 dotnet new tool-manifest
-dotnet tool install csharpier
-dotnet tool install husky
-dotnet tool install dotnet-outdated-tool
+
+# Code formatting and quality tools
+dotnet tool install csharpier           # Code formatter
+dotnet tool install husky               # Git hooks for pre-commit checks
+dotnet tool install dotnet-outdated-tool # Dependency update checker
+
+# Setup git hooks
 dotnet husky install
 dotnet husky add pre-commit -c "dotnet husky run"
 ```
 
 ### Update
 
+Keep tools up-to-date:
+
 ```shell
+# Update winget-installed tools
 winget upgrade Microsoft.DotNet.SDK.10
 winget upgrade Microsoft.VisualStudioCode
 winget upgrade nektos.act
 ```
 
 ```shell
-dotnet tool restore
-dotnet tool update --all
-dotnet husky install
-dotnet outdated --upgrade:prompt
+# Update .NET tools and dependencies
+dotnet tool restore                  # Restore tools from manifest
+dotnet tool update --all             # Update all .NET tools
+dotnet husky install                 # Reinstall git hooks
+dotnet outdated --upgrade:prompt     # Interactive dependency updates
 ```
+
+## Frequently Asked Questions
+
+**Q: What is Direct Play and why does it matter?**
+
+A: Direct Play means your media server (Plex/Emby/Jellyfin) sends the file directly to your player without transcoding. This saves server CPU, reduces power consumption, preserves quality, and enables playback on low-power devices. PlexCleaner ensures your media files are in formats that all your devices can Direct Play.
+
+**Q: How long does processing take?**
+
+A: Processing time varies significantly based on operations:
+
+- **Re-multiplexing** (container changes): Very fast, typically 1-5% of playback time.
+- **Track removal/language tags**: Very fast, typically <1 minute per file.
+- **Verification**: Fast, typically 10-30% of playback time (faster with `--quickscan`).
+- **De-interlacing**: Slow, typically 0.5-2x real-time (depends on CPU/GPU).
+- **Re-encoding**: Very slow, typically 0.1-1x real-time (heavily depends on CPU/GPU and quality settings).
+- **First run**: Slower due to analysis; subsequent runs are much faster thanks to sidecar files.
+
+Use `--parallel` for large libraries to process multiple files concurrently.
+
+**Q: When should I re-encode vs just re-multiplex?**
+
+A: Re-multiplex (container changes only) when:
+
+- File is in MP4, AVI, or other non-MKV container.
+- Tracks need removal/reordering.
+- Metadata needs updating.
+
+Re-encode (computationally expensive) only when:
+
+- Codec is incompatible (MPEG-2, VC-1, Vorbis, WMAPro).
+- Video is interlaced and causing playback issues.
+- Embedded closed captions need removal.
+- Specific quality/size requirements.
+
+**Q: Will PlexCleaner delete my files?**
+
+A: PlexCleaner modifies files in place and creates `.PlexCleaner` sidecar files. It only deletes files if:
+
+- `DeleteUnwantedExtensions` is enabled and file matches unwanted patterns.
+- `DeleteInvalidFiles` is enabled and file fails verification/repair.
+- `DeleteEmptyFolders` is enabled after processing.
+
+Always maintain backups before processing.
+
+**Q: Can I run PlexCleaner while Plex/Emby/Jellyfin is running?**
+
+A: Yes, but be cautious:
+
+- Media servers may have files open/locked during playback.
+- Modified files may need library refresh to reflect changes.
+- Consider using `monitor` mode with `--parallel` for continuous processing.
+- Test with a small subset first.
+
+**Q: Why are my files being re-processed every time?**
+
+A: Check:
+
+- Sidecar files (`.PlexCleaner`) are being preserved (not deleted/excluded).
+- File content hasn't changed (sidecar uses content hash, not timestamp).
+- Configuration changes may invalidate sidecar state.
+- Tool version updates may trigger re-analysis.
+
+Delete sidecar files with `createsidecar` to force fresh analysis.
+
+**Q: Does PlexCleaner support 4K/HDR/Dolby Vision?**
+
+A: Yes. PlexCleaner preserves video quality and HDR metadata when re-multiplexing. When re-encoding:
+
+- HDR10 metadata is preserved with proper encoder settings.
+- Dolby Vision: Profile 7 (cross-compatible) is supported; Profile 5 generates warnings.
+- Use hardware encoding carefully - not all GPUs preserve HDR metadata correctly.
+- Test with sample files before processing entire library.
 
 ## Feature Ideas
 
-- Cleanup chapters, e.g. chapter markers that exceed the media play time.
-- Cleanup NFO files, e.g. verify schema, verify image URL's.
-- Cleanup text based subtitle files, e.g. convert file encoding to UTF8.
-- Process external subtitle files, e.g. merge or extract.
+Have a feature request or idea? Please check [GitHub Discussions][discussions-link] and [Issues][issues-link] first to see if it's already been proposed. If not, feel free to start a new discussion!
+
+Some ideas being considered:
+
+- Cleanup chapters (e.g. chapter markers that exceed media play time).
+- Cleanup NFO files (e.g. verify schema, verify image URLs).
+- Cleanup text-based subtitle files (e.g. convert file encoding to UTF8).
+- Process external subtitle files (e.g. merge or extract).
 
 ## 3rd Party Tools
 
 - [7-Zip](https://www.7-zip.org/)
 - [AwesomeAssertions](https://awesomeassertions.org/)
 - [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
-- [CliWrap](cliwrap-link)
+- [CliWrap][cliwrap-link]
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
 - [dotnet-outdated](https://github.com/dotnet-outdated/dotnet-outdated)
@@ -919,10 +1408,8 @@ Licensed under the [MIT License][license-link]\
 ![GitHub License][license-shield]
 
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
-[alpine-docker-link]: https://hub.docker.com/_/alpine
 [cliwrap-link]: https://github.com/Tyrrrz/CliWrap
 [commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
-[debian-hub-link]: https://hub.docker.com/_/debian
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker

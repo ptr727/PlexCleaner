@@ -4,6 +4,34 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.15:
+  - This is primarily a code refactoring release.
+  - Updated from .NET 9 to .NET 10.
+  - Added [Nullable types](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types) support.
+  - Added [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) support.
+    - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
+    - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
+    - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
+    - Note that AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](./README.md#aot) if needed.
+  - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
+    - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
+    - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
+    - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
+    - Schema will automatically be upgraded and convert XML to JSON equivalent on reading.
+  - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
+  - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
+    - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
+    - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
+- Version 3.14:
+  - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.
+  - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
+  - Converted media tool commandline creation to using fluent builder pattern.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
+  - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
+  - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
+  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
+  - General refactoring.
 - Version 3.13:
   - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - Version 3:12:
@@ -296,7 +324,9 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - File logging and console output is now done using structured Serilog logging.
     - Basic console and file logging options are used, configuration from JSON is not currently supported.
 
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[savoury-link]: https://launchpad.net/~savoury1
 [github-release-notification]: https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/managing-subscriptions-for-activity-on-github/viewing-your-subscriptions
 [jsonschema-link]: https://json-everything.net/json-schema/
+[savoury-link]: https://launchpad.net/~savoury1
+[utf8jsonasync-link]: https://github.com/gragra33/Utf8JsonAsyncStreamReader

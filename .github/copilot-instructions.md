@@ -230,15 +230,17 @@ dotnet husky run
 
 ### GitHub Actions
 - **BuildGitHubRelease.yml**: Multi-runtime matrix build (win, linux, osx × x64/arm/arm64)
-- **BuildDockerPush.yml**: Multi-arch Docker builds (ubuntu, alpine, debian)
+- **BuildDockerPush.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
 - **TestBuildPr.yml** / **TestDockerPr.yml**: PR validation
 - Version info: `version.json` with Nerdbank.GitVersioning format
 - Branches: `main` (stable releases), `develop` (pre-releases)
 
 ### Docker
-- Multi-stage builds in `Docker/*Dockerfile`
-- Base images: `ubuntu:rolling`, `alpine:latest`, `debian:stable-slim`
-- Tool installation: Platform-specific package managers
+- Multi-stage builds in `Docker/Ubuntu.Rolling.Dockerfile`
+- Base image: `ubuntu:rolling` only (no longer publishing Alpine or Debian variants)
+- Supported architectures: `linux/amd64`, `linux/arm64` (no longer supporting `linux/arm/v7`)
+- Tool installation: Ubuntu package manager (apt)
+- Media tool versions match Windows versions for consistent behavior
 - Test script: `Docker/Test.sh` validates all commands
 - Version extraction: `Docker/Version.sh` captures tool versions for README
 - User: Runs as `nonroot` user in containers

@@ -18,15 +18,10 @@
         <File Path=".github/workflows/DependabotAutoMerge.yml" />
     </Folder>
     <Folder Name="/Solution Items/Docker/">
-        <File Path="Docker/Alpine.Edge.Dockerfile" />
-        <File Path="Docker/Alpine.Latest.Dockerfile" />
         <File Path="Docker/Build.sh" />
-        <File Path="Docker/Debian.Stable.Dockerfile" />
-        <File Path="Docker/Debian.Testing.Dockerfile" />
         <File Path="Docker/DebugTools.sh" />
         <File Path="Docker/README.m4" />
         <File Path="Docker/Test.sh" />
-        <File Path="Docker/Ubuntu.Devel.Dockerfile" />
         <File Path="Docker/Ubuntu.Rolling.Dockerfile" />
         <File Path="Docker/UnitTest.sh" />
         <File Path="Docker/Version.sh" />
