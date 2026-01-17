@@ -45,4 +45,27 @@ public class ConfigFileTests(PlexCleanerFixture fixture)
         Assert.Equal(100000000, configFileJsonSchema.VerifyOptions.MaximumBitrate);
         Assert.Equal(60, configFileJsonSchema.MonitorOptions.MonitorWaitTime);
     }
+
+    [Theory]
+    [InlineData("PlexCleaner.v1.json", ConfigFileJsonSchema1.Version)]
+    [InlineData("PlexCleaner.v2.json", ConfigFileJsonSchema2.Version)]
+    [InlineData("PlexCleaner.v3.json", ConfigFileJsonSchema3.Version)]
+    [InlineData("PlexCleaner.v4.json", ConfigFileJsonSchema.Version)]
+    public void Open_Old_Schemas_Upgrades_To_Current_Version(
+        string fileName,
+        int expectedDeserializedVersion
+    )
+    {
+        // Deserialize
+        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(
+            fixture.GetSampleFilePath(fileName)
+        );
+        Assert.NotNull(configFileJsonSchema);
+
+        // Verify schema was upgraded to current version
+        Assert.Equal(ConfigFileJsonSchema.Version, configFileJsonSchema.SchemaVersion);
+
+        // Verify DeserializedVersion reflects the original version
+        Assert.Equal(expectedDeserializedVersion, configFileJsonSchema.DeserializedVersion);
+    }
 }

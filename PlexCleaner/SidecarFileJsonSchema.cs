@@ -19,7 +19,7 @@ public record SidecarFileJsonSchemaBase
 // v1
 public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 {
-    protected const int Version = 1;
+    public const int Version = 1;
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
@@ -58,7 +58,7 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 // v2
 public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
 {
-    protected new const int Version = 2;
+    public new const int Version = 2;
 
     public SidecarFileJsonSchema2() { }
 
@@ -74,7 +74,7 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
 // v3
 public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 {
-    protected new const int Version = 3;
+    public new const int Version = 3;
 
     public SidecarFileJsonSchema3() { }
 
@@ -96,7 +96,7 @@ public record SidecarFileJsonSchema3 : SidecarFileJsonSchema2
 // v4
 public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 {
-    protected new const int Version = 4;
+    public new const int Version = 4;
 
     public SidecarFileJsonSchema4() { }
 
@@ -122,6 +122,9 @@ public record SidecarFileJsonSchema4 : SidecarFileJsonSchema3
 public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
 {
     public new const int Version = 5;
+
+    [JsonIgnore]
+    public int DeserializedVersion { get; private set; } = Version;
 
     public SidecarFileJsonSchema5() { }
 
@@ -200,15 +203,14 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
         }
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        // Set schema version to current
+        // v5
+
+        // Set schema version to current and save original version
         SchemaVersion = Version;
+        DeserializedVersion = version;
     }
 
-    public static SidecarFileJsonSchema FromFile(string path)
-    {
-        string json = File.ReadAllText(path);
-        return FromJson(json);
-    }
+    public static SidecarFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
     public static void ToFile(string path, SidecarFileJsonSchema json)
     {
@@ -235,7 +237,7 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
             Log.Warning(
-                "Converting SidecarFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}",
+                "Converting SidecarFileJsonSchema version from {JsonSchemaVersion} to {CurrentSchemaVersion}",
                 sidecarFileJsonSchemaBase.SchemaVersion,
                 Version
             );

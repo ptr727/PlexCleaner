@@ -61,4 +61,45 @@ public class PlexCleanerFixture : IDisposable
 
     public string GetSampleFilePath(string fileName) =>
         Path.GetFullPath(Path.Combine(_samplesDirectory, fileName));
+
+    /// <summary>
+    /// Creates a temporary copy of sample files in a temp directory, preserving filenames.
+    /// Returns the temp directory path and a cleanup action to delete it when done.
+    /// </summary>
+    public (string TempDirectory, Action Cleanup) CreateTempSampleFilesCopy(
+        params string[] fileNames
+    )
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        _ = Directory.CreateDirectory(tempDirectory);
+
+        foreach (string fileName in fileNames)
+        {
+            string sourcePath = GetSampleFilePath(fileName);
+            string destPath = Path.Combine(tempDirectory, fileName);
+            File.Copy(sourcePath, destPath);
+        }
+
+        return (
+            tempDirectory,
+            () =>
+            {
+                try
+                {
+                    if (Directory.Exists(tempDirectory))
+                    {
+                        Directory.Delete(tempDirectory, recursive: true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(
+                        "Failed to delete temp directory {TempDirectory}: {Exception}",
+                        tempDirectory,
+                        ex
+                    );
+                }
+            }
+        );
+    }
 }

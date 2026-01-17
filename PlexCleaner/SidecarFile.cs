@@ -454,6 +454,18 @@ public class SidecarFile
         {
             // Create the object from the sidecar file
             _sidecarJson = SidecarFileJsonSchema.FromFile(_sidecarFileInfo.FullName);
+
+            // Upgrade schema on disk if needed
+            if (_sidecarJson.DeserializedVersion != SidecarFileJsonSchema.Version)
+            {
+                Log.Warning(
+                    "Writing upgraded SidecarFileJsonSchema version from {LoadedVersion} to {CurrentVersion}, {FileName}",
+                    _sidecarJson.DeserializedVersion,
+                    SidecarFileJsonSchema.Version,
+                    _sidecarFileInfo.FullName
+                );
+                SidecarFileJsonSchema.ToFile(_sidecarFileInfo.FullName, _sidecarJson);
+            }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
@@ -484,9 +496,6 @@ public class SidecarFile
     {
         // Create or update the sidecar JSON object
         _sidecarJson ??= new SidecarFileJsonSchema();
-
-        // Schema version
-        _sidecarJson.SchemaVersion = SidecarFileJsonSchema.Version;
 
         // Media file info
         _mediaFileInfo.Refresh();

@@ -1,5 +1,35 @@
 <Solution>
-    <Folder Name="/Solution Items/">
+    <Folder Name="/Actions/">
+        <File Path=".github/workflows/BuildDockerPush.yml" />
+        <File Path=".github/workflows/BuildDockerTask.yml" />
+        <File Path=".github/workflows/BuildGitHubRelease.yml" />
+        <File Path=".github/workflows/DependabotAutoMerge.yml" />
+        <File Path=".github/workflows/GetVersionTask.yml" />
+        <File Path=".github/workflows/TestBuildPr.yml" />
+        <File Path=".github/workflows/TestBuildTask.yml" />
+        <File Path=".github/workflows/TestDockerPr.yml" />
+        <File Path=".github/workflows/TestDockerTask.yml" />
+    </Folder>
+    <Folder Name="/CoPilot/">
+        <File Path=".github/copilot-instructions.md" />
+    </Folder>
+    <Folder Name="/Dependabot/">
+        <File Path=".github/dependabot.yml" />
+    </Folder>
+    <Folder Name="/Docker/">
+        <File Path="Docker/Build.sh" />
+        <File Path="Docker/DebugTools.sh" />
+        <File Path="Docker/README.m4" />
+        <File Path="Docker/Test.sh" />
+        <File Path="Docker/Ubuntu.Rolling.Dockerfile" />
+        <File Path="Docker/UnitTest.sh" />
+        <File Path="Docker/Version.sh" />
+    </Folder>
+    <Folder Name="/Issues/">
+        <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
+        <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+    </Folder>
+    <Folder Name="/Solution/">
         <File Path=".dockerignore" />
         <File Path=".editorconfig" />
         <File Path=".gitattributes" />
@@ -10,25 +40,6 @@
         <File Path="PlexCleaner.schema.json" />
         <File Path="README.md" />
         <File Path="version.json" />
-    </Folder>
-    <Folder Name="/Solution Items/Actions/">
-        <File Path=".github/dependabot.yml" />
-        <File Path=".github/workflows/BuildDockerPush.yml" />
-        <File Path=".github/workflows/BuildGitHubRelease.yml" />
-        <File Path=".github/workflows/DependabotAutoMerge.yml" />
-    </Folder>
-    <Folder Name="/Solution Items/Docker/">
-        <File Path="Docker/Build.sh" />
-        <File Path="Docker/DebugTools.sh" />
-        <File Path="Docker/README.m4" />
-        <File Path="Docker/Test.sh" />
-        <File Path="Docker/Ubuntu.Rolling.Dockerfile" />
-        <File Path="Docker/UnitTest.sh" />
-        <File Path="Docker/Version.sh" />
-    </Folder>
-    <Folder Name="/Solution Items/Issues/">
-        <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
-        <File Path=".github/ISSUE_TEMPLATE/config.yml" />
     </Folder>
     <Project Path="PlexCleaner/PlexCleaner.csproj" />
     <Project Path="PlexCleanerTests/PlexCleanerTests.csproj" />

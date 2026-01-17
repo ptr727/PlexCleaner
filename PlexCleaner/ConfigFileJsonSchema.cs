@@ -36,7 +36,7 @@ public record ConfigFileJsonSchemaBase
 // v1
 public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 {
-    protected const int Version = 1;
+    public const int Version = 1;
 
     [JsonRequired]
     [JsonPropertyOrder(1)]
@@ -62,7 +62,7 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 // v2
 public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 {
-    protected new const int Version = 2;
+    public new const int Version = 2;
 
     public ConfigFileJsonSchema2() { }
 
@@ -78,7 +78,7 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
 // v3
 public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
 {
-    protected new const int Version = 3;
+    public new const int Version = 3;
 
     public ConfigFileJsonSchema3() { }
 
@@ -109,6 +109,9 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 {
     public new const int Version = 4;
 
+    [JsonIgnore]
+    public int DeserializedVersion { get; private set; } = Version;
+
     public ConfigFileJsonSchema4() { }
 
     public ConfigFileJsonSchema4(ConfigFileJsonSchema1 configFileJsonSchema1)
@@ -132,13 +135,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     private void Upgrade(int version)
     {
-        // v4:
-        // ToolsOptions1
-        // ProcessOptions4
-        // ConvertOptions3
-        // VerifyOptions2
-        // MonitorOptions1
-
         // v1
         if (version == ConfigFileJsonSchema1.Version)
         {
@@ -192,10 +188,16 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
-        // v4
+        // v4:
+        // ToolsOptions1
+        // ProcessOptions4
+        // ConvertOptions3
+        // VerifyOptions2
+        // MonitorOptions1
 
-        // Set schema version to current
+        // Set schema version to current and save original version
         SchemaVersion = Version;
+        DeserializedVersion = version;
     }
 
     public void SetDefaults()
@@ -249,7 +251,7 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         if (configFileJsonSchemaBase.SchemaVersion != Version)
         {
             Log.Warning(
-                "Converting ConfigFileJsonSchema from {JsonSchemaVersion} to {CurrentSchemaVersion}",
+                "Converting ConfigFileJsonSchema version from {JsonSchemaVersion} to {CurrentSchemaVersion}",
                 configFileJsonSchemaBase.SchemaVersion,
                 Version
             );
@@ -296,8 +298,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     public static void WriteSchemaToFile(string path)
     {
         // Create JSON schema
-        // TODO: Compare with old schema generation method that excluded obsolete properties
-        // TypeInfoResolver = SourceGenerationContext.Default.WithAddedModifier(ExcludeObsoletePropertiesModifier),
         JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
             typeof(ConfigFileJsonSchema)
         );

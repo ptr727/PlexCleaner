@@ -463,19 +463,13 @@ public static class Program
             // Load the settings file
             ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(Options.SettingsFile);
 
-            // Compare the schema version
-            if (config.SchemaVersion != ConfigFileJsonSchema.Version)
+            // Upgrade schema on disk if needed
+            if (config.DeserializedVersion != ConfigFileJsonSchema.Version)
             {
                 Log.Warning(
-                    "Loaded old settings schema version : {LoadedVersion} != {CurrentVersion}, {FileName}",
-                    config.SchemaVersion,
+                    "Writing upgraded ConfigFileJsonSchema version from {LoadedVersion} to {CurrentVersion}, {FileName}",
+                    config.DeserializedVersion,
                     ConfigFileJsonSchema.Version,
-                    Options.SettingsFile
-                );
-
-                // Upgrade the file schema
-                Log.Information(
-                    "Writing upgraded settings file : {FileName}",
                     Options.SettingsFile
                 );
                 ConfigFileJsonSchema.ToFile(Options.SettingsFile, config);
