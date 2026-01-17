@@ -459,7 +459,7 @@ public class SidecarFile
             if (_sidecarJson.DeserializedVersion != SidecarFileJsonSchema.Version)
             {
                 Log.Warning(
-                    "Writing upgraded SidecarFileJsonSchema version from {LoadedVersion} to {CurrentVersion}, {FileName}",
+                    "Writing SidecarFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
                     _sidecarJson.DeserializedVersion,
                     SidecarFileJsonSchema.Version,
                     _sidecarFileInfo.FullName

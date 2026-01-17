@@ -467,7 +467,7 @@ public static class Program
             if (config.DeserializedVersion != ConfigFileJsonSchema.Version)
             {
                 Log.Warning(
-                    "Writing upgraded ConfigFileJsonSchema version from {LoadedVersion} to {CurrentVersion}, {FileName}",
+                    "Writing ConfigFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
                     config.DeserializedVersion,
                     ConfigFileJsonSchema.Version,
                     Options.SettingsFile
