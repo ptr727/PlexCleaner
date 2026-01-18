@@ -453,19 +453,7 @@ public class SidecarFile
         try
         {
             // Create the object from the sidecar file
-            _sidecarJson = SidecarFileJsonSchema.FromFile(_sidecarFileInfo.FullName);
-
-            // Upgrade schema on disk if needed
-            if (_sidecarJson.DeserializedVersion != SidecarFileJsonSchema.Version)
-            {
-                Log.Warning(
-                    "Writing SidecarFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
-                    _sidecarJson.DeserializedVersion,
-                    SidecarFileJsonSchema.Version,
-                    _sidecarFileInfo.FullName
-                );
-                SidecarFileJsonSchema.ToFile(_sidecarFileInfo.FullName, _sidecarJson);
-            }
+            _sidecarJson = SidecarFileJsonSchema.OpenAndUpgrade(_sidecarFileInfo.FullName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {

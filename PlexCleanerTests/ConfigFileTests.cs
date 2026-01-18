@@ -4,20 +4,26 @@ using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 namespace PlexCleanerTests;
 
-public class ConfigFileTests(PlexCleanerFixture fixture)
+public class ConfigFileTests(PlexCleanerFixture assemblyFixture) : SamplesFixture
 {
     [Theory]
-    [InlineData("PlexCleaner.v1.json")]
-    [InlineData("PlexCleaner.v2.json")]
-    [InlineData("PlexCleaner.v3.json")]
-    [InlineData("PlexCleaner.v4.json")]
-    public void Open_Old_Schemas_Opens(string fileName)
+    [InlineData("PlexCleaner.v1.json", ConfigFileJsonSchema1.Version)]
+    [InlineData("PlexCleaner.v2.json", ConfigFileJsonSchema2.Version)]
+    [InlineData("PlexCleaner.v3.json", ConfigFileJsonSchema3.Version)]
+    [InlineData("PlexCleaner.v4.json", ConfigFileJsonSchema.Version)]
+    public void Open_Old_Schema_Open(string fileName, int expectedDeserializedVersion)
     {
         // Deserialize
         ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(
-            fixture.GetSampleFilePath(fileName)
+            assemblyFixture.GetSampleFilePath(fileName)
         );
         Assert.NotNull(configFileJsonSchema);
+
+        // Verify schema was upgraded to current version
+        Assert.Equal(ConfigFileJsonSchema.Version, configFileJsonSchema.SchemaVersion);
+
+        // Verify DeserializedVersion reflects the original version
+        Assert.Equal(expectedDeserializedVersion, configFileJsonSchema.DeserializedVersion);
 
         // Test for expected config values
         Assert.Equal(@".\Tools\", configFileJsonSchema.ToolsOptions.RootPath);
@@ -51,21 +57,28 @@ public class ConfigFileTests(PlexCleanerFixture fixture)
     [InlineData("PlexCleaner.v2.json", ConfigFileJsonSchema2.Version)]
     [InlineData("PlexCleaner.v3.json", ConfigFileJsonSchema3.Version)]
     [InlineData("PlexCleaner.v4.json", ConfigFileJsonSchema.Version)]
-    public void Open_Old_Schemas_Upgrades_To_Current_Version(
-        string fileName,
-        int expectedDeserializedVersion
-    )
+    public void Open_Old_Schema_Upgrade(string fileName, int expectedDeserializedVersion)
     {
-        // Deserialize
-        ConfigFileJsonSchema configFileJsonSchema = ConfigFileJsonSchema.FromFile(
-            fixture.GetSampleFilePath(fileName)
+        // Load config file schema and upgrade on disk
+        ConfigFileJsonSchema configSchema = ConfigFileJsonSchema.OpenAndUpgrade(
+            GetSampleFilePath(fileName)
         );
-        Assert.NotNull(configFileJsonSchema);
+        Assert.NotNull(configSchema);
 
         // Verify schema was upgraded to current version
-        Assert.Equal(ConfigFileJsonSchema.Version, configFileJsonSchema.SchemaVersion);
+        Assert.Equal(ConfigFileJsonSchema.Version, configSchema.SchemaVersion);
 
         // Verify DeserializedVersion reflects the original version
-        Assert.Equal(expectedDeserializedVersion, configFileJsonSchema.DeserializedVersion);
+        Assert.Equal(expectedDeserializedVersion, configSchema.DeserializedVersion);
+
+        // Re-open the file to verify it was saved in current version
+        configSchema = ConfigFileJsonSchema.FromFile(GetSampleFilePath(fileName));
+        Assert.NotNull(configSchema);
+
+        // Verify schema was upgraded to current version
+        Assert.Equal(ConfigFileJsonSchema.Version, configSchema.SchemaVersion);
+
+        // Verify DeserializedVersion reflects the current version
+        Assert.Equal(ConfigFileJsonSchema.Version, configSchema.DeserializedVersion);
     }
 }

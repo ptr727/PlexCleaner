@@ -461,19 +461,7 @@ public static class Program
         try
         {
             // Load the settings file
-            ConfigFileJsonSchema config = ConfigFileJsonSchema.FromFile(Options.SettingsFile);
-
-            // Upgrade schema on disk if needed
-            if (config.DeserializedVersion != ConfigFileJsonSchema.Version)
-            {
-                Log.Warning(
-                    "Writing ConfigFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
-                    config.DeserializedVersion,
-                    ConfigFileJsonSchema.Version,
-                    Options.SettingsFile
-                );
-                ConfigFileJsonSchema.ToFile(Options.SettingsFile, config);
-            }
+            ConfigFileJsonSchema config = ConfigFileJsonSchema.OpenAndUpgrade(Options.SettingsFile);
 
             // Verify the settings
             if (!config.VerifyValues())

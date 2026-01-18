@@ -228,6 +228,22 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
 
     public static ConfigFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
+    public static ConfigFileJsonSchema OpenAndUpgrade(string path)
+    {
+        ConfigFileJsonSchema configJson = FromFile(path);
+        if (configJson.DeserializedVersion != Version)
+        {
+            Log.Warning(
+                "Writing ConfigFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
+                configJson.DeserializedVersion,
+                Version,
+                path
+            );
+            ToFile(path, configJson);
+        }
+        return configJson;
+    }
+
     public static void ToFile(string path, ConfigFileJsonSchema json)
     {
         // Set the schema version to the current version

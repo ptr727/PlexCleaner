@@ -212,6 +212,22 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
 
     public static SidecarFileJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
+    public static SidecarFileJsonSchema OpenAndUpgrade(string path)
+    {
+        SidecarFileJsonSchema sidecarJson = FromFile(path);
+        if (sidecarJson.DeserializedVersion != Version)
+        {
+            Log.Warning(
+                "Writing SidecarFileJsonSchema upgraded from version {LoadedVersion} to {CurrentVersion}, {FileName}",
+                sidecarJson.DeserializedVersion,
+                Version,
+                path
+            );
+            ToFile(path, sidecarJson);
+        }
+        return sidecarJson;
+    }
+
     public static void ToFile(string path, SidecarFileJsonSchema json)
     {
         // Set the schema version to the current version
