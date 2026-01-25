@@ -50,6 +50,7 @@ public record ProcessResultJsonSchema
 
     public class ToolVersion
     {
+        [JsonConverter(typeof(JsonStringEnumConverter<MediaTool.ToolFamily>))]
         public MediaTool.ToolFamily Tool { get; set; }
 
         public string Version { get; set; } = string.Empty;
@@ -70,6 +71,7 @@ public record ProcessResultJsonSchema
         public string NewFileName { get; set; } = string.Empty;
         public bool Modified { get; set; }
 
+        [JsonConverter(typeof(JsonStringEnumConverter<SidecarFile.StatesType>))]
         public SidecarFile.StatesType State { get; set; }
     }
 
