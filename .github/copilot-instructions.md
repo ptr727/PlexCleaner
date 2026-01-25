@@ -3,6 +3,7 @@
 ## Project Overview
 
 PlexCleaner is a .NET 10.0 CLI utility that optimizes media files for Direct Play in Plex/Emby/Jellyfin by:
+
 - Converting containers to MKV format
 - Re-encoding incompatible video/audio codecs
 - Managing tracks (language tags, duplicates, subtitles)
@@ -15,6 +16,7 @@ The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToo
 ## Documentation
 
 User-facing documentation is organized as follows:
+
 - **[README.md](../README.md)**: Main project documentation, quick start, installation, usage, and FAQ.
 - **[Docs/LanguageMatching.md](../Docs/LanguageMatching.md)**: Technical details on IETF/RFC 5646 language tag matching and configuration.
 - **[Docs/CustomOptions.md](../Docs/CustomOptions.md)**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
@@ -24,7 +26,9 @@ User-facing documentation is organized as follows:
 ## Architecture
 
 ### Command Structure
+
 PlexCleaner provides multiple commands:
+
 - **process**: Batch process media files in specified folders
 - **monitor**: Watch folders for changes and automatically process modified files
 - **verify**: Verify media files using FFmpeg
@@ -38,15 +42,17 @@ PlexCleaner provides multiple commands:
 - **checkfornewtools**: Check for and download tool updates (Windows only)
 - **defaultsettings**: Create default configuration file
 - **createschema**: Generate JSON schema for configuration validation
- - **removesubtitles**: Remove all subtitle tracks
- - **removeclosedcaptions**: Remove embedded EIA-608/CTA-708 closed captions from video streams
- - **updatesidecar**: Create or update sidecar files to current schema/tool info
- - **getsidecarinfo**: Display sidecar file information
- - **testmediainfo**: Test parsing media tool information for non-Matroska containers
- - **getversioninfo**: Print application and media tool version information
+- **removesubtitles**: Remove all subtitle tracks
+- **removeclosedcaptions**: Remove embedded EIA-608/CTA-708 closed captions from video streams
+- **updatesidecar**: Create or update sidecar files to current schema/tool info
+- **getsidecarinfo**: Display sidecar file information
+- **testmediainfo**: Test parsing media tool information for non-Matroska containers
+- **getversioninfo**: Print application and media tool version information
 
 ### Fluent Builder Pattern for Media Tools
+
 All media tool command-line construction uses fluent builders (`*Builder.cs`). Never concatenate strings:
+
 ```csharp
 // Correct - fluent builder pattern
 var command = new FfMpeg.GlobalOptions(args)
@@ -58,7 +64,9 @@ string args = "-hide_banner " + option;
 ```
 
 ### Process Execution with CliWrap
+
 All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap) (v3.x):
+
 - Builders create `ArgumentsBuilder` instances
 - Execute via `Cli.Wrap(toolPath).WithArguments(builder)`
 - Use `BufferedCommandResult` for output capture
@@ -66,7 +74,9 @@ All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap)
 - All tool execution supports cancellation via `Program.CancelToken()`
 
 ### Sidecar File System
+
 Critical performance feature - DO NOT break compatibility:
+
 - Each `.mkv` gets a `.PlexCleaner` sidecar JSON file
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
@@ -76,6 +86,7 @@ Critical performance feature - DO NOT break compatibility:
 - Sidecar operations: `Create()`, `Read()`, `Update()`, `Delete()`
 
 ### Media Tool Abstraction
+
 - `MediaTool` base class defines tool lifecycle
 - Each tool family has: Tool class, Builder class, Info schema
 - Tool version info retrieved from CLI output, cached in `Tools.json`
@@ -85,7 +96,9 @@ Critical performance feature - DO NOT break compatibility:
 - Version checking: `GetInstalledVersion()`, `GetLatestVersion()` (Windows only)
 
 ### Media Properties and Track Management
+
 **MediaProps hierarchy:**
+
 - `MediaProps`: Container for all media information (video, audio, subtitle tracks)
 - `TrackProps`: Base class for all track types
   - `VideoProps`: Video track properties (format, resolution, codec, HDR, interlacing)
@@ -93,19 +106,23 @@ Critical performance feature - DO NOT break compatibility:
   - `SubtitleProps`: Subtitle track properties (format, codec, closed captions)
 
 **Track properties:**
+
 - Language tags: ISO 639-2B (`Language`) and RFC 5646/BCP 47 (`LanguageIetf`)
 - Flags: Default, Forced, HearingImpaired, VisualImpaired, Descriptions, Original, Commentary
 - State: Keep, Remove, ReMux, ReEncode, DeInterlace, SetFlags, SetLanguage, Unsupported
 - Title, Format, Codec, Id, Number, Uid
 
 **Track selection (`SelectMediaProps.cs`):**
+
 - Separates tracks into Selected/NotSelected categories
 - Used for language filtering, duplicate removal, codec selection
 - Move operations: `Move(track, toSelected)`, `Move(trackList, toSelected)`
 - State assignment: `SetState(selectedState, notSelectedState)`
 
 ### Language Tag Management
+
 **IETF/RFC 5646 Support:**
+
 - Uses external package `ptr727.LanguageTags` for language tag parsing and matching
 - Tag format: `language-extlang-script-region-variant-extension-privateuse`
 - Matching: Left-to-right prefix matching via `LanguageLookup.IsMatch()`
@@ -113,19 +130,23 @@ Critical performance feature - DO NOT break compatibility:
 - Special tags: `und` (undefined), `zxx` (no linguistic content), `en` (English)
 
 **Language processing:**
+
 - MediaInfo reports both ISO 639-2B and IETF tags (if set)
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
 ### Monitor Mode
+
 **File system watching:**
+
 - Uses `FileSystemWatcher` to monitor specified folders
 - Monitors: Size, CreationTime, LastWrite, FileName, DirectoryName
 - Handles: Changed, Created, Deleted, Renamed events
 - Queue-based: Changes added to watch queue with timestamps
 
 **Processing logic:**
+
 - Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
 - Files must be readable (not being written) before processing
 - Retry logic: `FileRetryCount` attempts with `FileRetryWaitTime` delays
@@ -133,12 +154,15 @@ Critical performance feature - DO NOT break compatibility:
 - Pre-process: Optional initial scan of all monitored folders on startup
 
 **Concurrency:**
+
 - Lock-based queue management (`_watchLock`)
 - Periodic processing (1-second poll interval)
 - Supports parallel processing when `--parallel` enabled
 
 ### XML and JSON Parsing
+
 AOT-safe parsers in `MediaInfoXmlParser.cs`:
+
 - **MediaInfoFromXml()**: Parses specific MediaInfo XML elements into `MediaInfoToolXmlSchema.MediaInfo`
   - Manually parses only known elements needed by PlexCleaner (id, format, language, etc.)
   - Used by sidecar file system to parse XML output when JSON unavailable
@@ -155,13 +179,16 @@ AOT-safe parsers in `MediaInfoXmlParser.cs`:
   - Maps only known MediaInfo track properties
 
 Parser design patterns:
+
 - Forward-only `XmlReader` with depth tracking for streaming
 - Recursive `ElementData` tree for generic XML-to-JSON conversion
 - Namespace filtering (skip `xmlns`, `xsi` attributes)
 - Special handling for MediaInfo's mixed attribute/text content format
 
 ### Extensions Pattern
+
 **Modern C# 13 extension syntax:**
+
 - Uses implicit class extensions: `extension(ILogger logger)`
 - Provides context-aware helper methods
 - Examples:
@@ -172,6 +199,7 @@ Parser design patterns:
 ## Code Conventions
 
 ### Formatting Standards
+
 - **Code formatter**: CSharpier (`.csharpier.json`) - primary formatter
 - **EditorConfig**: `.editorconfig` follows .NET Runtime style guide
 - **Pre-commit hooks**: Husky.Net validates style (`dotnet husky run`)
@@ -179,6 +207,7 @@ Parser design patterns:
 - Charset: UTF-8 without BOM
 
 ### Code Style
+
 - Target: .NET 10.0 (`<TargetFramework>net10.0</TargetFramework>`)
 - AOT compilation enabled: `<PublishAot>true</PublishAot>` in executable projects
 - Use C# modern features (records, pattern matching, collection expressions, implicit class extensions)
@@ -188,6 +217,7 @@ Parser design patterns:
 - Global usings: `GlobalUsing.cs` defines project-wide type aliases (`ConfigFileJsonSchema`, `SidecarFileJsonSchema`)
 
 ### Naming and Structure
+
 - JSON schemas: Generated via `JsonSchema.Net`, suffixed with version (e.g., `SidecarFileJsonSchema5`)
 - Builder methods: Return `this` for chaining
 - Media props: `*Props.cs` classes (VideoProps, AudioProps, SubtitleProps, TrackProps)
@@ -195,6 +225,7 @@ Parser design patterns:
 - Partial classes: Tool families use partial class structure (`*Tool.cs`, `*Builder.cs`)
 
 ### Async and Concurrency
+
 - Main loop: Uses `WaitForCancel()` polling pattern instead of async/await
 - Tool execution: Synchronous wrappers around CliWrap async operations
 - Parallel processing: PLINQ with `AsParallel()`, `WithDegreeOfParallelism()`
@@ -204,21 +235,24 @@ Parser design patterns:
 ## Testing
 
 ### Test Framework
+
 - xUnit v3.x with `AwesomeAssertions`
 - Test project: `PlexCleanerTests/`
 - Fixture: `PlexCleanerFixture` (assembly-level, sets up defaults and logging)
 - Sample media: `Samples/PlexCleaner/` (relative path `../../../../Samples/PlexCleaner`)
 
 ### Test Coverage
+
 - Command-line parsing: `CommandLineTests.cs`
 - Configuration validation: `ConfigFileTests.cs`
 - FFmpeg parsing: `FfMpegIdetParsingTests.cs`
 - Sidecar functionality: `SidecarFileTests.cs`
 - Version parsing: `VersionParsingTests.cs`
 - Wildcards: `WildcardTests.cs`
- - Filename escaping for filters: `FileNameEscapingTests.cs`
+- Filename escaping for filters: `FileNameEscapingTests.cs`
 
 ### Test Execution
+
 - Task: `"dotnet: .Net Build"` for builds
 - Unit tests: `dotnet test` or VS Code test explorer
 - Docker tests: Download Matroska test files from GitHub
@@ -227,6 +261,7 @@ Parser design patterns:
 ## Build and Release
 
 ### Local Development
+
 ```bash
 # Build
 dotnet build
@@ -245,6 +280,7 @@ dotnet husky run
 ```
 
 ### GitHub Actions
+
 - **BuildGitHubRelease.yml**: Multi-runtime matrix build (win, linux, osx × x64/arm/arm64)
 - **BuildDockerPush.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
 - **TestBuildPr.yml** / **TestDockerPr.yml**: PR validation
@@ -252,6 +288,7 @@ dotnet husky run
 - Branches: `main` (stable releases), `develop` (pre-releases)
 
 ### Docker
+
 - Multi-stage builds in `Docker/Ubuntu.Rolling.Dockerfile`
 - Base image: `ubuntu:rolling` only (no longer publishing Alpine or Debian variants)
 - Supported architectures: `linux/amd64`, `linux/arm64` (no longer supporting `linux/arm/v7`)
@@ -265,7 +302,9 @@ dotnet husky run
 ## Common Patterns
 
 ### Command-Line Parsing
+
 Uses `System.CommandLine` (v2.x):
+
 - Options defined in `CommandLineOptions.cs`
 - Binding via `CommandLineParser.Bind()`
 - No `System.CommandLine.NamingConventionBinder` (deprecated)
@@ -273,6 +312,7 @@ Uses `System.CommandLine` (v2.x):
 - Command routing: Each command maps to static method in `Program.cs`
 
 ### Parallel Processing
+
 - `--parallel` flag enables concurrent file processing
 - Uses `ProcessDriver.cs` with `AsParallel()` and `WithDegreeOfParallelism()`
 - Default thread count: min(CPU/2, 4), configurable via `--threadcount`
@@ -280,6 +320,7 @@ Uses `System.CommandLine` (v2.x):
 - File grouping: Groups by path (excluding extension) to prevent concurrent access to same file
 
 ### File Processing States
+
 ```csharp
 [Flags]
 enum StatesType {
@@ -290,9 +331,11 @@ enum StatesType {
     SetFlags, RemovedCoverArt
 }
 ```
+
 Check states with `HasFlag()`, combine with `|=`
 
 ### Configuration Schema
+
 - Settings: `PlexCleaner.defaults.json` with inline JSONC comments
 - Schema: `PlexCleaner.schema.json` (auto-generated via JsonSchema.Net)
 - Validation: JSON Schema.Net with source-generated context
@@ -302,12 +345,14 @@ Check states with `HasFlag()`, combine with `|=`
 - Verification: `VerifyValues()` method validates configuration
 
 ### Keep-Awake Pattern
+
 - Prevents system sleep during long operations
 - Uses `KeepAwake.cs` with Windows API calls
 - Timer-based: Refreshes every 30 seconds
 - Cross-platform: No-op on non-Windows systems
 
 ### Cancellation Handling
+
 - Global token source: `Program.s_cancelSource`
 - Console handlers: Ctrl+C, Ctrl+Z, Ctrl+Q
 - Keyboard monitoring: Separate task for key press handling
@@ -317,6 +362,7 @@ Check states with `HasFlag()`, combine with `|=`
 ## Critical Details
 
 ### DO NOT
+
 - Break sidecar file compatibility (versioned schema migrations only)
 - Use string concatenation for command-line arguments (use builders)
 - Modify file timestamps unless `RestoreFileTimestamp` enabled
@@ -326,6 +372,7 @@ Check states with `HasFlag()`, combine with `|=`
 - Break language tag matching logic (IETF/ISO conversion)
 
 ### DO
+
 - Add tests for media tool parsing changes (see `FfMpegIdetParsingTests.cs`)
 - Update `HISTORY.md` for notable changes
 - Use `Program.CancelToken()` for cancellation support
@@ -336,6 +383,7 @@ Check states with `HasFlag()`, combine with `|=`
 - Update global using aliases in `GlobalUsing.cs` when changing schema versions
 
 ### Performance Considerations
+
 - Sidecar files enable fast re-processing (skip verified files)
 - `--parallel` most effective with I/O-bound operations (re-mux)
 - `--quickscan` limits scan to 3 minutes (trades accuracy for speed)
@@ -344,26 +392,32 @@ Check states with `HasFlag()`, combine with `|=`
 - Monitor mode: Settle time prevents excessive re-processing
 
 ### Special Cases
+
 **Closed Captions:**
+
 - EIA-608/EIA-708 tracks handled specially in `SubtitleProps.HandleClosedCaptions()`
 - Parsed as subtitle tracks but removed during processing
 - Track IDs formatted as `{VideoId}-CC{Number}` (e.g., `256-CC1`)
 
 **VOBSUB Subtitles:**
+
 - Require `MuxingMode` to be set for Plex compatibility
 - Missing `MuxingMode` triggers error and removal recommendation
 
 **Duplicate Tracks:**
+
 - Language-based grouping with flag preservation
 - Preferred audio codec selection via `FindPreferredAudio()`
 - Keeps one flagged track per flag type, one non-flagged track
 
 **Language Mismatches:**
+
 - ISO 639-2B vs IETF tag validation in `TrackProps.SetLanguage()`
 - Tag metadata vs track metadata differences (FFprobe specific)
 - Automatic fallback: At least one track kept even if language doesn't match
 
 ## Key Files Reference
+
 - **Program.cs**: Entry point, command routing, global state, cancellation handling
 - **ProcessDriver.cs**: File enumeration, parallel processing orchestration
 - **ProcessFile.cs**: Single-file processing logic, track selection algorithms
