@@ -238,7 +238,8 @@ public class Monitor
             case WatcherChangeTypes.Renamed:
             case WatcherChangeTypes.All:
             default:
-                throw new NotImplementedException();
+                // Ignore
+                break;
         }
     }
 
@@ -264,7 +265,8 @@ public class Monitor
             case WatcherChangeTypes.Changed:
             case WatcherChangeTypes.All:
             default:
-                throw new NotImplementedException();
+                // Ignore
+                break;
         }
     }
 

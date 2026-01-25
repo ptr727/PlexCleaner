@@ -4,7 +4,7 @@ using SidecarFileJsonSchema = PlexCleaner.SidecarFileJsonSchema5;
 
 namespace PlexCleanerTests;
 
-public class SidecarFileTests(PlexCleanerFixture assemblyFixture) : SamplesFixture
+public class SidecarFileTests : SamplesFixture
 {
     [Theory]
     [InlineData("Sidecar.v1.PlexCleaner", SidecarFileJsonSchema1.Version)]

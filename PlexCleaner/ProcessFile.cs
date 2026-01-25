@@ -611,6 +611,7 @@ public class ProcessFile
         // Selected is Keep
         // NotSelected is Remove
         SelectMediaProps selectMediaProps = new(MkvMergeProps, true);
+        // First() will throw if not found
         selectMediaProps.Move(MkvMergeProps.Video.First(item => item.CoverArt), false);
 
         // There must be something left to keep

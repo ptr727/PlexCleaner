@@ -38,6 +38,12 @@ PlexCleaner provides multiple commands:
 - **checkfornewtools**: Check for and download tool updates (Windows only)
 - **defaultsettings**: Create default configuration file
 - **createschema**: Generate JSON schema for configuration validation
+ - **removesubtitles**: Remove all subtitle tracks
+ - **removeclosedcaptions**: Remove embedded EIA-608/CTA-708 closed captions from video streams
+ - **updatesidecar**: Create or update sidecar files to current schema/tool info
+ - **getsidecarinfo**: Display sidecar file information
+ - **testmediainfo**: Test parsing media tool information for non-Matroska containers
+ - **getversioninfo**: Print application and media tool version information
 
 ### Fluent Builder Pattern for Media Tools
 All media tool command-line construction uses fluent builders (`*Builder.cs`). Never concatenate strings:
@@ -210,6 +216,7 @@ Parser design patterns:
 - Sidecar functionality: `SidecarFileTests.cs`
 - Version parsing: `VersionParsingTests.cs`
 - Wildcards: `WildcardTests.cs`
+ - Filename escaping for filters: `FileNameEscapingTests.cs`
 
 ### Test Execution
 - Task: `"dotnet: .Net Build"` for builds

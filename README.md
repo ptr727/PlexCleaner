@@ -230,7 +230,7 @@ services:
     image: docker.io/ptr727/plexcleaner:latest  # Use :develop for pre-release builds
     container_name: PlexCleaner
     restart: unless-stopped
-    user: nonroot:users  # Change to match your user:group (e.g., 1000:1000)
+    user: 1000:100  # Change to match your nonroot:users
     command:
       - /PlexCleaner/PlexCleaner
       - monitor  # Monitor command
@@ -262,10 +262,11 @@ sudo chmod -R ug=rwx,o=rx /data/media
 
 ```shell
 # Replace /data/media with your actual media directory
+# Replace the 1001:100 with your nonroot:users
 docker run \
   -it --rm --pull always \
   --name PlexCleaner \
-  --user nonroot:users \
+  --user 1001:100 \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash

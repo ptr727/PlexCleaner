@@ -184,13 +184,13 @@ public static class Tools
     {
         // Keep in sync with VerifyFolderTools()
 
-        // Checking for new tools are not supported on Linux
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        // Checking for new tools is only supported on Windows
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Log.Warning("Checking for new tools are not supported on Linux");
+            Log.Warning("Checking for new tools is only supported on Windows");
             if (Program.Config.ToolsOptions.AutoUpdate)
             {
-                Log.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on Linux");
+                Log.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on non-Windows platforms");
                 Program.Config.ToolsOptions.AutoUpdate = false;
             }
 

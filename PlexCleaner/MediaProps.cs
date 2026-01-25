@@ -185,6 +185,7 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
         List<TrackProps> matchedTrackList = [];
         mediaInfoTrackList.ForEach(mediaInfoItem =>
             matchedTrackList.Add(
+                // First() will throw if not found
                 mkvMergeTrackList.First(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)
             )
         );
