@@ -24,7 +24,6 @@ public record FfMpegOptions
     public string Audio { get; set; } = string.Empty;
 
     // v3 : Value no longer needs defaults
-    [JsonRequired]
     public string Global { get; set; } = string.Empty;
 
     // v3 : Removed
