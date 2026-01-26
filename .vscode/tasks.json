@@ -3,8 +3,13 @@
     "tasks": [
         {
             "label": ".Net Build",
-            "type": "dotnet",
-            "task": "build",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}",
+                "--verbosity=diagnostic"
+            ],
             "group": "build",
             "problemMatcher": [
                 "$msCompile"
@@ -23,8 +28,7 @@
                 "style",
                 "--verify-no-changes",
                 "--severity=info",
-                "--verbosity=detailed",
-                "--exclude-diagnostics=IDE0055"
+                "--verbosity=detailed"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -34,6 +38,7 @@
                 "clear": false
             },
             "dependsOn": [
+                "CSharpier Format",
                 ".Net Build"
             ]
         },
@@ -127,91 +132,10 @@
             }
         },
         {
-            "label": "Build Alpine.Edge Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--platform=linux/amd64,linux/arm64",
-                "--file=./Docker/Alpine.Edge.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Build Alpine.Latest Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--platform=linux/amd64,linux/arm64",
-                "--file=./Docker/Alpine.Latest.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Build Debian.Stable Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--platform=linux/amd64,linux/arm64,linux/arm/v7",
-                "--file=./Docker/Debian.Stable.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Build Debian.Testing Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--platform=linux/amd64,linux/arm64,linux/arm/v7",
-                "--file=./Docker/Debian.Testing.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
             "label": "Build all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
                 "Build Ubuntu.Rolling Dockerfile",
-                "Build Ubuntu.Devel Dockerfile",
-                "Build Alpine.Edge Dockerfile",
-                "Build Alpine.Latest Dockerfile",
-                "Build Debian.Stable Dockerfile",
-                "Build Debian.Testing Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -262,99 +186,10 @@
             }
         },
         {
-            "label": "Load Alpine.Edge Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--load",
-                "--platform=linux/amd64",
-                "--tag=plexcleaner:alpine-edge",
-                "--file=./Docker/Alpine.Edge.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Load Alpine.Latest Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--load",
-                "--platform=linux/amd64",
-                "--tag=plexcleaner:alpine",
-                "--file=./Docker/Alpine.Latest.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Load Debian.Stable Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--load",
-                "--platform=linux/amd64",
-                "--tag=plexcleaner:debian",
-                "--file=./Docker/Debian.Stable.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Load Debian.Testing Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--load",
-                "--platform=linux/amd64",
-                "--tag=plexcleaner:debian-testing",
-                "--file=./Docker/Debian.Testing.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
             "label": "Load all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
                 "Load Ubuntu.Rolling Dockerfile",
-                "Load Ubuntu.Devel Dockerfile",
-                "Load Alpine.Edge Dockerfile",
-                "Load Alpine.Latest Dockerfile",
-                "Load Debian.Stable Dockerfile",
-                "Load Debian.Testing Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -411,111 +246,10 @@
             }
         },
         {
-            "label": "Test Alpine.Edge Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test-Alpine.Edge",
-                "plexcleaner:alpine-edge",
-                "/Test/Test.sh"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Load Alpine.Edge Dockerfile"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Test Alpine.Latest Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test-Alpine.Latest",
-                "plexcleaner:alpine",
-                "/Test/Test.sh"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Load Alpine.Latest Dockerfile"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Test Debian.Stable Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test-Debian.Stable",
-                "plexcleaner:debian",
-                "/Test/Test.sh"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Load Debian.Stable Dockerfile"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Test Debian.Testing Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test-Debian.Testing",
-                "plexcleaner:debian-testing",
-                "/Test/Test.sh"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Load Debian.Testing Dockerfile"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
             "label": "Test all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
                 "Test Ubuntu.Rolling Dockerfile",
-                "Test Ubuntu.Devel Dockerfile",
-                "Test Alpine.Edge Dockerfile",
-                "Test Alpine.Latest Dockerfile",
-                "Test Debian.Stable Dockerfile",
-                "Test Debian.Testing Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {

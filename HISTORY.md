@@ -4,18 +4,49 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.15:
+  - This is primarily a code refactoring release.
+  - Updated from .NET 9 to .NET 10.
+  - Added [Nullable types](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types) support.
+  - Added [Native AOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot) support.
+    - Replaced `JsonSchemaBuilder.FromType<T>()` with `GetJsonSchemaAsNode()` as `FromType<T>()` is [not AOT compatible](https://github.com/json-everything/json-everything/issues/975).
+    - Replaced `JsonSerializer.Deserialize<T>()` with `JsonSerializer.Deserialize(JsonSerializerContext)` for generating [AOT compatible](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonserializercontext) JSON serialization code.
+    - Replaced `MethodBase.GetCurrentMethod()?.Name` with `[System.Runtime.CompilerServices.CallerMemberName]` to generate the caller function name during compilation.
+    - AOT cross compilation is [not supported](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/cross-compile) by the CI/CD pipeline and single file native AOT binaries can be [manually built](./README.md#aot) if needed.
+  - Changed MediaInfo output from `--Output=XML` using XML to `--Output=JSON` using JSON.
+    - Attempts to use `Microsoft.XmlSerializer.Generator` and generate AOT compatible XML parsing was [unsuccessful](https://stackoverflow.com/questions/79858800/statically-generated-xml-parsing-code-using-microsoft-xmlserializer-generator), while JSON `JsonSerializerContext` is AOT compatible.
+    - Parsing the existing XML schema is done with custom AOT compatible XML parser created for the MediaInfo XML content.
+    - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
+    - Schema will automatically be upgraded and convert XML to JSON equivalent on reading.
+  - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
+  - Removed `MonitorOptions` from the config file schema, default values do not need to be changed.
+  - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
+    - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
+    - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
+- Version 3.14:
+  - Switch to using [CliWrap][cliwrap-link] for commandline tool process execution.
+  - Remove dependency on [deprecated](https://github.com/dotnet/command-line-api/issues/2576) `System.CommandLine.NamingConventionBinder` by directly using commandline options binding.
+  - Converted media tool commandline creation to using fluent builder pattern.
+  - Converted FFprobe JSON packet parsing to using streaming per-packet processing using [Utf8JsonAsyncStreamReader][utf8jsonasync-link] vs. read everything into memory and then process.
+  - Switched editorconfig `charset` from `utf-8-bom` to `utf-8` as some tools and PR merge in GitHub always write files without the BOM.
+  - Improved closed caption detection in MediaInfo, e.g. discrete detection of separate `SCTE 128` tracks vs. `A/53` embedded video tracks.
+  - Improved media tool parsing resiliency when parsing non-Matroska containers, i.e. added `testmediainfo` command to attempt parsing media files.
+  - Add [Husky.Net](https://alirezanet.github.io/Husky.Net) for pre-commit hook code style validation.
+  - General refactoring.
+- Version 3.13:
+  - Escape additional filename characters for use with `ffprobe movie=filename[out0+subcc]` command. Fixes [#524](https://github.com/ptr727/PlexCleaner/issues/524).
 - Version 3:12:
   - Update to .NET 9.0.
-    - Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
+    - ⚠️ Dropping Ubuntu docker `arm/v7` support as .NET for ARM32 is no longer published in the Ubuntu repository.
     - Switching Debian docker builds to install .NET using install script as the Microsoft repository now only supports x64 builds. (Ubuntu and Alpine still installing .NET using the distribution repository.)
     - Updated code style [`.editorconfig`](./.editorconfig) to closely follow the Visual Studio and .NET Runtime defaults.
     - Set [CSharpier](https://csharpier.com/) as default C# code formatter.
-  - Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
+  - ⚠️ Removed docker [`UbuntuDevel.Dockerfile`](./Docker/Ubuntu.Devel.Dockerfile), [`AlpineEdge.Dockerfile`](./Docker/Alpine.Edge.Dockerfile), and [`DebianTesting.Dockerfile`](./Docker/Debian.Testing.Dockerfile) builds from CI as theses OS pre-release / Beta builds were prone to intermittent build failures. If "bleeding edge" media tools are required local builds can be done using the Dockerfile.
   - Updated 7-Zip version number parsing to account for newly [observed](./PlexCleanerTests/VersionParsingTests.cs) variants.
   - EIA-608 and CTA-708 closed caption detection was reworked due to FFmpeg [removing](https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/19c95ecbff84eebca254d200c941ce07868ee707) easy detection using FFprobe.
     - See the [EIA-608 and CTA-708 Closed Captions](./README.md#eia-608-and-cta-708-closed-captions) section for details.
     - Refactored the logic used to determine if a video stream should be considered to contain closed captions.
-    - Note that detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
+    - Detection may have been broken since the release of FFmpeg v7, it is possible that media files may be in the `Verified` state with closed captions being undetected, run the `removeclosedcaptions` command to re-detect and remove closed captions.
   - Interlace and Telecine detection is complicated and this implementation using track flags and `idet` is naive and may not be reliable, changed `DeInterlace` to default to `false`.
   - Re-added `parallel` and `threadcount` option to `monitor` command, fixes [#498](https://github.com/ptr727/PlexCleaner/issues/498).
   - Added conditional checks for `ReMux` to warn when disabled and media must be modified for processing logic to work as intended, e.g. removing extra video streams, removing cover art, etc.
@@ -40,7 +71,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - No longer pre-installing VS Debug Tools in docker builds, replaced with [`DebugTools.sh`](./Docker//DebugTools.sh) script that can be used to install [VS Debug Tools](https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh) and [.NET Diagnostic Tools](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/tools-overview) if required.
 - Version 3.8:
   - Added Alpine Stable and Edge, Debian Stable and Testing, and Ubuntu Rolling and Devel docker builds.
-  - Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
+  - ⚠️ Removed ArchLinux docker build, only supported x64 and media tool versions were often lagging.
   - No longer using MCR base images with .NET pre-installed, support for new linux distribution versions were often lagging.
   - Alpine Stable builds are still [disabled](https://github.com/ptr727/PlexCleaner/issues/344), waiting for Alpine 3.20 to be released, ETA 1 June 2024.
   - Rob Savoury [announced][savoury-link] that due to a lack of funding Ubuntu Noble 24.04 LTS will not get PPA support.
@@ -60,7 +91,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Changed JSON serialization from `Newtonsoft.Json` [to](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/migrate-from-newtonsoft) .NET native `Text.Json`.
   - Changed JSON schema generation from `Newtonsoft.Json.Schema` [to][jsonschema-link] `JsonSchema.Net.Generation`.
   - Fixed issue with old settings schemas not upgrading as expected, and updated associated unit tests to help catch this next time.
-  - Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
+  - ⚠️ Disabling Alpine Edge builds, Handbrake is [failing](https://gitlab.alpinelinux.org/alpine/aports/-/issues/15979) to install, again.
     - Will re-enable Alpine builds if Alpine 3.20 and Handbrake is stable.
 - Version 3.6:
   - Disabling Alpine 3.19 release builds and switching to Alpine Edge.
@@ -78,7 +109,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Updating the tool itself is still a manual process.
     - Alternatively subscribe to GitHub [Release Notifications][github-release-notification].
   - Added `verify` command option to verify media streams in files.
-    - Note that only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
+    - Only media stream validation is performed, track-, bitrate-, and HDR verification is only performed as part of the `process` command.
     - The `verify` command is useful when testing or selecting from multiple available media sources.
 - Version 3.3:
   - Download Windows FfMpeg builds from [GyanD FfMpeg GitHub mirror](https://github.com/GyanD/codexffmpeg), may help with [#214](https://github.com/ptr727/PlexCleaner/issues/214).
@@ -104,7 +135,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - On v3 schema upgrade old `ConvertOptions` settings will be upgrade to equivalent settings.
   - Added support for [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag formats.
     - See the [Language Matching](./README.md#language-matching) section usage for details.
-    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix).
+    - IETF language tags allows for greater flexibility in Matroska player [language matching](https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix).
       - E.g. `pt-BR` for Brazilian Portuguese vs. `por` for Portuguese.
       - E.g. `zh-Hans` for simplified Chinese vs. `chi` for Chinese.
     - Update `ProcessOptions:DefaultLanguage` and `ProcessOptions:KeepLanguages` from ISO 639-2B to RFC 5646 format, e.g. `eng` to `en`.
@@ -141,8 +172,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Changed the process exit code to return `1` vs. `-1` in case of error, more conformant with standard exit codes, `0` remains success.
   - Settings JSON schema updated from v2 to v3 to account for new and modified settings.
     - Older settings schemas will automatically be upgraded with compatible settings to v3 on first run.
-  - *Breaking Change* Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
-  - *Breaking Change* Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
+  - ⚠️ Removed the `reprocess` commandline option, logic was very complex with limited value, use `reverify` instead.
+  - ⚠️ Refactored commandline arguments to only add relevant options to commands that use them vs. adding global options to all commands.
     - Maintaining commandline backwards compatibility was [complicated](https://github.com/dotnet/command-line-api/issues/2023), and the change is unfortunately a breaking change.
     - The following global options have been removed and added to their respective commands:
       - `--settingsfile` used by several commands.
@@ -281,11 +312,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Support for H.265 encoding added.
   - All file metadata, titles, tags, and track names are now deleted during media file cleanup.
   - Windows systems will be kept awake during processing.
-  - Schema version numbers were added to JSON config files, breaking backwards compatibility.
+  - ⚠️ Schema version numbers were added to JSON config files, breaking backwards compatibility.
     - Sidecar JSON will be invalid and recreated, including re-verifying that can be very time consuming.
     - Tools JSON will be invalid and `checkfortools` should be used to update tools.
   - Tool version numbers are now using the short version number, allowing for Sidecar compatibility between Windows and Linux.
-  - Processing of the same media can be mixed between Windows, Linux, and Docker, note that the paths in the `FileIgnoreList` setting are platform specific.
+  - Processing of the same media can be mixed between Windows, Linux, and Docker, but the paths in the `FileIgnoreList` setting are platform specific.
   - New options were added to the JSON config file.
     - `ConvertOptions:EnableH265Encoder`: Enable H.265 encoding vs. H.264.
     - `ToolsOptions:UseSystem`: Use tools from the system path vs. from the Tools folder, this is the default on Linux.
@@ -294,7 +325,9 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - File logging and console output is now done using structured Serilog logging.
     - Basic console and file logging options are used, configuration from JSON is not currently supported.
 
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[savoury-link]: https://launchpad.net/~savoury1
 [github-release-notification]: https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/managing-subscriptions-for-activity-on-github/viewing-your-subscriptions
 [jsonschema-link]: https://json-everything.net/json-schema/
+[savoury-link]: https://launchpad.net/~savoury1
+[utf8jsonasync-link]: https://github.com/gragra33/Utf8JsonAsyncStreamReader

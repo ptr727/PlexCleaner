@@ -1,8 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
@@ -72,27 +70,23 @@ public partial class MkvMerge
             try
             {
                 // Download latest release file
-                const string uri = "https://mkvtoolnix.download/latest-release.xml.gz";
+                // https://mkvtoolnix.download/latest-release.json
+                const string uri = "https://mkvtoolnix.download/latest-release.json";
                 Log.Information(
                     "{Tool} : Reading latest version from : {Uri}",
                     GetToolFamily(),
                     uri
                 );
-                Stream releaseStream = Program
-                    .GetHttpClient()
-                    .GetStreamAsync(uri)
-                    .GetAwaiter()
-                    .GetResult();
+                string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
+                Debug.Assert(json != null);
 
-                // Get XML from Gzip
-                using GZipStream gzStream = new(releaseStream, CompressionMode.Decompress);
-                using StreamReader sr = new(gzStream);
-                string xml = sr.ReadToEnd();
-
-                // Get the version number from XML
-                MkvToolXmlSchema.MkvToolnixReleases mkvtools =
-                    MkvToolXmlSchema.MkvToolnixReleases.FromXml(xml);
-                mediaToolInfo.Version = mkvtools.LatestSource.Version;
+                // Get the version number from JSON
+                MkvToolJsonSchema.LatestRelease latestRelease =
+                    MkvToolJsonSchema.LatestRelease.FromJson(json);
+                Debug.Assert(
+                    !string.IsNullOrEmpty(latestRelease.MkvToolnixReleases.LatestSource.Version)
+                );
+                mediaToolInfo.Version = latestRelease.MkvToolnixReleases.LatestSource.Version;
 
                 // Create download URL and the output fileName using the version number
                 // E.g. https://mkvtoolnix.download/windows/releases/18.0.0/mkvtoolnix-64-bit-18.0.0.7z
@@ -100,8 +94,7 @@ public partial class MkvMerge
                 mediaToolInfo.Url =
                     $"https://mkvtoolnix.download/windows/releases/{mediaToolInfo.Version}/{mediaToolInfo.FileName}";
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -110,7 +103,7 @@ public partial class MkvMerge
 
         public bool GetMediaProps(string fileName, out MediaProps mediaProps)
         {
-            mediaProps = null;
+            mediaProps = null!;
             return GetMediaPropsJson(fileName, out string json)
                 && GetMediaPropsFromJson(json, fileName, out mediaProps);
         }
@@ -175,7 +168,6 @@ public partial class MkvMerge
             {
                 // Deserialize
                 MkvToolJsonSchema.MkvMerge mkvMerge = MkvToolJsonSchema.MkvMerge.FromJson(json);
-                ArgumentNullException.ThrowIfNull(mkvMerge);
                 if (!mkvMerge.Container.Supported || mkvMerge.Tracks.Count == 0)
                 {
                     Log.Error(
@@ -254,8 +246,7 @@ public partial class MkvMerge
                     mkvMerge.Container.Properties.Duration / 1000000.0
                 );
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -380,5 +371,11 @@ public partial class MkvMerge
             RegexOptions.IgnoreCase | RegexOptions.Multiline
         )]
         public static partial Regex InstalledVersionRegex();
+
+        [GeneratedRegex(
+            @"<latest-source>.*?<version>(?<version>[\d.]+)</version>",
+            RegexOptions.IgnoreCase | RegexOptions.Multiline
+        )]
+        public static partial Regex LatestVersionRegex();
     }
 }

@@ -78,7 +78,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.MkvMerge);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.Codec) || string.IsNullOrEmpty(track.Properties.CodecId))
+        )
         {
             if (string.IsNullOrEmpty(track.Codec))
             {
@@ -357,7 +360,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Debug.Assert(Parent.Parser == MediaTool.ToolType.FfProbe);
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.CodecName) || string.IsNullOrEmpty(track.CodecLongName))
+        )
         {
             if (string.IsNullOrEmpty(track.CodecName))
             {
@@ -440,31 +446,31 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Flags
-        if (track.Disposition.Default != 0)
+        if (track.Disposition.IsDefault)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Disposition.Forced != 0)
+        if (track.Disposition.IsForced)
         {
             Flags |= FlagsType.Forced;
         }
-        if (track.Disposition.Original != 0)
+        if (track.Disposition.IsOriginal)
         {
             Flags |= FlagsType.Original;
         }
-        if (track.Disposition.Comment != 0)
+        if (track.Disposition.IsCommentary)
         {
             Flags |= FlagsType.Commentary;
         }
-        if (track.Disposition.HearingImpaired != 0)
+        if (track.Disposition.IsHearingImpaired)
         {
             Flags |= FlagsType.HearingImpaired;
         }
-        if (track.Disposition.VisualImpaired != 0)
+        if (track.Disposition.IsVisualImpaired)
         {
             Flags |= FlagsType.VisualImpaired;
         }
-        if (track.Disposition.Descriptions != 0)
+        if (track.Disposition.IsDescriptions)
         {
             Flags |= FlagsType.Descriptions;
         }
@@ -475,7 +481,8 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 .Tags.FirstOrDefault(item =>
                     item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)
                 )
-                .Value ?? "";
+                .Value
+            ?? string.Empty;
 
         // Language
         Language =
@@ -483,7 +490,8 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 .Tags.FirstOrDefault(item =>
                     item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)
                 )
-                .Value ?? "";
+                .Value
+            ?? string.Empty;
 
         // TODO: FfProbe uses the tag language value instead of the track language
         // Some files show MediaInfo and MkvMerge say language is "eng", FfProbe says language is "und"
@@ -527,7 +535,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     // Required
     // Format = track.Format;
     // Codec = track.CodecId;
-    public virtual bool Create(MediaInfoToolXmlSchema.Track track)
+    public virtual bool Create(MediaInfoToolJsonSchema.Track track)
     {
         Debug.Assert(Parent.Parser == MediaTool.ToolType.MediaInfo);
 
@@ -538,7 +546,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Fixup non-MKV container formats
-        if (!Parent.IsContainerMkv() && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId)))
+        if (
+            !Parent.IsContainerMkv()
+            && (string.IsNullOrEmpty(track.Format) || string.IsNullOrEmpty(track.CodecId))
+        )
         {
             if (string.IsNullOrEmpty(track.Format))
             {
@@ -597,11 +608,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         // HearingImpaired
         // Descriptions
 
-        if (track.Default)
+        if (track.IsDefault)
         {
             Flags |= FlagsType.Default;
         }
-        if (track.Forced)
+        if (track.IsForced)
         {
             Flags |= FlagsType.Forced;
         }
@@ -650,7 +661,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    private bool HandleSubTracks(MediaInfoToolXmlSchema.Track track)
+    private bool HandleSubTracks(MediaInfoToolJsonSchema.Track track)
     {
         // StreamOrder maps to Id
         // Id maps to Number
@@ -663,7 +674,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         {
             // Ignoring sub-track
             Log.Warning(
-                "{Parser} : {Type} : Ignoring sub-track : Id: {Id}, Number: {Id}, Container: {Container} : {FileName}",
+                "{Parser} : {Type} : Ignoring sub-track : Id: {Id}, Number: {Number}, Container: {Container} : {FileName}",
                 Parent.Parser,
                 Type,
                 track.StreamOrder,

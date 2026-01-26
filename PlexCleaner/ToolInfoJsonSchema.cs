@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Serilog;
@@ -22,8 +21,8 @@ public class ToolInfoJsonSchema
 
     public List<MediaToolInfo> Tools { get; } = [];
 
-    public MediaToolInfo GetToolInfo(MediaTool mediaTool) =>
-        Tools.FirstOrDefault(t => t.ToolFamily == mediaTool.GetToolFamily());
+    public MediaToolInfo? GetToolInfo(MediaTool mediaTool) =>
+        Tools.Find(tool => tool.ToolFamily == mediaTool.GetToolFamily());
 
     public static ToolInfoJsonSchema FromFile(string path) => FromJson(File.ReadAllText(path));
 
@@ -31,10 +30,12 @@ public class ToolInfoJsonSchema
         File.WriteAllText(path, ToJson(json));
 
     private static string ToJson(ToolInfoJsonSchema tools) =>
-        JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
+        JsonSerializer.Serialize(tools, ToolInfoJsonContext.Default.ToolInfoJsonSchema);
 
+    // Will throw on failure to deserialize
     public static ToolInfoJsonSchema FromJson(string json) =>
-        JsonSerializer.Deserialize<ToolInfoJsonSchema>(json, ConfigFileJsonSchema.JsonReadOptions);
+        JsonSerializer.Deserialize(json, ToolInfoJsonContext.Default.ToolInfoJsonSchema)
+        ?? throw new JsonException("Failed to deserialize ToolInfoJsonSchema");
 
     public static bool Upgrade(ToolInfoJsonSchema json)
     {
@@ -55,3 +56,16 @@ public class ToolInfoJsonSchema
         return false;
     }
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n"
+)]
+[JsonSerializable(typeof(ToolInfoJsonSchema))]
+internal partial class ToolInfoJsonContext : JsonSerializerContext;

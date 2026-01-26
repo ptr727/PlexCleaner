@@ -8,8 +8,6 @@ public partial class HandBrake
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         // TODO: Consolidate
         public GlobalOptions Default() => this;
 
@@ -21,15 +19,13 @@ public partial class HandBrake
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public InputOptions Input() => Add("--input");
 
         public InputOptions InputFile(string option) => Input().Add($"\"{option}\"");
@@ -60,15 +56,13 @@ public partial class HandBrake
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class OutputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public OutputOptions Output() => Add("--output");
 
         public OutputOptions OutputFile(string option) => Output().Add($"\"{option}\"");
@@ -116,7 +110,7 @@ public partial class HandBrake
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

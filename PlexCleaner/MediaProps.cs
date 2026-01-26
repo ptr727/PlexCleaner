@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Serilog;
@@ -39,7 +38,7 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
         || Subtitle.Any(item => item.State == TrackProps.StateType.Unsupported);
 
     public TimeSpan Duration { get; set; }
-    public string Container { get; set; }
+    public string Container { get; set; } = string.Empty;
 
     public int Attachments { get; set; }
     public int Chapters { get; set; }
@@ -107,14 +106,14 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
         out MediaProps mediaInfo
     )
     {
-        mkvMerge = null;
-        mediaInfo = null;
+        mkvMerge = null!;
+        mediaInfo = null!;
         return GetMediaProps(fileInfo, MediaTool.ToolType.FfProbe, out ffProbe)
             && GetMediaProps(fileInfo, MediaTool.ToolType.MkvMerge, out mkvMerge)
             && GetMediaProps(fileInfo, MediaTool.ToolType.MediaInfo, out mediaInfo);
     }
 
-    [SuppressMessage("Style", "IDE0072:Add missing cases")]
+    // Will throw on failure
     public static bool GetMediaProps(
         FileInfo fileInfo,
         MediaTool.ToolType parser,
@@ -135,7 +134,13 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
                 fileInfo.FullName,
                 out mediaProps
             ),
-            _ => throw new NotImplementedException(),
+            MediaTool.ToolType.None => throw new NotImplementedException(),
+            MediaTool.ToolType.FfMpeg => throw new NotImplementedException(),
+            MediaTool.ToolType.HandBrake => throw new NotImplementedException(),
+            MediaTool.ToolType.MkvPropEdit => throw new NotImplementedException(),
+            MediaTool.ToolType.SevenZip => throw new NotImplementedException(),
+            MediaTool.ToolType.MkvExtract => throw new NotImplementedException(),
+            _ => throw new NotSupportedException($"Unsupported parser type: {parser}"),
         };
 
     public void RemoveCoverArt()
@@ -180,7 +185,8 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
         List<TrackProps> matchedTrackList = [];
         mediaInfoTrackList.ForEach(mediaInfoItem =>
             matchedTrackList.Add(
-                mkvMergeTrackList.Find(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)
+                // First() will throw if not found
+                mkvMergeTrackList.First(mkvMergeItem => mkvMergeItem.Number == mediaInfoItem.Number)
             )
         );
 
@@ -210,7 +216,7 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
         foreach (TrackProps thisItem in thisTrackList)
         {
             // Find the matching item by matroska header number
-            TrackProps thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
+            TrackProps? thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
             if (thatItem == null)
             {
                 return false;

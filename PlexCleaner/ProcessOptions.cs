@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using Json.Schema.Generation;
 using Serilog;
 
 namespace PlexCleaner;
@@ -11,9 +10,9 @@ namespace PlexCleaner;
 // v2 : Added
 public record VideoFormat
 {
-    public string Format { get; set; }
-    public string Codec { get; set; }
-    public string Profile { get; set; }
+    public string Format { get; set; } = string.Empty;
+    public string Codec { get; set; } = string.Empty;
+    public string Profile { get; set; } = string.Empty;
 }
 
 // v1
@@ -24,50 +23,50 @@ public record ProcessOptions1
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string ReEncodeVideoFormats { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string ReEncodeVideoFormats { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string ReEncodeVideoCodecs { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string ReEncodeVideoCodecs { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string ReEncodeVideoProfiles { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string ReEncodeVideoProfiles { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string ReEncodeAudioFormats { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string ReEncodeAudioFormats { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string ReMuxExtensions { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string ReMuxExtensions { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string KeepExtensions { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string KeepExtensions { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string KeepLanguages { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string KeepLanguages { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
-    [JsonExclude]
-    public string PreferredAudioFormats { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
+    public string PreferredAudioFormats { get; set; } = string.Empty;
 
     [JsonRequired]
     public bool DeleteEmptyFolders { get; set; }
@@ -90,7 +89,7 @@ public record ProcessOptions1
 
     // v3 : Changed ISO 639-2 to RFC 5646 language tags
     [JsonRequired]
-    public string DefaultLanguage { get; set; } = "";
+    public string DefaultLanguage { get; set; } = string.Empty;
 
     [JsonRequired]
     public bool RemoveUnwantedLanguageTracks { get; set; }
@@ -131,7 +130,7 @@ public record ProcessOptions2 : ProcessOptions1
     // v1 -> v2 : CSV -> HashSet<string>
     // v3 -> v4 : Replaced by FileIgnoreMasks
     [Obsolete("Replaced in v4 with FileIgnoreMasks")]
-    [JsonExclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added
@@ -249,27 +248,27 @@ public record ProcessOptions4 : ProcessOptions3
             if (!string.IsNullOrEmpty(processOptions1.KeepExtensions))
             {
                 KeepExtensions.UnionWith(processOptions1.KeepExtensions.Split(','));
-                processOptions1.KeepExtensions = null;
+                processOptions1.KeepExtensions = string.Empty;
             }
             if (!string.IsNullOrEmpty(processOptions1.ReMuxExtensions))
             {
                 ReMuxExtensions.UnionWith(processOptions1.ReMuxExtensions.Split(','));
-                processOptions1.ReMuxExtensions = null;
+                processOptions1.ReMuxExtensions = string.Empty;
             }
             if (!string.IsNullOrEmpty(processOptions1.ReEncodeAudioFormats))
             {
                 ReEncodeAudioFormats.UnionWith(processOptions1.ReEncodeAudioFormats.Split(','));
-                processOptions1.ReEncodeAudioFormats = null;
+                processOptions1.ReEncodeAudioFormats = string.Empty;
             }
             if (!string.IsNullOrEmpty(processOptions1.KeepLanguages))
             {
                 KeepLanguages.UnionWith(processOptions1.KeepLanguages.Split(','));
-                processOptions1.KeepLanguages = null;
+                processOptions1.KeepLanguages = string.Empty;
             }
             if (!string.IsNullOrEmpty(processOptions1.PreferredAudioFormats))
             {
                 PreferredAudioFormats.UnionWith(processOptions1.PreferredAudioFormats.Split(','));
-                processOptions1.PreferredAudioFormats = null;
+                processOptions1.PreferredAudioFormats = string.Empty;
             }
 
             // v1 -> v2 : Convert CSV to List<VideoFormat>
@@ -300,23 +299,23 @@ public record ProcessOptions4 : ProcessOptions3
                     // Convert the * as wildcard to a null as any match
                     if (videoFormat.Codec.Equals("*", StringComparison.OrdinalIgnoreCase))
                     {
-                        videoFormat.Codec = null;
+                        videoFormat.Codec = string.Empty;
                     }
                     if (videoFormat.Format.Equals("*", StringComparison.OrdinalIgnoreCase))
                     {
-                        videoFormat.Format = null;
+                        videoFormat.Format = string.Empty;
                     }
                     if (videoFormat.Profile.Equals("*", StringComparison.OrdinalIgnoreCase))
                     {
-                        videoFormat.Profile = null;
+                        videoFormat.Profile = string.Empty;
                     }
 
                     ReEncodeVideo.Add(videoFormat);
                 }
             }
-            processOptions1.ReEncodeVideoCodecs = null;
-            processOptions1.ReEncodeVideoFormats = null;
-            processOptions1.ReEncodeVideoProfiles = null;
+            processOptions1.ReEncodeVideoCodecs = string.Empty;
+            processOptions1.ReEncodeVideoFormats = string.Empty;
+            processOptions1.ReEncodeVideoProfiles = string.Empty;
         }
 
         // v2
@@ -326,12 +325,11 @@ public record ProcessOptions4 : ProcessOptions3
             // ProcessOptions2 processOptions2 = this;
 
             // v2 -> v3 : Convert ISO 639-2 to RFC 5646 language tags
-            DefaultLanguage = Language.Lookup.GetIetfFromIso(DefaultLanguage) ?? Language.English;
+            // TODO: Filter out lookups that fail
+            DefaultLanguage = Language.Lookup.GetIetfFromIso(DefaultLanguage);
             List<string> oldList = [.. KeepLanguages];
             KeepLanguages.Clear();
-            oldList.ForEach(item =>
-                KeepLanguages.Add(Language.Lookup.GetIetfFromIso(item) ?? Language.English)
-            );
+            oldList.ForEach(item => KeepLanguages.Add(Language.Lookup.GetIetfFromIso(item)));
 
             // v2 -> v3 : Defaults
             KeepOriginalLanguage = true;
@@ -361,7 +359,7 @@ public record ProcessOptions4 : ProcessOptions3
 
     public void SetDefaults()
     {
-        DefaultLanguage = "en";
+        DefaultLanguage = Language.English;
         DeInterlace = false;
         DeleteEmptyFolders = true;
         DeleteUnwantedExtensions = true;

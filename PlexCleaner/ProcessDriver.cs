@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using Serilog;
 
@@ -32,7 +31,7 @@ public static class ProcessDriver
         List<string> localFileList = [];
         try
         {
-            // No need for concurrent collections, number of items are small, and added in bulk, just lock when adding results
+            // Lock when adding results
             Lock listLock = new();
 
             // Process each input in parallel
@@ -86,7 +85,7 @@ public static class ProcessDriver
             // Cancelled
             error = true;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Error
             error = true;
@@ -217,7 +216,7 @@ public static class ProcessDriver
             // Cancelled
             error = true;
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Error
             error = true;
@@ -346,7 +345,6 @@ public static class ProcessDriver
             {
                 // Process MKV files or files in the Remux list
                 FileInfo fileInfo = new(fileName);
-
                 if (
                     !SidecarFile.IsMkvFile(fileName)
                     && !Program.Config.ProcessOptions.ReMuxExtensions.Contains(
@@ -453,7 +451,7 @@ public static class ProcessDriver
             {
                 // Get media tool information
                 if (
-                    !Tools.MediaInfo.GetMediaPropsXml(fileName, out string mediaInfoXml)
+                    !Tools.MediaInfo.GetMediaPropsJson(fileName, out string mediaInfoXml)
                     || !Tools.MkvMerge.GetMediaPropsJson(fileName, out string mkvMergeJson)
                     || !Tools.FfProbe.GetMediaPropsJson(fileName, out string ffProbeJson)
                 )

@@ -27,12 +27,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'debian' || 'debian-develop' }}
-            file: debian.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'alpine' || 'alpine-develop' }}
-            file: alpine.ver
-          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'ubuntu' || 'ubuntu-develop' }}
-            file: ubuntu.ver
+          - tag: ${{ endsWith(github.ref, 'refs/heads/main') && 'latest' || 'develop' }}
+            file: latest.ver
 
     steps:
 

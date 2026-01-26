@@ -13,7 +13,7 @@ public record ToolsOptions1
     public bool UseSystem { get; set; }
 
     [JsonRequired]
-    public string RootPath { get; set; } = "";
+    public string RootPath { get; set; } = string.Empty;
 
     [JsonRequired]
     public bool RootRelative { get; set; }
@@ -24,20 +24,11 @@ public record ToolsOptions1
     public void SetDefaults()
     {
         // Set defaults based on OS
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            UseSystem = false;
-            RootPath = @".\Tools\";
-            RootRelative = true;
-            AutoUpdate = true;
-        }
-        else
-        {
-            UseSystem = true;
-            RootPath = "";
-            RootRelative = false;
-            AutoUpdate = false;
-        }
+        bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        UseSystem = !isWindows;
+        AutoUpdate = isWindows;
+        RootPath = @".\Tools\";
+        RootRelative = true;
     }
 
     public bool VerifyValues()

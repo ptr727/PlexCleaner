@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CliWrap;
@@ -25,7 +24,7 @@ public partial class SevenZip
         protected override string GetToolNameLinux() => "7z";
 
         protected override string GetSubFolder() =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : "";
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "x64" : string.Empty;
 
         public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
@@ -84,8 +83,7 @@ public partial class SevenZip
                     mediaToolInfo.FileName
                 );
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -112,11 +110,13 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;
@@ -186,11 +186,13 @@ public partial class SevenZip
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Rename the folder
             // E.g. 7z1805-extra to .\Tools\7Zip
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;

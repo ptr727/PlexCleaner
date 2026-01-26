@@ -10,8 +10,6 @@ public partial class MkvMerge
 {
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Default() =>
             DisableTrackStatisticsTags().NormalizeLanguageIetfExtended();
 
@@ -33,15 +31,13 @@ public partial class MkvMerge
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public InputOptions Default() => NoGlobalTags().NoTrackTags().NoAttachments().NoButtons();
 
         public InputOptions Identify(string option) => Add("--identify").Add($"\"{option}\"");
@@ -100,15 +96,13 @@ public partial class MkvMerge
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class OutputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public OutputOptions IdentificationFormat(string option) =>
             Add("--identification-format").Add(option);
 
@@ -143,7 +137,7 @@ public partial class MkvMerge
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

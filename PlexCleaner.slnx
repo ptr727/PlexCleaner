@@ -1,0 +1,77 @@
+<Solution>
+    <Folder Name="/Actions/">
+        <File Path=".github/workflows/BuildDockerPush.yml" />
+        <File Path=".github/workflows/BuildDockerTask.yml" />
+        <File Path=".github/workflows/BuildGitHubRelease.yml" />
+        <File Path=".github/workflows/DependabotAutoMerge.yml" />
+        <File Path=".github/workflows/GetVersionTask.yml" />
+        <File Path=".github/workflows/TestBuildPr.yml" />
+        <File Path=".github/workflows/TestBuildTask.yml" />
+        <File Path=".github/workflows/TestDockerPr.yml" />
+        <File Path=".github/workflows/TestDockerTask.yml" />
+    </Folder>
+    <Folder Name="/CoPilot/">
+        <File Path=".github/copilot-instructions.md" />
+    </Folder>
+    <Folder Name="/Dependabot/">
+        <File Path=".github/dependabot.yml" />
+    </Folder>
+    <Folder Name="/Docker/">
+        <File Path="Docker/Build.sh" />
+        <File Path="Docker/InstallDebugTools.sh" />
+        <File Path="Docker/README.m4" />
+        <File Path="Docker/Test.sh" />
+        <File Path="Docker/Ubuntu.Rolling.Dockerfile" />
+        <File Path="Docker/UnitTest.sh" />
+        <File Path="Docker/Version.sh" />
+    </Folder>
+    <Folder Name="/Docs/">
+        <File Path="Docs/ClosedCaptions.md" />
+        <File Path="Docs/CustomOptions.md" />
+        <File Path="Docs/LanguageMatching.md" />
+    </Folder>
+    <Folder Name="/Issues/">
+        <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
+        <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+    </Folder>
+    <Folder Name="/Samples/">
+        <File Path="Samples/PlexCleaner/PlexCleaner.v1.json" />
+        <File Path="Samples/PlexCleaner/PlexCleaner.v2.json" />
+        <File Path="Samples/PlexCleaner/PlexCleaner.v3.json" />
+        <File Path="Samples/PlexCleaner/PlexCleaner.v4.json" />
+        <File Path="Samples/PlexCleaner/Sidecar.v1.mkv" />
+        <File Path="Samples/PlexCleaner/Sidecar.v1.PlexCleaner" />
+        <File Path="Samples/PlexCleaner/Sidecar.v2.mkv" />
+        <File Path="Samples/PlexCleaner/Sidecar.v2.PlexCleaner" />
+        <File Path="Samples/PlexCleaner/Sidecar.v3.mkv" />
+        <File Path="Samples/PlexCleaner/Sidecar.v3.PlexCleaner" />
+        <File Path="Samples/PlexCleaner/Sidecar.v4.mkv" />
+        <File Path="Samples/PlexCleaner/Sidecar.v4.PlexCleaner" />
+        <File Path="Samples/PlexCleaner/Sidecar.v5.mkv" />
+        <File Path="Samples/PlexCleaner/Sidecar.v5.PlexCleaner" />
+    </Folder>
+    <Folder Name="/Solution/">
+        <File Path=".dockerignore" />
+        <File Path=".editorconfig" />
+        <File Path=".gitattributes" />
+        <File Path=".gitignore" />
+        <File Path="HISTORY.md" />
+        <File Path="LICENSE" />
+        <File Path="PlexCleaner.code-workspace" />
+        <File Path="PlexCleaner.defaults.json" />
+        <File Path="PlexCleaner.schema.json" />
+        <File Path="PlexCleaner.slnx" />
+        <File Path="README.md" />
+        <File Path="version.json" />
+    </Folder>
+    <Folder Name="/Tools/">
+        <File Path=".config/dotnet-tools.json" />
+    </Folder>
+    <Folder Name="/VSCode/">
+        <File Path=".vscode/launch.json" />
+        <File Path=".vscode/tasks.json" />
+    </Folder>
+    <Project Path="PlexCleaner/PlexCleaner.csproj" />
+    <Project Path="PlexCleanerTests/PlexCleanerTests.csproj" />
+    <Project Path="Sandbox/Sandbox.csproj" />
+</Solution>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using InsaneGenius.Utilities;
@@ -121,10 +120,10 @@ public static class Tools
             foreach (MediaTool mediaTool in GetToolList())
             {
                 // Lookup using the tool family
-                MediaToolInfo mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
+                MediaToolInfo? mediaToolInfo = toolInfoJson.GetToolInfo(mediaTool);
                 if (mediaToolInfo == null)
                 {
-                    Log.Error("{Tool} not found in Tools.json", mediaTool.GetToolFamily());
+                    Log.Error("{Tool} not registered", mediaTool.GetToolType());
                     return false;
                 }
 
@@ -145,7 +144,7 @@ public static class Tools
                 mediaTool.Info = mediaToolInfo;
             }
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -157,7 +156,7 @@ public static class Tools
         // System tools
         if (Program.Config.ToolsOptions.UseSystem)
         {
-            return "";
+            return string.Empty;
         }
 
         // Process relative or absolute tools path
@@ -167,11 +166,10 @@ public static class Tools
             return Program.Config.ToolsOptions.RootPath;
         }
 
-        // Get the assembly directory
-        string toolsRoot = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
-
         // Create the root from the relative directory
-        return Path.GetFullPath(Path.Combine(toolsRoot!, Program.Config.ToolsOptions.RootPath));
+        return Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, Program.Config.ToolsOptions.RootPath)
+        );
     }
 
     public static string CombineToolPath(string fileName) =>
@@ -186,13 +184,13 @@ public static class Tools
     {
         // Keep in sync with VerifyFolderTools()
 
-        // Checking for new tools are not supported on Linux
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        // Checking for new tools is only supported on Windows
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Log.Warning("Checking for new tools are not supported on Linux");
+            Log.Warning("Checking for new tools is only supported on Windows");
             if (Program.Config.ToolsOptions.AutoUpdate)
             {
-                Log.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on Linux");
+                Log.Warning("Set 'ToolsOptions:AutoUpdate' to 'false' on non-Windows platforms");
                 Program.Config.ToolsOptions.AutoUpdate = false;
             }
 
@@ -222,7 +220,7 @@ public static class Tools
         {
             // Read the current tool versions from the JSON file
             string toolsFile = GetToolsJsonPath();
-            ToolInfoJsonSchema toolInfoJson = null;
+            ToolInfoJsonSchema? toolInfoJson = null;
             if (File.Exists(toolsFile))
             {
                 // Deserialize and compare the schema version
@@ -238,10 +236,13 @@ public static class Tools
                     );
                     if (!ToolInfoJsonSchema.Upgrade(toolInfoJson))
                     {
+                        // Failed to upgrade schema
                         toolInfoJson = null;
                     }
                 }
             }
+
+            // Create new schema if not deserialized or upgraded
             toolInfoJson ??= new ToolInfoJsonSchema();
 
             // Set the last check time
@@ -276,7 +277,7 @@ public static class Tools
                 }
 
                 // Lookup in JSON file using the tool family
-                MediaToolInfo jsonToolInfo = toolInfoJson.GetToolInfo(mediaTool);
+                MediaToolInfo? jsonToolInfo = toolInfoJson.GetToolInfo(mediaTool);
                 bool updateRequired;
                 if (jsonToolInfo == null)
                 {
@@ -331,7 +332,7 @@ public static class Tools
             // Write updated JSON to file
             ToolInfoJsonSchema.ToFile(toolsFile, toolInfoJson);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -349,12 +350,11 @@ public static class Tools
                 .GetResult()
                 .EnsureSuccessStatusCode();
 
-            mediaToolInfo.Size = (long)httpResponse.Content.Headers.ContentLength;
-            mediaToolInfo.ModifiedTime = (DateTime)
-                httpResponse.Content.Headers.LastModified?.DateTime;
+            mediaToolInfo.Size = httpResponse.Content.Headers.ContentLength ?? 0;
+            mediaToolInfo.ModifiedTime =
+                httpResponse.Content.Headers.LastModified?.DateTime ?? DateTime.MinValue;
         }
-        catch (HttpRequestException e)
-            when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (HttpRequestException e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }
@@ -363,9 +363,12 @@ public static class Tools
 
     public static async Task DownloadFileAsync(Uri uri, string fileName)
     {
-        await using Stream httpStream = await Program.GetHttpClient().GetStreamAsync(uri);
+        await using Stream httpStream = await Program
+            .GetHttpClient()
+            .GetStreamAsync(uri)
+            .ConfigureAwait(false);
         await using FileStream fileStream = File.OpenWrite(fileName);
-        await httpStream.CopyToAsync(fileStream);
+        await httpStream.CopyToAsync(fileStream).ConfigureAwait(false);
     }
 
     public static bool DownloadFile(Uri uri, string fileName)
@@ -374,8 +377,7 @@ public static class Tools
         {
             DownloadFileAsync(uri, fileName).GetAwaiter().GetResult();
         }
-        catch (Exception e)
-            when (LogOptions.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+        catch (Exception e) when (LogOptions.Logger.LogAndHandle(e))
         {
             return false;
         }

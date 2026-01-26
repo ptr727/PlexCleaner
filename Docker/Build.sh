@@ -9,9 +9,9 @@ set -e
 # Build release and debug builds
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \
-    --self-contained false \
     --output ./Build/Release \
     --configuration release \
+    -property:PublishAot=false \
     -property:Version=$BUILD_VERSION \
     -property:FileVersion=$BUILD_FILE_VERSION \
     -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \
@@ -20,9 +20,9 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
 
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \
-    --self-contained false \
     --output ./Build/Debug \
     --configuration debug \
+    -property:PublishAot=false \
     -property:Version=$BUILD_VERSION \
     -property:FileVersion=$BUILD_FILE_VERSION \
     -property:AssemblyVersion=$BUILD_ASSEMBLY_VERSION \

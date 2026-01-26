@@ -41,38 +41,37 @@ public record ProcessResultJsonSchema
         File.WriteAllText(path, ToJson(json));
 
     private static string ToJson(ProcessResultJsonSchema tools) =>
-        JsonSerializer.Serialize(tools, ConfigFileJsonSchema.JsonWriteOptions);
+        JsonSerializer.Serialize(tools, ProcessResultJsonContext.Default.ProcessResultJsonSchema);
 
+    // Will throw on failure to deserialize
     public static ProcessResultJsonSchema FromJson(string json) =>
-        JsonSerializer.Deserialize<ProcessResultJsonSchema>(
-            json,
-            ConfigFileJsonSchema.JsonReadOptions
-        );
+        JsonSerializer.Deserialize(json, ProcessResultJsonContext.Default.ProcessResultJsonSchema)
+        ?? throw new JsonException("Failed to deserialize ProcessResultJsonSchema");
 
     public class ToolVersion
     {
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter<MediaTool.ToolFamily>))]
         public MediaTool.ToolFamily Tool { get; set; }
 
-        public string Version { get; set; }
+        public string Version { get; set; } = string.Empty;
     }
 
     public class Version
     {
-        public string Application { get; set; }
-        public string Runtime { get; set; }
-        public string OS { get; set; }
+        public string Application { get; set; } = string.Empty;
+        public string Runtime { get; set; } = string.Empty;
+        public string OS { get; set; } = string.Empty;
         public List<ToolVersion> Tools { get; } = [];
     }
 
     public class ProcessResult
     {
         public bool Result { get; set; }
-        public string OriginalFileName { get; set; }
-        public string NewFileName { get; set; }
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string NewFileName { get; set; } = string.Empty;
         public bool Modified { get; set; }
 
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter<SidecarFile.StatesType>))]
         public SidecarFile.StatesType State { get; set; }
     }
 
@@ -90,3 +89,16 @@ public record ProcessResultJsonSchema
         public List<ProcessResult> Results { get; } = [];
     }
 }
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n"
+)]
+[JsonSerializable(typeof(ProcessResultJsonSchema))]
+internal partial class ProcessResultJsonContext : JsonSerializerContext;

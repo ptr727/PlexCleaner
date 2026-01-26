@@ -26,8 +26,6 @@ public partial class MkvPropEdit
 
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public GlobalOptions Default() => NormalizeLanguageIetfExtended();
 
         public GlobalOptions NormalizeLanguageIetf(string option) =>
@@ -43,15 +41,13 @@ public partial class MkvPropEdit
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
-        private readonly ArgumentsBuilder _argumentsBuilder = argumentsBuilder;
-
         public InputOptions Default() => DeleteTrackStatisticsTags();
 
         public InputOptions InputFile(string option) => Add($"\"{option}\"");
@@ -75,7 +71,7 @@ public partial class MkvPropEdit
         public InputOptions DeleteAttachment(int option) => DeleteAttachment().Add($"{option + 1}");
 
         // Set the language property not the language-ietf property
-        // https://gitlab.com/mbunkus/mkvtoolnix/-/wikis/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
+        // https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix#mkvpropedit
         public InputOptions Language(string option) => Add($"language={option}");
 
         public InputOptions SetLanguage(string option) => Set().Language(option);
@@ -99,7 +95,7 @@ public partial class MkvPropEdit
             {
                 return this;
             }
-            _ = _argumentsBuilder.Add(option, escape);
+            _ = argumentsBuilder.Add(option, escape);
             return this;
         }
     }

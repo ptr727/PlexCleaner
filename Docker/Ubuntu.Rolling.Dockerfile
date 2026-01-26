@@ -49,8 +49,9 @@ RUN apt update \
     && apt upgrade -y
 
 # Install .NET SDK
-# https://packages.ubuntu.com/oracular/dotnet-sdk-9.0
-RUN apt install -y --no-install-recommends dotnet-sdk-9.0
+# https://documentation.ubuntu.com/ubuntu-for-developers/howto/dotnet-setup
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install
+RUN apt install -y --install-suggests dotnet-sdk-10.0
 
 # Copy source and unit tests
 COPY ./Samples/. ./Samples/.
@@ -58,13 +59,11 @@ COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 
 # Unit Test
-COPY ./Docker/UnitTest.sh ./
-RUN chmod ug=rwx,o=rx ./UnitTest.sh
+COPY --chmod=ug=rwx,o=rx ./Docker/UnitTest.sh ./
 RUN ./UnitTest.sh
 
 # Build
-COPY ./Docker/Build.sh ./
-RUN chmod ug=rwx,o=rx ./Build.sh
+COPY --chmod=ug=rwx,o=rx ./Docker/Build.sh ./
 RUN ./Build.sh
 
 
@@ -103,14 +102,13 @@ ENV TZ=Etc/UTC \
     LC_ALL=en_US.UTF-8
 
 # Install .NET Runtime
-# https://packages.ubuntu.com/oracular/dotnet-runtime-9.0
-RUN apt install -y --no-install-recommends dotnet-runtime-9.0
+RUN apt install -y --install-suggests dotnet-runtime-10.0
 
 # Install media tools
-# https://packages.ubuntu.com/oracular/ffmpeg
-# https://packages.ubuntu.com/oracular/handbrake-cli
-# https://packages.ubuntu.com/oracular/mediainfo
-# https://packages.ubuntu.com/oracular/mkvtoolnix
+# https://packages.ubuntu.com/questing/ffmpeg
+# https://packages.ubuntu.com/questing/handbrake-cli
+# https://packages.ubuntu.com/questing/mediainfo
+# https://packages.ubuntu.com/questing/mkvtoolnix
 RUN apt install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \
@@ -126,18 +124,15 @@ RUN apt autoremove -y \
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Copy test script
-COPY /Docker/Test.sh /Test/
-RUN chmod -R ug=rwx,o=rx /Test
+COPY --chmod=ug=rwx,o=rx ./Docker/Test.sh /Test/
 
 # Install debug tools
-COPY ./Docker/InstallDebugTools.sh ./
-RUN chmod ug=rwx,o=rx ./InstallDebugTools.sh \
-    && ./InstallDebugTools.sh \
+COPY --chmod=ug=rwx,o=rx ./Docker/InstallDebugTools.sh ./
+RUN ./InstallDebugTools.sh \
     && rm -rf ./InstallDebugTools.sh
 
 # Copy version script
-COPY /Docker/Version.sh /PlexCleaner/
-RUN chmod ug=rwx,o=rx /PlexCleaner/Version.sh
+COPY --chmod=ug=rwx,o=rx ./Docker/Version.sh /PlexCleaner/
 
 # Print version information
 ARG TARGETPLATFORM \

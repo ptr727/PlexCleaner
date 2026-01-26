@@ -50,7 +50,7 @@ public class TagMapSet
         {
             // Look for an existing entry
             string key = prime.ElementAt(i).Format;
-            if (dictionary.TryGetValue(key, out TagMap tagmap))
+            if (dictionary.TryGetValue(key, out TagMap? tagmap))
             {
                 // Increment the usage count
                 tagmap.Count++;

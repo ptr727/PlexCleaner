@@ -159,6 +159,7 @@
             "Pieter",
             "Plex",
             "plexcleaner",
+            "PLINQ",
             "preprocess",
             "printmediainfo",
             "printsidecar",
@@ -236,7 +237,7 @@
         "yaml.schemas": {
             "https://json.schemastore.org/github-issue-config.json": "file:/.github/ISSUE_TEMPLATE/config.yml"
         },
-        "dotnet.defaultSolution": "PlexCleaner.sln",
+        "dotnet.defaultSolution": "PlexCleaner.slnx",
         "files.trimTrailingWhitespace": true,
         "[markdown]": {
             "files.trimTrailingWhitespace": false
@@ -256,7 +257,8 @@
         "dotnet.formatting.organizeImportsOnFormat": true,
         "csharp.debug.symbolOptions.searchNuGetOrgSymbolServer": true,
         "csharp.debug.symbolOptions.searchMicrosoftSymbolServer": true,
-        "files.encoding": "utf8"
+        "files.encoding": "utf8",
+        "markdown.extension.toc.levels": "2..3"
     },
     "extensions": {
         "recommendations": [

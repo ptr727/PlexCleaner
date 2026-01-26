@@ -66,7 +66,7 @@ public partial class FfMpegIdetInfo
     public bool IsInterlaced(out double percentage) =>
         MultiFrame.IsInterlaced(out percentage) || SingleFrame.IsInterlaced(out percentage);
 
-    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo idetInfo, out string error)
+    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo, out string error)
     {
         // Get idet output from ffmpeg
         idetInfo = null;

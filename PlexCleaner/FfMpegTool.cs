@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using CliWrap;
@@ -113,8 +112,7 @@ public partial class FfMpeg
                     mediaToolInfo.FileName
                 );
             }
-            catch (Exception e)
-                when (Log.Logger.LogAndHandle(e, MethodBase.GetCurrentMethod()?.Name))
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return false;
             }
@@ -138,7 +136,10 @@ public partial class FfMpeg
 
             // Delete the tool destination directory
             string toolPath = GetToolFolder();
-            Directory.Delete(toolPath, true);
+            if (Directory.Exists(toolPath))
+            {
+                Directory.Delete(toolPath, true);
+            }
 
             // Build the versioned out folder from the downloaded filename
             // E.g. ffmpeg-3.4-win64-static.zip to .\Tools\FFmpeg\ffmpeg-3.4-win64-static
@@ -146,7 +147,6 @@ public partial class FfMpeg
 
             // Rename the extract folder to the tool folder
             // E.g. ffmpeg-3.4-win64-static to .\Tools\FFMpeg
-            Directory.Delete(toolPath, true);
             Directory.Move(extractPath, toolPath);
 
             return true;
@@ -265,7 +265,7 @@ public partial class FfMpeg
 
         public bool ConvertToMkv(
             string inputName,
-            SelectMediaProps selectMediaProps,
+            SelectMediaProps? selectMediaProps,
             string outputName,
             out string error
         )
