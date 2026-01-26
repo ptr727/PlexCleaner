@@ -239,7 +239,8 @@
           },
           "required": [
             "Video",
-            "Audio"
+            "Audio",
+            "Global"
           ]
         },
         "HandBrakeOptions": {

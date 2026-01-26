@@ -51,6 +51,11 @@ internal static class JsonSerialization
                     continue;
                 }
 
+                if (property.IsRequired)
+                {
+                    continue;
+                }
+
                 Func<object, object?, bool>? existing = property.ShouldSerialize;
                 property.ShouldSerialize = (obj, value) =>
                     !string.IsNullOrEmpty(value as string)
