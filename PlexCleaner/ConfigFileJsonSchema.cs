@@ -26,7 +26,12 @@ public record ConfigFileJsonSchemaBase
 
     [JsonPropertyName("$schema")]
     [JsonPropertyOrder(-3)]
-    public static string Schema => SchemaUri;
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance",
+        "CA1822:Mark members as static",
+        Justification = "Schema must be written as instance property for JSON serialization."
+    )]
+    public string Schema => SchemaUri;
 
     [JsonRequired]
     [JsonPropertyOrder(-2)]
@@ -44,19 +49,21 @@ public record ConfigFileJsonSchema1 : ConfigFileJsonSchemaBase
 
     // v2 : Replaced with ProcessOptions2
     [Obsolete("Replaced with ProcessOptions2 in v2.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public ProcessOptions1 ProcessOptions { get; set; } = new();
 
     // v3 : Replaced with ConvertOptions2
     [Obsolete("Replaced with ConvertOptions2 in v3.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public ConvertOptions1 ConvertOptions { get; set; } = new();
 
     // v3 : Replaced with VerifyOptions2
     [Obsolete("Replaced with VerifyOptions2 in v3.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public VerifyOptions1 VerifyOptions { get; set; } = new();
 
-    [JsonRequired]
-    [JsonPropertyOrder(5)]
-    public MonitorOptions1 MonitorOptions { get; set; } = new();
+    // v4 : Removed
+    // public MonitorOptions1 MonitorOptions { get; set; } = new();
 }
 
 // v2
@@ -72,6 +79,7 @@ public record ConfigFileJsonSchema2 : ConfigFileJsonSchema1
     // v2 : Added
     // v3 : Replaced with ProcessOptions3
     [Obsolete("Replaced with ProcessOptions3 in v3.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public new ProcessOptions2 ProcessOptions { get; set; } = new();
 }
 
@@ -91,11 +99,13 @@ public record ConfigFileJsonSchema3 : ConfigFileJsonSchema2
     // v3 : Added
     // v4 : Replaced with ProcessOptions4
     [Obsolete("Replaced with ProcessOptions4 in v4.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public new ProcessOptions3 ProcessOptions { get; set; } = new();
 
     // v3 : Added
     // v4 : Replaced with ConvertOptions3
     [Obsolete("Replaced with ConvertOptions3 in v4.")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public new ConvertOptions2 ConvertOptions { get; set; } = new();
 
     // v3 : Added
@@ -205,7 +215,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         ToolsOptions.SetDefaults();
         ConvertOptions.SetDefaults();
         ProcessOptions.SetDefaults();
-        MonitorOptions.SetDefaults();
         VerifyOptions.SetDefaults();
     }
 
@@ -213,7 +222,6 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         ToolsOptions.VerifyValues()
         && ConvertOptions.VerifyValues()
         && ProcessOptions.VerifyValues()
-        && MonitorOptions.VerifyValues()
         && VerifyOptions.VerifyValues();
 
     public static void WriteDefaultsToFile(string path)
@@ -253,8 +261,9 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         File.WriteAllText(path, ToJson(json));
     }
 
+    // Write using custom serializer to ignore null or empty strings
     private static string ToJson(ConfigFileJsonSchema json) =>
-        JsonSerializer.Serialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchema4);
+        JsonSerialization.SerializeIgnoreEmptyStrings(json, ConfigFileJsonContext.Default);
 
     // Will throw on failure to deserialize
     private static ConfigFileJsonSchema FromJson(string json)

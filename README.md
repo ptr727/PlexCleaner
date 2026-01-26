@@ -756,7 +756,6 @@ Options:
 - Most of the `process` command options apply.
 - `--preprocess`:
   - On startup process all existing media files while watching for new changes.
-- Advanced options are configured in [`MonitorOptions`](PlexCleaner.defaults.json).
 
 ### Other Commands
 

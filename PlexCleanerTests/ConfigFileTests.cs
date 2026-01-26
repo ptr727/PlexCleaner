@@ -49,7 +49,6 @@ public class ConfigFileTests(PlexCleanerFixture assemblyFixture) : SamplesFixtur
             configFileJsonSchema.ProcessOptions.FileIgnoreList
         );
         Assert.Equal(100000000, configFileJsonSchema.VerifyOptions.MaximumBitrate);
-        Assert.Equal(60, configFileJsonSchema.MonitorOptions.MonitorWaitTime);
     }
 
     [Theory]

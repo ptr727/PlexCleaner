@@ -25,6 +25,8 @@ public class Monitor
 
     public bool MonitorFolders(List<string> folders)
     {
+        const int MonitorWaitTime = 60;
+
         LogMonitorMessage();
 
         // Trim quotes around input paths
@@ -74,10 +76,7 @@ public class Monitor
                 foreach (string folder in folders)
                 {
                     Log.Information("Adding folder to processing queue : {Folder}", folder);
-                    _watchFolders.Add(
-                        folder,
-                        DateTime.UtcNow.AddSeconds(-Program.Config.MonitorOptions.MonitorWaitTime)
-                    );
+                    _watchFolders.Add(folder, DateTime.UtcNow.AddSeconds(-MonitorWaitTime));
                 }
             }
         }
@@ -94,9 +93,7 @@ public class Monitor
                 if (_watchFolders.Count != 0)
                 {
                     // Evaluate all folders in the watch list
-                    DateTime settleTime = DateTime.UtcNow.AddSeconds(
-                        -Program.Config.MonitorOptions.MonitorWaitTime
-                    );
+                    DateTime settleTime = DateTime.UtcNow.AddSeconds(-MonitorWaitTime);
                     foreach ((string folder, DateTime timeStamp) in _watchFolders)
                     {
                         // Settled down, i.e. not modified in last wait time

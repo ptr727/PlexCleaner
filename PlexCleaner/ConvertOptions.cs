@@ -29,6 +29,7 @@ public record FfMpegOptions
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string Output { get; set; } = string.Empty;
 }
 
@@ -39,12 +40,15 @@ public record ConvertOptions1
 
     // v2 : Replaced with FfMpegOptions and HandBrakeOptions
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public bool EnableH265Encoder { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public int VideoEncodeQuality { get; set; }
 
     [Obsolete("Replaced in v2 with FfMpegOptions and HandBrakeOptions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string AudioEncodeCodec { get; set; } = string.Empty;
 }
 

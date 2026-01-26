@@ -221,7 +221,7 @@ Parser design patterns:
 - JSON schemas: Generated via `JsonSchema.Net`, suffixed with version (e.g., `SidecarFileJsonSchema5`)
 - Builder methods: Return `this` for chaining
 - Media props: `*Props.cs` classes (VideoProps, AudioProps, SubtitleProps, TrackProps)
-- Options classes: `*Options.cs` for command categories (ProcessOptions, VerifyOptions, ConvertOptions, MonitorOptions, ToolsOptions)
+- Options classes: `*Options.cs` for command categories (ProcessOptions, VerifyOptions, ConvertOptions, ToolsOptions)
 - Partial classes: Tool families use partial class structure (`*Tool.cs`, `*Builder.cs`)
 
 ### Async and Concurrency

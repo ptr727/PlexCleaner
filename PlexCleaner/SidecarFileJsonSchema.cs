@@ -23,14 +23,17 @@ public record SidecarFileJsonSchema1 : SidecarFileJsonSchemaBase
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string FfMpegToolVersion { get; set; } = string.Empty;
 
     // v3 : Removed
     [Obsolete("Removed in v3")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string MkvToolVersion { get; set; } = string.Empty;
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string FfIdetInfoData { get; set; } = string.Empty;
 
     [JsonRequired]
@@ -68,6 +71,7 @@ public record SidecarFileJsonSchema2 : SidecarFileJsonSchema1
     // v2 : Added
     // v4 : Removed
     [Obsolete("Removed in v4")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public bool Verified { get; set; }
 }
 

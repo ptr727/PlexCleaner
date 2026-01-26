@@ -18,6 +18,7 @@
       "*.jpg",
       "*.nfo",
       "*.partial~",
+      "*.png",
       "*.sample.*",
       "*.sample",
       "*.smi",
@@ -40,6 +41,8 @@
       ".m2ts",
       ".m4v",
       ".mp4",
+      ".mpg",
+      ".mov",
       ".ts",
       ".vob",
       ".wmv"
@@ -175,13 +178,5 @@
     "RegisterInvalidFiles": false,
     // Warn when bitrate in bits per second is exceeded
     "MaximumBitrate": 100000000
-  },
-  "MonitorOptions": {
-    // Time to wait in seconds after detecting a file change
-    "MonitorWaitTime": 60,
-    // Time to wait in seconds between file retry operations
-    "FileRetryWaitTime": 5,
-    // Maximum number of file retry operations
-    "FileRetryCount": 2
   }
 }

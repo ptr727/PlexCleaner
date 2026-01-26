@@ -20,14 +20,17 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public int MinimumDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public int VerifyDuration { get; set; }
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public int IdetDuration { get; set; }
 
     [JsonRequired]
@@ -35,6 +38,7 @@ public record VerifyOptions1
 
     // v2 : Removed
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public int MinimumFileAge { get; set; }
 }
 

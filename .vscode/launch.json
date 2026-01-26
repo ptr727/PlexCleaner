@@ -68,7 +68,7 @@
             "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
             "args": [
                 "defaultsettings",
-                "--settingsfile=PlexCleaner.json",
+                "--settingsfile=PlexCleaner.defaults.json",
             ],
             "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
             "console": "internalConsole",

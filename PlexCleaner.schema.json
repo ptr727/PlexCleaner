@@ -4,6 +4,12 @@
     "null"
   ],
   "properties": {
+    "$schema": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "SchemaVersion": {
       "type": [
         "string",
@@ -325,37 +331,6 @@
         "RegisterInvalidFiles",
         "MaximumBitrate"
       ]
-    },
-    "MonitorOptions": {
-      "type": "object",
-      "properties": {
-        "MonitorWaitTime": {
-          "type": [
-            "string",
-            "integer"
-          ],
-          "pattern": "^-?(?:0|[1-9]\\d*)$"
-        },
-        "FileRetryWaitTime": {
-          "type": [
-            "string",
-            "integer"
-          ],
-          "pattern": "^-?(?:0|[1-9]\\d*)$"
-        },
-        "FileRetryCount": {
-          "type": [
-            "string",
-            "integer"
-          ],
-          "pattern": "^-?(?:0|[1-9]\\d*)$"
-        }
-      },
-      "required": [
-        "MonitorWaitTime",
-        "FileRetryWaitTime",
-        "FileRetryCount"
-      ]
     }
   },
   "required": [
@@ -363,7 +338,6 @@
     "ToolsOptions",
     "ProcessOptions",
     "ConvertOptions",
-    "VerifyOptions",
-    "MonitorOptions"
+    "VerifyOptions"
   ]
 }

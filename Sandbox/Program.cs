@@ -80,8 +80,11 @@ public class Program
 
     public static void SetRuntimeOptions()
     {
-        FileEx.Options.RetryCount = PlexCleaner.Program.Config.MonitorOptions.FileRetryCount;
-        FileEx.Options.RetryWaitTime = PlexCleaner.Program.Config.MonitorOptions.FileRetryWaitTime;
+        const int FileRetryWaitTime = 5;
+        const int FileRetryCount = 2;
+
+        FileEx.Options.RetryCount = FileRetryCount;
+        FileEx.Options.RetryWaitTime = FileRetryWaitTime;
 
         PlexCleaner.Program.Options.ThreadCount = PlexCleaner.Program.Options.Parallel
             ? PlexCleaner.Program.Options.ThreadCount == 0

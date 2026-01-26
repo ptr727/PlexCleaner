@@ -23,41 +23,49 @@ public record ProcessOptions1
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Format>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string ReEncodeVideoFormats { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Codec>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string ReEncodeVideoCodecs { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> List<VideoFormat::Profile>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string ReEncodeVideoProfiles { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string ReEncodeAudioFormats { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string ReMuxExtensions { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string KeepExtensions { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string KeepLanguages { get; set; } = string.Empty;
 
     // v2 : Removed
     // v1 -> v2 : CSV -> HashSet<string>
     [Obsolete("Removed in v2")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public string PreferredAudioFormats { get; set; } = string.Empty;
 
     [JsonRequired]
@@ -122,6 +130,7 @@ public record ProcessOptions2 : ProcessOptions1
     // v1 -> v2 : CSV -> HashSet<string>
     // v3 -> v4 : Replaced by FileIgnoreMasks
     [Obsolete("Replaced in v4 with FileIgnoreMasks")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWriting)]
     public new HashSet<string> KeepExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     // v2 : Added

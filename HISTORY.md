@@ -19,6 +19,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - SidecarFile schema changed from v4 to v5 to account for XML to JSON content change.
     - Schema will automatically be upgraded and convert XML to JSON equivalent on reading.
   - Using [`ArrayPool<byte>.Shared.Rent()`](https://learn.microsoft.com/en-us/dotnet/api/system.buffers.arraypool-1) vs. `new byte[]` to improve memory pressure during sidecar hash calculations.
+  - Removed `MonitorOptions` from the config file schema, default values do not need to be changed.
   - ⚠️ Standardized on only using the Ubuntu [rolling](https://releases.ubuntu.com/) docker base image.
     - No longer publishing Debian or Alpine based docker images, or images supporting `linux/arm/v7`.
     - The media tool versions published with the rolling release are typically current, and matches the versions available on Windows, offering a consistent experience, and requires less testing due to changes in behavior between versions.
