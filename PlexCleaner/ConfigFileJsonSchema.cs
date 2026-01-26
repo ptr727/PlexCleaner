@@ -326,9 +326,15 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         JsonNode schemaNode = ConfigFileJsonContext.Default.Options.GetJsonSchemaAsNode(
             typeof(ConfigFileJsonSchema)
         );
-        string schemaJson = schemaNode.ToJsonString(ConfigFileJsonContext.Default.Options);
+
+        // Add decorators
+        JsonObject schemaObject = schemaNode.AsObject();
+        _ = schemaObject.TryAdd("title", "PlexCleaner Configuration Schema");
+        _ = schemaObject.TryAdd("$id", SchemaUri);
+        _ = schemaObject.TryAdd("$schema", "https://json-schema.org/draft/2020-12/schema");
 
         // Write to file
+        string schemaJson = schemaObject.ToJsonString(ConfigFileJsonContext.Default.Options);
         File.WriteAllText(path, schemaJson);
     }
 }

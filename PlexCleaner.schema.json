@@ -239,8 +239,7 @@
           },
           "required": [
             "Video",
-            "Audio",
-            "Global"
+            "Audio"
           ]
         },
         "HandBrakeOptions": {
@@ -339,5 +338,8 @@
     "ProcessOptions",
     "ConvertOptions",
     "VerifyOptions"
-  ]
+  ],
+  "title": "PlexCleaner Configuration Schema",
+  "$id": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
