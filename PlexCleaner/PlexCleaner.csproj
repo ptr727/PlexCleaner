@@ -51,7 +51,7 @@
       Version="10.0.102"
       PrivateAssets="all"
     />
-    <PackageReference Include="ptr727.LanguageTags" Version="1.1.14" />
+    <PackageReference Include="ptr727.LanguageTags" Version="1.2.1" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
