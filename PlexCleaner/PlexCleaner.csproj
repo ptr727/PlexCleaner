@@ -47,7 +47,7 @@
     <PackageReference Include="CliWrap" Version="3.10.0" />
     <PackageReference Include="InsaneGenius.Utilities" Version="3.4.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.103" PrivateAssets="all" />
-    <PackageReference Include="ptr727.LanguageTags" Version="1.2.11" />
+    <PackageReference Include="ptr727.LanguageTags" Version="1.2.13" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
