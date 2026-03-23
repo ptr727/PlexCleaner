@@ -44,7 +44,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CliWrap" Version="3.10.0" />
+    <PackageReference Include="CliWrap" Version="3.10.1" />
     <PackageReference Include="InsaneGenius.Utilities" Version="3.4.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201" PrivateAssets="all" />
     <PackageReference Include="ptr727.LanguageTags" Version="1.2.17" />
