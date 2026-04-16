@@ -75,7 +75,7 @@ dotnet_diagnostic.CA2234.severity = none  # Pass System.Uri instead of string
 
 # False positives or inapplicable in this codebase
 dotnet_diagnostic.CA1508.severity = none  # Dead code (false positive with ??= pattern)
-dotnet_diagnostic.CA5392.severity = none  # DefaultDllImportSearchPaths (no P/Invoke in this project)
+dotnet_diagnostic.CA5392.severity = none  # DefaultDllImportSearchPaths (limited intentional P/Invoke, risk accepted)
 csharp_indent_block_contents = true
 csharp_indent_braces = false
 csharp_indent_case_contents = true
