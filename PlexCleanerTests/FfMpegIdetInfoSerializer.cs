@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using PlexCleaner;
@@ -10,8 +9,8 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
 {
     public bool IsSerializable(
         Type type,
-        object value,
-        [NotNullWhen(false)] out string failureReason
+        object? value,
+        [NotNullWhen(false)] out string? failureReason
     )
     {
         if (type == typeof(FfMpegIdetInfo) && value is FfMpegIdetInfo)

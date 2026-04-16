@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Xml.Serialization;
 
 // https://github.com/MediaArea/MediaAreaXml/blob/master/mediainfo.xsd

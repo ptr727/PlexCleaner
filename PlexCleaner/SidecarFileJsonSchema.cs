@@ -1,7 +1,5 @@
 // See ConfigFileJsonSchema.cs for schema update steps
 
-using System;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using InsaneGenius.Utilities;

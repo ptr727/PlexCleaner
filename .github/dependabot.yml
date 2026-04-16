@@ -21,23 +21,3 @@ updates:
     actions-deps:
       patterns:
         - "*"
-
-  # develop
-- package-ecosystem: "nuget"
-  target-branch: "develop"
-  directory: "/"
-  schedule:
-    interval: "daily"
-  groups:
-    nuget-deps:
-      patterns:
-        - "*"
-- package-ecosystem: "github-actions"
-  target-branch: "develop"
-  directory: "/"
-  schedule:
-    interval: "daily"
-  groups:
-    actions-deps:
-      patterns:
-        - "*"

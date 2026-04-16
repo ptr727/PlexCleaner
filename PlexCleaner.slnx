@@ -1,14 +1,15 @@
 <Solution>
-    <Folder Name="/Actions/">
-        <File Path=".github/workflows/BuildDockerPush.yml" />
-        <File Path=".github/workflows/BuildDockerTask.yml" />
-        <File Path=".github/workflows/BuildGitHubRelease.yml" />
-        <File Path=".github/workflows/DependabotAutoMerge.yml" />
-        <File Path=".github/workflows/GetVersionTask.yml" />
-        <File Path=".github/workflows/TestBuildPr.yml" />
-        <File Path=".github/workflows/TestBuildTask.yml" />
-        <File Path=".github/workflows/TestDockerPr.yml" />
-        <File Path=".github/workflows/TestDockerTask.yml" />
+    <Folder Name="/GitHub Actions/">
+        <File Path=".github/workflows/build-datebadge-task.yml" />
+        <File Path=".github/workflows/build-docker-task.yml" />
+        <File Path=".github/workflows/build-executable-task.yml" />
+        <File Path=".github/workflows/build-release-task.yml" />
+        <File Path=".github/workflows/get-version-task.yml" />
+        <File Path=".github/workflows/merge-bot-pull-request.yml" />
+        <File Path=".github/workflows/publish-periodic-docker-release.yml" />
+        <File Path=".github/workflows/publish-release.yml" />
+        <File Path=".github/workflows/test-pull-request.yml" />
+        <File Path=".github/workflows/test-release-task.yml" />
     </Folder>
     <Folder Name="/CoPilot/">
         <File Path=".github/copilot-instructions.md" />
@@ -21,8 +22,7 @@
         <File Path="Docker/InstallDebugTools.sh" />
         <File Path="Docker/README.m4" />
         <File Path="Docker/Test.sh" />
-        <File Path="Docker/Ubuntu.Rolling.Dockerfile" />
-        <File Path="Docker/UnitTest.sh" />
+        <File Path="Docker/Dockerfile" />
         <File Path="Docker/Version.sh" />
     </Folder>
     <Folder Name="/Docs/">
@@ -50,11 +50,15 @@
         <File Path="Samples/PlexCleaner/Sidecar.v5.mkv" />
         <File Path="Samples/PlexCleaner/Sidecar.v5.PlexCleaner" />
     </Folder>
-    <Folder Name="/Solution/">
+    <Folder Name="/Solution Items/">
         <File Path=".dockerignore" />
         <File Path=".editorconfig" />
         <File Path=".gitattributes" />
         <File Path=".gitignore" />
+        <File Path="AGENTS.md" />
+        <File Path="CODESTYLE.md" />
+        <File Path="Directory.Build.props" />
+        <File Path="Directory.Packages.props" />
         <File Path="HISTORY.md" />
         <File Path="LICENSE" />
         <File Path="PlexCleaner.code-workspace" />

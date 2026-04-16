@@ -215,6 +215,13 @@ Parser design patterns:
 - Logging: Serilog with thread IDs (`Log.Information/Warning/Error`)
 - Exception handling: Currently uses broad `catch(Exception)` - TODO to specialize
 - Global usings: `GlobalUsing.cs` defines project-wide type aliases (`ConfigFileJsonSchema`, `SidecarFileJsonSchema`)
+- `Directory.Build.props`: Common MSBuild properties (`TargetFramework`, `Nullable`, `ImplicitUsings`,
+  `AnalysisLevel`, etc.) shared across all projects live here at the solution root. Do not duplicate
+  these in individual `.csproj` files -- only add a property to a `.csproj` when it is project-specific
+  or overrides the shared default.
+- `Directory.Packages.props`: All NuGet package versions are centralised here via `PackageVersion` items.
+  `PackageReference` elements in `.csproj` files must not include a `Version` attribute. Asset metadata
+  (`PrivateAssets`, `IncludeAssets`) stays in the `.csproj` `PackageReference` element.
 
 ### Naming and Structure
 
@@ -281,15 +288,15 @@ dotnet husky run
 
 ### GitHub Actions
 
-- **BuildGitHubRelease.yml**: Multi-runtime matrix build (win, linux, osx × x64/arm/arm64)
-- **BuildDockerPush.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
-- **TestBuildPr.yml** / **TestDockerPr.yml**: PR validation
+- **publish-release.yml**: Multi-runtime matrix build (win, linux, osx x x64/arm/arm64)
+- **publish-periodic-docker-release.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
+- **test-pull-request.yml**: PR validation
 - Version info: `version.json` with Nerdbank.GitVersioning format
 - Branches: `main` (stable releases), `develop` (pre-releases)
 
 ### Docker
 
-- Multi-stage builds in `Docker/Ubuntu.Rolling.Dockerfile`
+- Multi-stage builds in `Docker/Dockerfile`
 - Base image: `ubuntu:rolling` only (no longer publishing Alpine or Debian variants)
 - Supported architectures: `linux/amd64`, `linux/arm64` (no longer supporting `linux/arm/v7`)
 - Tool installation: Ubuntu package manager (apt)
@@ -440,3 +447,12 @@ Check states with `HasFlag()`, combine with `|=`
 - **KeepAwake.cs**: System sleep prevention
 - **PlexCleaner.defaults.json**: Canonical configuration reference
 - **.editorconfig** / **.csharpier.json**: Code style definitions
+
+## Git and Commit Rules
+
+**These rules are absolute — no exceptions:**
+
+- **Never make git commits.** All commits must be cryptographically signed (SSH/GPG). AI coding agents cannot produce signed commits. Stage changes with `git add` and leave `git commit` to the developer, who must run it in their own environment where signing keys are available.
+- **Never force push.** Do not run `git push --force` or `git push --force-with-lease`. Force pushing rewrites shared branch history and is blocked by branch protection rules.
+- **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
+- **Staging is the limit.** Prepare changes and stage files; the developer handles all commits and pushes.

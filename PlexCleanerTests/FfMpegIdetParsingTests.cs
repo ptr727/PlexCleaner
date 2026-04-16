@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using AwesomeAssertions;
@@ -11,10 +10,8 @@ using Xunit.Sdk;
 
 namespace PlexCleanerTests;
 
-public class FfMpegIdetParsingTests(PlexCleanerFixture fixture)
+public class FfMpegIdetParsingTests
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
     public static TheoryData<string, FfMpegIdetInfo> Data =>
         new()
         {

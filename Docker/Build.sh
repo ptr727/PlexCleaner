@@ -6,10 +6,16 @@ set -x
 # Exit on error
 set -e
 
+# Build the solution
+dotnet build ./PlexCleaner/PlexCleaner.csproj
+
+# Test the solution
+dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
+
 # Build release and debug builds
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \
-    --output ./Build/Release \
+    -property:PublishDir=$(pwd)/Build/Release/ \
     --configuration release \
     -property:PublishAot=false \
     -property:Version=$BUILD_VERSION \
@@ -20,7 +26,7 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
 
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     --arch $TARGETARCH \
-    --output ./Build/Debug \
+    -property:PublishDir=$(pwd)/Build/Debug/ \
     --configuration debug \
     -property:PublishAot=false \
     -property:Version=$BUILD_VERSION \
@@ -29,7 +35,7 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     -property:InformationalVersion=$BUILD_INFORMATION_VERSION \
     -property:PackageVersion=$BUILD_PACKAGE_VERSION
 
-# Copy build output
+# Copy configured build target as default output
 mkdir -p ./Publish/PlexCleaner/Debug
 mkdir -p ./Publish/PlexCleaner/Release
 if [ "$BUILD_CONFIGURATION" = "Debug" ] || [ "$BUILD_CONFIGURATION" = "debug" ]

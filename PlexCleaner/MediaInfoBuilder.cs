@@ -1,4 +1,3 @@
-using System;
 using CliWrap;
 using CliWrap.Builders;
 
