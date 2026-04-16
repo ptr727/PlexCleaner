@@ -52,7 +52,7 @@ jobs:
           path: ./Publish
 
       - name: Create GitHub release step
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
