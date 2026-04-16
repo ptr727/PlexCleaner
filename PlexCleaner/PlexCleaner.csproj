@@ -1,7 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <AnalysisLevel>latest</AnalysisLevel>
     <ApplicationIcon>PlexCleaner.ico</ApplicationIcon>
     <AssemblyName>PlexCleaner</AssemblyName>
     <AssemblyVersion>1.1.1.0</AssemblyVersion>
@@ -11,13 +10,9 @@
     <Description>Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.</Description>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <FileVersion>1.1.1.0</FileVersion>
     <IncludeSymbols>true</IncludeSymbols>
     <NeutralLanguage>en</NeutralLanguage>
-    <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <PackageId>ptr727.PlexCleaner</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -30,7 +25,6 @@
     <RootNamespace>PlexCleaner</RootNamespace>
     <StartupObject>PlexCleaner.Program</StartupObject>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <TargetFramework>net10.0</TargetFramework>
     <Version>1.1.1.0-prerelease</Version>
   </PropertyGroup>
   <PropertyGroup>
@@ -44,17 +38,17 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CliWrap" Version="3.10.1" />
-    <PackageReference Include="InsaneGenius.Utilities" Version="3.4.3" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.202" PrivateAssets="all" />
-    <PackageReference Include="ptr727.LanguageTags" Version="1.2.26" />
-    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-    <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
-    <PackageReference Include="System.CommandLine" Version="2.0.6" />
-    <PackageReference Include="Utf8JsonAsyncStreamReader" Version="2.1.0" />
+    <PackageReference Include="CliWrap" />
+    <PackageReference Include="InsaneGenius.Utilities" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <PackageReference Include="ptr727.LanguageTags" />
+    <PackageReference Include="Serilog.Enrichers.Thread" />
+    <PackageReference Include="Serilog.Sinks.Async" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Utf8JsonAsyncStreamReader" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="PlexCleanerTests" />

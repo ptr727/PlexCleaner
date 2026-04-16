@@ -1,7 +1,5 @@
-using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Reflection;
 using InsaneGenius.Utilities;
 using PlexCleaner;
@@ -18,7 +16,7 @@ using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 namespace PlexCleanerTests;
 
 // One instance for all tests in the assembly
-public class PlexCleanerFixture : IDisposable
+public sealed class PlexCleanerFixture : IDisposable
 {
     internal static string GetSamplesAbsoluteDirectory()
     {
@@ -26,9 +24,9 @@ public class PlexCleanerFixture : IDisposable
         const string samplesDirectory = "../../../../Samples/PlexCleaner";
 
         // Get absolute path
-        Assembly entryAssembly = Assembly.GetEntryAssembly();
+        Assembly entryAssembly = Assembly.GetEntryAssembly()!;
         Debug.Assert(entryAssembly != null);
-        string assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location);
+        string assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location)!;
         Debug.Assert(!string.IsNullOrEmpty(assemblyDirectory));
         return Path.GetFullPath(Path.Combine(assemblyDirectory, samplesDirectory));
     }
@@ -74,6 +72,16 @@ public class PlexCleanerFixture : IDisposable
 }
 
 // One instance per test and copy of samples in temp directory
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1063:Implement IDisposable Correctly",
+    Justification = "Test fixture does not need the full IDisposable pattern"
+)]
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1031:Do not catch general exception types",
+    Justification = "Test fixture cleanup must not throw"
+)]
 public class SamplesFixture : IDisposable
 {
     public SamplesFixture()
@@ -118,7 +126,7 @@ public class SamplesFixture : IDisposable
             {
                 string relativePath = Path.GetRelativePath(sourceSamplesDirectory, sourceFilePath);
                 string destFilePath = Path.Combine(GetSamplesDirectory, relativePath);
-                string destDirPath = Path.GetDirectoryName(destFilePath);
+                string destDirPath = Path.GetDirectoryName(destFilePath)!;
 
                 if (!string.IsNullOrEmpty(destDirPath) && !Directory.Exists(destDirPath))
                 {

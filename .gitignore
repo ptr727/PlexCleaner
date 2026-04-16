@@ -5,6 +5,8 @@
 
 .idea
 .vs
+.codex
 .DS_Store
 
+*.log
 *.user

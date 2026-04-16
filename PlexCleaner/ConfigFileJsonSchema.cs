@@ -7,8 +7,6 @@
 // Update the Upgrade() method to handle upgrading from the previous version
 // Update GlobalUsing.cs global using statements to the latest version
 
-using System;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Schema;

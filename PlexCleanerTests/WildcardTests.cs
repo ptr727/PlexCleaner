@@ -3,10 +3,8 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class WildcardTests(PlexCleanerFixture fixture)
+public class WildcardTests
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
     [Theory]
     [InlineData("*.fuse_hidden*", "Foo.fuse_hidden1234", true)]
     [InlineData("*.fuse_hidden*", "fuse_hidden.foo", false)]

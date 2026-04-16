@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using PlexCleaner;
 using Serilog;
@@ -56,11 +52,11 @@ public class Program
         LogOptions.Logger = Log.Logger;
 
         // Get settings
-        Dictionary<string, JsonElement> settings = null;
+        Dictionary<string, JsonElement>? settings = null;
         if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
         {
             await using FileStream jsonStream = File.OpenRead(settingsPath);
-            settings = JsonSerializer.Deserialize(
+            settings = await JsonSerializer.DeserializeAsync(
                 jsonStream,
                 ConfigJsonContext.Default.DictionaryStringJsonElement
             );
@@ -68,7 +64,7 @@ public class Program
         }
 
         // Derive from Program and implement Sandbox()
-        TestSomething program = new(settings);
+        TestSomething program = new(settings ?? []);
         int ret = await program.Sandbox(args);
 
         // Done
@@ -93,7 +89,7 @@ public class Program
             : 1;
     }
 
-    public static string GetSettingsFilePath(string fileName)
+    public static string? GetSettingsFilePath(string fileName)
     {
         // Load settings file from current working directory
         string settingsPath = Path.GetFullPath(fileName);

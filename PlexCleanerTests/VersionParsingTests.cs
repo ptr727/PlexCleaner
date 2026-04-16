@@ -4,10 +4,8 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class VersionParsingTests(PlexCleanerFixture fixture)
+public class VersionParsingTests
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
     [Theory]
     [InlineData(
         "ffmpeg version 4.3.1-2020-11-19-full_build-www.gyan.dev Copyright (c) 2000-2020 the FFmpeg developers",

@@ -1,0 +1,78 @@
+name: Build executable task
+
+on:
+  workflow_call:
+    outputs:
+      # Output of the uploaded artifact id
+      artifact-id:
+        value: ${{ jobs.upload-build-artifacts.outputs.artifact-id }}
+
+jobs:
+
+  get-version:
+    name: Get version information job
+    uses: ./.github/workflows/get-version-task.yml
+    secrets: inherit
+
+  build-executable-matrix:
+    name: Build executable project matrix job
+    runs-on: ubuntu-latest
+    needs: [get-version]
+    strategy:
+      matrix:
+        runtime: [ win-x64, linux-x64, linux-musl-x64, linux-arm, linux-arm64, osx-x64, osx-arm64 ]
+
+    steps:
+
+      - name: Setup .NET SDK step
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x
+
+      - name: Checkout code step
+        uses: actions/checkout@v6
+
+      - name: Build executable project step
+        run: |
+          dotnet publish ./PlexCleaner/PlexCleaner.csproj \
+            --runtime ${{ matrix.runtime }} \
+            -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \
+            --configuration ${{ github.ref_name == 'main' && 'Release' || 'Debug' }} \
+            -property:PublishAot=false \
+            -property:Version=${{ needs.get-version.outputs.AssemblyVersion }} \
+            -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }} \
+            -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }} \
+            -property:InformationalVersion=${{ needs.get-version.outputs.AssemblyInformationalVersion }} \
+            -property:PackageVersion=${{ needs.get-version.outputs.SemVer2 }}
+
+      - name: Upload matrix build artifacts step
+        uses: actions/upload-artifact@v7
+        with:
+          name: publish-${{ matrix.runtime }}
+          path: ${{ runner.temp }}/publish
+
+  upload-build-artifacts:
+    name: Upload matrix build artifacts job
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    runs-on: ubuntu-latest
+    needs: [ build-executable-matrix ]
+
+    steps:
+
+      - name: Download matrix build artifacts step
+        uses: actions/download-artifact@v8
+        with:
+          pattern: publish-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/publish
+
+      - name: Zip build output step
+        run: 7z a -t7z ${{ runner.temp }}/PlexCleaner.7z ${{ runner.temp }}/publish/*
+
+      - name: Upload build artifacts step
+        id: artifact-upload-step
+        uses: actions/upload-artifact@v7
+        with:
+          name: executable-build
+          path: ${{ runner.temp }}/PlexCleaner.7z

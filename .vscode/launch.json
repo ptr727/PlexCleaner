@@ -11,11 +11,11 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "--help",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "console": "internalConsole",
             "stopAtEntry": false
         },
@@ -24,12 +24,12 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
                 "--help",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "console": "internalConsole",
             "stopAtEntry": false
         },
@@ -38,11 +38,11 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "--version",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "console": "internalConsole",
             "stopAtEntry": false
         },
@@ -51,12 +51,12 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getversioninfo",
                 "--settingsfile=PlexCleaner.json",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "console": "internalConsole",
             "stopAtEntry": false
         },
@@ -65,12 +65,12 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "defaultsettings",
                 "--settingsfile=PlexCleaner.defaults.json",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "console": "internalConsole",
             "stopAtEntry": false
         },
@@ -79,7 +79,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
                 "--logfile=PlexCleaner_Single.log",
@@ -87,7 +87,7 @@
                 "--resultsfile=Results_Single.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false
@@ -97,7 +97,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
                 "--logfile=PlexCleaner_Single_Quickscan.log",
@@ -106,7 +106,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -117,7 +117,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
                 "--logfile=PlexCleaner_Single_Quickscan.log",
@@ -127,7 +127,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -138,7 +138,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
                 "--logfile=PlexCleaner_Parallel_TestSnippets_Quickscan.log",
@@ -150,7 +150,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -161,7 +161,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "monitor",
                 "--logfile=PlexCleaner.log",
@@ -169,7 +169,7 @@
                 "--preprocess",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -180,7 +180,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "remux",
                 "--logfile=PlexCleaner.log",
@@ -188,7 +188,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -199,7 +199,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "reencode",
                 "--logfile=PlexCleaner.log",
@@ -207,7 +207,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -218,7 +218,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "deinterlace",
                 "--logfile=PlexCleaner.log",
@@ -226,7 +226,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -237,7 +237,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "removeclosedcaptions",
                 "--logfile=PlexCleaner.log",
@@ -245,7 +245,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -256,14 +256,14 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "removesubtitles",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -274,7 +274,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "verify",
                 "--logfile=PlexCleaner.log",
@@ -282,7 +282,7 @@
                 "--quickscan",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -293,13 +293,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "gettagmap",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -310,13 +310,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getmediainfo",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -327,14 +327,14 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "testmediainfo",
                 "--logfile=PlexCleaner.log",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -345,13 +345,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "gettoolinfo",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -362,12 +362,12 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "checkfornewtools",
                 "--settingsfile=PlexCleaner.json",
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -378,13 +378,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "createsidecar",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -395,13 +395,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "updatesidecar",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -412,13 +412,13 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getsidecarinfo",
                 "--settingsfile=PlexCleaner.json",
                 "--mediafiles=D:\\Test"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -429,12 +429,12 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0/PlexCleaner.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "createschema",
                 "--schemafile=PlexCleaner.schema.json"
             ],
-            "cwd": "${workspaceFolder}/PlexCleaner/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug",
             "externalConsole": false,
             "stopAtEntry": false,
             "enableStepFiltering": false,
@@ -445,9 +445,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": ".Net Build",
-            "program": "${workspaceFolder}/Sandbox/bin/Debug/net10.0/Sandbox.dll",
+            "program": "${workspaceFolder}/.artifacts/bin/Sandbox/debug/Sandbox.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Sandbox/bin/Debug/net10.0",
+            "cwd": "${workspaceFolder}/.artifacts/bin/Sandbox/debug",
             "stopAtEntry": false,
             "enableStepFiltering": false,
             "justMyCode": false

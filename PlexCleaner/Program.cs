@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using InsaneGenius.Utilities;
 using Serilog;
 using Serilog.Debugging;

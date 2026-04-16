@@ -94,15 +94,12 @@
             }
         },
         {
-            "label": "Build Ubuntu.Rolling Dockerfile",
-            "type": "shell",
-            "command": "docker",
+            "label": ".Net Outdated Upgrade",
+            "type": "process",
+            "command": "dotnet",
             "args": [
-                "buildx",
-                "build",
-                "--platform=linux/amd64,linux/arm64",
-                "--file=./Docker/Ubuntu.Rolling.Dockerfile",
-                "${workspaceFolder}"
+                "outdated",
+                "--upgrade:prompt"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -113,14 +110,14 @@
             }
         },
         {
-            "label": "Build Ubuntu.Devel Dockerfile",
+            "label": "Build Dockerfile",
             "type": "shell",
             "command": "docker",
             "args": [
                 "buildx",
                 "build",
                 "--platform=linux/amd64,linux/arm64",
-                "--file=./Docker/Ubuntu.Devel.Dockerfile",
+                "--file=./Docker/Dockerfile",
                 "${workspaceFolder}"
             ],
             "problemMatcher": [
@@ -135,7 +132,7 @@
             "label": "Build all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
-                "Build Ubuntu.Rolling Dockerfile",
+                "Build Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -144,7 +141,7 @@
             }
         },
         {
-            "label": "Load Ubuntu.Rolling Dockerfile",
+            "label": "Load Dockerfile",
             "type": "shell",
             "command": "docker",
             "args": [
@@ -153,28 +150,7 @@
                 "--load",
                 "--platform=linux/amd64",
                 "--tag=plexcleaner:ubuntu",
-                "--file=./Docker/Ubuntu.Rolling.Dockerfile",
-                "${workspaceFolder}"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Load Ubuntu.Devel Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "buildx",
-                "build",
-                "--load",
-                "--platform=linux/amd64",
-                "--tag=plexcleaner:ubuntu-devel",
-                "--file=./Docker/Ubuntu.Devel.Dockerfile",
+                "--file=./Docker/Dockerfile",
                 "${workspaceFolder}"
             ],
             "problemMatcher": [
@@ -189,7 +165,7 @@
             "label": "Load all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
-                "Load Ubuntu.Rolling Dockerfile",
+                "Load Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -198,44 +174,20 @@
             }
         },
         {
-            "label": "Test Ubuntu.Rolling Dockerfile",
+            "label": "Test Dockerfile",
             "type": "shell",
             "command": "docker",
             "args": [
                 "run",
                 "-it",
                 "--rm",
-                "--name=PlexCleaner-Test-Ubuntu.Rolling",
+                "--name=PlexCleaner-Test",
                 "plexcleaner:ubuntu",
                 "/Test/Test.sh"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
-                "Load Ubuntu.Rolling Dockerfile"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
-            "label": "Test Ubuntu.Devel Dockerfile",
-            "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test-Ubuntu.Devel",
-                "plexcleaner:ubuntu-devel",
-                "/Test/Test.sh"
-            ],
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Load Ubuntu.Devel Dockerfile"
+                "Load Dockerfile"
             ],
             "problemMatcher": [
                 "$msCompile"
@@ -249,32 +201,13 @@
             "label": "Test all Dockerfiles",
             "dependsOrder": "parallel",
             "dependsOn": [
-                "Test Ubuntu.Rolling Dockerfile",
+                "Test Dockerfile"
             ],
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
                 "clear": false
             }
-        },
-        {
-            "label": ".NET Format",
-            "type": "process",
-            "command": "dotnet",
-            "args": [
-                "format",
-                "--verify-no-changes",
-                "--severity=info",
-                "--verbosity=detailed"
-            ],
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true,
-                "panel": "dedicated"
-            }
-        },
+        }
     ]
 }

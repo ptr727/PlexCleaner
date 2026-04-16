@@ -15,10 +15,13 @@
 
 # Build Dockerfile
 # docker buildx create --name "plexcleaner" --use
-# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Ubuntu.Rolling.Dockerfile .
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Dockerfile .
+
+# Build and log output
+# docker buildx build --no-cache --progress=plain --platform linux/amd64 --file ./Docker/Dockerfile . 2>&1 | tee build.log
 
 # Test linux/amd64 target
-# docker buildx build --load --platform linux/amd64 --tag plexcleaner:ubuntu --file ./Docker/Ubuntu.Rolling.Dockerfile .
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:ubuntu --file ./Docker/Dockerfile .
 # docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /bin/bash
 
 
@@ -53,16 +56,15 @@ RUN apt update \
 # https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install
 RUN apt install -y --install-suggests dotnet-sdk-10.0
 
-# Copy source and unit tests
+# Copy source
 COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
+COPY ./.editorconfig ./
+COPY ./Directory.Build.props ./
+COPY ./Directory.Packages.props ./
 
-# Unit Test
-COPY --chmod=ug=rwx,o=rx ./Docker/UnitTest.sh ./
-RUN ./UnitTest.sh
-
-# Build
+# Build project
 COPY --chmod=ug=rwx,o=rx ./Docker/Build.sh ./
 RUN ./Build.sh
 

@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
-using System.Linq;
 
 namespace PlexCleaner;
 
