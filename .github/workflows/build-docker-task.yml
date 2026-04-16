@@ -67,6 +67,6 @@ jobs:
             BUILD_CONFIGURATION=${{ github.ref_name == 'main' && 'Release' || 'Debug' }}
             BUILD_VERSION=${{ needs.get-version.outputs.AssemblyVersion }}
             BUILD_FILE_VERSION=${{ needs.get-version.outputs.AssemblyFileVersion }}
-            BUILD_ASSEMBLY_VERSION=${{ needs.get-version.outputs.AssemblyFileVersion }}
+            BUILD_ASSEMBLY_VERSION=${{ needs.get-version.outputs.AssemblyVersion }}
             BUILD_INFORMATION_VERSION=${{ needs.get-version.outputs.AssemblyInformationalVersion }}
             BUILD_PACKAGE_VERSION=${{ needs.get-version.outputs.SemVer2 }}
