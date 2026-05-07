@@ -52,11 +52,11 @@ Major NuGet bumps are not auto-merged by [merge-bot-pull-request.yml](.github/wo
 
 ## GitHub Actions pinning
 
-Every third-party action in `.github/workflows/*.yml` is pinned to a full commit SHA with a `# vX.Y.Z` trailing comment, e.g. `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`. Floating tags (`@v6`, `@main`, `@master`) are not used. Local reusable workflows (`./.github/workflows/*.yml`) are referenced by path and don't need pinning.
+Every third-party action in `.github/workflows/*.yml` is pinned to a full commit SHA with a trailing comment matching the upstream release tag, e.g. `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`. The comment is whatever tag the action's repo actually publishes — typically `# vX.Y.Z`, but use `# v3` if upstream only publishes major-only tags (e.g. `addnab/docker-run-action`) and `# master` if the action ships only a moving branch (rare). Floating refs without a SHA (`@v6`, `@main`, `@master`) are never used. Local reusable workflows (`./.github/workflows/*.yml`) are referenced by path and don't need pinning.
 
-**Why:** Floating tags can be silently re-pointed by the action's owner (or by a compromised account) to malicious code; a SHA pin is immutable. The version comment keeps the file readable and lets dependabot rewrite both the SHA and the comment together when bumping.
+**Why:** Floating tags can be silently re-pointed by the action's owner (or by a compromised account) to malicious code; a SHA pin is immutable. Matching the comment to upstream's actual release tag (rather than fabricating one) lets dependabot rewrite both the SHA and the comment together when bumping.
 
-When adding a new `uses:` line, resolve the latest release's commit SHA (`gh api repos/<owner>/<repo>/releases/latest`) and include the version comment. Don't ship a floating tag and "pin it later".
+When adding a new `uses:` line, resolve the latest release's commit SHA (`gh api repos/<owner>/<repo>/releases/latest`) and copy its `tag_name` into the comment verbatim. Don't ship a floating tag and "pin it later".
 
 ## Merge bot
 
@@ -64,6 +64,8 @@ When adding a new `uses:` line, resolve the latest release's commit SHA (`gh api
 
 - **Branch-aware merge method**: the script picks `--squash` for PRs targeting develop and `--merge` for PRs targeting main, matching each ruleset's `allowed_merge_methods`. An unknown base branch is a hard error.
 - **App token, not GITHUB_TOKEN**: the merge step uses a token minted by `actions/create-github-app-token` from `CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` secrets. Pushes authored by `GITHUB_TOKEN` are blocked from triggering downstream workflows by GitHub's recursion guard; without the App token, a Dependabot merge to develop would silently skip `publish-release.yml` and `publish-periodic-docker-release.yml`, leaving the develop Docker tag and prerelease stale.
+
+The App secrets (`CODEGEN_APP_CLIENT_ID`, `CODEGEN_APP_PRIVATE_KEY`) must exist in **both** secret namespaces: Settings → Secrets and variables → **Actions**, and Settings → Secrets and variables → **Dependabot**. Since Sept 2021, GitHub injects only the Dependabot-namespace secrets when a Dependabot-authored `pull_request` event fires; the regular Actions namespace is not visible to that run. Without the Dependabot duplicate the App-token step gets empty inputs and merge-bot silently fails to auto-merge. (The trigger remains `pull_request`, not `pull_request_target` — the merge-bot doesn't check out PR code, but `pull_request` plus duplicated secrets is the simpler, less-permissive setup.)
 
 ## Key Requirements for All Projects Derived from This Template
 
