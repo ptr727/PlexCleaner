@@ -50,6 +50,14 @@ Bot-merged PRs (Dependabot) trigger the publish workflows automatically because 
 
 Major NuGet bumps are not auto-merged by [merge-bot-pull-request.yml](.github/workflows/merge-bot-pull-request.yml) — they require human review. Major GitHub Actions bumps are auto-merged because the workflow execution itself is the validation surface.
 
+## GitHub Actions pinning
+
+Every third-party action in `.github/workflows/*.yml` is pinned to a full commit SHA with a `# vX.Y.Z` trailing comment, e.g. `uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`. Floating tags (`@v6`, `@main`, `@master`) are not used. Local reusable workflows (`./.github/workflows/*.yml`) are referenced by path and don't need pinning.
+
+**Why:** Floating tags can be silently re-pointed by the action's owner (or by a compromised account) to malicious code; a SHA pin is immutable. The version comment keeps the file readable and lets dependabot rewrite both the SHA and the comment together when bumping.
+
+When adding a new `uses:` line, resolve the latest release's commit SHA (`gh api repos/<owner>/<repo>/releases/latest`) and include the version comment. Don't ship a floating tag and "pin it later".
+
 ## Merge bot
 
 [merge-bot-pull-request.yml](.github/workflows/merge-bot-pull-request.yml) auto-merges Dependabot PRs. Two key design choices:
