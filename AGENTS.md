@@ -24,15 +24,15 @@ Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`
 
 ## Merging a PR
 
-**Never merge a PR without a clear "no issues found" review from `copilot-pull-request-reviewer` on the latest commit.** `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures) are satisfied — it does not confirm Copilot has re-evaluated the latest changes.
+**Never merge a PR without `copilot-pull-request-reviewer` having posted a clean re-review on the latest commit** — defined as a review submitted *after* the head commit's `committedDate`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
 
 After resolving Copilot's threads or pushing fixes:
 
-1. Wait for Copilot to post a fresh review on the new commit (`review_on_push: true` is set, so it normally happens within a few minutes).
-2. A fresh review is identified by `submitted_at > head commit's timestamp` — compare `gh api repos/<repo>/pulls/<n>/reviews` against `gh pr view <n> --json commits`.
-3. If the fresh review is COMMENTED with no new inline threads (or APPROVED), the PR is good to merge.
-4. If the fresh review introduces new concerns, address them and loop.
-5. **If Copilot does not auto re-review within a reasonable window after the latest push (~5 min), do not merge — ask the user.** Silence is not approval.
+1. Wait for Copilot to post a fresh review on the new head commit. The `copilot_code_review` rule on both `develop` and `main` rulesets has `review_on_push: true` configured (verify with `gh api repos/<repo>/rulesets/<id> --jq '.rules[] | select(.type=="copilot_code_review")'`), so a re-review normally lands within a few minutes.
+2. A fresh review is identified by comparing `submitted_at` (from `gh api repos/<repo>/pulls/<n>/reviews`) against `committedDate` of the last commit (from `gh pr view <n> --json commits --jq '.commits[-1].committedDate'`). Fresh ⇔ `submitted_at > committedDate`.
+3. If the fresh review is `COMMENTED` with zero unresolved inline threads (or `APPROVED`), the PR is good to merge.
+4. If the fresh review introduces new concerns (inline threads or body-level objections), address them and loop.
+5. **If Copilot does not auto re-review within a reasonable window after the latest push (~5 min), do not merge — ask the maintainer.** Silence is not approval.
 
 This applies to every human-authored PR (feature → develop, develop → main). The merge-bot workflow's auto-merge of dependabot bumps is the only exception and is governed separately by the `update-type` filter.
 
