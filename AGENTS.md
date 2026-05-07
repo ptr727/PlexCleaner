@@ -42,6 +42,8 @@ Use the **"Create a merge commit"** option on develop → main PRs. Repo ruleset
 
 Under any squash-only setup this would be a recurring pain point: each develop → main squash drops develop's ancestry and forces a per-cycle admin-bypass merge commit on develop to resync. With merge-commit on main, that resync is unnecessary — main's history shows one merge commit per release (a feature, not a defect: each promotion is visible as a single auditable node), and develop stays linear.
 
+**Immediately after a develop → main merge lands and main's publish workflows complete, bump the minor version in [version.json](version.json) on develop.** Open a small isolated feature PR `bump-version-X.Y` (e.g. `"version": "3.16"` → `"version": "3.17"`), squash into develop, and continue feature work from there. Without this bump, develop's next NBGV-computed prerelease (`3.16.<height>-g{sha}`) is *numerically lower* than the stable that just shipped (`3.16.<N>`), which is visibly confusing in HISTORY.md, `--version` output, and consumer update prompts. Bumping ensures every develop prerelease is `3.17.<height>-g{sha}` — visibly newer than main's `3.16.<N>`. Don't bundle the bump with other work; keep the PR isolated so the version change is unambiguous in git blame.
+
 ## Release flow
 
 PlexCleaner is a "pull" project: consumers (`docker pull ptr727/plexcleaner:latest`, `docker pull ptr727/plexcleaner:develop`, GitHub Releases) track both branches. **Both `main` and `develop` auto-publish on every push** — there is no manual `workflow_dispatch` gate.
