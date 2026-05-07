@@ -17,7 +17,7 @@ jobs:
 
       - name: Build BYOB date badge step
         if: ${{ github.ref_name == 'main' }}
-        uses: RubbaBoy/BYOB@v1
+        uses: RubbaBoy/BYOB@24f464284c1fd32028524b59607d417a2e36fee7 # v1.3.0
         with:
           name: lastbuild
           label: "Last Build"
