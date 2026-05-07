@@ -4,10 +4,8 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class CommandLineTests(PlexCleanerFixture fixture)
+public class CommandLineTests
 {
-    private readonly PlexCleanerFixture _fixture = fixture;
-
     [Theory]
     [InlineData(
         "removeclosedcaptions",

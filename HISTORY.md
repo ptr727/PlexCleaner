@@ -4,6 +4,14 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.16:
+  - Structural changes only, no functional changes.
+  - Consolidated project structure, build configuration, CI/CD workflows, and Docker configuration across projects.
+  - Project changes: Added `Directory.Build.props` and `Directory.Packages.props`, refactored `.csproj` files, added `CODESTYLE.md` and `AGENTS.md`.
+  - Build changes: Enabled `TreatWarningsAsErrors`, `AnalysisLevel=latest-all`, centralized NuGet package versions.
+  - CI/CD changes: Renamed workflows to kebab-case, restructured into reusable task workflows, consolidated Docker test workflows.
+  - Docker changes: Merged build and test scripts, renamed Dockerfile.
+  - Editor changes: Updated `.editorconfig`, `.dockerignore`, VS Code tasks and workspace settings.
 - Version 3.15:
   - This is primarily a code refactoring release.
   - Updated from .NET 9 to .NET 10.

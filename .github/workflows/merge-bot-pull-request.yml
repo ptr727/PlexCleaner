@@ -1,0 +1,74 @@
+name: Merge bot pull request action
+
+"on":
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  merge-dependabot:
+    name: Merge dependabot pull request job
+    runs-on: ubuntu-latest
+    # Restrict to dependabot PRs that originate from this repository, not a
+    # fork. Check the PR author rather than the event actor so maintainer
+    # repair commits on Dependabot branches can still auto-merge after CI
+    # passes.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+
+      - name: Generate GitHub App token step
+        # Use an App token (not GITHUB_TOKEN) so the resulting merge push is
+        # committed by the App and fires downstream workflows on develop/main.
+        # Pushes from GITHUB_TOKEN are blocked from triggering further workflow
+        # runs by GitHub's recursion guard, which would silently skip
+        # publish-release.yml and publish-periodic-docker-release.yml on the
+        # merge commit and prevent develop's auto-prerelease/Docker rebuild.
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          client-id: ${{ secrets.CODEGEN_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}
+
+      - name: Get dependabot metadata step
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # Skip semver-major NuGet bumps: they often build cleanly but break
+      # runtime behavior, so they should land via human review. GitHub Actions
+      # majors auto-merge because the workflow execution itself validates them.
+      #
+      # Merge method must match the base branch's ruleset:
+      #   develop -> squash only (linear history)
+      #   main    -> merge commits only (preserves develop ancestry)
+      # A mismatch fails enablePullRequestAutoMerge with
+      # "Merge method ... is not allowed on this repository".
+      - name: Merge pull request step
+        if: >-
+          (steps.metadata.outputs.package-ecosystem != 'nuget') ||
+          (steps.metadata.outputs.update-type != 'version-update:semver-major')
+        run: |
+          set -euo pipefail
+          case "${{ github.event.pull_request.base.ref }}" in
+            develop) method=--squash ;;
+            main) method=--merge ;;
+            *)
+              echo "::error::Unsupported base branch: ${{ github.event.pull_request.base.ref }}"
+              exit 1
+              ;;
+          esac
+          gh pr merge --auto "$method" "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}

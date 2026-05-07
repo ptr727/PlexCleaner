@@ -1,0 +1,24 @@
+name: Publish project release action
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  create-release:
+    name: Publish project release job
+    uses: ./.github/workflows/build-release-task.yml
+    secrets: inherit
+    permissions:
+      contents: write
+    with:
+      # Push to GitHub; Docker image is built (validates Dockerfile) but not pushed
+      # Docker Hub publishing is handled by publish-periodic-docker-release.yml
+      github: true
+      dockerhub: false

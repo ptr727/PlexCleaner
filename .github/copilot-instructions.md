@@ -13,6 +13,18 @@ PlexCleaner is a .NET 10.0 CLI utility that optimizes media files for Direct Pla
 
 The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) via CLI wrappers.
 
+## Branching, Releases, and Bot Behavior
+
+For full rationale see [`AGENTS.md`](../AGENTS.md). Quick rules:
+
+- `feature → develop → main`. PRs only.
+- Develop accepts **squash merges only**; main accepts **merge commits only**. Don't suggest rebase-merge — it's disabled at the repo level.
+- Both branches **auto-publish on push**: develop produces NBGV prereleases (`X.Y.Z-g{sha}`) tagged `develop` on Docker Hub; main produces stable releases (`X.Y.Z`) tagged `latest`.
+- Dependabot targets **both** `main` and `develop` with the same ecosystems; major NuGet bumps gate on human review, everything else auto-merges via App-token-driven merge-bot.
+- Every third-party GitHub Action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Don't introduce `@v6` / `@main` / `@master` floating refs.
+- Don't recommend `git push --force` or `--force-with-lease`; both rulesets enforce `non_fast_forward`.
+- `version.json`'s `publicReleaseRefSpec` is `^refs/heads/main$` — bumping the base `version` field is the only manual versioning action.
+
 ## Documentation
 
 User-facing documentation is organized as follows:
@@ -215,6 +227,13 @@ Parser design patterns:
 - Logging: Serilog with thread IDs (`Log.Information/Warning/Error`)
 - Exception handling: Currently uses broad `catch(Exception)` - TODO to specialize
 - Global usings: `GlobalUsing.cs` defines project-wide type aliases (`ConfigFileJsonSchema`, `SidecarFileJsonSchema`)
+- `Directory.Build.props`: Common MSBuild properties (`TargetFramework`, `Nullable`, `ImplicitUsings`,
+  `AnalysisLevel`, etc.) shared across all projects live here at the solution root. Do not duplicate
+  these in individual `.csproj` files -- only add a property to a `.csproj` when it is project-specific
+  or overrides the shared default.
+- `Directory.Packages.props`: All NuGet package versions are centralised here via `PackageVersion` items.
+  `PackageReference` elements in `.csproj` files must not include a `Version` attribute. Asset metadata
+  (`PrivateAssets`, `IncludeAssets`) stays in the `.csproj` `PackageReference` element.
 
 ### Naming and Structure
 
@@ -281,15 +300,15 @@ dotnet husky run
 
 ### GitHub Actions
 
-- **BuildGitHubRelease.yml**: Multi-runtime matrix build (win, linux, osx × x64/arm/arm64)
-- **BuildDockerPush.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
-- **TestBuildPr.yml** / **TestDockerPr.yml**: PR validation
+- **publish-release.yml**: Multi-runtime matrix build (win, linux, osx x x64/arm/arm64)
+- **publish-periodic-docker-release.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
+- **test-pull-request.yml**: PR validation
 - Version info: `version.json` with Nerdbank.GitVersioning format
 - Branches: `main` (stable releases), `develop` (pre-releases)
 
 ### Docker
 
-- Multi-stage builds in `Docker/Ubuntu.Rolling.Dockerfile`
+- Multi-stage builds in `Docker/Dockerfile`
 - Base image: `ubuntu:rolling` only (no longer publishing Alpine or Debian variants)
 - Supported architectures: `linux/amd64`, `linux/arm64` (no longer supporting `linux/arm/v7`)
 - Tool installation: Ubuntu package manager (apt)
@@ -440,3 +459,12 @@ Check states with `HasFlag()`, combine with `|=`
 - **KeepAwake.cs**: System sleep prevention
 - **PlexCleaner.defaults.json**: Canonical configuration reference
 - **.editorconfig** / **.csharpier.json**: Code style definitions
+
+## Git and Commit Rules
+
+**These rules are absolute — no exceptions:**
+
+- **Never make git commits.** All commits must be cryptographically signed (SSH/GPG). AI coding agents cannot produce signed commits. Stage changes with `git add` and leave `git commit` to the developer, who must run it in their own environment where signing keys are available.
+- **Never force push.** Do not run `git push --force` or `git push --force-with-lease`. Force pushing rewrites shared branch history and is blocked by branch protection rules.
+- **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
+- **Staging is the limit.** Prepare changes and stage files; the developer handles all commits and pushes.
