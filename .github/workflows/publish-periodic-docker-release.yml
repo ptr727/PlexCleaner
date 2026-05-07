@@ -42,7 +42,7 @@ jobs:
         echo Size: $(docker manifest inspect -v docker.io/ptr727/plexcleaner:${{ matrix.tag }} | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec) >> ${{ runner.temp }}/versions/${{ matrix.file }}
 
     - name: Write tool versions to file step
-      uses: addnab/docker-run-action@v3
+      uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
       with:
         image: docker.io/ptr727/plexcleaner:${{ matrix.tag }}
         options: --volume ${{ runner.temp }}/versions:/versions
@@ -59,7 +59,7 @@ jobs:
       run: cat ${{ runner.temp }}/versions/${{ matrix.file }}
 
     - name: Upload version artifacts step
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: versions-${{ matrix.file }}
         path: ${{ runner.temp }}/versions/${{ matrix.file }}
@@ -73,10 +73,10 @@ jobs:
     steps:
 
     - name: Checkout step
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Download version artifacts step
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         pattern: versions-*
         merge-multiple: true
@@ -86,7 +86,7 @@ jobs:
       run: m4 --include=${{ runner.temp }}/versions ./Docker/README.m4 > ${{ runner.temp }}/README.md
 
     - name: Update Docker Hub README.md step
-      uses: peter-evans/dockerhub-description@v5
+      uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_PASSWORD }}
