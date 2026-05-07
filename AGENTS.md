@@ -13,6 +13,50 @@ For comprehensive coding standards and detailed conventions, refer to [`.github/
 - **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
 - **Staging is the limit.** Prepare and stage file changes; the developer runs `git commit` in their own environment where signing keys are available.
 
+## Branches and merging
+
+- Pipeline is `feature → develop → main`. Both branches are protected by branch rulesets; everything lands via PR.
+- **Feature → develop PRs squash-merge** (single commit on develop, PR title becomes the commit message; never rebase-merge).
+- **Develop → main PRs merge-commit** (one merge commit on main per release, develop's tip becomes a second parent and stays in main's ancestry — see [Develop → Main Promotion](#develop--main-promotion)).
+- Open feature PRs against `develop`. `develop → main` is how stable releases are cut.
+
+Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`, `allow_rebase_merge=false`, `allow_auto_merge=true`. The `develop` ruleset enforces `allowed_merge_methods=["squash"]` and `required_linear_history`. The `main` ruleset enforces `allowed_merge_methods=["merge"]` and intentionally omits linear-history (the develop → main merge commit is non-linear by design).
+
+## Develop → Main Promotion
+
+Use the **"Create a merge commit"** option on develop → main PRs. Repo rulesets are split: PRs into `develop` are squash-only (linear history); PRs into `main` are merge-commit only. Clicking "Create a merge commit" on a develop → main PR produces a merge commit on main whose second parent is develop's tip — so develop becomes a real ancestor of main, and the *next* develop → main PR has a clean merge base (no recurring conflicts, no behind-base churn).
+
+Under any squash-only setup this would be a recurring pain point: each develop → main squash drops develop's ancestry and forces a per-cycle admin-bypass merge commit on develop to resync. With merge-commit on main, that resync is unnecessary — main's history shows one merge commit per release (a feature, not a defect: each promotion is visible as a single auditable node), and develop stays linear.
+
+## Release flow
+
+PlexCleaner is a "pull" project: consumers (`docker pull ptr727/plexcleaner:latest`, `docker pull ptr727/plexcleaner:develop`, GitHub Releases) track both branches. **Both `main` and `develop` auto-publish on every push** — there is no manual `workflow_dispatch` gate.
+
+[publish-release.yml](.github/workflows/publish-release.yml) drives both prereleases and stable releases off the same [build-release-task.yml](.github/workflows/build-release-task.yml). It triggers on `push: [main, develop]`:
+
+- **Push to `develop`** — automatic prerelease. Merging any PR into `develop` (feature, bug fix, dependabot) calls [get-version-task.yml](.github/workflows/get-version-task.yml) for an NBGV-computed version like `3.16.42-g1a2b3c4` (because develop does not match `publicReleaseRefSpec` in [version.json](version.json)) and creates a GitHub Release with `prerelease: true`. The Docker image is tagged `develop` by [publish-periodic-docker-release.yml](.github/workflows/publish-periodic-docker-release.yml).
+- **Push to `main`** — automatic stable release. NBGV produces a clean version like `3.16.42` and creates a GitHub Release with `prerelease: false`. The Docker image is tagged `latest`.
+
+Branch-aware logic lives in three places:
+
+- [build-release-task.yml](.github/workflows/build-release-task.yml) — `prerelease: ${{ github.ref_name != 'main' }}` and `target_commitish: ${{ github.sha }}` (the latter is critical: without it, softprops creates the tag against the repo's default branch, mis-tagging develop builds onto main's tip).
+- [publish-periodic-docker-release.yml](.github/workflows/publish-periodic-docker-release.yml) — `tag: ${{ github.ref_name == 'main' && 'latest' || 'develop' }}`.
+
+Bot-merged PRs (Dependabot) trigger the publish workflows automatically because the merge-bot uses an App token — see the merge-bot section below.
+
+## Dependabot
+
+[.github/dependabot.yml](.github/dependabot.yml) targets **both `main` and `develop`** with two ecosystems each (`nuget`, `github-actions`), grouped per ecosystem, daily. The duplication is intentional: because both branches auto-publish, develop must not drift from main's dependency baseline. A NuGet major bump landing on develop should land on main on the next promotion cycle, not weeks later.
+
+Major NuGet bumps are not auto-merged by [merge-bot-pull-request.yml](.github/workflows/merge-bot-pull-request.yml) — they require human review. Major GitHub Actions bumps are auto-merged because the workflow execution itself is the validation surface.
+
+## Merge bot
+
+[merge-bot-pull-request.yml](.github/workflows/merge-bot-pull-request.yml) auto-merges Dependabot PRs. Two key design choices:
+
+- **Branch-aware merge method**: the script picks `--squash` for PRs targeting develop and `--merge` for PRs targeting main, matching each ruleset's `allowed_merge_methods`. An unknown base branch is a hard error.
+- **App token, not GITHUB_TOKEN**: the merge step uses a token minted by `actions/create-github-app-token` from `CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` secrets. Pushes authored by `GITHUB_TOKEN` are blocked from triggering downstream workflows by GitHub's recursion guard; without the App token, a Dependabot merge to develop would silently skip `publish-release.yml` and `publish-periodic-docker-release.yml`, leaving the develop Docker tag and prerelease stale.
+
 ## Key Requirements for All Projects Derived from This Template
 
 ### Build & Quality Standards

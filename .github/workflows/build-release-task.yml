@@ -52,11 +52,23 @@ jobs:
           path: ./Publish
 
       - name: Create GitHub release step
-        uses: softprops/action-gh-release@v3
+        # softprops creates the underlying tag from `tag_name` if it does not
+        # already exist, so the workflow drives the entire release lifecycle:
+        # NBGV computes the version, this step creates the tag + release with
+        # auto-generated notes, and the artifacts are attached in one shot.
+        # `target_commitish` MUST be set explicitly: softprops doesn't pass a
+        # default through, and GitHub's REST API then defaults the new tag to
+        # the repository's default branch (main). On `push: develop` runs the
+        # tag would land on main's tip instead of the develop commit that
+        # built the artifact, leaving "Browse files" and `git checkout <tag>`
+        # pointing at unrelated code.
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
-          generate_release_notes: true
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
+          target_commitish: ${{ github.sha }}
           prerelease: ${{ github.ref_name != 'main' }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
             LICENSE
             README.md

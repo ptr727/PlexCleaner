@@ -13,6 +13,17 @@ PlexCleaner is a .NET 10.0 CLI utility that optimizes media files for Direct Pla
 
 The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) via CLI wrappers.
 
+## Branching, Releases, and Bot Behavior
+
+For full rationale see [`AGENTS.md`](../AGENTS.md). Quick rules:
+
+- `feature → develop → main`. PRs only.
+- Develop accepts **squash merges only**; main accepts **merge commits only**. Don't suggest rebase-merge — it's disabled at the repo level.
+- Both branches **auto-publish on push**: develop produces NBGV prereleases (`X.Y.Z-g{sha}`) tagged `develop` on Docker Hub; main produces stable releases (`X.Y.Z`) tagged `latest`.
+- Dependabot targets **both** `main` and `develop` with the same ecosystems; major NuGet bumps gate on human review, everything else auto-merges via App-token-driven merge-bot.
+- Don't recommend `git push --force` or `--force-with-lease`; both rulesets enforce `non_fast_forward`.
+- `version.json`'s `publicReleaseRefSpec` is `^refs/heads/main$` — bumping the base `version` field is the only manual versioning action.
+
 ## Documentation
 
 User-facing documentation is organized as follows:
