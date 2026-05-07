@@ -22,6 +22,20 @@ For comprehensive coding standards and detailed conventions, refer to [`.github/
 
 Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`, `allow_rebase_merge=false`, `allow_auto_merge=true`. The `develop` ruleset enforces `allowed_merge_methods=["squash"]` and `required_linear_history`. The `main` ruleset enforces `allowed_merge_methods=["merge"]` and intentionally omits linear-history (the develop → main merge commit is non-linear by design).
 
+## Merging a PR
+
+**Never merge a PR without a clear "no issues found" review from `copilot-pull-request-reviewer` on the latest commit.** `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures) are satisfied — it does not confirm Copilot has re-evaluated the latest changes.
+
+After resolving Copilot's threads or pushing fixes:
+
+1. Wait for Copilot to post a fresh review on the new commit (`review_on_push: true` is set, so it normally happens within a few minutes).
+2. A fresh review is identified by `submitted_at > head commit's timestamp` — compare `gh api repos/<repo>/pulls/<n>/reviews` against `gh pr view <n> --json commits`.
+3. If the fresh review is COMMENTED with no new inline threads (or APPROVED), the PR is good to merge.
+4. If the fresh review introduces new concerns, address them and loop.
+5. **If Copilot does not auto re-review within a reasonable window after the latest push (~5 min), do not merge — ask the user.** Silence is not approval.
+
+This applies to every human-authored PR (feature → develop, develop → main). The merge-bot workflow's auto-merge of dependabot bumps is the only exception and is governed separately by the `update-type` filter.
+
 ## Develop → Main Promotion
 
 Use the **"Create a merge commit"** option on develop → main PRs. Repo rulesets are split: PRs into `develop` are squash-only (linear history); PRs into `main` are merge-commit only. Clicking "Create a merge commit" on a develop → main PR produces a merge commit on main whose second parent is develop's tip — so develop becomes a real ancestor of main, and the *next* develop → main PR has a clean merge base (no recurring conflicts, no behind-base churn).

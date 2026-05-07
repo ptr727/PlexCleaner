@@ -22,6 +22,7 @@ For full rationale see [`AGENTS.md`](../AGENTS.md). Quick rules:
 - Both branches **auto-publish on push**: develop produces NBGV prereleases (`X.Y.Z-g{sha}`) tagged `develop` on Docker Hub; main produces stable releases (`X.Y.Z`) tagged `latest`.
 - Dependabot targets **both** `main` and `develop` with the same ecosystems; major NuGet bumps gate on human review, everything else auto-merges via App-token-driven merge-bot.
 - Every third-party GitHub Action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Don't introduce `@v6` / `@main` / `@master` floating refs.
+- Never merge a PR without a fresh "no issues found" review from `copilot-pull-request-reviewer` on the latest commit. `mergeStateStatus: CLEAN` is necessary but not sufficient — Copilot's re-review of the latest push is required. If Copilot doesn't auto re-review within ~5 min of the last push, ask before merging. See [`AGENTS.md`](../AGENTS.md#merging-a-pr).
 - Don't recommend `git push --force` or `--force-with-lease`; both rulesets enforce `non_fast_forward`.
 - `version.json`'s `publicReleaseRefSpec` is `^refs/heads/main$` — bumping the base `version` field is the only manual versioning action.
 
