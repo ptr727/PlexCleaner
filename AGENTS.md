@@ -22,11 +22,34 @@ For comprehensive coding standards and detailed conventions, refer to [`.github/
 
 Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`, `allow_rebase_merge=false`, `allow_auto_merge=true`. The `develop` ruleset enforces `allowed_merge_methods=["squash"]` and `required_linear_history`. The `main` ruleset enforces `allowed_merge_methods=["merge"]` and intentionally omits linear-history (the develop → main merge commit is non-linear by design).
 
+## Merging a PR
+
+**Never merge a PR without `copilot-pull-request-reviewer[bot]` (shown as "Copilot" in the GitHub UI; the `[bot]` suffix is its actual login) having posted a clean re-review on the latest commit** — defined as a review whose `commit_id` (or GraphQL `commit.oid`) equals the PR's `headRefOid`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
+
+After resolving Copilot's threads or pushing fixes:
+
+1. Wait for Copilot to post a fresh review on the new head commit. The `copilot_code_review` rule on both `develop` and `main` rulesets has `review_on_push: true` configured (verify with `gh api repos/<owner>/<repo>/rulesets/<id> --jq '.rules[] | select(.type=="copilot_code_review")'`), so a re-review normally lands within a few minutes.
+2. Verify Copilot's most recent review targets the current head — compare its `commit_id` to `headRefOid`, not timestamps (multiple reviews and authors clutter the list, and timestamp drift is unreliable):
+
+   ```sh
+   head=$(gh pr view <n> --json headRefOid --jq .headRefOid)
+   last=$(gh api --paginate repos/<owner>/<repo>/pulls/<n>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .commit_id' | tail -1)
+   [ "$head" = "$last" ] && echo "fresh" || echo "stale"
+   ```
+
+3. If the fresh review is `COMMENTED` with zero unresolved inline threads (or `APPROVED`), the PR is good to merge.
+4. If the fresh review introduces new concerns (inline threads or body-level objections), address them and loop.
+5. **If Copilot does not auto re-review within a reasonable window after the latest push (~5 min), do not merge — ask the maintainer.** Silence is not approval. Copilot can be re-prompted manually from the GitHub PR UI ("Re-request review" on the Copilot reviewer entry).
+
+This applies to every human-authored PR (feature → develop, develop → main). The merge-bot workflow's auto-merge of dependabot bumps is the only exception and is governed separately by the `update-type` filter.
+
 ## Develop → Main Promotion
 
 Use the **"Create a merge commit"** option on develop → main PRs. Repo rulesets are split: PRs into `develop` are squash-only (linear history); PRs into `main` are merge-commit only. Clicking "Create a merge commit" on a develop → main PR produces a merge commit on main whose second parent is develop's tip — so develop becomes a real ancestor of main, and the *next* develop → main PR has a clean merge base (no recurring conflicts, no behind-base churn).
 
 Under any squash-only setup this would be a recurring pain point: each develop → main squash drops develop's ancestry and forces a per-cycle admin-bypass merge commit on develop to resync. With merge-commit on main, that resync is unnecessary — main's history shows one merge commit per release (a feature, not a defect: each promotion is visible as a single auditable node), and develop stays linear.
+
+**Immediately after a develop → main merge lands and main's publish workflows complete, bump the minor version in [version.json](version.json) on develop.** Open a small isolated feature PR `bump-version-X.Y` (e.g. `"version": "3.16"` → `"version": "3.17"`), squash into develop, and continue feature work from there. Without this bump, develop's next NBGV-computed prerelease (`3.16.<height>-g{sha}`) is *numerically lower* than the stable that just shipped (`3.16.<N>`), which is visibly confusing in HISTORY.md, `--version` output, and consumer update prompts. Bumping ensures every develop prerelease is `3.17.<height>-g{sha}` — visibly newer than main's `3.16.<N>`. Don't bundle the bump with other work; keep the PR isolated so the version change is unambiguous in git blame.
 
 ## Release flow
 
