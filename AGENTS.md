@@ -28,12 +28,12 @@ Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`
 
 After resolving Copilot's threads or pushing fixes:
 
-1. Wait for Copilot to post a fresh review on the new head commit. The `copilot_code_review` rule on both `develop` and `main` rulesets has `review_on_push: true` configured (verify with `gh api repos/<repo>/rulesets/<id> --jq '.rules[] | select(.type=="copilot_code_review")'`), so a re-review normally lands within a few minutes.
+1. Wait for Copilot to post a fresh review on the new head commit. The `copilot_code_review` rule on both `develop` and `main` rulesets has `review_on_push: true` configured (verify with `gh api repos/<owner>/<repo>/rulesets/<id> --jq '.rules[] | select(.type=="copilot_code_review")'`), so a re-review normally lands within a few minutes.
 2. Verify Copilot's most recent review targets the current head — compare its `commit_id` to `headRefOid`, not timestamps (multiple reviews and authors clutter the list, and timestamp drift is unreliable):
 
    ```sh
    head=$(gh pr view <n> --json headRefOid --jq .headRefOid)
-   last=$(gh api --paginate repos/<repo>/pulls/<n>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .commit_id' | tail -1)
+   last=$(gh api --paginate repos/<owner>/<repo>/pulls/<n>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .commit_id' | tail -1)
    [ "$head" = "$last" ] && echo "fresh" || echo "stale"
    ```
 
