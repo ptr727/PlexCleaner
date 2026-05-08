@@ -24,7 +24,7 @@ Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`
 
 ## Merging a PR
 
-**Never merge a PR without `copilot-pull-request-reviewer` having posted a clean re-review on the latest commit** — defined as a review submitted *after* the head commit's `committedDate`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
+**Never merge a PR without `copilot-pull-request-reviewer` having posted a clean re-review on the latest commit** — defined as a review whose `commit_id` (or GraphQL `commit.oid`) equals the PR's `headRefOid`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
 
 After resolving Copilot's threads or pushing fixes:
 
