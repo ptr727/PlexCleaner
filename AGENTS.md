@@ -24,7 +24,7 @@ Repo settings reflect this: `allow_merge_commit=true`, `allow_squash_merge=true`
 
 ## Merging a PR
 
-**Never merge a PR without `copilot-pull-request-reviewer` having posted a clean re-review on the latest commit** — defined as a review whose `commit_id` (or GraphQL `commit.oid`) equals the PR's `headRefOid`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
+**Never merge a PR without `copilot-pull-request-reviewer[bot]` (shown as "Copilot" in the GitHub UI; the `[bot]` suffix is its actual login) having posted a clean re-review on the latest commit** — defined as a review whose `commit_id` (or GraphQL `commit.oid`) equals the PR's `headRefOid`, with no new unresolved inline threads (Copilot in this repo posts `COMMENTED` reviews, not `APPROVED`, so a clean COMMENTED review with zero open threads is the "no issues found" outcome). `mergeStateStatus: CLEAN` only confirms ruleset gates (thread resolution, status checks, signatures); it does not confirm Copilot has re-evaluated the latest changes.
 
 After resolving Copilot's threads or pushing fixes:
 
@@ -33,7 +33,7 @@ After resolving Copilot's threads or pushing fixes:
 
    ```sh
    head=$(gh pr view <n> --json headRefOid --jq .headRefOid)
-   last=$(gh api repos/<repo>/pulls/<n>/reviews --jq '[.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")] | last | .commit_id')
+   last=$(gh api --paginate repos/<repo>/pulls/<n>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .commit_id' | tail -1)
    [ "$head" = "$last" ] && echo "fresh" || echo "stale"
    ```
 
