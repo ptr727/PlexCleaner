@@ -6,7 +6,7 @@
     <PackageVersion Include="InsaneGenius.Utilities" Version="3.4.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.2.45" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.2.47" />
     <PackageVersion Include="Serilog" Version="4.3.1" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
