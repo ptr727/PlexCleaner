@@ -480,6 +480,8 @@ Provider-specific mechanics for driving GitHub Copilot reviews entirely via `gh`
 
 Auto-review on push is configured (the branch ruleset's `copilot_code_review` rule with `review_on_push: true`) but fires inconsistently — treat it as best-effort. After every push, **re-request a review programmatically** via the GraphQL `requestReviews` mutation, passing the Copilot reviewer's bot node id in `botIds`. This drives the loop end-to-end without a maintainer clicking "re-request review" in the UI.
 
+> **The reviewer login differs by API — this is intentional, not a typo.** In **GraphQL** (`gh api graphql` and `gh pr view --json reviews`, which is GraphQL-backed) the `Bot.login` is `copilot-pull-request-reviewer` — **no `[bot]` suffix**. In the **REST** API (`gh api repos/.../issues|pulls/...`) the same account's `user.login` is `copilot-pull-request-reviewer[bot]` — **with** the suffix. Each query below uses the correct form for its API; match the API, not a single spelling, when adapting them. (The prose elsewhere referring to `copilot-pull-request-reviewer[bot]` is describing the REST/display login.)
+
 ```sh
 # 1. PR node id + the Copilot reviewer's bot node id (read from any existing
 #    Copilot review; the reviewer login is `copilot-pull-request-reviewer`).
@@ -525,9 +527,10 @@ gh pr view <N> --json reviews --jq \
   '.reviews[] | select(.author.login=="copilot-pull-request-reviewer") | .commit.oid' \
   | grep -q "$PR_HEAD" && echo "covered via formal review"
 
-# 2. Issue comment — show the most recent Copilot comment for manual confirmation.
+# 2. Issue comment — show the most recent Copilot comment for manual
+#    confirmation. This is the REST API, so the login carries the `[bot]` suffix.
 gh api repos/ptr727/PlexCleaner/issues/<N>/comments --jq \
-  '[.[] | select(.user.login=="copilot-pull-request-reviewer")] | last | {created_at, body: .body[:200]}'
+  '[.[] | select(.user.login=="copilot-pull-request-reviewer[bot]")] | last | {created_at, body: .body[:200]}'
 ```
 
 Coverage is confirmed when (1) exits 0. For issue comments (path 2), body content is the only reliable signal — `created_at` is not (commit timestamps can predate the push). Treat path (2) as confirmed only when the comment body explicitly refers to the current changes.
