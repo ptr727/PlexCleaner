@@ -13,6 +13,38 @@ on:
         required: false
         type: boolean
         default: false
+      # Git ref to check out / version (empty = default checkout ref).
+      ref:
+        required: false
+        type: string
+        default: ''
+      # Logical branch driving config / tags / prerelease for every target.
+      # Required (no `github.ref_name` fallback): the publisher builds both
+      # `main` and `develop` from one run whose `github.ref_name` is `main`,
+      # so a silent fallback would mislabel the develop leg. Every caller
+      # passes it explicitly; a missing value should fail loudly.
+      branch:
+        required: true
+        type: string
+      # Smoke mode: reduced, never-published build for fast PR feedback.
+      # Forwarded to every target; also hard-disables every push below so a
+      # smoke run can never publish regardless of the publish flags.
+      smoke:
+        required: false
+        type: boolean
+        default: false
+      # Per-target presence gates. Default true (build everything). A PR smoke
+      # run sets these from the paths-filter so only changed targets build; a
+      # derived project that drops a target deletes its job below and removes
+      # it from `github-release`'s `needs`.
+      enable_docker:
+        required: false
+        type: boolean
+        default: true
+      enable_executable:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
 
@@ -20,30 +52,56 @@ jobs:
     name: Get version information job
     uses: ./.github/workflows/get-version-task.yml
     secrets: inherit
+    with:
+      ref: ${{ inputs.ref }}
 
   build-executable:
     name: Build executable job
+    if: ${{ inputs.enable_executable }}
+    needs: [get-version]
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
+    with:
+      # Pin to the exact commit get-version resolved (immutable), not the
+      # possibly-moving branch ref: the publisher passes a branch name, and a
+      # commit landing mid-run could otherwise build artifacts from a different
+      # commit than the one the release tag (also GitCommitId) points at.
+      ref: ${{ needs.get-version.outputs.GitCommitId }}
+      branch: ${{ inputs.branch }}
+      smoke: ${{ inputs.smoke }}
 
   build-docker:
     name: Build Docker job
+    if: ${{ inputs.enable_docker }}
+    needs: [get-version]
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:
-      # Conditional push to Docker Hub
-      push: ${{ inputs.dockerhub }}
+      # Pin to the resolved commit (see build-executable) so the pushed image
+      # contents match the SemVer2 tag computed from the same commit.
+      ref: ${{ needs.get-version.outputs.GitCommitId }}
+      branch: ${{ inputs.branch }}
+      smoke: ${{ inputs.smoke }}
+      # Conditional push to Docker Hub — never on a smoke build.
+      push: ${{ inputs.dockerhub && !inputs.smoke }}
 
   github-release:
     name: Publish GitHub release job
-    if: ${{ inputs.github }}
+    # `&& !inputs.smoke` enforces the "smoke never publishes" guarantee at the
+    # job level too (matching the push gate above), so a smoke caller that also
+    # set `github: true` still can't create a release.
+    if: ${{ inputs.github && !inputs.smoke }}
     runs-on: ubuntu-latest
     needs: [get-version, build-executable, build-docker]
 
     steps:
 
+      # Check out the exact built commit (NBGV `GitCommitId`), so the uploaded
+      # release files match the tag even if the branch advances mid-run.
       - name: Checkout code step
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.get-version.outputs.GitCommitId }}
 
       - name: Download executable build artifacts step
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -51,12 +109,45 @@ jobs:
           artifact-ids: ${{ needs.build-executable.outputs.artifact-id }}
           path: ./Publish
 
+      # The weekly publisher re-runs even when a branch has no new commits, so
+      # NBGV can produce a SemVer2 that was already released. GitHub release
+      # creation has no built-in skip-duplicate, and re-publishing an unchanged
+      # version is exactly the churn the two-phase model avoids — so skip the
+      # release step when a release for this tag already exists. A manual
+      # `workflow_dispatch` is allowed through so it can repair/refresh a
+      # partially-created release for the same tag. The Docker mutable tags
+      # (`latest`/`develop`) and base-image refresh still happen regardless.
+      - name: Check for existing release step
+        id: release-exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.get-version.outputs.SemVer2 }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              echo "Release $TAG already exists; workflow_dispatch will refresh it."
+            else
+              echo "Release $TAG already exists; skipping release creation (no-op republish)."
+            fi
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # `target_commitish` MUST be set explicitly: softprops doesn't pass a
+      # default through, and GitHub's REST API then defaults the new tag to the
+      # repository's default branch (main). Pin it to NBGV's `GitCommitId` —
+      # the exact commit the version was computed from — not `github.sha`
+      # (wrong on the develop leg of the publisher's branch matrix) and not a
+      # branch name (a moving ref a mid-run commit could advance past).
       - name: Create GitHub release step
+        if: ${{ steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
-          target_commitish: ${{ github.sha }}
-          prerelease: ${{ github.ref_name != 'main' }}
+          target_commitish: ${{ needs.get-version.outputs.GitCommitId }}
+          prerelease: ${{ inputs.branch != 'main' }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |

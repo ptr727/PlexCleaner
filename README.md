@@ -206,7 +206,7 @@ Choose an installation method based on your platform and requirements:
 - See the [Docker README][docker-link] for current distribution and media tool versions.
 - `ptr727/plexcleaner:latest` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `main` branch.
 - `ptr727/plexcleaner:develop` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `develop` branch.
-- Images are updated weekly with the latest upstream updates.
+- Docker images and GitHub Releases for both branches are published on a weekly schedule (and on demand), each refreshed with the latest upstream and base-image updates. Pull requests are smoke-tested only and do not publish.
 - The container has all the prerequisite 3rd party tools pre-installed.
 
 **Path Mapping Convention**: All examples use `/data/media` as the host path mapped to `/media` inside the container. Replace `/data/media` with your actual host media location.
@@ -990,7 +990,7 @@ Licensed under the [MIT License][license-link]\
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-periodic-docker-release.yml?logo=github&label=Docker%20Build
+[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Docker%20Build
 [github-link]: https://github.com/ptr727/PlexCleaner
 [plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
@@ -1000,7 +1000,7 @@ Licensed under the [MIT License][license-link]\
 [license-link]: ./LICENSE
 [license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
 [pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
-[release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?logo=github&label=Releases%20Build
+[release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Releases%20Build
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
 [releases-link]: https://github.com/ptr727/PlexCleaner/releases
 [ubuntu-hub-link]: https://hub.docker.com/_/ubuntu

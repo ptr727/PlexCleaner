@@ -8,6 +8,26 @@ on:
         required: false
         type: boolean
         default: false
+      # Git ref to check out / version (empty = default checkout ref).
+      ref:
+        required: false
+        type: string
+        default: ''
+      # Logical branch driving config and tags (`main` => Release/`latest`,
+      # anything else => Debug/`develop`). Required (no `github.ref_name`
+      # fallback): the publisher builds develop from a run whose
+      # `github.ref_name` is `main`, so a silent fallback would mistag it.
+      # The orchestrator always passes it explicitly.
+      branch:
+        required: true
+        type: string
+      # Smoke mode: build `linux/amd64` only (no QEMU/arm64), never push, and
+      # skip the shared registry `cache-to` so PR builds don't pollute the
+      # release buildcache. Used for fast PR feedback.
+      smoke:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
 
@@ -15,26 +35,25 @@ jobs:
     name: Get version information job
     uses: ./.github/workflows/get-version-task.yml
     secrets: inherit
+    with:
+      ref: ${{ inputs.ref }}
 
   build-docker:
     name: Build Docker image job
     runs-on: ubuntu-latest
     needs: [get-version]
-    strategy:
-      matrix:
-        include:
-          - file: ./Docker/Dockerfile
-            platforms: linux/amd64,linux/arm64
-            tags: |
-              docker.io/ptr727/plexcleaner:${{ github.ref_name == 'main' && 'latest' || 'develop' }}
-              docker.io/ptr727/plexcleaner:${{ needs.get-version.outputs.SemVer2 }}
 
     steps:
 
       - name: Checkout step
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ inputs.ref }}
 
+      # QEMU only exists to emulate arm64. Smoke builds are amd64-only, so
+      # skip it entirely to save the emulation setup cost.
       - name: Setup QEMU step
+        if: ${{ !inputs.smoke }}
         uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
         with:
           platforms: linux/amd64,linux/arm64
@@ -42,10 +61,16 @@ jobs:
       - name: Setup Buildx step
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.smoke && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
 
-      # Always login to Docker Hub, not just on push, to benefit from
-      # higher rate limits with a Docker subscription for pulls and cache
+      # Always login to Docker Hub, not just on push, to benefit from higher
+      # rate limits with a Docker subscription for pulls and cache reads on
+      # every build (including smoke). This is a CONSCIOUS choice over gating
+      # login on `inputs.push`: the trade-off is that fork PRs without access
+      # to the Docker Hub secrets cannot run the Docker smoke build. Acceptable
+      # because PlexCleaner's contribution flow is same-repo branch PRs +
+      # Dependabot (App token); a fork-PR Docker smoke path would alternatively
+      # gate this step on `inputs.push` and accept anonymous-rate-limited reads.
       - name: Login to Docker Hub step
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
@@ -57,14 +82,33 @@ jobs:
         with:
           context: .
           push: ${{ inputs.push }}
-          file: ${{ matrix.file }}
-          tags: ${{ matrix.tags }}
-          platforms: ${{ matrix.platforms }}
-          cache-from: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache
-          cache-to: type=registry,ref=docker.io/ptr727/plexcleaner:buildcache,mode=max
+          file: ./Docker/Dockerfile
+          tags: |
+            docker.io/ptr727/plexcleaner:${{ inputs.branch == 'main' && 'latest' || 'develop' }}
+            docker.io/ptr727/plexcleaner:${{ needs.get-version.outputs.SemVer2 }}
+          platforms: ${{ inputs.smoke && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          # Branch-scoped registry cache. READ both branches' caches — the
+          # layers are nearly identical (only BUILD_CONFIGURATION differs), so
+          # a main build can seed from develop's cache and vice versa — but
+          # WRITE only this branch's own tag, and only when actually pushing.
+          # Gating the export on `inputs.push` (not just `!smoke`) means a
+          # non-publishing build never writes the shared registry cache or
+          # needs Docker Hub write creds — smoke builds (always push=false) are
+          # covered too. Branch-scoping is what lets the publisher's weekly
+          # matrix build main and develop concurrently in one run without the
+          # two legs overwriting a single shared cache (destroying hit rates).
+          # `mode=max` caches the multi-stage builder layers (the expensive
+          # `dotnet publish`); `ignore-error=true` keeps a transient cache
+          # export failure from failing an otherwise-good publish. Registry
+          # (not gha) cache because the weekly publish cadence would let gha's
+          # 7-day unused-entry eviction drop branch caches between publishes.
+          cache-from: |
+            type=registry,ref=docker.io/ptr727/plexcleaner:buildcache-main
+            type=registry,ref=docker.io/ptr727/plexcleaner:buildcache-develop
+          cache-to: ${{ inputs.push && format('type=registry,ref=docker.io/ptr727/plexcleaner:buildcache-{0},mode=max,ignore-error=true', inputs.branch) || '' }}
           build-args: |
             LABEL_VERSION=${{ needs.get-version.outputs.SemVer2 }}
-            BUILD_CONFIGURATION=${{ github.ref_name == 'main' && 'Release' || 'Debug' }}
+            BUILD_CONFIGURATION=${{ inputs.branch == 'main' && 'Release' || 'Debug' }}
             BUILD_VERSION=${{ needs.get-version.outputs.AssemblyVersion }}
             BUILD_FILE_VERSION=${{ needs.get-version.outputs.AssemblyFileVersion }}
             BUILD_ASSEMBLY_VERSION=${{ needs.get-version.outputs.AssemblyVersion }}

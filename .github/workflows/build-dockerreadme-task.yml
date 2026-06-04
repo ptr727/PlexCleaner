@@ -1,0 +1,54 @@
+name: Create Docker README.md task
+
+on:
+  workflow_call:
+    inputs:
+      # Logical branch this run is for. The Docker Hub README is rendered from
+      # `main` only (it embeds the `latest` image's tool versions); the job
+      # self-gates so the develop leg of the publisher's branch matrix is a
+      # no-op. Required (no `github.ref_name` fallback) so the gate can't
+      # silently misfire.
+      branch:
+        required: true
+        type: string
+
+jobs:
+
+  docker-readme:
+    name: Create Docker README.md job
+    # Render only for main: there is a single Docker Hub README, and the m4
+    # template includes the `latest` image's tool versions.
+    if: ${{ inputs.branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Pin to the branch this run is for (always `main` here, via the job
+      # gate). Without it, checkout uses the triggering ref — a
+      # `workflow_dispatch` from `develop` would otherwise render the Hub
+      # README from develop's `Docker/README.m4` instead of main's.
+      - name: Checkout step
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ inputs.branch }}
+
+      # Download by exact name (not a `versions-*` pattern): the main leg's
+      # artifact contains a file literally named `latest.ver`, which the m4
+      # template references via `include({{latest.ver}})`.
+      - name: Download version artifacts step
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: versions-main
+          path: ${{ runner.temp }}/versions
+
+      - name: Create README.md from README.m4 step
+        run: m4 --include=${{ runner.temp }}/versions ./Docker/README.m4 > ${{ runner.temp }}/README.md
+
+      - name: Update Docker Hub README.md step
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          repository: ptr727/plexcleaner
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ${{ runner.temp }}/README.md

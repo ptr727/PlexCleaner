@@ -2,6 +2,25 @@ name: Build executable task
 
 on:
   workflow_call:
+    inputs:
+      # Git ref to check out / version (empty = default checkout ref).
+      ref:
+        required: false
+        type: string
+        default: ''
+      # Logical branch driving build configuration (`main` => Release, else
+      # Debug). Required (no `github.ref_name` fallback, which would mislabel
+      # the develop leg of the publisher's matrix); the orchestrator passes it.
+      branch:
+        required: true
+        type: string
+      # Smoke mode: build a representative runtime subset (linux-x64 +
+      # win-x64) instead of the full 7-runtime matrix, and skip the zip /
+      # artifact aggregation. Used for fast PR feedback.
+      smoke:
+        required: false
+        type: boolean
+        default: false
     outputs:
       # Output of the uploaded artifact id
       artifact-id:
@@ -13,6 +32,8 @@ jobs:
     name: Get version information job
     uses: ./.github/workflows/get-version-task.yml
     secrets: inherit
+    with:
+      ref: ${{ inputs.ref }}
 
   build-executable-matrix:
     name: Build executable project matrix job
@@ -20,7 +41,7 @@ jobs:
     needs: [get-version]
     strategy:
       matrix:
-        runtime: [ win-x64, linux-x64, linux-musl-x64, linux-arm, linux-arm64, osx-x64, osx-arm64 ]
+        runtime: ${{ fromJSON(inputs.smoke && '["linux-x64","win-x64"]' || '["win-x64","linux-x64","linux-musl-x64","linux-arm","linux-arm64","osx-x64","osx-arm64"]') }}
 
     steps:
 
@@ -31,13 +52,15 @@ jobs:
 
       - name: Checkout code step
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Build executable project step
         run: |
           dotnet publish ./PlexCleaner/PlexCleaner.csproj \
             --runtime ${{ matrix.runtime }} \
             -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \
-            --configuration ${{ github.ref_name == 'main' && 'Release' || 'Debug' }} \
+            --configuration ${{ inputs.branch == 'main' && 'Release' || 'Debug' }} \
             -property:PublishAot=false \
             -property:Version=${{ needs.get-version.outputs.AssemblyVersion }} \
             -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }} \
@@ -48,11 +71,16 @@ jobs:
       - name: Upload matrix build artifacts step
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: publish-${{ matrix.runtime }}
+          name: publish-${{ inputs.branch }}-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
 
+  # Smoke builds only need the per-runtime compile to succeed (fast PR
+  # feedback) — the zipped, downloadable artifact is a release concern, so
+  # skip the aggregation entirely on smoke. The `artifact-id` output is then
+  # empty, which is fine because the GitHub release job never runs on smoke.
   upload-build-artifacts:
     name: Upload matrix build artifacts job
+    if: ${{ !inputs.smoke }}
     outputs:
       artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     runs-on: ubuntu-latest
@@ -63,7 +91,7 @@ jobs:
       - name: Download matrix build artifacts step
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          pattern: publish-*
+          pattern: publish-${{ inputs.branch }}-*
           merge-multiple: true
           path: ${{ runner.temp }}/publish
 
@@ -74,5 +102,5 @@ jobs:
         id: artifact-upload-step
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: executable-build
+          name: executable-build-${{ inputs.branch }}
           path: ${{ runner.temp }}/PlexCleaner.7z
