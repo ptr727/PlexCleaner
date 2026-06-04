@@ -990,7 +990,7 @@ Licensed under the [MIT License][license-link]\
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
 [docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-periodic-docker-release.yml?logo=github&label=Docker%20Build
+[docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?logo=github&label=Docker%20Build
 [github-link]: https://github.com/ptr727/PlexCleaner
 [plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues

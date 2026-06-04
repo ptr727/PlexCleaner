@@ -74,7 +74,11 @@ jobs:
 
   smoke-build:
     name: Smoke build changed targets job
-    needs: [changes]
+    # Also gate on unit-test: the smoke build includes a Docker image build, so
+    # don't spend it when unit tests are already failing. A failed unit-test
+    # leaves this job skipped (needs unsatisfied) and the aggregator blocks on
+    # the unit-test failure directly.
+    needs: [changes, unit-test]
     if: >-
       needs.changes.outputs.docker == 'true' ||
       needs.changes.outputs.executable == 'true'
