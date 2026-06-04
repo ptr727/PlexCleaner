@@ -4,21 +4,118 @@ on:
   push:
     branches: [ main, develop ]
   workflow_dispatch:
+  schedule:
+    # Weekly full build/publish of both branches on Mondays at 02:00 UTC.
+    # This is the guaranteed publisher in the default two-phase model: routine
+    # merges only smoke-test, and this scheduled run republishes everything
+    # (also refreshing the Docker base image, e.g. `ubuntu:rolling`).
+    - cron: '0 2 * * MON'
 
+# Single GLOBAL group (not ref-scoped): this workflow publishes shared,
+# ref-independent artifacts — it pushes both branches' Docker tags + caches
+# and creates GitHub releases for both — on schedule/dispatch regardless of
+# the triggering ref. A ref-scoped group would let a scheduled run (ref=main)
+# and a manual dispatch (ref=develop) run concurrently and double-push. The
+# global group serializes every publish run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}
+  # Cancelling a publish mid-flight can leave a partially pushed multi-arch tag
+  # set or a half-created GitHub release. Queue instead of cancel so each
+  # publish runs to completion.
+  cancel-in-progress: false
 
 jobs:
 
-  create-release:
+  setup:
+    name: Resolve publish plan job
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.plan.outputs.branches }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - name: Compute publish plan step
+        id: plan
+        env:
+          # Repository variable (Settings -> Actions -> Variables). Unset reads
+          # as empty string, so the default is the two-phase model.
+          PUBLISH_ON_MERGE: ${{ vars.PUBLISH_ON_MERGE }}
+        run: |
+          set -euo pipefail
+          case "${{ github.event_name }}" in
+            push)
+              branches='["${{ github.ref_name }}"]'
+              if [[ "${PUBLISH_ON_MERGE:-}" == "true" ]]; then
+                publish=true
+              else
+                publish=false
+              fi
+              ;;
+            *)
+              # schedule / workflow_dispatch
+              branches='["main","develop"]'
+              publish=true
+              ;;
+          esac
+          echo "Event=${{ github.event_name }} branches=$branches publish=$publish"
+          echo "branches=$branches" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+
+  publish:
     name: Publish project release job
+    needs: [setup]
+    if: ${{ needs.setup.outputs.publish == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
     uses: ./.github/workflows/build-release-task.yml
     secrets: inherit
     permissions:
       contents: write
     with:
-      # Push to GitHub; Docker image is built (validates Dockerfile) but not pushed
-      # Docker Hub publishing is handled by publish-periodic-docker-release.yml
+      ref: ${{ matrix.branch }}
+      branch: ${{ matrix.branch }}
+      smoke: false
+      # Push to GitHub and Docker Hub.
       github: true
-      dockerhub: false
+      dockerhub: true
+
+  tool-versions:
+    name: Get tool versions job
+    needs: [setup, publish]
+    if: ${{ needs.setup.outputs.publish == 'true' }}
+    strategy:
+      matrix:
+        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    uses: ./.github/workflows/build-toolversions-task.yml
+    secrets: inherit
+    with:
+      branch: ${{ matrix.branch }}
+
+  docker-readme:
+    name: Create Docker README.md job
+    needs: [setup, tool-versions]
+    if: ${{ needs.setup.outputs.publish == 'true' }}
+    strategy:
+      matrix:
+        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    uses: ./.github/workflows/build-dockerreadme-task.yml
+    secrets: inherit
+    with:
+      # The task self-gates to `main`; the develop leg is a no-op.
+      branch: ${{ matrix.branch }}
+
+  date-badge:
+    name: Create BYOB date badge job
+    needs: [setup, publish]
+    if: ${{ needs.setup.outputs.publish == 'true' }}
+    strategy:
+      matrix:
+        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    uses: ./.github/workflows/build-datebadge-task.yml
+    secrets: inherit
+    permissions:
+      contents: write
+    with:
+      # The badge task self-gates to `main`; the develop leg is a no-op.
+      branch: ${{ matrix.branch }}
