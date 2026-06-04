@@ -19,9 +19,11 @@ For full rationale see [`AGENTS.md`](../AGENTS.md). Quick rules:
 
 - `feature → develop → main`. PRs only.
 - Develop accepts **squash merges only**; main accepts **merge commits only**. Don't suggest rebase-merge — it's disabled at the repo level.
-- Both branches **auto-publish on push**: develop produces NBGV prereleases (`X.Y.Z-g{sha}`) tagged `develop` on Docker Hub; main produces stable releases (`X.Y.Z`) tagged `latest`.
+- **Two-phase publishing.** PRs only **smoke-build** changed targets (Docker `linux/amd64`, a 2-runtime executable subset, no push). `publish-release.yml` is the sole publisher: its **weekly schedule + manual dispatch** build/publish **both** branches (develop ⇒ NBGV prereleases `X.Y.Z-g{sha}` tagged `develop`; main ⇒ stable `X.Y.Z` tagged `latest`). Routine merges do **not** publish unless the `PUBLISH_ON_MERGE` repo variable is `true`.
 - Dependabot targets **both** `main` and `develop` with the same ecosystems; major NuGet bumps gate on human review, everything else auto-merges via App-token-driven merge-bot.
 - Every third-party GitHub Action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Don't introduce `@v6` / `@main` / `@master` floating refs.
+- Never merge a PR without a fresh "no issues found" review from `copilot-pull-request-reviewer[bot]` (shown as "Copilot" in the UI) on the latest commit. `mergeStateStatus: CLEAN` is necessary but not sufficient — Copilot's re-review of the latest push is required. Re-request the review **programmatically** after every push via the `requestReviews` GraphQL mutation (don't wait on flaky auto-review-on-push) — see the [GitHub Copilot Review Runbook](#github-copilot-review-runbook) below and [`AGENTS.md`](../AGENTS.md#merging-a-pr).
+- After a develop → main merge lands and main's publish workflows complete, bump the minor in `version.json` on develop (e.g. `3.16` → `3.17`) via an isolated `bump-version-X.Y` PR. Without it, develop's next prerelease version numbers fall below main's just-shipped stable.
 - Don't recommend `git push --force` or `--force-with-lease`; both rulesets enforce `non_fast_forward`.
 - `version.json`'s `publicReleaseRefSpec` is `^refs/heads/main$` — bumping the base `version` field is the only manual versioning action.
 
@@ -300,11 +302,13 @@ dotnet husky run
 
 ### GitHub Actions
 
-- **publish-release.yml**: Multi-runtime matrix build (win, linux, osx x x64/arm/arm64)
-- **publish-periodic-docker-release.yml**: Multi-arch Docker builds (linux/amd64, linux/arm64)
-- **test-pull-request.yml**: PR validation
-- Version info: `version.json` with Nerdbank.GitVersioning format
-- Branches: `main` (stable releases), `develop` (pre-releases)
+Two-phase model — reusable `*-task.yml` workflows orchestrated by two entry points:
+
+- **test-pull-request.yml**: PR validation. `changes` (dorny/paths-filter) → always-on `unit-test` (Husky) + path-gated `smoke-build` (reduced, no-push) → `Check pull request workflow status` aggregator (ruleset-bound name; requires `changes` succeeded).
+- **publish-release.yml**: the **sole publisher** (`push` + weekly `schedule` + `workflow_dispatch`). A `setup` job computes the branch list + publish gate; the `publish` matrix builds both branches via `build-release-task.yml` (executable 7-RID matrix + multi-arch Docker `linux/amd64,linux/arm64` + GitHub release), then `tool-versions`, `docker-readme` (main only), `date-badge` (main only).
+- Reusable tasks: `build-release-task.yml`, `build-executable-task.yml`, `build-docker-task.yml`, `build-toolversions-task.yml`, `build-dockerreadme-task.yml`, `build-datebadge-task.yml`, `get-version-task.yml`. All thread a required `branch` input (config keys off it, never `github.ref_name`) plus `ref`/`smoke`.
+- Version info: `version.json` with Nerdbank.GitVersioning format. `get-version-task.yml` surfaces `SemVer2`, the assembly versions, and `GitCommitId` (used to pin the release `target_commitish`).
+- Branches: `main` (stable releases, `latest`), `develop` (pre-releases, `develop`).
 
 ### Docker
 
@@ -462,9 +466,131 @@ Check states with `HasFlag()`, combine with `|=`
 
 ## Git and Commit Rules
 
-**These rules are absolute — no exceptions:**
-
-- **Never make git commits.** All commits must be cryptographically signed (SSH/GPG). AI coding agents cannot produce signed commits. Stage changes with `git add` and leave `git commit` to the developer, who must run it in their own environment where signing keys are available.
+- **Default to staging, not committing.** Stage changes with `git add` and leave `git commit` to the developer unless explicitly authorized to commit for the current ask ("commit this", "open a PR"). Authorization is scope-bound to that task.
+- **All commits must be cryptographically signed (SSH/GPG)** — branch protection rejects unsigned commits. Signing depends on environment config (`commit.gpgsign`, a `user.signingkey`, a loaded agent). If signing isn't configured, **do not commit** — stop at `git add` and surface it. Verify first: `git config --get commit.gpgsign && ssh-add -L`.
 - **Never force push.** Do not run `git push --force` or `git push --force-with-lease`. Force pushing rewrites shared branch history and is blocked by branch protection rules.
 - **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
-- **Staging is the limit.** Prepare changes and stage files; the developer handles all commits and pushes.
+- **The `develop → main` release merge is maintainer-only.** Drive `feature → develop` PRs end-to-end when authorized (commit, push, Copilot review loop, squash-merge), but never self-merge a release to `main`.
+
+## GitHub Copilot Review Runbook
+
+Provider-specific mechanics for driving GitHub Copilot reviews entirely via `gh`/GraphQL — no manual UI clicks. The review-loop *contract* (re-request on every push, verify head-SHA coverage, triage, reply + resolve, escalate when stuck) is in [AGENTS.md → Merging a PR](../AGENTS.md#merging-a-pr); this section is how to make Copilot reliably execute it.
+
+### Triggering and Polling
+
+Auto-review on push is configured (the branch ruleset's `copilot_code_review` rule with `review_on_push: true`) but fires inconsistently — treat it as best-effort. After every push, **re-request a review programmatically** via the GraphQL `requestReviews` mutation, passing the Copilot reviewer's bot node id in `botIds`. This drives the loop end-to-end without a maintainer clicking "re-request review" in the UI.
+
+> **The reviewer login differs by API — this is intentional, not a typo.** In **GraphQL** (`gh api graphql` and `gh pr view --json reviews`, which is GraphQL-backed) the `Bot.login` is `copilot-pull-request-reviewer` — **no `[bot]` suffix**. In the **REST** API (`gh api repos/.../issues|pulls/...`) the same account's `user.login` is `copilot-pull-request-reviewer[bot]` — **with** the suffix. Each query below uses the correct form for its API; match the API, not a single spelling, when adapting them. (The prose elsewhere referring to `copilot-pull-request-reviewer[bot]` is describing the REST/display login.)
+
+```sh
+# 1. PR node id + the Copilot reviewer's bot node id (read from any existing
+#    Copilot review; the reviewer login is `copilot-pull-request-reviewer`).
+PR_NODE=$(gh pr view <N> --json id --jq '.id')
+BOT_ID=$(gh api graphql -f query='
+{
+  repository(owner: "ptr727", name: "PlexCleaner") {
+    pullRequest(number: <N>) {
+      reviews(first: 50) { nodes { author { __typename login ... on Bot { id } } } }
+    }
+  }
+}' --jq '[.data.repository.pullRequest.reviews.nodes[]
+          | select(.author.login == "copilot-pull-request-reviewer")
+          | .author.id] | first')
+
+# 2. Re-request a Copilot review on the current head.
+gh api graphql -f query='
+mutation($pr: ID!, $bot: ID!) {
+  requestReviews(input: { pullRequestId: $pr, botIds: [$bot], union: true }) {
+    pullRequest { id }
+  }
+}' -F pr="$PR_NODE" -F bot="$BOT_ID"
+```
+
+The bot node id is read from an existing Copilot review, so step 1 needs at least one prior review on the PR — auto-review-on-open normally supplies the first. If none exists yet and auto-review didn't fire, request `Copilot` once through the GitHub PR UI to seed it, then use the mutation for every subsequent re-request. The Copilot reviewer bot's global node id is `BOT_kgDOCnlnWA` (login `copilot-pull-request-reviewer`) if you need to skip discovery.
+
+**Do NOT post `@Copilot review` as a PR comment.** That triggers the Copilot *coding agent* (`copilot-swe-agent[bot]`), which makes code changes rather than posting a review.
+
+Known non-working request paths (use the `requestReviews` mutation instead):
+
+- `POST /requested_reviewers` with `reviewers=[Copilot]` can return 200 but no-op.
+- `copilot-pull-request-reviewer` as a requested reviewer slug returns 422.
+
+### Verify Review Covered Current Head
+
+Before merging, confirm Copilot reviewed the current PR head SHA. Copilot may respond as a formal review (carries an exact commit SHA) or an issue comment (no SHA). Check both.
+
+```sh
+PR_HEAD=$(gh pr view <N> --json headRefOid --jq '.headRefOid')
+
+# 1. Formal review — exact SHA match.
+gh pr view <N> --json reviews --jq \
+  '.reviews[] | select(.author.login=="copilot-pull-request-reviewer") | .commit.oid' \
+  | grep -q "$PR_HEAD" && echo "covered via formal review"
+
+# 2. Issue comment — show the most recent Copilot comment for manual
+#    confirmation. This is the REST API, so the login carries the `[bot]` suffix.
+gh api repos/ptr727/PlexCleaner/issues/<N>/comments --jq \
+  '[.[] | select(.user.login=="copilot-pull-request-reviewer[bot]")] | last | {created_at, body: .body[:200]}'
+```
+
+Coverage is confirmed when (1) exits 0. For issue comments (path 2), body content is the only reliable signal — `created_at` is not (commit timestamps can predate the push). Treat path (2) as confirmed only when the comment body explicitly refers to the current changes.
+
+### Bounded Retry Workflow
+
+If a review did not run on the current head:
+
+1. Wait briefly and check head-SHA coverage (above).
+1. Re-request via the `requestReviews` mutation; fall back to the GitHub PR UI only if the mutation no-ops.
+1. Retry up to two more times (three total).
+1. If still missing, mark the review blocked and escalate to the maintainer with what was attempted.
+
+### Reply and Thread Resolution Workflow
+
+List unresolved threads (`first: 100` + cursor pagination; if `hasNextPage`, re-run with `after: "<endCursor>"`):
+
+```sh
+gh api graphql -f query='
+{
+  repository(owner: "ptr727", name: "PlexCleaner") {
+    pullRequest(number: <N>) {
+      reviewThreads(first: 100) {
+        nodes {
+          id isResolved path
+          comments(first: 1) { nodes { author { login } body } }
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+}' | jq '
+  .data.repository.pullRequest.reviewThreads |
+  (.pageInfo | "hasNextPage=\(.hasNextPage) endCursor=\(.endCursor)"),
+  (.nodes[] | select(.isResolved == false))
+'
+```
+
+Reply on a thread, then resolve it:
+
+```sh
+gh api graphql -f query='
+mutation($threadId: ID!, $body: String!) {
+  addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $threadId, body: $body }) {
+    comment { id }
+  }
+}' -F threadId="PRRT_..." -F body="Fixed in <SHA>: <one-line summary>."
+
+gh api graphql -f query='
+mutation($threadId: ID!) {
+  resolveReviewThread(input: { threadId: $threadId }) { thread { id isResolved } }
+}' -F threadId="PRRT_..."
+```
+
+Issue-level Copilot comments (those in `issues/<N>/comments`) have no resolution action — reply if the finding warrants it; no resolution step is possible.
+
+Reply-body conventions:
+
+- Accepted bug/style fix: include fixing commit SHA and a one-line summary.
+- Declined style comment: cite the rule (AGENTS.md or CODESTYLE) and the existing-tree precedent.
+- Declined architecture proposal: one-sentence rationale.
+
+A PR is mergeable when `mergeStateStatus == CLEAN` and there are 0 unresolved threads on the current head. After the final push, sweep-resolve stale older threads for removed code paths.

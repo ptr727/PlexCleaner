@@ -1,0 +1,74 @@
+name: Get tool versions task
+
+on:
+  workflow_call:
+    inputs:
+      # Logical branch this run is for. Selects the pushed image tag
+      # (`main` => `latest`, else `develop`) and the per-branch versions
+      # filename so both legs of the publisher's branch matrix can run in one
+      # run without artifact collisions. Required (no `github.ref_name`
+      # fallback) so the develop leg of the matrix isn't mistagged.
+      branch:
+        required: true
+        type: string
+
+jobs:
+
+  tool-versions:
+    name: Get tool versions job
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Authenticate the implicit `docker pull` below (manifest inspect +
+      # docker-run-action) so reading the just-pushed image isn't subject to
+      # anonymous Docker Hub rate limits.
+      - name: Login to Docker Hub step
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Get image size step
+        env:
+          # `main` => the `latest` tag rendered into the Docker Hub README via
+          # the `latest.ver` m4 include; `develop` => the `develop` tag and a
+          # `develop.ver` file kept distinct for the matrix (informational —
+          # the Docker Hub README is rendered from main only).
+          TAG: ${{ inputs.branch == 'main' && 'latest' || 'develop' }}
+          FILE: ${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${{ runner.temp }}/versions"
+          touch "${{ runner.temp }}/versions/$FILE"
+          echo "Image: docker.io/ptr727/plexcleaner:$TAG" >> "${{ runner.temp }}/versions/$FILE"
+          echo "Size: $(docker manifest inspect -v "docker.io/ptr727/plexcleaner:$TAG" | jq '.[] | select(.Descriptor.platform.architecture=="amd64") | [.OCIManifest.layers[].size] | add' | numfmt --to=iec)" >> "${{ runner.temp }}/versions/$FILE"
+
+      - name: Write tool versions to file step
+        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+        with:
+          image: docker.io/ptr727/plexcleaner:${{ inputs.branch == 'main' && 'latest' || 'develop' }}
+          options: --volume ${{ runner.temp }}/versions:/versions
+          run: |
+            FILE="${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}"
+            echo OS: $(. /etc/os-release; echo $PRETTY_NAME) >> /versions/$FILE
+            echo dotNET: $(dotnet --info) >> /versions/$FILE
+            echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) >> /versions/$FILE
+            echo HandBrakeCLI: $(HandBrakeCLI --version) >> /versions/$FILE
+            echo MediaInfo: $(mediainfo --version) >> /versions/$FILE
+            echo MkvMerge: $(mkvmerge --version) >> /versions/$FILE
+            echo FfMpeg: $(ffmpeg -version) >> /versions/$FILE
+
+      - name: Print versions step
+        env:
+          FILE: ${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}
+        run: cat "${{ runner.temp }}/versions/$FILE"
+
+      - name: Upload version artifacts step
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          # Branch-suffixed so both matrix legs coexist; the inner filename
+          # stays `latest.ver` for main (the m4 `include({{latest.ver}})`
+          # token), consumed by build-dockerreadme-task.yml.
+          name: versions-${{ inputs.branch }}
+          path: ${{ runner.temp }}/versions/${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}
