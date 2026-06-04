@@ -23,8 +23,14 @@ jobs:
 
     steps:
 
+      # Pin to the branch this run is for (always `main` here, via the job
+      # gate). Without it, checkout uses the triggering ref — a
+      # `workflow_dispatch` from `develop` would otherwise render the Hub
+      # README from develop's `Docker/README.m4` instead of main's.
       - name: Checkout step
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.branch }}
 
       # Download by exact name (not a `versions-*` pattern): the main leg's
       # artifact contains a file literally named `latest.ver`, which the m4
