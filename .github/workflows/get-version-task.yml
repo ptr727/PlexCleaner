@@ -2,6 +2,15 @@ name: Get version information task
 
 on:
   workflow_call:
+    inputs:
+      # Git ref to check out / version (empty = caller's default checkout ref,
+      # `github.ref`). The publisher passes an explicit branch so a scheduled
+      # run — whose `github.ref` is always the default branch — can still
+      # compute NBGV versions for `develop` too.
+      ref:
+        required: false
+        type: string
+        default: ''
     outputs:
       # Version information outputs
       SemVer2:
@@ -12,6 +21,11 @@ on:
         value: ${{ jobs.get-version.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion:
         value: ${{ jobs.get-version.outputs.AssemblyInformationalVersion }}
+      # Full SHA of the commit NBGV computed the version from. Used to pin the
+      # GitHub release tag to the exact built commit (immutable), rather than a
+      # moving branch ref.
+      GitCommitId:
+        value: ${{ jobs.get-version.outputs.GitCommitId }}
 
 jobs:
 
@@ -23,6 +37,7 @@ jobs:
       AssemblyVersion: ${{ steps.nbgv.outputs.AssemblyVersion }}
       AssemblyFileVersion: ${{ steps.nbgv.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion: ${{ steps.nbgv.outputs.AssemblyInformationalVersion }}
+      GitCommitId: ${{ steps.nbgv.outputs.GitCommitId }}
 
     steps:
 
@@ -34,6 +49,7 @@ jobs:
       - name: Checkout code step
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Run Nerdbank.GitVersioning tool step
