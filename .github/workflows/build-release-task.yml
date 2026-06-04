@@ -58,20 +58,28 @@ jobs:
   build-executable:
     name: Build executable job
     if: ${{ inputs.enable_executable }}
+    needs: [get-version]
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
-      ref: ${{ inputs.ref }}
+      # Pin to the exact commit get-version resolved (immutable), not the
+      # possibly-moving branch ref: the publisher passes a branch name, and a
+      # commit landing mid-run could otherwise build artifacts from a different
+      # commit than the one the release tag (also GitCommitId) points at.
+      ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
 
   build-docker:
     name: Build Docker job
     if: ${{ inputs.enable_docker }}
+    needs: [get-version]
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:
-      ref: ${{ inputs.ref }}
+      # Pin to the resolved commit (see build-executable) so the pushed image
+      # contents match the SemVer2 tag computed from the same commit.
+      ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
       # Conditional push to Docker Hub — never on a smoke build.
