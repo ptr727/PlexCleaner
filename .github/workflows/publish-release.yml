@@ -11,14 +11,16 @@ on:
     # (also refreshing the Docker base image, e.g. `ubuntu:rolling`).
     - cron: '0 2 * * MON'
 
-# Single GLOBAL group (not ref-scoped): this workflow publishes shared,
-# ref-independent artifacts — it pushes both branches' Docker tags + caches
-# and creates GitHub releases for both — on schedule/dispatch regardless of
-# the triggering ref. A ref-scoped group would let a scheduled run (ref=main)
-# and a manual dispatch (ref=develop) run concurrently and double-push. The
-# global group serializes every publish run.
+# Real publishes (schedule, dispatch, or push when PUBLISH_ON_MERGE is set)
+# share a single GLOBAL, ref-independent group so they serialize: they push
+# both branches' shared Docker tags + caches and create GitHub releases for
+# both regardless of the triggering ref, so a ref-scoped group would let a
+# scheduled run (ref=main) and a manual dispatch (ref=develop) run concurrently
+# and double-push. Non-publishing `push` runs (the two-phase default) get a
+# unique per-run group so they don't queue behind — or delay — a real publish;
+# they only execute the no-op `setup` job and skip everything else.
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || vars.PUBLISH_ON_MERGE == 'true') && github.workflow || format('{0}-noop-{1}', github.workflow, github.run_id) }}
   # Cancelling a publish mid-flight can leave a partially pushed multi-arch tag
   # set or a half-created GitHub release. Queue instead of cancel so each
   # publish runs to completion.
