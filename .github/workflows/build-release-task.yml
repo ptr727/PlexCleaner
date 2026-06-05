@@ -103,10 +103,20 @@ jobs:
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
 
-      - name: Download executable build artifacts step
+      # Collect every release asset by the `release-asset-<branch>-*` artifact
+      # convention rather than naming individual build jobs, so this download
+      # step never changes when a derived project subsets targets: dropping a
+      # target (delete its job + this job's `needs` entry) just leaves one
+      # fewer `release-asset-*` to match, and a downstream ships different
+      # files by adding/replacing a leaf `build-*-task.yml` that uploads under
+      # this pattern. `merge-multiple` flattens the matched artifacts into one
+      # `./Publish` dir; download-artifact succeeds (downloads nothing) when
+      # the pattern matches zero artifacts, so a file-less release still works.
+      - name: Download release asset artifacts step
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          artifact-ids: ${{ needs.build-executable.outputs.artifact-id }}
+          pattern: release-asset-${{ inputs.branch }}-*
+          merge-multiple: true
           path: ./Publish
 
       # The weekly publisher re-runs even when a branch has no new commits, so

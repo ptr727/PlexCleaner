@@ -21,10 +21,6 @@ on:
         required: false
         type: boolean
         default: false
-    outputs:
-      # Output of the uploaded artifact id
-      artifact-id:
-        value: ${{ jobs.upload-build-artifacts.outputs.artifact-id }}
 
 jobs:
 
@@ -76,13 +72,11 @@ jobs:
 
   # Smoke builds only need the per-runtime compile to succeed (fast PR
   # feedback) — the zipped, downloadable artifact is a release concern, so
-  # skip the aggregation entirely on smoke. The `artifact-id` output is then
-  # empty, which is fine because the GitHub release job never runs on smoke.
+  # skip the aggregation entirely on smoke. The GitHub release job never runs
+  # on smoke, so no `release-asset-*` artifact is needed then.
   upload-build-artifacts:
     name: Upload matrix build artifacts job
     if: ${{ !inputs.smoke }}
-    outputs:
-      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     runs-on: ubuntu-latest
     needs: [ build-executable-matrix ]
 
@@ -98,9 +92,14 @@ jobs:
       - name: Zip build output step
         run: 7z a -t7z ${{ runner.temp }}/PlexCleaner.7z ${{ runner.temp }}/publish/*
 
+      # GitHub-release asset, uploaded under the `release-asset-<branch>-*`
+      # convention that the `github-release` job in build-release-task.yml
+      # collects by pattern (it never names this job) — so a derived project
+      # swaps its release contents by replacing this leaf task, not the
+      # orchestrator. Branch-suffixed so the publisher's branch matrix can
+      # build both branches in one run without colliding on the artifact name.
       - name: Upload build artifacts step
-        id: artifact-upload-step
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: executable-build-${{ inputs.branch }}
+          name: release-asset-${{ inputs.branch }}-executable
           path: ${{ runner.temp }}/PlexCleaner.7z
