@@ -37,7 +37,7 @@ end_of_line = crlf
 indent_size = 2
 
 # Json files
-[*.json]
+[*.{json,jsonc}]
 end_of_line = crlf
 
 # Linux scripts
