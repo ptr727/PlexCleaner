@@ -5,6 +5,7 @@
 
 .idea
 .vs
+.artifacts
 .codex
 .DS_Store
 
