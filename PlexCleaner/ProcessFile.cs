@@ -212,13 +212,22 @@ public class ProcessFile
 
     public void ClearMetadataErrors()
     {
-        // Clear all the error flags
+        // Clear all the error flags, including per track HasErrors which AnyErrors checks
         FfProbeProps.HasErrors = false;
         MkvMergeProps.HasErrors = false;
         MediaInfoProps.HasErrors = false;
-        FfProbeProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
-        MkvMergeProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
-        MediaInfoProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
+        ClearTrackErrors(FfProbeProps);
+        ClearTrackErrors(MkvMergeProps);
+        ClearTrackErrors(MediaInfoProps);
+
+        static void ClearTrackErrors(MediaProps mediaProps) =>
+            mediaProps
+                .GetTrackList()
+                .ForEach(item =>
+                {
+                    item.HasErrors = false;
+                    item.State = TrackProps.StateType.None;
+                });
     }
 
     public bool RepairMetadataErrors(ref bool modified)

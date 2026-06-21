@@ -58,17 +58,12 @@ internal static class MatroskaStructure
                 return false;
             }
 
+            // Confirm at least one cue point is present, an empty index is not usable
+            // The first entry is enough, no need to walk a long index
             reader.EnterContainer();
-            bool anyCuePoint = false;
-            while (FindElement(reader, CuePoint))
-            {
-                reader.EnterContainer();
-                reader.LeaveContainer();
-                anyCuePoint = true;
-            }
+            bool anyCuePoint = FindElement(reader, CuePoint);
             reader.LeaveContainer();
 
-            // An empty index is not usable
             return anyCuePoint;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
