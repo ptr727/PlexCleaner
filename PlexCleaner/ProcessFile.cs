@@ -352,14 +352,14 @@ public class ProcessFile
 
         // Stop if the tags are still invalid
         return !MkvMergeProps.GetTrackList().Exists(HasInvalidLanguageTag)
-            || SetVerifyFailedNonConverging("setting language tags");
+            || SetVerifyFailed("setting language tags");
     }
 
-    private bool SetVerifyFailedNonConverging(string operation)
+    private bool SetVerifyFailed(string operation)
     {
         // Mark verify failed so the file is reported and no longer re-processed
         Log.Error(
-            "Repair did not resolve errors after {Operation}, marking as VerifyFailed : {FileName}",
+            "Verification failed, marking as VerifyFailed : {Operation} : {FileName}",
             operation,
             FileInfo.Name
         );
@@ -447,7 +447,7 @@ public class ProcessFile
         return (
                 !HasMetadataErrors(TrackProps.StateType.Remove)
                 && !HasMetadataErrors(TrackProps.StateType.ReMux)
-            ) || SetVerifyFailedNonConverging("remuxing");
+            ) || SetVerifyFailed("remuxing");
     }
 
     public bool RemuxRemoveExtraVideoTracks(ref bool modified)
@@ -573,7 +573,7 @@ public class ProcessFile
         // Can we repair
         if (!Program.Config.VerifyOptions.AutoRepair || !Program.Config.ProcessOptions.ReMux)
         {
-            return SetVerifyFailedNonConverging("Matroska structure check");
+            return SetVerifyFailed("Matroska structure check");
         }
 
         // Remux to rewrite the container structure
@@ -593,7 +593,7 @@ public class ProcessFile
         }
 
         // Stop if the remux did not fix the structure, else monitor mode loops
-        return VerifyMatroskaParse() || SetVerifyFailedNonConverging("Matroska structure remux");
+        return VerifyMatroskaParse() || SetVerifyFailed("Matroska structure remux");
     }
 
     private bool VerifyMatroskaParse()
