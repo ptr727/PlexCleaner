@@ -333,7 +333,8 @@ public class ProcessFile
         selectMediaProps.WriteLine("Invalid", "Keep");
 
         // Recover from the valid tag, else undefined
-        // MkvPropEdit sets the ISO 639 and IETF tags consistently from this value
+        // MkvPropEdit sets the legacy language property to this value, the --normalize-language-ietf global
+        // option then derives a consistent IETF tag, overwriting the invalid one
         selectMediaProps
             .Selected.GetTrackList()
             .ForEach(item => item.LanguageIetf = ResolveLanguageTag(item));
