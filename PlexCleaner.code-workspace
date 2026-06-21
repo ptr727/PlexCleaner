@@ -265,11 +265,11 @@
             "davidanson.vscode-markdownlint",
             "editorconfig.editorconfig",
             "github.vscode-github-actions",
-            "gruntfuggly.todo-tree",
             "ms-azuretools.vscode-docker",
             "ms-dotnettools.csdevkit",
             "streetsidesoftware.code-spell-checker",
-            "yzhang.markdown-all-in-one"
+            "yzhang.markdown-all-in-one",
+            "fanaticpythoner.better-todo-tree"
         ]
     }
 }
