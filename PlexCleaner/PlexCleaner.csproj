@@ -41,6 +41,7 @@
     <PackageReference Include="CliWrap" />
     <PackageReference Include="InsaneGenius.Utilities" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <PackageReference Include="NEbml" />
     <PackageReference Include="ptr727.LanguageTags" />
     <PackageReference Include="Serilog.Enrichers.Thread" />
     <PackageReference Include="Serilog.Sinks.Async" />

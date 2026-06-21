@@ -24,12 +24,12 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.16**:
+**Version: 3.18**:
 
 **Summary:**
 
-- Structural changes only, no functional changes.
-- Consolidated project structure, build configuration, CI/CD workflows, and Docker configuration across projects.
+- Fixed an infinite remux loop in `monitor` mode on files with invalid IETF language tags.
+- Added a deterministic Direct Play check that detects Matroska files the player cannot parse and re-multiplexes only those.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -132,6 +132,7 @@ Common examples of issues resolved by the `process` command:
 **Track Management:**
 
 - Missing language tags → Set language for unknown tracks (enables automatic selection).
+- Invalid or unmappable IETF/BCP-47 language tags → Set to a valid tag in place.
 - Duplicate audio/subtitle tracks → Remove duplicates, keep best quality.
 - VOBsub subtitles without `MuxingMode` → Re-multiplex to set correct attribute (prevents hangs).
 
@@ -144,6 +145,7 @@ Common examples of issues resolved by the `process` command:
 **Performance & Integrity:**
 
 - Corrupt media streams → Verify integrity and attempt automatic repair.
+- Matroska files that fail player Direct Play despite passing tool checks → Detect using the same structural EBML parse the player uses and re-multiplex.
 - High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
 
 See the [`process` command](#process-command) for detailed workflow and the [Common Configuration Examples](#common-configuration-examples) for quick setup examples.
@@ -962,6 +964,7 @@ Some ideas being considered:
 - [JSON2CSharp][json2csharp-link]
 - [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
 - [MKVToolNix](https://mkvtoolnix.download/)
+- [NEbml](https://github.com/OlegZee/NEbml)
 - [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
 - [regex101.com](https://regex101.com/)
 - [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)

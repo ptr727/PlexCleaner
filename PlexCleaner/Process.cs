@@ -206,6 +206,15 @@ public static class Process
                 break;
             }
 
+            // Repair Matroska container structure that cannot be Direct Played
+            // Conditional on Verify option
+            if (!processFile.RepairMatroskaStructure(ref modified) || Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+
             // Remove EIA-EIA-608 and CTA-708 Closed Captions from the video stream
             // Conditional on RemoveClosedCaptions option
             if (!processFile.RemoveClosedCaptions(true, ref modified) || Program.IsCancelled())
