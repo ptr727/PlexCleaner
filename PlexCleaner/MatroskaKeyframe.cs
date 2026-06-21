@@ -3,9 +3,17 @@ using NEbml.Core;
 
 namespace PlexCleaner;
 
-// Structural Matroska read mirroring Jellyfin's MatroskaKeyframeExtractor (MIT licensed)
-// Reproduces the same EBML parse the player performs, throwing on files that cannot be Direct Played
-// https://github.com/jellyfin/jellyfin/tree/master/src/Jellyfin.MediaEncoding.Keyframes/Matroska
+// Deliberate port of Jellyfin's MatroskaKeyframeExtractor and EbmlReaderExtensions (MIT licensed)
+// Kept structurally identical on purpose: the goal is to fail exactly where the player's keyframe parse
+// fails, so a file flagged here is one the player cannot Direct Play, and a file passed here is one it can
+// Deviating from upstream (stricter validation, rebalanced container scopes, defensive checks) would change
+// which files are flagged relative to the player and reintroduce false positives or negatives
+// The caller runs this read-only and treats any thrown exception as "cannot Direct Play"
+//
+// Staying in sync: ported from the pinned revision below and the NEbml dependency is pinned to the same
+// version Jellyfin uses; if upstream changes, diff against this revision and re-port rather than patching locally
+// Source: https://github.com/jellyfin/jellyfin/tree/97a02f58039855eb1e3e23686d4fe5bee1fbd15e/src/Jellyfin.MediaEncoding.Keyframes/Matroska
+// Behaviour is verified end to end by the regression test suite against known-good and known-bad files
 internal static class MatroskaKeyframe
 {
     // Element IDs from the Matroska specification, look up names by value
@@ -55,11 +63,12 @@ internal static class MatroskaKeyframe
         {
             reader.EnterContainer();
 
-            // Mandatory element
+            // Mandatory element, result ignored to match upstream
+            // If absent the following read throws or misreads, which the caller treats as a Direct Play failure
             _ = FindElement(reader, CueTime);
             _ = reader.ReadUInt();
 
-            // Mandatory element
+            // Mandatory element, result ignored to match upstream (see above)
             _ = FindElement(reader, CueTrackPositions);
             reader.EnterContainer();
             if (FindElement(reader, CuePointTrackNumber))
@@ -109,6 +118,7 @@ internal static class MatroskaKeyframe
             throw new InvalidOperationException("Expected a segment container");
         }
 
+        // Segment is intentionally left open for the rest of the parse, later ReadAt positions are Segment relative
         reader.EnterContainer();
 
         long? tracksPosition = null;
