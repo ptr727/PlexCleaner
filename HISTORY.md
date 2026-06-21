@@ -9,8 +9,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Invalid IETF language tags (e.g. `language_ietf` set to a value that cannot be resolved to ISO 639) are now set in place to a valid tag (the ISO 639 equivalent if known, else `und`) so the repair converges instead of remuxing the same file every cycle.
     - Added a non-convergence guard: if a repair (invalid language tags, metadata remux, or the Matroska structure check) does not resolve the detected errors, the file is marked `VerifyFailed` and is no longer re-processed, breaking the loop for any unfixable condition.
   - Added a deterministic Direct Play verification check ([#746](https://github.com/ptr727/PlexCleaner/issues/746)).
-    - Some Matroska files parse cleanly with FfProbe / MkvMerge / MediaInfo yet fail Direct Play in Jellyfin / Emby / Shield because the player's EBML keyframe parse throws.
-    - `Verify` now runs the same structural EBML / Matroska read the player uses (via the NEbml library) as a deterministic pass / fail oracle, and remuxes only files that provably fail, leaving structurally valid files untouched.
+    - Some Matroska files parse cleanly with FfProbe / MkvMerge / MediaInfo yet fail Direct Play in Jellyfin / Emby / Shield because the player cannot use the file's seek index (e.g. the Cues are positioned before the Tracks, which a forward-only reader cannot reach).
+    - `Verify` now validates the Matroska seek index (the SeekHead and Cues a player needs for keyframe seeking) using the NEbml library, and remuxes only files whose index is missing or unusable, leaving valid files untouched.
 - Version 3.16:
   - Structural changes only, no functional changes.
   - Consolidated project structure, build configuration, CI/CD workflows, and Docker configuration across projects.

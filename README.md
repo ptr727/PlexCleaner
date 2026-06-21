@@ -29,7 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 **Summary:**
 
 - Fixed an infinite remux loop in `monitor` mode on files with invalid IETF language tags.
-- Added a deterministic Direct Play check that detects Matroska files the player cannot parse and re-multiplexes only those.
+- Added a deterministic Direct Play check that detects Matroska files with an unusable seek index and re-multiplexes only those.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -145,7 +145,7 @@ Common examples of issues resolved by the `process` command:
 **Performance & Integrity:**
 
 - Corrupt media streams → Verify integrity and attempt automatic repair.
-- Matroska files that fail player Direct Play despite passing tool checks → Detect using the same structural EBML parse the player uses and re-multiplex.
+- Matroska files that fail player Direct Play despite passing tool checks → Detect an unusable seek index (SeekHead/Cues) and re-multiplex.
 - High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
 
 See the [`process` command](#process-command) for detailed workflow and the [Common Configuration Examples](#common-configuration-examples) for quick setup examples.

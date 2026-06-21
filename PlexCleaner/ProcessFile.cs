@@ -444,9 +444,14 @@ public class ProcessFile
         }
 
         // Stop if the remux did not resolve the errors it targets, else monitor mode loops
+        // Mirror the trigger condition above, including SetLanguage when SetIetfLanguageTags is enabled
         return (
                 !HasMetadataErrors(TrackProps.StateType.Remove)
                 && !HasMetadataErrors(TrackProps.StateType.ReMux)
+                && !(
+                    Program.Config.ProcessOptions.SetIetfLanguageTags
+                    && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+                )
             ) || SetVerifyFailed("remuxing");
     }
 
@@ -561,8 +566,8 @@ public class ProcessFile
             return true;
         }
 
-        // Read-only structural check matching the player
-        if (VerifyMatroskaParse())
+        // Read-only structural check
+        if (MatroskaStructureValid())
         {
             // Can be Direct Played, do not remux valid files
             return true;
@@ -593,22 +598,12 @@ public class ProcessFile
         }
 
         // Stop if the remux did not fix the structure, else monitor mode loops
-        return VerifyMatroskaParse() || SetVerifyFailed("Matroska structure remux");
+        return MatroskaStructureValid() || SetVerifyFailed("Matroska structure remux");
     }
 
-    private bool VerifyMatroskaParse()
-    {
-        // Read-only, run the same Matroska parse the player uses, throws if the file cannot be Direct Played
-        try
-        {
-            MatroskaKeyframe.Parse(FileInfo.FullName);
-            return true;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
-        {
-            return false;
-        }
-    }
+    private bool MatroskaStructureValid() =>
+        // Read-only logical validation of the Matroska seek index
+        MatroskaStructure.IsSeekIndexValid(FileInfo.FullName);
 
     public bool AnyTags() =>
         MkvMergeProps.AnyTags || FfProbeProps.AnyTags || MediaInfoProps.AnyTags;
