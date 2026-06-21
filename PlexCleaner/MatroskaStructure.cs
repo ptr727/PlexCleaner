@@ -52,6 +52,7 @@ internal static class MatroskaStructure
             }
 
             // Confirm the Cues element is present at the referenced position and has cue points
+            // ReadAt is relative to the entered Segment container, matching the Segment-relative SeekHead positions
             _ = reader.ReadAt(cues);
             if (reader.ElementId.EncodedValue != Cues)
             {
