@@ -12,6 +12,19 @@ namespace PlexCleaner;
 // https://github.com/ietf-wg-cellar/matroska-specification/blob/master/ebml_matroska.xml
 internal static class MatroskaStructure
 {
+    // Seek index validation failure, None means the index is usable
+    // Validation short-circuits at the first failure so only one value is reported
+    public enum SeekIndexIssue
+    {
+        None = 0,
+        NoSegment,
+        IncompleteSeekHead,
+        CuesBeforeTracks,
+        CuesNotFound,
+        NoCuePoints,
+        ParseError,
+    }
+
     // EBML element IDs (encoded values) from the Matroska specification
     private const ulong Segment = 0x18538067;
     private const ulong SeekHead = 0x114D9B74;
@@ -23,8 +36,8 @@ internal static class MatroskaStructure
     private const ulong Cues = 0x1C53BB6B;
     private const ulong CuePoint = 0xBB;
 
-    // Returns false when the seek index is missing or unusable, i.e. the file should be remuxed
-    public static bool IsSeekIndexValid(string fileName)
+    // Returns None when the seek index is usable, else the first defect found, i.e. the file should be remuxed
+    public static SeekIndexIssue GetSeekIndexIssue(string fileName)
     {
         try
         {
@@ -34,21 +47,21 @@ internal static class MatroskaStructure
             // Descend into the Segment, all seek positions are relative to it
             if (!FindElement(reader, Segment))
             {
-                return false;
+                return SeekIndexIssue.NoSegment;
             }
             reader.EnterContainer();
 
             // A usable seek index references the Info, Tracks and Cues elements
             if (!TryReadSeekPositions(reader, out long info, out long tracks, out long cues))
             {
-                return false;
+                return SeekIndexIssue.IncompleteSeekHead;
             }
 
             // A player reads Info and Tracks before seeking forward to the Cues
             // Cues placed before the Tracks or Info cannot be reached and break keyframe seeking
             if (cues < info || cues < tracks)
             {
-                return false;
+                return SeekIndexIssue.CuesBeforeTracks;
             }
 
             // Confirm the Cues element is present at the referenced position and has cue points
@@ -56,7 +69,7 @@ internal static class MatroskaStructure
             _ = reader.ReadAt(cues);
             if (reader.ElementId.EncodedValue != Cues)
             {
-                return false;
+                return SeekIndexIssue.CuesNotFound;
             }
 
             // Confirm at least one cue point is present, an empty index is not usable
@@ -65,12 +78,12 @@ internal static class MatroskaStructure
             bool anyCuePoint = FindElement(reader, CuePoint);
             reader.LeaveContainer();
 
-            return anyCuePoint;
+            return anyCuePoint ? SeekIndexIssue.None : SeekIndexIssue.NoCuePoints;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Structure too malformed for the reader to parse
-            return false;
+            return SeekIndexIssue.ParseError;
         }
     }
 

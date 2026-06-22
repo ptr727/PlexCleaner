@@ -577,13 +577,13 @@ public class ProcessFile
         }
 
         // Read-only structural check
-        if (MatroskaStructureValid())
+        if (MatroskaStructureValid(out MatroskaStructure.SeekIndexIssue issue))
         {
-            // Can be Direct Played, do not remux valid files
+            // Seek index is usable, do not remux valid files
             return true;
         }
 
-        Log.Warning("Matroska structure cannot be Direct Played : {FileName}", FileInfo.Name);
+        Log.Warning("Matroska seek index unusable, {Issue} : {FileName}", issue, FileInfo.Name);
 
         // Can we repair
         if (!Program.Config.VerifyOptions.AutoRepair || !Program.Config.ProcessOptions.ReMux)
@@ -608,12 +608,15 @@ public class ProcessFile
         }
 
         // Stop if the remux did not fix the structure, else monitor mode loops
-        return MatroskaStructureValid() || SetVerifyFailed("Matroska structure remux");
+        return MatroskaStructureValid(out _) || SetVerifyFailed("Matroska structure remux");
     }
 
-    private bool MatroskaStructureValid() =>
+    private bool MatroskaStructureValid(out MatroskaStructure.SeekIndexIssue issue)
+    {
         // Read-only logical validation of the Matroska seek index
-        MatroskaStructure.IsSeekIndexValid(FileInfo.FullName);
+        issue = MatroskaStructure.GetSeekIndexIssue(FileInfo.FullName);
+        return issue == MatroskaStructure.SeekIndexIssue.None;
+    }
 
     public bool AnyTags() =>
         MkvMergeProps.AnyTags || FfProbeProps.AnyTags || MediaInfoProps.AnyTags;
@@ -962,6 +965,12 @@ public class ProcessFile
         if (videoProps != null)
         {
             // Interlaced attribute set
+            return true;
+        }
+
+        // idet on the limited quickscan sample is unreliable, rely on the interlace metadata flags only
+        if (Program.Options.QuickScan)
+        {
             return true;
         }
 
@@ -1671,6 +1680,12 @@ public class ProcessFile
     {
         // Skip if no bitrate limit
         if (Program.Config.VerifyOptions.MaximumBitrate == 0)
+        {
+            return true;
+        }
+
+        // Bitrate over the limited quickscan sample is not representative of the whole file
+        if (Program.Options.QuickScan)
         {
             return true;
         }
