@@ -95,13 +95,13 @@ jobs:
       branch: ${{ matrix.branch }}
 
   docker-readme:
-    name: Create Docker README.md job
+    name: Publish Docker Hub readme job
     needs: [setup, tool-versions]
     if: ${{ needs.setup.outputs.publish == 'true' }}
     strategy:
       matrix:
         branch: ${{ fromJSON(needs.setup.outputs.branches) }}
-    uses: ./.github/workflows/build-dockerreadme-task.yml
+    uses: ./.github/workflows/publish-docker-readme-task.yml
     secrets: inherit
     with:
       # The task self-gates to `main`; the develop leg is a no-op.
