@@ -36,7 +36,7 @@ internal static class MatroskaStructure
     private const ulong Cues = 0x1C53BB6B;
     private const ulong CuePoint = 0xBB;
 
-    // Returns None when the seek index is usable, else the specific defect(s), i.e. the file should be remuxed
+    // Returns None when the seek index is usable, else the first defect found, i.e. the file should be remuxed
     public static SeekIndexIssue GetSeekIndexIssue(string fileName)
     {
         try

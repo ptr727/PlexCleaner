@@ -8,19 +8,16 @@ public class FfMpegIdetDecisionTests
 {
     // tff, bff, progressive, undetermined, expectedInterlaced (decision is on the MultiFrame pass)
     [Theory]
-    // Progressive content
-    [InlineData(0, 0, 8992, 0, false)]
-    // Cleanly interlaced, single field order
-    [InlineData(8991, 0, 0, 0, true)]
-    [InlineData(0, 8991, 0, 0, true)]
-    // Progressive with idet noise, real-world false-positive samples, not interlaced
-    [InlineData(206, 111, 3968, 32, false)] // The American (2010)
-    [InlineData(55, 574, 3669, 19, false)] // Top Gun Maverick (2022)
-    [InlineData(332, 397, 3760, 12, false)] // Hysteria (2011)
-    // Mostly undetermined, cannot decide reliably, not interlaced
-    [InlineData(100, 0, 50, 200, false)]
-    // Dominant field order outnumbers progressive frames, interlaced
-    [InlineData(6000, 0, 4000, 0, true)]
+    // Real full-scan idet samples
+    [InlineData(1154, 0, 0, 0, true)] // interlaced, MPEG-2
+    [InlineData(0, 0, 8085, 0, false)] // progressive, clean
+    [InlineData(482, 534, 151645, 23, false)] // progressive feature with idet noise
+    // Synthetic boundary cases
+    [InlineData(8000, 0, 0, 0, true)] // pure top field interlaced
+    [InlineData(0, 8000, 0, 0, true)] // pure bottom field interlaced
+    [InlineData(50, 500, 4000, 0, false)] // minority interlaced noise below progressive
+    [InlineData(100, 0, 50, 200, false)] // undetermined majority, cannot decide
+    [InlineData(6000, 0, 4000, 0, true)] // dominant field order outnumbers progressive
     public void IsInterlaced_MultiFrame(int tff, int bff, int prog, int und, bool expected)
     {
         FfMpegIdetInfo idet = new()
