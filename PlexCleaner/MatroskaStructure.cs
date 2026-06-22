@@ -12,17 +12,17 @@ namespace PlexCleaner;
 // https://github.com/ietf-wg-cellar/matroska-specification/blob/master/ebml_matroska.xml
 internal static class MatroskaStructure
 {
-    // Seek index validation failures, None means the index is usable
-    [Flags]
+    // Seek index validation failure, None means the index is usable
+    // Validation short-circuits at the first failure so only one value is reported
     public enum SeekIndexIssue
     {
         None = 0,
-        NoSegment = 1 << 0,
-        IncompleteSeekHead = 1 << 1,
-        CuesBeforeTracks = 1 << 2,
-        CuesNotFound = 1 << 3,
-        NoCuePoints = 1 << 4,
-        ParseError = 1 << 5,
+        NoSegment,
+        IncompleteSeekHead,
+        CuesBeforeTracks,
+        CuesNotFound,
+        NoCuePoints,
+        ParseError,
     }
 
     // EBML element IDs (encoded values) from the Matroska specification
