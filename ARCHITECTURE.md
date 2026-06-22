@@ -311,7 +311,7 @@ Check states with `HasFlag()`, combine with `|=`
 
 ### Test Execution
 
-- Task: `"dotnet: .Net Build"` for builds
+- Task: `.Net Build` (VS Code task) for builds
 - Unit tests: `dotnet test` or VS Code test explorer
 - Docker tests: Download Matroska test files from GitHub
 - CI: Separate workflows for build tests and Docker tests
@@ -326,8 +326,8 @@ The authoritative release and workflow governance is in [AGENTS.md](./AGENTS.md)
 # Build
 dotnet build
 
-# Format code
-dotnet csharpier format .
+# Format code (canonical CSharpier Format task invocation)
+dotnet csharpier format --log-level=debug .
 
 # Verify formatting
 dotnet format style --verify-no-changes --severity=info --verbosity=detailed
