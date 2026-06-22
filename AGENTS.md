@@ -43,6 +43,8 @@ Under any squash-only setup this would be a recurring pain point: each develop �
 
 **Immediately after a develop → main merge lands and main's publish workflows complete, bump the minor version in [version.json](version.json) on develop.** Open a small isolated feature PR `bump-version-X.Y` (e.g. `"version": "3.16"` → `"version": "3.17"`), squash into develop, and continue feature work from there. Without this bump, develop's next NBGV-computed prerelease (`3.16.<height>-g{sha}`) is *numerically lower* than the stable that just shipped (`3.16.<N>`), which is visibly confusing in HISTORY.md, `--version` output, and consumer update prompts. Bumping ensures every develop prerelease is `3.17.<height>-g{sha}` — visibly newer than main's `3.16.<N>`. Don't bundle the bump with other work; keep the PR isolated so the version change is unambiguous in git blame.
 
+A **maintenance** develop -> main promotion - dependency bumps, CI/doc fixes, template re-syncs, not a release - holds main's version: run `git checkout main -- version.json` on the promotion branch before opening the PR, so main advances only its git height (a patch), not its minor, and develop keeps its lead. Only a release promotion carries develop's bumped version to main.
+
 ## Release flow
 
 PlexCleaner is a "pull" project: consumers (`docker pull ptr727/plexcleaner:latest`, `docker pull ptr727/plexcleaner:develop`, GitHub Releases) track both branches. It uses a **two-phase model** that decouples merging from publishing:

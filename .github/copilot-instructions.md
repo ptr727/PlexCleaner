@@ -24,6 +24,7 @@ For full rationale see [`AGENTS.md`](../AGENTS.md). Quick rules:
 - Every third-party GitHub Action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Don't introduce `@v6` / `@main` / `@master` floating refs.
 - Never merge a PR without a fresh "no issues found" review from `copilot-pull-request-reviewer[bot]` (shown as "Copilot" in the UI) on the latest commit. `mergeStateStatus: CLEAN` is necessary but not sufficient — Copilot's re-review of the latest push is required. Re-request the review **programmatically** after every push via the `requestReviews` GraphQL mutation (don't wait on flaky auto-review-on-push) — see the [GitHub Copilot Review Runbook](#github-copilot-review-runbook) below and [`AGENTS.md`](../AGENTS.md#merging-a-pr).
 - After a develop → main merge lands and main's publish workflows complete, bump the minor in `version.json` on develop (e.g. `3.16` → `3.17`) via an isolated `bump-version-X.Y` PR. Without it, develop's next prerelease version numbers fall below main's just-shipped stable.
+- A maintenance develop -> main promotion (dependency bumps, CI/doc fixes, template re-syncs - not a release) holds main's version: `git checkout main -- version.json` on the promotion branch, so main advances only a patch and develop keeps its lead.
 - Don't recommend `git push --force` or `--force-with-lease`; both rulesets enforce `non_fast_forward`.
 - `version.json`'s `publicReleaseRefSpec` is `^refs/heads/main$` — bumping the base `version` field is the only manual versioning action.
 

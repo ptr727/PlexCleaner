@@ -212,13 +212,22 @@ public class ProcessFile
 
     public void ClearMetadataErrors()
     {
-        // Clear all the error flags
+        // Clear all the error flags, including per track HasErrors which AnyErrors checks
         FfProbeProps.HasErrors = false;
         MkvMergeProps.HasErrors = false;
         MediaInfoProps.HasErrors = false;
-        FfProbeProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
-        MkvMergeProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
-        MediaInfoProps.GetTrackList().ForEach(item => item.State = TrackProps.StateType.None);
+        ClearTrackErrors(FfProbeProps);
+        ClearTrackErrors(MkvMergeProps);
+        ClearTrackErrors(MediaInfoProps);
+
+        static void ClearTrackErrors(MediaProps mediaProps) =>
+            mediaProps
+                .GetTrackList()
+                .ForEach(item =>
+                {
+                    item.HasErrors = false;
+                    item.State = TrackProps.StateType.None;
+                });
     }
 
     public bool RepairMetadataErrors(ref bool modified)
@@ -231,10 +240,30 @@ public class ProcessFile
             return true;
         }
 
+        // Do not re-attempt repairs on a file that previously failed to converge, else monitor mode loops
+        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
+        {
+            ClearMetadataErrors();
+            return true;
+        }
+
         // Any metadata errors to repair
         if (!HasMetadataErrors())
         {
             // Nothing to do
+            return true;
+        }
+
+        // Normalize invalid language tags in place, remuxing cannot fix these
+        if (!RepairLanguageTags(ref modified))
+        {
+            return false;
+        }
+
+        // Any metadata errors left to repair after normalizing language tags
+        if (!HasMetadataErrors())
+        {
+            // Done
             return true;
         }
 
@@ -253,6 +282,103 @@ public class ProcessFile
 
         // Set track flags
         return RepairMetadataFlags(ref modified);
+    }
+
+    private static bool HasInvalidLanguageTag(TrackProps item) =>
+        // ISO 639 or IETF tag is set but cannot be mapped to its counterpart
+        (
+            !Language.IsUndefined(item.Language)
+            && string.IsNullOrEmpty(Language.Lookup.GetIetfFromIso(item.Language))
+        )
+        || (
+            !Language.IsUndefined(item.LanguageIetf)
+            && string.IsNullOrEmpty(Language.Lookup.GetIsoFromIetf(item.LanguageIetf))
+        );
+
+    private static string ResolveLanguageTag(TrackProps item)
+    {
+        // A valid IETF tag wins and recovers the ISO 639 tag
+        if (
+            !Language.IsUndefined(item.LanguageIetf)
+            && !string.IsNullOrEmpty(Language.Lookup.GetIsoFromIetf(item.LanguageIetf))
+        )
+        {
+            return item.LanguageIetf;
+        }
+
+        // A valid ISO 639 tag recovers the IETF tag
+        string ietfFromIso = Language.Lookup.GetIetfFromIso(item.Language);
+        if (!Language.IsUndefined(item.Language) && !string.IsNullOrEmpty(ietfFromIso))
+        {
+            return ietfFromIso;
+        }
+
+        // Neither is valid
+        return Language.Undefined;
+    }
+
+    public bool RepairLanguageTags(ref bool modified)
+    {
+        // Invalid tags cannot be fixed by remuxing as mkvmerge preserves them, set them in place
+        // Use MkvMerge for IETF language tags
+        // Selected is Invalid, NotSelected is Keep
+        SelectMediaProps selectMediaProps = new(MkvMergeProps, HasInvalidLanguageTag);
+        if (selectMediaProps.Selected.Count == 0)
+        {
+            // Nothing to do
+            return true;
+        }
+
+        Log.Information("Setting invalid language tags : {FileName}", FileInfo.Name);
+        selectMediaProps.WriteLine("Invalid", "Keep");
+
+        // Recover from the valid tag, else undefined
+        // MkvPropEdit sets the legacy language property to this value, the --normalize-language-ietf global
+        // option then derives a consistent IETF tag, overwriting the invalid one
+        selectMediaProps
+            .Selected.GetTrackList()
+            .ForEach(item => item.LanguageIetf = ResolveLanguageTag(item));
+
+        // Include undefined to overwrite the invalid tag
+        if (
+            !Tools.MkvPropEdit.SetTrackLanguage(
+                FileInfo.FullName,
+                selectMediaProps.Selected,
+                includeUndefined: true
+            )
+        )
+        {
+            // Error
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.SetLanguage;
+        if (!Refresh(true))
+        {
+            return false;
+        }
+
+        // Stop if the tags are still invalid
+        return !MkvMergeProps.GetTrackList().Exists(HasInvalidLanguageTag)
+            || SetVerifyFailed("setting language tags");
+    }
+
+    private bool SetVerifyFailed(string operation)
+    {
+        // Mark verify failed so the file is reported and no longer re-processed
+        Log.Error(
+            "Verification failed, marking as VerifyFailed : {Operation} : {FileName}",
+            operation,
+            FileInfo.Name
+        );
+        _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
+        _ = Refresh(false);
+
+        // Always returns false to signal the repair did not succeed
+        return false;
     }
 
     public bool RepairMetadataRemux(ref bool modified)
@@ -279,12 +405,6 @@ public class ProcessFile
         {
             // Done
             return true;
-        }
-
-        // Already remuxed?
-        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ReMuxed))
-        {
-            Log.Warning("Metadata errors re-detected after remuxing : {FileName}", FileInfo.Name);
         }
 
         // Start with keeping all tracks
@@ -328,7 +448,21 @@ public class ProcessFile
         // Refresh
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
-        return Refresh(outputName);
+        if (!Refresh(outputName))
+        {
+            return false;
+        }
+
+        // Stop if the remux did not resolve the errors it targets, else monitor mode loops
+        // Mirror the trigger condition above, including SetLanguage when SetIetfLanguageTags is enabled
+        return (
+                !HasMetadataErrors(TrackProps.StateType.Remove)
+                && !HasMetadataErrors(TrackProps.StateType.ReMux)
+                && !(
+                    Program.Config.ProcessOptions.SetIetfLanguageTags
+                    && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+                )
+            ) || SetVerifyFailed("remuxing");
     }
 
     public bool RemuxRemoveExtraVideoTracks(ref bool modified)
@@ -420,6 +554,68 @@ public class ProcessFile
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
         return Refresh(true);
+    }
+
+    public bool RepairMatroskaStructure(ref bool modified)
+    {
+        // Conditional on Verify, this is a Direct Play verification check
+        if (!Program.Config.ProcessOptions.Verify)
+        {
+            return true;
+        }
+
+        // The structural parse looks for a video track, skip audio only files
+        if (MkvMergeProps.Video.Count == 0)
+        {
+            return true;
+        }
+
+        // Do not re-attempt on a file that previously failed to converge
+        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
+        {
+            return true;
+        }
+
+        // Read-only structural check
+        if (MatroskaStructureValid(out MatroskaStructure.SeekIndexIssue issue))
+        {
+            // Seek index is usable, do not remux valid files
+            return true;
+        }
+
+        Log.Warning("Matroska seek index unusable, {Issue} : {FileName}", issue, FileInfo.Name);
+
+        // Can we repair
+        if (!Program.Config.VerifyOptions.AutoRepair || !Program.Config.ProcessOptions.ReMux)
+        {
+            return SetVerifyFailed("Matroska structure check");
+        }
+
+        // Remux to rewrite the container structure
+        Log.Information("Remux to repair Matroska structure : {FileName}", FileInfo.Name);
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        {
+            // Error
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        if (!Refresh(outputName))
+        {
+            return false;
+        }
+
+        // Stop if the remux did not fix the structure, else monitor mode loops
+        return MatroskaStructureValid(out _) || SetVerifyFailed("Matroska structure remux");
+    }
+
+    private bool MatroskaStructureValid(out MatroskaStructure.SeekIndexIssue issue)
+    {
+        // Read-only logical validation of the Matroska seek index
+        issue = MatroskaStructure.GetSeekIndexIssue(FileInfo.FullName);
+        return issue == MatroskaStructure.SeekIndexIssue.None;
     }
 
     public bool AnyTags() =>
@@ -769,6 +965,12 @@ public class ProcessFile
         if (videoProps != null)
         {
             // Interlaced attribute set
+            return true;
+        }
+
+        // idet on the limited quickscan sample is unreliable, rely on the interlace metadata flags only
+        if (Program.Options.QuickScan)
+        {
             return true;
         }
 
@@ -1478,6 +1680,12 @@ public class ProcessFile
     {
         // Skip if no bitrate limit
         if (Program.Config.VerifyOptions.MaximumBitrate == 0)
+        {
+            return true;
+        }
+
+        // Bitrate over the limited quickscan sample is not representative of the whole file
+        if (Program.Options.QuickScan)
         {
             return true;
         }

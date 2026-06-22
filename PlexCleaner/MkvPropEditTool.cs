@@ -38,7 +38,11 @@ public partial class MkvPropEdit
         protected override bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo) =>
             throw new NotImplementedException();
 
-        public bool SetTrackLanguage(string fileName, MediaProps mediaProps)
+        public bool SetTrackLanguage(
+            string fileName,
+            MediaProps mediaProps,
+            bool includeUndefined = false
+        )
         {
             // Build command line
             Command command = GetBuilder()
@@ -49,11 +53,13 @@ public partial class MkvPropEdit
                         .Default()
                         .Add(options =>
                         {
-                            // Set track language if defined
+                            // Set track language if defined, or undefined too when overwriting an invalid tag
                             Debug.Assert(mediaProps.Parser == ToolType.MkvMerge);
                             mediaProps
                                 .GetTrackList()
-                                .Where(item => !Language.IsUndefined(item.LanguageAny))
+                                .Where(item =>
+                                    includeUndefined || !Language.IsUndefined(item.LanguageAny)
+                                )
                                 .ToList()
                                 .ForEach(item =>
                                     options.EditTrack(item.Number).SetLanguage(item.LanguageAny)
