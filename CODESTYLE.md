@@ -158,7 +158,7 @@ Note: Code snippets are illustrative examples only. Replace namespaces/types to 
 
 #### Code Structure
 
-1. **Global usings**: Use `GlobalUsings.cs` for common namespaces
+1. **Global usings**: Use `GlobalUsing.cs` for common namespaces
 
    ```csharp
    global using System;

@@ -57,12 +57,12 @@ All media tool command-line construction uses fluent builders (`*Builder.cs`). N
 
 ```csharp
 // Correct - fluent builder pattern
-var command = new FfMpeg.GlobalOptions(args)
+FfMpeg.GlobalOptions command = new FfMpeg.GlobalOptions(args)
     .Default()
     .Add(customOption);
 
 // Wrong - string concatenation
-string args = "-hide_banner " + option;
+string rawArguments = "-hide_banner " + option;
 ```
 
 ### Process Execution with CliWrap
@@ -327,7 +327,7 @@ The authoritative release and workflow governance is in [AGENTS.md](./AGENTS.md)
 dotnet build
 
 # Format code
-dotnet csharpier .
+dotnet csharpier format .
 
 # Verify formatting
 dotnet format style --verify-no-changes --severity=info --verbosity=detailed
