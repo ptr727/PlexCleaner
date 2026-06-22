@@ -37,6 +37,7 @@
                 "showReuseMessage": false,
                 "clear": false
             },
+            "dependsOrder": "sequence",
             "dependsOn": [
                 "CSharpier Format",
                 ".Net Build"

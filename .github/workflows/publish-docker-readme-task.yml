@@ -1,4 +1,4 @@
-name: Create Docker README.md task
+name: Publish Docker Hub readme task
 
 on:
   workflow_call:
@@ -15,7 +15,7 @@ on:
 jobs:
 
   docker-readme:
-    name: Create Docker README.md job
+    name: Publish Docker Hub readme job
     # Render only for main: there is a single Docker Hub README, and the m4
     # template includes the `latest` image's tool versions.
     if: ${{ inputs.branch == 'main' }}
