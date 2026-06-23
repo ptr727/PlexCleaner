@@ -43,6 +43,15 @@ jobs:
           PUBLISH_ON_MERGE: ${{ vars.PUBLISH_ON_MERGE }}
         run: |
           set -euo pipefail
+          # A schedule or dispatch builds BOTH branches in the matrix regardless of the triggering ref (a push builds
+          # only the pushed branch). Dispatching on a non-default ref makes the main leg mis-version (NBGV can't resolve
+          # the public main ref), publishing a malformed non-prerelease release that GitHub marks "Latest". Fail fast:
+          # dispatch only from the default branch.
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" \
+                && "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]]; then
+            echo "::error::Dispatch publish-release from the default branch (${{ github.event.repository.default_branch }}); the matrix builds both branches. Re-dispatch on the default branch."
+            exit 1
+          fi
           case "${{ github.event_name }}" in
             push)
               branches='["${{ github.ref_name }}"]'

@@ -103,6 +103,21 @@ jobs:
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
 
+      # Safety net: a public (main) release must never carry a prerelease identifier - any '-' in SemVer2 (e.g. the
+      # observed '-g<sha>' git-height suffix). Guards against NBGV mis-detecting the public ref (e.g. a dispatch on a
+      # non-default ref) from publishing a malformed non-prerelease release that GitHub would then mark "Latest".
+      # Root-cause-agnostic backstop to the dispatch-ref guard in publish-release.yml.
+      - name: Verify public release version step
+        if: ${{ inputs.branch == 'main' }}
+        env:
+          SEMVER2: ${{ needs.get-version.outputs.SemVer2 }}
+        run: |
+          set -euo pipefail
+          if [[ "$SEMVER2" == *-* ]]; then
+            echo "::error::Public (main) release version '$SEMVER2' carries a prerelease suffix; refusing to publish."
+            exit 1
+          fi
+
       # Collect every release-asset-<branch>-* artifact by pattern, so the
       # release job never names a build job and stays reusable as targets change.
       - name: Download release asset artifacts step
