@@ -36,7 +36,7 @@ indent_size = 2
 end_of_line = crlf
 indent_size = 2
 
-# Json and JsonC files
+# JSON and JSONC files
 [*.{json,jsonc}]
 end_of_line = crlf
 
