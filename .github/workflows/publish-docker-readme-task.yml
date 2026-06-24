@@ -1,8 +1,9 @@
 name: Publish Docker Hub readme task
 
 # Pushes the Docker Hub repository overview (Docker/README.md). Caller-gated: the publisher invokes this only when main
-# is published - the overview has no per-branch context. Matrixes over one or more repositories, with an optional
-# transform step (e.g. m4) to render the readme before pushing.
+# is published - the overview has no per-branch context. The repository list is either passed directly (`repositories`)
+# or derived from a manifest (`manifest` + `manifest-jq`), covering single- and multi-image repos without per-repo glue.
+# An optional transform step (e.g. m4) renders the readme before pushing, optionally after downloading a build artifact.
 
 on:
   workflow_call:
@@ -13,18 +14,35 @@ on:
         required: false
         type: string
         default: ''
-      # JSON array of Docker Hub repositories to update, e.g. '["owner/image"]'. A multi-image repo passes several; a
-      # single-image repo passes one.
+      # JSON array of Docker Hub repositories to update, e.g. '["owner/image"]'. Leave empty to derive the list from a
+      # manifest instead (see `manifest`).
       repositories:
-        required: true
+        required: false
         type: string
+        default: ''
+      # Optional: derive the repository list from a checked-out manifest file (used when `repositories` is empty), e.g.
+      # './Make/Matrix.json'. `manifest-jq` is the jq program that turns it into the JSON array of repo names.
+      manifest:
+        required: false
+        type: string
+        default: ''
+      manifest-jq:
+        required: false
+        type: string
+        default: ''
       # Optional command that renders the readme before pushing (e.g. an m4 step that writes Docker/README.md). Empty
       # pushes the committed file as-is.
       transform-run:
         required: false
         type: string
         default: ''
-      # Readme file to push (the transform's output, or the committed file).
+      # Optional same-run workflow artifact to download before the transform (e.g. version includes the m4 render needs).
+      transform-artifact:
+        required: false
+        type: string
+        default: ''
+      # Readme file to push (the transform's output, or the committed file). Single-image repos with a root README pass
+      # './README.md'.
       readme-filepath:
         required: false
         type: string
@@ -32,12 +50,43 @@ on:
 
 jobs:
 
+  # Resolve the repository list once - either the static `repositories` input or a jq program over a manifest - so the
+  # publish matrix is the same shape for single- and multi-image repos and no caller hand-rolls its own derivation.
+  get-repos:
+    name: Get repository list job
+    runs-on: ubuntu-latest
+    outputs:
+      repositories: ${{ steps.list.outputs.repositories }}
+
+    steps:
+
+      - name: Checkout code step
+        if: ${{ inputs.repositories == '' }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Resolve repository list step
+        id: list
+        env:
+          REPOSITORIES: ${{ inputs.repositories }}
+          MANIFEST: ${{ inputs.manifest }}
+          MANIFEST_JQ: ${{ inputs.manifest-jq }}
+        run: |
+          set -euo pipefail
+          if [ -n "$REPOSITORIES" ]; then
+            echo "repositories=$REPOSITORIES" >> "$GITHUB_OUTPUT"
+          else
+            echo "repositories=$(jq --compact-output "$MANIFEST_JQ" "$MANIFEST")" >> "$GITHUB_OUTPUT"
+          fi
+
   publish-readme:
     name: Publish Docker Hub readme job
     runs-on: ubuntu-latest
+    needs: get-repos
     strategy:
       matrix:
-        repository: ${{ fromJson(inputs.repositories) }}
+        repository: ${{ fromJson(needs.get-repos.outputs.repositories) }}
 
     steps:
 
@@ -45,6 +94,14 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ inputs.ref || github.ref }}
+
+      # Optional: pull a same-run artifact the transform depends on (e.g. version includes for an m4 render).
+      - name: Download transform artifact step
+        if: ${{ inputs.transform-artifact != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs.transform-artifact }}
+          path: ${{ runner.temp }}/transform
 
       # Optional readme render (e.g. m4 with version includes) before pushing.
       - name: Generate readme step

@@ -69,6 +69,7 @@ jobs:
         with:
           # Branch-suffixed so both matrix legs coexist; the inner filename
           # stays `latest.ver` for main (the m4 `include({{latest.ver}})`
-          # token), consumed by build-dockerreadme-task.yml.
+          # token), consumed by publish-docker-readme-task.yml via its
+          # transform-artifact input.
           name: versions-${{ inputs.branch }}
           path: ${{ runner.temp }}/versions/${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}

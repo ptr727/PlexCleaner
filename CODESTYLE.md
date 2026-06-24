@@ -33,14 +33,14 @@ Each language defines a **clean-compile** verification - the combination of buil
 
 These apply repo-wide, in every directory:
 
-1. **Markdown linting**: All `.md` files must be lint-clean (error and warning free) via the VS Code `markdownlint` extension. [`.markdownlint-cli2.jsonc`](./.markdownlint-cli2.jsonc) at the repo root is the single source of truth - the davidanson `markdownlint` extension and a command-line `markdownlint-cli2` run both read it, so the IDE and CLI stay in lock-step. Rules it deliberately disables (e.g. `MD013` line-length, `MD033` inline HTML) are **intentional** - do not "fix" them. This file is carried verbatim by every derived repo (see the template's [Files and Sections Derived Repos Must Carry Verbatim](https://github.com/ptr727/ProjectTemplate/blob/main/AGENTS.md#files-and-sections-derived-repos-must-carry-verbatim) list). Fix violations at the source rather than disabling rules.
+1. **Markdown linting**: All `.md` files must be lint-clean (error and warning free) via the VS Code `markdownlint` extension. [`.markdownlint-cli2.jsonc`](./.markdownlint-cli2.jsonc) at the repo root is the single source of truth - the davidanson `markdownlint` extension and a command-line `markdownlint-cli2` run both read it, so the IDE and CLI stay in lock-step. Rules it deliberately disables (e.g. `MD013` line-length, `MD033` inline HTML) are **intentional** - do not "fix" them. Fix violations at the source rather than disabling rules.
 2. **Spelling**: All spelling must be clean via the CSpell VS Code integration; words must be correctly spelled in **US English** (the repo-wide convention - see [AGENTS.md](./AGENTS.md)). Project-specific terms go in the workspace CSpell config.
 
 ## .NET
 
-*This section applies only to the .NET side. A repo with no .NET projects drops the whole section - see [Adopting Without .NET](#adopting-without-net) at its end.*
+*This section applies only to the .NET side. A repo with no .NET projects drops the whole section.*
 
-This is the style guide for the **.NET projects** in this repo. **Adapt the project list to your repo**: this template ships [`NuGetLibrary/`](./NuGetLibrary/), [`Console/`](./Console/), [`Tests/`](./Tests/), [`Benchmarks/`](./Benchmarks/), and [`CodeGen/`](./CodeGen/); a derived repo names its own projects.
+This is the style guide for the **.NET projects** in this repo.
 
 ### Build Requirements
 
@@ -336,7 +336,8 @@ Follow the scope hierarchy in [Analyzer Diagnostics and Suppressions](#analyzer-
 
    ```xml
    <ItemGroup>
-     <InternalsVisibleTo Include="PlexCleanerTests" />
+     <InternalsVisibleTo Include="YourBenchmarkProject" />
+     <InternalsVisibleTo Include="YourTestProject" />
    </ItemGroup>
    ```
 
@@ -344,15 +345,11 @@ Follow the scope hierarchy in [Analyzer Diagnostics and Suppressions](#analyzer-
 
 1. **Code reviews**: All changes go through pull requests
 
-### Adopting Without .NET
-
-If your derived project has no .NET side, drop this entire `.NET` section and delete the .NET projects and their build/release wiring: the NuGet build/publish jobs, the `[*.cs]` / ReSharper block in `.editorconfig`, the `.NET` task group in `.vscode/tasks.json`, and the `nuget` entries in `.github/dependabot.yml`. See [README.md](./README.md) Template Adoption for the full checklist. The Python side stands alone.
-
 ## Python
 
-*This section applies only to the Python side. A repo with no Python projects drops the whole section - see [Adopting Without Python](#adopting-without-python) at its end.*
+*This section applies only to the Python side. A repo with no Python projects drops the whole section.*
 
-This is the style guide for the **Python project** in this repo ([`PyPiLibrary/`](./PyPiLibrary/)).
+This is the style guide for the **Python project** in this repo.
 
 ### Toolchain
 
@@ -368,7 +365,7 @@ This is the style guide for the **Python project** in this repo ([`PyPiLibrary/`
 
 ### Local Development Loop
 
-From inside `PyPiLibrary/`:
+From inside the Python project directory:
 
 ```sh
 uv sync                          # creates .venv, installs deps + dev group
@@ -381,19 +378,19 @@ uv run pytest                    # run tests
 uv build                         # produce wheel + sdist in ./dist
 ```
 
-The Python clean-compile (see [Clean-Compile Verification](#clean-compile-verification)) is `uv run ruff format` + `uv run ruff check` + `uv run pyright`; run it (plus `uv run pytest`) before committing. The template ships these as documented commands, not VS Code tasks. CI runs the same commands via [`.github/workflows/build-pypilibrary-task.yml`](./.github/workflows/build-pypilibrary-task.yml). No git hooks ship by default - see the root README's "Optional: enable git hooks locally" section to wire up `pre-commit` for `ruff` and `pyright` if you want pre-commit checks locally.
+The Python clean-compile (see [Clean-Compile Verification](#clean-compile-verification)) is `uv run ruff format` + `uv run ruff check` + `uv run pyright`; run it (plus `uv run pytest`) before committing. These are documented commands, not VS Code tasks. CI runs the same commands via the Python build workflow. No git hooks ship by default - see the root README's "Optional: enable git hooks locally" section to wire up `pre-commit` for `ruff` and `pyright` if you want pre-commit checks locally.
 
 ### Layout
 
 `src` layout - keeps the package out of the repo root and prevents accidental imports of unbuilt code:
 
 ```text
-PyPiLibrary/
+<python-project>/
     pyproject.toml
     README.md
     uv.lock                # committed for reproducible CI
     src/
-        ptr727_projecttemplate_library/
+        <package_name>/
             __init__.py
             _version.py
             <modules>.py
@@ -459,16 +456,12 @@ PyPiLibrary/
 
 ### Versioning
 
-`_version.py` ships with `__version__ = "0.0.0"` as a placeholder. The publish workflow uses `skip-existing: true` so the workflow won't fail, but no new PyPI versions will land until you wire `_version.py` to something that increments. See the **Template Adoption** section of [`README.md`](./PyPiLibrary/README.md) for the three usual options (`hatch-vcs`, version.json bridge, manual bumps).
+`_version.py` ships with `__version__ = "0.0.0"` as a placeholder. The publish workflow uses `skip-existing: true` so the workflow won't fail, but no new PyPI versions will land until you wire `_version.py` to something that increments (the usual options are `hatch-vcs`, a version.json bridge, or manual bumps).
 
 ### Linter Cleanliness
 
 Before pushing or opening a PR:
 
 - VS Code's **Problems** pane should be quiet for the files you touched. The relevant linters are ruff (via the `charliermarsh.ruff` extension) and pyright (via the `ms-python.python` extension's bundled Pylance).
-- The CI gate is `uv run ruff check && uv run ruff format --check && uv run pyright && uv run pytest` - same as the local commands above, run from `PyPiLibrary/`.
+- The CI gate is `uv run ruff check && uv run ruff format --check && uv run pyright && uv run pytest` - same as the local commands above, run from the Python project directory.
 - Markdown in this directory follows the repo-wide [Markdown and Spelling](#markdown-and-spelling) rules.
-
-### Adopting Without Python
-
-If your derived project does not need a Python side, delete the entire `PyPiLibrary/` folder, the `build-pypilibrary` job in `build-release-task.yml`, the `publish-pypi` job in `publish-release.yml`, the `build-pypilibrary-task.yml` workflow, the `uv` block in `.github/dependabot.yml`, the `Python.code-workspace` file, and the `.devcontainer/python/` directory. The .NET side stands alone.

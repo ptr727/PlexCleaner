@@ -102,8 +102,8 @@ jobs:
       branch: ${{ matrix.branch }}
 
   # Caller-gated to main: the Docker Hub overview has no per-branch context, so it updates only when main is published.
-  # The transform-run downloads the main leg's `versions-main` artifact (the `latest.ver` the m4 template includes) and
-  # renders Docker/README.m4 before the canonical task pushes the overview.
+  # The task downloads the main leg's `versions-main` artifact (the `latest.ver` the m4 template includes) via
+  # transform-artifact, then transform-run renders Docker/README.m4 from it before the task pushes the overview.
   docker-readme:
     name: Publish Docker Hub readme job
     needs: [setup, tool-versions]
@@ -115,9 +115,8 @@ jobs:
     with:
       ref: main
       repositories: '["ptr727/plexcleaner"]'
-      transform-run: >-
-        GH_TOKEN=${{ github.token }} gh run download ${{ github.run_id }} -n versions-main -D "${RUNNER_TEMP}/versions"
-        && m4 --include="${RUNNER_TEMP}/versions" ./Docker/README.m4 > ./Docker/README.md
+      transform-artifact: versions-main
+      transform-run: m4 --include="${RUNNER_TEMP}/transform" ./Docker/README.m4 > ./Docker/README.md
 
   date-badge:
     name: Create BYOB date badge job
