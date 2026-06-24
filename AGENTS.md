@@ -175,11 +175,11 @@ This repo is derived from [`ptr727/ProjectTemplate`](https://github.com/ptr727/P
 Intentional deviations from a literal verbatim carry, kept on purpose:
 
 - **`.editorconfig`** carries the template verbatim plus a repo-wide block of CA-rule relaxations in `[*.cs]` (console-app, not a library; documented inline). The template's per-extension EOL block - including the `Dockerfile`/`*.Dockerfile` LF pins - is carried as-is.
-- **`.gitattributes`** carries the template verbatim plus a `.husky/pre-commit text eol=lf` pin (this repo ships an extensionless Husky.Net hook, the exact case the template's `*.sh`/extensionless-script note calls out). `Docker/README.m4` is left at its existing EOL - it is an m4 source, not a script, so no LF pin is needed.
+- **`.gitattributes`** carries the template verbatim plus a `.husky/pre-commit text eol=lf` pin (this repo ships an extensionless Husky.Net hook, the exact case the template's `*.sh`/extensionless-script note calls out) and a `Docker/README.m4 text eol=lf` pin (m4 source rendered on Linux).
 - **`.github/copilot-instructions.md`** keeps this repo's filled `ptr727`/`PlexCleaner` placeholders, its [`ARCHITECTURE.md`](./ARCHITECTURE.md) pointer, and the `.NET`-only language wording (no Python) - already adapted from the template's placeholder/multi-language form.
-- **`CODESTYLE.md`** is the repo-adapted .NET-only version (real project names, Husky.Net documented), not the template's generic placeholder form; this sync carries only the template's new portable General-section governance (the local-commit-gate-is-a-choice rule and the brownfield git-signing allowance note).
-- **`.vscode/tasks.json`** keeps the `.Net` task-label casing (a documented historical choice, see CODESTYLE.md) and this repo's Docker/Husky convenience tasks; the clean-compile task command sequences match the template.
-- **Workflow YAML** stays LF (this repo's existing convention for `.github/workflows/`), not the template's CRLF.
+- **`CODESTYLE.md`** is carried whole from the template (genericized - generic project-name placeholders, both language sections); this repo's real project names live in `.csproj`/`.editorconfig`, not the style guide.
+- **Husky.Net pre-commit hooks.** This repo runs Husky.Net (a `.husky/` hook runner + a `Husky.Net Run` VS Code task), inverting the template's no-hooks-by-default stance.
+- **`.vscode/tasks.json`** keeps the `.Net` task-label casing (a documented historical choice) and this repo's Docker/Husky convenience tasks; the clean-compile task command sequences match the template.
 
 ## Workflow YAML Conventions
 
