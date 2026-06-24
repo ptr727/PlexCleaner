@@ -120,17 +120,12 @@ jobs:
       transform-run: m4 --include=$RUNNER_TEMP/transform ./Docker/README.m4 > ./Docker/README.md
       readme-filepath: ./Docker/README.md
 
+  # Caller-gated to main: the badge has no per-branch context, so it updates only when main is published.
   date-badge:
     name: Create BYOB date badge job
     needs: [setup, publish]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
     uses: ./.github/workflows/build-datebadge-task.yml
     secrets: inherit
     permissions:
       contents: write
-    with:
-      # The badge task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
