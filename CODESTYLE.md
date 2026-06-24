@@ -1,6 +1,6 @@
 # Code Style and Formatting Rules
 
-This is the single code-style guide for the repo. The **General** section applies to every language and is always carried. Each **language section** (.NET, Python) is self-contained and **droppable**: a repo with no .NET side drops the .NET section, a repo with no Python side drops the Python section - the same per-language model as [`.editorconfig`](./.editorconfig), whose `[*.cs]` block a non-.NET repo drops.
+This is the single code-style guide for the repo. The **General** section applies to every language. Each **language section** (.NET, Python) is self-contained: a repo reads only the section(s) for the languages it ships and ignores the rest. The whole file is carried, not trimmed - an unused-language section costs nothing and keeps re-sync a clean overwrite, the same carry-whole model as [`.editorconfig`](./.editorconfig), whose inert `[*.cs]` block a non-.NET repo keeps.
 
 Cross-cutting *process* rules (PR titles, branching, US English, markdown style, comments philosophy, workflow YAML, PR review etiquette) live in [AGENTS.md](./AGENTS.md) and are not repeated here.
 
@@ -38,7 +38,7 @@ These apply repo-wide, in every directory:
 
 ## .NET
 
-*This section applies only to the .NET side. A repo with no .NET projects drops the whole section.*
+*This section applies only to the .NET side. A repo with no .NET projects still carries it (the file is carried whole) and ignores it.*
 
 This is the style guide for the **.NET projects** in this repo.
 
@@ -53,13 +53,12 @@ This is the style guide for the **.NET projects** in this repo.
    - After any code change it must pass before commit. Run the `.NET Format` task. To run it natively instead, reproduce that task chain from [`.vscode/tasks.json`](./.vscode/tasks.json) exactly - `CSharpier Format`, then `.NET Build`, then the `dotnet format style --verify-no-changes --severity=info ...` verify - without dropping or loosening any argument (tasks.json is the canonical command spec). Bare `dotnet format` alone, skipping CSharpier or the build, is not sufficient.
 
 2. **Analyzer configuration**
-   - `<AnalysisLevel>latest-all</AnalysisLevel>`
-   - `<EnableNETAnalyzers>true</EnableNETAnalyzers>`
-   - Analyzer severity is `suggestion`, but all warnings must be addressed - see [Analyzer Diagnostics and Suppressions](#analyzer-diagnostics-and-suppressions); do not relax rules to dodge them.
+   - `<EnableNETAnalyzers>true</EnableNETAnalyzers>` with `<AnalysisLevel>latest-all</AnalysisLevel>` and `<AnalysisMode>All</AnalysisMode>` (full analyzer set enabled)
+   - `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` - warnings fail the build, so every diagnostic must be addressed, not muted (see [Analyzer Diagnostics and Suppressions](#analyzer-diagnostics-and-suppressions))
 
 3. **CI lint backstop**
-   - `dotnet csharpier check` and `dotnet format style --verify-no-changes` run on every PR
-   - No git hooks ship by default - see README "Optional: enable git hooks locally" to opt in
+   - CI runs the same clean-compile commands (`dotnet csharpier check` and `dotnet format style --verify-no-changes`) on every PR as the authoritative backstop
+   - Git hooks are opt-in - no hook runner ships by default; wire `pre-commit`/Husky.Net yourself if you want local enforcement
 
 #### Build Tasks
 
@@ -84,7 +83,7 @@ Available VS Code tasks (run them from VS Code's task runner - **Terminal -> Run
    - `dotnet-outdated-tool`: Dependency update checks
    - Nerdbank.GitVersioning: Version management
 
-Pre-commit git hooks are not installed by default - CI is the lint backstop. See README "Optional: enable git hooks locally" if you want Husky.Net (or another runner) wired up locally.
+Pre-commit git hooks are not installed by default - CI is the lint backstop. Hooks are opt-in; wire Husky.Net (or another runner) yourself if you want local enforcement.
 
 #### Editor Baseline
 
@@ -112,7 +111,7 @@ Note: Code snippets are illustrative examples only. Replace namespaces/types to 
    - Top-level statements for console apps
    - Pattern matching over traditional checks
    - Collection expressions when types loosely match
-   - Extension methods using `extension()` syntax
+   - Extension methods declared inside an `extension(<receiver>) { ... }` block
    - Implicit object creation when type is apparent
    - Range and index operators
 
@@ -204,7 +203,7 @@ Note: Code snippets are illustrative examples only. Replace namespaces/types to 
    - `<GenerateDocumentationFile>true</GenerateDocumentationFile>`
    - Missing XML comments for public APIs are suppressed (`.editorconfig`)
    - Must document all public surfaces.
-   - Single-line summaries, additional details in remarks, document input parameters, returns values, exceptions, and add crefs
+   - Single-line summaries, additional details in remarks, document input parameters, return values, exceptions, and add crefs
 
    ```csharp
    /// <summary>
@@ -347,7 +346,7 @@ Follow the scope hierarchy in [Analyzer Diagnostics and Suppressions](#analyzer-
 
 ## Python
 
-*This section applies only to the Python side. A repo with no Python projects drops the whole section.*
+*This section applies only to the Python side. A repo with no Python projects still carries it (the file is carried whole) and ignores it.*
 
 This is the style guide for the **Python project** in this repo.
 
@@ -378,7 +377,7 @@ uv run pytest                    # run tests
 uv build                         # produce wheel + sdist in ./dist
 ```
 
-The Python clean-compile (see [Clean-Compile Verification](#clean-compile-verification)) is `uv run ruff format` + `uv run ruff check` + `uv run pyright`; run it (plus `uv run pytest`) before committing. These are documented commands, not VS Code tasks. CI runs the same commands via the Python build workflow. No git hooks ship by default - see the root README's "Optional: enable git hooks locally" section to wire up `pre-commit` for `ruff` and `pyright` if you want pre-commit checks locally.
+The Python clean-compile (see [Clean-Compile Verification](#clean-compile-verification)) is `uv run ruff format` + `uv run ruff check` + `uv run pyright`; run it (plus `uv run pytest`) before committing. These are documented commands, not VS Code tasks. CI runs the same clean-compile commands as the authoritative backstop. Git hooks are opt-in; wire `pre-commit` for `ruff` and `pyright` yourself if you want local enforcement.
 
 ### Layout
 
@@ -456,7 +455,7 @@ The Python clean-compile (see [Clean-Compile Verification](#clean-compile-verifi
 
 ### Versioning
 
-`_version.py` ships with `__version__ = "0.0.0"` as a placeholder. The publish workflow uses `skip-existing: true` so the workflow won't fail, but no new PyPI versions will land until you wire `_version.py` to something that increments (the usual options are `hatch-vcs`, a version.json bridge, or manual bumps).
+`_version.py` ships with `__version__ = "0.0.0"` as a placeholder. Until you wire `_version.py` to something that increments (the usual options are `hatch-vcs`, a version.json bridge, or manual bumps), no new PyPI versions will land - publishing with `skip-existing: true` keeps a stuck placeholder version from failing the run.
 
 ### Linter Cleanliness
 

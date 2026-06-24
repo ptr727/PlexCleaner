@@ -37,6 +37,7 @@ on:
         type: string
         default: ''
       # Optional same-run workflow artifact to download before the transform (e.g. version includes the m4 render needs).
+      # Using this requires the caller to grant `permissions: actions: read` so download-artifact can read the run's artifacts.
       transform-artifact:
         required: false
         type: string
@@ -76,8 +77,12 @@ jobs:
           set -euo pipefail
           if [ -n "$REPOSITORIES" ]; then
             echo "repositories=$REPOSITORIES" >> "$GITHUB_OUTPUT"
-          else
+          elif [ -n "$MANIFEST" ] && [ -n "$MANIFEST_JQ" ]; then
             echo "repositories=$(jq --compact-output "$MANIFEST_JQ" "$MANIFEST")" >> "$GITHUB_OUTPUT"
+          else
+            # Default to this repo's own Docker Hub repository (lowercased owner/name) so a single-image caller
+            # carries the orchestration verbatim with no repo-specific value.
+            echo "repositories=[\"$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')\"]" >> "$GITHUB_OUTPUT"
           fi
 
   publish-readme:
@@ -86,7 +91,7 @@ jobs:
     needs: get-repos
     strategy:
       matrix:
-        repository: ${{ fromJson(needs.get-repos.outputs.repositories) }}
+        repository: ${{ fromJSON(needs.get-repos.outputs.repositories) }}
 
     steps:
 
@@ -106,7 +111,9 @@ jobs:
       # Optional readme render (e.g. m4 with version includes) before pushing.
       - name: Generate readme step
         if: ${{ inputs.transform-run != '' }}
-        run: ${{ inputs.transform-run }}
+        run: |
+          set -euo pipefail
+          ${{ inputs.transform-run }}
 
       - name: Publish Docker Hub readme step
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
