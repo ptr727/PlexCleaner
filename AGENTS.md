@@ -103,7 +103,22 @@ Applies to code and workflow (`#`) comments alike.
 
 ## PR Review Etiquette
 
+> **Mandatory in every derived repo.** This entire "PR Review Etiquette" section is the provider-agnostic review-loop *contract* and must be carried **verbatim** into every repo derived from this template, alongside the [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) "GitHub Copilot Review Runbook" that implements it. Without both in-repo, an agent working in the derived repo has no pointer to the reliable Copilot mechanics and falls back to ad-hoc (and known-broken) behavior.
+
 The repo runs a review loop on every PR: local agent iteration plus remote automated review (GitHub Copilot is the configured reviewer). Treat this as a contract regardless of which local agent authored the changes.
+
+### Merge Gate (read this first)
+
+**Do not merge - and do not enable auto-merge - unless ALL of these hold:**
+
+1. Required status checks are green (`mergeStateStatus: CLEAN`), **and**
+2. A Copilot review is confirmed on the **current head SHA** (not an earlier push), **and**
+3. **Every** Copilot finding on that head SHA is closed out - all review threads resolved, **and** any issue-level Copilot comments (which have no resolve action) triaged and replied to - so zero outstanding findings remain, **and**
+4. The maintainer has given **explicit** permission to merge.
+
+`mergeStateStatus: CLEAN` reflects **only** required statuses - it never reflects open bot review comments, so `CLEAN` alone is **never** sufficient to merge. A green/`CLEAN` PR with an unresolved Copilot finding fails this gate; treat it as "not mergeable" no matter what the merge-state field says. The agent never merges on its own (consistent with "default to staging"; merging is maintainer-authorized).
+
+**Merging is not releasing.** A merge to a release branch does **not** by itself publish; publishing is a separate step in the repo's release pipeline (a scheduled run or a manual dispatch), not an automatic consequence of merging. Never describe a merge as cutting a release, and never trigger a publish without explicit maintainer instruction.
 
 ### Expected Review Loop
 
@@ -115,7 +130,7 @@ The repo runs a review loop on every PR: local agent iteration plus remote autom
 6. Reply to each thread and resolve what was addressed.
 7. Re-run the loop after every fix push until no actionable findings remain.
 
-`mergeStateStatus: CLEAN` only checks required statuses; it does not block on bot review comments. Drive the loop to green - review confirmed on the latest head SHA and every actionable finding closed - and then **wait for the maintainer's explicit permission to merge**. The agent does not merge on its own (consistent with "default to staging"; merging is maintainer-authorized).
+Drive the loop to green - review confirmed on the latest head SHA and every actionable finding closed - then stop and apply the **Merge Gate** above: all four preconditions must hold, and `mergeStateStatus: CLEAN` alone never satisfies it.
 
 For provider-specific mechanics (how to request review, query review state, post replies, resolve threads), see the **GitHub Copilot Review Runbook** in [.github/copilot-instructions.md](./.github/copilot-instructions.md). This file owns the contract; that file owns the mechanics.
 
@@ -154,6 +169,17 @@ This repo is derived from [`ptr727/ProjectTemplate`](https://github.com/ptr727/P
 - **.vscode/tasks.json.** Carry the named **clean-compile** task definitions verbatim - `.Net Build`, `CSharpier Format`, and `.Net Format` (which chains the first two then `dotnet format style --verify-no-changes`). Their names are owned by the `CODESTYLE.md` ".NET" section and their command sequence + arguments are the canonical clean-compile spec; don't loosen them. Convenience tasks are the adapt zone.
 - **Release notes.** Keep a short release-notes summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release.
 - **Report drift upstream.** When a re-sync surfaces a template gap, an outdated instruction, or something that bit this repo and would bite the next derived repo, open an issue in [`ptr727/ProjectTemplate`](https://github.com/ptr727/ProjectTemplate) rather than only patching locally - the template is the single source of truth, and this upstream-issue rule is this repo's only cross-repo obligation. Do not maintain or reference a "known downstream" registry, and do not name sibling repositories in docs, comments, or workflows - that registry and the maintainer fan-out duty live in the template hub only.
+
+### Template adaptations
+
+Intentional deviations from a literal verbatim carry, kept on purpose:
+
+- **`.editorconfig`** carries the template verbatim plus a repo-wide block of CA-rule relaxations in `[*.cs]` (console-app, not a library; documented inline). The template's per-extension EOL block - including the `Dockerfile`/`*.Dockerfile` LF pins - is carried as-is.
+- **`.gitattributes`** carries the template verbatim plus a `.husky/pre-commit text eol=lf` pin (this repo ships an extensionless Husky.Net hook, the exact case the template's `*.sh`/extensionless-script note calls out). `Docker/README.m4` is left at its existing EOL - it is an m4 source, not a script, so no LF pin is needed.
+- **`.github/copilot-instructions.md`** keeps this repo's filled `ptr727`/`PlexCleaner` placeholders, its [`ARCHITECTURE.md`](./ARCHITECTURE.md) pointer, and the `.NET`-only language wording (no Python) - already adapted from the template's placeholder/multi-language form.
+- **`CODESTYLE.md`** is the repo-adapted .NET-only version (real project names, Husky.Net documented), not the template's generic placeholder form; this sync carries only the template's new portable General-section governance (the local-commit-gate-is-a-choice rule and the brownfield git-signing allowance note).
+- **`.vscode/tasks.json`** keeps the `.Net` task-label casing (a documented historical choice, see CODESTYLE.md) and this repo's Docker/Husky convenience tasks; the clean-compile task command sequences match the template.
+- **Workflow YAML** stays LF (this repo's existing convention for `.github/workflows/`), not the template's CRLF.
 
 ## Workflow YAML Conventions
 

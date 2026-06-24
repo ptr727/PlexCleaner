@@ -106,15 +106,19 @@ jobs:
   docker-readme:
     name: Publish Docker Hub readme job
     needs: [setup, tool-versions]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    # Caller-gated to main: there is one Docker Hub README and the m4 template embeds the `latest` image's tool
+    # versions. The task is no longer self-gating, so gate here and render only when the matrix includes main.
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
     uses: ./.github/workflows/publish-docker-readme-task.yml
     secrets: inherit
     with:
-      # The task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
+      ref: main
+      repositories: '["ptr727/plexcleaner"]'
+      # Download the main leg's tool-versions artifact (file `latest.ver`) to $RUNNER_TEMP/transform, then render
+      # Docker/README.md from the m4 template whose `include({{latest.ver}})` resolves against that include dir.
+      transform-artifact: versions-main
+      transform-run: m4 --include=$RUNNER_TEMP/transform ./Docker/README.m4 > ./Docker/README.md
+      readme-filepath: ./Docker/README.md
 
   date-badge:
     name: Create BYOB date badge job

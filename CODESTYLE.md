@@ -20,10 +20,11 @@ Each language defines a **clean-compile** verification - the combination of buil
 
 - **Run it after every code change.** The relevant language's clean-compile must pass before you commit; CI runs the same checks as a backstop.
 - **The named task definition is the canonical spec** - its exact command sequence, arguments, and strictness. You may run it through the VS Code task **or** by invoking the equivalent native commands directly; either is fine **only if the sequence, arguments, and strictness match exactly**. No shortcuts and no more-lenient options (for example, never drop `--verify-no-changes` or loosen a `--severity`).
+- **A local commit/pre-commit gate is the derived repo's choice.** CI is the authoritative backstop regardless; a local gate is an additive convenience a repo may wire and keep. This repo wires Husky.Net (and `dotnet husky run` as a style step). Keeping a working gate is not drift, and "no hooks ship by default" in the template must not be read as "remove your gate to stay aligned".
 
 ### Analyzer Diagnostics and Suppressions
 
-- **A new port is not a license to silence diagnostics.** Brownfield / just-ported status never justifies relaxing analyzer or linter severities or muting newly surfaced warnings - fix them.
+- **A new port is not a license to silence diagnostics.** Brownfield / just-ported status never justifies relaxing analyzer or linter severities or muting newly surfaced warnings - fix them. (The only brownfield allowance is the one-time git-signing / line-ending migration described in [AGENTS.md](./AGENTS.md) and [README.md](./README.md), which has nothing to do with code analysis.)
 - **Suppress only genuine false-positives or deliberate, documented exceptions**, always at the **narrowest scope that fits**, in this order of preference:
   1. An **in-code annotation on the specific symbol**, with a justification - the language's attribute/comment form, never a blanket pragma spanning a region.
   2. The **owning project's local config** when the exception is project-wide for one project (e.g. a test project's own `.editorconfig`).

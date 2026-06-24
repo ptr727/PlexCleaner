@@ -1,5 +1,16 @@
-# Leave line endings alone
+# Leave line endings alone; the .editorconfig per-extension end_of_line rules govern.
 # git config --global core.autocrlf false
 # git add --renormalize .
 # git ls-files --eol
 * -text
+
+# Exception: scripts must stay LF regardless of the `* -text` default - a CRLF shebang breaks execution. `.editorconfig`
+# covers `*.sh`, but extensionless executables match no extension rule, so pin them here so git enforces LF on checkout
+# and `--renormalize`. Any repo whose tooling ships extensionless scripts adds the matching path pin, e.g. s6-overlay
+# init `Docker/s6-overlay/** text eol=lf` or husky/git hooks `.husky/pre-commit text eol=lf`.
+*.sh text eol=lf
+.husky/pre-commit text eol=lf
+
+# Dockerfiles must be LF - a CRLF breaks RUN heredocs and line continuations.
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
