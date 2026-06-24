@@ -1,0 +1,61 @@
+name: Publish Docker Hub readme task
+
+# Pushes the Docker Hub repository overview (Docker/README.md). Caller-gated: the publisher invokes this only when main
+# is published - the overview has no per-branch context. Matrixes over one or more repositories, with an optional
+# transform step (e.g. m4) to render the readme before pushing.
+
+on:
+  workflow_call:
+    inputs:
+      # Ref whose readme (and any transform sources) to publish; empty uses the caller's ref. The publisher passes
+      # `main` so the overview tracks the main release even when dispatched from another ref.
+      ref:
+        required: false
+        type: string
+        default: ''
+      # JSON array of Docker Hub repositories to update, e.g. '["owner/image"]'. A multi-image repo passes several; a
+      # single-image repo passes one.
+      repositories:
+        required: true
+        type: string
+      # Optional command that renders the readme before pushing (e.g. an m4 step that writes Docker/README.md). Empty
+      # pushes the committed file as-is.
+      transform-run:
+        required: false
+        type: string
+        default: ''
+      # Readme file to push (the transform's output, or the committed file).
+      readme-filepath:
+        required: false
+        type: string
+        default: ./Docker/README.md
+
+jobs:
+
+  publish-readme:
+    name: Publish Docker Hub readme job
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository: ${{ fromJson(inputs.repositories) }}
+
+    steps:
+
+      - name: Checkout code step
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      # Optional readme render (e.g. m4 with version includes) before pushing.
+      - name: Generate readme step
+        if: ${{ inputs.transform-run != '' }}
+        run: ${{ inputs.transform-run }}
+
+      - name: Publish Docker Hub readme step
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ matrix.repository }}
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ${{ inputs.readme-filepath }}

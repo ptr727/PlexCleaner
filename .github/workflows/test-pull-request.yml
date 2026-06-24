@@ -131,3 +131,31 @@ jobs:
           # (no target changed) — `skipped` passes, only failure/cancelled blocks.
           exit_on_result "unit-test" "${{ needs.unit-test.result }}"
           exit_on_result "smoke-build" "${{ needs.smoke-build.result }}"
+
+  # Smoke builds gate every release-asset upload on `!smoke`, but actions like docker/build-push-action can still emit
+  # a build-record artifact, so this terminal cleanup deletes the run's artifacts to keep them off the storage quota.
+  # Independent of `check-workflow-status` so housekeeping never gates the required merge check.
+  cleanup-artifacts:
+    name: Delete workflow artifacts job
+    needs: [smoke-build]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete workflow artifacts step
+        # continue-on-error: best-effort housekeeping must never red the run, even on an unexpected failure.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! ids=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --paginate \
+            --jq '.artifacts[].id'); then
+            echo "::warning::Could not list run artifacts; skipping cleanup (storage may not be freed)."
+            ids=""
+          fi
+          for artifact_id in $ids; do
+            gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$artifact_id" \
+              || echo "::warning::Failed to delete artifact $artifact_id; continuing."
+          done

@@ -99,9 +99,24 @@ jobs:
       # Check out the exact built commit (NBGV `GitCommitId`), so the uploaded
       # release files match the tag even if the branch advances mid-run.
       - name: Checkout code step
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
+
+      # Backstop (main only): a public release must not carry a prerelease '-', guarding against NBGV mis-versioning the
+      # public ref (e.g. a dispatch on a non-default ref) into a malformed "Latest" release. Strip '+buildmetadata'
+      # first - a '-' there is legitimate; only a '-' in the core/prerelease segment marks a prerelease.
+      - name: Verify public release version step
+        if: ${{ inputs.branch == 'main' }}
+        env:
+          SEMVER2: ${{ needs.get-version.outputs.SemVer2 }}
+        run: |
+          set -euo pipefail
+          CORE_AND_PRE="${SEMVER2%%+*}"   # drop +buildmetadata; a '-' here is the genuine prerelease separator
+          if [[ "$CORE_AND_PRE" == *-* ]]; then
+            echo "::error::Public (main) release version '$SEMVER2' carries a prerelease suffix; refusing to publish."
+            exit 1
+          fi
 
       # Collect every release asset by the `release-asset-<branch>-*` artifact
       # convention rather than naming individual build jobs, so this download
@@ -156,7 +171,7 @@ jobs:
       # branch name (a moving ref a mid-run commit could advance past).
       - name: Create GitHub release step
         if: ${{ steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch' }}
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
           target_commitish: ${{ needs.get-version.outputs.GitCommitId }}

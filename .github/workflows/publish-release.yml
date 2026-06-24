@@ -43,6 +43,13 @@ jobs:
           PUBLISH_ON_MERGE: ${{ vars.PUBLISH_ON_MERGE }}
         run: |
           set -euo pipefail
+          # Schedule/dispatch builds both branches regardless of triggering ref. A dispatch on a non-default ref
+          # mis-versions the main leg (NBGV can't resolve the public main ref), so fail fast: dispatch from default only.
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" \
+                && "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]]; then
+            echo "::error::Dispatch publish-release from the default branch (${{ github.event.repository.default_branch }}); the matrix builds both branches. Re-dispatch on the default branch."
+            exit 1
+          fi
           case "${{ github.event_name }}" in
             push)
               branches='["${{ github.ref_name }}"]'
@@ -94,30 +101,56 @@ jobs:
     with:
       branch: ${{ matrix.branch }}
 
+  # Caller-gated to main: the Docker Hub overview has no per-branch context, so it updates only when main is published.
+  # The transform-run downloads the main leg's `versions-main` artifact (the `latest.ver` the m4 template includes) and
+  # renders Docker/README.m4 before the canonical task pushes the overview.
   docker-readme:
-    name: Create Docker README.md job
+    name: Publish Docker Hub readme job
     needs: [setup, tool-versions]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
-    uses: ./.github/workflows/build-dockerreadme-task.yml
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
+    uses: ./.github/workflows/publish-docker-readme-task.yml
     secrets: inherit
+    permissions:
+      contents: read
     with:
-      # The task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
+      ref: main
+      repositories: '["ptr727/plexcleaner"]'
+      transform-run: >-
+        GH_TOKEN=${{ github.token }} gh run download ${{ github.run_id }} -n versions-main -D "${RUNNER_TEMP}/versions"
+        && m4 --include="${RUNNER_TEMP}/versions" ./Docker/README.m4 > ./Docker/README.md
 
   date-badge:
     name: Create BYOB date badge job
     needs: [setup, publish]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
     uses: ./.github/workflows/build-datebadge-task.yml
     secrets: inherit
     permissions:
       contents: write
-    with:
-      # The badge task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
+
+  # Release artifacts are an intra-run handoff (durable copies live on the GitHub release), so leaving them accumulates
+  # against the small account-wide storage quota; delete them once every consumer has read them.
+  cleanup-artifacts:
+    name: Delete workflow artifacts job
+    needs: [setup, publish, tool-versions, docker-readme, date-badge]
+    if: ${{ always() && needs.setup.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete workflow artifacts step
+        # continue-on-error: best-effort housekeeping must never red the run, even on an unexpected failure.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! ids=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --paginate \
+            --jq '.artifacts[].id'); then
+            echo "::warning::Could not list run artifacts; skipping cleanup (storage may not be freed)."
+            ids=""
+          fi
+          for artifact_id in $ids; do
+            gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$artifact_id" \
+              || echo "::warning::Failed to delete artifact $artifact_id; continuing."
+          done

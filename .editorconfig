@@ -36,21 +36,31 @@ indent_size = 2
 end_of_line = crlf
 indent_size = 2
 
-# Json files
-[*.json]
+# JSON and JSONC files
+[*.{json,jsonc}]
 end_of_line = crlf
 
 # Linux scripts
 [*.sh]
 end_of_line = lf
 
+# Dockerfiles - CRLF breaks RUN heredocs and line continuations
+[{Dockerfile,*.Dockerfile}]
+end_of_line = lf
+
 # Windows scripts
 [*.{cmd,bat,ps1}]
 end_of_line = crlf
 
+# --- .NET-only below: C# and ReSharper style. Everything above is the line-ending
+# governance every derived repo carries; a non-.NET repo may drop from here down. ---
+
 # C# files
 [*.cs]
 end_of_line = crlf
+# Suppressions follow CODESTYLE.md "Analyzer Diagnostics and Suppressions": prefer a
+# [SuppressMessage] attribute or the owning project's .editorconfig; relax a rule
+# repo-wide here only when it applies to every project (never a brownfield batch).
 dotnet_diagnostic.IDE0055.severity = none
 dotnet_analyzer_diagnostic.severity = suggestion
 

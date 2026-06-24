@@ -3,16 +3,13 @@ name: Get version information task
 on:
   workflow_call:
     inputs:
-      # Git ref to check out / version (empty = caller's default checkout ref,
-      # `github.ref`). The publisher passes an explicit branch so a scheduled
-      # run — whose `github.ref` is always the default branch — can still
-      # compute NBGV versions for `develop` too.
+      # Git ref to check out and version. Empty falls back to the caller's default checkout ref (`github.ref`); the
+      # publisher passes an explicit branch so a scheduled run can still compute versions for `develop`.
       ref:
         required: false
         type: string
         default: ''
     outputs:
-      # Version information outputs
       SemVer2:
         value: ${{ jobs.get-version.outputs.SemVer2 }}
       AssemblyVersion:
@@ -21,9 +18,7 @@ on:
         value: ${{ jobs.get-version.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion:
         value: ${{ jobs.get-version.outputs.AssemblyInformationalVersion }}
-      # Full SHA of the commit NBGV computed the version from. Used to pin the
-      # GitHub release tag to the exact built commit (immutable), rather than a
-      # moving branch ref.
+      # Full SHA of the commit the version was computed from, used to pin the release tag to the exact built commit.
       GitCommitId:
         value: ${{ jobs.get-version.outputs.GitCommitId }}
 
@@ -47,11 +42,13 @@ jobs:
           dotnet-version: 10.x
 
       - name: Checkout code step
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
+      # nbgv is floated on @master: its tag stream lags master, so Dependabot tag-tracking would propose a downgrade.
+      # Revisit if dotnet/nbgv resumes regular tagged releases.
       - name: Run Nerdbank.GitVersioning tool step
         id: nbgv
-        uses: dotnet/nbgv@705dad19ab067f12f4e9eeaa60812e01edef5d25 # v0.5.2
+        uses: dotnet/nbgv@master

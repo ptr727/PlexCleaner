@@ -1,0 +1,15 @@
+{
+    "config": {
+        // Prose paragraphs and data-heavy tables/URLs are intentionally long;
+        // reflowing at 80 cols hurts readability and churns diffs.
+        "MD013": false,
+        // Inline HTML is used for reference-link section dividers.
+        "MD033": false,
+        // Require fenced code blocks over the legacy 4-space-indented style.
+        "MD046": { "style": "fenced" },
+        // MD060 (table column style) is not enforced - allow both compact
+        // (`|a|b|`) and padded (`| a | b |`) table pipe spacing.
+        "MD060": false
+    },
+    "gitignore": true
+}
