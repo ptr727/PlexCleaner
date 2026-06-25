@@ -10,6 +10,9 @@ This file is the canonical reference for cross-cutting AI-agent and workflow rul
 - **All commits must be cryptographically signed (SSH or GPG).** Branch protection enforces this on both branches; unsigned commits are rejected on push. Signing depends on environment configuration - `git config commit.gpgsign true`, a configured `user.signingkey`, and a working signing agent (loaded `ssh-agent` for SSH, or `gpg-agent` for GPG). If signing is not configured in the environment, **do not commit** - surface the missing config to the developer and stop at `git add`. Verify before any agent-authored commit (`git config --get commit.gpgsign && ssh-add -L` or the GPG equivalent). **Signing must be live before the *first* commit, not retrofitted.** Turning on `Require signed commits` against a branch that already has unsigned commits forces a rewrite of that entire history to re-sign it - changing every commit SHA and making whoever does the rewrite the committer and signer of every commit (a rebase preserves the `author` field but not the original signatures; you cannot sign another contributor's commits for them). During new-repo setup, never create commits until signing is verified.
 - **Never force push.** Do not run `git push --force` or `git push --force-with-lease` under any circumstances. Force pushing rewrites shared history and can cause data loss.
 - **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
+
+### Git and Commit Rules - Repo-Specific Notes
+
 - **The `develop -> main` release merge is maintainer-only.** Drive `feature -> develop` PRs end-to-end when authorized (commit, push, Copilot review loop, squash-merge), but never self-merge a release to `main`.
 
 ## Branching Model
@@ -43,7 +46,7 @@ This repo uses a **two-phase model by default**: PRs build fast, publishing is b
 
 ### Format
 
-- Imperative subject summarizing the change, <=72 characters, no trailing period. ("Add Direct Play seek-index verification", not "Added X" or "Adds X".)
+- Imperative subject summarizing the change, <=72 characters, no trailing period. ("Add 24-hour PM2.5 average sensor", not "Added X" or "Adds X".)
 - Optional body, blank-line separated, explaining *why* the change is being made when that's non-obvious. The diff shows *what*.
 
 ### Rules
@@ -51,7 +54,7 @@ This repo uses a **two-phase model by default**: PRs build fast, publishing is b
 - Don't write `update stuff`, `wip`, or other vague titles. (Dependabot's default `Bump X from Y to Z` titles are fine - keep them.)
 - Don't add `Co-Authored-By:` lines unless the developer explicitly asks.
 - Don't put release-bump magnitude in the title - no "minor", "patch", "release v0.2.0", etc. Nerdbank.GitVersioning computes the next release version from `version.json` + git history. Dependency versions in dependency-bump titles are fine and expected.
-- Use US English spelling and match the existing heading style of the file you're editing: title case with lowercase short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from); hyphenated compounds capitalize both parts unless the second is a short preposition (*Built-in*, *Direct-Play*, *24-Hour*).
+- Use US English spelling and match the existing heading style of the file you're editing: title case with lowercase short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from); hyphenated compounds capitalize both parts unless the second is a short preposition (*Built-in*, *EPA-Corrected*, *24-Hour*).
 
 ### Examples
 
