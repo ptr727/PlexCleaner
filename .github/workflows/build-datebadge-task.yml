@@ -1,15 +1,10 @@
 name: Build BYOB date badge task
 
+# Caller-gated: the publisher invokes this only when main is published - the badge has no per-branch context, it tracks
+# the last main build.
+
 on:
   workflow_call:
-    inputs:
-      # Logical branch this badge run is for. The badge only updates on
-      # `main`; the publisher passes the branch explicitly so a scheduled run
-      # building `develop` doesn't try to write the main badge. Required (no
-      # `github.ref_name` fallback) so the gate can't silently misfire.
-      branch:
-        required: true
-        type: string
 
 jobs:
 
@@ -21,10 +16,9 @@ jobs:
 
       - name: Get current date step
         id: date
-        run: echo "date=$(date)" >> $GITHUB_OUTPUT
+        run: echo "date=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Build BYOB date badge step
-        if: ${{ inputs.branch == 'main' }}
         uses: RubbaBoy/BYOB@24f464284c1fd32028524b59607d417a2e36fee7 # v1.3.0
         with:
           name: lastbuild

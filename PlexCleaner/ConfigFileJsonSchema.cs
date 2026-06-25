@@ -5,7 +5,7 @@
 // Mark changed or removed attributes as [Obsolete] and [Json.Schema.Generation.JsonExclude] and remove [JsonRequired]
 // Add new attributes to the new class and mark as [JsonRequired]
 // Update the Upgrade() method to handle upgrading from the previous version
-// Update GlobalUsing.cs global using statements to the latest version
+// Update GlobalUsings.cs global using statements to the latest version
 
 using System.Text.Json;
 using System.Text.Json.Nodes;

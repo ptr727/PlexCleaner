@@ -44,6 +44,10 @@ end_of_line = crlf
 [*.sh]
 end_of_line = lf
 
+# Dockerfiles - CRLF breaks RUN heredocs and line continuations
+[{Dockerfile,*.Dockerfile}]
+end_of_line = lf
+
 # Windows scripts
 [*.{cmd,bat,ps1}]
 end_of_line = crlf
@@ -60,6 +64,8 @@ end_of_line = crlf
 dotnet_diagnostic.IDE0055.severity = none
 dotnet_analyzer_diagnostic.severity = suggestion
 
+# PlexCleaner adaptation: repo-wide CA relaxations that apply to every project here (a console app, not a
+# reusable library). Per CODESTYLE.md these are justified repo-wide because they hold for all projects.
 # Public API surface rules: not applicable, this is a console app not a reusable library
 dotnet_diagnostic.CA1002.severity = none  # Do not expose List<T>
 dotnet_diagnostic.CA1024.severity = none  # Use properties where appropriate
