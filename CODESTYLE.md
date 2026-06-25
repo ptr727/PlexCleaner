@@ -40,7 +40,7 @@ These apply repo-wide, in every directory:
 
 *This section applies only to the .NET side. A repo with no .NET projects still carries it (the file is carried whole) and ignores it.*
 
-This is the style guide for the **.NET projects** in this repo.
+This is the style guide for any **.NET projects** in this repo.
 
 ### Build Requirements
 
@@ -345,7 +345,7 @@ Follow the scope hierarchy in [Analyzer Diagnostics and Suppressions](#analyzer-
 
 *This section applies only to the Python side. A repo with no Python projects still carries it (the file is carried whole) and ignores it.*
 
-This is the style guide for the **Python project** in this repo.
+This is the style guide for any **Python project(s)** in this repo.
 
 ### Toolchain
 
