@@ -75,10 +75,7 @@ jobs:
     if: >-
       github.event.action == 'synchronize' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (
-        github.event.pull_request.user.login == 'dependabot[bot]' ||
-        github.event.pull_request.user.login == 'ptr727-codegen[bot]'
-      ) &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.actor != github.event.pull_request.user.login
     permissions:
       pull-requests: write

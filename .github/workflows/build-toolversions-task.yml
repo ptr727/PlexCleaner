@@ -52,7 +52,8 @@ jobs:
           run: |
             FILE="${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}"
             echo OS: $(. /etc/os-release; echo $PRETTY_NAME) >> /versions/$FILE
-            echo dotNET: $(dotnet --info) >> /versions/$FILE
+            echo dotNET: >> /versions/$FILE
+            dotnet --info >> /versions/$FILE
             echo PlexCleaner: $(/PlexCleaner/PlexCleaner --version) >> /versions/$FILE
             echo HandBrakeCLI: $(HandBrakeCLI --version) >> /versions/$FILE
             echo MediaInfo: $(mediainfo --version) >> /versions/$FILE
