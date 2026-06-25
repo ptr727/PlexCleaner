@@ -82,7 +82,7 @@ Critical performance feature - DO NOT break compatibility:
 - Each `.mkv` gets a `.PlexCleaner` sidecar JSON file
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
-- Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsing.cs`)
+- Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
 - Processing skips verified files unless sidecar invalidated
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
 - Sidecar operations: `Create()`, `Read()`, `Update()`, `Delete()`
@@ -210,7 +210,7 @@ For formatter, EditorConfig, pre-commit hooks, line endings, and charset details
 - Prefer `Debug.Assert()` for internal invariants
 - Logging: Serilog with thread IDs (`Log.Information/Warning/Error`)
 - Exception handling: uses broad `catch(Exception)` blocks at boundary points
-- Global usings: `GlobalUsing.cs` defines project-wide type aliases (`ConfigFileJsonSchema`, `SidecarFileJsonSchema`)
+- Global usings: `GlobalUsings.cs` defines project-wide type aliases (`ConfigFileJsonSchema`, `SidecarFileJsonSchema`)
 - `Directory.Build.props`: Common MSBuild properties (`TargetFramework`, `Nullable`, `ImplicitUsings`, `AnalysisLevel`, etc.) shared across all projects live here at the solution root. Do not duplicate these in individual `.csproj` files -- only add a property to a `.csproj` when it is project-specific or overrides the shared default.
 - `Directory.Packages.props`: All NuGet package versions are centralised here via `PackageVersion` items. `PackageReference` elements in `.csproj` files must not include a `Version` attribute. Asset metadata (`PrivateAssets`, `IncludeAssets`) stays in the `.csproj` `PackageReference` element.
 
@@ -382,7 +382,7 @@ Two-phase model - reusable `*-task.yml` workflows orchestrated by two entry poin
 - Handle cross-platform paths (`Path.Combine`, forward slashes in Docker)
 - Use modern C# features (collection expressions, pattern matching, extensions)
 - Version schemas when making breaking changes
-- Update global using aliases in `GlobalUsing.cs` when changing schema versions
+- Update global using aliases in `GlobalUsings.cs` when changing schema versions
 
 ### Performance Considerations
 
@@ -438,7 +438,7 @@ Two-phase model - reusable `*-task.yml` workflows orchestrated by two entry poin
 - **SelectMediaProps.cs**: Track filtering and selection logic
 - **CommandLineOptions.cs**: CLI parsing, option definitions
 - **Extensions.cs**: Logger extensions, implicit class extensions
-- **GlobalUsing.cs**: Global type aliases for schema versions
+- **GlobalUsings.cs**: Global type aliases for schema versions
 - **KeepAwake.cs**: System sleep prevention
 - **PlexCleaner.defaults.json**: Canonical configuration reference
 - **.editorconfig** / **.csharpier.json**: Code style definitions
