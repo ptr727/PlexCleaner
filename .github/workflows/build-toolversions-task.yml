@@ -33,7 +33,7 @@ jobs:
         env:
           # `main` => the `latest` tag rendered into the Docker Hub README via
           # the `latest.ver` m4 include; `develop` => the `develop` tag and a
-          # `develop.ver` file kept distinct for the matrix (informational —
+          # `develop.ver` file kept distinct for the matrix (informational -
           # the Docker Hub README is rendered from main only).
           TAG: ${{ inputs.branch == 'main' && 'latest' || 'develop' }}
           FILE: ${{ inputs.branch == 'main' && 'latest.ver' || 'develop.ver' }}

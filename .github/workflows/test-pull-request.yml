@@ -24,7 +24,7 @@ jobs:
       docker: ${{ github.event_name == 'pull_request' && steps.filter.outputs.docker || 'true' }}
       executable: ${{ github.event_name == 'pull_request' && steps.filter.outputs.executable || 'true' }}
     steps:
-      # Build-workflow files are intentionally NOT in the filters — a path
+      # Build-workflow files are intentionally NOT in the filters - a path
       # filter can't tell a logic change in a reusable workflow from an action
       # version bump, so a workflow-only change isn't smoke-built; the reusable
       # workflows are exercised by the next run that uses them (a later code
@@ -103,7 +103,7 @@ jobs:
   # TODO: Workaround for GitHub Actions not supporting status checks on conditional jobs
   # https://github.com/orgs/community/discussions/12395#discussioncomment-12970019
   # This job's name is bound to the branch ruleset as the required status check
-  # context — do NOT rename it.
+  # context - do NOT rename it.
   check-workflow-status:
     name: Check pull request workflow status
     runs-on: ubuntu-latest
@@ -128,6 +128,6 @@ jobs:
             exit 1
           fi
           # unit-test always runs; smoke-build may be legitimately skipped
-          # (no target changed) — `skipped` passes, only failure/cancelled blocks.
+          # (no target changed) - `skipped` passes, only failure/cancelled blocks.
           exit_on_result "unit-test" "${{ needs.unit-test.result }}"
           exit_on_result "smoke-build" "${{ needs.smoke-build.result }}"
