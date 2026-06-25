@@ -18,7 +18,7 @@ Each language defines a **clean-compile** verification - the combination of buil
 
 - **Run it after every code change.** The relevant language's clean-compile must pass before you commit; CI runs the same checks as a backstop.
 - **The named task definition is the canonical spec** - its exact command sequence, arguments, and strictness. You may run it through the VS Code task **or** by invoking the equivalent native commands directly; either is fine **only if the sequence, arguments, and strictness match exactly**. No shortcuts and no more-lenient options (for example, never drop `--verify-no-changes` or loosen a `--severity`).
-- **A local commit/pre-commit gate is the derived repo's choice - the template ships no hook runner only because no single runner fits every language it targets** (a `dotnet`-tool runner like Husky.Net suits .NET but not Python), **not** as a recommendation against commit gates. CI is the authoritative backstop regardless; a local gate is an additive convenience a repo may wire and keep - Husky.Net (and `dotnet husky run` as a style step) for .NET, `pre-commit` for Python. Keeping a working gate is not drift, and "no hooks ship by default" must not be read as "remove your gate to stay aligned".
+- **A local commit/pre-commit gate is the repo's choice.** No single hook runner fits every language (a `dotnet`-tool runner like Husky.Net suits .NET but not Python), so none is mandated - but that is **not** a recommendation against commit gates. CI is the authoritative backstop regardless; a local gate is an additive convenience a repo may wire and keep - Husky.Net (and `dotnet husky run` as a style step) for .NET, `pre-commit` for Python. Keeping a working gate is not drift.
 
 ### Analyzer Diagnostics and Suppressions
 
@@ -54,22 +54,19 @@ This is the style guide for the **.NET projects** in this repo.
 
 2. **Analyzer configuration**
    - `<EnableNETAnalyzers>true</EnableNETAnalyzers>` with `<AnalysisLevel>latest-all</AnalysisLevel>` and `<AnalysisMode>All</AnalysisMode>` (full analyzer set enabled)
-   - `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` - warnings fail the build, so every diagnostic must be addressed, not muted (see [Analyzer Diagnostics and Suppressions](#analyzer-diagnostics-and-suppressions))
+   - `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` - any diagnostic surfaced as a warning fails the build, so it must be fixed or deliberately suppressed, not left to accumulate (see [Analyzer Diagnostics and Suppressions](#analyzer-diagnostics-and-suppressions))
 
 3. **CI lint backstop**
-   - CI runs the same clean-compile commands (`dotnet csharpier check` and `dotnet format style --verify-no-changes`) on every PR as the authoritative backstop
-   - Git hooks are opt-in - no hook runner ships by default; wire `pre-commit`/Husky.Net yourself if you want local enforcement
+   - CI runs the clean-compile checks on every PR as the authoritative backstop
+   - Git hooks are optional; a repo may wire a local runner (Husky.Net) for pre-commit enforcement, but CI is the gate that matters
 
 #### Build Tasks
 
-Available VS Code tasks (run them from VS Code's task runner - **Terminal -> Run Task** - or an agent's task-running tool). The first three are the clean-compile set, carried verbatim; the rest are convenience tasks a derived repo adapts or drops:
+Available VS Code tasks (run them from VS Code's task runner - **Terminal -> Run Task** - or an agent's task-running tool). The three clean-compile tasks below are carried verbatim; a repo adds its own convenience tasks (tool updates, dependency upgrades, benchmarks) on top:
 
 - `.NET Build`: Build with diagnostic verbosity *(clean-compile)*
 - `CSharpier Format`: Auto-format code with CSharpier *(clean-compile)*
 - `.NET Format`: Run CSharpier and build, then verify formatting and style with `--verify-no-changes` *(clean-compile; the task to run after edits)*
-- `.NET Tool Update`: Update dotnet tools *(convenience)*
-- `.NET Outdated Upgrade`: Upgrade outdated NuGet dependencies, interactive prompt *(convenience)*
-- `.NET Benchmark`: Run BenchmarkDotNet *(project-specific; present only if a Benchmarks project exists)*
 
 ### Tooling and Editor
 
@@ -83,7 +80,7 @@ Available VS Code tasks (run them from VS Code's task runner - **Terminal -> Run
    - `dotnet-outdated-tool`: Dependency update checks
    - Nerdbank.GitVersioning: Version management
 
-Pre-commit git hooks are not installed by default - CI is the lint backstop. Hooks are opt-in; wire Husky.Net (or another runner) yourself if you want local enforcement.
+CI is the authoritative lint backstop. Local pre-commit hooks are optional - wire Husky.Net (or another runner) if you want local enforcement.
 
 #### Editor Baseline
 
@@ -111,7 +108,7 @@ Note: Code snippets are illustrative examples only. Replace namespaces/types to 
    - Top-level statements for console apps
    - Pattern matching over traditional checks
    - Collection expressions when types loosely match
-   - Extension methods declared inside an `extension(<receiver>) { ... }` block
+   - Extension methods - the classic `this`-parameter form, or an `extension(<receiver>) { ... }` block on C# 14+
    - Implicit object creation when type is apparent
    - Range and index operators
 
