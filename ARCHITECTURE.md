@@ -311,7 +311,7 @@ Check states with `HasFlag()`, combine with `|=`
 
 ### Test Execution
 
-- Task: `.Net Build` (VS Code task) for builds
+- Task: `.NET Build` (VS Code task) for builds
 - Unit tests: `dotnet test` or VS Code test explorer
 - Docker tests: Download Matroska test files from GitHub
 - CI: Separate workflows for build tests and Docker tests

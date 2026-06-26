@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": ".Net Build",
+            "label": ".NET Build",
             "type": "process",
             "command": "dotnet",
             "args": [
@@ -20,7 +20,7 @@
             }
         },
         {
-            "label": ".Net Format",
+            "label": ".NET Format",
             "type": "process",
             "command": "dotnet",
             "args": [
@@ -40,7 +40,7 @@
             "dependsOrder": "sequence",
             "dependsOn": [
                 "CSharpier Format",
-                ".Net Build"
+                ".NET Build"
             ]
         },
         {
@@ -62,7 +62,7 @@
             }
         },
         {
-            "label": ".Net Tool Update",
+            "label": ".NET Tool Update",
             "type": "process",
             "command": "dotnet",
             "args": [
@@ -95,7 +95,7 @@
             }
         },
         {
-            "label": ".Net Outdated Upgrade",
+            "label": ".NET Outdated Upgrade",
             "type": "process",
             "command": "dotnet",
             "args": [

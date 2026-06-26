@@ -15,7 +15,7 @@
             ]
         },
         {
-            "name": ".Net Format",
+            "name": ".NET Format",
             "command": "dotnet",
             "args": [
                 "format",

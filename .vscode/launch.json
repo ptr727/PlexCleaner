@@ -10,7 +10,7 @@
             "name": "Help",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "--help",
@@ -23,7 +23,7 @@
             "name": "Process Help",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
@@ -37,7 +37,7 @@
             "name": "Version",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "--version",
@@ -50,7 +50,7 @@
             "name": "Get Version Info",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getversioninfo",
@@ -64,7 +64,7 @@
             "name": "Default Settings",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "defaultsettings",
@@ -78,7 +78,7 @@
             "name": "Process Single",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
@@ -96,7 +96,7 @@
             "name": "Process Quickscan",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
@@ -116,7 +116,7 @@
             "name": "Process TestSnippets Quickscan",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
@@ -137,7 +137,7 @@
             "name": "Process Parallel TestSnippets Quickscan",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "process",
@@ -160,7 +160,7 @@
             "name": "Monitor",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "monitor",
@@ -179,7 +179,7 @@
             "name": "ReMux",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "remux",
@@ -198,7 +198,7 @@
             "name": "ReEncode",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "reencode",
@@ -217,7 +217,7 @@
             "name": "DeInterlace",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "deinterlace",
@@ -236,7 +236,7 @@
             "name": "Remove ClosedCaptions",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "removeclosedcaptions",
@@ -255,7 +255,7 @@
             "name": "Remove Subtitles",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "removesubtitles",
@@ -273,7 +273,7 @@
             "name": "Verify",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "verify",
@@ -292,7 +292,7 @@
             "name": "Get Tag Map",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "gettagmap",
@@ -309,7 +309,7 @@
             "name": "Get Media Info",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getmediainfo",
@@ -326,7 +326,7 @@
             "name": "Test Media Info",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "testmediainfo",
@@ -344,7 +344,7 @@
             "name": "Get Tool Info",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "gettoolinfo",
@@ -361,7 +361,7 @@
             "name": "Check for new Tools",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "checkfornewtools",
@@ -377,7 +377,7 @@
             "name": "Create Sidecar",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "createsidecar",
@@ -394,7 +394,7 @@
             "name": "Update Sidecar",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "updatesidecar",
@@ -411,7 +411,7 @@
             "name": "Get Sidecar Info",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "getsidecarinfo",
@@ -428,7 +428,7 @@
             "name": "Create Schema",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/PlexCleaner/debug/PlexCleaner.dll",
             "args": [
                 "createschema",
@@ -444,7 +444,7 @@
             "name": "Sandbox",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": ".Net Build",
+            "preLaunchTask": ".NET Build",
             "program": "${workspaceFolder}/.artifacts/bin/Sandbox/debug/Sandbox.dll",
             "args": [],
             "cwd": "${workspaceFolder}/.artifacts/bin/Sandbox/debug",
