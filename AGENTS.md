@@ -182,7 +182,7 @@ Intentional deviations from a literal verbatim carry, kept on purpose:
 - **`.github/copilot-instructions.md`** keeps this repo's filled `ptr727`/`PlexCleaner` placeholders, its [`ARCHITECTURE.md`](./ARCHITECTURE.md) pointer, and the `.NET`-only language wording (no Python) - already adapted from the template's placeholder/multi-language form.
 - **`CODESTYLE.md`** is carried whole from the template (genericized - generic project-name placeholders, both language sections); this repo's real project names live in `.csproj`/`.editorconfig`, not the style guide.
 - **Husky.Net pre-commit hooks.** This repo runs Husky.Net (a `.husky/` hook runner + a `Husky.Net Run` VS Code task), inverting the template's no-hooks-by-default stance.
-- **`.vscode/tasks.json`** carries the template's `.NET` clean-compile tasks verbatim (labels and command sequences) and adds this repo's Docker/Husky convenience tasks; the `.NET` task-label casing now matches the template (the former `.Net` casing was re-converged to the template's official casing per [`CODESTYLE.md`](./CODESTYLE.md)).
+- **`.vscode/tasks.json`** carries the template's `.NET` clean-compile tasks verbatim (labels and command sequences) and adds this repo's Docker/Husky convenience tasks (the intentional deviation); task-label casing follows the template's official `.NET` casing per [`CODESTYLE.md`](./CODESTYLE.md).
 
 ## Workflow YAML Conventions
 
