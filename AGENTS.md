@@ -10,6 +10,9 @@ This file is the canonical reference for cross-cutting AI-agent and workflow rul
 - **All commits must be cryptographically signed (SSH or GPG).** Branch protection enforces this on both branches; unsigned commits are rejected on push. Signing depends on environment configuration - `git config commit.gpgsign true`, a configured `user.signingkey`, and a working signing agent (loaded `ssh-agent` for SSH, or `gpg-agent` for GPG). If signing is not configured in the environment, **do not commit** - surface the missing config to the developer and stop at `git add`. Verify before any agent-authored commit (`git config --get commit.gpgsign && ssh-add -L` or the GPG equivalent). **Signing must be live before the *first* commit, not retrofitted.** Turning on `Require signed commits` against a branch that already has unsigned commits forces a rewrite of that entire history to re-sign it - changing every commit SHA and making whoever does the rewrite the committer and signer of every commit (a rebase preserves the `author` field but not the original signatures; you cannot sign another contributor's commits for them). During new-repo setup, never create commits until signing is verified.
 - **Never force push.** Do not run `git push --force` or `git push --force-with-lease` under any circumstances. Force pushing rewrites shared history and can cause data loss.
 - **Never run destructive git commands** (`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`) without explicit developer instruction.
+
+### Git and Commit Rules - Repo-Specific Notes
+
 - **The `develop -> main` release merge is maintainer-only.** Drive `feature -> develop` PRs end-to-end when authorized (commit, push, Copilot review loop, squash-merge), but never self-merge a release to `main`.
 
 ## Branching Model
@@ -22,7 +25,7 @@ This file is the canonical reference for cross-cutting AI-agent and workflow rul
   - *Main* - the check is graph-based; it asks whether main's tip commit is reachable from develop, not whether the two branches have the same content. After any develop -> main release, main's tip is a brand-new merge commit that develop's history doesn't contain. Forward-only develop never adds it (no back-merge of main into develop), so the check would fail on every subsequent release.
   - *Develop* - bot auto-merge incompatibility. When two bot PRs against develop land in the same minute (e.g. two grouped Dependabot PRs from the same daily run), the first to merge pushes the second into `mergeStateStatus: BEHIND`. GitHub's auto-merge will not fire while the strict flag is on, and nothing in the workflow set auto-updates a bot branch in that window - the merge-bot enables auto-merge via `gh pr merge --auto` but never rebases a stalled branch onto base (see [`merge-bot-pull-request.yml`](./.github/workflows/merge-bot-pull-request.yml)). Real file-level conflicts are still caught textually (`mergeable: CONFLICTING` blocks merge regardless); semantic-but-not-textual conflicts that combine cleanly are caught by the post-merge develop CI run rather than pre-merge. Do not reintroduce the strict flag on develop thinking it's hygiene - it breaks bot auto-merge.
 - **Dependabot targets both `main` and `develop` in parallel.** [`.github/dependabot.yml`](./.github/dependabot.yml) duplicates every ecosystem entry (one per branch). Each branch absorbs its own bot PRs independently, so neither falls behind, and the forward-only rule still holds (nothing is back-merged from main to develop - both branches receive their updates directly). Parallel auto-merge across same-batch bot PRs is race-proof only because both rulesets have the strict "up to date" flag off (see bullet above). The merge-bot ([`.github/workflows/merge-bot-pull-request.yml`](./.github/workflows/merge-bot-pull-request.yml)) dispatches `--squash` or `--merge` from each PR's base ref via a `case` statement so the form matches the ruleset on either base. Dependabot **security** PRs (CVE-driven) always open against the repo default branch (`main`) regardless of `target-branch` - the same `case` statement covers them. Semver-major NuGet bumps gate on human review; everything else auto-merges.
-- **Maintainer repair commits on a Dependabot PR still auto-merge.** The merge-bot's `merge-dependabot` job gates on the PR *author* (`dependabot[bot]`), not the event actor, and fires on `opened` / `reopened` / `synchronize`, so a maintainer's fix-up commits pushed onto a Dependabot branch still auto-merge once CI passes (auto-merge is re-asserted idempotently via `gh pr merge --auto`). It runs only for Dependabot-authored PRs that originate from this repository, not forks.
+- **Maintainer-pushed commits on a bot PR auto-disable auto-merge.** The merge-bot's `merge-dependabot` job only fires on `opened` / `reopened` events (auto-merge is enabled exactly once per PR, for Dependabot-authored PRs that originate from this repository, not forks). When a maintainer pushes commits to the bot's branch (a `synchronize` event with a non-bot actor), the `disable-auto-merge-on-maintainer-push` job fires and calls `gh pr merge --disable-auto`; the maintainer's commits stay in the PR but won't auto-merge with the bot's content. Re-enable manually (`gh pr merge --auto <PR>`) when ready. The merge-bot is on `pull_request_target` with per-PR concurrency; it carries only `merge-dependabot` + `disable-auto-merge-on-maintainer-push` (no `merge-codegen` / `merge-upstream-version` - this repo has neither codegen nor an upstream-version tracker).
 - **App-token workflows use Client ID, not App ID.** `actions/create-github-app-token` deprecated the numeric `app-id` input in v3.0.0; the merge-bot uses `client-id: ${{ secrets.CODEGEN_APP_CLIENT_ID }}` (with `private-key: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}`). The App token - not `GITHUB_TOKEN` - is required so the merge push is committed by the App and fires downstream workflows (`GITHUB_TOKEN` pushes are blocked from triggering further runs by GitHub's recursion guard). When adding new App-token call sites, use the same form - do not reintroduce `app-id`.
 - **Why parallel dual-target rather than develop-only with eventual flow-through:** consumers pull the Docker image and the release executables from `main` directly. A develop-only model would leave `main` running stale code during long-running develop features, so both branches receive their own bot updates on their own cadence and each stays current.
 
@@ -43,7 +46,7 @@ This repo uses a **two-phase model by default**: PRs build fast, publishing is b
 
 ### Format
 
-- Imperative subject summarizing the change, <=72 characters, no trailing period. ("Add Direct Play seek-index verification", not "Added X" or "Adds X".)
+- Imperative subject summarizing the change, <=72 characters, no trailing period. ("Add 24-hour PM2.5 average sensor", not "Added X" or "Adds X".)
 - Optional body, blank-line separated, explaining *why* the change is being made when that's non-obvious. The diff shows *what*.
 
 ### Rules
@@ -51,7 +54,7 @@ This repo uses a **two-phase model by default**: PRs build fast, publishing is b
 - Don't write `update stuff`, `wip`, or other vague titles. (Dependabot's default `Bump X from Y to Z` titles are fine - keep them.)
 - Don't add `Co-Authored-By:` lines unless the developer explicitly asks.
 - Don't put release-bump magnitude in the title - no "minor", "patch", "release v0.2.0", etc. Nerdbank.GitVersioning computes the next release version from `version.json` + git history. Dependency versions in dependency-bump titles are fine and expected.
-- Use US English spelling and match the existing heading style of the file you're editing: title case with lowercase short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from); hyphenated compounds capitalize both parts unless the second is a short preposition (*Built-in*, *Direct-Play*, *24-Hour*).
+- Use US English spelling and match the existing heading style of the file you're editing: title case with lowercase short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from); hyphenated compounds capitalize both parts unless the second is a short preposition (*Built-in*, *EPA-Corrected*, *24-Hour*).
 
 ### Examples
 
@@ -103,7 +106,22 @@ Applies to code and workflow (`#`) comments alike.
 
 ## PR Review Etiquette
 
+> **Mandatory in every derived repo.** This entire "PR Review Etiquette" section is the provider-agnostic review-loop *contract* and must be carried **verbatim** into every repo derived from this template, alongside the [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) "GitHub Copilot Review Runbook" that implements it. Without both in-repo, an agent working in the derived repo has no pointer to the reliable Copilot mechanics and falls back to ad-hoc (and known-broken) behavior.
+
 The repo runs a review loop on every PR: local agent iteration plus remote automated review (GitHub Copilot is the configured reviewer). Treat this as a contract regardless of which local agent authored the changes.
+
+### Merge Gate (read this first)
+
+**Do not merge - and do not enable auto-merge - unless ALL of these hold:**
+
+1. Required status checks are green (`mergeStateStatus: CLEAN`), **and**
+2. A Copilot review is confirmed on the **current head SHA** (not an earlier push), **and**
+3. **Every** Copilot finding on that head SHA is closed out - all review threads resolved, **and** any issue-level Copilot comments (which have no resolve action) triaged and replied to - so zero outstanding findings remain, **and**
+4. The maintainer has given **explicit** permission to merge.
+
+`mergeStateStatus: CLEAN` reflects **only** required statuses - it never reflects open bot review comments, so `CLEAN` alone is **never** sufficient to merge. A green/`CLEAN` PR with an unresolved Copilot finding fails this gate; treat it as "not mergeable" no matter what the merge-state field says. The agent never merges on its own (consistent with "default to staging"; merging is maintainer-authorized).
+
+**Merging is not releasing.** A merge to a release branch does **not** by itself publish; publishing is a separate, explicitly configured step in the repo's release pipeline (e.g. a scheduled run, a manual dispatch, or an opted-in publish-on-merge trigger), not an automatic consequence of merging. Never describe a merge as cutting a release, and never trigger a publish without explicit maintainer instruction.
 
 ### Expected Review Loop
 
@@ -115,7 +133,7 @@ The repo runs a review loop on every PR: local agent iteration plus remote autom
 6. Reply to each thread and resolve what was addressed.
 7. Re-run the loop after every fix push until no actionable findings remain.
 
-`mergeStateStatus: CLEAN` only checks required statuses; it does not block on bot review comments. Drive the loop to green - review confirmed on the latest head SHA and every actionable finding closed - and then **wait for the maintainer's explicit permission to merge**. The agent does not merge on its own (consistent with "default to staging"; merging is maintainer-authorized).
+Drive the loop to green - review confirmed on the latest head SHA and every actionable finding closed - then stop and apply the **Merge Gate** above: all four preconditions must hold, and `mergeStateStatus: CLEAN` alone never satisfies it.
 
 For provider-specific mechanics (how to request review, query review state, post replies, resolve threads), see the **GitHub Copilot Review Runbook** in [.github/copilot-instructions.md](./.github/copilot-instructions.md). This file owns the contract; that file owns the mechanics.
 
@@ -150,10 +168,21 @@ Anti-pattern: don't keep flipping the code on the same style point. Flip the rul
 This repo is derived from [`ptr727/ProjectTemplate`](https://github.com/ptr727/ProjectTemplate) and re-syncs against it periodically, not just at creation.
 
 - **Verbatim carries.** Pull the current template version of each shared artifact and re-apply it, adapting only this repo's placeholders: [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) (the Copilot review runbook - change only the `<owner>`/`<repo>`/`<N>` values in its API snippets), [`.markdownlint-cli2.jsonc`](./.markdownlint-cli2.jsonc), [`.editorconfig`](./.editorconfig), [`.gitattributes`](./.gitattributes), and this file's [PR Review Etiquette](#pr-review-etiquette) section. The `.editorconfig` EOL/per-extension block is always-verbatim; its `[*.cs]`/ReSharper block is .NET-only and is carried here. Keep `copilot-instructions.md` **narrow** (provider mechanics plus the commit/PR-title summary); project-specific conventions live in this file and the architecture deep-dive lives in [`ARCHITECTURE.md`](./ARCHITECTURE.md), not there - non-Copilot agents are not directed to that file.
-- **CODESTYLE.md.** Re-sync the whole file from the template, then keep the **General** section plus the **.NET** language section and drop the language sections this repo doesn't ship (this repo is .NET-only). Repo-root placement is load-bearing - `AGENTS.md` and `.github/copilot-instructions.md` link it by relative path. Adapt the in-section repo-specific bits: the .NET project-folder list, the `InternalsVisibleTo` project names, and the VS Code task labels. Replacing the file wholesale and dropping whole sections is simpler to keep current than hand-editing per-language snippets.
-- **.vscode/tasks.json.** Carry the named **clean-compile** task definitions verbatim - `.Net Build`, `CSharpier Format`, and `.Net Format` (which chains the first two then `dotnet format style --verify-no-changes`). Their names are owned by the `CODESTYLE.md` ".NET" section and their command sequence + arguments are the canonical clean-compile spec; don't loosen them. Convenience tasks are the adapt zone.
+- **CODESTYLE.md.** Re-sync the whole file from the template; it is carried whole, so the language sections this repo doesn't ship stay inert (this repo is .NET-only). Repo-root placement is load-bearing - `AGENTS.md` and `.github/copilot-instructions.md` link it by relative path. The file is genericized with neutral placeholders, so re-sync is a clean wholesale overwrite.
+- **.vscode/tasks.json.** Carry the named **clean-compile** task definitions verbatim - `.NET Build`, `CSharpier Format`, and `.NET Format` (which chains the first two then `dotnet format style --verify-no-changes`). Their names are owned by the `CODESTYLE.md` ".NET" section and their command sequence + arguments are the canonical clean-compile spec; don't loosen them. Convenience tasks are the adapt zone.
 - **Release notes.** Keep a short release-notes summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release.
 - **Report drift upstream.** When a re-sync surfaces a template gap, an outdated instruction, or something that bit this repo and would bite the next derived repo, open an issue in [`ptr727/ProjectTemplate`](https://github.com/ptr727/ProjectTemplate) rather than only patching locally - the template is the single source of truth, and this upstream-issue rule is this repo's only cross-repo obligation. Do not maintain or reference a "known downstream" registry, and do not name sibling repositories in docs, comments, or workflows - that registry and the maintainer fan-out duty live in the template hub only.
+
+### Template adaptations
+
+Intentional deviations from a literal verbatim carry, kept on purpose:
+
+- **`.editorconfig`** carries the template verbatim plus a repo-wide block of CA-rule relaxations in `[*.cs]` (console-app, not a library; documented inline). The template's per-extension EOL block - including the `Dockerfile`/`*.Dockerfile` LF pins - is carried as-is.
+- **`.gitattributes`** carries the template verbatim plus a `.husky/pre-commit text eol=lf` pin (this repo ships an extensionless Husky.Net hook, the exact case the template's `*.sh`/extensionless-script note calls out) and a `Docker/README.m4 text eol=lf` pin (m4 source rendered on Linux).
+- **`.github/copilot-instructions.md`** keeps this repo's filled `ptr727`/`PlexCleaner` placeholders, its [`ARCHITECTURE.md`](./ARCHITECTURE.md) pointer, and the `.NET`-only language wording (no Python) - already adapted from the template's placeholder/multi-language form.
+- **`CODESTYLE.md`** is carried whole from the template (genericized - generic project-name placeholders, both language sections); this repo's real project names live in `.csproj`/`.editorconfig`, not the style guide.
+- **Husky.Net pre-commit hooks.** This repo runs Husky.Net (a `.husky/` hook runner + a `Husky.Net Run` VS Code task), inverting the template's no-hooks-by-default stance.
+- **`.vscode/tasks.json`** carries the template's `.NET` clean-compile tasks verbatim (labels and command sequences) and adds this repo's Docker/Husky convenience tasks (the intentional deviation); task-label casing follows the template's official `.NET` casing per [`CODESTYLE.md`](./CODESTYLE.md).
 
 ## Workflow YAML Conventions
 

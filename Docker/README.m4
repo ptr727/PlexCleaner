@@ -22,7 +22,7 @@ Refer to the [project](https://github.com/ptr727/PlexCleaner) page.
 ## Docker Tags
 
 - `latest`:
-  - Based on [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` latest stable release base image.
+  - Based on the [Ubuntu Rolling](https://releases.ubuntu.com/) `ubuntu:rolling` base image (latest interim release).
   - Multi-architecture image supporting `linux/amd64` and `linux/arm64` builds.
   - Builds from the release [main branch](https://github.com/ptr727/PlexCleaner/tree/main).
 - `develop`:

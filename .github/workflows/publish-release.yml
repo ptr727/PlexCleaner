@@ -17,7 +17,7 @@ on:
 # both regardless of the triggering ref, so a ref-scoped group would let a
 # scheduled run (ref=main) and a manual dispatch (ref=develop) run concurrently
 # and double-push. Non-publishing `push` runs (the two-phase default) get a
-# unique per-run group so they don't queue behind — or delay — a real publish;
+# unique per-run group so they don't queue behind - or delay - a real publish;
 # they only execute the no-op `setup` job and skip everything else.
 concurrency:
   group: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || vars.PUBLISH_ON_MERGE == 'true') && github.workflow || format('{0}-noop-{1}', github.workflow, github.run_id) }}
@@ -106,27 +106,56 @@ jobs:
   docker-readme:
     name: Publish Docker Hub readme job
     needs: [setup, tool-versions]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    # Caller-gated to main: there is one Docker Hub README and the m4 template embeds the `latest` image's tool
+    # versions. The task is no longer self-gating, so gate here and render only when the matrix includes main.
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
     uses: ./.github/workflows/publish-docker-readme-task.yml
     secrets: inherit
+    permissions:
+      contents: read
+      actions: read
     with:
-      # The task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
+      ref: main
+      repositories: '["ptr727/plexcleaner"]'
+      # Download the main leg's tool-versions artifact (file `latest.ver`) to $RUNNER_TEMP/transform, then render
+      # Docker/README.md from the m4 template whose `include({{latest.ver}})` resolves against that include dir.
+      transform-artifact: versions-main
+      transform-run: m4 --include=$RUNNER_TEMP/transform ./Docker/README.m4 > ./Docker/README.md
+      readme-filepath: ./Docker/README.md
 
+  # Caller-gated to main: the badge has no per-branch context, so it updates only when main is published.
   date-badge:
     name: Create BYOB date badge job
     needs: [setup, publish]
-    if: ${{ needs.setup.outputs.publish == 'true' }}
-    strategy:
-      matrix:
-        branch: ${{ fromJSON(needs.setup.outputs.branches) }}
+    if: ${{ needs.setup.outputs.publish == 'true' && contains(fromJSON(needs.setup.outputs.branches), 'main') }}
     uses: ./.github/workflows/build-datebadge-task.yml
     secrets: inherit
     permissions:
       contents: write
-    with:
-      # The badge task self-gates to `main`; the develop leg is a no-op.
-      branch: ${{ matrix.branch }}
+
+  # Release artifacts are an intra-run handoff (durable copies live on the GitHub release), so leaving them accumulates
+  # against the small account-wide storage quota; delete them once every consumer has read them.
+  cleanup-artifacts:
+    name: Delete workflow artifacts job
+    needs: [setup, publish, tool-versions, docker-readme, date-badge]
+    if: ${{ always() && needs.setup.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete workflow artifacts step
+        # continue-on-error: best-effort housekeeping must never red the run, even on an unexpected failure.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! ids=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --paginate \
+            --jq '.artifacts[].id'); then
+            echo "::warning::Could not list run artifacts; skipping cleanup (storage may not be freed)."
+            ids=""
+          fi
+          for artifact_id in $ids; do
+            gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$artifact_id" \
+              || echo "::warning::Failed to delete artifact $artifact_id; continuing."
+          done

@@ -5,7 +5,7 @@ on:
     inputs:
       # Git ref to check out / version (empty = caller's default checkout ref,
       # `github.ref`). The publisher passes an explicit branch so a scheduled
-      # run — whose `github.ref` is always the default branch — can still
+      # run - whose `github.ref` is always the default branch - can still
       # compute NBGV versions for `develop` too.
       ref:
         required: false

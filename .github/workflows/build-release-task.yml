@@ -3,12 +3,12 @@ name: Build project release task
 on:
   workflow_call:
     inputs:
-      # Input to control whether to create a GitHub release
+      # Whether to create a GitHub release.
       github:
         required: false
         type: boolean
         default: false
-      # Input to control whether to push the docker image to Docker Hub
+      # Whether to push the docker image to Docker Hub.
       dockerhub:
         required: false
         type: boolean
@@ -18,30 +18,30 @@ on:
         required: false
         type: string
         default: ''
-      # Logical branch driving config / tags / prerelease for every target.
-      # Required (no `github.ref_name` fallback): the publisher builds both
-      # `main` and `develop` from one run whose `github.ref_name` is `main`,
-      # so a silent fallback would mislabel the develop leg. Every caller
-      # passes it explicitly; a missing value should fail loudly.
+      # Logical branch driving config / tags / prerelease for every target. Required (no fallback) because the
+      # publisher builds both `main` and `develop` in one run, so a silent fallback would mislabel the develop leg.
       branch:
         required: true
         type: string
-      # Smoke mode: reduced, never-published build for fast PR feedback.
-      # Forwarded to every target; also hard-disables every push below so a
-      # smoke run can never publish regardless of the publish flags.
+      # Smoke mode: reduced, never-published build for fast PR feedback. Forwarded to every target and hard-disables
+      # every push below, so a smoke run can never publish regardless of the publish flags.
       smoke:
         required: false
         type: boolean
         default: false
-      # Per-target presence gates. Default true (build everything). A PR smoke
-      # run sets these from the paths-filter so only changed targets build; a
-      # derived project that drops a target deletes its job below and removes
-      # it from `github-release`'s `needs`.
+      # Per-target presence gates. Default true (build everything); a PR smoke run sets these from the paths-filter
+      # so only changed targets build.
       enable_docker:
         required: false
         type: boolean
         default: true
       enable_executable:
+        required: false
+        type: boolean
+        default: true
+      # Set false for a repo that produces no release-asset-* files (e.g. Docker-only): the release is then just the
+      # tag + source zip + README + LICENSE; the artifact download is skipped and the unmatched-files guard relaxes.
+      expect_release_assets:
         required: false
         type: boolean
         default: true
@@ -62,10 +62,7 @@ jobs:
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
-      # Pin to the exact commit get-version resolved (immutable), not the
-      # possibly-moving branch ref: the publisher passes a branch name, and a
-      # commit landing mid-run could otherwise build artifacts from a different
-      # commit than the one the release tag (also GitCommitId) points at.
+      # Pin to the resolved commit so the artifacts match the release tag.
       ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
@@ -77,64 +74,59 @@ jobs:
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:
-      # Pin to the resolved commit (see build-executable) so the pushed image
-      # contents match the SemVer2 tag computed from the same commit.
+      # Pin to the resolved commit so the artifacts match the release tag.
       ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
-      # Conditional push to Docker Hub — never on a smoke build.
+      # Push to Docker Hub, never on a smoke build.
       push: ${{ inputs.dockerhub && !inputs.smoke }}
 
   github-release:
     name: Publish GitHub release job
-    # `&& !inputs.smoke` enforces the "smoke never publishes" guarantee at the
-    # job level too (matching the push gate above), so a smoke caller that also
-    # set `github: true` still can't create a release.
+    # `!inputs.smoke` enforces "smoke never publishes" at the job level, so a smoke caller that also set
+    # `github: true` still can't create a release.
     if: ${{ inputs.github && !inputs.smoke }}
     runs-on: ubuntu-latest
     needs: [get-version, build-executable, build-docker]
 
     steps:
 
-      # Check out the exact built commit (NBGV `GitCommitId`), so the uploaded
-      # release files match the tag even if the branch advances mid-run.
+      # Check out the exact built commit so the uploaded release files match the tag even if the branch advances mid-run.
       - name: Checkout code step
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
 
-      # Safety net: a public (main) release must never carry a prerelease identifier - any '-' in SemVer2 (e.g. the
-      # observed '-g<sha>' git-height suffix). Guards against NBGV mis-detecting the public ref (e.g. a dispatch on a
-      # non-default ref) from publishing a malformed non-prerelease release that GitHub would then mark "Latest".
-      # Root-cause-agnostic backstop to the dispatch-ref guard in publish-release.yml.
+      # Backstop (main only): a public release must not carry a prerelease '-', guarding against NBGV mis-versioning the
+      # public ref (e.g. a dispatch on a non-default ref) into a malformed "Latest" release. Strip '+buildmetadata'
+      # first - a '-' there is legitimate; only a '-' in the core/prerelease segment marks a prerelease.
       - name: Verify public release version step
         if: ${{ inputs.branch == 'main' }}
         env:
           SEMVER2: ${{ needs.get-version.outputs.SemVer2 }}
         run: |
           set -euo pipefail
-          if [[ "$SEMVER2" == *-* ]]; then
+          CORE_AND_PRE="${SEMVER2%%+*}"   # drop +buildmetadata; a '-' here is the genuine prerelease separator
+          if [[ "$CORE_AND_PRE" == *-* ]]; then
             echo "::error::Public (main) release version '$SEMVER2' carries a prerelease suffix; refusing to publish."
             exit 1
           fi
 
-      # Collect every release-asset-<branch>-* artifact by pattern, so the
-      # release job never names a build job and stays reusable as targets change.
+      # Collect assets by the `release-asset-<branch>-*` pattern so this step is target-agnostic: subset releases by
+      # deleting the target, not `enable_*: false` (a skipped `needs` job would skip this release job too). The release
+      # step guards `fail_on_unmatched_files: true`, so at least one `release-asset-*` must match; a repo that drops
+      # every file-producing target (e.g. a Docker-only repo, whose release carries only source zip + README + LICENSE)
+      # relaxes that guard.
       - name: Download release asset artifacts step
+        if: ${{ inputs.expect_release_assets }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: release-asset-${{ inputs.branch }}-*
           merge-multiple: true
           path: ./Publish
 
-      # The weekly publisher re-runs even when a branch has no new commits, so
-      # NBGV can produce a SemVer2 that was already released. GitHub release
-      # creation has no built-in skip-duplicate, and re-publishing an unchanged
-      # version is exactly the churn the two-phase model avoids — so skip the
-      # release step when a release for this tag already exists. A manual
-      # `workflow_dispatch` is allowed through so it can repair/refresh a
-      # partially-created release for the same tag. The Docker mutable tags
-      # (`latest`/`develop`) and base-image refresh still happen regardless.
+      # The weekly publisher re-runs even with no new commits, so the version may already be released. Skip the release
+      # step when a release for this tag already exists to avoid a no-op republish.
       - name: Check for existing release step
         id: release-exists
         env:
@@ -153,21 +145,22 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # `target_commitish` MUST be set explicitly: softprops doesn't pass a
-      # default through, and GitHub's REST API then defaults the new tag to the
-      # repository's default branch (main). Pin it to NBGV's `GitCommitId` —
-      # the exact commit the version was computed from — not `github.sha`
-      # (wrong on the develop leg of the publisher's branch matrix) and not a
-      # branch name (a moving ref a mid-run commit could advance past).
+      # `target_commitish` must be set explicitly: otherwise GitHub's REST API tags the release on the default branch.
+      # Pin it to `GitCommitId` so the tag is on the exact built commit, consistent with the SemVer2 tag and artifacts.
+      # Skip when the release already exists, but always let a manual `workflow_dispatch` through to refresh it.
+      # Every release (any branch, any target) is a tag on the built commit plus the auto-attached source zip, README,
+      # and LICENSE; targets amend it by uploading `release-asset-*` files (binaries/packages) or pushing elsewhere
+      # (image/registry). `fail_on_unmatched_files: true` fails loudly if a promised `release-asset-*` is missing or
+      # misnamed; a no-file-target repo relaxes it (see download step).
       - name: Create GitHub release step
         if: ${{ steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
+          generate_release_notes: true
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
           target_commitish: ${{ needs.get-version.outputs.GitCommitId }}
           prerelease: ${{ inputs.branch != 'main' }}
-          generate_release_notes: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: ${{ inputs.expect_release_assets }}
           files: |
             LICENSE
             README.md
