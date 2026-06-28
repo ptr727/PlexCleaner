@@ -127,10 +127,15 @@ check_security() {
 
 check_secrets() {
   # --paginate: the secrets endpoints page at 30, so without it a repo with many secrets could miss a
-  # required name and report a false failure.
+  # required name and report a false failure. Distinguish an API/auth error (note + skip) from a genuinely
+  # missing secret (FAIL), so a transient failure does not masquerade as every secret being absent.
   local actions deps
-  actions="$(gh api --paginate "repos/$REPO/actions/secrets" --jq '.secrets[].name' 2>/dev/null || true)"
-  deps="$(gh api --paginate "repos/$REPO/dependabot/secrets" --jq '.secrets[].name' 2>/dev/null || true)"
+  if ! actions="$(gh api --paginate "repos/$REPO/actions/secrets" --jq '.secrets[].name' 2>/dev/null)"; then
+    note "could not list Actions secrets (API error); skipping secret-name checks"; return
+  fi
+  if ! deps="$(gh api --paginate "repos/$REPO/dependabot/secrets" --jq '.secrets[].name' 2>/dev/null)"; then
+    note "could not list Dependabot secrets (API error); skipping secret-name checks"; return
+  fi
   for s in "${REQUIRED_ACTIONS_SECRETS[@]}"; do
     assert "actions secret $s present" grep -qx "$s" <<<"$actions"
   done

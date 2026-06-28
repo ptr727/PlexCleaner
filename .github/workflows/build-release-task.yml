@@ -51,7 +51,7 @@ jobs:
   build-executable:
     name: Build executable job
     needs: [get-version, validate]
-    if: ${{ !cancelled() && needs.get-version.result == 'success' && needs.validate.result != 'failure' }}
+    if: ${{ !cancelled() && needs.get-version.result == 'success' && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
@@ -67,7 +67,7 @@ jobs:
   build-docker:
     name: Build Docker job
     needs: [get-version, validate]
-    if: ${{ !cancelled() && needs.get-version.result == 'success' && needs.validate.result != 'failure' }}
+    if: ${{ !cancelled() && needs.get-version.result == 'success' && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:
