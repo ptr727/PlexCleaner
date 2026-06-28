@@ -28,8 +28,15 @@ pass()  { printf '  \033[32mok\033[0m   %s\n' "$*"; }
 fail()  { printf '  \033[31mFAIL\033[0m %s\n' "$*"; FAILED=1; }
 FAILED=0
 
-ruleset_id() { # name -> id (empty if absent)
-  gh api "repos/$REPO/rulesets" --jq ".[] | select(.name==\"$1\") | .id" 2>/dev/null | head -1
+ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on an API error
+  local out
+  # An absent ruleset is a successful call with no match (empty); only a real API error fails. Diagnose to
+  # stderr (not stdout, which the caller's $(...) would swallow) and return non-zero so the run stops with cause.
+  if ! out="$(gh api "repos/$REPO/rulesets" 2>/dev/null)"; then
+    echo "ERROR: could not list rulesets for $REPO (API error - need admin auth on the repo)" >&2
+    return 1
+  fi
+  jq -r ".[] | select(.name==\"$1\") | .id" <<<"$out" | head -1
 }
 
 apply_ruleset() {
