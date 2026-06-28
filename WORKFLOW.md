@@ -129,8 +129,9 @@ with `::error::` before any publish. Downstream jobs `needs:` it.
 CI runs on push to every branch, so GitHub head-resolves the reusable `./...` workflows from the pushed head:
 a pull request that edits a reusable task tests its own copy. CI validates (the reusable `validate-task`:
 `unit-test` + `lint`) and smoke-builds both targets, uploading and pushing nothing. One aggregator job, the
-ruleset-bound required check, gates the merge. Each publish leg reuses the **same** `validate-task` on its own
-branch, so the CI gate and the publish gate are the identical definition.
+ruleset-bound required check, gates the merge. A branch-deletion push (all-zeros `github.sha`) is skipped by a
+`!github.event.deleted` guard on every job, so a deletion never runs a failing build. Each publish leg reuses
+the **same** `validate-task` on its own branch, so the CI gate and the publish gate are the identical definition.
 
 ### The two-target release seam
 
@@ -211,7 +212,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 - **D4.1 Publish only on schedule or dispatch - never on push.** Output: `publish-release` triggers are
   `schedule` (weekly) and `workflow_dispatch` only. There is **no `push` trigger** and no `PUBLISH_ON_MERGE`
-  variable. A merge does not publish. *Prevents per-merge release churn and a blind publish-on-merge.*
+  variable. A merge does not publish; a dispatch is guarded to the default branch (`main`), since the
+  workflow logic resolves from the dispatch ref. *Prevents per-merge release churn and a blind publish-on-merge.*
 - **D4.2 A publish builds both branches in full.** Output: the run matrices over `main` and `develop`; each
   leg builds the executable + Docker targets and creates the GitHub release for its branch (`main` stable /
   `latest`, `develop` prerelease / `develop`). *Prevents a half-published release set.*

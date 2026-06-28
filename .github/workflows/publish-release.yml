@@ -28,6 +28,9 @@ jobs:
   # version is unchanged; the Docker push still refreshes the base image.
   publish:
     name: Publish project release job
+    # A dispatch must come from the default branch (main): the publisher builds both branches from their own
+    # refs, but the workflow logic itself resolves from the dispatch ref, so restrict it for predictability.
+    if: ${{ github.event_name == 'schedule' || github.ref_name == 'main' }}
     strategy:
       fail-fast: false
       matrix:

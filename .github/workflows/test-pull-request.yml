@@ -20,15 +20,18 @@ concurrency:
 
 jobs:
 
+  # `!github.event.deleted` skips a branch-deletion push (github.sha is all-zeros, so checkout/build fail).
   # The same unit-test + lint gate the publisher runs, so the PR gate and the publish gate are identical.
   validate:
     name: Validate job
+    if: ${{ !github.event.deleted }}
     uses: ./.github/workflows/validate-task.yml
 
   # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. Docker smoke is
   # amd64-only and seeds from the branch-scoped cache, so it stays fast.
   smoke-build:
     name: Smoke build job
+    if: ${{ !github.event.deleted }}
     uses: ./.github/workflows/build-release-task.yml
     secrets: inherit
     with:
@@ -39,12 +42,13 @@ jobs:
       branch: ${{ github.ref_name }}
 
   # Single required status check. Its name is the ruleset-bound context in repo-config/ruleset-*.json. Do
-  # not rename it without updating those in lockstep. Must succeed, not merely not-fail.
+  # not rename it without updating those in lockstep. Must succeed, not merely not-fail. Skips on a branch
+  # deletion (when validate/smoke-build also skip), so the deletion push does not fail this required check.
   check-workflow-status:
     name: Check pull request workflow status job
     runs-on: ubuntu-latest
     needs: [validate, smoke-build]
-    if: always()
+    if: ${{ always() && !github.event.deleted }}
     steps:
       - name: Check workflow results step
         run: |
