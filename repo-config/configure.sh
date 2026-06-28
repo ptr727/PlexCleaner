@@ -37,7 +37,9 @@ ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on a
     return 1
   fi
   # shellcheck disable=SC2016  # $n is a jq variable (--arg n), not a shell expansion
-  jq -r --arg n "$1" '.[] | select(.name==$n) | .id' <<<"$out" | head -1
+  # Select the first match inside jq (not `| head -1`): under pipefail, head closing the pipe early can
+  # SIGPIPE jq and fail the function.
+  jq -r --arg n "$1" '[.[] | select(.name==$n) | .id] | first // empty' <<<"$out"
 }
 
 apply_ruleset() {

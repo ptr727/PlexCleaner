@@ -22,8 +22,8 @@ templates); repository administration config-as-code is the maintainer's, so it 
   commits, the same required check, strict **off**; no linear-history rule).
 - [`settings.json`](./settings.json) - repository settings (auto-merge on; squash **and** merge-commit
   allowed; rebase off; auto-delete-on-merge **off**, so `main`/`develop` survive a promotion - Dependabot
-  deletes its own merged branches, and a feature branch is removed via the merge UI or `gh pr merge
-  --delete-branch`).
+  deletes its own merged branches, and a feature branch is removed via the merge UI or
+  `gh pr merge --delete-branch`).
 
 ## What it does not store
 
