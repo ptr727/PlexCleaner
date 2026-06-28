@@ -5,8 +5,8 @@ name: Validate task
 on:
   workflow_call:
     inputs:
-      # Git ref to validate (empty = default checkout ref). The publisher passes each branch so its leg
-      # validates the branch it publishes.
+      # Git ref to validate (empty = default checkout ref). The publisher passes its trigger branch so the
+      # publish run validates the branch it publishes.
       ref:
         required: false
         type: string

@@ -2,8 +2,8 @@ name: Build Docker image task
 
 # Builds the multi-arch image (linux/amd64,arm64) and, on a main publish, pushes it plus the Docker Hub overview.
 # Branch drives config and tags: main => Release/`latest`, else Debug/`develop`, plus the `:SemVer2` tag. Smoke builds
-# amd64 only and never pushes; registry buildcache is branch-scoped. The orchestrator always passes `branch` (the
-# publisher builds develop from a main-ref run, so a github.ref_name fallback would mistag it).
+# amd64 only and never pushes; registry buildcache is branch-scoped. The orchestrator passes `branch` explicitly
+# (the publisher builds one branch per run - the trigger ref - and smoke passes github.ref_name).
 on:
   workflow_call:
     inputs:
@@ -26,7 +26,7 @@ on:
         required: false
         type: boolean
         default: false
-      # Version from the orchestrator's single NBGV run (one version per leg, threaded). This task does not
+      # Version from the orchestrator's single NBGV run (threaded). This task does not
       # re-run NBGV on the detached commit, which could classify the branch differently.
       semver2:
         required: true
