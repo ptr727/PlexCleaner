@@ -21,9 +21,10 @@ templates); repository administration config-as-code is the maintainer's, so it 
 - [`ruleset-main.json`](./ruleset-main.json) - the `main` branch ruleset (merge-commit-only, signed
   commits, the same required check, strict **off**; no linear-history rule).
 - [`settings.json`](./settings.json) - repository settings (auto-merge on; squash **and** merge-commit
-  allowed; rebase off; auto-delete-on-merge **off**, so `main`/`develop` survive a promotion - Dependabot
-  deletes its own merged branches, and a feature branch is removed via the merge UI or
-  `gh pr merge --delete-branch`).
+  allowed; rebase off; auto-delete-on-merge **off**). Auto-delete is **off** so a `develop -> main` promotion
+  does not delete `develop` (GitHub's auto-delete would remove the merged head branch); the trade-off is that
+  merged bot and feature branches are not auto-removed - clean them up manually (the merge UI's delete button
+  or `gh pr merge --delete-branch`).
 
 ## What it does not store
 
