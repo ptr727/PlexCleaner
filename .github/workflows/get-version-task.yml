@@ -1,7 +1,8 @@
 name: Get version information task
 
-# Run NBGV once and expose the version outputs. The publisher passes an explicit ref per matrix leg so a scheduled
-# run (whose github.ref is always the default branch) still versions develop correctly.
+# Run NBGV once and expose the version outputs. The publisher passes its trigger branch as ref so the run
+# versions the branch it publishes; github.ref matches that branch (one branch per run), so NBGV classifies it
+# correctly without overriding github.ref.
 on:
   workflow_call:
     inputs:

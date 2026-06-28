@@ -18,7 +18,7 @@ on:
         required: false
         type: string
         default: ''
-      # Logical branch driving config, tags, and prerelease. Required (see header); the publisher builds both branches.
+      # Logical branch driving config, tags, and prerelease. Required (see header); the publisher passes the run's branch.
       branch:
         required: true
         type: string
@@ -30,7 +30,7 @@ on:
 
 jobs:
 
-  # Validate the branch this leg publishes (unit tests + lint), gating the build/publish below. Skipped on
+  # Validate the branch being published (unit tests + lint), gating the build/publish below. Skipped on
   # smoke: the PR runs its own validate job, so a smoke build does not double-validate.
   validate:
     name: Validate job

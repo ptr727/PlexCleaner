@@ -28,8 +28,20 @@ pass()  { printf '  \033[32mok\033[0m   %s\n' "$*"; }
 fail()  { printf '  \033[31mFAIL\033[0m %s\n' "$*"; FAILED=1; }
 FAILED=0
 
-ruleset_id() { # name -> id (empty if absent)
-  gh api "repos/$REPO/rulesets" --jq ".[] | select(.name==\"$1\") | .id" 2>/dev/null | head -1
+ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on an API error
+  local out
+  # An absent ruleset is a successful call with no match (empty); only a real API error fails. Let gh print its
+  # own error on stderr (do not suppress it); add a generic context line and return non-zero so the run stops
+  # (the caller's $(...) cannot print the cause itself).
+  # per_page=100 returns every ruleset in one array (a repo has only a handful); the default page size is 30.
+  if ! out="$(gh api "repos/$REPO/rulesets?per_page=100")"; then
+    echo "ERROR: could not list rulesets for $REPO (see gh error above)" >&2
+    return 1
+  fi
+  # shellcheck disable=SC2016  # $n is a jq variable (--arg n), not a shell expansion
+  # Select the first match inside jq (not `| head -1`): under pipefail, head closing the pipe early can
+  # SIGPIPE jq and fail the function.
+  jq -r --arg n "$1" '[.[] | select(.name==$n) | .id] | first // empty' <<<"$out"
 }
 
 apply_ruleset() {

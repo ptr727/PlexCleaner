@@ -19,7 +19,7 @@ on:
         required: false
         type: boolean
         default: false
-      # Version from the orchestrator's single NBGV run (one version per leg, threaded). This task does not
+      # Version from the orchestrator's single NBGV run (threaded). This task does not
       # re-run NBGV on the detached commit, which could classify the branch differently.
       semver2:
         required: true
