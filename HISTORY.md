@@ -4,6 +4,9 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.19:
+  - Reworked the CI/CD pipeline to a branch-scoped self-publishing model: a weekly scheduled run (and manual dispatch) publishes both `main` (stable, Docker `latest`) and `develop` (prerelease, Docker `develop`) - native executables, the multi-arch Docker image, and the GitHub release - while merges accumulate until the next run. No application changes.
+  - Added `WORKFLOW.md` (the canonical CI/CD specification) and `repo-config/` (rulesets and repository settings as code).
 - Version 3.18:
   - Fixed an infinite remux loop in `monitor` mode on files with unmappable IETF / BCP-47 language tags ([#747](https://github.com/ptr727/PlexCleaner/issues/747)).
     - Invalid IETF language tags (e.g. `language_ietf` set to a value that cannot be resolved to ISO 639) are now set in place to a valid tag (the ISO 639 equivalent if known, else `und`) so the repair converges instead of remuxing the same file every cycle.

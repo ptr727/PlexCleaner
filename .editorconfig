@@ -53,7 +53,7 @@ end_of_line = lf
 end_of_line = crlf
 
 # --- .NET-only below: C# and ReSharper style. Everything above is the line-ending
-# governance every derived repo carries; a non-.NET repo may drop from here down. ---
+# governance for the .NET style block below. ---
 
 # C# files
 [*.cs]

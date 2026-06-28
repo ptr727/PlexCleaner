@@ -15,6 +15,3 @@
 # Dockerfiles must be LF - a CRLF breaks RUN heredocs and line continuations.
 Dockerfile text eol=lf
 *.Dockerfile text eol=lf
-
-# m4 README source is rendered on Linux; keep it LF.
-Docker/README.m4 text eol=lf
