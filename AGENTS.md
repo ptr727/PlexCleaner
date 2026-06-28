@@ -33,7 +33,7 @@ This file is the canonical reference for cross-cutting AI-agent rules. The CI/CD
 
 ## Release Model
 
-The publish behavior - the **weekly scheduled + on-demand** publisher (both branches built in one run: native binaries + multi-arch Docker image + GitHub release), branch-scoped versioning (`main` = stable / `latest`, `develop` = prerelease / `develop`), and the rule that **merges do not publish** (changes accumulate and ship in the next weekly run, which also refreshes the Docker base image) - is specified in [`WORKFLOW.md`](./WORKFLOW.md), the canonical CI/CD guide. Do not duplicate those rules here.
+The publish behavior - the **scheduled + on-demand** publisher (one branch per run: the weekly schedule rebuilds `main`, and a dispatch publishes the branch it is started from - native binaries + multi-arch Docker image + a GitHub release that anchors the version), branch-scoped versioning (`main` = stable / `latest`, `develop` = prerelease / `develop`), and the rule that **merges do not publish** (changes accumulate and ship in the next scheduled run, which also refreshes the Docker base image; release `develop` by dispatching from `develop`) - is specified in [`WORKFLOW.md`](./WORKFLOW.md), the canonical CI/CD guide. Do not duplicate those rules here.
 
 Versioning is the one release rule that is a **human process**, not a workflow outcome, so it lives here:
 

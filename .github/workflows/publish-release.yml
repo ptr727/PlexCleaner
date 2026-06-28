@@ -1,47 +1,43 @@
 name: Publish project release action
 
-# Scheduled + on-demand publisher. The weekly run (and a manual dispatch) builds and publishes BOTH
-# branches in full: native binaries (PlexCleaner.7z) + multi-arch Docker image + GitHub release. main
-# publishes a stable release (`latest` image), develop a prerelease (`develop` image).
+# Scheduled + on-demand publisher, one run = one branch (the trigger ref). The weekly schedule rebuilds
+# `main` only (native binaries + multi-arch Docker image + GitHub release; refreshes the `latest` image and
+# its `ubuntu:rolling` base for CVEs). A manual dispatch publishes the branch it is started from (main =>
+# stable/`latest`, develop => prerelease/`develop`). Building only the trigger branch keeps github.ref aligned
+# with the branch being versioned, so NBGV classifies it correctly with no matrix and no cross-branch ref leak.
 #
-# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next weekly run, and
-# the rebuild also refreshes the Docker base image (ubuntu:rolling) for CVEs. A maintainer dispatches to
-# release on demand. CI/validation runs separately on push (test-pull-request); this workflow never runs
-# on push.
+# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run. To
+# release develop, dispatch this workflow from the develop branch. CI/validation runs separately on push
+# (test-pull-request); this never runs on push.
 on:
   workflow_dispatch:
   schedule:
-    # Weekly full publish of both branches (Mon 02:00 UTC).
+    # Weekly rebuild/publish of main (Mon 02:00 UTC) to pick up base-image updates.
     - cron: '0 2 * * MON'
 
-# Global, ref-independent group so publishes serialize (shared Docker tags, both-branch releases).
-# cancel-in-progress: false so a publish is never cancelled mid-release.
+# Global, ref-independent group so two publishes never overlap (a schedule + a manual dispatch, or back-to-back
+# dispatches). cancel-in-progress: false so a publish is never cancelled mid-release.
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
 
-  # Publish each branch in full (binaries + Docker + GitHub release). Each leg validates, checks out, and
-  # versions its own branch ref (build-release-task gates the build on its own validate job), so a failing
-  # test or lint on either branch blocks only that leg. The no-op guard skips release creation when the
-  # version is unchanged; the Docker push still refreshes the base image.
+  # Publish the trigger branch in full (native binaries + Docker + GitHub release). The schedule always runs on
+  # the default branch (main); a dispatch runs on whatever branch it is started from. build-release-task
+  # validates, versions, and tags that one branch; the no-op guard skips release creation when the version is
+  # unchanged while the Docker push still refreshes the base image.
   publish:
     name: Publish project release job
-    # A dispatch must come from the default branch (main): the publisher builds both branches from their own
-    # refs, but the workflow logic itself resolves from the dispatch ref, so restrict it for predictability.
-    if: ${{ github.event_name == 'schedule' || github.ref_name == 'main' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: [main, develop]
+    # Only the long-lived branches publish; a stray dispatch from a feature branch is a no-op.
+    if: ${{ github.ref_name == 'main' || github.ref_name == 'develop' }}
     uses: ./.github/workflows/build-release-task.yml
     secrets: inherit
     permissions:
       contents: write
     with:
-      ref: ${{ matrix.branch }}
-      branch: ${{ matrix.branch }}
+      ref: ${{ github.ref_name }}
+      branch: ${{ github.ref_name }}
       smoke: false
       github: true
       dockerhub: true
