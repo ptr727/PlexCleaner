@@ -131,10 +131,10 @@ check_secrets() {
   # missing secret (FAIL), so a transient failure does not masquerade as every secret being absent.
   local actions deps
   if ! actions="$(gh api --paginate "repos/$REPO/actions/secrets" --jq '.secrets[].name' 2>/dev/null)"; then
-    note "could not list Actions secrets (API error); skipping secret-name checks"; return
+    fail "could not list Actions secrets (API error - cannot verify required secrets)"; return
   fi
   if ! deps="$(gh api --paginate "repos/$REPO/dependabot/secrets" --jq '.secrets[].name' 2>/dev/null)"; then
-    note "could not list Dependabot secrets (API error); skipping secret-name checks"; return
+    fail "could not list Dependabot secrets (API error - cannot verify required secrets)"; return
   fi
   for s in "${REQUIRED_ACTIONS_SECRETS[@]}"; do
     assert "actions secret $s present" grep -qx "$s" <<<"$actions"

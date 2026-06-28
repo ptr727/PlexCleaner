@@ -365,7 +365,8 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 Run [`repo-config/configure.sh check`](./repo-config/). It confirms the listed secrets exist, the
 `main`/`develop` rulesets enforce the required merge method + status check + signed commits + strict-off, and
 the repository settings are in place, exiting non-zero on drift. Secret *values* cannot be read back, so it
-asserts the names exist and a GitHub App is installed. The Docker Hub token's validity and push scope are a
+asserts the names exist (failing if it cannot query them). The GitHub App installation is a best-effort
+check (a precise check needs app-level auth, so it notes rather than fails). The Docker Hub token's validity and push scope are a
 manual checklist item.
 
 ### Assessment
@@ -408,4 +409,4 @@ version **and** security updates enabled. The GitHub App installed with the scop
 
 **Validation.** This configuration is codified in [`repo-config/`](./repo-config/) and applied/audited by
 `repo-config/configure.sh`; `check` is the 5D audit. Secret values cannot be read back, so the audit asserts
-the names exist and the App is installed.
+the names exist (failing if they cannot be queried); the App installation is a best-effort check.
