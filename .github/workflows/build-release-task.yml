@@ -30,6 +30,16 @@ on:
 
 jobs:
 
+  # Validate the branch this leg publishes (unit tests + lint), gating the build/publish below. Skipped on
+  # smoke: the PR runs its own validate job, so a smoke build does not double-validate.
+  validate:
+    name: Validate job
+    if: ${{ !inputs.smoke }}
+    uses: ./.github/workflows/validate-task.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.ref }}
+
   get-version:
     name: Get version information job
     uses: ./.github/workflows/get-version-task.yml
@@ -37,9 +47,11 @@ jobs:
     with:
       ref: ${{ inputs.ref }}
 
+  # Build only when validation passed (success) or was skipped (smoke); never when it failed.
   build-executable:
     name: Build executable job
-    needs: [get-version]
+    needs: [get-version, validate]
+    if: ${{ !cancelled() && needs.get-version.result == 'success' && needs.validate.result != 'failure' }}
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
@@ -50,7 +62,8 @@ jobs:
 
   build-docker:
     name: Build Docker job
-    needs: [get-version]
+    needs: [get-version, validate]
+    if: ${{ !cancelled() && needs.get-version.result == 'success' && needs.validate.result != 'failure' }}
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:

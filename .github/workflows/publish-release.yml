@@ -22,17 +22,12 @@ concurrency:
 
 jobs:
 
-  # Unit-test + lint gate before publishing. The matrix legs need it, so a failing test or lint blocks the
-  # weekly release (per-branch validation already ran on push CI at merge time; this is the coarse re-check).
-  validate:
-    name: Validate job
-    uses: ./.github/workflows/validate-task.yml
-
-  # Publish each branch in full (binaries + Docker + GitHub release); each leg checks out and versions its own
-  # ref. The no-op guard skips release creation when the version is unchanged, the Docker push still refreshes.
+  # Publish each branch in full (binaries + Docker + GitHub release). Each leg validates, checks out, and
+  # versions its own branch ref (build-release-task gates the build on its own validate job), so a failing
+  # test or lint on either branch blocks only that leg. The no-op guard skips release creation when the
+  # version is unchanged; the Docker push still refreshes the base image.
   publish:
     name: Publish project release job
-    needs: validate
     strategy:
       fail-fast: false
       matrix:

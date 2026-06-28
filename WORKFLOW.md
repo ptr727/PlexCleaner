@@ -27,7 +27,7 @@ Dependabot pull requests merge themselves once their checks pass.
 
 ### Glossary
 
-- **Entry workflow** - has `push` / `schedule` / `workflow_dispatch` triggers. The orchestrator an event or
+- **Entry workflow** - has `push` / `schedule` / `workflow_dispatch` triggers. The orchestrator that an event or
   a person starts.
 - **Reusable workflow (task)** - a `workflow_call` workflow invoked through a `uses:` reference, never
   triggered directly. File ends in `-task.yml`.
@@ -69,9 +69,8 @@ Dependabot pull requests merge themselves once their checks pass.
 Legibility rules. Necessary but not sufficient: a perfectly styled workflow can still violate section 4.
 
 - **Action pinning.** Pin every action to a commit SHA with a trailing `# vX.Y.Z` comment. Use `# vX` only
-  when the upstream floating major tag has no specific patch SHA. The one no-pin exception is
-  `dotnet/nbgv@master`, whose tag stream lags `master`. A tool an action *installs* (e.g. the actionlint
-  binary behind `raven-actions/actionlint`) is not a `uses:` ref and is left unpinned to track latest.
+  when the upstream floating major tag has no specific patch SHA. A tool an action *installs* (e.g. the
+  actionlint binary behind `raven-actions/actionlint`) is not a `uses:` ref and is left unpinned to track latest.
 - **Filename.** Reusable workflows end in `-task.yml`; entry workflows end in what they do
   (`-pull-request.yml`, `-release.yml`). A `-task.yml` is `uses:`-d, never triggered directly.
 - **Workflow `name:`.** Reusable names end in **"task"**, entry names in **"action"**.
@@ -130,8 +129,8 @@ with `::error::` before any publish. Downstream jobs `needs:` it.
 CI runs on push to every branch, so GitHub head-resolves the reusable `./...` workflows from the pushed head:
 a pull request that edits a reusable task tests its own copy. CI validates (the reusable `validate-task`:
 `unit-test` + `lint`) and smoke-builds both targets, uploading and pushing nothing. One aggregator job, the
-ruleset-bound required check, gates the merge. The publisher reuses the **same** `validate-task`, so the CI
-gate and the publish gate are the identical definition.
+ruleset-bound required check, gates the merge. Each publish leg reuses the **same** `validate-task` on its own
+branch, so the CI gate and the publish gate are the identical definition.
 
 ### The two-target release seam
 
@@ -228,8 +227,11 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   the Docker push still runs - re-pushing the same tags refreshes the base image. The paired transfer-artifact
   delete is gated to the consumer, so the `retention-days: 1` backstop reclaims it. *Prevents duplicate
   releases while still refreshing the image.*
-- **D4.6 Publish is tested as built.** Output: the publisher runs the same reusable `validate-task` as CI,
-  as a `validate` job the publish matrix `needs:`. *Prevents publishing a tree that would fail the CI gate.*
+- **D4.6 Publish is tested as built, per branch.** Output: each publish leg runs the same reusable
+  `validate-task` on its own branch ref (inside `build-release-task`, gated `!smoke`) before building, so a
+  failing test or lint on either branch blocks only that leg. It is the identical definition CI runs.
+  *Prevents publishing a tree that would fail the CI gate, including the leg whose branch is not the run's
+  trigger ref.*
 - **D4.7 Docker publishing authenticates with Docker Hub credentials.** Output: the Docker target logs in via
   `docker/login-action` with `DOCKER_HUB_USERNAME` + `DOCKER_HUB_ACCESS_TOKEN` and pushes with
   `docker/build-push-action`; the Docker Hub overview is pushed with the same token. There is no NuGet/OIDC
@@ -280,8 +282,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 ### D9 - Style, static, and dropped workflows (see section 2)
 
-- **D9.1** Every action SHA-pinned with a version comment (sole exception `dotnet/nbgv@master`); an
-  installed-tool version is left unpinned to track latest.
+- **D9.1** Every action SHA-pinned with a version comment; an installed-tool version (e.g. the actionlint
+  binary) is left unpinned to track latest.
 - **D9.2** File/workflow/job/step names follow the suffix rules; a ruleset-bound `context:` name moves only in
   lockstep with `repo-config/`.
 - **D9.3** Bash `run:` blocks start `set -euo pipefail`; multi-line `if:` uses `>-`.

@@ -1,9 +1,16 @@
 name: Validate task
 
 # The single validation gate: unit tests + the full lint set (the editor's checks, enforced in CI). Reused by
-# test-pull-request (produces the required check) and publish-release, so the PR and publish gates are identical.
+# test-pull-request (produces the required check) and the publisher, so the CI and publish gates are identical.
 on:
   workflow_call:
+    inputs:
+      # Git ref to validate (empty = default checkout ref). The publisher passes each branch so its leg
+      # validates the branch it publishes.
+      ref:
+        required: false
+        type: string
+        default: ''
 
 jobs:
 
@@ -20,6 +27,8 @@ jobs:
 
       - name: Checkout code step
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
 
       # Builds with TreatWarningsAsErrors, so analyzer and code-style warnings fail here.
       - name: Run unit tests step
@@ -39,6 +48,8 @@ jobs:
 
       - name: Checkout code step
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Check C# formatting step
         run: |
