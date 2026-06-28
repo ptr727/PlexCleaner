@@ -1,5 +1,7 @@
 name: Build executable task
 
+# Build the executable across the runtime matrix; on a non-smoke run, zip all runtimes into PlexCleaner.7z (per-RID
+# subfolders) as the release-asset-<branch>-executable artifact. Smoke builds a 2-runtime subset and skips the zip.
 on:
   workflow_call:
     inputs:
@@ -8,33 +10,35 @@ on:
         required: false
         type: string
         default: ''
-      # Logical branch driving build configuration (`main` => Release, else
-      # Debug). Required (no `github.ref_name` fallback, which would mislabel
-      # the develop leg of the publisher's matrix); the orchestrator passes it.
+      # Logical branch: main => Release, else Debug. Required (see header).
       branch:
         required: true
         type: string
-      # Smoke mode: build a representative runtime subset (linux-x64 +
-      # win-x64) instead of the full 7-runtime matrix, and skip the zip /
-      # artifact aggregation. Used for fast PR feedback.
+      # Smoke: build linux-x64 + win-x64 only (not the full matrix), skip the zip. Fast PR feedback.
       smoke:
         required: false
         type: boolean
         default: false
+      # Version from the orchestrator's single NBGV run (one version per leg, threaded). This task does not
+      # re-run NBGV on the detached commit, which could classify the branch differently.
+      semver2:
+        required: true
+        type: string
+      assembly_version:
+        required: true
+        type: string
+      assembly_file_version:
+        required: true
+        type: string
+      assembly_informational_version:
+        required: true
+        type: string
 
 jobs:
-
-  get-version:
-    name: Get version information job
-    uses: ./.github/workflows/get-version-task.yml
-    secrets: inherit
-    with:
-      ref: ${{ inputs.ref }}
 
   build-executable-matrix:
     name: Build executable project matrix job
     runs-on: ubuntu-latest
-    needs: [get-version]
     strategy:
       matrix:
         runtime: ${{ fromJSON(inputs.smoke && '["linux-x64","win-x64"]' || '["win-x64","linux-x64","linux-musl-x64","linux-arm","linux-arm64","osx-x64","osx-arm64"]') }}
@@ -58,23 +62,24 @@ jobs:
             -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \
             --configuration ${{ inputs.branch == 'main' && 'Release' || 'Debug' }} \
             -property:PublishAot=false \
-            -property:Version=${{ needs.get-version.outputs.AssemblyVersion }} \
-            -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }} \
-            -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }} \
-            -property:InformationalVersion=${{ needs.get-version.outputs.AssemblyInformationalVersion }} \
-            -property:PackageVersion=${{ needs.get-version.outputs.SemVer2 }}
+            -property:Version=${{ inputs.assembly_version }} \
+            -property:FileVersion=${{ inputs.assembly_file_version }} \
+            -property:AssemblyVersion=${{ inputs.assembly_version }} \
+            -property:InformationalVersion=${{ inputs.assembly_informational_version }} \
+            -property:PackageVersion=${{ inputs.semver2 }}
 
+      # Smoke just proves each runtime compiles; the per-runtime upload feeds the release zip, so skip it on
+      # smoke (also keeps the branch out of the artifact name, which a feature branch's `/` would invalidate).
       - name: Upload matrix build artifacts step
+        if: ${{ !inputs.smoke }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: publish-${{ inputs.branch }}-${{ matrix.runtime }}
           path: ${{ runner.temp }}/publish
           retention-days: 1
 
-  # Smoke builds only need the per-runtime compile to succeed (fast PR
-  # feedback) - the zipped, downloadable artifact is a release concern, so
-  # skip the aggregation entirely on smoke. The release job collects the
-  # release-asset-<branch>-* artifacts by pattern, so no artifact-id is needed.
+  # Aggregate every runtime into one PlexCleaner.7z (skipped on smoke; the zip is a release concern). The release
+  # job collects the release-asset-<branch>-* artifacts by pattern.
   upload-build-artifacts:
     name: Upload matrix build artifacts job
     if: ${{ !inputs.smoke }}

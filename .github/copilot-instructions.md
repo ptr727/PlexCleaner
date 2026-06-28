@@ -4,7 +4,7 @@ Repository conventions for GitHub Copilot (and any other AI agent reading this f
 
 The **canonical guide is [AGENTS.md](../AGENTS.md)** at the repo root - read it first, including the [PR Review Etiquette](../AGENTS.md#pr-review-etiquette) review-loop contract this file's runbook implements. This file is intentionally narrow: commit/PR-title conventions (summarized inline so VS Code's commit-message and PR-title generators have them) plus the GitHub Copilot Review Runbook.
 
-For code-style rules, see [`CODESTYLE.md`](../CODESTYLE.md) at the repo root - one guide with a General section plus the .NET language section.
+For code-style rules, see [`CODESTYLE.md`](../CODESTYLE.md) at the repo root.
 
 For PlexCleaner's architecture, processing pipeline, and design patterns, see [../ARCHITECTURE.md](../ARCHITECTURE.md).
 
@@ -151,6 +151,4 @@ After the final push, sweep-resolve stale older threads for removed code paths.
 
 ## When in Doubt
 
-Read [AGENTS.md](../AGENTS.md) for this repo's conventions and [../ARCHITECTURE.md](../ARCHITECTURE.md) for PlexCleaner's architecture, processing pipeline, and design patterns. For code-style rules, [`CODESTYLE.md`](../CODESTYLE.md) (its General section plus the relevant language section) is authoritative. Don't restate any of these files' rules in commit bodies or PR descriptions - keep those focused on the change itself.
-
-**In a derived repo:** if you find a discrepancy that should be fixed in the template itself (this file or AGENTS.md is out of date, a rule is missing, something bit this repo and would bite the next), open an issue upstream in [`ptr727/ProjectTemplate`](https://github.com/ptr727/ProjectTemplate) rather than only fixing it locally - see the template's [AGENTS.md "Staying in Sync and Reporting Drift Upstream"](https://github.com/ptr727/ProjectTemplate/blob/main/AGENTS.md#staying-in-sync-and-reporting-drift-upstream).
+Read [AGENTS.md](../AGENTS.md) for this repo's conventions and [../ARCHITECTURE.md](../ARCHITECTURE.md) for PlexCleaner's architecture, processing pipeline, and design patterns. For code-style rules, [`CODESTYLE.md`](../CODESTYLE.md) is authoritative. Don't restate any of these files' rules in commit bodies or PR descriptions - keep those focused on the change itself.

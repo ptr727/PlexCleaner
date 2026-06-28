@@ -1,18 +1,16 @@
 name: Get version information task
 
+# Run NBGV once and expose the version outputs. The publisher passes an explicit ref per matrix leg so a scheduled
+# run (whose github.ref is always the default branch) still versions develop correctly.
 on:
   workflow_call:
     inputs:
-      # Git ref to check out / version (empty = caller's default checkout ref,
-      # `github.ref`). The publisher passes an explicit branch so a scheduled
-      # run - whose `github.ref` is always the default branch - can still
-      # compute NBGV versions for `develop` too.
+      # Git ref to check out / version (empty = caller's default checkout ref).
       ref:
         required: false
         type: string
         default: ''
     outputs:
-      # Version information outputs
       SemVer2:
         value: ${{ jobs.get-version.outputs.SemVer2 }}
       AssemblyVersion:
@@ -21,9 +19,7 @@ on:
         value: ${{ jobs.get-version.outputs.AssemblyFileVersion }}
       AssemblyInformationalVersion:
         value: ${{ jobs.get-version.outputs.AssemblyInformationalVersion }}
-      # Full SHA of the commit NBGV computed the version from. Used to pin the
-      # GitHub release tag to the exact built commit (immutable), rather than a
-      # moving branch ref.
+      # Full SHA NBGV versioned; pins the release tag to the exact built commit, not a moving ref.
       GitCommitId:
         value: ${{ jobs.get-version.outputs.GitCommitId }}
 
