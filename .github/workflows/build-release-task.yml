@@ -55,10 +55,14 @@ jobs:
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
-      # Pin to the resolved commit so the artifacts match the release tag.
+      # Pin to the resolved commit so the artifacts match the release tag, and thread the single NBGV version.
       ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
+      semver2: ${{ needs.get-version.outputs.SemVer2 }}
+      assembly_version: ${{ needs.get-version.outputs.AssemblyVersion }}
+      assembly_file_version: ${{ needs.get-version.outputs.AssemblyFileVersion }}
+      assembly_informational_version: ${{ needs.get-version.outputs.AssemblyInformationalVersion }}
 
   build-docker:
     name: Build Docker job
@@ -67,10 +71,14 @@ jobs:
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:
-      # Pin to the resolved commit so the artifacts match the release tag.
+      # Pin to the resolved commit so the artifacts match the release tag, and thread the single NBGV version.
       ref: ${{ needs.get-version.outputs.GitCommitId }}
       branch: ${{ inputs.branch }}
       smoke: ${{ inputs.smoke }}
+      semver2: ${{ needs.get-version.outputs.SemVer2 }}
+      assembly_version: ${{ needs.get-version.outputs.AssemblyVersion }}
+      assembly_file_version: ${{ needs.get-version.outputs.AssemblyFileVersion }}
+      assembly_informational_version: ${{ needs.get-version.outputs.AssemblyInformationalVersion }}
       # Push to Docker Hub, never on a smoke build.
       push: ${{ inputs.dockerhub && !inputs.smoke }}
 

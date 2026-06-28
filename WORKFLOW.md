@@ -381,8 +381,9 @@ the configuration is part of "operational" (D10; audit 5D).
 **Secrets.**
 
 - `DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` - Docker Hub credentials the Docker target logs in with to
-  push the image and the repository overview. Actions store. The access token needs push scope on
-  `docker.io/ptr727/plexcleaner`. There is no NuGet/OIDC publishing.
+  push the image and the repository overview. Required in **both** the Actions and Dependabot secret stores: a
+  Dependabot-triggered push runs CI whose Docker smoke build logs in too, and that run gets the Dependabot
+  store. The access token needs push scope on `docker.io/ptr727/plexcleaner`. There is no NuGet/OIDC publishing.
 - `CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` - the GitHub App credentials the merge-bot mints the App
   token from. Required in **both** the Actions and Dependabot secret stores (a Dependabot-triggered run gets
   the Dependabot store, not Actions secrets). The App must be installed on the repo with `contents: write` and

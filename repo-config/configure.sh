@@ -15,13 +15,12 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${REPO:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
 
-# Secrets by store (names only; values are never readable via the API). The publisher reads the Docker Hub
-# credentials from Actions to push images. The merge-bot's App credentials must be set in BOTH stores: it
-# reads them from Actions on a normal PR, but from the Dependabot store when it acts on a Dependabot PR,
-# because Dependabot-triggered runs are given the Dependabot secret store, not Actions secrets. Publishing
-# the GitHub release uses the built-in GITHUB_TOKEN (no secret needed).
+# Secrets by store (names only; values are never readable via the API). The Docker Hub credentials and the
+# merge-bot App credentials must be set in BOTH stores: a Dependabot-triggered run gets the Dependabot secret
+# store, not Actions secrets, and that run's push CI builds the Docker smoke, which logs in to Docker Hub.
+# Publishing the GitHub release uses the built-in GITHUB_TOKEN (no secret needed).
 REQUIRED_ACTIONS_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY)
-REQUIRED_DEPENDABOT_SECRETS=(CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY)
+REQUIRED_DEPENDABOT_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY)
 REQUIRED_CHECK="Check pull request workflow status job"
 
 note()  { printf '  %s\n' "$*"; }
@@ -73,6 +72,9 @@ assert() {
 # caller's. Reads JSON from stdin.
 jq_has() { jq -e "$@" >/dev/null 2>&1; }
 
+# jq_lacks FILTER... - true iff the jq filter selects nothing. Reads JSON from stdin.
+jq_lacks() { ! jq -e "$@" >/dev/null 2>&1; }
+
 check_ruleset() { # name  expected-merge-method  expect-linear(true/false)
   local name="$1" method="$2" linear="$3" id rs
   id="$(ruleset_id "$name")"
@@ -92,6 +94,10 @@ check_ruleset() { # name  expected-merge-method  expect-linear(true/false)
   if [[ "$linear" == "true" ]]; then
     assert "'$name' requires linear history" \
       jq_has '.rules[] | select(.type=="required_linear_history")' <<<"$rs"
+  else
+    # main must NOT require linear history - it would block the develop -> main merge-commit promotion.
+    assert "'$name' does not require linear history" \
+      jq_lacks '.rules[] | select(.type=="required_linear_history")' <<<"$rs"
   fi
 }
 

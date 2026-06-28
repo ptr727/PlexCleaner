@@ -27,9 +27,10 @@ templates); repository administration config-as-code is the maintainer's, so it 
 ## What it does not store
 
 Secret **values** are never readable through the API, so the script only asserts the required secret
-**names** exist (`DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` for pushing the image, and the App
-credentials `CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` for the merge-bot) and that a GitHub App
-is installed. Set the values in the repository (or organization) secret store directly. There is no
+**names** exist (`DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` for the image, and the App credentials
+`CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` for the merge-bot) and that a GitHub App is installed.
+The Docker Hub and App credentials must be set in **both** the Actions and Dependabot secret stores, since a
+Dependabot-triggered run gets the Dependabot store. Set the values in the repository (or organization) secret store directly. There is no
 NuGet publishing here; the GitHub release uses the built-in `GITHUB_TOKEN`. The Docker Hub access token's
 validity and push scope are verified by hand, not by this script.
 

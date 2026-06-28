@@ -12,8 +12,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 [![Release Status][release-status-shield]][actions-link]\
 [![Docker Status][docker-status-shield]][actions-link]\
-[![Last Commit][last-commit-shield]][commit-link]\
-[![Last Build][last-build-shield]][actions-link]
+[![Last Commit][last-commit-shield]][commit-link]
 
 ### Releases
 
@@ -949,7 +948,6 @@ Some ideas being considered:
 
 - [7-Zip](https://www.7-zip.org/)
 - [AwesomeAssertions](https://awesomeassertions.org/)
-- [Bring Your Own Badge](https://github.com/marketplace/actions/bring-your-own-badge)
 - [CliWrap][cliwrap-link]
 - [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
 - [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
@@ -999,7 +997,6 @@ Licensed under the [MIT License][license-link]\
 [plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
 [json2csharp-link]: https://json2csharp.com
-[last-build-shield]: https://byob.yarr.is/ptr727/PlexCleaner/lastbuild
 [last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
 [license-link]: ./LICENSE
 [license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License

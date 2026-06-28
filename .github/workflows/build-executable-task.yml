@@ -19,20 +19,26 @@ on:
         required: false
         type: boolean
         default: false
+      # Version from the orchestrator's single NBGV run (one version per leg, threaded). This task does not
+      # re-run NBGV on the detached commit, which could classify the branch differently.
+      semver2:
+        required: true
+        type: string
+      assembly_version:
+        required: true
+        type: string
+      assembly_file_version:
+        required: true
+        type: string
+      assembly_informational_version:
+        required: true
+        type: string
 
 jobs:
-
-  get-version:
-    name: Get version information job
-    uses: ./.github/workflows/get-version-task.yml
-    secrets: inherit
-    with:
-      ref: ${{ inputs.ref }}
 
   build-executable-matrix:
     name: Build executable project matrix job
     runs-on: ubuntu-latest
-    needs: [get-version]
     strategy:
       matrix:
         runtime: ${{ fromJSON(inputs.smoke && '["linux-x64","win-x64"]' || '["win-x64","linux-x64","linux-musl-x64","linux-arm","linux-arm64","osx-x64","osx-arm64"]') }}
@@ -56,11 +62,11 @@ jobs:
             -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \
             --configuration ${{ inputs.branch == 'main' && 'Release' || 'Debug' }} \
             -property:PublishAot=false \
-            -property:Version=${{ needs.get-version.outputs.AssemblyVersion }} \
-            -property:FileVersion=${{ needs.get-version.outputs.AssemblyFileVersion }} \
-            -property:AssemblyVersion=${{ needs.get-version.outputs.AssemblyVersion }} \
-            -property:InformationalVersion=${{ needs.get-version.outputs.AssemblyInformationalVersion }} \
-            -property:PackageVersion=${{ needs.get-version.outputs.SemVer2 }}
+            -property:Version=${{ inputs.assembly_version }} \
+            -property:FileVersion=${{ inputs.assembly_file_version }} \
+            -property:AssemblyVersion=${{ inputs.assembly_version }} \
+            -property:InformationalVersion=${{ inputs.assembly_informational_version }} \
+            -property:PackageVersion=${{ inputs.semver2 }}
 
       # Smoke just proves each runtime compiles; the per-runtime upload feeds the release zip, so skip it on
       # smoke (also keeps the branch out of the artifact name, which a feature branch's `/` would invalidate).
