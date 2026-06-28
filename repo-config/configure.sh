@@ -36,7 +36,8 @@ ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on a
     echo "ERROR: could not list rulesets for $REPO (API error - need admin auth on the repo)" >&2
     return 1
   fi
-  jq -r ".[] | select(.name==\"$1\") | .id" <<<"$out" | head -1
+  # shellcheck disable=SC2016  # $n is a jq variable (--arg n), not a shell expansion
+  jq -r --arg n "$1" '.[] | select(.name==$n) | .id' <<<"$out" | head -1
 }
 
 apply_ruleset() {
