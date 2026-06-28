@@ -1,14 +1,14 @@
 name: Build project release task
 
+# Orchestrate one branch's release: version once (get-version), build the executable 7z and the Docker image, then
+# create the GitHub release. github/dockerhub gate the two publish targets; smoke builds everything, publishes nothing.
 on:
   workflow_call:
     inputs:
-      # Whether to create a GitHub release.
       github:
         required: false
         type: boolean
         default: false
-      # Whether to push the docker image to Docker Hub.
       dockerhub:
         required: false
         type: boolean
@@ -18,33 +18,15 @@ on:
         required: false
         type: string
         default: ''
-      # Logical branch driving config / tags / prerelease for every target. Required (no fallback) because the
-      # publisher builds both `main` and `develop` in one run, so a silent fallback would mislabel the develop leg.
+      # Logical branch driving config, tags, and prerelease. Required (see header); the publisher builds both branches.
       branch:
         required: true
         type: string
-      # Smoke mode: reduced, never-published build for fast PR feedback. Forwarded to every target and hard-disables
-      # every push below, so a smoke run can never publish regardless of the publish flags.
+      # Smoke: reduced, never-published build for fast PR feedback; hard-disables every push below.
       smoke:
         required: false
         type: boolean
         default: false
-      # Per-target presence gates. Default true (build everything); a PR smoke run sets these from the paths-filter
-      # so only changed targets build.
-      enable_docker:
-        required: false
-        type: boolean
-        default: true
-      enable_executable:
-        required: false
-        type: boolean
-        default: true
-      # Set false for a repo that produces no release-asset-* files (e.g. Docker-only): the release is then just the
-      # tag + source zip + README + LICENSE; the artifact download is skipped and the unmatched-files guard relaxes.
-      expect_release_assets:
-        required: false
-        type: boolean
-        default: true
 
 jobs:
 
@@ -57,7 +39,6 @@ jobs:
 
   build-executable:
     name: Build executable job
-    if: ${{ inputs.enable_executable }}
     needs: [get-version]
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
@@ -69,7 +50,6 @@ jobs:
 
   build-docker:
     name: Build Docker job
-    if: ${{ inputs.enable_docker }}
     needs: [get-version]
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
@@ -83,8 +63,7 @@ jobs:
 
   github-release:
     name: Publish GitHub release job
-    # `!inputs.smoke` enforces "smoke never publishes" at the job level, so a smoke caller that also set
-    # `github: true` still can't create a release.
+    # !smoke enforces "smoke never publishes" even if a smoke caller set github: true.
     if: ${{ inputs.github && !inputs.smoke }}
     runs-on: ubuntu-latest
     needs: [get-version, build-executable, build-docker]
@@ -97,9 +76,8 @@ jobs:
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
 
-      # Backstop (main only): a public release must not carry a prerelease '-', guarding against NBGV mis-versioning the
-      # public ref (e.g. a dispatch on a non-default ref) into a malformed "Latest" release. Strip '+buildmetadata'
-      # first - a '-' there is legitimate; only a '-' in the core/prerelease segment marks a prerelease.
+      # Backstop (main only): refuse to publish if the public version carries a prerelease '-' (NBGV mis-versioning).
+      # Strip '+buildmetadata' first; only a '-' in the core segment marks a prerelease.
       - name: Verify public release version step
         if: ${{ inputs.branch == 'main' }}
         env:
@@ -112,21 +90,15 @@ jobs:
             exit 1
           fi
 
-      # Collect assets by the `release-asset-<branch>-*` pattern so this step is target-agnostic: subset releases by
-      # deleting the target, not `enable_*: false` (a skipped `needs` job would skip this release job too). The release
-      # step guards `fail_on_unmatched_files: true`, so at least one `release-asset-*` must match; a repo that drops
-      # every file-producing target (e.g. a Docker-only repo, whose release carries only source zip + README + LICENSE)
-      # relaxes that guard.
+      # Collect the executable build's release-asset-<branch>-* artifacts (the PlexCleaner.7z) by pattern.
       - name: Download release asset artifacts step
-        if: ${{ inputs.expect_release_assets }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: release-asset-${{ inputs.branch }}-*
           merge-multiple: true
           path: ./Publish
 
-      # The weekly publisher re-runs even with no new commits, so the version may already be released. Skip the release
-      # step when a release for this tag already exists to avoid a no-op republish.
+      # Weekly re-runs may hit an already-released version; skip release-create when the tag exists (no-op republish).
       - name: Check for existing release step
         id: release-exists
         env:
@@ -145,13 +117,8 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # `target_commitish` must be set explicitly: otherwise GitHub's REST API tags the release on the default branch.
-      # Pin it to `GitCommitId` so the tag is on the exact built commit, consistent with the SemVer2 tag and artifacts.
-      # Skip when the release already exists, but always let a manual `workflow_dispatch` through to refresh it.
-      # Every release (any branch, any target) is a tag on the built commit plus the auto-attached source zip, README,
-      # and LICENSE; targets amend it by uploading `release-asset-*` files (binaries/packages) or pushing elsewhere
-      # (image/registry). `fail_on_unmatched_files: true` fails loudly if a promised `release-asset-*` is missing or
-      # misnamed; a no-file-target repo relaxes it (see download step).
+      # target_commitish pins the tag to the exact built commit (GitCommitId), not the moving branch ref.
+      # fail_on_unmatched_files catches a missing or misnamed PlexCleaner.7z.
       - name: Create GitHub release step
         if: ${{ steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
@@ -160,7 +127,7 @@ jobs:
           tag_name: ${{ needs.get-version.outputs.SemVer2 }}
           target_commitish: ${{ needs.get-version.outputs.GitCommitId }}
           prerelease: ${{ inputs.branch != 'main' }}
-          fail_on_unmatched_files: ${{ inputs.expect_release_assets }}
+          fail_on_unmatched_files: true
           files: |
             LICENSE
             README.md

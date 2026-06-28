@@ -24,12 +24,13 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.18**:
+**Version: 3.19**:
 
 **Summary:**
 
-- Fixed an infinite remux loop in `monitor` mode on files with invalid IETF language tags.
-- Added a deterministic Direct Play check that detects Matroska files with an unusable seek index and re-multiplexes only those.
+- Internal CI/CD rework, no application changes.
+  - Branch-scoped self-publishing: a weekly scheduled run and manual dispatch publish both branches (executables + multi-arch Docker image + GitHub release).
+  - Hardened repository configuration, see [WORKFLOW.md](./WORKFLOW.md).
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 

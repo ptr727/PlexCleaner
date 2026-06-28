@@ -1,15 +1,13 @@
 <Solution>
     <Folder Name="/GitHub Actions/">
-        <File Path=".github/workflows/build-datebadge-task.yml" />
         <File Path=".github/workflows/build-docker-task.yml" />
         <File Path=".github/workflows/build-executable-task.yml" />
         <File Path=".github/workflows/build-release-task.yml" />
         <File Path=".github/workflows/get-version-task.yml" />
         <File Path=".github/workflows/merge-bot-pull-request.yml" />
-        <File Path=".github/workflows/publish-periodic-docker-release.yml" />
         <File Path=".github/workflows/publish-release.yml" />
         <File Path=".github/workflows/test-pull-request.yml" />
-        <File Path=".github/workflows/test-release-task.yml" />
+        <File Path=".github/workflows/validate-task.yml" />
     </Folder>
     <Folder Name="/CoPilot/">
         <File Path=".github/copilot-instructions.md" />
@@ -20,7 +18,7 @@
     <Folder Name="/Docker/">
         <File Path="Docker/Build.sh" />
         <File Path="Docker/InstallDebugTools.sh" />
-        <File Path="Docker/README.m4" />
+        <File Path="Docker/README.md" />
         <File Path="Docker/Test.sh" />
         <File Path="Docker/Dockerfile" />
         <File Path="Docker/Version.sh" />
@@ -57,6 +55,7 @@
         <File Path=".gitignore" />
         <File Path="AGENTS.md" />
         <File Path="CODESTYLE.md" />
+        <File Path="cspell.json" />
         <File Path="Directory.Build.props" />
         <File Path="Directory.Packages.props" />
         <File Path="HISTORY.md" />
@@ -67,6 +66,7 @@
         <File Path="PlexCleaner.slnx" />
         <File Path="README.md" />
         <File Path="version.json" />
+        <File Path="WORKFLOW.md" />
     </Folder>
     <Folder Name="/Tools/">
         <File Path=".config/dotnet-tools.json" />

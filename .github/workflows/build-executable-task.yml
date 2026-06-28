@@ -1,5 +1,7 @@
 name: Build executable task
 
+# Build the executable across the runtime matrix; on a non-smoke run, zip all runtimes into PlexCleaner.7z (per-RID
+# subfolders) as the release-asset-<branch>-executable artifact. Smoke builds a 2-runtime subset and skips the zip.
 on:
   workflow_call:
     inputs:
@@ -8,15 +10,11 @@ on:
         required: false
         type: string
         default: ''
-      # Logical branch driving build configuration (`main` => Release, else
-      # Debug). Required (no `github.ref_name` fallback, which would mislabel
-      # the develop leg of the publisher's matrix); the orchestrator passes it.
+      # Logical branch: main => Release, else Debug. Required (see header).
       branch:
         required: true
         type: string
-      # Smoke mode: build a representative runtime subset (linux-x64 +
-      # win-x64) instead of the full 7-runtime matrix, and skip the zip /
-      # artifact aggregation. Used for fast PR feedback.
+      # Smoke: build linux-x64 + win-x64 only (not the full matrix), skip the zip. Fast PR feedback.
       smoke:
         required: false
         type: boolean
@@ -71,10 +69,8 @@ jobs:
           path: ${{ runner.temp }}/publish
           retention-days: 1
 
-  # Smoke builds only need the per-runtime compile to succeed (fast PR
-  # feedback) - the zipped, downloadable artifact is a release concern, so
-  # skip the aggregation entirely on smoke. The release job collects the
-  # release-asset-<branch>-* artifacts by pattern, so no artifact-id is needed.
+  # Aggregate every runtime into one PlexCleaner.7z (skipped on smoke; the zip is a release concern). The release
+  # job collects the release-asset-<branch>-* artifacts by pattern.
   upload-build-artifacts:
     name: Upload matrix build artifacts job
     if: ${{ !inputs.smoke }}
