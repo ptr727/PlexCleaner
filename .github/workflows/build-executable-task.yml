@@ -62,7 +62,10 @@ jobs:
             -property:InformationalVersion=${{ needs.get-version.outputs.AssemblyInformationalVersion }} \
             -property:PackageVersion=${{ needs.get-version.outputs.SemVer2 }}
 
+      # Smoke just proves each runtime compiles; the per-runtime upload feeds the release zip, so skip it on
+      # smoke (also keeps the branch out of the artifact name, which a feature branch's `/` would invalidate).
       - name: Upload matrix build artifacts step
+        if: ${{ !inputs.smoke }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: publish-${{ inputs.branch }}-${{ matrix.runtime }}
