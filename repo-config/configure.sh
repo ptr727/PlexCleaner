@@ -30,10 +30,11 @@ FAILED=0
 
 ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on an API error
   local out
-  # An absent ruleset is a successful call with no match (empty); only a real API error fails. Diagnose to
-  # stderr (not stdout, which the caller's $(...) would swallow) and return non-zero so the run stops with cause.
-  if ! out="$(gh api "repos/$REPO/rulesets" 2>/dev/null)"; then
-    echo "ERROR: could not list rulesets for $REPO (API error - need admin auth on the repo)" >&2
+  # An absent ruleset is a successful call with no match (empty); only a real API error fails. Let gh print its
+  # own error on stderr (do not suppress it); add a generic context line and return non-zero so the run stops
+  # (the caller's $(...) cannot print the cause itself).
+  if ! out="$(gh api "repos/$REPO/rulesets")"; then
+    echo "ERROR: could not list rulesets for $REPO (see gh error above)" >&2
     return 1
   fi
   # shellcheck disable=SC2016  # $n is a jq variable (--arg n), not a shell expansion
