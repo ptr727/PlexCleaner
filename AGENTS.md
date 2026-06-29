@@ -40,6 +40,7 @@ Versioning is the one release rule that is a **human process**, not a workflow o
 - The `version` (major.minor) in [`version.json`](./version.json) is the version floor; NBGV appends the git height as the SemVer patch. `main` (the public release ref, `publicReleaseRefSpec = ^refs/heads/main$`) builds a stable `X.Y.<height>`; `develop` builds a prerelease `X.Y.<height>-g<sha>`. The maintainer edits `version.json`; *routine* dependency bumps, CI/workflow fixes, and doc edits leave it untouched.
 - **Bump `version.json` only by maintainer instruction**, for a functional change (a new feature, a behavior change, a breaking change) or a significant one-time overhaul of the build/release process (such as a CI/CD migration), in the PR that introduces it (typically on `develop`). Do not bump on a cadence, for routine CI/workflow or dependency or doc edits, or mechanically after a release.
 - **No post-release bump; no develop-ahead requirement.** NBGV advances the patch on every commit, so a release always gets a fresh build version with no `version.json` edit and there is no `bump-version-X.Y` PR after a release. A `develop -> main` promotion carries whatever `version.json` is current.
+- **`dotnet/nbgv` is consumed via `@master`, never SHA-pinned.** Its tag stream lags `master` such that Dependabot tag-tracking would only propose downgrades to stale tags; this is the sole WORKFLOW.md D9.1 exception (rationale inline in the workflow). Do not SHA-pin it.
 
 ## Pull Request Title and Commit Message Conventions
 
