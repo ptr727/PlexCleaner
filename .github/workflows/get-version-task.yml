@@ -49,6 +49,8 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
+      # Floated on `master` (not SHA-pinned): upstream tags lag `master`, so a
+      # pin would only draw spurious Dependabot downgrade PRs.
       - name: Run Nerdbank.GitVersioning tool step
         id: nbgv
-        uses: dotnet/nbgv@705dad19ab067f12f4e9eeaa60812e01edef5d25 # v0.5.2
+        uses: dotnet/nbgv@master
