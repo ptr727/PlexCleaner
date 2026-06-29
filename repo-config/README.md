@@ -21,16 +21,18 @@ templates); repository administration config-as-code is the maintainer's, so it 
 - [`ruleset-main.json`](./ruleset-main.json) - the `main` branch ruleset (merge-commit-only, signed
   commits, the same required check, strict **off**; no linear-history rule).
 - [`settings.json`](./settings.json) - repository settings (auto-merge on; squash **and** merge-commit
-  allowed; rebase off; auto-delete-on-merge **off**). Auto-delete is **off** so a `develop -> main` promotion
-  does not delete `develop` (GitHub's auto-delete would remove the merged head branch); the trade-off is that
-  merged bot and feature branches are not auto-removed - clean them up manually (the merge UI's delete button
-  or `gh pr merge --delete-branch`).
+  allowed; rebase off; auto-delete-on-merge **off**). The repo-wide auto-delete **setting** is off so a
+  `develop -> main` promotion does not delete `develop` (GitHub's auto-delete would remove the merged head
+  branch). Per-merge deletion is explicit instead: the merge-bot deletes a merged bot branch with
+  `gh pr merge --delete-branch`, and a feature branch is deleted the same way (or via the merge UI's delete
+  button) - so `main`/`develop` survive while bot/feature branches are still cleaned up.
 
 ## What it does not store
 
 Secret **values** are never readable through the API, so the script only asserts the required secret
 **names** exist (`DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` for the image, and the App credentials
-`CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` for the merge-bot) and that a GitHub App is installed.
+`CODEGEN_APP_CLIENT_ID` / `CODEGEN_APP_PRIVATE_KEY` for the merge-bot), and *notes* (best-effort) whether a
+GitHub App is installed - a precise check needs app-level auth, so the App-installation check does not fail the audit.
 The Docker Hub and App credentials must be set in **both** the Actions and Dependabot secret stores, since a
 Dependabot-triggered run gets the Dependabot store. Set the values in the repository (or organization) secret store directly. There is no
 NuGet publishing here; the GitHub release uses the built-in `GITHUB_TOKEN`. The Docker Hub access token's
