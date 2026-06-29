@@ -300,7 +300,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 ### D9 - Style, static, and dropped workflows (see section 2)
 
-- **D9.1** Every action SHA-pinned with a version comment; an installed-tool version (e.g. the actionlint
+- **D9.1** Every action SHA-pinned with a version comment (sole exception: `dotnet/nbgv@master`); an installed-tool version (e.g. the actionlint
   binary) is left unpinned to track latest.
 - **D9.2** File/workflow/job/step names follow the suffix rules; a ruleset-bound `context:` name moves only in
   lockstep with `repo-config/`.
