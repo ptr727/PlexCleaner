@@ -62,7 +62,7 @@ jobs:
               exit 1
               ;;
           esac
-          gh pr merge --auto "$method" "$PR_URL"
+          gh pr merge --auto --delete-branch "$method" "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
