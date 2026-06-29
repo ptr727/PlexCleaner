@@ -88,8 +88,8 @@ jq_has() { jq -e "$@" >/dev/null 2>&1; }
 # `jq -e` exits 1 (last output false/null) or 4 (no output at all) for the "lacks" cases, 0 for a truthy
 # match, and 2/3/5 for a real error (malformed filter or input), which is propagated so the calling assert
 # fails loudly. The `|| rc=$?` keeps jq in a list (exempt from set -e) so a non-zero exit captures rc instead
-# of aborting.
-jq_lacks() { local rc=0; jq -e "$@" >/dev/null 2>&1 || rc=$?; case "$rc" in 0) return 1 ;; 1|4) return 0 ;; *) return "$rc" ;; esac; }
+# of aborting. Only stdout is discarded - jq's stderr is kept so a real error shows its diagnostic.
+jq_lacks() { local rc=0; jq -e "$@" >/dev/null || rc=$?; case "$rc" in 0) return 1 ;; 1|4) return 0 ;; *) return "$rc" ;; esac; }
 
 check_ruleset() { # name  expected-merge-method  expect-linear(true/false)
   local name="$1" method="$2" linear="$3" id rs
