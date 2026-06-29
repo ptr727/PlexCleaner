@@ -49,8 +49,8 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
 
-      # Floated on `master` (not SHA-pinned): upstream tags lag `master`, so a
-      # pin would only draw spurious Dependabot downgrade PRs.
+      # Float nbgv on `master`, not SHA-pinned: its tag stream lags `master`, so Dependabot
+      # tag-tracking would only propose downgrades to stale tags (WORKFLOW.md D9.1).
       - name: Run Nerdbank.GitVersioning tool step
         id: nbgv
         uses: dotnet/nbgv@master
