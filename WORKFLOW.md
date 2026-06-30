@@ -174,7 +174,7 @@ tracker. A person steps in only for a breaking change (a red check) or to dispat
 ### Flow diagrams
 
 Three diagrams trace the architecture above: the pull-request gate, the schedule/dispatch publisher, and
-the bot automation. They are the same outcomes the section 4 contract specifies, drawn from the workflow YAML; if a
+the bot automation. They depict the same outcomes that the section 4 contract specifies, drawn from the workflow YAML; if a
 diagram and a guarantee disagree, one of them is a defect. Triggers are blue, gates yellow,
 durable/published outputs green, and stop/skip outcomes red.
 
