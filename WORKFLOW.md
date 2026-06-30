@@ -84,7 +84,8 @@ Legibility rules. Necessary but not sufficient: a perfectly styled workflow can 
   `group: '${{ github.workflow }}-${{ github.ref }}'`, `cancel-in-progress: true`. The publisher overrides
   it: a ref-independent group with `cancel-in-progress: false`, so two publishes never overlap (a schedule and
   a manual dispatch, or back-to-back dispatches against the shared Docker tags) and none is cancelled
-  mid-release.
+  mid-release. The merge-bot also overrides it: it keys on the PR number with `cancel-in-progress: false`
+  so each PR's events run to completion in order.
 - **Shells.** Every multi-line bash `run:` starts with `set -euo pipefail`.
 - **Conditionals.** Multi-line `if:` uses the folded scalar `if: >-`.
 - **Boolean inputs.** A boolean used by both `workflow_call` and `workflow_dispatch` is declared in both
@@ -170,6 +171,107 @@ checks are the safety net), except a **semver-major NuGet** bump, which waits fo
 does not itself publish - it ships in the next weekly publish. There is no codegen and no upstream-version
 tracker. A person steps in only for a breaking change (a red check) or to dispatch a release.
 
+### Flow diagrams
+
+Three diagrams trace the architecture above: the pull-request gate, the schedule/dispatch publisher, and
+the bot automation. They are the same outcomes section 4 contracts, drawn from the workflow YAML; if a
+diagram and a guarantee disagree, one of them is a defect. Triggers are blue, gates yellow,
+durable/published outputs green, and stop/skip outcomes red.
+
+**Pull request (CI) - `test-pull-request.yml`.** Every push head-resolves the reusable tasks, runs the
+validate gate and a non-publishing smoke build of both targets, and a single aggregator produces the
+ruleset-bound required check (D1, D6).
+
+```mermaid
+flowchart TD
+    T(["push: every branch<br/>(or workflow_dispatch)"]):::trig
+    T --> D{"github.event.deleted?"}
+    D -- "yes: branch deletion" --> X(["all jobs + aggregator skip<br/>no failed run, no pending check"]):::stop
+    D -- "no" --> V["Validate job<br/>(validate-task.yml)"]
+    D -- "no" --> S["Smoke build job<br/>build-release-task.yml<br/>smoke: true, github: false, dockerhub: false"]
+    subgraph VT ["validate-task.yml"]
+        U["Run unit tests job<br/>dotnet test, warnings-as-errors"]
+        L["Lint job<br/>CSharpier, dotnet format,<br/>markdownlint, cspell, actionlint"]
+    end
+    V --> VT
+    subgraph BRTS ["build-release-task.yml (smoke: true)"]
+        GVS["Get version job<br/>NBGV @master"] --> SE["Build executable job<br/>linux-x64 + win-x64 only<br/>no zip, no upload"]
+        GVS --> SD["Build Docker job<br/>linux/amd64 only<br/>no push"]
+    end
+    S --> BRTS
+    VT --> A
+    BRTS --> A
+    A{"Check pull request workflow status job<br/>validate AND smoke-build succeeded?"}:::gate
+    A -- "yes" --> G(["required check passes<br/>merge unblocked"]):::pub
+    A -- "no" --> R(["required check fails<br/>merge blocked"]):::stop
+    classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    classDef pub fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+```
+
+**Publish - `publish-release.yml` -> `build-release-task.yml`.** A weekly schedule (rebuilds `main`) or a
+dispatch on the started branch validates, versions once with NBGV, builds the per-RID executable 7z and the
+multi-arch Docker image, then cuts the GitHub release and pushes to Docker Hub (D2, D3, D4). Both output
+sinks are shown.
+
+```mermaid
+flowchart TD
+    SCH(["schedule: Mon 02:00 UTC<br/>(rebuilds main)"]):::trig --> PG
+    DSP(["workflow_dispatch<br/>(branch it was started from)"]):::trig --> PG
+    PG{"publish job guard<br/>ref_name in (main, develop)?"}:::gate
+    PG -- "no (feature branch)" --> PSKIP(["publish is a no-op"]):::stop
+    PG -- "yes" --> VAL
+    subgraph BRT ["build-release-task.yml (github: true, dockerhub: true, smoke: false)"]
+        VAL["Validate job<br/>(validate-task.yml, branch ref)"] --> VG{"validate succeeded<br/>or skipped?"}:::gate
+        VG -- "failed" --> VFAIL(["build + release skipped"]):::stop
+        GV["Get version job<br/>NBGV @master, runs once<br/>SemVer2 + GitCommitId"]
+        VG -- "ok" --> BE
+        VG -- "ok" --> BD
+        GV --> BE
+        GV --> BD
+        BE["Build executable job<br/>RID matrix: win-x64, linux-x64,<br/>linux-musl-x64, linux-arm, linux-arm64,<br/>osx-x64, osx-arm64 -> PlexCleaner.7z<br/>release-asset-&lt;branch&gt;-executable"]
+        BD["Build Docker job<br/>linux/amd64 + linux/arm64<br/>tags: latest|develop + :SemVer2"]
+        BD --> DH[("Docker Hub push<br/>ptr727/plexcleaner<br/>latest|develop + :SemVer2 (multi-arch)<br/>+ overview on main")]:::pub
+        BE --> GR
+        BD --> GR
+        GR{"github-release job<br/>main version clean?<br/>(strip +meta, no '-')"}:::gate
+        GR -- "main carries prerelease '-'" --> GRX(["fail ::error::<br/>refuse to publish"]):::stop
+        GR -- "ok" --> EX{"tag exists<br/>and not dispatch?"}:::gate
+        EX -- "exists, schedule" --> NOP(["skip release-create<br/>artifact reclaimed by backstop"]):::stop
+        EX -- "create or dispatch refresh" --> REL[("GitHub release<br/>tag = SemVer2 at GitCommitId<br/>PlexCleaner.7z + README + LICENSE<br/>prerelease = branch != main")]:::pub
+    end
+    classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    classDef pub fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+```
+
+**Automation - Dependabot + merge-bot.** Dependabot opens in-repo bot PRs; the merge-bot enables auto-merge
+on open (squash on `develop`, merge on `main`), excepting semver-major NuGet, and disables it on a
+maintainer push. There is no codegen here; a merged bump does not publish - it ships in the next scheduled
+run (D8).
+
+```mermaid
+flowchart TD
+    DEP(["Dependabot opens PR<br/>(in-repo branch, daily)"]):::trig --> MB
+    subgraph MBT ["merge-bot-pull-request.yml (pull_request_target, key = PR number)"]
+        MB{"event / author / in-repo?"}:::gate
+        MB -- "opened/reopened<br/>dependabot[bot]" --> MAJ{"semver-major NuGet?"}:::gate
+        MAJ -- "yes" --> HUM(["no auto-merge<br/>human review"]):::stop
+        MAJ -- "no" --> EN["enable auto-merge<br/>--squash develop / --merge main<br/>(App token, --delete-branch)"]
+        MB -- "synchronize by maintainer<br/>on dependabot branch" --> DIS["disable auto-merge<br/>(App token)"]
+    end
+    EN --> CK{"required check passes?"}:::gate
+    CK -- "yes" --> MRG(["PR merges (App token)"]):::pub
+    CK -- "no" --> BLK(["merge blocked<br/>maintainer notified"]):::stop
+    MRG -. "no publish on merge" .-> NEXT(["ships in next weekly schedule"]):::stop
+    classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    classDef pub fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+```
+
 ## 4. Behavioral contract - expected outcomes
 
 Each is a **MUST**, stated as input -> output plus the failure it prevents.
@@ -198,7 +300,11 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `dotnet format style --verify-no-changes`, `markdownlint-cli2`, `cspell` on the user-facing docs (README,
   HISTORY), and `actionlint` (which shellchecks every `run:`). Same checks the editor and the Husky hook run.
 - **D1.4 Smoke never publishes and never uploads.** Output: a smoke build compiles/packs both targets but
-  makes no GitHub release, no Docker push, no artifact upload. Every publish step is gated `!smoke`.
+  makes no GitHub release, no Docker push, no artifact upload. Every publish step is gated `!smoke`. The
+  Docker Hub login is **not** gated: smoke logs in too, for higher pull/cache-read rate limits, so it does
+  require the Docker Hub secrets (present in both the Actions and Dependabot stores). Fork safety rests on
+  forks being unable to push here - they trigger no run and gate no required check, not on the absence of
+  credentials.
 - **D1.5 One required aggregator gates merge.** Output: a single aggregator job must **succeed** (not merely
   "not fail"), `needs:` `validate` and `smoke-build`, and blocks on any non-success. Its name is
   ruleset-bound (D6.2) and must not be renamed. *Prevents a defect merging unverified.*
