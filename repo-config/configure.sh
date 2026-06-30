@@ -138,7 +138,7 @@ check_security() {
   # 404 when disabled; automated-security-fixes returns { "enabled": true/false }.
   assert "Dependabot vulnerability alerts enabled" gh_ok "repos/$REPO/vulnerability-alerts"
   assert "Dependabot automated security updates enabled" \
-    jq_has '.enabled == true' < <(gh api "repos/$REPO/automated-security-fixes" 2>/dev/null)
+    jq_has '.enabled == true' < <(gh api "repos/$REPO/automated-security-fixes")
 }
 
 check_secrets() {

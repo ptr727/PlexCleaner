@@ -387,7 +387,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 - **D7.1 The publisher does not cancel mid-flight.** Output: ref-independent group, `cancel-in-progress:
   false`. CI uses the `...-${{ github.ref }}` group with `cancel-in-progress: true`; the merge-bot keys on PR
   number (D8.1).
-- **D7.2 Skipped jobs still need valid permissions.** Output: every reusable job declares valid
+- **D7.2 Skipped jobs still need valid permissions.** Output: every reusable job runs under valid least-privilege
   `permissions:`; a callee's extra scope is granted by the caller.
 - **D7.3 Boolean inputs both forms.** Declared in both trigger blocks, compared against `true` and `'true'`.
 
