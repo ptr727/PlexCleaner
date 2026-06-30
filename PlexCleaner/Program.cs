@@ -20,6 +20,11 @@ public static class Program
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
 
+    // Floor log level: the configured minimum below which events are suppressed outside
+    // a per-file session (see PerFileLogLevel). Warning when --logwarning is set.
+    public static LogEventLevel LogFloorLevel =>
+        Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
+
     public static HttpClient GetHttpClient() => s_httpClient.Value;
 
     private static HttpClient CreateHttpClient()
@@ -204,9 +209,12 @@ public static class Program
 
         // Logger configuration
         LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
-            .MinimumLevel.Is(Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information)
+            // Generate Information events so per-file sessions can elevate to them; the
+            // PerFileLogLevel filter enforces the configured floor for non-elevated logs
+            .MinimumLevel.Is(LogEventLevel.Information)
             // Set minimum to Verbose for LogOverride context
             .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName!, LogEventLevel.Verbose)
+            .Filter.With(new PerFileLogLevel.Filter(LogFloorLevel))
             .Enrich.WithThreadId()
             .WriteTo.Console(
                 theme: AnsiConsoleTheme.Code,

@@ -39,6 +39,10 @@ public static class Process
         ProcessFile? processFile = null;
         bool result;
 
+        // Treat each file as a logging session: a fault or modification elevates this
+        // file's logging to Information so remediation detail is logged at warning level
+        using IDisposable logScope = PerFileLogLevel.BeginScope(Program.LogFloorLevel);
+
         // Process in jump loop
         for (; ; )
         {

@@ -43,6 +43,7 @@ public class SidecarFile
     private string _mkvMergeJson = string.Empty;
 
     private SidecarFileJsonSchema? _sidecarJson;
+    private StatesType _state;
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
@@ -70,7 +71,21 @@ public class SidecarFile
     public MediaProps FfProbeProps { get; private set; }
     public MediaProps MkvMergeProps { get; private set; }
     public MediaProps MediaInfoProps { get; private set; }
-    public StatesType State { get; set; }
+
+    public StatesType State
+    {
+        get => _state;
+        set
+        {
+            // Gaining a real processing state means this file is being remediated;
+            // elevate its logging session so the remediation steps are logged
+            if (value != StatesType.None && value != _state)
+            {
+                PerFileLogLevel.Elevate();
+            }
+            _state = value;
+        }
+    }
 
     public bool Create()
     {
@@ -307,8 +322,9 @@ public class SidecarFile
         MkvMergeProps = mkvMergeProps;
         FfProbeProps = ffProbeProps;
 
-        // Assign state
-        State = _sidecarJson.State;
+        // Assign state directly: loading persisted state is not a new remediation,
+        // so it must not elevate the logging session via the State setter
+        _state = _sidecarJson.State;
 
         return true;
     }
