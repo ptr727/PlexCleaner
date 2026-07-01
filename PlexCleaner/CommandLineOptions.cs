@@ -132,18 +132,24 @@ public class CommandLineParser
     };
 
     // FileInfo with AcceptExistingOnly validates the path exists at parse time, so the plugin loader
-    // does not need to re-check it
+    // does not need to re-check it. Both Required and the existence check are gated to non-AOT builds so
+    // that under AOT the custom command still reaches CustomCommand and emits the non-AOT error.
+#if PLUGINS
     private readonly Option<FileInfo> _pluginAssemblyOption = new Option<FileInfo>(
         "--pluginassembly"
     )
     {
         Description = "Path to a plugin assembly implementing IProcessPlugin",
         HelpName = "filepath",
-        // Not required in AOT builds so custom can reach CustomCommand and emit the non-AOT error
-#if PLUGINS
         Required = true,
-#endif
     }.AcceptExistingOnly();
+#else
+    private readonly Option<FileInfo> _pluginAssemblyOption = new("--pluginassembly")
+    {
+        Description = "Path to a plugin assembly implementing IProcessPlugin",
+        HelpName = "filepath",
+    };
+#endif
 
     private RootCommand CreateRootCommand()
     {
