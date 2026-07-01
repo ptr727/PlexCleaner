@@ -29,6 +29,7 @@ public class SidecarFile
         RemovedAttachments = 1 << 14,
         SetFlags = 1 << 15,
         RemovedCoverArt = 1 << 16,
+        ClearedDefaultFlags = 1 << 17,
     }
 
     private const string SidecarExtension = ".PlexCleaner";

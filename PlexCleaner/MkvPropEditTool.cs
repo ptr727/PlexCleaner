@@ -103,6 +103,34 @@ public partial class MkvPropEdit
             return Execute(command, out CommandResult result) && result.ExitCode is 0;
         }
 
+        public bool ClearDefaultFlags(string fileName, IEnumerable<TrackProps> trackList)
+        {
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        .Add(options =>
+                        {
+                            // Clear the Default flag on each track, MkvMerge track numbers
+                            trackList
+                                .ToList()
+                                .ForEach(item =>
+                                    options
+                                        .EditTrack(item.Number)
+                                        .ClearFlags(TrackProps.FlagsType.Default)
+                                );
+                            return options;
+                        })
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+        }
+
         public bool ClearTags(string fileName, MediaProps mediaProps)
         {
             // Build command line

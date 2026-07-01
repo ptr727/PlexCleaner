@@ -255,6 +255,15 @@ public static class Process
                 break;
             }
 
+            // Clear redundant Default track flags
+            // Conditional on SetTrackFlags option
+            if (!processFile.RepairDefaultFlags(ref modified) || Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+
             // Re-Encode formats that cannot be direct-played
             // Conditional on ReEncode option
             if (!processFile.ReEncode(true, ref modified) || Program.IsCancelled())
@@ -278,6 +287,7 @@ public static class Process
                 !processFile.RepairMetadataErrors(ref modified)
                 || !processFile.SetUnknownLanguageTracks(ref modified)
                 || !processFile.RemoveTags(ref modified)
+                || !processFile.RepairDefaultFlags(ref modified)
                 || Program.IsCancelled()
             )
             {
