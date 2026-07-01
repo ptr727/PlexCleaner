@@ -63,13 +63,14 @@ public static class PluginLoader
     {
         ArgumentNullException.ThrowIfNull(assemblyFile);
 
-        // The CLI validates that the path exists (AcceptExistingOnly), so just load and reflect. Resolve
-        // FullName inside the try so any path error is logged and returns null instead of throwing.
+        // Start with the safe file name and upgrade to the resolved full path inside the try, so the
+        // catch can log the most specific location available without FullName throwing before the try
+        string assemblyPath = assemblyFile.Name;
         try
         {
-            string fullPath = assemblyFile.FullName;
-            PluginLoadContext context = new(fullPath);
-            Assembly assembly = context.LoadFromAssemblyPath(fullPath);
+            assemblyPath = assemblyFile.FullName;
+            PluginLoadContext context = new(assemblyPath);
+            Assembly assembly = context.LoadFromAssemblyPath(assemblyPath);
 
             // Require exactly one concrete IProcessPlugin implementation
             List<Type> pluginTypes =
@@ -86,7 +87,7 @@ public static class PluginLoader
                 Log.Error(
                     "Plugin assembly must contain exactly one IProcessPlugin implementation, found {Count} : {AssemblyPath}",
                     pluginTypes.Count,
-                    fullPath
+                    assemblyPath
                 );
                 return null;
             }
@@ -104,13 +105,14 @@ public static class PluginLoader
                 return null;
             }
 
-            Log.Information("Loaded plugin : {Name} : {AssemblyPath}", plugin.Name, fullPath);
+            Log.Information("Loaded plugin : {Name} : {AssemblyPath}", plugin.Name, assemblyPath);
             return plugin;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
-            // Log the file name (does not resolve the path) since LogAndHandle only reports the caller
-            Log.Error("Failed to load plugin : {AssemblyName}", assemblyFile.Name);
+            // Log the resolved path (falls back to the file name if FullName threw) since LogAndHandle
+            // only reports the caller member
+            Log.Error("Failed to load plugin : {AssemblyPath}", assemblyPath);
             return null;
         }
     }
