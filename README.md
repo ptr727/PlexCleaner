@@ -845,6 +845,7 @@ Notes:
 - A plugin binds to a specific `PlexCleaner.dll` and may need rebuilding across releases. `PluginApiVersion` only guards the plugin contract, but the public API a plugin calls can change in any release, so `Initialize` should also check `host.ApplicationVersion` against the PlexCleaner version the plugin was tested against (see the example).
 - File processing is serial by default; if you enable `--parallel`, plugin code must be thread-safe.
 - `ProcessFile` is called for every file under `--mediafiles`, not only Matroska files, so a plugin should filter by type (e.g. `SidecarFile.IsMkvFile(fileName)`) and return `true` to skip files it does not handle.
+- A plugin that modifies a file must keep the sidecar in sync or the next normal run will invalidate the saved state. Follow the example flow: confirm the file is Matroska, call `GetMediaProps()` to initialize the sidecar, then modify through a `ProcessFile` helper such as `RepairMatroskaStructure(...)` that refreshes the sidecar to match the changed file.
 
 CLI example:
 
