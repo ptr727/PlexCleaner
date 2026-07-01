@@ -61,11 +61,11 @@ public static class PluginLoader
     [RequiresDynamicCode("Loads a plugin assembly at runtime")]
     public static IProcessPlugin? Load(FileInfo assemblyFile)
     {
-        // The CLI validates that the path exists (AcceptExistingOnly), so use the resolved full path
-        // directly and let the try/catch handle assembly load and reflection errors
-        string fullPath = assemblyFile.FullName;
+        // The CLI validates that the path exists (AcceptExistingOnly), so just load and reflect. Resolve
+        // FullName inside the try so any path error is logged and returns null instead of throwing.
         try
         {
+            string fullPath = assemblyFile.FullName;
             PluginLoadContext context = new(fullPath);
             Assembly assembly = context.LoadFromAssemblyPath(fullPath);
 
@@ -107,8 +107,8 @@ public static class PluginLoader
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
-            // Include the assembly path since LogAndHandle only reports the caller member
-            Log.Error("Failed to load plugin : {AssemblyPath}", fullPath);
+            // Log the file name (does not resolve the path) since LogAndHandle only reports the caller
+            Log.Error("Failed to load plugin : {AssemblyName}", assemblyFile.Name);
             return null;
         }
     }
