@@ -28,7 +28,6 @@ public class ProcessFile
         _sidecarFile = new SidecarFile(FileInfo);
     }
 
-    // TODO: Improve nullable logic
     public MediaProps FfProbeProps { get; private set; } = null!;
     public MediaProps MkvMergeProps { get; private set; } = null!;
     public MediaProps MediaInfoProps { get; private set; } = null!;

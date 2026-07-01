@@ -43,6 +43,7 @@ public class SidecarFile
     private string _mkvMergeJson = string.Empty;
 
     private SidecarFileJsonSchema? _sidecarJson;
+    private StatesType _state;
 
     public SidecarFile(FileInfo mediaFileInfo)
     {
@@ -66,11 +67,23 @@ public class SidecarFile
         MediaInfoProps = null!;
     }
 
-    // TODO: Improve nullable handling
     public MediaProps FfProbeProps { get; private set; }
     public MediaProps MkvMergeProps { get; private set; }
     public MediaProps MediaInfoProps { get; private set; }
-    public StatesType State { get; set; }
+
+    public StatesType State
+    {
+        get => _state;
+        set
+        {
+            // Elevate loglevel
+            if (value != StatesType.None && value != _state)
+            {
+                PerFileLogLevel.Elevate();
+            }
+            _state = value;
+        }
+    }
 
     public bool Create()
     {
@@ -307,8 +320,8 @@ public class SidecarFile
         MkvMergeProps = mkvMergeProps;
         FfProbeProps = ffProbeProps;
 
-        // Assign state
-        State = _sidecarJson.State;
+        // Set state directly to prevent log elevation
+        _state = _sidecarJson.State;
 
         return true;
     }

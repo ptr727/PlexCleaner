@@ -37,7 +37,6 @@ public abstract class MediaTool
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
-    // TODO: Improve nullable logic
     public MediaToolInfo Info { get; set; } = null!;
 
     public abstract ToolFamily GetToolFamily();

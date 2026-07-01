@@ -19,6 +19,8 @@ public static class Program
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
+    public static LogEventLevel LogFloorLevel =>
+        Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
 
     public static HttpClient GetHttpClient() => s_httpClient.Value;
 
@@ -204,9 +206,10 @@ public static class Program
 
         // Logger configuration
         LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
-            .MinimumLevel.Is(Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information)
-            // Set minimum to Verbose for LogOverride context
-            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName!, LogEventLevel.Verbose)
+            // Emit Information events so sessions can elevate to them; the filter is the sole
+            // authority for the configured floor and LogOverride passthrough (see PerFileLogLevel)
+            .MinimumLevel.Is(LogEventLevel.Information)
+            .Filter.With(new PerFileLogLevel.Filter(LogFloorLevel))
             .Enrich.WithThreadId()
             .WriteTo.Console(
                 theme: AnsiConsoleTheme.Code,
