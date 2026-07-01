@@ -406,15 +406,13 @@ public class ProcessFile
         // Per MkvToolNix docs remux is the recommended approach to correcting language tags
         // Honor Program.Config.ProcessOptions.SetIetfLanguageTags as lots of older media does not have IETF tags set
 
-        // Any tracks need remuxing
-        if (
-            !HasMetadataErrors(TrackProps.StateType.Remove)
-            && !HasMetadataErrors(TrackProps.StateType.ReMux)
-            && !(
-                Program.Config.ProcessOptions.SetIetfLanguageTags
-                && HasMetadataErrors(TrackProps.StateType.SetLanguage)
-            )
-        )
+        // Any tracks need remuxing, evaluate each once and reuse for the detection warning
+        bool removeErrors = HasMetadataErrors(TrackProps.StateType.Remove);
+        bool remuxErrors = HasMetadataErrors(TrackProps.StateType.ReMux);
+        bool setLanguageErrors =
+            Program.Config.ProcessOptions.SetIetfLanguageTags
+            && HasMetadataErrors(TrackProps.StateType.SetLanguage);
+        if (!removeErrors && !remuxErrors && !setLanguageErrors)
         {
             // Done
             return true;
@@ -444,9 +442,9 @@ public class ProcessFile
         // Detected: metadata errors requiring a remux
         Log.Warning(
             "Metadata errors detected : Remove: {Remove}, ReMux: {ReMux}, SetLanguage: {SetLanguage} : {FileName}",
-            HasMetadataErrors(TrackProps.StateType.Remove),
-            HasMetadataErrors(TrackProps.StateType.ReMux),
-            HasMetadataErrors(TrackProps.StateType.SetLanguage),
+            removeErrors,
+            remuxErrors,
+            setLanguageErrors,
             FileInfo.Name
         );
 
