@@ -164,7 +164,6 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Id = track.Id;
 
         // Uid: Matroska unique track id
-        // TODO: Consider switching to using uid vs. number as it is unique and deterministic in MkvMerge and MkvPropEdit
         Uid = track.Properties.Uid;
 
         // Number: Matroska track number from block header

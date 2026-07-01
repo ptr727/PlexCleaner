@@ -58,7 +58,6 @@ public partial class FfMpeg
         // Error with some PGS subtitles
         // [matroska,webm @ 000001d77fb61ca0] Could not find codec parameters for stream 2 (Subtitle: hdmv_pgs_subtitle): unspecified size
         // Consider increasing the value for the 'analyzeduration' and 'probesize' options
-        // TODO: Issue is reported fixed, to be verified
 
         // Add -fflags +genpts to generate missing timestamps
         // [mpegts @ 0x5713ff02ab40] first pts and dts value must be set
@@ -122,7 +121,6 @@ public partial class FfMpeg
         // https://trac.ffmpeg.org/ticket/6375
         // Too many packets buffered for output stream 0:1
         // Set max_muxing_queue_size to large value to work around issue
-        // TODO: Issue is reported fixed, to be verified
         public OutputOptions Default() => MaxMuxingQueueSize("1024");
 
         public OutputOptions MaxMuxingQueueSize() => Add("-max_muxing_queue_size");

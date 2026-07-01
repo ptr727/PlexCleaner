@@ -10,7 +10,7 @@ using Serilog;
 
 // ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
 
-// TODO: When using quickscan select a portion of the middle of the file vs, the beginning.
+// TODO: When using quickscan select a portion of the middle of the file
 
 namespace PlexCleaner;
 

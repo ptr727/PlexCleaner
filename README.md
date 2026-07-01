@@ -23,13 +23,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.19**:
+**Version: 3.20**:
 
 **Summary:**
 
-- Internal CI/CD rework, no application changes.
-  - Branch-scoped self-publishing: a weekly scheduled run and manual dispatch publish both branches (executables + multi-arch Docker image + GitHub release).
-  - Hardened repository configuration, see [WORKFLOW.md](./WORKFLOW.md).
+- Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
