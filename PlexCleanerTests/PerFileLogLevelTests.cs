@@ -155,41 +155,15 @@ public class PerFileLogLevelTests
     }
 
     [Fact]
-    public void SidecarStateChange_ElevatesSession()
+    public void SidecarStateChange_DoesNotElevate()
     {
+        // State changes no longer elevate logging; only Warning/Error events do. Detections are logged
+        // as explicit warnings, which is what raises the per-file level.
         PerFileLogLevel.Filter filter = new(LogEventLevel.Warning);
         SidecarFile sidecar = new("/does-not-exist.mkv");
         using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Warning);
 
         _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeFalse();
-        sidecar.State = SidecarFile.StatesType.ReMuxed;
-        _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeTrue();
-    }
-
-    [Fact]
-    public void SidecarStateNone_DoesNotElevate()
-    {
-        PerFileLogLevel.Filter filter = new(LogEventLevel.Warning);
-        SidecarFile sidecar = new("/does-not-exist.mkv");
-        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Warning);
-
-        sidecar.State = SidecarFile.StatesType.None;
-        _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeFalse();
-    }
-
-    [Fact]
-    public void SidecarStateUnchanged_DoesNotElevate()
-    {
-        PerFileLogLevel.Filter filter = new(LogEventLevel.Warning);
-        SidecarFile sidecar = new("/does-not-exist.mkv");
-
-        // First assignment elevates a throwaway session; re-setting the same value must not elevate
-        using (PerFileLogLevel.BeginScope(LogEventLevel.Warning))
-        {
-            sidecar.State = SidecarFile.StatesType.ReMuxed;
-        }
-
-        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Warning);
         sidecar.State = SidecarFile.StatesType.ReMuxed;
         _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeFalse();
     }

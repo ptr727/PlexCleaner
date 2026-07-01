@@ -6,6 +6,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - Version 3.20:
   - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter. Prior to this change the log output would only contain the trigger warning or error event, now it will also log all subsequent information level events for that file during its processing cycle.
+  - Log a warning when a repair or cleanup condition is detected (redundant `Default` flags, invalid language tags, interlaced video, tracks needing re-encode, etc.) so `--logwarning` surfaces every file that is modified, with the subsequent cleanup steps logged at information level.
   - Always log the end-of-run summary at information level, even with `--logwarning`, so the modified, error, and verify-failed counts are recorded for every processing run.
   - Handle the `SIGINT`, `SIGTERM`, and `SIGQUIT` termination signals (`docker stop`, `Ctrl+C`) so processing is interrupted gracefully and the summary and exit code are logged before exit. The custom `Ctrl+Q`/`Ctrl+Z` exit keys are removed in favor of the standard signals.
   - Normalize `Default` track flags instead of only warning about them: clear the flag on a lone track of a type, keep the preferred audio track as the single default when multiple are flagged, and clear all default flags on subtitle tracks.

@@ -142,6 +142,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: extension in the ReMux extension list
+        Log.Warning(
+            "ReMux extension detected : Extension: {Extension} : {FileName}",
+            FileInfo.Extension,
+            FileInfo.Name
+        );
+
         // ReMux the file
         Log.Information("Remux file matched by extension : {FileName}", FileInfo.Name);
 
@@ -328,6 +335,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: tracks with invalid language tags
+        Log.Warning(
+            "Invalid language tags detected : Tracks: {Tracks} : {FileName}",
+            selectMediaProps.Selected.Count,
+            FileInfo.Name
+        );
+
         Log.Information("Setting invalid language tags : {FileName}", FileInfo.Name);
         selectMediaProps.WriteLine("Invalid", "Keep");
 
@@ -392,15 +406,13 @@ public class ProcessFile
         // Per MkvToolNix docs remux is the recommended approach to correcting language tags
         // Honor Program.Config.ProcessOptions.SetIetfLanguageTags as lots of older media does not have IETF tags set
 
-        // Any tracks need remuxing
-        if (
-            !HasMetadataErrors(TrackProps.StateType.Remove)
-            && !HasMetadataErrors(TrackProps.StateType.ReMux)
-            && !(
-                Program.Config.ProcessOptions.SetIetfLanguageTags
-                && HasMetadataErrors(TrackProps.StateType.SetLanguage)
-            )
-        )
+        // Any tracks need remuxing, evaluate each once and reuse for the detection warning
+        bool removeErrors = HasMetadataErrors(TrackProps.StateType.Remove);
+        bool remuxErrors = HasMetadataErrors(TrackProps.StateType.ReMux);
+        bool setLanguageErrors =
+            Program.Config.ProcessOptions.SetIetfLanguageTags
+            && HasMetadataErrors(TrackProps.StateType.SetLanguage);
+        if (!removeErrors && !remuxErrors && !setLanguageErrors)
         {
             // Done
             return true;
@@ -426,6 +438,15 @@ public class ProcessFile
         selectMediaProps.Move(mkvMergeRemoveList, false);
 
         // Do not call SetState() on items that are not in scope, further processing is done by state
+
+        // Detected: metadata errors requiring a remux
+        Log.Warning(
+            "Metadata errors detected : Remove: {Remove}, ReMux: {ReMux}, SetLanguage: {SetLanguage} : {FileName}",
+            removeErrors,
+            remuxErrors,
+            setLanguageErrors,
+            FileInfo.Name
+        );
 
         // ReMux the file
         Log.Information("Remux to repair metadata errors : {FileName}", FileInfo.Name);
@@ -496,6 +517,13 @@ public class ProcessFile
         // To be removed tracks
         selectMediaProps.Move(mkvMergeRemoveList, false);
 
+        // Detected: multiple video tracks
+        Log.Warning(
+            "Extra video tracks detected : Video: {Video} : {FileName}",
+            MkvMergeProps.Video.Count,
+            FileInfo.Name
+        );
+
         // ReMux the file
         Log.Information("Remux to remove extra video tracks : {FileName}", FileInfo.Name);
         selectMediaProps.WriteLine("Keep", "Remove");
@@ -526,6 +554,15 @@ public class ProcessFile
             // Nothing to do
             return true;
         }
+
+        // Detected: tracks needing flags set
+        Log.Warning(
+            "Track flags to set detected : Tracks: {Tracks} : {FileName}",
+            MkvMergeProps.Video.Count(item => item.State == TrackProps.StateType.SetFlags)
+                + MkvMergeProps.Audio.Count(item => item.State == TrackProps.StateType.SetFlags)
+                + MkvMergeProps.Subtitle.Count(item => item.State == TrackProps.StateType.SetFlags),
+            FileInfo.Name
+        );
 
         // Already flagged?
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.SetFlags))
@@ -571,6 +608,15 @@ public class ProcessFile
             // Nothing to do
             return true;
         }
+
+        // Detected: redundant Default flags, report the Default-flagged track count per type
+        Log.Warning(
+            "Redundant Default flags detected : Video: {Video}, Audio: {Audio}, Subtitle: {Subtitle} : {FileName}",
+            MkvMergeProps.Video.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            MkvMergeProps.Audio.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            MkvMergeProps.Subtitle.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            FileInfo.Name
+        );
 
         // Re-detected after a previous clearing pass, e.g. reintroduced by re-encoding
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedDefaultFlags))
@@ -721,6 +767,9 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: tags present
+        Log.Warning("Tags detected : {FileName}", FileInfo.Name);
+
         // Already cleared?
         // Tags can re-appear after running FfMpeg or HandBrake
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedTags))
@@ -752,6 +801,13 @@ public class ProcessFile
             // No attachments
             return true;
         }
+
+        // Detected: attachments present
+        Log.Warning(
+            "Attachments detected : Attachments: {Attachments} : {FileName}",
+            MkvMergeProps.Attachments,
+            FileInfo.Name
+        );
 
         // Already removed?
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.RemovedAttachments))
@@ -870,6 +926,9 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: cover art present
+        Log.Warning("Cover Art detected : {FileName}", FileInfo.Name);
+
         // Already removed?
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.RemovedCoverArt))
         {
@@ -924,6 +983,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: tracks with unknown language
+        Log.Warning(
+            "Unknown language tracks detected : Tracks: {Tracks} : {FileName}",
+            selectMediaProps.Selected.Count,
+            FileInfo.Name
+        );
+
         Log.Information(
             "Setting unknown language tracks to {DefaultLanguage} : {FileName}",
             Program.Config.ProcessOptions.DefaultLanguage,
@@ -970,6 +1036,13 @@ public class ProcessFile
         // There must be something left to keep
         Debug.Assert(selectMediaProps.Selected.Count > 0);
 
+        // Detected: tracks with unwanted languages
+        Log.Warning(
+            "Unwanted language tracks detected : Tracks: {Tracks} : {FileName}",
+            selectMediaProps.NotSelected.Count,
+            FileInfo.Name
+        );
+
         Log.Information("Removing unwanted language tracks : {FileName}", FileInfo.Name);
         selectMediaProps.WriteLine("Keep", "Remove");
 
@@ -1006,6 +1079,13 @@ public class ProcessFile
 
         // There must be something left to keep
         Debug.Assert(selectMediaProps.Selected.Count > 0);
+
+        // Detected: duplicate tracks
+        Log.Warning(
+            "Duplicate tracks detected : Tracks: {Tracks} : {FileName}",
+            selectMediaProps.NotSelected.Count,
+            FileInfo.Name
+        );
 
         Log.Information("Removing duplicate tracks : {FileName}", FileInfo.Name);
         selectMediaProps.WriteLine("Keep", "Remove");
@@ -1181,6 +1261,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: interlaced video
+        Log.Warning(
+            "Interlaced video detected : Format: {Format} : {FileName}",
+            videoProps.Format,
+            FileInfo.Name
+        );
+
         // Already deinterlaced?
         if (State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
@@ -1335,6 +1422,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: closed captions in the video stream
+        Log.Warning(
+            "Closed Captions detected : Format: {Format} : {FileName}",
+            videoProps.Format,
+            FileInfo.Name
+        );
+
         // Already removed?
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedCaptions))
         {
@@ -1421,6 +1515,13 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: subtitle tracks present
+        Log.Warning(
+            "Subtitles detected : Subtitle: {Subtitle} : {FileName}",
+            MkvMergeProps.Subtitle.Count,
+            FileInfo.Name
+        );
+
         Log.Information("Removing subtitles : {FileName}", FileInfo.Name);
         MkvMergeProps.Subtitle.ForEach(item => item.WriteLine("Subtitles"));
 
@@ -1465,6 +1566,13 @@ public class ProcessFile
             // Done
             return true;
         }
+
+        // Detected: tracks requiring re-encoding
+        Log.Warning(
+            "Tracks requiring re-encode detected : Tracks: {Tracks} : {FileName}",
+            selectMediaProps.Selected.Count,
+            FileInfo.Name
+        );
 
         // Already reencoded?
         if (State.HasFlag(SidecarFile.StatesType.ReEncoded))
