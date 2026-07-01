@@ -135,7 +135,10 @@ public class CommandLineParser
     {
         Description = "Path to a plugin assembly implementing IProcessPlugin",
         HelpName = "filepath",
+        // Not required in AOT builds so custom can reach CustomCommand and emit the non-AOT error
+#if PLUGINS
         Required = true,
+#endif
     };
 
     private RootCommand CreateRootCommand()
