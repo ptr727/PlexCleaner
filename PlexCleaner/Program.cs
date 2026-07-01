@@ -285,7 +285,13 @@ public static class Program
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Load the plugin after config and tools are initialized
+        // Load the plugin after config and tools are initialized (the option is required, so the
+        // path is always present here)
+        if (Options.PluginAssembly == null)
+        {
+            Log.Error("Plugin assembly path is required");
+            return MakeExitCode(ExitCode.Error);
+        }
         IProcessPlugin? plugin = PluginLoader.Load(Options.PluginAssembly);
         if (plugin == null)
         {

@@ -383,6 +383,45 @@ public class CommandLineTests
         _ = options.ThreadCount.Should().Be(2);
     }
 
+    [Fact]
+    public void Parse_Commandline_Custom_ExistingPluginAssembly_Binds()
+    {
+        // AcceptExistingOnly validates the path at parse time, so use a file that exists
+        string existing = typeof(CommandLineTests).Assembly.Location;
+        string[] args =
+        [
+            "custom",
+            "--settingsfile=settings.json",
+            $"--pluginassembly={existing}",
+            "--mediafiles=/data/foo",
+        ];
+
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().BeEmpty();
+        _ = parser.Result.CommandResult.Command.Name.Should().Be("custom");
+
+        CommandLineOptions options = parser.Bind();
+        FileInfo? pluginAssembly = options.PluginAssembly;
+        _ = pluginAssembly.Should().NotBeNull();
+        _ = pluginAssembly.FullName.Should().Be(new FileInfo(existing).FullName);
+    }
+
+    [Fact]
+    public void Parse_Commandline_Custom_MissingPluginAssembly_Fails()
+    {
+        // A non-existent plugin path fails at parse time via AcceptExistingOnly
+        string[] args =
+        [
+            "custom",
+            "--settingsfile=settings.json",
+            "--pluginassembly=/does/not/exist.dll",
+            "--mediafiles=/data/foo",
+        ];
+
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().NotBeEmpty();
+    }
+
     [Theory]
     [InlineData("--help")]
     [InlineData("--version")]

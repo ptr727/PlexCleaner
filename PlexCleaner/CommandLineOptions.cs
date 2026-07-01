@@ -19,7 +19,7 @@ public class CommandLineOptions
     public string ResultsFile { get; set; } = string.Empty;
     public string SchemaFile { get; set; } = string.Empty;
     public string SettingsFile { get; set; } = string.Empty;
-    public string PluginAssembly { get; set; } = string.Empty;
+    public FileInfo? PluginAssembly { get; set; }
 }
 
 public class CommandLineParser
@@ -131,15 +131,25 @@ public class CommandLineParser
         HelpName = "boolean",
     };
 
-    private readonly Option<string> _pluginAssemblyOption = new("--pluginassembly")
+    // FileInfo with AcceptExistingOnly validates the path exists at parse time, so the plugin loader
+    // does not need to re-check it. Both Required and the existence check are gated to non-AOT builds so
+    // that under AOT the custom command still reaches CustomCommand and emits the non-AOT error.
+#if PLUGINS
+    private readonly Option<FileInfo> _pluginAssemblyOption = new Option<FileInfo>(
+        "--pluginassembly"
+    )
     {
         Description = "Path to a plugin assembly implementing IProcessPlugin",
         HelpName = "filepath",
-        // Not required in AOT builds so custom can reach CustomCommand and emit the non-AOT error
-#if PLUGINS
         Required = true,
-#endif
+    }.AcceptExistingOnly();
+#else
+    private readonly Option<FileInfo> _pluginAssemblyOption = new("--pluginassembly")
+    {
+        Description = "Path to a plugin assembly implementing IProcessPlugin",
+        HelpName = "filepath",
     };
+#endif
 
     private RootCommand CreateRootCommand()
     {
@@ -440,7 +450,7 @@ public class CommandLineParser
             ResultsFile = Result.GetValue(_resultsFileOption) ?? string.Empty,
             SchemaFile = Result.GetValue(_schemaFileOption) ?? string.Empty,
             SettingsFile = Result.GetValue(_settingsFileOption) ?? string.Empty,
-            PluginAssembly = Result.GetValue(_pluginAssemblyOption) ?? string.Empty,
+            PluginAssembly = Result.GetValue(_pluginAssemblyOption),
         };
 
         return options;
