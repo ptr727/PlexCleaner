@@ -61,6 +61,8 @@ public static class PluginLoader
     [RequiresDynamicCode("Loads a plugin assembly at runtime")]
     public static IProcessPlugin? Load(FileInfo assemblyFile)
     {
+        ArgumentNullException.ThrowIfNull(assemblyFile);
+
         // The CLI validates that the path exists (AcceptExistingOnly), so just load and reflect. Resolve
         // FullName inside the try so any path error is logged and returns null instead of throwing.
         try

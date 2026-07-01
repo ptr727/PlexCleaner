@@ -289,6 +289,7 @@ public static class Program
         // path is always present here)
         if (Options.PluginAssembly == null)
         {
+            Log.Error("Plugin assembly path is required");
             return MakeExitCode(ExitCode.Error);
         }
         IProcessPlugin? plugin = PluginLoader.Load(Options.PluginAssembly);
