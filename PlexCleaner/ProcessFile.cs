@@ -572,6 +572,12 @@ public class ProcessFile
             return true;
         }
 
+        // Re-detected after a previous clearing pass, e.g. reintroduced by re-encoding
+        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.ClearedDefaultFlags))
+        {
+            Log.Warning("Default flags re-detected after clearing : {FileName}", FileInfo.Name);
+        }
+
         // Clear the redundant Default flags
         Log.Information("Clearing redundant Default flags : {FileName}", FileInfo.Name);
         clearList.ForEach(item => item.WriteLine("Default"));
