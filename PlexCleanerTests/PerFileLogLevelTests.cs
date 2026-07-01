@@ -202,10 +202,11 @@ public class PerFileLogLevelSidecarTests : SamplesFixture
     public void LoadingPersistedState_DoesNotElevate()
     {
         PerFileLogLevel.Filter filter = new(LogEventLevel.Warning);
+        // Only the sidecar fixture exists (no paired .mkv); verify:false reads the sidecar and
+        // skips verification, loading the persisted state without media access or verify logging.
         SidecarFile sidecar = new(GetSampleFilePath("Sidecar.State.mkv"));
         using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Warning);
 
-        // verify:false loads the persisted state without running verification logging
         _ = sidecar.Read(out _, false).Should().BeTrue();
         _ = sidecar.State.Should().HaveFlag(SidecarFile.StatesType.SetLanguage);
         _ = sidecar.State.Should().HaveFlag(SidecarFile.StatesType.ReMuxed);
