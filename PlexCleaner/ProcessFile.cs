@@ -609,12 +609,16 @@ public class ProcessFile
             return true;
         }
 
-        // Detected: redundant Default flags, report the Default-flagged track count per type
+        // Detected: redundant Default flags, report Default-flagged count over total track count per
+        // type so the reason is visible (1/1 = lone track, 2/4 = multiple defaults)
         Log.Warning(
-            "Redundant Default flags detected : Video: {Video}, Audio: {Audio}, Subtitle: {Subtitle} : {FileName}",
+            "Redundant Default flags detected : Video: {VideoDefault}/{VideoTotal}, Audio: {AudioDefault}/{AudioTotal}, Subtitle: {SubtitleDefault}/{SubtitleTotal} : {FileName}",
             MkvMergeProps.Video.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            MkvMergeProps.Video.Count,
             MkvMergeProps.Audio.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            MkvMergeProps.Audio.Count,
             MkvMergeProps.Subtitle.Count(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+            MkvMergeProps.Subtitle.Count,
             FileInfo.Name
         );
 
