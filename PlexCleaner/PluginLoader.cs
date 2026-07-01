@@ -25,6 +25,13 @@ internal sealed class PluginLoadContext(string pluginPath)
         string? path = _resolver.ResolveAssemblyToPath(assemblyName);
         return path != null ? LoadFromAssemblyPath(path) : null;
     }
+
+    protected override nint LoadUnmanagedDll(string unmanagedDllName)
+    {
+        // Probe the plugin directory for native dependencies the plugin bundles
+        string? path = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+        return path != null ? LoadUnmanagedDllFromPath(path) : nint.Zero;
+    }
 }
 
 internal sealed class PluginHost(ILogger logger) : IPluginHost
@@ -94,6 +101,8 @@ public static class PluginLoader
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            // Include the assembly path since LogAndHandle only reports the caller member
+            Log.Error("Failed to load plugin : {AssemblyPath}", fullPath);
             return null;
         }
     }
