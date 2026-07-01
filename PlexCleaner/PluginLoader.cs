@@ -58,15 +58,17 @@ public static class PluginLoader
             return null;
         }
 
-        string fullPath = Path.GetFullPath(assemblyPath);
-        if (!File.Exists(fullPath))
-        {
-            Log.Error("Plugin assembly not found : {AssemblyPath}", fullPath);
-            return null;
-        }
-
+        // Resolve inside the try so a malformed path (GetFullPath throws) fails cleanly with a log
+        string fullPath = assemblyPath;
         try
         {
+            fullPath = Path.GetFullPath(assemblyPath);
+            if (!File.Exists(fullPath))
+            {
+                Log.Error("Plugin assembly not found : {AssemblyPath}", fullPath);
+                return null;
+            }
+
             PluginLoadContext context = new(fullPath);
             Assembly assembly = context.LoadFromAssemblyPath(fullPath);
 
