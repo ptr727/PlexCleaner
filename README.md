@@ -28,6 +28,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 **Summary:**
 
 - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
+- Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -222,6 +223,7 @@ services:
     image: docker.io/ptr727/plexcleaner:latest  # Use :develop for pre-release builds
     container_name: PlexCleaner
     restart: unless-stopped
+    stop_grace_period: 30s  # Allow time to finish the current file and log the summary on stop
     user: 1000:100  # Change to match your nonroot:users
     command:
       - /PlexCleaner/PlexCleaner
@@ -236,6 +238,8 @@ services:
     volumes:
       - /data/media:/media  # Map host path /data/media to container /media (read/write)
 ```
+
+On stop (`docker stop`, or Compose shutdown), PlexCleaner handles the termination signal, stops processing gracefully, and logs the run summary and exit code before exiting. Because it aborts the in-flight file rather than killing it mid-write, allow enough grace for a long re-encode to unwind: set `stop_grace_period` (Compose) or `--stop-timeout` / `docker stop --time 30` (Docker run). Without enough grace the container is force-killed (`SIGKILL`) and the summary is lost.
 
 #### Docker Run Examples
 

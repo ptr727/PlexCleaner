@@ -220,11 +220,11 @@ public static class ProcessDriver
         // Stop the timer
         timer.Stop();
 
-        // Done
-        Log.Information("Completed {TaskName}", taskName);
-        Log.Information("Processing time : {Elapsed}", timer.Elapsed);
-        Log.Information("Total files : {Count}", totalCount);
-        Log.Information("Error files : {Count}", errorCount);
+        // Done, force logging so the summary survives the warning floor and an interrupted run
+        Log.Logger.LogOverrideContext().Information("Completed {TaskName}", taskName);
+        Log.Logger.LogOverrideContext().Information("Processing time : {Elapsed}", timer.Elapsed);
+        Log.Logger.LogOverrideContext().Information("Total files : {Count}", totalCount);
+        Log.Logger.LogOverrideContext().Information("Error files : {Count}", errorCount);
 
         return !error;
     }

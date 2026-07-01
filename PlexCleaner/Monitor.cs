@@ -12,11 +12,7 @@ public class Monitor
 
     private readonly Lock _watchLock = new();
 
-    private static void LogMonitorMessage()
-    {
-        Log.Information("Monitoring folders ...");
-        Program.LogInterruptMessage();
-    }
+    private static void LogMonitorMessage() => Log.Information("Monitoring folders ...");
 
     public bool MonitorFolders(List<string> folders)
     {
