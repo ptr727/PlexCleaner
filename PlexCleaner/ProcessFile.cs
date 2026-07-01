@@ -583,7 +583,7 @@ public class ProcessFile
 
         // Refresh
         modified = true;
-        _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
+        _sidecarFile.State |= SidecarFile.StatesType.ClearedDefaultFlags;
         return Refresh(true);
     }
 
