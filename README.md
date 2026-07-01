@@ -86,6 +86,7 @@ See [Installation](#installation) for detailed setup instructions and other plat
   - [Process Command](#process-command)
   - [Monitor Command](#monitor-command)
   - [Other Commands](#other-commands)
+- [Custom Plugins](#custom-plugins)
 - [Testing](#testing)
   - [Unit Testing](#unit-testing)
   - [Docker Testing](#docker-testing)
