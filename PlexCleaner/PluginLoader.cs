@@ -16,9 +16,19 @@ internal sealed class PluginLoadContext(string pluginPath)
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        // Defer to the default context for anything the host already provides (PlexCleaner, Serilog,
-        // framework), keeping shared types single-identity; load only the plugin's private dependencies
-        if (Default.Assemblies.Any(item => item.GetName().Name == assemblyName.Name))
+        // Defer to the default context for host-provided assemblies (PlexCleaner, Serilog, framework)
+        // so shared types keep a single identity. Match the full identity, not just the simple name, so
+        // a plugin's private dependency that shares a simple name with a host assembly but differs in
+        // version or strong name still loads its own compatible copy in isolation.
+        if (
+            Default.Assemblies.Any(item =>
+                string.Equals(
+                    item.GetName().FullName,
+                    assemblyName.FullName,
+                    StringComparison.Ordinal
+                )
+            )
+        )
         {
             return null;
         }
