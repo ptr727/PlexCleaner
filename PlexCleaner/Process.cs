@@ -287,6 +287,7 @@ public static class Process
                 !processFile.RepairMetadataErrors(ref modified)
                 || !processFile.SetUnknownLanguageTracks(ref modified)
                 || !processFile.RemoveTags(ref modified)
+                || !processFile.RepairDefaultFlags(ref modified)
                 || Program.IsCancelled()
             )
             {

@@ -46,13 +46,14 @@ public class DefaultTrackFlagsTests
     public void LoneDefaultTrack_IsCleared()
     {
         MediaProps props = NewProps();
-        _ = AddVideo(props, 1, isDefault: true);
+        VideoProps video = AddVideo(props, 1, isDefault: true);
         AudioProps audio = AddAudio(props, 2, "ac-3", isDefault: true);
 
         // Single track of a type with a default flag is redundant
         List<TrackProps> clear = ProcessFile.FindRedundantDefaultTracks(props);
 
         _ = clear.Should().HaveCount(2);
+        _ = clear.Should().Contain(video);
         _ = clear.Should().Contain(audio);
     }
 
