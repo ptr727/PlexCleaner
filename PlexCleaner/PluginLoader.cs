@@ -51,6 +51,13 @@ public static class PluginLoader
     [RequiresDynamicCode("Loads a plugin assembly at runtime")]
     public static IProcessPlugin? Load(string assemblyPath)
     {
+        // An empty path would resolve to the current directory and report a misleading error
+        if (string.IsNullOrWhiteSpace(assemblyPath))
+        {
+            Log.Error("Plugin assembly path is empty");
+            return null;
+        }
+
         string fullPath = Path.GetFullPath(assemblyPath);
         if (!File.Exists(fullPath))
         {

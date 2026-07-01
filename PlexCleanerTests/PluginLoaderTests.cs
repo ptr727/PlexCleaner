@@ -17,8 +17,9 @@ public class PluginLoaderTests
         // A non-null typed return proves the loaded type satisfies the host's IProcessPlugin
         // (single shared type identity) and that Initialize accepted the host
         _ = plugin.Should().NotBeNull();
-        _ = plugin.Name.Should().Be("MatroskaHeaderCleanup");
-        _ = plugin.GetType().Assembly.GetName().Name.Should().Be("MatroskaHeaderCleanup");
+        IProcessPlugin loaded = plugin;
+        _ = loaded.Name.Should().Be("MatroskaHeaderCleanup");
+        _ = loaded.GetType().Assembly.GetName().Name.Should().Be("MatroskaHeaderCleanup");
     }
 
     [Fact]
