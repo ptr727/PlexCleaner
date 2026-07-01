@@ -555,6 +555,79 @@ public class ProcessFile
         return Refresh(true);
     }
 
+    public bool RepairDefaultFlags(ref bool modified)
+    {
+        // Conditional
+        if (!Program.Config.ProcessOptions.SetTrackFlags)
+        {
+            // Done
+            return true;
+        }
+
+        // Normalize Default flags using MkvMergeInfo
+        List<TrackProps> clearList = FindRedundantDefaultTracks(MkvMergeProps);
+        if (clearList.Count == 0)
+        {
+            // Nothing to do
+            return true;
+        }
+
+        // Clear the redundant Default flags
+        Log.Information("Clearing redundant Default flags : {FileName}", FileInfo.Name);
+        clearList.ForEach(item => item.WriteLine("Default"));
+        if (!Tools.MkvPropEdit.ClearDefaultFlags(FileInfo.FullName, clearList))
+        {
+            // Error
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
+        return Refresh(true);
+    }
+
+    // Select the Default-flagged tracks to clear, leaving at most one meaningful default per type
+    internal static List<TrackProps> FindRedundantDefaultTracks(MediaProps mediaProps)
+    {
+        List<TrackProps> clearList = [];
+
+        // Video keeps the first default, audio keeps the preferred format, subtitles keep none
+        clearList.AddRange(SelectClearableDefaults(mediaProps.Video, defaults => defaults[0]));
+        clearList.AddRange(SelectClearableDefaults(mediaProps.Audio, FindPreferredAudio));
+        clearList.AddRange(SelectClearableDefaults(mediaProps.Subtitle, _ => null));
+
+        return clearList;
+    }
+
+    private static IEnumerable<TrackProps> SelectClearableDefaults(
+        IEnumerable<TrackProps> trackList,
+        Func<List<TrackProps>, TrackProps?> selectKeeper
+    )
+    {
+        List<TrackProps> tracks = [.. trackList];
+        List<TrackProps> defaults =
+        [
+            .. tracks.Where(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
+        ];
+
+        // A lone track needs no Default flag
+        if (tracks.Count == 1 && defaults.Count == 1)
+        {
+            return defaults;
+        }
+
+        // Multiple Default flags, keep the selected track and clear the rest
+        if (defaults.Count > 1)
+        {
+            TrackProps? keeper = selectKeeper(defaults);
+            return defaults.Where(item => !ReferenceEquals(item, keeper));
+        }
+
+        // Zero or one Default flag is already correct
+        return [];
+    }
+
     public bool RepairMatroskaStructure(ref bool modified)
     {
         // Conditional on Verify, this is a Direct Play verification check
@@ -1521,10 +1594,6 @@ public class ProcessFile
             return false;
         }
 
-        // Verify track flags
-        // Warning only
-        _ = VerifyTrackFlags();
-
         // Verify HDR profile
         // Warning only
         _ = VerifyHdrProfile();
@@ -1728,41 +1797,6 @@ public class ProcessFile
                 "Audio bitrate exceeds Video bitrate : {AudioBitrate} > {VideoBitrate} : {FileName}",
                 Bitrate.ToBitsPerSecond(bitrateInfo.AudioBitrate.Average),
                 Bitrate.ToBitsPerSecond(bitrateInfo.VideoBitrate.Average),
-                FileInfo.Name
-            );
-
-            // Warning only
-        }
-
-        return true;
-    }
-
-    private bool VerifyTrackFlags()
-    {
-        // Use MkvMergeInfo
-
-        // Count the number of Default tracks
-        List<bool> videoDefaults =
-        [
-            .. MkvMergeProps.Video.Select(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
-        ];
-        List<bool> audioDefaults =
-        [
-            .. MkvMergeProps.Audio.Select(item => item.Flags.HasFlag(TrackProps.FlagsType.Default)),
-        ];
-        List<bool> subtitleDefaults =
-        [
-            .. MkvMergeProps.Subtitle.Select(item =>
-                item.Flags.HasFlag(TrackProps.FlagsType.Default)
-            ),
-        ];
-        if (videoDefaults.Count > 1 || audioDefaults.Count > 1 || subtitleDefaults.Count > 1)
-        {
-            Log.Warning(
-                "Multiple Default flagged tracks : Video: {Video}, Audio: {Audio}, Subtitle: {Subtitle} : {FileName}",
-                videoDefaults.Count,
-                audioDefaults.Count,
-                subtitleDefaults.Count,
                 FileInfo.Name
             );
 

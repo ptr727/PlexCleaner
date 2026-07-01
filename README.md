@@ -29,6 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
 - Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
+- Normalize multiple or redundant `Default` track flags instead of only warning about them.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 

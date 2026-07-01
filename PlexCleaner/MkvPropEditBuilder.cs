@@ -83,6 +83,15 @@ public partial class MkvPropEdit
             return this;
         }
 
+        public InputOptions ClearFlags(TrackProps.FlagsType option)
+        {
+            TrackProps
+                .GetFlags(option)
+                .ToList()
+                .ForEach(item => Set().Add($"{GetTrackFlag(item)}=0"));
+            return this;
+        }
+
         public InputOptions Add(Func<InputOptions, InputOptions> func) => func(this);
 
         public InputOptions Add(string option) => Add(option, false);
