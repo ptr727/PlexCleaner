@@ -77,5 +77,6 @@
     </Folder>
     <Project Path="PlexCleaner/PlexCleaner.csproj" />
     <Project Path="PlexCleanerTests/PlexCleanerTests.csproj" />
+    <Project Path="Plugins/MatroskaHeaderCleanup/MatroskaHeaderCleanup.csproj" />
     <Project Path="Sandbox/Sandbox.csproj" />
 </Solution>

@@ -16,7 +16,7 @@
     <OutputType>Exe</OutputType>
     <PackageId>ptr727.PlexCleaner</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <PackageProjectUrl>https://github.com/ptr727/PlexCleaner</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageVersion>1.1.1.0-prerelease</PackageVersion>
@@ -30,6 +30,10 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  <!-- Plugin loading uses AssemblyLoadContext and reflection, unavailable under NativeAOT -->
+  <PropertyGroup Condition="'$(PublishAot)' != 'true'">
+    <DefineConstants>$(DefineConstants);PLUGINS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md">

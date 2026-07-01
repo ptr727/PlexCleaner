@@ -1,0 +1,101 @@
+#if PLUGINS
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.Loader;
+using Serilog;
+
+namespace PlexCleaner;
+
+// Loads a user plugin assembly, sharing the host's already-loaded assemblies so the IProcessPlugin
+// type identity and the static Program.Config / Tools are the same instance the plugin binds to
+internal sealed class PluginLoadContext(string pluginPath)
+    : AssemblyLoadContext(isCollectible: false)
+{
+    private readonly AssemblyDependencyResolver _resolver = new(pluginPath);
+
+    protected override Assembly? Load(AssemblyName assemblyName)
+    {
+        // Defer to the default context for anything the host already provides (PlexCleaner, Serilog,
+        // framework), keeping shared types single-identity; load only the plugin's private dependencies
+        if (Default.Assemblies.Any(item => item.GetName().Name == assemblyName.Name))
+        {
+            return null;
+        }
+        string? path = _resolver.ResolveAssemblyToPath(assemblyName);
+        return path != null ? LoadFromAssemblyPath(path) : null;
+    }
+}
+
+internal sealed class PluginHost(ILogger logger) : IPluginHost
+{
+    public int PluginApiVersion => PluginApi.Version;
+    public string ApplicationVersion => AssemblyVersion.GetReleaseVersion();
+    public string OperatingSystem => RuntimeInformation.OSDescription;
+    public string Runtime => AssemblyVersion.GetRuntimeVersion();
+    public ILogger Logger => logger;
+}
+
+public static class PluginLoader
+{
+    [RequiresUnreferencedCode(
+        "Loads a plugin assembly and discovers IProcessPlugin via reflection"
+    )]
+    [RequiresDynamicCode("Loads a plugin assembly at runtime")]
+    public static IProcessPlugin? Load(string assemblyPath)
+    {
+        string fullPath = Path.GetFullPath(assemblyPath);
+        if (!File.Exists(fullPath))
+        {
+            Log.Error("Plugin assembly not found : {AssemblyPath}", fullPath);
+            return null;
+        }
+
+        try
+        {
+            PluginLoadContext context = new(fullPath);
+            Assembly assembly = context.LoadFromAssemblyPath(fullPath);
+
+            // Require exactly one concrete IProcessPlugin implementation
+            List<Type> pluginTypes =
+            [
+                .. assembly
+                    .GetTypes()
+                    .Where(type =>
+                        typeof(IProcessPlugin).IsAssignableFrom(type)
+                        && type is { IsInterface: false, IsAbstract: false }
+                    ),
+            ];
+            if (pluginTypes.Count != 1)
+            {
+                Log.Error(
+                    "Plugin assembly must contain exactly one IProcessPlugin implementation, found {Count} : {AssemblyPath}",
+                    pluginTypes.Count,
+                    fullPath
+                );
+                return null;
+            }
+
+            if (Activator.CreateInstance(pluginTypes[0]) is not IProcessPlugin plugin)
+            {
+                Log.Error("Failed to create plugin instance : {Type}", pluginTypes[0].FullName);
+                return null;
+            }
+
+            // The plugin validates host compatibility against PluginApi.Version
+            if (!plugin.Initialize(new PluginHost(Log.Logger)))
+            {
+                Log.Error("Plugin reported incompatible with the host : {Name}", plugin.Name);
+                return null;
+            }
+
+            Log.Information("Loaded plugin : {Name} : {AssemblyPath}", plugin.Name, fullPath);
+            return plugin;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return null;
+        }
+    }
+}
+#endif

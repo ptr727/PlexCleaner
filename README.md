@@ -370,6 +370,8 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     -property:PublishAot=true
 ```
 
+> **ℹ️ Note**: The [`custom` plugin command](#custom-plugins) loads assemblies at runtime and is not available in AOT builds; use a standard (JIT) build, which is what the published binaries and Docker images use.
+
 ## Configuration
 
 ### Default Settings
@@ -813,6 +815,62 @@ Additional commands for specific tasks, organized by category:
   - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
   - Print media file information and track details.
+
+## Custom Plugins
+
+The `custom` command runs a user-provided plugin assembly over the media files, reusing PlexCleaner's file iteration and processing. This is useful for bespoke, targeted re-processing that the built-in commands do not cover, for example re-running a newly added or fixed verification check on a library where files are already marked as verified, without paying for a full re-verification.
+
+A plugin is a .NET class library that references `PlexCleaner.dll` and implements the `IProcessPlugin` interface:
+
+```csharp
+public interface IProcessPlugin
+{
+    string Name { get; }
+    bool Initialize(IPluginHost host); // return false when incompatible, see host.PluginApiVersion
+    bool ProcessFile(string fileName); // called once per file, return false on failure
+}
+```
+
+`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. See the [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) example, which re-checks and repairs the Matroska seek-index structure on already-verified files.
+
+Notes:
+
+- A plugin runs arbitrary code with the same privileges as PlexCleaner. Only run plugins you trust.
+- Plugin loading uses runtime assembly loading and is not available in [AOT builds](#aot); use a standard build (the published binaries and Docker images are standard builds).
+- A plugin binds to a specific `PlexCleaner.dll` and may need rebuilding across releases; `Initialize` should reject an incompatible `host.PluginApiVersion`.
+- Plugins run in parallel unless `--parallel false` is set, so plugin code must be thread-safe.
+
+CLI example:
+
+```shell
+dotnet PlexCleaner.dll custom \
+    --settingsfile /config/PlexCleaner.json \
+    --pluginassembly /config/plugins/MatroskaHeaderCleanup.dll \
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
+```
+
+Docker Compose example (one-shot):
+
+```yaml
+services:
+
+  plexcleaner-custom:
+    image: docker.io/ptr727/plexcleaner:latest
+    container_name: PlexCleaner-Custom
+    user: 1000:100  # Change to match your nonroot:users
+    command:
+      - /PlexCleaner/PlexCleaner
+      - custom
+      - --settingsfile=/media/PlexCleaner/PlexCleaner.json
+      - --pluginassembly=/media/PlexCleaner/plugins/MatroskaHeaderCleanup.dll
+      - --mediafiles=/media/Series
+      - --mediafiles=/media/Movies
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /data/media:/media  # Media, config, and the plugin DLL are mounted here
+```
 
 ## Testing
 
