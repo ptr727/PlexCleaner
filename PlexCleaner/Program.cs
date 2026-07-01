@@ -276,6 +276,64 @@ public static class Program
         return MakeExitCode(ExitCode.Success);
     }
 
+#if PLUGINS
+    public static int CustomCommand()
+    {
+        // Create
+        if (!Create(true))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Load the plugin after config and tools are initialized
+        IProcessPlugin? plugin = PluginLoader.Load(Options.PluginAssembly);
+        if (plugin == null)
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                Options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Process each file using the plugin, isolating plugin exceptions to the current file so a
+        // faulty plugin fails that file instead of aborting the entire run
+        bool ProcessFile(string fileName)
+        {
+            try
+            {
+                return plugin.ProcessFile(fileName);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                return false;
+            }
+        }
+
+        if (!ProcessDriver.ProcessFiles(fileList, plugin.Name, false, ProcessFile))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
+    }
+#else
+    public static int CustomCommand()
+    {
+        Log.Error("Custom plugin support requires a non-AOT build");
+        return MakeExitCode(ExitCode.Error);
+    }
+#endif
+
     public static int MonitorCommand()
     {
         // Create

@@ -30,6 +30,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
 - Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
 - Normalize multiple or redundant `Default` track flags instead of only warning about them.
+- Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -86,6 +87,7 @@ See [Installation](#installation) for detailed setup instructions and other plat
   - [Process Command](#process-command)
   - [Monitor Command](#monitor-command)
   - [Other Commands](#other-commands)
+- [Custom Plugins](#custom-plugins)
 - [Testing](#testing)
   - [Unit Testing](#unit-testing)
   - [Docker Testing](#docker-testing)
@@ -370,6 +372,8 @@ dotnet publish ./PlexCleaner/PlexCleaner.csproj \
     -property:PublishAot=true
 ```
 
+> **ℹ️ Note**: The [`custom` plugin command](#custom-plugins) loads assemblies at runtime and is not available in AOT builds; use a standard (JIT) build, which is what the published binaries and Docker images use.
+
 ## Configuration
 
 ### Default Settings
@@ -571,6 +575,7 @@ Commands:
   testmediainfo         Test parsing media tool information
   getversioninfo        Print application and media tool version information
   createschema          Create JSON settings schema file
+  custom                Process media files using a custom plugin assembly
 ```
 
 ### Global Options
@@ -813,6 +818,66 @@ Additional commands for specific tasks, organized by category:
   - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
   - Print media file information and track details.
+
+## Custom Plugins
+
+The `custom` command runs a user-provided plugin assembly over the media files, reusing PlexCleaner's file iteration and processing. This is useful for bespoke, targeted re-processing that the built-in commands do not cover, for example re-running a newly added or fixed verification check on a library where files are already marked as verified, without paying for a full re-verification.
+
+A plugin is a .NET class library that references `PlexCleaner.dll` and implements the `IProcessPlugin` interface:
+
+```csharp
+public interface IProcessPlugin
+{
+    string Name { get; }
+    bool Initialize(IPluginHost host); // return false when incompatible, see host.PluginApiVersion
+    bool ProcessFile(string fileName); // called once per file, return false on failure
+}
+```
+
+`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. See the [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) example, which re-checks and repairs the Matroska seek-index structure on already-verified files.
+
+Notes:
+
+- A plugin runs arbitrary code with the same privileges as PlexCleaner. Only run plugins you trust.
+- The plugin type is created via reflection, so it must be a concrete class with a public parameterless constructor, and the assembly must contain exactly one `IProcessPlugin` implementation.
+- Many processing helpers are gated by the settings file, for example verification only runs when `ProcessOptions.Verify` is enabled, so enable the relevant settings for the operation the plugin performs.
+- Plugin loading uses runtime assembly loading and is not available in [AOT builds](#aot); use a standard build (the published binaries and Docker images are standard builds).
+- A plugin binds to a specific `PlexCleaner.dll` and may need rebuilding across releases. `PluginApiVersion` only guards the plugin contract, but the public API a plugin calls can change in any release, so `Initialize` should also check `host.ApplicationVersion` against the PlexCleaner version the plugin was tested against (see the example).
+- File processing is serial by default; if you enable `--parallel`, plugin code must be thread-safe.
+- `ProcessFile` is called for every file under `--mediafiles`, not only Matroska files, so a plugin should filter by type (e.g. `SidecarFile.IsMkvFile(fileName)`) and return `true` to skip files it does not handle.
+- A plugin that modifies a file must keep the sidecar in sync or the next normal run will invalidate the saved state. Follow the example flow: confirm the file is Matroska, call `GetMediaProps()` to initialize the sidecar, then modify through a `ProcessFile` helper such as `RepairMatroskaStructure(...)` that refreshes the sidecar to match the changed file.
+
+CLI example:
+
+```shell
+dotnet PlexCleaner.dll custom \
+    --settingsfile /config/PlexCleaner.json \
+    --pluginassembly /config/plugins/MatroskaHeaderCleanup.dll \
+    --mediafiles /media/Movies \
+    --mediafiles /media/Series
+```
+
+Docker Compose example (one-shot):
+
+```yaml
+services:
+
+  plexcleaner-custom:
+    image: docker.io/ptr727/plexcleaner:latest
+    container_name: PlexCleaner-Custom
+    user: 1000:100  # Change to match your nonroot:users
+    command:
+      - /PlexCleaner/PlexCleaner
+      - custom
+      - --settingsfile=/media/PlexCleaner/PlexCleaner.json
+      - --pluginassembly=/media/PlexCleaner/plugins/MatroskaHeaderCleanup.dll
+      - --mediafiles=/media/Series
+      - --mediafiles=/media/Movies
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /data/media:/media  # Media, config, and the plugin DLL are mounted here
+```
 
 ## Testing
 
