@@ -64,6 +64,13 @@ public sealed class MatroskaCleanupPlugin : IProcessPlugin
 
     public bool ProcessFile(string fileName)
     {
+        // The driver passes every file, so skip anything that is not a Matroska file rather than
+        // reporting it as an error. Plugins that target other container types filter accordingly.
+        if (!SidecarFile.IsMkvFile(fileName))
+        {
+            return true;
+        }
+
         ProcessFile processFile = new(fileName);
         if (!processFile.GetMediaProps())
         {
