@@ -1,4 +1,29 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# C# formatting and style (CSharpier + dotnet format), see task-runner.json
 dotnet husky run
+
+# Markdown and spelling lint parity with CI, only when Markdown files are staged. The editor
+# extensions only warn, so this hook is what actually gates a commit on lint errors. markdownlint and
+# cspell are Node tools that do not run reliably across Windows, WSL, and Linux, so run them through
+# Docker (the same way the CLIs are run elsewhere). To keep this hook reliable and never a false
+# blocker, only use images that are already present locally (never pull) and skip when Docker or the
+# image is unavailable; CI enforces these regardless. Warm the images with the VS Code "Lint" tasks.
+# MSYS_NO_PATHCONV keeps the bind mount correct under Git Bash on Windows; it is a no-op on Linux/WSL.
+docs_lint() {
+    image="$1"
+    shift
+    if docker image inspect "$image" >/dev/null 2>&1; then
+        MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd):/workdir" -w /workdir "$image" "$@" || exit 1
+    else
+        echo "husky: $image not present, skipping lint (run the VS Code Lint tasks or rely on CI)"
+    fi
+}
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -q '\.md$'; then
+    if command -v docker >/dev/null 2>&1; then
+        docs_lint davidanson/markdownlint-cli2:latest "**/*.md"
+        docs_lint ghcr.io/streetsidesoftware/cspell:latest --no-progress README.md HISTORY.md
+    fi
+fi
