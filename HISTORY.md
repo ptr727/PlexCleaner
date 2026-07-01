@@ -6,6 +6,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - Version 3.20:
   - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter. Prior to this change the log output would only contain the trigger warning or error event, now it will also log all subsequent information level events for that file during its processing cycle.
+  - Always log the end-of-run summary at information level, even with `--logwarning`, so the modified, error, and verify-failed counts are recorded for every processing run.
+  - Handle the `SIGINT`, `SIGTERM`, and `SIGQUIT` termination signals (`docker stop`, `Ctrl+C`) so processing is interrupted gracefully and the summary and exit code are logged before exit. The custom `Ctrl+Q`/`Ctrl+Z` exit keys are removed in favor of the standard signals.
 - Version 3.19:
   - Reworked the CI/CD pipeline to a branch-scoped self-publishing model: a weekly scheduled run (and manual dispatch) publishes both `main` (stable, Docker `latest`) and `develop` (prerelease, Docker `develop`) - native executables, the multi-arch Docker image, and the GitHub release - while merges accumulate until the next run. No application changes.
   - Added `WORKFLOW.md` (the canonical CI/CD specification) and `repo-config/` (rulesets and repository settings as code).

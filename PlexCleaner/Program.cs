@@ -12,6 +12,7 @@ namespace PlexCleaner;
 
 public static class Program
 {
+    // Never disposed, so signal handlers can safely call Cancel() for the process lifetime
     private static readonly CancellationTokenSource s_cancelSource = new();
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
@@ -41,15 +42,6 @@ public static class Program
     private static int MakeExitCode(bool success) =>
         success ? (int)ExitCode.Success : (int)ExitCode.Error;
 
-    public static void LogInterruptMessage()
-    {
-        // Keyboard handler is only active if input is not redirected
-        if (!Console.IsInputRedirected)
-        {
-            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
-        }
-    }
-
     private static int Main(string[] args)
     {
         // Wait for debugger to attach
@@ -71,12 +63,20 @@ public static class Program
 
         // Setup
         CreateLogger();
-        Console.CancelKeyPress += CancelEventHandler;
-        Task? consoleKeyTask = null;
-        if (!Console.IsInputRedirected)
-        {
-            consoleKeyTask = Task.Run(KeyPressHandler);
-        }
+
+        // Handle termination signals to cancel gracefully and still log the summary before exit
+        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGINT,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGTERM,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGQUIT,
+            PosixSignalHandler
+        );
 
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();
@@ -90,8 +90,10 @@ public static class Program
 
         // Cleanup
         Cancel();
-        consoleKeyTask?.Wait();
-        Console.CancelKeyPress -= CancelEventHandler;
+        // Unhook signals before flushing so a second signal reverts to default OS termination
+        sigIntRegistration.Dispose();
+        sigTermRegistration.Dispose();
+        sigQuitRegistration.Dispose();
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
@@ -135,47 +137,13 @@ public static class Program
         }
     }
 
-    private static void KeyPressHandler()
+    private static void PosixSignalHandler(PosixSignalContext context)
     {
-        for (; ; )
-        {
-            // Wait on key available or cancelled
-            while (!Console.KeyAvailable)
-            {
-                if (WaitForCancel(100))
-                {
-                    // Done
-                    return;
-                }
-            }
+        Log.Warning("Operation interrupted : {Signal}", context.Signal);
 
-            // Read key and hide from console display
-            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-
-            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
-            if (
-                keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
-                && keyInfo.Modifiers == ConsoleModifiers.Control
-            )
-            {
-                // Signal the cancel event
-                Cancel(ConsoleModifiers.Control, keyInfo.Key);
-
-                // Done
-                return;
-            }
-        }
-    }
-
-    private static void CancelEventHandler(object? sender, ConsoleCancelEventArgs eventArgs)
-    {
-        Log.Warning("Cancel event triggered : {EventType}", eventArgs.SpecialKey);
-
-        // Keep running and do graceful exit
-        eventArgs.Cancel = true;
-
-        // Signal the cancel event, use Ctrl+Break as signal
-        Cancel(ConsoleModifiers.Control, ConsoleKey.Pause);
+        // Keep running and do a graceful exit so the summary and exit code are logged
+        context.Cancel = true;
+        Cancel();
     }
 
     private static void WaitForDebugger()
@@ -562,12 +530,6 @@ public static class Program
     public static void Cancel() =>
         // Signal cancel
         s_cancelSource.Cancel();
-
-    public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
-    {
-        Log.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
-        Cancel();
-    }
 
     public static CancellationToken CancelToken() => s_cancelSource.Token;
 

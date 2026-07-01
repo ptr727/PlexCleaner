@@ -366,7 +366,7 @@ public static class Process
             fatalError = true;
         }
 
-        Log.Information("Deleted folders : {Deleted}", totalDeleted);
+        Log.Logger.LogOverrideContext().Information("Deleted folders : {Deleted}", totalDeleted);
 
         return !fatalError;
     }
