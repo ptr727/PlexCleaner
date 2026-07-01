@@ -185,7 +185,7 @@ The conventions for everything under [`.github/workflows/`](./.github/workflows/
 
 - **PlexCleaner** (`PlexCleaner/PlexCleaner.csproj`)
   - The CLI application - orchestrates FFmpeg, HandBrake, MkvToolNix, MediaInfo, and 7-Zip to optimize media for Direct Play.
-  - Target framework: .NET 10.0, AOT compiled (`<PublishAot>true</PublishAot>`). Internals are exposed to the test project via `InternalsVisibleTo`.
+  - Target framework: .NET 10.0. AOT is opt-in (`<PublishAot>false</PublishAot>` by default, matching the shipped builds); the plugin loader compiles only in non-AOT builds. Internals are exposed to the test project via `InternalsVisibleTo`.
 - **PlexCleanerTests** (`PlexCleanerTests/PlexCleanerTests.csproj`)
   - xUnit v3 test suite. Assertions via AwesomeAssertions.
 - **`Docker/`** - multi-arch Linux container build (`ubuntu:rolling`, `linux/amd64` + `linux/arm64`); runs as a `nonroot` user, mounts media under `/media`.

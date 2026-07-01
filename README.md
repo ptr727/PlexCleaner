@@ -841,7 +841,7 @@ Notes:
 - Many processing helpers are gated by the settings file, for example verification only runs when `ProcessOptions.Verify` is enabled, so enable the relevant settings for the operation the plugin performs.
 - Plugin loading uses runtime assembly loading and is not available in [AOT builds](#aot); use a standard build (the published binaries and Docker images are standard builds).
 - A plugin binds to a specific `PlexCleaner.dll` and may need rebuilding across releases. `PluginApiVersion` only guards the plugin contract, but the public API a plugin calls can change in any release, so `Initialize` should also check `host.ApplicationVersion` against the PlexCleaner version the plugin was tested against (see the example).
-- Plugins run in parallel unless `--parallel false` is set, so plugin code must be thread-safe.
+- File processing is serial by default; if you enable `--parallel`, plugin code must be thread-safe.
 
 CLI example:
 
