@@ -30,6 +30,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
 - Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
 - Normalize multiple or redundant `Default` track flags instead of only warning about them.
+- Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -574,6 +575,7 @@ Commands:
   testmediainfo         Test parsing media tool information
   getversioninfo        Print application and media tool version information
   createschema          Create JSON settings schema file
+  custom                Process media files using a custom plugin assembly
 ```
 
 ### Global Options
