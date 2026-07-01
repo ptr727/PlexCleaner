@@ -19,9 +19,6 @@ public static class Program
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
-
-    // Floor log level: the configured minimum below which events are suppressed outside
-    // a per-file session (see PerFileLogLevel). Warning when --logwarning is set.
     public static LogEventLevel LogFloorLevel =>
         Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
 
@@ -209,11 +206,9 @@ public static class Program
 
         // Logger configuration
         LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
-            // Generate Information events so per-file sessions can elevate to them; the
-            // PerFileLogLevel filter enforces the configured floor for non-elevated logs
+            // Emit Information events so sessions can elevate to them; the filter is the sole
+            // authority for the configured floor and LogOverride passthrough (see PerFileLogLevel)
             .MinimumLevel.Is(LogEventLevel.Information)
-            // Set minimum to Verbose for LogOverride context
-            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName!, LogEventLevel.Verbose)
             .Filter.With(new PerFileLogLevel.Filter(LogFloorLevel))
             .Enrich.WithThreadId()
             .WriteTo.Console(

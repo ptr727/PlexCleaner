@@ -67,7 +67,6 @@ public class SidecarFile
         MediaInfoProps = null!;
     }
 
-    // TODO: Improve nullable handling
     public MediaProps FfProbeProps { get; private set; }
     public MediaProps MkvMergeProps { get; private set; }
     public MediaProps MediaInfoProps { get; private set; }
@@ -77,8 +76,7 @@ public class SidecarFile
         get => _state;
         set
         {
-            // Gaining a real processing state means this file is being remediated;
-            // elevate its logging session so the remediation steps are logged
+            // Elevate loglevel
             if (value != StatesType.None && value != _state)
             {
                 PerFileLogLevel.Elevate();
@@ -322,8 +320,7 @@ public class SidecarFile
         MkvMergeProps = mkvMergeProps;
         FfProbeProps = ffProbeProps;
 
-        // Assign state directly: loading persisted state is not a new remediation,
-        // so it must not elevate the logging session via the State setter
+        // Set state directly to prevent log elevation
         _state = _sidecarJson.State;
 
         return true;
