@@ -12,7 +12,7 @@ public class PluginLoaderTests
     [Fact]
     public void Load_ExamplePlugin_ReturnsInitializedPlugin()
     {
-        IProcessPlugin? plugin = PluginLoader.Load(ExamplePluginPath);
+        IProcessPlugin? plugin = PluginLoader.Load(new FileInfo(ExamplePluginPath));
 
         // A non-null typed return proves the loaded type satisfies the host's IProcessPlugin
         // (single shared type identity) and that Initialize accepted the host
@@ -26,7 +26,7 @@ public class PluginLoaderTests
     public void Load_MissingAssembly_ReturnsNull()
     {
         IProcessPlugin? plugin = PluginLoader.Load(
-            Path.Combine(AppContext.BaseDirectory, "DoesNotExist.dll")
+            new FileInfo(Path.Combine(AppContext.BaseDirectory, "DoesNotExist.dll"))
         );
 
         _ = plugin.Should().BeNull();

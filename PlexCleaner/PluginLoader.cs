@@ -59,26 +59,13 @@ public static class PluginLoader
         "Loads a plugin assembly and discovers IProcessPlugin via reflection"
     )]
     [RequiresDynamicCode("Loads a plugin assembly at runtime")]
-    public static IProcessPlugin? Load(string assemblyPath)
+    public static IProcessPlugin? Load(FileInfo assemblyFile)
     {
-        // An empty path would resolve to the current directory and report a misleading error
-        if (string.IsNullOrWhiteSpace(assemblyPath))
-        {
-            Log.Error("Plugin assembly path is empty");
-            return null;
-        }
-
-        // Resolve inside the try so a malformed path (GetFullPath throws) fails cleanly with a log
-        string fullPath = assemblyPath;
+        // The CLI validates that the path exists (AcceptExistingOnly), so use the resolved full path
+        // directly and let the try/catch handle assembly load and reflection errors
+        string fullPath = assemblyFile.FullName;
         try
         {
-            fullPath = Path.GetFullPath(assemblyPath);
-            if (!File.Exists(fullPath))
-            {
-                Log.Error("Plugin assembly not found : {AssemblyPath}", fullPath);
-                return null;
-            }
-
             PluginLoadContext context = new(fullPath);
             Assembly assembly = context.LoadFromAssemblyPath(fullPath);
 
