@@ -76,6 +76,10 @@ public sealed class MatroskaCleanupPlugin : IProcessPlugin
         {
             return false;
         }
+
+        // RepairMatroskaStructure refreshes the sidecar and adds the ReMuxed state while preserving
+        // existing state (flags are combined, not replaced), so an already Verified file keeps its
+        // Verified state and is not re-verified; Verified is only cleared if the remux fails to repair.
         bool modified = false;
         return processFile.RepairMatroskaStructure(ref modified);
     }
