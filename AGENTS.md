@@ -103,8 +103,8 @@ Applies to code and workflow (`#`) comments alike.
 
 ### Line Endings
 
-- [`.editorconfig`](./.editorconfig) defines the correct ending per file type (CRLF for `.md`, `.cs`, XML/`.csproj`/`.props`, `.yml`/`.yaml`, `.json`, `.cmd`/`.bat`/`.ps1`; LF for `.sh`), and [`.gitattributes`](./.gitattributes) (`* -text`) stops git from normalizing. The `[*.cs]`/ReSharper style block applies because this repo ships .NET.
-- **Editing an existing file: preserve its current line endings** - do not reflow them as a side effect of a content change, even if the file is already non-compliant. After any programmatic edit, verify with `git diff --stat` (only changed lines) and `file <path>` (expected ending). Bring a non-compliant file to its `.editorconfig` ending only as a deliberate, isolated EOL-only change.
+- [`.editorconfig`](./.editorconfig) is the single source of truth for line endings: CRLF for `.md`, `.cs`, XML/`.csproj`/`.props`, `.yml`/`.yaml`, `.json`, `.cmd`/`.bat`/`.ps1`; LF for `.sh` and Dockerfiles. The `[*.cs]`/ReSharper style block applies because this repo ships .NET.
+- **Always honor the `.editorconfig` ending.** Create a file with its spec ending; when editing a file, bring the whole file to spec (a file-wide EOL fix alongside the content change is expected, not a violation); if you come across a file with the wrong ending, fix it. [`.gitattributes`](./.gitattributes) (`* -text`) governs git's own normalization - it is not a license to leave a file on the wrong ending. Verify with `file <path>` after writing.
 
 ### Quantitative Claims
 
@@ -175,6 +175,7 @@ Anti-pattern: don't keep flipping the code on the same style point. Flip the rul
 - **Clean-compile tasks.** [`.vscode/tasks.json`](./.vscode/tasks.json) defines the canonical `.NET Build`, `CSharpier Format`, and `.NET Format` tasks (the last chains the first two then `dotnet format style --verify-no-changes`); their names are owned by the `CODESTYLE.md` ".NET" section - do not loosen them. Husky.Net runs the same checks as a local pre-commit hook, and CI's `lint` job is the authoritative backstop.
 - **Brownfield analyzer relaxations.** `Directory.Build.props` sets strict analysis; because this is a pre-existing console app, a specific set of analyzer rules are relaxed to suggestion in [`.editorconfig`](./.editorconfig), each documented inline. Prefer fixing new violations over adding relaxations.
 - **Spell check.** The cspell word list and path exclusions live in [`cspell.json`](./cspell.json), the single source shared by the editor and CI. Do not keep a parallel word list in the `.code-workspace` file.
+- **Run CI CLI tooling via Docker.** The linters CI uses (actionlint, markdownlint-cli2, shellcheck, cspell, etc.) need not be installed on the host - run them from their official images (e.g. `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint`) to reproduce a CI check locally before pushing.
 - **Release notes.** Keep a short summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release.
 
 ## Workflow YAML Conventions

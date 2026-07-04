@@ -26,6 +26,8 @@ jobs:
     name: Validate job
     if: ${{ !github.event.deleted }}
     uses: ./.github/workflows/validate-task.yml
+    # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
+    secrets: inherit
 
   # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. Docker smoke is
   # amd64-only and seeds from the branch-scoped cache, so it stays fast.

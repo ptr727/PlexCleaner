@@ -31,8 +31,18 @@ jobs:
           ref: ${{ inputs.ref }}
 
       # Builds with TreatWarningsAsErrors, so analyzer and code-style warnings fail here.
+      # --collect drives coverlet.collector to emit Cobertura XML into ./coverage/<guid>/.
       - name: Run unit tests step
-        run: dotnet test
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      # Report-only: fail_ci_if_error is false so a Codecov hiccup or an absent token never fails the gate.
+      - name: Upload coverage to Codecov step
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # The editor's checks, enforced in CI from the same config files.
   lint:
