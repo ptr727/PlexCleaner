@@ -1,0 +1,11 @@
+# Coverage is reported and trended, never gated. informational keeps Codecov's own commit
+# statuses advisory (always "pass") so a coverage change can never block a PR merge.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+comment: false

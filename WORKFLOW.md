@@ -513,6 +513,10 @@ the configuration is part of "operational" (D10; audit 5D).
   token from. Required in **both** the Actions and Dependabot secret stores (a Dependabot-triggered run gets
   the Dependabot store, not Actions secrets). The App must be installed on the repo with `contents: write` and
   `pull_requests: write`.
+- `CODECOV_TOKEN` - authenticates the coverage upload to Codecov from the `validate` job's `unit-test` step.
+  Report-only and non-gating (the upload sets `fail_ci_if_error: false`, so a Codecov outage or an absent token
+  never fails CI). Required in **both** the Actions and Dependabot secret stores, since a Dependabot-triggered
+  push runs CI whose `validate` job uploads coverage and that run gets the Dependabot store.
 - The built-in `GITHUB_TOKEN` needs no setup. **No `PUBLISH_ON_MERGE` variable is used.**
 
 **Branch rulesets.**

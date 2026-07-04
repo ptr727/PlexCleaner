@@ -15,12 +15,13 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${REPO:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
 
-# Secrets by store (names only; values are never readable via the API). The Docker Hub credentials and the
-# merge-bot App credentials must be set in BOTH stores: a Dependabot-triggered run gets the Dependabot secret
-# store, not Actions secrets, and that run's push CI builds the Docker smoke, which logs in to Docker Hub.
-# Publishing the GitHub release uses the built-in GITHUB_TOKEN (no secret needed).
-REQUIRED_ACTIONS_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY)
-REQUIRED_DEPENDABOT_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY)
+# Secrets by store (names only; values are never readable via the API). The Docker Hub credentials, the
+# merge-bot App credentials, and CODECOV_TOKEN must be set in BOTH stores: a Dependabot-triggered run gets the
+# Dependabot secret store, not Actions secrets, and that run's push CI builds the Docker smoke (logs in to
+# Docker Hub) and runs the validate job (uploads coverage to Codecov). Publishing the GitHub release uses the
+# built-in GITHUB_TOKEN (no secret needed).
+REQUIRED_ACTIONS_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY CODECOV_TOKEN)
+REQUIRED_DEPENDABOT_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY CODECOV_TOKEN)
 REQUIRED_CHECK="Check pull request workflow status job"
 
 note()  { printf '  %s\n' "$*"; }
