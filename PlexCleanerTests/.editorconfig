@@ -1,0 +1,10 @@
+root = false
+
+# C# files
+[*.cs]
+
+# Allow underscores in test method names
+dotnet_diagnostic.CA1707.severity = none
+
+# Ignore unused private members
+dotnet_diagnostic.IDE0052.severity = none

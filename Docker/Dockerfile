@@ -1,0 +1,145 @@
+# Description: Ubuntu latest release
+# Based on: ubuntu:rolling
+# .NET install: Ubuntu repository
+# Platforms: linux/amd64, linux/arm64
+# Tag: ptr727/plexcleaner:ubuntu
+
+# Docker build debugging:
+# --progress=plain
+# --no-cache
+
+# Test image in shell:
+# docker run -it --rm --pull always --name Testing ubuntu:rolling /bin/bash
+# docker run -it --rm --pull always --name Testing ptr727/plexcleaner:ubuntu /bin/bash
+# export DEBIAN_FRONTEND=noninteractive
+
+# Build Dockerfile
+# docker buildx create --name "plexcleaner" --use
+# docker buildx build --platform linux/amd64,linux/arm64 --file ./Docker/Dockerfile .
+
+# Build and log output
+# docker buildx build --no-cache --progress=plain --platform linux/amd64 --file ./Docker/Dockerfile . 2>&1 | tee build.log
+
+# Test linux/amd64 target
+# docker buildx build --load --platform linux/amd64 --tag plexcleaner:ubuntu --file ./Docker/Dockerfile .
+# docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /bin/bash
+
+
+# Builder layer
+FROM --platform=$BUILDPLATFORM ubuntu:rolling AS builder
+
+# Layer workdir
+WORKDIR /Builder
+
+# Build platform args
+ARG TARGETPLATFORM \
+    TARGETARCH \
+    BUILDPLATFORM
+
+# PlexCleaner build attribute configuration
+ARG BUILD_CONFIGURATION="Debug" \
+    BUILD_VERSION="1.0.0.0" \
+    BUILD_FILE_VERSION="1.0.0.0" \
+    BUILD_ASSEMBLY_VERSION="1.0.0.0" \
+    BUILD_INFORMATION_VERSION="1.0.0.0" \
+    BUILD_PACKAGE_VERSION="1.0.0.0"
+
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Upgrade
+RUN apt update \
+    && apt upgrade -y
+
+# Install .NET SDK
+# https://documentation.ubuntu.com/ubuntu-for-developers/howto/dotnet-setup
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install
+RUN apt install -y --install-suggests dotnet-sdk-10.0
+
+# Copy source
+COPY ./Samples/. ./Samples/.
+COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
+COPY ./PlexCleaner/. ./PlexCleaner/.
+COPY ./Plugins/. ./Plugins/.
+COPY ./.editorconfig ./
+COPY ./Directory.Build.props ./
+COPY ./Directory.Packages.props ./
+
+# Build project
+COPY --chmod=ug=rwx,o=rx ./Docker/Build.sh ./
+RUN ./Build.sh
+
+
+# Final layer
+FROM ubuntu:rolling AS final
+
+# Image label
+ARG LABEL_VERSION="1.0.0.0"
+LABEL name="PlexCleaner" \
+    version=${LABEL_VERSION} \
+    description="Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc." \
+    maintainer="Pieter Viljoen <ptr727@users.noreply.github.com>"
+
+# Prevent EULA and confirmation prompts in installers
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Upgrade
+RUN apt update \
+    && apt upgrade -y
+
+# Install dependencies
+RUN apt install -y --no-install-recommends \
+        ca-certificates \
+        locales \
+        locales-all \
+        p7zip-full \
+        tzdata \
+        wget \
+    && locale-gen --no-purge en_US en_US.UTF-8
+
+# Set locale to UTF-8 after running locale-gen
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/enable-globalization.md
+ENV TZ=Etc/UTC \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
+# Install .NET Runtime
+RUN apt install -y --install-suggests dotnet-runtime-10.0
+
+# Install media tools
+# https://packages.ubuntu.com/questing/ffmpeg
+# https://packages.ubuntu.com/questing/handbrake-cli
+# https://packages.ubuntu.com/questing/mediainfo
+# https://packages.ubuntu.com/questing/mkvtoolnix
+RUN apt install -y --no-install-recommends \
+        ffmpeg \
+        handbrake-cli \
+        mediainfo \
+        mkvtoolnix
+
+# Cleanup
+RUN apt autoremove -y \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy PlexCleaner from builder layer
+COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
+
+# Copy test script
+COPY --chmod=ug=rwx,o=rx ./Docker/Test.sh /Test/
+
+# Install debug tools
+COPY --chmod=ug=rwx,o=rx ./Docker/InstallDebugTools.sh ./
+RUN ./InstallDebugTools.sh \
+    && rm -rf ./InstallDebugTools.sh
+
+# Copy version script
+COPY --chmod=ug=rwx,o=rx ./Docker/Version.sh /PlexCleaner/
+
+# Print version information
+ARG TARGETPLATFORM \
+    BUILDPLATFORM
+RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
+        /PlexCleaner/Version.sh; \
+    fi

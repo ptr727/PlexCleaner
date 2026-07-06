@@ -1,0 +1,57 @@
+{
+  "SchemaVersion": 1,
+  "ToolsOptions": {
+    "UseSystem": false,
+    "RootPath": ".\\Tools\\",
+    "RootRelative": true,
+    "AutoUpdate": true
+  },
+  "ConvertOptions": {
+    "EnableH265Encoder": true,
+    "VideoEncodeQuality": 20,
+    "AudioEncodeCodec": "ac3"
+  },
+  "ProcessOptions": {
+    "DeleteEmptyFolders": true,
+    "DeleteUnwantedExtensions": true,
+    "KeepExtensions": ".partial~,.nfo,.jpg,.srt,.smi,.ssa,.ass,.vtt",
+    "ReMux": true,
+    "ReMuxExtensions": ".avi,.m2ts,.ts,.vob,.mp4,.m4v,.asf,.wmv,.dv",
+    "DeInterlace": true,
+    "ReEncode": true,
+    "ReEncodeVideoFormats": "mpeg2video,mpeg4,msmpeg4v3,msmpeg4v2,vc1,h264,wmv3,msrle,rawvideo,indeo5",
+    "ReEncodeVideoCodecs": "*,dx50,div3,mp42,*,*,*,*,*,*",
+    "ReEncodeVideoProfiles": "*,*,*,*,*,Constrained Baseline@30,*,*,*,*",
+    "ReEncodeAudioFormats": "flac,mp2,vorbis,wmapro,pcm_s16le,opus,wmav2,pcm_u8,adpcm_ms",
+    "SetUnknownLanguage": true,
+    "DefaultLanguage": "eng",
+    "RemoveUnwantedLanguageTracks": true,
+    "KeepLanguages": "eng,afr,chi,ind",
+    "RemoveDuplicateTracks": true,
+    "PreferredAudioFormats": "truehd atmos,truehd,dts-hd master audio,dts-hd high resolution audio,dts,e-ac-3,ac-3",
+    "RemoveTags": true,
+    "UseSidecarFiles": true,
+    "SidecarUpdateOnToolChange": false,
+    "Verify": true,
+    "RestoreFileTimestamp": false,
+    "FileIgnoreList": [
+      "\\\\server\\Share\\Movies\\Foo (2000)\\Foo (2000).mkv",
+      "\\\\server\\Share\\Series\\Fianc\u00E9\\Season 1\\Fianc\u00E9 - S01E01 - Bar.mkv"
+    ]
+  },
+  "MonitorOptions": {
+    "MonitorWaitTime": 60,
+    "FileRetryWaitTime": 5,
+    "FileRetryCount": 2
+  },
+  "VerifyOptions": {
+    "AutoRepair": true,
+    "DeleteInvalidFiles": false,
+    "RegisterInvalidFiles": true,
+    "MinimumDuration": 300,
+    "VerifyDuration": 0,
+    "IdetDuration": 0,
+    "MaximumBitrate": 100000000,
+    "MinimumFileAge": 0
+  }
+}

@@ -1,0 +1,106 @@
+name: Build executable task
+
+# Build the executable across the runtime matrix; on a non-smoke run, zip all runtimes into PlexCleaner.7z (per-RID
+# subfolders) as the release-asset-<branch>-executable artifact. Smoke builds a 2-runtime subset and skips the zip.
+on:
+  workflow_call:
+    inputs:
+      # Git ref to check out / version (empty = default checkout ref).
+      ref:
+        required: false
+        type: string
+        default: ''
+      # Logical branch: main => Release, else Debug. Required (see header).
+      branch:
+        required: true
+        type: string
+      # Smoke: build linux-x64 + win-x64 only (not the full matrix), skip the zip. Fast PR feedback.
+      smoke:
+        required: false
+        type: boolean
+        default: false
+      # Version from the orchestrator's single NBGV run (threaded). This task does not
+      # re-run NBGV on the detached commit, which could classify the branch differently.
+      semver2:
+        required: true
+        type: string
+      assembly_version:
+        required: true
+        type: string
+      assembly_file_version:
+        required: true
+        type: string
+      assembly_informational_version:
+        required: true
+        type: string
+
+jobs:
+
+  build-executable-matrix:
+    name: Build executable project matrix job
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: ${{ fromJSON(inputs.smoke && '["linux-x64","win-x64"]' || '["win-x64","linux-x64","linux-musl-x64","linux-arm","linux-arm64","osx-x64","osx-arm64"]') }}
+
+    steps:
+
+      - name: Setup .NET SDK step
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: 10.x
+
+      - name: Checkout code step
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Build executable project step
+        run: |
+          dotnet publish ./PlexCleaner/PlexCleaner.csproj \
+            --runtime ${{ matrix.runtime }} \
+            -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \
+            --configuration ${{ inputs.branch == 'main' && 'Release' || 'Debug' }} \
+            -property:PublishAot=false \
+            -property:Version=${{ inputs.assembly_version }} \
+            -property:FileVersion=${{ inputs.assembly_file_version }} \
+            -property:AssemblyVersion=${{ inputs.assembly_version }} \
+            -property:InformationalVersion=${{ inputs.assembly_informational_version }} \
+            -property:PackageVersion=${{ inputs.semver2 }}
+
+      # Smoke just proves each runtime compiles; the per-runtime upload feeds the release zip, so skip it on
+      # smoke (also keeps the branch out of the artifact name, which a feature branch's `/` would invalidate).
+      - name: Upload matrix build artifacts step
+        if: ${{ !inputs.smoke }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: publish-${{ inputs.branch }}-${{ matrix.runtime }}
+          path: ${{ runner.temp }}/publish
+          retention-days: 1
+
+  # Aggregate every runtime into one PlexCleaner.7z (skipped on smoke; the zip is a release concern). The release
+  # job collects the release-asset-<branch>-* artifacts by pattern.
+  upload-build-artifacts:
+    name: Upload matrix build artifacts job
+    if: ${{ !inputs.smoke }}
+    runs-on: ubuntu-latest
+    needs: [ build-executable-matrix ]
+
+    steps:
+
+      - name: Download matrix build artifacts step
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: publish-${{ inputs.branch }}-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/publish
+
+      - name: Zip build output step
+        run: 7z a -t7z ${{ runner.temp }}/PlexCleaner.7z ${{ runner.temp }}/publish/*
+
+      - name: Upload build artifacts step
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-asset-${{ inputs.branch }}-executable
+          path: ${{ runner.temp }}/PlexCleaner.7z
+          retention-days: 1

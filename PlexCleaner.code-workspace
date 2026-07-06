@@ -1,0 +1,46 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "yaml.schemas": {
+            "https://json.schemastore.org/github-issue-config.json": "file:/.github/ISSUE_TEMPLATE/config.yml"
+        },
+        "dotnet.defaultSolution": "PlexCleaner.slnx",
+        "files.trimTrailingWhitespace": true,
+        "[markdown]": {
+            "files.trimTrailingWhitespace": false
+        },
+        "[plaintext]": {
+            "files.trimTrailingWhitespace": false
+        },
+        "[csharp]": {
+            "editor.formatOnSave": true,
+            "editor.defaultFormatter": "csharpier.csharpier-vscode"
+        },
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.renderWhitespace": "boundary",
+        "dotnet.formatting.organizeImportsOnFormat": true,
+        "csharp.debug.symbolOptions.searchNuGetOrgSymbolServer": true,
+        "csharp.debug.symbolOptions.searchMicrosoftSymbolServer": true,
+        "files.encoding": "utf8",
+        "files.trimTrailingWhitespaceInRegexAndStrings": false,
+        "git.alwaysSignOff": true,
+        "markdown.extension.toc.levels": "2..3"
+    },
+    "extensions": {
+        "recommendations": [
+            "csharpier.csharpier-vscode",
+            "davidanson.vscode-markdownlint",
+            "editorconfig.editorconfig",
+            "github.vscode-github-actions",
+            "ms-azuretools.vscode-docker",
+            "ms-dotnettools.csdevkit",
+            "streetsidesoftware.code-spell-checker",
+            "yzhang.markdown-all-in-one",
+            "fanaticpythoner.better-todo-tree"
+        ]
+    }
+}

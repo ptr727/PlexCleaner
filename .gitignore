@@ -1,0 +1,14 @@
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+.idea
+.vs
+.artifacts
+.codex
+coverage/
+.DS_Store
+
+*.log
+*.user

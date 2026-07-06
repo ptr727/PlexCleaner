@@ -1,0 +1,91 @@
+name: Validate task
+
+# The single validation gate: unit tests + the full lint set (the editor's checks, enforced in CI). Reused by
+# test-pull-request (produces the required check) and the publisher, so the CI and publish gates are identical.
+on:
+  workflow_call:
+    inputs:
+      # Git ref to validate (empty = default checkout ref). The publisher passes its trigger branch so the
+      # publish run validates the branch it publishes.
+      ref:
+        required: false
+        type: string
+        default: ''
+
+jobs:
+
+  unit-test:
+    name: Run unit tests job
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Setup .NET SDK step
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: 10.x
+
+      - name: Checkout code step
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
+
+      # Builds with TreatWarningsAsErrors, so analyzer and code-style warnings fail here.
+      # --collect drives coverlet.collector to emit Cobertura XML into ./coverage/<guid>/.
+      - name: Run unit tests step
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      # Report-only: fail_ci_if_error is false so a Codecov hiccup or an absent token never fails the gate.
+      - name: Upload coverage to Codecov step
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # The editor's checks, enforced in CI from the same config files.
+  lint:
+    name: Lint job
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Setup .NET SDK step
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: 10.x
+
+      - name: Checkout code step
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Check C# formatting step
+        run: |
+          set -euo pipefail
+          dotnet tool restore
+          dotnet csharpier check .
+
+      - name: Check C# style step
+        run: dotnet format style --verify-no-changes --severity=info --verbosity=detailed
+
+      - name: Lint markdown step
+        uses: DavidAnson/markdownlint-cli2-action@8de2aa07cae85fd17c0b35642db70cf5495f1d25 # v24.0.0
+        with:
+          globs: '**/*.md'
+
+      # Spell-check the user-facing docs; word list + exclusions live in cspell.json (shared with the editor).
+      - name: Spell check step
+        uses: streetsidesoftware/cspell-action@de2a73e963e7443969755b648a1008f77033c5b2 # v8.4.0
+        with:
+          files: |
+            README.md
+            HISTORY.md
+          incremental_files_only: false
+
+      - name: Lint workflows step
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+
+      - name: Check line endings step
+        run: docker run --rm -v "$PWD":/check --workdir /check mstruebing/editorconfig-checker@sha256:67b9e9b16a674e36f7c05919da789f03a01d343ca8423eb8797179399af07c00 # editorconfig-checker v3.4.0

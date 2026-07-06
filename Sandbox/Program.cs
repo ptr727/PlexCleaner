@@ -1,0 +1,139 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using InsaneGenius.Utilities;
+using PlexCleaner;
+using Serilog;
+using Serilog.Debugging;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
+using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
+
+namespace Sandbox;
+
+// Settings:
+/*
+{
+    "class": {
+        "key": "value",
+    }
+}
+*/
+
+public class Program
+{
+    private const string JsonConfigFile = "Sandbox.json";
+
+    private readonly Dictionary<string, JsonElement> _settings;
+
+    protected Program(Dictionary<string, JsonElement> settings) => _settings = settings;
+
+    public static async Task<int> Main(string[] args)
+    {
+        // Create default commandline options and config
+        PlexCleaner.Program.Options = new CommandLineOptions();
+        PlexCleaner.Program.Config = new ConfigFileJsonSchema();
+        PlexCleaner.Program.Config.SetDefaults();
+
+        // Set runtime options
+        SetRuntimeOptions();
+
+        // Create logger
+        SelfLog.Enable(Console.Error);
+        Log.Logger = new LoggerConfiguration()
+            .Enrich.WithThreadId()
+            .WriteTo.Console(
+                theme: AnsiConsoleTheme.Code,
+                restrictedToMinimumLevel: LogEventLevel.Debug,
+                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture
+            )
+            .CreateLogger();
+        LogOptions.Logger = Log.Logger;
+
+        // Get settings
+        Dictionary<string, JsonElement>? settings = null;
+        if (GetSettingsFilePath(JsonConfigFile) is { } settingsPath)
+        {
+            await using FileStream jsonStream = File.OpenRead(settingsPath);
+            settings = await JsonSerializer.DeserializeAsync(
+                jsonStream,
+                ConfigJsonContext.Default.DictionaryStringJsonElement
+            );
+            Log.Information("Settings loaded : {FilePath}", settingsPath);
+        }
+
+        // Derive from Program and implement Sandbox()
+        TestSomething program = new(settings ?? []);
+        int ret = await program.Sandbox(args);
+
+        // Done
+        await Log.CloseAndFlushAsync();
+        return ret;
+    }
+
+    protected virtual Task<int> Sandbox(string[] args) => Task.FromResult(0);
+
+    public static void SetRuntimeOptions()
+    {
+        const int FileRetryWaitTime = 5;
+        const int FileRetryCount = 2;
+
+        FileEx.Options.RetryCount = FileRetryCount;
+        FileEx.Options.RetryWaitTime = FileRetryWaitTime;
+
+        PlexCleaner.Program.Options.ThreadCount = PlexCleaner.Program.Options.Parallel
+            ? PlexCleaner.Program.Options.ThreadCount == 0
+                ? Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+                : Math.Clamp(PlexCleaner.Program.Options.ThreadCount, 1, Environment.ProcessorCount)
+            : 1;
+    }
+
+    public static string? GetSettingsFilePath(string fileName)
+    {
+        // Load settings file from current working directory
+        string settingsPath = Path.GetFullPath(fileName);
+        if (!File.Exists(settingsPath))
+        {
+            // Try to load settings file from assembly directory
+            settingsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, fileName));
+        }
+        if (!File.Exists(settingsPath))
+        {
+            Log.Error("File not found : {FilePath}", fileName);
+            return null;
+        }
+        return settingsPath;
+    }
+
+    public JsonElement? GetSettingsObject(string key) =>
+        _settings?.TryGetValue(key, out JsonElement value) == true ? value : null;
+
+    public Dictionary<string, string> GetSettingsDictionary(string key) =>
+        new(
+            GetSettingsObject(key)?.Deserialize(ConfigJsonContext.Default.DictionaryStringString)
+                ?? [],
+            StringComparer.OrdinalIgnoreCase
+        );
+}
+
+[JsonSourceGenerationOptions(
+    AllowTrailingCommas = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    IncludeFields = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString,
+    PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    WriteIndented = true,
+    NewLine = "\r\n",
+    PropertyNameCaseInsensitive = true
+)]
+[JsonSerializable(
+    typeof(Dictionary<string, JsonElement>),
+    TypeInfoPropertyName = "DictionaryStringJsonElement"
+)]
+[JsonSerializable(
+    typeof(Dictionary<string, string>),
+    TypeInfoPropertyName = "DictionaryStringString"
+)]
+internal sealed partial class ConfigJsonContext : JsonSerializerContext;

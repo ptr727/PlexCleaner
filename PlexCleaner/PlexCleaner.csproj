@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <ApplicationIcon>PlexCleaner.ico</ApplicationIcon>
+    <AssemblyName>PlexCleaner</AssemblyName>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <Authors>Pieter Viljoen</Authors>
+    <Company>Pieter Viljoen</Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year) $(Company)</Copyright>
+    <Description>Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.</Description>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <FileVersion>1.1.1.0</FileVersion>
+    <IncludeSymbols>true</IncludeSymbols>
+    <NeutralLanguage>en</NeutralLanguage>
+    <OutputType>Exe</OutputType>
+    <PackageId>ptr727.PlexCleaner</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PublishAot>false</PublishAot>
+    <PackageProjectUrl>https://github.com/ptr727/PlexCleaner</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageVersion>1.1.1.0-prerelease</PackageVersion>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RepositoryUrl>https://github.com/ptr727/PlexCleaner</RepositoryUrl>
+    <RootNamespace>PlexCleaner</RootNamespace>
+    <StartupObject>PlexCleaner.Program</StartupObject>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Version>1.1.1.0-prerelease</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  <!-- Plugin loading uses AssemblyLoadContext and reflection, unavailable under NativeAOT -->
+  <PropertyGroup Condition="'$(PublishAot)' != 'true'">
+    <DefineConstants>$(DefineConstants);PLUGINS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CliWrap" />
+    <PackageReference Include="InsaneGenius.Utilities" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <PackageReference Include="NEbml" />
+    <PackageReference Include="ptr727.LanguageTags" />
+    <PackageReference Include="Serilog.Enrichers.Thread" />
+    <PackageReference Include="Serilog.Sinks.Async" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Utf8JsonAsyncStreamReader" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PlexCleanerTests" />
+  </ItemGroup>
+</Project>

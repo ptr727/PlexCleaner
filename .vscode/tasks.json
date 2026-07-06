@@ -1,0 +1,303 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": ".NET Build",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "${workspaceFolder}",
+                "--verbosity=diagnostic"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": ".NET Format",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "format",
+                "style",
+                "--verify-no-changes",
+                "--severity=info",
+                "--verbosity=detailed"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "CSharpier Format",
+                ".NET Build"
+            ]
+        },
+        {
+            "label": "CSharpier Format",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "csharpier",
+                "format",
+                "--log-level=debug",
+                "."
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": ".NET Tool Update",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "tool",
+                "update",
+                "--all"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Husky.Net Run",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "husky",
+                "run"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": ".NET Outdated Upgrade",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "outdated",
+                "--upgrade:prompt"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Build Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--platform=linux/amd64,linux/arm64",
+                "--file=./Docker/Dockerfile",
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Build all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Build Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Load Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "buildx",
+                "build",
+                "--load",
+                "--platform=linux/amd64",
+                "--tag=plexcleaner:ubuntu",
+                "--file=./Docker/Dockerfile",
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Load all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Load Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Test Dockerfile",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "-it",
+                "--rm",
+                "--name=PlexCleaner-Test",
+                "plexcleaner:ubuntu",
+                "/Test/Test.sh"
+            ],
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Load Dockerfile"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Test all Dockerfiles",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "Test Dockerfile"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: CSharpier",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "csharpier",
+                "check",
+                "."
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Style",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "format",
+                "style",
+                "--verify-no-changes",
+                "--severity=info",
+                "--verbosity=detailed"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Markdown",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--volume=${workspaceFolder}:/workdir",
+                "--workdir=/workdir",
+                "davidanson/markdownlint-cli2:latest",
+                "**/*.md"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Spelling",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--volume=${workspaceFolder}:/workdir",
+                "--workdir=/workdir",
+                "ghcr.io/streetsidesoftware/cspell:latest",
+                "--no-progress",
+                "README.md",
+                "HISTORY.md"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: All (CI parity)",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Lint: CSharpier",
+                "Lint: Style",
+                "Lint: Markdown",
+                "Lint: Spelling"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        }
+    ]
+}
