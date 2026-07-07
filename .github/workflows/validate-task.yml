@@ -86,3 +86,6 @@ jobs:
 
       - name: Lint workflows step
         uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+
+      - name: Check line endings step
+        run: docker run --rm -v "$PWD":/check --workdir /check mstruebing/editorconfig-checker@sha256:67b9e9b16a674e36f7c05919da789f03a01d343ca8423eb8797179399af07c00 # editorconfig-checker v3.4.0

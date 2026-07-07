@@ -103,7 +103,7 @@ Applies to code and workflow (`#`) comments alike.
 
 ### Line Endings
 
-- [`.editorconfig`](./.editorconfig) is the single source of truth for line endings: CRLF for `.md`, `.cs`, XML/`.csproj`/`.props`, `.yml`/`.yaml`, `.json`, `.cmd`/`.bat`/`.ps1`; LF for `.sh` and Dockerfiles. The `[*.cs]`/ReSharper style block applies because this repo ships .NET.
+- [`.editorconfig`](./.editorconfig) is the single source of truth for line endings: CRLF for `.md`, `.cs`, XML/`.csproj`/`.props`, non-workflow `.yml`/`.yaml`, `.json`, `.cmd`/`.bat`/`.ps1`; LF for `.sh`, Dockerfiles, and workflow YAML (`.github/workflows/*.{yml,yaml}`). Workflow YAML is pinned LF because Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of mixed; git still leaves endings alone (`* -text`) and CI's `editorconfig-checker` enforces it. The `[*.cs]`/ReSharper style block applies because this repo ships .NET.
 - **Always honor the `.editorconfig` ending.** Create a file with its spec ending; when editing a file, bring the whole file to spec (a file-wide EOL fix alongside the content change is expected, not a violation); if you come across a file with the wrong ending, fix it. [`.gitattributes`](./.gitattributes) (`* -text`) governs git's own normalization - it is not a license to leave a file on the wrong ending. Verify with `file <path>` after writing.
 
 ### Quantitative Claims
