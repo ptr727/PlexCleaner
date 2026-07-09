@@ -156,7 +156,7 @@ public partial class FfProbe
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync(CancellationToken.None, Program.CancelToken());
                 processId = task.ProcessId;
-                Log.Information(
+                Log.Debug(
                     "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                     GetToolType(),
                     processId,
@@ -222,7 +222,7 @@ public partial class FfProbe
                     .Build();
 
                 // Execute command
-                Log.Information("Creating temp media file : {TempFileName}", tempName);
+                Log.Debug("Creating temp media file : {TempFileName}", tempName);
                 if (!Tools.FfMpeg.Execute(command, true, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
@@ -251,7 +251,7 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Information("Getting subcc packet info : {FileName}", fileName);
+            Log.Debug("Getting subcc packet info : {FileName}", fileName);
             bool ret = GetPackets(command, packetFunc, out string error);
             if (!ret)
             {
@@ -280,7 +280,7 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Information("Getting bitrate packets : {FileName}", fileName);
+            Log.Debug("Getting bitrate packets : {FileName}", fileName);
             if (!GetPackets(command, packetFunc, out string error))
             {
                 Log.Error("Failed to get bitrate packets : {FileName}", fileName);
@@ -312,11 +312,7 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Information(
-                "{ToolType} : Getting media info : {FileName}",
-                GetToolType(),
-                fileName
-            );
+            Log.Debug("{ToolType} : Getting media info : {FileName}", GetToolType(), fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;

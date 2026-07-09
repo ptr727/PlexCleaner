@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Serilog;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -1750,7 +1751,7 @@ public class ProcessFile
     public static bool VerifyMediaStreams(FileInfo fileInfo)
     {
         // Verify
-        Log.Information("Verifying media streams : {FileName}", fileInfo.FullName);
+        Log.Debug("Verifying media streams : {FileName}", fileInfo.FullName);
         if (!Tools.FfMpeg.VerifyMedia(fileInfo.FullName))
         {
             // Cancel requested
@@ -1901,7 +1902,7 @@ public class ProcessFile
         // https://en.wikipedia.org/wiki/YIFY
 
         // Calculate bitrate
-        Log.Information("Calculating bitrate info : {FileName}", FileInfo.FullName);
+        Log.Debug("Calculating bitrate info : {FileName}", FileInfo.FullName);
         if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
             // Error
@@ -2212,10 +2213,10 @@ public class ProcessFile
         MkvMergeProps = mkvMergeProps;
         FfProbeProps = ffProbeProps;
 
-        // Print info
-        MediaInfoProps.WriteLine();
-        MkvMergeProps.WriteLine();
-        FfProbeProps.WriteLine();
+        // Print info at Debug; this per-file track dump is diagnostic detail, not a user action
+        MediaInfoProps.WriteLine(LogEventLevel.Debug);
+        MkvMergeProps.WriteLine(LogEventLevel.Debug);
+        FfProbeProps.WriteLine(LogEventLevel.Debug);
 
         return true;
     }
@@ -2361,7 +2362,7 @@ public class ProcessFile
     private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
-        Log.Information("Counting interlaced frames : {FileName}", FileInfo.FullName);
+        Log.Debug("Counting interlaced frames : {FileName}", FileInfo.FullName);
         if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
         {
             // Cancel requested
@@ -2616,7 +2617,7 @@ public class ProcessFile
             .FirstOrDefault(props => props != null);
         if (audioProps != null)
         {
-            Log.Information(
+            Log.Debug(
                 "Preferred audio format selected : {Preferred} in {Formats}",
                 audioProps.Format,
                 audioPropsList.Select(item => item.Format)
@@ -2625,7 +2626,7 @@ public class ProcessFile
         }
 
         // Return first item
-        Log.Information(
+        Log.Debug(
             "No audio format matching preferred formats : {Preferred} not in {Formats}, Selecting {Selected}",
             Program.Config.ProcessOptions.PreferredAudioFormats,
             audioPropsList.Select(item => item.Format),

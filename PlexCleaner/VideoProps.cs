@@ -1,4 +1,5 @@
 using Serilog;
+using Serilog.Events;
 
 // TODO: Find a better way to create profile levels
 // https://trac.ffmpeg.org/ticket/2901
@@ -179,9 +180,10 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         return formatMatch && codecMatch && profileMatch;
     }
 
-    public override void WriteLine() =>
+    public override void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
         // Keep in sync with TrackInfo::WriteLine
-        Log.Information(
+        Log.Write(
+            level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
                 + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
                 + "Profile: {Profile}, Interlaced: {Interlaced}, HDR: {HDR}, CC: {CC}, CoverArt: {CoverArt}, "

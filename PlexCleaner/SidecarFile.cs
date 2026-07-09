@@ -95,7 +95,7 @@ public class SidecarFile
             return false;
         }
 
-        Log.Information(
+        Log.Debug(
             "Sidecar created : State: {State} : {FileName}",
             State,
             _sidecarFileInfo.FullName
@@ -162,11 +162,7 @@ public class SidecarFile
             }
         }
 
-        Log.Information(
-            "Sidecar read : State: {State} : {FileName}",
-            State,
-            _sidecarFileInfo.FullName
-        );
+        Log.Debug("Sidecar read : State: {State} : {FileName}", State, _sidecarFileInfo.FullName);
 
         return true;
     }
@@ -199,7 +195,7 @@ public class SidecarFile
             return false;
         }
 
-        Log.Information(
+        Log.Debug(
             "Sidecar updated : State: {State} : {FileName}",
             State,
             _sidecarFileInfo.FullName
@@ -266,7 +262,7 @@ public class SidecarFile
     {
         Debug.Assert(_sidecarJson != null);
 
-        Log.Information("Reading media info from sidecar : {FileName}", _sidecarFileInfo.FullName);
+        Log.Debug("Reading media info from sidecar : {FileName}", _sidecarFileInfo.FullName);
 
         // Decompress the tool data
         _mediaInfoJson = StringCompression.Decompress(_sidecarJson.MediaInfoData);
@@ -511,7 +507,7 @@ public class SidecarFile
 
     private bool GetToolInfo()
     {
-        Log.Information("Reading media info from tools : {FileName}", _mediaFileInfo.FullName);
+        Log.Debug("Reading media info from tools : {FileName}", _mediaFileInfo.FullName);
 
         // Read the tool data text
         if (

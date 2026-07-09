@@ -1,12 +1,15 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
 public class CommandLineOptions
 {
     public bool Debug { get; set; }
+    public bool LogElevate { get; set; }
+    public bool LogClear { get; set; }
     public bool LogAppend { get; set; }
     public bool LogWarning { get; set; }
     public bool Parallel { get; set; }
@@ -14,8 +17,9 @@ public class CommandLineOptions
     public bool QuickScan { get; set; }
     public bool TestSnippets { get; set; }
     public int ThreadCount { get; set; }
+    public LogEventLevel LogLevel { get; set; } = LogEventLevel.Information;
     public List<string> MediaFiles { get; set; } = [];
-    public string LogFile { get; set; } = string.Empty;
+    public FileInfo? LogFile { get; set; }
     public string ResultsFile { get; set; } = string.Empty;
     public string SchemaFile { get; set; } = string.Empty;
     public string SettingsFile { get; set; } = string.Empty;
@@ -46,23 +50,46 @@ public class CommandLineParser
         public override int Invoke(ParseResult parseResult) => action(parseResult);
     }
 
-    private readonly Option<string> _logFileOption = new("--logfile")
+    private readonly Option<LogEventLevel> _logLevelOption = new("--loglevel")
+    {
+        Description = "Log level: Verbose, Debug, Information, Warning, Error, Fatal",
+        HelpName = "level",
+        DefaultValueFactory = _ => LogEventLevel.Information,
+        Recursive = true,
+    };
+
+    private readonly Option<FileInfo?> _logFileOption = new("--logfile")
     {
         Description = "Path to log file",
         HelpName = "filepath",
         Recursive = true,
     };
 
+    private readonly Option<bool> _logClearOption = new("--logclear")
+    {
+        Description = "Clear the log file before writing (default appends)",
+        HelpName = "boolean",
+        Recursive = true,
+    };
+
+    private readonly Option<bool> _logElevateOption = new("--logelevate")
+    {
+        Description = "Raise a file's log level to Information after a warning or error",
+        HelpName = "boolean",
+        Recursive = true,
+    };
+
     private readonly Option<bool> _logAppendOption = new("--logappend")
     {
-        Description = "Append to existing log file",
+        Description = "(Deprecated) Appending is now the default, use --logclear to clear",
         HelpName = "boolean",
         Recursive = true,
     };
 
     private readonly Option<bool> _logWarningOption = new("--logwarning")
     {
-        Description = "Log warnings and errors only",
+        Description =
+            "(Deprecated) Use --loglevel Warning (add --logelevate for per-file elevation)",
         HelpName = "boolean",
         Recursive = true,
     };
@@ -158,7 +185,10 @@ public class CommandLineParser
         );
 
         // Global options
+        rootCommand.Options.Add(_logLevelOption);
         rootCommand.Options.Add(_logFileOption);
+        rootCommand.Options.Add(_logClearOption);
+        rootCommand.Options.Add(_logElevateOption);
         rootCommand.Options.Add(_logAppendOption);
         rootCommand.Options.Add(_logWarningOption);
         rootCommand.Options.Add(_debugOption);
@@ -438,6 +468,9 @@ public class CommandLineParser
         CommandLineOptions options = new()
         {
             Debug = Result.GetValue(_debugOption),
+            LogLevel = Result.GetValue(_logLevelOption),
+            LogElevate = Result.GetValue(_logElevateOption),
+            LogClear = Result.GetValue(_logClearOption),
             LogAppend = Result.GetValue(_logAppendOption),
             LogWarning = Result.GetValue(_logWarningOption),
             Parallel = Result.GetValue(_parallelOption),
@@ -446,7 +479,7 @@ public class CommandLineParser
             TestSnippets = Result.GetValue(_testSnippetsOption),
             ThreadCount = Result.GetValue(_threadCountOption),
             MediaFiles = Result.GetValue(_mediaFilesOption) ?? [],
-            LogFile = Result.GetValue(_logFileOption) ?? string.Empty,
+            LogFile = Result.GetValue(_logFileOption),
             ResultsFile = Result.GetValue(_resultsFileOption) ?? string.Empty,
             SchemaFile = Result.GetValue(_schemaFileOption) ?? string.Empty,
             SettingsFile = Result.GetValue(_settingsFileOption) ?? string.Empty,

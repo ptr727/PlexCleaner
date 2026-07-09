@@ -44,6 +44,11 @@ public class PerFileLogLevelTests
     [InlineData(LogEventLevel.Information, LogEventLevel.Debug, false)]
     [InlineData(LogEventLevel.Information, LogEventLevel.Information, true)]
     [InlineData(LogEventLevel.Information, LogEventLevel.Warning, true)]
+    [InlineData(LogEventLevel.Debug, LogEventLevel.Verbose, false)]
+    [InlineData(LogEventLevel.Debug, LogEventLevel.Debug, true)]
+    [InlineData(LogEventLevel.Debug, LogEventLevel.Information, true)]
+    [InlineData(LogEventLevel.Verbose, LogEventLevel.Verbose, true)]
+    [InlineData(LogEventLevel.Verbose, LogEventLevel.Debug, true)]
     public void NoSession_HonorsFloor(LogEventLevel floor, LogEventLevel level, bool expected)
     {
         PerFileLogLevel.Filter filter = new(floor);
@@ -114,6 +119,36 @@ public class PerFileLogLevelTests
 
         _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeTrue();
         _ = filter.IsEnabled(Event(LogEventLevel.Debug)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Session_DebugFloor_ElevateDoesNotHideDebug()
+    {
+        // With a sub-Information floor, a warning must not raise the floor and hide Debug output
+        PerFileLogLevel.Filter filter = new(LogEventLevel.Debug);
+        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Debug);
+        _ = filter.IsEnabled(Event(LogEventLevel.Debug)).Should().BeTrue();
+
+        // Warning self-elevates, but the floor is already more verbose than Information
+        _ = filter.IsEnabled(Event(LogEventLevel.Warning)).Should().BeTrue();
+
+        // Debug still passes after the warning; only Verbose (below the floor) is suppressed
+        _ = filter.IsEnabled(Event(LogEventLevel.Debug)).Should().BeTrue();
+        _ = filter.IsEnabled(Event(LogEventLevel.Verbose)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Session_VerboseFloor_ExplicitElevateDoesNotHideVerbose()
+    {
+        PerFileLogLevel.Filter filter = new(LogEventLevel.Verbose);
+        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Verbose);
+        _ = filter.IsEnabled(Event(LogEventLevel.Verbose)).Should().BeTrue();
+
+        PerFileLogLevel.Elevate();
+
+        // Explicit elevation must not raise a floor that is already below Information
+        _ = filter.IsEnabled(Event(LogEventLevel.Verbose)).Should().BeTrue();
+        _ = filter.IsEnabled(Event(LogEventLevel.Debug)).Should().BeTrue();
     }
 
     [Fact]

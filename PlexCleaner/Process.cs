@@ -33,8 +33,9 @@ public static class Process
         // Current step, reported as the failure reason on error
         string? operation = null;
 
-        // Scoped logging session to continue logging after any error or warning
-        using IDisposable logScope = PerFileLogLevel.BeginScope(Program.LogFloorLevel);
+        // Scoped logging session to continue logging after any error or warning; only has an effect
+        // when --logelevate installed the PerFileLogLevel filter, otherwise the session is inert
+        using IDisposable logScope = PerFileLogLevel.BeginScope(Program.Options.LogLevel);
 
         // Process in jump loop
         for (; ; )
@@ -413,7 +414,7 @@ public static class Process
 
                     // Delete empty folders
                     int deleted = 0;
-                    Log.Information("Looking for empty folders in {Folder}", folder);
+                    Log.Debug("Looking for empty folders in {Folder}", folder);
                     DeleteEmptyDirectories(folder, ref deleted);
                     _ = Interlocked.Add(ref totalDeleted, deleted);
                 });

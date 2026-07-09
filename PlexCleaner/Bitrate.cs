@@ -98,7 +98,7 @@ public class Bitrate
     }
 
     public void WriteLine(string prefix) =>
-        Log.Information(
+        Log.Debug(
             "{Prefix} : Length: {Length}, Minimum: {Minimum}, Maximum: {Maximum}, Average: {Average}, Exceeded: {Exceeded}, Duration: {Duration}",
             prefix,
             TimeSpan.FromSeconds(BytesPerSecond.Count),

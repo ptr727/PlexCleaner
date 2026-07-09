@@ -256,7 +256,7 @@ public static class Tools
                 }
 
                 // Get the URL details
-                Log.Information(
+                Log.Debug(
                     "{Tool} : Getting download URI details : {Uri}",
                     mediaTool.GetToolFamily(),
                     latestToolInfo.Url

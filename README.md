@@ -27,9 +27,10 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter.
+- Reworked logging: added `--loglevel` (`Verbose` ... `Fatal`) to select the log level, `--logclear` (the log file now appends by default), and `--logelevate` to opt into raising a file's level to `Information` after a warning or error. `--logwarning` and `--logappend` are deprecated. Low-level tool and per-track chatter is now logged at `Debug`/`Verbose`.
 - Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
 - Normalize multiple or redundant `Default` track flags instead of only warning about them.
+- Fixed an `idet` interlace-detection defect where ffmpeg emitting its statistics more than once could cause the counts to parse incorrectly and detection to fail; also improved detection reporting (detection source and a self-describing reason).
 - Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
 - Fixed closed caption removal for H.265/HEVC video that was incorrectly reported as an unsupported format (HDR10 and HDR10+ HEVC content remains guarded).
 
@@ -288,7 +289,7 @@ docker run -it --rm --pull always \
   --name PlexCleaner --env TZ=America/Los_Angeles \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
-  /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --logwarning \
+  /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --loglevel Warning --logelevate \
   monitor --settingsfile /media/PlexCleaner/PlexCleaner.json --parallel \
   --mediafiles /media/Movies --mediafiles /media/Series
 ```
@@ -549,12 +550,15 @@ Usage:
   PlexCleaner [command] [options]
 
 Options:
+  --loglevel <level>      Log level: Verbose, Debug, Information, Warning, Error, Fatal [default: Information]
+  --logfile <filepath>    Path to log file
+  --logclear <boolean>    Clear the log file before writing (default appends)
+  --logelevate <boolean>  Raise a file's log level to Information after a warning or error
+  --logappend <boolean>   (Deprecated) Appending is now the default, use --logclear to clear
+  --logwarning <boolean>  (Deprecated) Use --loglevel Warning (add --logelevate for per-file elevation)
+  --debug <boolean>       Wait for debugger to attach
   -?, -h, --help          Show help and usage information
   --version               Show version information
-  --logfile <filepath>    Path to log file
-  --logappend <boolean>   Append to existing log file
-  --logwarning <boolean>  Log warnings and errors only
-  --debug <boolean>       Wait for debugger to attach
 
 Commands:
   defaultsettings       Create default JSON settings file
@@ -583,12 +587,18 @@ Commands:
 
 Global options apply to all commands:
 
+- `--loglevel`:
+  - Minimum log level: `Verbose`, `Debug`, `Information` (default), `Warning`, `Error`, or `Fatal`.
 - `--logfile`:
-  - Path to the log file.
-- `--logappend`:
-  - Append to the existing log file, default will overwrite the log file on startup.
+  - Path to the log file. The file appends by default and rolls to a numbered file (`<name>_001.<ext>`) when it reaches 1 GiB.
+- `--logclear`:
+  - Clear the log file before writing, default appends to the existing log file.
+- `--logelevate`:
+  - Raise a file's log level back to `Information` after it logs a warning or error, so the full context of a problem file is shown even at a higher `--loglevel`.
 - `--logwarning`:
-  - Only log warnings and errors, default will log information, warnings, and errors.
+  - *(Deprecated, will be removed.)* Equivalent to `--loglevel Warning`; add `--logelevate` to restore the previous per-file elevation behavior.
+- `--logappend`:
+  - *(Deprecated, will be removed.)* Appending is now the default; use `--logclear` to clear the log file.
 - `--debug`:
   - Launch and wait for a debugger to attach.
 
@@ -611,9 +621,12 @@ Options:
   --resultsfile <filepath>              Path to results file
   --testsnippets <boolean>              Create short media file clips
   -?, -h, --help                        Show help and usage information
+  --loglevel <level>                    Log level: Verbose, Debug, Information, Warning, Error, Fatal [default: Information]
   --logfile <filepath>                  Path to log file
-  --logappend <boolean>                 Append to existing log file
-  --logwarning <boolean>                Log warnings and errors only
+  --logclear <boolean>                  Clear the log file before writing (default appends)
+  --logelevate <boolean>                Raise a file's log level to Information after a warning or error
+  --logappend <boolean>                 (Deprecated) Appending is now the default, use --logclear to clear
+  --logwarning <boolean>                (Deprecated) Use --loglevel Warning (add --logelevate for per-file elevation)
   --debug <boolean>                     Wait for debugger to attach
 ```
 
@@ -743,9 +756,12 @@ Options:
   --quickscan <boolean>                 Scan only part of the file
   --preprocess <boolean>                Pre-process all monitored folders
   -?, -h, --help                        Show help and usage information
+  --loglevel <level>                    Log level: Verbose, Debug, Information, Warning, Error, Fatal [default: Information]
   --logfile <filepath>                  Path to log file
-  --logappend <boolean>                 Append to existing log file
-  --logwarning <boolean>                Log warnings and errors only
+  --logclear <boolean>                  Clear the log file before writing (default appends)
+  --logelevate <boolean>                Raise a file's log level to Information after a warning or error
+  --logappend <boolean>                 (Deprecated) Appending is now the default, use --logclear to clear
+  --logwarning <boolean>                (Deprecated) Use --loglevel Warning (add --logelevate for per-file elevation)
   --debug <boolean>                     Wait for debugger to attach
 ```
 

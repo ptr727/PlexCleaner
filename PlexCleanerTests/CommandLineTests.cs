@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -197,9 +198,10 @@ public class CommandLineTests
         "--parallel",
         "--threadcount=2",
         "--quickscan",
+        "--loglevel=Debug",
         "--logfile=logfile.log",
-        "--logappend",
-        "--logwarning",
+        "--logelevate",
+        "--logclear",
         "--debug",
         "--preprocess"
     )]
@@ -220,9 +222,10 @@ public class CommandLineTests
         _ = options.Parallel.Should().BeTrue();
         _ = options.ThreadCount.Should().Be(2);
         _ = options.QuickScan.Should().BeTrue();
-        _ = options.LogFile.Should().Be("logfile.log");
-        _ = options.LogAppend.Should().BeTrue();
-        _ = options.LogWarning.Should().BeTrue();
+        _ = options.LogLevel.Should().Be(LogEventLevel.Debug);
+        _ = options.LogFile!.Name.Should().Be("logfile.log");
+        _ = options.LogElevate.Should().BeTrue();
+        _ = options.LogClear.Should().BeTrue();
         _ = options.Debug.Should().BeTrue();
         _ = options.PreProcess.Should().BeTrue();
     }
@@ -261,9 +264,12 @@ public class CommandLineTests
         _ = options.ThreadCount.Should().Be(2);
         _ = options.QuickScan.Should().BeTrue();
         _ = options.ResultsFile.Should().Be("results.json");
-        _ = options.LogFile.Should().Be("logfile.log");
+        _ = options.LogFile!.Name.Should().Be("logfile.log");
+        // Deprecated flags still parse for backward compatibility
         _ = options.LogAppend.Should().BeTrue();
         _ = options.LogWarning.Should().BeTrue();
+        // --loglevel omitted, so it defaults to Information
+        _ = options.LogLevel.Should().Be(LogEventLevel.Information);
         _ = options.Debug.Should().BeTrue();
     }
 
@@ -476,5 +482,57 @@ public class CommandLineTests
     {
         CommandLineParser parser = new(args);
         _ = parser.Result.Errors.Should().NotBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(
+        "process",
+        "--settingsfile=settings.json",
+        "--mediafiles=/data/foo",
+        "--loglevel=bogus"
+    )]
+    public void Parse_Commandline_InvalidLogLevel_Fails(params string[] args)
+    {
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().NotBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("process", "--settingsfile=settings.json", "--mediafiles=/data/foo")]
+    public void Parse_Commandline_DefaultLogLevel_IsInformation(params string[] args)
+    {
+        CommandLineParser parser = new(args);
+        _ = parser.Result.Errors.Should().BeEmpty();
+
+        CommandLineOptions options = parser.Bind();
+        _ = options.LogLevel.Should().Be(LogEventLevel.Information);
+        _ = options.LogElevate.Should().BeFalse();
+        _ = options.LogClear.Should().BeFalse();
+        _ = options.LogFile.Should().BeNull();
+    }
+
+    [Fact]
+    public void FromCommandLine_LogWarning_MapsToWarningLevelWithoutElevation()
+    {
+        // Deprecated --logwarning maps to the Warning level only; it does not enable elevation
+        CommandLineOptions options = new() { LogWarning = true };
+        LoggerFactory.Options logOptions = LoggerFactory.FromCommandLine(options);
+        _ = logOptions.Level.Should().Be(LogEventLevel.Warning);
+        _ = logOptions.Elevate.Should().BeFalse();
+    }
+
+    [Fact]
+    public void FromCommandLine_LogLevelAndElevate_MapThrough()
+    {
+        CommandLineOptions options = new()
+        {
+            LogLevel = LogEventLevel.Debug,
+            LogElevate = true,
+            LogClear = true,
+        };
+        LoggerFactory.Options logOptions = LoggerFactory.FromCommandLine(options);
+        _ = logOptions.Level.Should().Be(LogEventLevel.Debug);
+        _ = logOptions.Elevate.Should().BeTrue();
+        _ = logOptions.FileClear.Should().BeTrue();
     }
 }

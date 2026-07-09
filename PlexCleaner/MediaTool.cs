@@ -91,11 +91,7 @@ public abstract class MediaTool
     // Can throw HTTP exceptions
     protected string GetLatestGitHubRelease(string repo)
     {
-        Log.Information(
-            "{Tool} : Getting latest version from GitHub : {Repo}",
-            GetToolFamily(),
-            repo
-        );
+        Log.Debug("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
         return GitHubRelease.GetLatestRelease(repo);
     }
 
@@ -109,7 +105,7 @@ public abstract class MediaTool
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
-            Log.Information(
+            Log.Debug(
                 "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 processId,
@@ -205,7 +201,7 @@ public abstract class MediaTool
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
-            Log.Information(
+            Log.Debug(
                 "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 processId,

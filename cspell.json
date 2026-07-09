@@ -107,6 +107,8 @@
     "listfiles",
     "locproj",
     "logappend",
+    "logclear",
+    "logelevate",
     "logfile",
     "loglevel",
     "logwarning",
