@@ -1286,16 +1286,13 @@ public class ProcessFile
         // Detected: interlaced video, idetInfo is set when the idet scan detected it, else a metadata flag
         if (idetInfo != null)
         {
-            FfMpegIdetInfo.Frames multiFrame = idetInfo.MultiFrame;
-            _ = idetInfo.IsInterlaced(out double percentage);
+            // idetInfo is only set when the idet scan detected interlaced content
+            bool interlaced = idetInfo.IsInterlaced(out string reason);
+            Debug.Assert(interlaced);
             Log.Warning(
-                "Interlaced video detected : Format: {Format}, Detected by: Idet, MultiFrame: {Percentage:F2}% (TFF: {TFF}, BFF: {BFF}, Progressive: {Progressive}, Undetermined: {Undetermined}) : {FileName}",
+                "Interlaced video detected : Format: {Format}, Detected by: Idet, {Reason} : {FileName}",
                 videoProps.Format,
-                percentage,
-                multiFrame.Tff,
-                multiFrame.Bff,
-                multiFrame.Progressive,
-                multiFrame.Undetermined,
+                reason,
                 FileInfo.FullName
             );
         }
@@ -2406,8 +2403,6 @@ public class ProcessFile
             return false;
         }
 
-        // Log result
-        idetInfo.WriteLine();
         return true;
     }
 
