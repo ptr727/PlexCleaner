@@ -53,7 +53,7 @@ public static class Process
             }
 
             // Does the file exist and have access permissions
-            operation = nameof(File.Exists);
+            operation = $"{nameof(File)}.{nameof(File.Exists)}";
             if (!File.Exists(fileName))
             {
                 Log.Error("Skipping inaccessible file : {FileName}", fileName);
