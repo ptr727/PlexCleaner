@@ -7,7 +7,7 @@ namespace PlexCleanerTests;
 public class FfMpegNalUnitTests
 {
     [Theory]
-    // Format strings match FfProbe codec_name / MediaInfo format tags
+    // Format strings are FFprobe codec_name tokens (the value passed to GetNalUnit)
     [InlineData("h264", 6)]
     [InlineData("hevc", 39)]
     [InlineData("mpeg2video", 178)]
