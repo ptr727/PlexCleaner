@@ -193,7 +193,7 @@ public partial class FfMpegIdetInfo
                         "Progressive",
                         string.Create(
                             CultureInfo.InvariantCulture,
-                            $"undetermined frames ({Undetermined}) outnumber determined frames ({Determined})"
+                            $"determined frames ({Determined}) do not outnumber undetermined frames ({Undetermined})"
                         ),
                         interlaced
                     );

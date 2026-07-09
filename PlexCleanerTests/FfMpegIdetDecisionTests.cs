@@ -49,7 +49,13 @@ public class FfMpegIdetDecisionTests
     [Theory]
     // tff, bff, progressive, undetermined, reason fragment describing the decision rationale
     [InlineData(0, 0, 0, 0, "no frames analyzed")]
-    [InlineData(100, 0, 50, 200, "undetermined frames (200) outnumber determined frames (150)")]
+    [InlineData(
+        100,
+        0,
+        50,
+        200,
+        "determined frames (150) do not outnumber undetermined frames (200)"
+    )]
     [InlineData(
         6000,
         0,
