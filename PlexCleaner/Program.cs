@@ -88,6 +88,13 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
+        // A graceful cancellation (SIGINT / SIGTERM / SIGQUIT) is a clean shutdown, not a failure.
+        // Checked before the cleanup Cancel() below so it only applies to signal-driven cancellation.
+        if (IsCancelled())
+        {
+            exitCode = MakeExitCode(ExitCode.Success);
+        }
+
         // Cleanup
         Cancel();
         // Unhook signals before flushing so a second signal reverts to default OS termination

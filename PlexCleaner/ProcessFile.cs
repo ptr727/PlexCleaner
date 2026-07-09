@@ -557,7 +557,7 @@ public class ProcessFile
 
         // Detected: tracks needing flags set
         Log.Warning(
-            "Track flags to set detected : Tracks: {Tracks} : {FileName}",
+            "Track flags to be set detected : Tracks: {Tracks} : {FileName}",
             MkvMergeProps.Video.Count(item => item.State == TrackProps.StateType.SetFlags)
                 + MkvMergeProps.Audio.Count(item => item.State == TrackProps.StateType.SetFlags)
                 + MkvMergeProps.Subtitle.Count(item => item.State == TrackProps.StateType.SetFlags),
