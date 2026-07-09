@@ -5,6 +5,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 ## Release History
 
 - Version 3.20:
+  - Enabled closed caption removal for H.265/HEVC video: the SEI NAL unit lookup keyed on `h265` never matched FFprobe's `hevc` codec name, so HEVC files were incorrectly reported as an "Unsupported video format for Closed Captions removal". HEVC content (excluding HDR10+, which remains guarded) is now cleaned using the `filter_units=remove_types=39` bitstream filter, same as H.264 and MPEG-2.
   - Added per-file stateful log level filtering to enable information level output after a warning or error event is detected, overriding the `--logwarning` warning only filter. Prior to this change the log output would only contain the trigger warning or error event, now it will also log all subsequent information level events for that file during its processing cycle.
   - Log a warning when a repair or cleanup condition is detected (redundant `Default` flags, invalid language tags, interlaced video, tracks needing re-encode, etc.) so `--logwarning` surfaces every file that is modified, with the subsequent cleanup steps logged at information level.
   - Always log the end-of-run summary at information level, even with `--logwarning`, so the modified, error, and verify-failed counts are recorded for every processing run.

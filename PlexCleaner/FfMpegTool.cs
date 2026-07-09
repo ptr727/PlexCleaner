@@ -21,7 +21,7 @@ public partial class FfMpeg
 
     // Common format tags
     private const string H264Format = "h264";
-    private const string H265Format = "h265";
+    private const string H265Format = "hevc";
     private const string MPEG2Format = "mpeg2video";
 
     // SEI NAL units for EIA-608 and CTA-708 content
@@ -34,7 +34,7 @@ public partial class FfMpeg
 
     public static int GetNalUnit(string format) =>
         // Get SEI NAL unit based on video format
-        // H264 = 6, H265 = 9, MPEG2 = 178
+        // H264 = 6, H265/HEVC = 39, MPEG2 = 178
         // Return default(int) if not found
         s_sEINalUnitList
             .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
