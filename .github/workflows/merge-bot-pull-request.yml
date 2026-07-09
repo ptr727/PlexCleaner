@@ -41,17 +41,8 @@ jobs:
           client-id: ${{ secrets.CODEGEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}
 
-      - name: Get dependabot metadata step
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      # Skip semver-major NuGet bumps so they land via human review; other ecosystems' majors auto-merge.
+      # Auto-merge every tier, semver-major included: the required checks are the gate, not the bump magnitude.
       - name: Merge pull request step
-        if: >-
-          (steps.metadata.outputs.package-ecosystem != 'nuget') ||
-          (steps.metadata.outputs.update-type != 'version-update:semver-major')
         run: |
           set -euo pipefail
           case "${{ github.event.pull_request.base.ref }}" in
