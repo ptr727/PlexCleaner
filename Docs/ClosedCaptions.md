@@ -183,4 +183,4 @@ ffmpeg -loglevel error -i [in-filename] -c copy -map 0 -bsf:v filter_units=remov
 
 Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.
 
-> **ℹ️ Note**: [Wiki](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [issue](https://trac.ffmpeg.org/ticket/5283); as of writing HDR10+ metadata may be lost when removing closed captions from H265 content. PlexCleaner therefore skips closed caption removal on H265/HEVC content carrying HDR10+ dynamic metadata (SMPTE ST 2094), reporting it as an error rather than risk stripping the metadata.
+> **ℹ️ Note**: [Wiki](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [issue](https://trac.ffmpeg.org/ticket/5283); as of writing HDR10+ metadata may be lost when removing closed captions from H265 content. PlexCleaner therefore skips closed caption removal on H265/HEVC content carrying HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) metadata, reporting it as an error rather than risk stripping the metadata.
