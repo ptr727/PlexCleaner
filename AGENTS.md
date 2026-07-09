@@ -179,6 +179,11 @@ Anti-pattern: don't keep flipping the code on the same style point. Flip the rul
 - **Run CI CLI tooling via Docker.** The linters CI uses (actionlint, markdownlint-cli2, shellcheck, cspell, etc.) need not be installed on the host - run them from their official images (e.g. `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint`) to reproduce a CI check locally before pushing.
 - **Release notes.** Keep a short summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release.
 
+## Communicating with the User
+
+- **Reference every pull request as a clickable link.** When you mention a PR - in chat, a summary, or a report - render it as a markdown link to the PR (`[#123](https://github.com/<owner>/<repo>/pull/123)`), never a bare `#123`. The same applies to issues and commits.
+- **Ask for input as a numbered list.** When you need the user to decide or answer, present the questions - and any options - as a numbered list so they can reply per number. A single inline question is fine; two or more are always numbered.
+
 ## Workflow YAML Conventions
 
 The conventions for everything under [`.github/workflows/`](./.github/workflows/) - action pinning, file/workflow/job/step naming, concurrency, shells, conditionals, boolean inputs, permissions, artifact handling, Docker layer cache, and release tagging - are specified in [`WORKFLOW.md`](./WORKFLOW.md), the canonical CI/CD guide. New and modified workflows must respect it; do not duplicate those rules here.
