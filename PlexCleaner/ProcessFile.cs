@@ -106,7 +106,7 @@ public class ProcessFile
         }
 
         // Make the extension lowercase
-        Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
+        Log.Warning("Making file extension lowercase : {FileName}", FileInfo.FullName);
 
         // Rename the file
         // Windows is case insensitive, so we need to rename in two steps
@@ -189,7 +189,7 @@ public class ProcessFile
         }
 
         // ReMux the file
-        Log.Information(
+        Log.Warning(
             "ReMux {Container} to Matroska : {FileName}",
             MkvMergeProps.Container,
             FileInfo.FullName

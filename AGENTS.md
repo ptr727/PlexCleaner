@@ -183,6 +183,20 @@ Anti-pattern: don't keep flipping the code on the same style point. Flip the rul
 
 The conventions for everything under [`.github/workflows/`](./.github/workflows/) - action pinning, file/workflow/job/step naming, concurrency, shells, conditionals, boolean inputs, permissions, artifact handling, Docker layer cache, and release tagging - are specified in [`WORKFLOW.md`](./WORKFLOW.md), the canonical CI/CD guide. New and modified workflows must respect it; do not duplicate those rules here.
 
+## Logging Conventions
+
+Serilog log levels describe the **nature** of an event, applied uniformly across the whole app - never "which command am I in". When adding or reviewing a log call, pick the level from what the event *is*, and keep the pipeline reading as a coherent story: *inspect -> decide to act -> do the work -> call the tool -> succeed or fail*.
+
+- **Error** - an operation failed and could not complete (tool returned non-zero, IO/parse/verify failure, a step that aborts the file). Every early-exit failure path.
+- **Warning** - the **trigger**: the orchestration layer inspected the file, interpreted the result, and has **decided to modify the media** (or detected a noteworthy non-fatal condition - unknown codec, cover art, language fallback, non-convergent repair, an interruption). Emitted **once**, at the decision point, *before* the modification. This is the event that elevates the per-file log from Warning to Information (see `PerFileLogLevel`), so `--loglevel Warning` shows every file that gets changed and why.
+  - A "modification" is a write to the **media file**, including in-place metadata edits (MkvPropEdit flags/language/title) and container remuxes/renames. Sidecar cache writes and the results file are bookkeeping, not media modifications - they are Debug/Information, not Warnings.
+  - **The media-manipulation code itself does not emit Warning.** Doing a remux or re-encode is that code's job, not a warning. Only the decision to run it is the Warning. Do not sprinkle Warnings through `Convert`, the media-tool wrappers, or the worker methods.
+- **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics: startup (banner, settings, tool versions), discovery (`Discovered N files`), batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary), the per-file entry, read-only outcomes of note (skips), a worker **doing its job** (e.g. `Convert.ReMux` logging `Remux using MkvMerge`), and the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
+- **Debug** - troubleshooting detail; *how* the work is done: raw tool invocations and command lines (`Executing MkvMerge : args`), read/probe mechanics (`Getting media info`, `Reading media info from sidecar`, temp files, packet probes), per-track structural dumps during normal processing, inspection sub-steps (verify, bitrate, idet counting), and sidecar cache bookkeeping.
+- **Verbose** - very granular: filesystem-watcher events, per-packet/byte-level progress.
+
+The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
+
 ## Project Structure
 
 - **PlexCleaner** (`PlexCleaner/PlexCleaner.csproj`)

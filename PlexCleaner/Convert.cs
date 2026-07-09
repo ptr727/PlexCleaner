@@ -22,7 +22,7 @@ public static class Convert
         // Convert using ffmpeg
         // Selected is ReEncode
         // NotSelected is Keep
-        Log.Debug("Reencode using FfMpeg : {FileName}", inputName);
+        Log.Information("Reencode using FfMpeg : {FileName}", inputName);
         if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName))
         {
             Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
@@ -59,7 +59,7 @@ public static class Convert
         // E.g. https://github.com/mbunkus/mkvtoolnix/issues/2123
 
         // Try MKV first
-        Log.Debug("Remux using MkvMerge : {FileName}", inputName);
+        Log.Information("Remux using MkvMerge : {FileName}", inputName);
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
         {
             // Failed, delete temp file
@@ -74,7 +74,7 @@ public static class Convert
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
 
             // Retry using FfMpeg
-            Log.Debug("Remux using FfMpeg : {FileName}", inputName);
+            Log.Information("Remux using FfMpeg : {FileName}", inputName);
             if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
             {
                 // Failed, delete temp file
@@ -140,7 +140,7 @@ public static class Convert
         // ReMux keeping specific tracks
         // Selected is Keep
         // NotSelected is Remove
-        Log.Debug("Remux using MkvMerge : {FileName}", inputName);
+        Log.Information("Remux using MkvMerge : {FileName}", inputName);
         if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaProps, tempName))
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
@@ -170,7 +170,7 @@ public static class Convert
         Debug.Assert(fileName != tempName);
 
         // ReMux
-        Log.Debug("Remux using MkvMerge : {FileName}", fileName);
+        Log.Information("Remux using MkvMerge : {FileName}", fileName);
         if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", fileName);

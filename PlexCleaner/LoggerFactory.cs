@@ -98,4 +98,9 @@ public static class LoggerFactory
         // Create logger
         return loggerConfiguration.CreateLogger();
     }
+
+    // Bridge the Serilog logger to a Microsoft.Extensions.Logging factory, so libraries that log
+    // through ILoggerFactory (e.g. ptr727.LanguageTags) share the same sinks and configuration
+    public static Microsoft.Extensions.Logging.ILoggerFactory CreateLoggerFactory(ILogger logger) =>
+        new Serilog.Extensions.Logging.SerilogLoggerFactory(logger);
 }

@@ -15,6 +15,10 @@ public static class Program
     private static volatile int s_signalExitCode;
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
+    // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers; lives for the
+    // process lifetime and is disposed at shutdown alongside the logger
+    private static Microsoft.Extensions.Logging.ILoggerFactory? s_libraryLoggerFactory;
+
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
@@ -60,7 +64,12 @@ public static class Program
 
         // Create the logger from the bound options
         Log.Logger = LoggerFactory.Create(LoggerFactory.FromCommandLine(Options));
+
+        // Propagate the logger to the libraries so their output shares the same sinks:
+        // InsaneGenius.Utilities takes a Serilog logger, ptr727.LanguageTags takes an ILoggerFactory
         LogOptions.Logger = Log.Logger;
+        s_libraryLoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        ptr727.LanguageTags.LogOptions.SetFactory(s_libraryLoggerFactory);
 
         // Warn about deprecated options, single-threaded here before any command is invoked so the
         // warning is emitted once; routed through the override context so it shows at any log level
@@ -120,6 +129,7 @@ public static class Program
 
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
         Log.CloseAndFlush();
+        s_libraryLoggerFactory?.Dispose();
 
         return exitCode;
     }
