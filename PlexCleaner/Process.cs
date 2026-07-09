@@ -53,6 +53,7 @@ public static class Process
             }
 
             // Does the file exist and have access permissions
+            operation = nameof(File.Exists);
             if (!File.Exists(fileName))
             {
                 Log.Error("Skipping inaccessible file : {FileName}", fileName);
@@ -117,6 +118,7 @@ public static class Process
             Debug.Assert(SidecarFile.IsMkvFile(processFile.FileInfo));
 
             // If a sidecar file exists for this MKV file it must be writable
+            operation = nameof(processFile.IsSidecarWriteable);
             if (processFile.IsSidecarAvailable() && !processFile.IsSidecarWriteable())
             {
                 Log.Error(
@@ -310,14 +312,30 @@ public static class Process
             }
 
             // FfMpeg or HandBrake could undo the previous cleanup, repeat cleanup
+            // Split so the reported operation names the actual failing step
             operation = nameof(processFile.RepairMetadataErrors);
-            if (
-                !processFile.RepairMetadataErrors(ref modified)
-                || !processFile.SetUnknownLanguageTracks(ref modified)
-                || !processFile.RemoveTags(ref modified)
-                || !processFile.RepairDefaultFlags(ref modified)
-                || Program.IsCancelled()
-            )
+            if (!processFile.RepairMetadataErrors(ref modified) || Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+            operation = nameof(processFile.SetUnknownLanguageTracks);
+            if (!processFile.SetUnknownLanguageTracks(ref modified) || Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+            operation = nameof(processFile.RemoveTags);
+            if (!processFile.RemoveTags(ref modified) || Program.IsCancelled())
+            {
+                // Error
+                result = false;
+                break;
+            }
+            operation = nameof(processFile.RepairDefaultFlags);
+            if (!processFile.RepairDefaultFlags(ref modified) || Program.IsCancelled())
             {
                 // Error
                 result = false;

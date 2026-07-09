@@ -14,6 +14,10 @@ public static class Program
 {
     // Never disposed, so signal handlers can safely call Cancel() for the process lifetime
     private static readonly CancellationTokenSource s_cancelSource = new();
+
+    // Set only when cancellation was requested by an OS termination signal (a clean shutdown),
+    // as opposed to an internal Cancel() (e.g. Monitor error) that should keep the failure exit code
+    private static volatile bool s_cancelledBySignal;
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
@@ -88,9 +92,10 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
-        // A graceful cancellation (SIGINT / SIGTERM / SIGQUIT) is a clean shutdown, not a failure.
-        // Checked before the cleanup Cancel() below so it only applies to signal-driven cancellation.
-        if (IsCancelled())
+        // A cancellation from an OS termination signal (SIGINT / SIGTERM / SIGQUIT) is a clean
+        // shutdown, not a failure. Keyed off the signal flag, not IsCancelled(), so an internal
+        // Cancel() (e.g. a Monitor error) keeps its failure exit code.
+        if (s_cancelledBySignal)
         {
             exitCode = MakeExitCode(ExitCode.Success);
         }
@@ -149,6 +154,7 @@ public static class Program
         Log.Warning("Operation interrupted : {Signal}", context.Signal);
 
         // Keep running and do a graceful exit so the summary and exit code are logged
+        s_cancelledBySignal = true;
         context.Cancel = true;
         Cancel();
     }
