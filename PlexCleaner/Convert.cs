@@ -23,10 +23,9 @@ public static class Convert
         // Selected is ReEncode
         // NotSelected is Keep
         Log.Information("Reencode using FfMpeg : {FileName}", inputName);
-        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName, out string error))
+        if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName))
         {
             Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
-            Log.Error("{Error}", error);
             File.Delete(tempName);
             return false;
         }
@@ -61,7 +60,7 @@ public static class Convert
 
         // Try MKV first
         Log.Information("Remux using MkvMerge : {FileName}", inputName);
-        if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName, out string error))
+        if (!Tools.MkvMerge.ReMuxToMkv(inputName, tempName))
         {
             // Failed, delete temp file
             File.Delete(tempName);
@@ -73,11 +72,10 @@ public static class Convert
             }
 
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
-            Log.Error("{Error}", error);
 
             // Retry using FfMpeg
             Log.Information("Remux using FfMpeg : {FileName}", inputName);
-            if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName, out error))
+            if (!Tools.FfMpeg.ReMuxToMkv(inputName, tempName))
             {
                 // Failed, delete temp file
                 File.Delete(tempName);
@@ -89,7 +87,6 @@ public static class Convert
                 }
 
                 Log.Error("Failed to remux using FfMpeg : {TempFileName}", tempName);
-                Log.Error("{Error}", error);
 
                 // Error
                 return false;
@@ -144,10 +141,9 @@ public static class Convert
         // Selected is Keep
         // NotSelected is Remove
         Log.Information("Remux using MkvMerge : {FileName}", inputName);
-        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaProps, tempName, out string error))
+        if (!Tools.MkvMerge.ReMuxToMkv(inputName, selectMediaProps, tempName))
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", inputName);
-            Log.Error("{Error}", error);
             File.Delete(tempName);
             return false;
         }
@@ -175,10 +171,9 @@ public static class Convert
 
         // ReMux
         Log.Information("Remux using MkvMerge : {FileName}", fileName);
-        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName, out string error))
+        if (!Tools.MkvMerge.ReMuxToMkv(fileName, tempName))
         {
             Log.Error("Failed to remux using MkvMerge : {FileName}", fileName);
-            Log.Error("{Error}", error);
             File.Delete(tempName);
             return false;
         }

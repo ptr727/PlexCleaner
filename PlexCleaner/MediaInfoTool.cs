@@ -115,12 +115,11 @@ public partial class MediaInfo
             if (result.ExitCode != 0)
             {
                 Log.Error(
-                    "{ToolType} : Failed to to get media info : {FileName}",
+                    "{ToolType} : Failed to get media info : {FileName}",
                     GetToolType(),
                     fileName
                 );
-                Log.Error("{ToolType} : {Error}", GetToolType(), result.StandardError.Trim());
-                return false;
+                return LogFailedResult(result);
             }
             if (result.StandardError.Length > 0)
             {

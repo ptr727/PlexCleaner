@@ -65,14 +65,12 @@ public partial class FfMpegIdetInfo
 
     public bool IsInterlaced(out string reason) => MultiFrame.IsInterlaced(out reason);
 
-    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo, out string error)
+    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo)
     {
         // Get idet output from ffmpeg
         idetInfo = null;
-        error = string.Empty;
         if (!Tools.FfMpeg.GetIdetText(fileName, out string text))
         {
-            error = text;
             return false;
         }
 
@@ -108,12 +106,16 @@ public partial class FfMpegIdetInfo
         // frame=76434 fps=1114 q=-0.0 Lsize=N/A time=00:42:30.68 bitrate=N/A speed=37.2x
 
         // Match (regex construction uses \n for new line)
-        Match match = IdetRegex().Match(text.Replace("\r\n", "\n", StringComparison.Ordinal));
-        if (!match.Success)
+        // idet can emit its stats more than once (an early empty pass before the final counts),
+        // so match every triple and use the last, which holds the final cumulative counts
+        MatchCollection matches = IdetRegex()
+            .Matches(text.Replace("\r\n", "\n", StringComparison.Ordinal));
+        if (matches.Count == 0)
         {
             Log.Error("Failed to parse idet output");
             return false;
         }
+        Match match = matches[^1];
 
         // Get the frame counts
         RepeatedFields.Neither = ParseGroupInt(match, "repeated_neither");

@@ -70,7 +70,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool SetTrackFlags(string fileName, MediaProps mediaProps)
@@ -100,7 +101,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool ClearDefaultFlags(string fileName, IEnumerable<TrackProps> trackList)
@@ -128,7 +130,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool ClearTags(string fileName, MediaProps mediaProps)
@@ -163,7 +166,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool ClearAttachments(string fileName, MediaProps mediaProps)
@@ -190,7 +194,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
     }
 }

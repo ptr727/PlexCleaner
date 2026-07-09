@@ -138,6 +138,47 @@ public abstract class MediaTool
     public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult) =>
         Execute(command, false, false, out bufferedCommandResult);
 
+    // Stream carrying tool error text; stderr by default, stdout for MkvMerge
+    protected virtual string GetErrorOutput(BufferedCommandResult result) => result.StandardError;
+
+    protected bool LogFailedResult(BufferedCommandResult result)
+    {
+        string summary = CleanForLog(Summarize(GetErrorOutput(result).Trim()));
+        Log.Error(
+            "Failed execution of {ToolType} : ExitCode: {ExitCode}{Detail}",
+            GetToolType(),
+            result.ExitCode,
+            string.IsNullOrEmpty(summary) ? string.Empty : $" : {summary}"
+        );
+        return false;
+    }
+
+    // Join lines with " | " and drop other control characters so multi-line tool output stays a single structured log value; printable Unicode (e.g. media titles) is preserved
+    protected static string CleanForLog(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+        string joined = text.ReplaceLineEndings(" | ");
+        StringBuilder builder = new(joined.Length);
+        foreach (char character in joined)
+        {
+            _ = builder.Append(char.IsControl(character) ? ' ' : character);
+        }
+        return builder.ToString().Trim();
+    }
+
+    protected bool LogFailedResult(CommandResult result)
+    {
+        Log.Error(
+            "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+            GetToolType(),
+            result.ExitCode
+        );
+        return false;
+    }
+
     public bool Execute(
         Command command,
         bool stdOutSummary,

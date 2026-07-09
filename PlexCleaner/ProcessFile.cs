@@ -557,7 +557,7 @@ public class ProcessFile
 
         // Detected: tracks needing flags set
         Log.Warning(
-            "Track flags to set detected : Tracks: {Tracks} : {FileName}",
+            "Track flags to be set detected : Tracks: {Tracks} : {FileName}",
             MkvMergeProps.Video.Count(item => item.State == TrackProps.StateType.SetFlags)
                 + MkvMergeProps.Audio.Count(item => item.State == TrackProps.StateType.SetFlags)
                 + MkvMergeProps.Subtitle.Count(item => item.State == TrackProps.StateType.SetFlags),
@@ -1324,18 +1324,9 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != deintName);
 
         // DeInterlace using HandBrake and ignore subtitles
-        if (
-            !Tools.HandBrake.ConvertToMkv(
-                FileInfo.FullName,
-                deintName,
-                false,
-                true,
-                out string error
-            )
-        )
+        if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, deintName, false, true))
         {
             Log.Error("Failed to deinterlace interlaced media : {FileName}", FileInfo.FullName);
-            Log.Error("{Error}", error);
             File.Delete(deintName);
             return false;
         }
@@ -1349,10 +1340,9 @@ public class ProcessFile
         {
             // No subtitles, just remux all content
             Log.Information("Remuxing deinterlaced media : {FileName}", FileInfo.FullName);
-            if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName, out error))
+            if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName))
             {
                 Log.Error("Failed to remux deinterlaced media : {FileName}", FileInfo.FullName);
-                Log.Error("{Error}", error);
                 File.Delete(deintName);
                 File.Delete(remuxName);
                 return false;
@@ -1367,21 +1357,12 @@ public class ProcessFile
                 "Remuxing subtitles and deinterlaced media : {FileName}",
                 FileInfo.FullName
             );
-            if (
-                !Tools.MkvMerge.MergeToMkv(
-                    deintName,
-                    FileInfo.FullName,
-                    subtitleProps,
-                    remuxName,
-                    out error
-                )
-            )
+            if (!Tools.MkvMerge.MergeToMkv(deintName, FileInfo.FullName, subtitleProps, remuxName))
             {
                 Log.Error(
                     "Failed to remux subtitles and deinterlaced media : {FileName}",
                     FileInfo.FullName
                 );
-                Log.Error("{Error}", error);
                 File.Delete(deintName);
                 File.Delete(remuxName);
                 return false;
@@ -1520,14 +1501,13 @@ public class ProcessFile
 
         // Remove Closed Captions
         Log.Information("Removing closed captions using FfMpeg : {FileName}", FileInfo.FullName);
-        if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName, out string error))
+        if (!Tools.FfMpeg.RemoveNalUnits(FileInfo.FullName, nalUnit, tempName))
         {
             // Error
             Log.Error(
                 "Failed to remove closed captions using FfMpeg : {FileName}",
                 FileInfo.FullName
             );
-            Log.Error("{Error}", error);
             File.Delete(tempName);
             return false;
         }
@@ -1576,11 +1556,10 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != tempName);
 
         // Remove Subtitles
-        if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName, out string error))
+        if (!Tools.MkvMerge.RemoveSubtitles(FileInfo.FullName, tempName))
         {
             // Error
             Log.Error("Failed to remove subtitles : {FileName}", FileInfo.FullName);
-            Log.Error("{Error}", error);
             File.Delete(tempName);
             return false;
         }
@@ -1772,7 +1751,7 @@ public class ProcessFile
     {
         // Verify
         Log.Information("Verifying media streams : {FileName}", fileInfo.FullName);
-        if (!Tools.FfMpeg.VerifyMedia(fileInfo.FullName, out string error))
+        if (!Tools.FfMpeg.VerifyMedia(fileInfo.FullName))
         {
             // Cancel requested
             if (Program.IsCancelledError())
@@ -1782,7 +1761,6 @@ public class ProcessFile
 
             // Failed stream validation
             Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
-            Log.Error("{Error}", error);
 
             // Caller should update the state
             return false;
@@ -2096,7 +2074,7 @@ public class ProcessFile
             "Attempting media repair by reencoding using FfMpeg : {FileName}",
             FileInfo.FullName
         );
-        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName, out string error))
+        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName))
         {
             // Failed, delete temp file
             File.Delete(tempName);
@@ -2109,14 +2087,13 @@ public class ProcessFile
 
             // Failed
             Log.Error("Failed to reencode using FfMpeg : {FileName}", FileInfo.FullName);
-            Log.Error("{Error}", error);
 
             // Try again using handbrake
             Log.Information(
                 "Attempting media repair by reencoding using HandBrake : {FileName}",
                 FileInfo.FullName
             );
-            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false, out error))
+            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false))
             {
                 // Failed, delete temp file
                 File.Delete(tempName);
@@ -2129,7 +2106,6 @@ public class ProcessFile
 
                 // Failed
                 Log.Error("Failed to reencode using HandBrake : {FileName}", FileInfo.FullName);
-                Log.Error("{Error}", error);
 
                 // Caller will update state
                 return false;
@@ -2386,10 +2362,7 @@ public class ProcessFile
     {
         // Count the frame types using the idet filter
         Log.Information("Counting interlaced frames : {FileName}", FileInfo.FullName);
-        if (
-            !FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo, out string error)
-            || idetInfo == null
-        )
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
         {
             // Cancel requested
             if (Program.IsCancelledError())
@@ -2399,7 +2372,6 @@ public class ProcessFile
 
             // Error
             Log.Error("Failed to count interlaced frames : {FileName}", FileInfo.FullName);
-            Log.Error("{Error}", error);
             return false;
         }
 

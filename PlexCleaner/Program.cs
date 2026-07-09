@@ -14,6 +14,9 @@ public static class Program
 {
     // Never disposed, so signal handlers can safely call Cancel() for the process lifetime
     private static readonly CancellationTokenSource s_cancelSource = new();
+
+    // Exit code for an OS-signal interruption (128 + signal number), else 0; set only by PosixSignalHandler
+    private static volatile int s_signalExitCode;
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
@@ -88,6 +91,12 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
+        // A signal interruption reports its own exit code so a caller can tell it from a clean finish or an error
+        if (s_signalExitCode != 0)
+        {
+            exitCode = s_signalExitCode;
+        }
+
         // Cleanup
         Cancel();
         // Unhook signals before flushing so a second signal reverts to default OS termination
@@ -140,6 +149,13 @@ public static class Program
     private static void PosixSignalHandler(PosixSignalContext context)
     {
         Log.Warning("Operation interrupted : {Signal}", context.Signal);
+
+        // Report 128 + signal number (PosixSignal enum values are abstract, so map explicitly); any other signal defaults to 128
+        s_signalExitCode =
+            context.Signal == PosixSignal.SIGINT ? 130
+            : context.Signal == PosixSignal.SIGQUIT ? 131
+            : context.Signal == PosixSignal.SIGTERM ? 143
+            : 128;
 
         // Keep running and do a graceful exit so the summary and exit code are logged
         context.Cancel = true;
