@@ -39,6 +39,11 @@ public class FfMpegIdetDecisionTests
         _ = reason.Should().Contain($"BFF: {bff}");
         _ = reason.Should().Contain($"Progressive: {prog}");
         _ = reason.Should().Contain($"Undetermined: {und}");
+
+        // Dominant is the dominant field order as a percentage of all frames
+        double total = tff + bff + prog + und;
+        double dominant = total == 0.0 ? 0.0 : Math.Max(tff, bff) / total * 100.0;
+        _ = reason.Should().Contain(FormattableString.Invariant($"Dominant: {dominant:F2}%"));
     }
 
     [Theory]
