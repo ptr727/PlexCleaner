@@ -150,21 +150,12 @@ public static class Program
     {
         Log.Warning("Operation interrupted : {Signal}", context.Signal);
 
-        // Report 128 + signal number (PosixSignal enum values are abstract, so map explicitly)
-        s_signalExitCode = context.Signal switch
-        {
-            PosixSignal.SIGINT => 130,
-            PosixSignal.SIGQUIT => 131,
-            PosixSignal.SIGTERM => 143,
-            PosixSignal.SIGTSTP => throw new NotImplementedException(),
-            PosixSignal.SIGTTOU => throw new NotImplementedException(),
-            PosixSignal.SIGTTIN => throw new NotImplementedException(),
-            PosixSignal.SIGWINCH => throw new NotImplementedException(),
-            PosixSignal.SIGCONT => throw new NotImplementedException(),
-            PosixSignal.SIGCHLD => throw new NotImplementedException(),
-            PosixSignal.SIGHUP => throw new NotImplementedException(),
-            _ => 128,
-        };
+        // Report 128 + signal number (PosixSignal enum values are abstract, so map explicitly); any other signal defaults to 128
+        s_signalExitCode =
+            context.Signal == PosixSignal.SIGINT ? 130
+            : context.Signal == PosixSignal.SIGQUIT ? 131
+            : context.Signal == PosixSignal.SIGTERM ? 143
+            : 128;
 
         // Keep running and do a graceful exit so the summary and exit code are logged
         context.Cancel = true;
