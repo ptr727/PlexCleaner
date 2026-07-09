@@ -1286,7 +1286,9 @@ public class ProcessFile
         // Detected: interlaced video, idetInfo is set when the idet scan detected it, else a metadata flag
         if (idetInfo != null)
         {
-            _ = idetInfo.IsInterlaced(out string reason);
+            // idetInfo is only set when the idet scan detected interlaced content
+            bool interlaced = idetInfo.IsInterlaced(out string reason);
+            Debug.Assert(interlaced);
             Log.Warning(
                 "Interlaced video detected : Format: {Format}, Detected by: Idet, {Reason} : {FileName}",
                 videoProps.Format,
