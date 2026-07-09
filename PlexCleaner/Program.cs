@@ -15,9 +15,8 @@ public static class Program
     // Never disposed, so signal handlers can safely call Cancel() for the process lifetime
     private static readonly CancellationTokenSource s_cancelSource = new();
 
-    // Set only when cancellation was requested by an OS termination signal (a clean shutdown),
-    // as opposed to an internal Cancel() (e.g. Monitor error) that should keep the failure exit code
-    private static volatile bool s_cancelledBySignal;
+    // Exit code for an OS-signal interruption (128 + signal number), else 0; set only by PosixSignalHandler
+    private static volatile int s_signalExitCode;
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
@@ -92,12 +91,10 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
-        // A cancellation from an OS termination signal (SIGINT / SIGTERM / SIGQUIT) is a clean
-        // shutdown, not a failure. Keyed off the signal flag, not IsCancelled(), so an internal
-        // Cancel() (e.g. a Monitor error) keeps its failure exit code.
-        if (s_cancelledBySignal)
+        // A signal interruption reports its own exit code so a caller can tell it from a clean finish or an error
+        if (s_signalExitCode != 0)
         {
-            exitCode = MakeExitCode(ExitCode.Success);
+            exitCode = s_signalExitCode;
         }
 
         // Cleanup
@@ -153,8 +150,23 @@ public static class Program
     {
         Log.Warning("Operation interrupted : {Signal}", context.Signal);
 
+        // Report 128 + signal number (PosixSignal enum values are abstract, so map explicitly)
+        s_signalExitCode = context.Signal switch
+        {
+            PosixSignal.SIGINT => 130,
+            PosixSignal.SIGQUIT => 131,
+            PosixSignal.SIGTERM => 143,
+            PosixSignal.SIGTSTP => throw new NotImplementedException(),
+            PosixSignal.SIGTTOU => throw new NotImplementedException(),
+            PosixSignal.SIGTTIN => throw new NotImplementedException(),
+            PosixSignal.SIGWINCH => throw new NotImplementedException(),
+            PosixSignal.SIGCONT => throw new NotImplementedException(),
+            PosixSignal.SIGCHLD => throw new NotImplementedException(),
+            PosixSignal.SIGHUP => throw new NotImplementedException(),
+            _ => 128,
+        };
+
         // Keep running and do a graceful exit so the summary and exit code are logged
-        s_cancelledBySignal = true;
         context.Cancel = true;
         Cancel();
     }
