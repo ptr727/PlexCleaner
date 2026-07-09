@@ -263,7 +263,7 @@ public static class ProcessDriver
                 {
                     Log.Warning(
                         "Skipping media with errors : {FileName}",
-                        processFile.FileInfo.Name
+                        processFile.FileInfo.FullName
                     );
                     return false;
                 }
@@ -376,7 +376,7 @@ public static class ProcessDriver
                 // Skip further validation if any errors
                 if (mediaInfoProps.HasErrors || ffProbeProps.HasErrors || mkvMergeProps.HasErrors)
                 {
-                    Log.Warning("Media metadata has errors : {File}", fileInfo.Name);
+                    Log.Warning("Media metadata has errors : {FileName}", fileInfo.FullName);
                     return true;
                 }
 
@@ -395,7 +395,7 @@ public static class ProcessDriver
                     || mkvMergeProps.Subtitle.Count != mediaInfoProps.Subtitle.Count
                 )
                 {
-                    Log.Warning("Tool track count discrepancy : {File}", fileInfo.Name);
+                    Log.Warning("Tool track count discrepancy : {FileName}", fileInfo.FullName);
                 }
 
                 // If Matroska container then MkvMerge and MediaInfo track Uid's should match
@@ -409,7 +409,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge video track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge video track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                     if (
                         mkvMergeProps.Audio.Any(mkvItem =>
@@ -419,7 +422,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge audio track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge audio track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                     if (
                         mkvMergeProps.Subtitle.Any(mkvItem =>
@@ -429,7 +435,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge subtitle track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge subtitle track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                 }
 

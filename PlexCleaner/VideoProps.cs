@@ -147,7 +147,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         if (CoverArt)
         {
             Log.Warning(
-                "{Parser} : {Type} : Cover art video track : Format: {Format}, Codec: {Codec} : {fileName}",
+                "{Parser} : {Type} : Cover art video track : Format: {Format}, Codec: {Codec} : {FileName}",
                 Parent.Parser,
                 Type,
                 Format,
