@@ -31,7 +31,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
 - Normalize multiple or redundant `Default` track flags instead of only warning about them.
 - Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
-- Fixed closed caption removal for H.265/HEVC video that was incorrectly reported as an unsupported format (HDR10 and HDR10+ HEVC remains guarded).
+- Fixed closed caption removal for H.265/HEVC video that was incorrectly reported as an unsupported format (HDR10 and HDR10+ HEVC content remains guarded).
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -507,7 +507,7 @@ Refer to [Docs/LanguageMatching.md](./Docs/LanguageMatching.md) for technical de
 
 ### EIA-608 and CTA-708 Closed Captions
 
-> **ℹ️ TL;DR**: Closed captions (CC) are subtitles embedded in the video stream (not separate tracks). They can cause issues with some players that always display them or cannot disable them. PlexCleaner can detect and remove them using the `RemoveClosedCaptions` option. Removal is supported for H.264, H.265/HEVC, and MPEG-2 video (HDR10 and HDR10+ HEVC is skipped to avoid stripping HDR metadata).
+> **ℹ️ TL;DR**: Closed captions (CC) are subtitles embedded in the video stream (not separate tracks). They can cause issues with some players that always display them or cannot disable them. PlexCleaner can detect and remove them using the `RemoveClosedCaptions` option. Removal is supported for H.264, H.265/HEVC, and MPEG-2 video (HDR10 and HDR10+ HEVC content is skipped to avoid stripping HDR metadata).
 
 Refer to [Docs/ClosedCaptions.md](./Docs/ClosedCaptions.md) for technical details on detection and removal methods.
 
