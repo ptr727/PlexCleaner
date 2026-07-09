@@ -62,9 +62,9 @@ public partial class FfMpegIdetInfo
 
     public bool IsInterlaced() => IsInterlaced(out _);
 
-    public bool IsInterlaced(out double percentage) =>
+    public bool IsInterlaced(out string reason) =>
         // MultiFrame is idet's temporally aware and more reliable detector, SingleFrame is noisier
-        MultiFrame.IsInterlaced(out percentage);
+        MultiFrame.IsInterlaced(out reason);
 
     public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo, out string error)
     {
@@ -80,13 +80,6 @@ public partial class FfMpegIdetInfo
         // Parse the text
         idetInfo = new FfMpegIdetInfo();
         return idetInfo.Parse(text);
-    }
-
-    public void WriteLine()
-    {
-        RepeatedFields.WriteLine(nameof(RepeatedFields));
-        SingleFrame.WriteLine(nameof(SingleFrame));
-        MultiFrame.WriteLine(nameof(MultiFrame));
     }
 
     internal bool Parse(string text)
@@ -155,15 +148,6 @@ public partial class FfMpegIdetInfo
         public int Top { get; set; }
         public int Bottom { get; set; }
         public int Total => Neither + Top + Bottom;
-
-        public void WriteLine(string prefix) =>
-            Log.Information(
-                "{Prefix} : Neither: {Neither}, Top: {Top}, Bottom: {Bottom}",
-                prefix,
-                Neither,
-                Top,
-                Bottom
-            );
     }
 
     public class Frames
@@ -176,43 +160,58 @@ public partial class FfMpegIdetInfo
         public int Determined => Interlaced + Progressive;
         public int Total => Tff + Bff + Progressive + Undetermined;
 
-        public bool IsInterlaced(out double percentage)
+        public bool IsInterlaced(out string reason)
         {
             // Genuinely interlaced content is consistently one field order
             // Use the dominant order and treat the minority order as idet noise
             int interlaced = Math.Max(Tff, Bff);
-            percentage =
+            double percentage =
                 Total == 0
                     ? 0.0
                     : System.Convert.ToDouble(interlaced) / System.Convert.ToDouble(Total) * 100.0;
             Debug.Assert(percentage is >= 0.0 and <= 100.0);
 
+            // Frame counts common to every reason string
+            string counts = string.Create(
+                CultureInfo.InvariantCulture,
+                $"TFF: {Tff}, BFF: {Bff}, Progressive: {Progressive}, Undetermined: {Undetermined}, Dominant: {percentage:F2}%"
+            );
+
+            // No frames means nothing to decide
+            if (Total == 0)
+            {
+                reason = $"Progressive: no frames analyzed; {counts}";
+                return false;
+            }
+
             // Need a determined majority to make a reliable call
             if (Undetermined >= Determined)
             {
                 // Assume not interlaced
+                reason = string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Progressive: undetermined frames ({Undetermined}) outnumber determined frames ({Determined}); {counts}"
+                );
                 return false;
             }
 
             // Interlaced only when the dominant field order outnumbers progressive frames
             // Bias toward progressive, a few percent of interlaced frames is normal idet noise
             // and we would rather miss interlaced content than deinterlace progressive content
-            return interlaced > Progressive;
-        }
+            if (interlaced > Progressive)
+            {
+                reason = string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Interlaced: dominant field order ({interlaced}) outnumbers progressive frames ({Progressive}); {counts}"
+                );
+                return true;
+            }
 
-        public void WriteLine(string prefix)
-        {
-            bool interlaced = IsInterlaced(out double percentage);
-            Log.Information(
-                "{Prefix} : Interlaced: {Interlaced} ({Percentage:F2}%), TFF: {TFF}, BFF: {BFF}, Progressive: {Progressive}, Undetermined: {Undetermined}",
-                prefix,
-                interlaced,
-                percentage,
-                Tff,
-                Bff,
-                Progressive,
-                Undetermined
+            reason = string.Create(
+                CultureInfo.InvariantCulture,
+                $"Progressive: dominant field order ({interlaced}) does not outnumber progressive frames ({Progressive}); {counts}"
             );
+            return false;
         }
     }
 }
