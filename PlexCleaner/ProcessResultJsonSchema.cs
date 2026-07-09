@@ -72,7 +72,7 @@ public record ProcessResultJsonSchema
         [JsonConverter(typeof(JsonStringEnumConverter<SidecarFile.StatesType>))]
         public SidecarFile.StatesType State { get; set; }
 
-        // Processing step that failed, only set on error (null on success, omitted from JSON when null)
+        // Failing step; null on success, omitted from JSON when null
         public string? FailedOperation { get; set; }
     }
 

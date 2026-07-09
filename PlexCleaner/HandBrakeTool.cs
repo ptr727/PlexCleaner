@@ -92,15 +92,13 @@ public partial class HandBrake
             string inputName,
             string outputName,
             bool includeSubtitles,
-            bool deInterlace,
-            out string error
+            bool deInterlace
         )
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.InputFile(inputName).TestSnippets())
@@ -121,12 +119,8 @@ public partial class HandBrake
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         [GeneratedRegex(

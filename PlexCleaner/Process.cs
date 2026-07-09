@@ -30,7 +30,7 @@ public static class Process
         ProcessFile? processFile = null;
         bool result;
 
-        // Name of the current processing step, reported as the failure reason on error
+        // Current step, reported as the failure reason on error
         string? operation = null;
 
         // Scoped logging session to continue logging after any error or warning
@@ -365,7 +365,6 @@ public static class Process
             break;
         }
 
-        // Report the failing step as the failure reason
         if (!result)
         {
             failedOperation = operation;

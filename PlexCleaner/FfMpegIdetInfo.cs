@@ -65,14 +65,12 @@ public partial class FfMpegIdetInfo
 
     public bool IsInterlaced(out string reason) => MultiFrame.IsInterlaced(out reason);
 
-    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo, out string error)
+    public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo)
     {
         // Get idet output from ffmpeg
         idetInfo = null;
-        error = string.Empty;
         if (!Tools.FfMpeg.GetIdetText(fileName, out string text))
         {
-            error = text;
             return false;
         }
 

@@ -133,7 +133,8 @@ public partial class SevenZip
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode == 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         public bool BootstrapDownload()
