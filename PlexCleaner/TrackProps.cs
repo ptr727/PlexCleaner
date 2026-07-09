@@ -703,12 +703,9 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    // Command output (getmediainfo, etc.) uses Information; normal processing passes Debug so the
-    // per-file track dump is quiet unless --loglevel Debug is set. Explicit overloads, not an optional
-    // parameter, to keep binary compatibility and avoid default values on an overridden virtual.
-    public void WriteLine() => WriteLine(LogEventLevel.Information);
-
-    public virtual void WriteLine(LogEventLevel level) =>
+    // Command output (getmediainfo, etc.) uses the default Information; normal processing passes Debug
+    // so the per-file track dump is quiet unless --loglevel Debug is set
+    public virtual void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
         Log.Write(
             level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "

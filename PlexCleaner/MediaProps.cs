@@ -70,9 +70,7 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
 
     public bool HasCovertArt() => Video.Any(item => item.CoverArt);
 
-    public void WriteLine() => WriteLine(LogEventLevel.Information);
-
-    public void WriteLine(LogEventLevel level)
+    public void WriteLine(LogEventLevel level = LogEventLevel.Information)
     {
         Video.ForEach(item => item.WriteLine(level));
         Audio.ForEach(item => item.WriteLine(level));
