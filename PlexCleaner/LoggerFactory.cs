@@ -21,12 +21,17 @@ public static class LoggerFactory
         public bool Elevate { get; init; }
     }
 
+    // The effective minimum level, folding the deprecated --logwarning into the level so the filter
+    // and the per-file session scope (Process.cs) share a single source of truth. --logwarning maps to
+    // the Warning level only, it does not enable elevation.
+    public static LogEventLevel EffectiveLevel(CommandLineOptions options) =>
+        options.LogWarning ? LogEventLevel.Warning : options.LogLevel;
+
     // Map bound commandline options to logger options, applying deprecated flag semantics
     public static Options FromCommandLine(CommandLineOptions options) =>
         new()
         {
-            // Deprecated --logwarning maps to the Warning level only, it does not enable elevation
-            Level = options.LogWarning ? LogEventLevel.Warning : options.LogLevel,
+            Level = EffectiveLevel(options),
             File = options.LogFile,
             // Deprecated --logappend is a no-op; appending is the default, --logclear opts into clearing
             FileClear = options.LogClear,

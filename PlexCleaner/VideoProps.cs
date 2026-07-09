@@ -180,7 +180,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         return formatMatch && codecMatch && profileMatch;
     }
 
-    public override void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
+    public override void WriteLine(LogEventLevel level) =>
         // Keep in sync with TrackInfo::WriteLine
         Log.Write(
             level,

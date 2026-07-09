@@ -34,8 +34,11 @@ public static class Process
         string? operation = null;
 
         // Scoped logging session to continue logging after any error or warning; only has an effect
-        // when --logelevate installed the PerFileLogLevel filter, otherwise the session is inert
-        using IDisposable logScope = PerFileLogLevel.BeginScope(Program.Options.LogLevel);
+        // when --logelevate installed the PerFileLogLevel filter, otherwise the session is inert. Use
+        // the same effective level as the filter so the deprecated --logwarning floor stays consistent
+        using IDisposable logScope = PerFileLogLevel.BeginScope(
+            LoggerFactory.EffectiveLevel(Program.Options)
+        );
 
         // Process in jump loop
         for (; ; )

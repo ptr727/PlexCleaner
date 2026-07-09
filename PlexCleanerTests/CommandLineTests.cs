@@ -522,6 +522,27 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void EffectiveLevel_LogWarning_IsWarningRegardlessOfLogLevel()
+    {
+        // The filter (FromCommandLine) and the per-file session scope (Process.cs) must agree on the
+        // level, so the deprecated --logwarning maps to Warning through the shared EffectiveLevel helper
+        CommandLineOptions options = new()
+        {
+            LogWarning = true,
+            LogLevel = LogEventLevel.Information,
+        };
+        _ = LoggerFactory.EffectiveLevel(options).Should().Be(LogEventLevel.Warning);
+        _ = LoggerFactory.FromCommandLine(options).Level.Should().Be(LogEventLevel.Warning);
+    }
+
+    [Fact]
+    public void EffectiveLevel_NoLogWarning_UsesLogLevel()
+    {
+        CommandLineOptions options = new() { LogLevel = LogEventLevel.Debug };
+        _ = LoggerFactory.EffectiveLevel(options).Should().Be(LogEventLevel.Debug);
+    }
+
+    [Fact]
     public void FromCommandLine_LogLevelAndElevate_MapThrough()
     {
         CommandLineOptions options = new()
