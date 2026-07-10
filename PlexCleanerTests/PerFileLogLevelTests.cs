@@ -152,6 +152,31 @@ public class PerFileLogLevelTests
     }
 
     [Fact]
+    public void Session_ErrorFloor_WarningDoesNotPassOrElevate()
+    {
+        // --loglevel Error --logelevate: a warning is below the Error floor, so it must not pass and
+        // must not trigger elevation (no leaking warnings or information)
+        PerFileLogLevel.Filter filter = new(LogEventLevel.Error);
+        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Error);
+
+        _ = filter.IsEnabled(Event(LogEventLevel.Warning)).Should().BeFalse();
+        _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Session_ErrorFloor_ErrorPassesAndElevates()
+    {
+        // An error at the floor reveals the file's Information context
+        PerFileLogLevel.Filter filter = new(LogEventLevel.Error);
+        using IDisposable scope = PerFileLogLevel.BeginScope(LogEventLevel.Error);
+
+        _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeFalse();
+        _ = filter.IsEnabled(Event(LogEventLevel.Error)).Should().BeTrue();
+        _ = filter.IsEnabled(Event(LogEventLevel.Information)).Should().BeTrue();
+        _ = filter.IsEnabled(Event(LogEventLevel.Warning)).Should().BeTrue();
+    }
+
+    [Fact]
     public void Elevate_OutsideSession_IsNoOp()
     {
         PerFileLogLevel.Filter filter = new(LogEventLevel.Warning);

@@ -55,8 +55,11 @@ internal static class PerFileLogLevel
                 return logEvent.Level >= floor;
             }
 
-            // Elevate future logging events on any warning or error
-            if (logEvent.Level >= LogEventLevel.Warning)
+            // A warning or error at or above the configured floor reveals the file's context by
+            // elevating to Information. The trigger is never below the floor, so a floor above Warning
+            // (--loglevel Error/Fatal) does not leak lower-level warnings.
+            LogEventLevel trigger = floor > LogEventLevel.Warning ? floor : LogEventLevel.Warning;
+            if (logEvent.Level >= trigger)
             {
                 Elevate();
                 return true;
