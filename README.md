@@ -590,7 +590,7 @@ Global options apply to all commands:
 - `--loglevel`:
   - Minimum log level: `Verbose`, `Debug`, `Information` (default), `Warning`, `Error`, or `Fatal`.
 - `--logfile`:
-  - Path to the log file. The file appends by default and rolls to a numbered file (`<name>_001.<ext>`) when it reaches 1 GiB.
+  - Path to the log file. The file appends by default and rolls to a numbered file (`<name>_001.<ext>`) when it reaches 1 GiB, retaining the most recent 31 files and deleting older ones.
 - `--logclear`:
   - Clear the log file before writing, default appends to the existing log file.
 - `--logelevate`:
