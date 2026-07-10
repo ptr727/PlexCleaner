@@ -140,8 +140,9 @@ public abstract class MediaTool
     protected bool LogFailedResult(BufferedCommandResult result)
     {
         // ffmpeg can exit 0 yet report a fatal error on stderr (see FfMpegTool), so failures may carry
-        // an error summary. Log the summary as its own value with the " : " separator in the template,
-        // otherwise the string-quoting renders "ExitCode: 0" : ..." with the quote in the wrong place.
+        // an error summary. Log the summary as its own value with the " : " separator in the template.
+        // Folding the separator into a quoted string value instead puts the quote right after the exit
+        // code, rendering: ExitCode: 0" : ... instead of the correct ExitCode: 0 : "...".
         string summary = CleanForLog(Summarize(GetErrorOutput(result).Trim()));
         if (string.IsNullOrEmpty(summary))
         {
