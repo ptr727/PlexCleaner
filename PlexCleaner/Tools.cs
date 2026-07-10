@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using InsaneGenius.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
@@ -372,7 +371,7 @@ public static class Tools
         {
             DownloadFileAsync(uri, fileName).GetAwaiter().GetResult();
         }
-        catch (Exception e) when (LogOptions.Logger.LogAndHandle(e))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
         }

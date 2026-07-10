@@ -49,7 +49,7 @@ public sealed class PlexCleanerFixture : IDisposable
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        LogOptions.LoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
 
         // Get the Samples directory
         GetSamplesDirectory = GetSamplesAbsoluteDirectory();

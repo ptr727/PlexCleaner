@@ -3,7 +3,7 @@
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="CliWrap" Version="3.10.2" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="InsaneGenius.Utilities" Version="3.6.18" />
+    <PackageVersion Include="InsaneGenius.Utilities" Version="3.7.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />

@@ -65,10 +65,10 @@ public static class Program
         // Create the logger from the bound options
         Log.Logger = LoggerFactory.Create(LoggerFactory.FromCommandLine(Options));
 
-        // Propagate the logger to the libraries so their output shares the same sinks:
-        // InsaneGenius.Utilities takes a Serilog logger, ptr727.LanguageTags takes an ILoggerFactory
-        LogOptions.Logger = Log.Logger;
+        // Propagate the logger to the libraries so their output shares the same sinks; both take a
+        // Microsoft.Extensions.Logging factory bridged from the Serilog logger
         s_libraryLoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = s_libraryLoggerFactory;
         ptr727.LanguageTags.LogOptions.SetFactory(s_libraryLoggerFactory);
 
         // Warn about deprecated options, single-threaded here before any command is invoked so the

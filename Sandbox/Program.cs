@@ -49,7 +49,7 @@ public class Program
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        LogOptions.LoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
 
         // Get settings
         Dictionary<string, JsonElement>? settings = null;
