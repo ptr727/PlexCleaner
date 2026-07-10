@@ -49,7 +49,9 @@ public class Program
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.LoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        using Microsoft.Extensions.Logging.ILoggerFactory loggerFactory =
+            LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = loggerFactory;
 
         // Get settings
         Dictionary<string, JsonElement>? settings = null;
