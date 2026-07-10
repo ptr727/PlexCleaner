@@ -74,11 +74,7 @@ public partial class MkvMerge
                 // Download latest release file
                 // https://mkvtoolnix.download/latest-release.json
                 const string uri = "https://mkvtoolnix.download/latest-release.json";
-                Log.Information(
-                    "{Tool} : Reading latest version from : {Uri}",
-                    GetToolFamily(),
-                    uri
-                );
+                Log.Debug("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
                 string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
                 Debug.Assert(json != null);
 
@@ -121,7 +117,7 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            Log.Information("Getting media info : {FileName}", fileName);
+            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;

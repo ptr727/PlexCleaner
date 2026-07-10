@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Serilog;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -69,11 +70,11 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
 
     public bool HasCovertArt() => Video.Any(item => item.CoverArt);
 
-    public void WriteLine()
+    public void WriteLine(LogEventLevel level = LogEventLevel.Information)
     {
-        Video.ForEach(item => item.WriteLine());
-        Audio.ForEach(item => item.WriteLine());
-        Subtitle.ForEach(item => item.WriteLine());
+        Video.ForEach(item => item.WriteLine(level));
+        Audio.ForEach(item => item.WriteLine(level));
+        Subtitle.ForEach(item => item.WriteLine(level));
     }
 
     public void WriteLine(string prefix)

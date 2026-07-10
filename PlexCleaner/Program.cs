@@ -1,12 +1,8 @@
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
-using InsaneGenius.Utilities;
+using ptr727.Utilities;
 using Serilog;
-using Serilog.Debugging;
-using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
@@ -19,12 +15,14 @@ public static class Program
     private static volatile int s_signalExitCode;
     private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
+    // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers; lives for the
+    // process lifetime and is disposed at shutdown alongside the logger
+    private static Microsoft.Extensions.Logging.ILoggerFactory? s_libraryLoggerFactory;
+
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
-    public static LogEventLevel LogFloorLevel =>
-        Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information;
 
     public static HttpClient GetHttpClient() => s_httpClient.Value;
 
@@ -64,8 +62,31 @@ public static class Program
         // Bind all commandline options
         Options = commandLineParser.Bind();
 
-        // Setup
-        CreateLogger();
+        // Create the logger from the bound options
+        Log.Logger = LoggerFactory.Create(LoggerFactory.FromCommandLine(Options));
+
+        // Propagate the logger to the libraries so their output shares the same sinks; both take a
+        // Microsoft.Extensions.Logging factory bridged from the Serilog logger
+        s_libraryLoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = s_libraryLoggerFactory;
+        ptr727.LanguageTags.LogOptions.SetFactory(s_libraryLoggerFactory);
+
+        // Warn about deprecated options, single-threaded here before any command is invoked so the
+        // warning is emitted once; routed through the override context so it shows at any log level
+        if (Options.LogWarning)
+        {
+            Log.Logger.LogOverrideContext()
+                .Warning(
+                    "--logwarning is deprecated and will be removed; use --loglevel Warning (add --logelevate to restore per-file elevation)"
+                );
+        }
+        if (Options.LogAppend)
+        {
+            Log.Logger.LogOverrideContext()
+                .Warning(
+                    "--logappend is deprecated and will be removed; appending is now the default, use --logclear to clear the log file"
+                );
+        }
 
         // Handle termination signals to cancel gracefully and still log the summary before exit
         PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
@@ -108,6 +129,7 @@ public static class Program
 
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
         Log.CloseAndFlush();
+        s_libraryLoggerFactory?.Dispose();
 
         return exitCode;
     }
@@ -175,52 +197,6 @@ public static class Program
 
         // Break into the debugger
         Debugger.Break();
-    }
-
-    private static void CreateLogger()
-    {
-        // Clear log file before creating the logger
-        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
-        {
-            File.Delete(Options.LogFile);
-        }
-
-        // Enable Serilog debug output to the console
-        SelfLog.Enable(Console.Error);
-
-        // Logger configuration
-        LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
-            // Emit Information events so sessions can elevate to them; the filter is the sole
-            // authority for the configured floor and LogOverride passthrough (see PerFileLogLevel)
-            .MinimumLevel.Is(LogEventLevel.Information)
-            .Filter.With(new PerFileLogLevel.Filter(LogFloorLevel))
-            .Enrich.WithThreadId()
-            .WriteTo.Console(
-                theme: AnsiConsoleTheme.Code,
-                // Remove lj from default to quote strings
-                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                formatProvider: CultureInfo.InvariantCulture
-            );
-
-        // Log to file
-        if (!string.IsNullOrEmpty(Options.LogFile))
-        {
-            _ = loggerConfiguration.WriteTo.Async(action =>
-                action.File(
-                    Options.LogFile,
-                    rollOnFileSizeLimit: true,
-                    // Remove lj from default to quote strings
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                    formatProvider: CultureInfo.InvariantCulture
-                )
-            );
-        }
-
-        // Create static Serilog logger
-        Log.Logger = loggerConfiguration.CreateLogger();
-
-        // Set library logger to Serilog logger
-        LogOptions.Logger = Log.Logger;
     }
 
     public static int DefaultSettingsCommand()

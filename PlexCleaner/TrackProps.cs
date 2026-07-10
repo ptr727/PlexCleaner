@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Serilog;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -702,8 +703,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    public virtual void WriteLine() =>
-        Log.Information(
+    // Command output (getmediainfo, etc.) uses the default Information; normal processing passes Debug
+    // so the per-file track dump is quiet unless --loglevel Debug is set
+    public virtual void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
+        Log.Write(
+            level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
                 + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
@@ -781,7 +785,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 HasErrors = true;
                 State = StateType.SetFlags;
                 Flags |= item.Flag;
-                Log.Information(
+                Log.Debug(
                     "{Parser} : {Type} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, State: {State} : {FileName}",
                     Parent.Parser,
                     Type,

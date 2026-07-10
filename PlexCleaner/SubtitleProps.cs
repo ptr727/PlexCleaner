@@ -145,7 +145,7 @@ public class SubtitleProps(MediaProps mediaProps) : TrackProps(TrackType.Subtitl
         }
 
         // Set the closed caption flag
-        Log.Information(
+        Log.Debug(
             "{Parser} : {Type} : Setting closed caption flag on video track from A/53 subtitle track : Format: {Format}, MuxingMode: {MuxingMode}, Subtitle Id: {SubtitleId}, Video Id: {VideoId}, Container: {Container} : {FileName}",
             Parent.Parser,
             Type,

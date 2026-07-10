@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using InsaneGenius.Utilities;
 using PlexCleaner;
 using PlexCleanerTests;
+using ptr727.Utilities;
 using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
@@ -49,16 +49,20 @@ public sealed class PlexCleanerFixture : IDisposable
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        _loggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = _loggerFactory;
 
         // Get the Samples directory
         GetSamplesDirectory = GetSamplesAbsoluteDirectory();
     }
 
+    private readonly Microsoft.Extensions.Logging.ILoggerFactory _loggerFactory;
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
         Log.CloseAndFlush();
+        _loggerFactory.Dispose();
     }
 
     /// <summary>

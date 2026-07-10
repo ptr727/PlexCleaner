@@ -19,7 +19,7 @@ public static class ProcessDriver
         // Trim quotes around input paths
         mediaFiles = [.. mediaFiles.Select(file => file.Trim('"'))];
 
-        Log.Information("Creating file and folder list ...");
+        Log.Debug("Creating file and folder list ...");
 
         bool error = false;
         List<string> localDirectoryList = [];
@@ -50,7 +50,7 @@ public static class ProcessDriver
                         }
 
                         // Enumerate all files in the directory and its subdirectories
-                        Log.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                        Log.Debug("Enumerating files in {Directory} ...", fileOrFolder);
                         List<FileInfo> fileInfoList =
                         [
                             .. new DirectoryInfo(fileOrFolder).EnumerateFiles(
@@ -351,7 +351,7 @@ public static class ProcessDriver
                 }
 
                 // Get media information
-                Log.Information("Reading media information : {FileName}", fileName);
+                Log.Debug("Reading media information : {FileName}", fileName);
                 int ret = 0;
                 if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
                 {

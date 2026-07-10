@@ -107,7 +107,7 @@ public partial class MediaInfo
                 .Build();
 
             // Execute command
-            Log.Information("Getting media info : {FileName}", fileName);
+            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
