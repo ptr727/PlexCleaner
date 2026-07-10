@@ -20,6 +20,15 @@ public partial class FfProbe
         // "Undesirable" tags
         private static readonly List<string> s_undesirableTags = ["statistics"];
 
+        // Skip empty stderr, e.g. a cancelled process, to avoid logging an empty "" line
+        internal static void LogErrorOutput(string error)
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Log.Error("{Error}", error);
+            }
+        }
+
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
 
         public override ToolType GetToolType() => ToolType.FfProbe;
@@ -226,7 +235,7 @@ public partial class FfProbe
                 if (!Tools.FfMpeg.Execute(command, true, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
-                    Log.Error("{Error}", result.StandardError.Trim());
+                    LogErrorOutput(result.StandardError.Trim());
                     File.Delete(tempName);
                     return false;
                 }
@@ -256,7 +265,7 @@ public partial class FfProbe
             if (!ret)
             {
                 Log.Error("Failed to get subcc packet info : {FileName}", fileName);
-                Log.Error("{Error}", error);
+                LogErrorOutput(error);
             }
             if (Program.Options.QuickScan)
             {
@@ -284,7 +293,7 @@ public partial class FfProbe
             if (!GetPackets(command, packetFunc, out string error))
             {
                 Log.Error("Failed to get bitrate packets : {FileName}", fileName);
-                Log.Error("{Error}", error);
+                LogErrorOutput(error);
                 return false;
             }
             return true;
