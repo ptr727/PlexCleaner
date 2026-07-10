@@ -181,7 +181,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
     }
 
     public override void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
-        // Keep in sync with TrackInfo::WriteLine
+        // Keep in sync with TrackProps.WriteLine
         Log.Write(
             level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
@@ -212,7 +212,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         );
 
     public override void WriteLine(string prefix) =>
-        // Keep in sync with TrackInfo::WriteLine
+        // Keep in sync with TrackProps.WriteLine
         Log.Information(
             "{Prefix} : "
                 + "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
