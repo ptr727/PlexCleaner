@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Security.Cryptography;
-using InsaneGenius.Utilities;
+using ptr727.Utilities;
 using Serilog;
 using Serilog.Events;
 

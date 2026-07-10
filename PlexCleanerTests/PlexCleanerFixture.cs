@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using InsaneGenius.Utilities;
 using PlexCleaner;
 using PlexCleanerTests;
+using ptr727.Utilities;
 using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;

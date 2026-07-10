@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
-using InsaneGenius.Utilities;
+using ptr727.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
