@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using InsaneGenius.Utilities;
 using Serilog;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -548,10 +549,10 @@ public class SidecarFile
         MkvMergeProps = mkvMergeProps;
         FfProbeProps = ffProbeProps;
 
-        // Print info
-        MediaInfoProps.WriteLine();
-        MkvMergeProps.WriteLine();
-        FfProbeProps.WriteLine();
+        // Print info at Debug; this per-file track dump is diagnostic detail, not a user action
+        MediaInfoProps.WriteLine(LogEventLevel.Debug);
+        MkvMergeProps.WriteLine(LogEventLevel.Debug);
+        FfProbeProps.WriteLine(LogEventLevel.Debug);
 
         return true;
     }

@@ -105,8 +105,15 @@ public class ProcessFile
             return true;
         }
 
+        // Detected: file extension is not lowercase
+        Log.Warning(
+            "Uppercase file extension detected : Extension: {Extension} : {FileName}",
+            FileInfo.Extension,
+            FileInfo.FullName
+        );
+
         // Make the extension lowercase
-        Log.Warning("Making file extension lowercase : {FileName}", FileInfo.FullName);
+        Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
 
         // Rename the file
         // Windows is case insensitive, so we need to rename in two steps
@@ -188,8 +195,15 @@ public class ProcessFile
             return false;
         }
 
-        // ReMux the file
+        // Detected: MKV file is not a Matroska container
         Log.Warning(
+            "Non-Matroska container detected : Container: {Container} : {FileName}",
+            MkvMergeProps.Container,
+            FileInfo.FullName
+        );
+
+        // ReMux the file
+        Log.Information(
             "ReMux {Container} to Matroska : {FileName}",
             MkvMergeProps.Container,
             FileInfo.FullName
