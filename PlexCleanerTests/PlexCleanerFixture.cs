@@ -15,6 +15,11 @@ using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 
 namespace PlexCleanerTests;
 
+// Tests that mutate global static state (e.g. swap the Serilog Log.Logger) join this collection so
+// they run sequentially and are not parallelized with the rest of the suite
+[CollectionDefinition("Sequential", DisableParallelization = true)]
+public sealed class SequentialCollectionDefinition;
+
 // One instance for all tests in the assembly
 public sealed class PlexCleanerFixture : IDisposable
 {

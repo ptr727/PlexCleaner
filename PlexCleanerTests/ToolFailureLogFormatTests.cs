@@ -13,7 +13,8 @@ namespace PlexCleanerTests;
 // The tool-failure log line renders through the app's {Message} output template, which quotes string
 // values. These tests exercise MediaTool.LogFailedResult and verify the ExitCode and error summary
 // format correctly - the error text is quoted as its own value and the " : " separator is not pulled
-// inside the quotes.
+// inside the quotes. Sequential because they swap the global Serilog Log.Logger.
+[Collection("Sequential")]
 public class ToolFailureLogFormatTests
 {
     private sealed class CapturingSink : ILogEventSink
