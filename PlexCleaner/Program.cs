@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using ptr727.Utilities;
 using Serilog;
@@ -13,7 +12,6 @@ public static class Program
 
     // Exit code for an OS-signal interruption (128 + signal number), else 0; set only by PosixSignalHandler
     private static volatile int s_signalExitCode;
-    private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
 
     // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers; lives for the
     // process lifetime and is disposed at shutdown alongside the logger
@@ -23,20 +21,6 @@ public static class Program
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
-
-    public static HttpClient GetHttpClient() => s_httpClient.Value;
-
-    private static HttpClient CreateHttpClient()
-    {
-        HttpClient httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
-        httpClient.DefaultRequestHeaders.UserAgent.Add(
-            new ProductInfoHeaderValue(
-                AssemblyVersion.GetName(),
-                AssemblyVersion.GetInformationalVersion()
-            )
-        );
-        return httpClient;
-    }
 
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 
@@ -142,12 +126,17 @@ public static class Program
             return;
         }
 
+        // Get the latest release version from github releases, skip on download failure (already logged)
+        // E.g. 1.2.3
+        const string repo = "ptr727/PlexCleaner";
+        if (!GitHubRelease.GetLatestRelease(repo, out string latest))
+        {
+            return;
+        }
+
         try
         {
-            // Get the latest release version from github releases
-            // E.g. 1.2.3
-            const string repo = "ptr727/PlexCleaner";
-            Version latestVersion = new(GitHubRelease.GetLatestRelease(repo));
+            Version latestVersion = new(latest);
 
             // Get this version
             Version thisVersion = new(AssemblyVersion.GetReleaseVersion());

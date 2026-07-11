@@ -95,7 +95,11 @@ public partial class FfMpeg
                 // Get the latest release version number from github releases
                 // https://github.com/GyanD/codexffmpeg
                 const string repo = "GyanD/codexffmpeg";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Create the filename using the version number
                 // ffmpeg-6.0-full_build.7z
