@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.Json.Nodes;
 using ptr727.Utilities;
 using Serilog;
@@ -21,13 +20,22 @@ public class GitHubRelease
             return false;
         }
 
-        // Parse latest version from "tag_name"
-        JsonNode? releases = JsonNode.Parse(json);
-        Debug.Assert(releases != null);
-        JsonNode? versionTag = releases["tag_name"];
-        Debug.Assert(versionTag != null);
-        version = versionTag.ToString();
-        return true;
+        // Parse latest version from "tag_name"; malformed or unexpected JSON returns false, not throws
+        try
+        {
+            string? versionTag = JsonNode.Parse(json)?["tag_name"]?.ToString();
+            if (string.IsNullOrEmpty(versionTag))
+            {
+                Log.Error("Failed to read tag_name from GitHub release : {Uri}", uri);
+                return false;
+            }
+            version = versionTag;
+            return true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
+        }
     }
 
     public static string GetDownloadUri(string repo, string tag, string file) =>
