@@ -68,7 +68,11 @@ public partial class HandBrake
                 // Get the latest release version number from github releases
                 // https://github.com/HandBrake/HandBrake
                 const string repo = "HandBrake/HandBrake";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Create the filename using the version number
                 // HandBrakeCLI-1.3.2-win-x86_64.zip

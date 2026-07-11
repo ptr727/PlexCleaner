@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
+using ptr727.Utilities;
 using Serilog;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
@@ -75,8 +76,10 @@ public partial class MkvMerge
                 // https://mkvtoolnix.download/latest-release.json
                 const string uri = "https://mkvtoolnix.download/latest-release.json";
                 Log.Debug("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
-                string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
-                Debug.Assert(json != null);
+                if (!Download.DownloadString(new Uri(uri), out string json))
+                {
+                    return false;
+                }
 
                 // Get the version number from JSON
                 MkvToolJsonSchema.LatestRelease latestRelease =

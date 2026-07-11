@@ -5,6 +5,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 ## Release History
 
 - Version 3.20:
+  - Switched tool downloads and the application version check to the resilient HTTP client in `ptr727.Utilities` (retry with backoff and a circuit breaker via `Microsoft.Extensions.Http.Resilience`), replacing the plain `HttpClient`.
   - Enabled closed caption removal for H.265/HEVC video: the SEI NAL unit lookup keyed on `h265` never matched FFprobe's `hevc` codec name, so HEVC files were incorrectly reported as an "Unsupported video format for Closed Captions removal". HEVC video (excluding HDR10 and HDR10+ content, which remains guarded) is now cleaned using the `filter_units=remove_types=39` bitstream filter, same as H.264 and MPEG-2.
   - Reworked the logging configuration and command line:
     - Added `--loglevel` (`Verbose`, `Debug`, `Information` (default), `Warning`, `Error`, `Fatal`) as the single log level control. `Debug` and `Verbose` output can now be selected; previously `Information` was a hard floor and could not be lowered.

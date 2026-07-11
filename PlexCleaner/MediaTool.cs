@@ -88,11 +88,10 @@ public abstract class MediaTool
             ? GetLatestVersionWindows(out mediaToolInfo)
             : throw new NotImplementedException();
 
-    // Can throw HTTP exceptions
-    protected string GetLatestGitHubRelease(string repo)
+    protected bool GetLatestGitHubRelease(string repo, out string version)
     {
         Log.Debug("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
-        return GitHubRelease.GetLatestRelease(repo);
+        return GitHubRelease.GetLatestRelease(repo, out version);
     }
 
     public bool Execute(Command command, out CommandResult commandResult)
