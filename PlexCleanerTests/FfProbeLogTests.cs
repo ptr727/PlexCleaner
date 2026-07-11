@@ -8,6 +8,8 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
+// Sequential because these swap the global Serilog Log.Logger
+[Collection("Sequential")]
 public class FfProbeLogTests
 {
     private sealed class CapturingSink : ILogEventSink
