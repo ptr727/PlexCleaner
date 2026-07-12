@@ -16,7 +16,7 @@
     <OutputType>Exe</OutputType>
     <PackageId>ptr727.PlexCleaner</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <PackageProjectUrl>https://github.com/ptr727/PlexCleaner</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageVersion>1.1.1.0-prerelease</PackageVersion>
@@ -31,6 +31,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
+  <!-- Plugin loading uses AssemblyLoadContext and reflection, unavailable under NativeAOT -->
+  <PropertyGroup Condition="'$(PublishAot)' != 'true'">
+    <DefineConstants>$(DefineConstants);PLUGINS</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
@@ -39,11 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CliWrap" />
-    <PackageReference Include="InsaneGenius.Utilities" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
     <PackageReference Include="NEbml" />
     <PackageReference Include="ptr727.LanguageTags" />
+    <PackageReference Include="ptr727.Utilities" />
     <PackageReference Include="Serilog.Enrichers.Thread" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.Sinks.Async" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />

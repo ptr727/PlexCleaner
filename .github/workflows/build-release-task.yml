@@ -36,6 +36,8 @@ jobs:
     name: Validate job
     if: ${{ !inputs.smoke }}
     uses: ./.github/workflows/validate-task.yml
+    # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
+    secrets: inherit
     with:
       ref: ${{ inputs.ref }}
 

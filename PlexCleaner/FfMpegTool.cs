@@ -10,7 +10,7 @@ using Serilog;
 
 // ffmpeg [global_options] {[input_file_options] -i input_url} ... {[output_file_options] output_url}
 
-// TODO: When using quickscan select a portion of the middle of the file vs, the beginning.
+// TODO: When using quickscan select a portion of the middle of the file
 
 namespace PlexCleaner;
 
@@ -21,7 +21,7 @@ public partial class FfMpeg
 
     // Common format tags
     private const string H264Format = "h264";
-    private const string H265Format = "h265";
+    private const string H265Format = "hevc";
     private const string MPEG2Format = "mpeg2video";
 
     // SEI NAL units for EIA-608 and CTA-708 content
@@ -34,7 +34,7 @@ public partial class FfMpeg
 
     public static int GetNalUnit(string format) =>
         // Get SEI NAL unit based on video format
-        // H264 = 6, H265 = 9, MPEG2 = 178
+        // H264 = 6, H265/HEVC = 39, MPEG2 = 178
         // Return default(int) if not found
         s_sEINalUnitList
             .FirstOrDefault(item => item.format.Equals(format, StringComparison.OrdinalIgnoreCase))
@@ -95,7 +95,11 @@ public partial class FfMpeg
                 // Get the latest release version number from github releases
                 // https://github.com/GyanD/codexffmpeg
                 const string repo = "GyanD/codexffmpeg";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Create the filename using the version number
                 // ffmpeg-6.0-full_build.7z
@@ -148,10 +152,9 @@ public partial class FfMpeg
             return true;
         }
 
-        public bool VerifyMedia(string fileName, out string error)
+        public bool VerifyMedia(string fileName)
         {
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
@@ -159,30 +162,23 @@ public partial class FfMpeg
                 .OutputOptions(options => options.Default().NullOutput())
                 .Build();
 
-            // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0 && error.Length == 0;
+            // Execute command; ffmpeg can exit 0 yet still report stream errors on stderr, treat any stderr as failure
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (
+                    (result.ExitCode == 0 && result.StandardError.Trim().Length == 0)
+                    || LogFailedResult(result)
+                );
         }
 
-        public bool ReMuxToMkv(string inputName, string outputName, out string error) =>
-            ReMuxToFormat(inputName, outputName, "matroska", out error);
+        public bool ReMuxToMkv(string inputName, string outputName) =>
+            ReMuxToFormat(inputName, outputName, "matroska");
 
-        public bool ReMuxToFormat(
-            string inputName,
-            string outputName,
-            string format,
-            out string error
-        )
+        public bool ReMuxToFormat(string inputName, string outputName, string format)
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
@@ -192,12 +188,8 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         private static void CreateTrackArgs(
@@ -262,14 +254,13 @@ public partial class FfMpeg
         public bool ConvertToMkv(
             string inputName,
             SelectMediaProps? selectMediaProps,
-            string outputName,
-            out string error
+            string outputName
         )
         {
             if (selectMediaProps == null)
             {
                 // No track selection, use default conversion
-                return ConvertToMkv(inputName, outputName, out error);
+                return ConvertToMkv(inputName, outputName);
             }
 
             // Delete output file
@@ -281,7 +272,6 @@ public partial class FfMpeg
             CreateTrackArgs(selectMediaProps, out string inputMap, out string outputMap);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
@@ -298,21 +288,16 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
-        public bool ConvertToMkv(string inputName, string outputName, out string error)
+        public bool ConvertToMkv(string inputName, string outputName)
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options =>
                     options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
@@ -331,20 +316,11 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
-        public bool RemoveNalUnits(
-            string inputName,
-            int nalUnit,
-            string outputName,
-            out string error
-        )
+        public bool RemoveNalUnits(string inputName, int nalUnit, string outputName)
         {
             // Remove SEI NAL units e.g. EIA-608 and CTA-708 content
             // https://ffmpeg.org/ffmpeg-bitstream-filters.html#filter_005funits
@@ -353,7 +329,6 @@ public partial class FfMpeg
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
@@ -368,12 +343,8 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         public bool GetIdetText(string fileName, out string text)
@@ -399,7 +370,7 @@ public partial class FfMpeg
                 return false;
             }
             text = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return result.ExitCode == 0 || LogFailedResult(result);
         }
 
         [GeneratedRegex(

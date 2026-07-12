@@ -205,7 +205,7 @@ For formatter, EditorConfig, pre-commit hooks, line endings, and charset details
 ### Code Style
 
 - Target: .NET 10.0 (`<TargetFramework>net10.0</TargetFramework>`)
-- AOT compilation enabled: `<PublishAot>true</PublishAot>` in executable projects
+- AOT compilation is opt-in: `<PublishAot>false</PublishAot>` by default (matching the shipped builds, which load plugins via reflection); publish with `-p:PublishAot=true` to build an AOT binary, which excludes the plugin loader
 - Use C# modern features (records, pattern matching, collection expressions, implicit class extensions)
 - Prefer `Debug.Assert()` for internal invariants
 - Logging: Serilog with thread IDs (`Log.Information/Warning/Error`)

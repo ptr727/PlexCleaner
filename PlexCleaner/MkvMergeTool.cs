@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
+using ptr727.Utilities;
 using Serilog;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
@@ -30,6 +31,10 @@ public partial class MkvMerge
         protected override string GetToolNameLinux() => "mkvmerge";
 
         public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
+
+        // mkvmerge reports errors on stdout, not stderr
+        protected override string GetErrorOutput(BufferedCommandResult result) =>
+            result.StandardOutput;
 
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
@@ -70,13 +75,11 @@ public partial class MkvMerge
                 // Download latest release file
                 // https://mkvtoolnix.download/latest-release.json
                 const string uri = "https://mkvtoolnix.download/latest-release.json";
-                Log.Information(
-                    "{Tool} : Reading latest version from : {Uri}",
-                    GetToolFamily(),
-                    uri
-                );
-                string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
-                Debug.Assert(json != null);
+                Log.Debug("{Tool} : Reading latest version from : {Uri}", GetToolFamily(), uri);
+                if (!Download.DownloadString(new Uri(uri), out string json))
+                {
+                    return false;
+                }
 
                 // Get the version number from JSON
                 MkvToolJsonSchema.LatestRelease latestRelease =
@@ -117,26 +120,19 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            Log.Information("Getting media info : {FileName}", fileName);
+            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                // Handle error, error reported to stdout
-                // stdout is not summarized so summarize it before logging
                 Log.Error(
-                    "{ToolType} : Failed to to get media info : {FileName}",
+                    "{ToolType} : Failed to get media info : {FileName}",
                     GetToolType(),
                     fileName
                 );
-                Log.Error(
-                    "{ToolType} : {Error}",
-                    GetToolType(),
-                    Summarize(result.StandardOutput).Trim()
-                );
-                return false;
+                return LogFailedResult(result);
             }
             if (result.StandardError.Length > 0)
             {
@@ -254,15 +250,13 @@ public partial class MkvMerge
         public bool ReMuxToMkv(
             string inputName,
             SelectMediaProps selectMediaProps,
-            string outputName,
-            out string error
+            string outputName
         )
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
@@ -272,21 +266,16 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardOutput.Trim();
-            return result.ExitCode is 0 or 1;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
         }
 
-        public bool ReMuxToMkv(string inputName, string outputName, out string error)
+        public bool ReMuxToMkv(string inputName, string outputName)
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().InputFile(inputName))
@@ -294,21 +283,16 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardOutput.Trim();
-            return result.ExitCode is 0 or 1;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
         }
 
-        public bool RemoveSubtitles(string inputName, string outputName, out string error)
+        public bool RemoveSubtitles(string inputName, string outputName)
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().NoSubtitles().InputFile(inputName))
@@ -316,20 +300,15 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardOutput.Trim();
-            return result.ExitCode is 0 or 1;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
         }
 
         public bool MergeToMkv(
             string sourceOne,
             string sourceTwo,
             MediaProps keepTwo,
-            string outputName,
-            out string error
+            string outputName
         )
         {
             // Merge all tracks from sourceOne with selected tracks in sourceTwo
@@ -341,7 +320,6 @@ public partial class MkvMerge
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options =>
@@ -356,12 +334,8 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardOutput.Trim();
-            return result.ExitCode is 0 or 1;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
         }
 
         [GeneratedRegex(

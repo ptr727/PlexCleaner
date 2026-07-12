@@ -19,7 +19,7 @@ public static class ProcessDriver
         // Trim quotes around input paths
         mediaFiles = [.. mediaFiles.Select(file => file.Trim('"'))];
 
-        Log.Information("Creating file and folder list ...");
+        Log.Debug("Creating file and folder list ...");
 
         bool error = false;
         List<string> localDirectoryList = [];
@@ -50,7 +50,7 @@ public static class ProcessDriver
                         }
 
                         // Enumerate all files in the directory and its subdirectories
-                        Log.Information("Enumerating files in {Directory} ...", fileOrFolder);
+                        Log.Debug("Enumerating files in {Directory} ...", fileOrFolder);
                         List<FileInfo> fileInfoList =
                         [
                             .. new DirectoryInfo(fileOrFolder).EnumerateFiles(
@@ -220,11 +220,11 @@ public static class ProcessDriver
         // Stop the timer
         timer.Stop();
 
-        // Done
-        Log.Information("Completed {TaskName}", taskName);
-        Log.Information("Processing time : {Elapsed}", timer.Elapsed);
-        Log.Information("Total files : {Count}", totalCount);
-        Log.Information("Error files : {Count}", errorCount);
+        // Done, force logging so the summary survives the warning floor and an interrupted run
+        Log.Logger.LogOverrideContext().Information("Completed {TaskName}", taskName);
+        Log.Logger.LogOverrideContext().Information("Processing time : {Elapsed}", timer.Elapsed);
+        Log.Logger.LogOverrideContext().Information("Total files : {Count}", totalCount);
+        Log.Logger.LogOverrideContext().Information("Error files : {Count}", errorCount);
 
         return !error;
     }
@@ -263,7 +263,7 @@ public static class ProcessDriver
                 {
                     Log.Warning(
                         "Skipping media with errors : {FileName}",
-                        processFile.FileInfo.Name
+                        processFile.FileInfo.FullName
                     );
                     return false;
                 }
@@ -351,7 +351,7 @@ public static class ProcessDriver
                 }
 
                 // Get media information
-                Log.Information("Reading media information : {FileName}", fileName);
+                Log.Debug("Reading media information : {FileName}", fileName);
                 int ret = 0;
                 if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
                 {
@@ -376,7 +376,7 @@ public static class ProcessDriver
                 // Skip further validation if any errors
                 if (mediaInfoProps.HasErrors || ffProbeProps.HasErrors || mkvMergeProps.HasErrors)
                 {
-                    Log.Warning("Media metadata has errors : {File}", fileInfo.Name);
+                    Log.Warning("Media metadata has errors : {FileName}", fileInfo.FullName);
                     return true;
                 }
 
@@ -395,7 +395,7 @@ public static class ProcessDriver
                     || mkvMergeProps.Subtitle.Count != mediaInfoProps.Subtitle.Count
                 )
                 {
-                    Log.Warning("Tool track count discrepancy : {File}", fileInfo.Name);
+                    Log.Warning("Tool track count discrepancy : {FileName}", fileInfo.FullName);
                 }
 
                 // If Matroska container then MkvMerge and MediaInfo track Uid's should match
@@ -409,7 +409,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge video track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge video track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                     if (
                         mkvMergeProps.Audio.Any(mkvItem =>
@@ -419,7 +422,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge audio track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge audio track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                     if (
                         mkvMergeProps.Subtitle.Any(mkvItem =>
@@ -429,7 +435,10 @@ public static class ProcessDriver
                         )
                     )
                     {
-                        Log.Warning("MkvMerge subtitle track Uid mismatch : {File}", fileInfo.Name);
+                        Log.Warning(
+                            "MkvMerge subtitle track Uid mismatch : {FileName}",
+                            fileInfo.FullName
+                        );
                     }
                 }
 

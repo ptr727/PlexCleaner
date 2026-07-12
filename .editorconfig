@@ -16,6 +16,7 @@ root = true
 # Defaults
 [*]
 charset = utf-8
+end_of_line = crlf
 indent_size = 4
 indent_style = space
 insert_final_newline = true
@@ -36,12 +37,21 @@ indent_size = 2
 end_of_line = crlf
 indent_size = 2
 
+# Workflow YAML is LF: Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of
+# mixed. git still leaves endings alone (`* -text`); this and CI (editorconfig-checker) enforce it. Other YAML is CRLF.
+[.github/workflows/*.{yml,yaml}]
+end_of_line = lf
+
 # JSON and JSONC files
 [*.{json,jsonc}]
 end_of_line = crlf
 
 # Linux scripts
 [*.sh]
+end_of_line = lf
+
+# Husky git hook is an extensionless shell script - LF like other scripts (matches the .gitattributes pin)
+[.husky/pre-commit]
 end_of_line = lf
 
 # Dockerfiles - CRLF breaks RUN heredocs and line continuations

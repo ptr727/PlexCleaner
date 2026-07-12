@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using InsaneGenius.Utilities;
+using ptr727.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
@@ -256,7 +256,7 @@ public static class Tools
                 }
 
                 // Get the URL details
-                Log.Information(
+                Log.Debug(
                     "{Tool} : Getting download URI details : {Uri}",
                     mediaTool.GetToolFamily(),
                     latestToolInfo.Url
@@ -336,47 +336,21 @@ public static class Tools
 
     public static bool GetUrlInfo(MediaToolInfo mediaToolInfo)
     {
-        try
-        {
-            using HttpResponseMessage httpResponse = Program
-                .GetHttpClient()
-                .GetAsync(mediaToolInfo.Url)
-                .GetAwaiter()
-                .GetResult()
-                .EnsureSuccessStatusCode();
-
-            mediaToolInfo.Size = httpResponse.Content.Headers.ContentLength ?? 0;
-            mediaToolInfo.ModifiedTime =
-                httpResponse.Content.Headers.LastModified?.DateTime ?? DateTime.MinValue;
-        }
-        catch (HttpRequestException e) when (Log.Logger.LogAndHandle(e))
+        if (
+            !Download.GetContentInfo(
+                new Uri(mediaToolInfo.Url),
+                out long size,
+                out DateTime modifiedTime
+            )
+        )
         {
             return false;
         }
+        mediaToolInfo.Size = size;
+        mediaToolInfo.ModifiedTime = modifiedTime;
         return true;
     }
 
-    public static async Task DownloadFileAsync(Uri uri, string fileName)
-    {
-        await using Stream httpStream = await Program
-            .GetHttpClient()
-            .GetStreamAsync(uri)
-            .ConfigureAwait(false);
-        await using FileStream fileStream = File.OpenWrite(fileName);
-        await httpStream.CopyToAsync(fileStream).ConfigureAwait(false);
-    }
-
-    public static bool DownloadFile(Uri uri, string fileName)
-    {
-        try
-        {
-            DownloadFileAsync(uri, fileName).GetAwaiter().GetResult();
-        }
-        catch (Exception e) when (LogOptions.Logger.LogAndHandle(e))
-        {
-            return false;
-        }
-
-        return true;
-    }
+    public static bool DownloadFile(Uri uri, string fileName) =>
+        Download.DownloadFile(uri, fileName);
 }

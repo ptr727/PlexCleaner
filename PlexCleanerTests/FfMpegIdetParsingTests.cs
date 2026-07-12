@@ -47,6 +47,45 @@ public class FfMpegIdetParsingTests
                     },
                 }
             },
+            {
+                // idet can emit an early all-zero pass before the final counts; the parser must
+                // use the last triple (real ffmpeg 7.1.5 output from a progressive DVD rip)
+                new string(
+                    """
+                    [Parsed_idet_0 @ 0x568fce0a2b00] Repeated Fields: Neither:     0 Top:     0 Bottom:     0
+                    [Parsed_idet_0 @ 0x568fce0a2b00] Single frame detection: TFF:     0 BFF:     0 Progressive:     0 Undetermined:     0
+                    [Parsed_idet_0 @ 0x568fce0a2b00] Multi frame detection: TFF:     0 BFF:     0 Progressive:     0 Undetermined:     0
+                    Stream mapping:
+                      Stream #0:0 -> #0:0 (hevc (native) -> wrapped_avframe (native))
+                    [Parsed_idet_0 @ 0x719af8004500] Repeated Fields: Neither: 43870 Top:     1 Bottom:     0
+                    [Parsed_idet_0 @ 0x719af8004500] Single frame detection: TFF:    21 BFF:    21 Progressive: 25267 Undetermined: 18562
+                    [Parsed_idet_0 @ 0x719af8004500] Multi frame detection: TFF:     0 BFF:    11 Progressive: 43831 Undetermined:    29
+                    """
+                ),
+                new FfMpegIdetInfo
+                {
+                    RepeatedFields = new FfMpegIdetInfo.Repeated
+                    {
+                        Neither = 43870,
+                        Top = 1,
+                        Bottom = 0,
+                    },
+                    SingleFrame = new FfMpegIdetInfo.Frames
+                    {
+                        Tff = 21,
+                        Bff = 21,
+                        Progressive = 25267,
+                        Undetermined = 18562,
+                    },
+                    MultiFrame = new FfMpegIdetInfo.Frames
+                    {
+                        Tff = 0,
+                        Bff = 11,
+                        Progressive = 43831,
+                        Undetermined = 29,
+                    },
+                }
+            },
         };
 
     [Theory]
@@ -58,10 +97,11 @@ public class FfMpegIdetParsingTests
     )]
     public void Parse_Idet_Field_Test(string text, FfMpegIdetInfo idetInfo)
     {
-        // Follow same pattern as in FfMpegIdetInfo.Parse()
+        // Follow same pattern as in FfMpegIdetInfo.Parse() : use the last triple
         text = text.Replace("\r\n", "\n", StringComparison.Ordinal);
-        Match match = FfMpegIdetInfo.IdetRegex().Match(text);
-        _ = match.Success.Should().BeTrue();
+        MatchCollection matches = FfMpegIdetInfo.IdetRegex().Matches(text);
+        _ = matches.Count.Should().BeGreaterThan(0);
+        Match match = matches[^1];
 
         _ = idetInfo
             .RepeatedFields.Neither.Should()

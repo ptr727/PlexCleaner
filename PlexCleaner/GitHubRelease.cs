@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.Text.Json.Nodes;
+using ptr727.Utilities;
 using Serilog;
 
 namespace PlexCleaner;
@@ -7,22 +7,35 @@ namespace PlexCleaner;
 // TODO: Convert to JSON Schema class
 public class GitHubRelease
 {
-    // Can throw HTTP exceptions
-    public static string GetLatestRelease(string repo)
+    public static bool GetLatestRelease(string repo, out string version)
     {
+        version = string.Empty;
+
         // Get the latest release version number from github releases
         // https://api.github.com/repos/ptr727/PlexCleaner/releases/latest
         string uri = $"https://api.github.com/repos/{repo}/releases/latest";
-        Log.Information("Getting latest GitHub Release version from : {Uri}", uri);
-        string json = Program.GetHttpClient().GetStringAsync(uri).GetAwaiter().GetResult();
-        Debug.Assert(json != null);
+        Log.Debug("Getting latest GitHub Release version from : {Uri}", uri);
+        if (!Download.DownloadString(new Uri(uri), out string json))
+        {
+            return false;
+        }
 
-        // Parse latest version from "tag_name"
-        JsonNode? releases = JsonNode.Parse(json);
-        Debug.Assert(releases != null);
-        JsonNode? versionTag = releases["tag_name"];
-        Debug.Assert(versionTag != null);
-        return versionTag.ToString();
+        // Parse latest version from "tag_name"; malformed or unexpected JSON returns false, not throws
+        try
+        {
+            string? versionTag = JsonNode.Parse(json)?["tag_name"]?.ToString();
+            if (string.IsNullOrEmpty(versionTag))
+            {
+                Log.Error("Failed to read tag_name from GitHub release : {Uri}", uri);
+                return false;
+            }
+            version = versionTag;
+            return true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
+        }
     }
 
     public static string GetDownloadUri(string repo, string tag, string file) =>

@@ -37,7 +37,6 @@ public abstract class MediaTool
 
     // The tool info must be set during initialization
     // Version information is used in the sidecar tool logic
-    // TODO: Improve nullable logic
     public MediaToolInfo Info { get; set; } = null!;
 
     public abstract ToolFamily GetToolFamily();
@@ -89,15 +88,10 @@ public abstract class MediaTool
             ? GetLatestVersionWindows(out mediaToolInfo)
             : throw new NotImplementedException();
 
-    // Can throw HTTP exceptions
-    protected string GetLatestGitHubRelease(string repo)
+    protected bool GetLatestGitHubRelease(string repo, out string version)
     {
-        Log.Information(
-            "{Tool} : Getting latest version from GitHub : {Repo}",
-            GetToolFamily(),
-            repo
-        );
-        return GitHubRelease.GetLatestRelease(repo);
+        Log.Debug("{Tool} : Getting latest version from GitHub : {Repo}", GetToolFamily(), repo);
+        return GitHubRelease.GetLatestRelease(repo, out version);
     }
 
     public bool Execute(Command command, out CommandResult commandResult)
@@ -110,7 +104,7 @@ public abstract class MediaTool
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
-            Log.Information(
+            Log.Debug(
                 "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 processId,
@@ -139,6 +133,62 @@ public abstract class MediaTool
     public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult) =>
         Execute(command, false, false, out bufferedCommandResult);
 
+    // Stream carrying tool error text; stderr by default, stdout for MkvMerge
+    protected virtual string GetErrorOutput(BufferedCommandResult result) => result.StandardError;
+
+    protected bool LogFailedResult(BufferedCommandResult result)
+    {
+        // ffmpeg can exit 0 yet report a fatal error on stderr (see FfMpegTool), so failures may carry
+        // an error summary. Log the summary as its own value with the " : " separator in the template.
+        // Folding the separator into a quoted string value instead puts the quote right after the exit
+        // code, rendering: ExitCode: 0" : ... instead of the correct ExitCode: 0 : "...".
+        string summary = CleanForLog(Summarize(GetErrorOutput(result).Trim()));
+        if (string.IsNullOrEmpty(summary))
+        {
+            Log.Error(
+                "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+                GetToolType(),
+                result.ExitCode
+            );
+        }
+        else
+        {
+            Log.Error(
+                "Failed execution of {ToolType} : ExitCode: {ExitCode} : {Error}",
+                GetToolType(),
+                result.ExitCode,
+                summary
+            );
+        }
+        return false;
+    }
+
+    // Join lines with " | " and drop other control characters so multi-line tool output stays a single structured log value; printable Unicode (e.g. media titles) is preserved
+    protected static string CleanForLog(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+        string joined = text.ReplaceLineEndings(" | ");
+        StringBuilder builder = new(joined.Length);
+        foreach (char character in joined)
+        {
+            _ = builder.Append(char.IsControl(character) ? ' ' : character);
+        }
+        return builder.ToString().Trim();
+    }
+
+    protected bool LogFailedResult(CommandResult result)
+    {
+        Log.Error(
+            "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+            GetToolType(),
+            result.ExitCode
+        );
+        return false;
+    }
+
     public bool Execute(
         Command command,
         bool stdOutSummary,
@@ -165,7 +215,7 @@ public abstract class MediaTool
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
-            Log.Information(
+            Log.Debug(
                 "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 processId,

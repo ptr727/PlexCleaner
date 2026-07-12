@@ -20,6 +20,15 @@ public partial class FfProbe
         // "Undesirable" tags
         private static readonly List<string> s_undesirableTags = ["statistics"];
 
+        // Skip empty stderr, e.g. a cancelled process, to avoid logging an empty "" line
+        internal static void LogErrorOutput(string error)
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Log.Error("{Error}", error);
+            }
+        }
+
         public override ToolFamily GetToolFamily() => ToolFamily.FfMpeg;
 
         public override ToolType GetToolType() => ToolType.FfProbe;
@@ -156,7 +165,7 @@ public partial class FfProbe
                     .WithValidation(CommandResultValidation.None)
                     .ExecuteAsync(CancellationToken.None, Program.CancelToken());
                 processId = task.ProcessId;
-                Log.Information(
+                Log.Debug(
                     "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                     GetToolType(),
                     processId,
@@ -222,11 +231,11 @@ public partial class FfProbe
                     .Build();
 
                 // Execute command
-                Log.Information("Creating temp media file : {TempFileName}", tempName);
+                Log.Debug("Creating temp media file : {TempFileName}", tempName);
                 if (!Tools.FfMpeg.Execute(command, true, true, out BufferedCommandResult result))
                 {
                     Log.Error("Failed to create temp media file : {TempFileName}", tempName);
-                    Log.Error("{Error}", result.StandardError.Trim());
+                    LogErrorOutput(result.StandardError.Trim());
                     File.Delete(tempName);
                     return false;
                 }
@@ -251,12 +260,12 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Information("Getting subcc packet info : {FileName}", fileName);
+            Log.Debug("Getting subcc packet info : {FileName}", fileName);
             bool ret = GetPackets(command, packetFunc, out string error);
             if (!ret)
             {
                 Log.Error("Failed to get subcc packet info : {FileName}", fileName);
-                Log.Error("{Error}", error);
+                LogErrorOutput(error);
             }
             if (Program.Options.QuickScan)
             {
@@ -280,11 +289,11 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Information("Getting bitrate packets : {FileName}", fileName);
+            Log.Debug("Getting bitrate packets : {FileName}", fileName);
             if (!GetPackets(command, packetFunc, out string error))
             {
                 Log.Error("Failed to get bitrate packets : {FileName}", fileName);
-                Log.Error("{Error}", error);
+                LogErrorOutput(error);
                 return false;
             }
             return true;
@@ -312,11 +321,7 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Information(
-                "{ToolType} : Getting media info : {FileName}",
-                GetToolType(),
-                fileName
-            );
+            Log.Debug("{ToolType} : Getting media info : {FileName}", GetToolType(), fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
@@ -324,12 +329,11 @@ public partial class FfProbe
             if (result.ExitCode != 0)
             {
                 Log.Error(
-                    "{ToolType} : Failed to to get media info : {FileName}",
+                    "{ToolType} : Failed to get media info : {FileName}",
                     GetToolType(),
                     fileName
                 );
-                Log.Error("{ToolType} : {Error}", GetToolType(), result.StandardError.Trim());
-                return false;
+                return LogFailedResult(result);
             }
             if (result.StandardError.Length > 0)
             {

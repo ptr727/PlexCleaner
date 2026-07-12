@@ -67,7 +67,11 @@ public partial class SevenZip
                 // Get the latest release version number from github releases
                 // https://github.com/ip7z/7zip
                 const string repo = "ip7z/7zip";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Create the filename using the version number
                 // remove the . from the version, 23.01 -> 2301
@@ -133,7 +137,8 @@ public partial class SevenZip
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode == 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         public bool BootstrapDownload()

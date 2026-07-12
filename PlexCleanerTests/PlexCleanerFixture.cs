@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using InsaneGenius.Utilities;
 using PlexCleaner;
 using PlexCleanerTests;
+using ptr727.Utilities;
 using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
@@ -14,6 +14,11 @@ using ConfigFileJsonSchema = PlexCleaner.ConfigFileJsonSchema4;
 [assembly: AssemblyFixture(typeof(PlexCleanerFixture))]
 
 namespace PlexCleanerTests;
+
+// Tests that mutate global static state (e.g. swap the Serilog Log.Logger) join this collection so
+// they run sequentially and are not parallelized with the rest of the suite
+[CollectionDefinition("Sequential", DisableParallelization = true)]
+public sealed class SequentialCollectionDefinition;
 
 // One instance for all tests in the assembly
 public sealed class PlexCleanerFixture : IDisposable
@@ -49,16 +54,20 @@ public sealed class PlexCleanerFixture : IDisposable
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        _loggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = _loggerFactory;
 
         // Get the Samples directory
         GetSamplesDirectory = GetSamplesAbsoluteDirectory();
     }
 
+    private readonly Microsoft.Extensions.Logging.ILoggerFactory _loggerFactory;
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
         Log.CloseAndFlush();
+        _loggerFactory.Dispose();
     }
 
     /// <summary>

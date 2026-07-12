@@ -70,7 +70,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool SetTrackFlags(string fileName, MediaProps mediaProps)
@@ -100,7 +101,37 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
+        }
+
+        public bool ClearDefaultFlags(string fileName, IEnumerable<TrackProps> trackList)
+        {
+            // Build command line
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options =>
+                    options
+                        .InputFile(fileName)
+                        .Default()
+                        .Add(options =>
+                        {
+                            // Clear the Default flag on each track, MkvMerge track numbers
+                            trackList
+                                .ToList()
+                                .ForEach(item =>
+                                    options
+                                        .EditTrack(item.Number)
+                                        .ClearFlags(TrackProps.FlagsType.Default)
+                                );
+                            return options;
+                        })
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool ClearTags(string fileName, MediaProps mediaProps)
@@ -135,7 +166,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
 
         public bool ClearAttachments(string fileName, MediaProps mediaProps)
@@ -162,7 +194,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result) && result.ExitCode is 0;
+            return Execute(command, out CommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result));
         }
     }
 }

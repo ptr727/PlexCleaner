@@ -209,6 +209,136 @@
                 "showReuseMessage": false,
                 "clear": false
             }
+        },
+        {
+            "label": "Lint: CSharpier",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "csharpier",
+                "check",
+                "."
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Style",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "format",
+                "style",
+                "--verify-no-changes",
+                "--severity=info",
+                "--verbosity=detailed"
+            ],
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: EditorConfig",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--pull=always",
+                "--volume=${workspaceFolder}:/check",
+                "--workdir=/check",
+                "mstruebing/editorconfig-checker:latest"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Workflows",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--pull=always",
+                "--volume=${workspaceFolder}:/repo",
+                "--workdir=/repo",
+                "rhysd/actionlint:latest",
+                "-color"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Markdown",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--pull=always",
+                "--volume=${workspaceFolder}:/workdir",
+                "--workdir=/workdir",
+                "davidanson/markdownlint-cli2:latest",
+                "**/*.md"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Spelling",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--pull=always",
+                "--volume=${workspaceFolder}:/workdir",
+                "--workdir=/workdir",
+                "ghcr.io/streetsidesoftware/cspell:latest",
+                "--no-progress",
+                "README.md",
+                "HISTORY.md"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: All (CI parity)",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Lint: CSharpier",
+                "Lint: Style",
+                "Lint: EditorConfig",
+                "Lint: Workflows",
+                "Lint: Markdown",
+                "Lint: Spelling"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
         }
     ]
 }

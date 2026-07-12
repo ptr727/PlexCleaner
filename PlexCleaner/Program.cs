@@ -1,52 +1,31 @@
 using System.Diagnostics;
-using System.Globalization;
-using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
-using InsaneGenius.Utilities;
+using ptr727.Utilities;
 using Serilog;
-using Serilog.Debugging;
-using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PlexCleaner;
 
 public static class Program
 {
+    // Never disposed, so signal handlers can safely call Cancel() for the process lifetime
     private static readonly CancellationTokenSource s_cancelSource = new();
-    private static readonly Lazy<HttpClient> s_httpClient = new(CreateHttpClient);
+
+    // Exit code for an OS-signal interruption (128 + signal number), else 0; set only by PosixSignalHandler
+    private static volatile int s_signalExitCode;
+
+    // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers; lives for the
+    // process lifetime and is disposed at shutdown alongside the logger
+    private static Microsoft.Extensions.Logging.ILoggerFactory? s_libraryLoggerFactory;
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
 
-    public static HttpClient GetHttpClient() => s_httpClient.Value;
-
-    private static HttpClient CreateHttpClient()
-    {
-        HttpClient httpClient = new() { Timeout = TimeSpan.FromSeconds(120) };
-        httpClient.DefaultRequestHeaders.UserAgent.Add(
-            new ProductInfoHeaderValue(
-                AssemblyVersion.GetName(),
-                AssemblyVersion.GetInformationalVersion()
-            )
-        );
-        return httpClient;
-    }
-
     private static int MakeExitCode(ExitCode exitCode) => (int)exitCode;
 
     private static int MakeExitCode(bool success) =>
         success ? (int)ExitCode.Success : (int)ExitCode.Error;
-
-    public static void LogInterruptMessage()
-    {
-        // Keyboard handler is only active if input is not redirected
-        if (!Console.IsInputRedirected)
-        {
-            Console.WriteLine("Press Ctrl+C or Ctrl+Z or Ctrl+Q to exit.");
-        }
-    }
 
     private static int Main(string[] args)
     {
@@ -67,14 +46,45 @@ public static class Program
         // Bind all commandline options
         Options = commandLineParser.Bind();
 
-        // Setup
-        CreateLogger();
-        Console.CancelKeyPress += CancelEventHandler;
-        Task? consoleKeyTask = null;
-        if (!Console.IsInputRedirected)
+        // Create the logger from the bound options
+        Log.Logger = LoggerFactory.Create(LoggerFactory.FromCommandLine(Options));
+
+        // Propagate the logger to the libraries so their output shares the same sinks; both take a
+        // Microsoft.Extensions.Logging factory bridged from the Serilog logger
+        s_libraryLoggerFactory = LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = s_libraryLoggerFactory;
+        ptr727.LanguageTags.LogOptions.SetFactory(s_libraryLoggerFactory);
+
+        // Warn about deprecated options, single-threaded here before any command is invoked so the
+        // warning is emitted once; routed through the override context so it shows at any log level
+        if (Options.LogWarning)
         {
-            consoleKeyTask = Task.Run(KeyPressHandler);
+            Log.Logger.LogOverrideContext()
+                .Warning(
+                    "--logwarning is deprecated and will be removed; use --loglevel Warning (add --logelevate to restore per-file elevation)"
+                );
         }
+        if (Options.LogAppend)
+        {
+            Log.Logger.LogOverrideContext()
+                .Warning(
+                    "--logappend is deprecated and will be removed; appending is now the default, use --logclear to clear the log file"
+                );
+        }
+
+        // Handle termination signals to cancel gracefully and still log the summary before exit
+        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGINT,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGTERM,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGQUIT,
+            PosixSignalHandler
+        );
 
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();
@@ -86,15 +96,24 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
+        // A signal interruption reports its own exit code so a caller can tell it from a clean finish or an error
+        if (s_signalExitCode != 0)
+        {
+            exitCode = s_signalExitCode;
+        }
+
         // Cleanup
         Cancel();
-        consoleKeyTask?.Wait();
-        Console.CancelKeyPress -= CancelEventHandler;
+        // Unhook signals before flushing so a second signal reverts to default OS termination
+        sigIntRegistration.Dispose();
+        sigTermRegistration.Dispose();
+        sigQuitRegistration.Dispose();
         keepAwakeTimer.Stop();
         KeepAwake.AllowSleep();
 
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
         Log.CloseAndFlush();
+        s_libraryLoggerFactory?.Dispose();
 
         return exitCode;
     }
@@ -107,12 +126,17 @@ public static class Program
             return;
         }
 
+        // Get the latest release version from github releases, skip on download failure (already logged)
+        // E.g. 1.2.3
+        const string repo = "ptr727/PlexCleaner";
+        if (!GitHubRelease.GetLatestRelease(repo, out string latest))
+        {
+            return;
+        }
+
         try
         {
-            // Get the latest release version from github releases
-            // E.g. 1.2.3
-            const string repo = "ptr727/PlexCleaner";
-            Version latestVersion = new(GitHubRelease.GetLatestRelease(repo));
+            Version latestVersion = new(latest);
 
             // Get this version
             Version thisVersion = new(AssemblyVersion.GetReleaseVersion());
@@ -133,47 +157,20 @@ public static class Program
         }
     }
 
-    private static void KeyPressHandler()
+    private static void PosixSignalHandler(PosixSignalContext context)
     {
-        for (; ; )
-        {
-            // Wait on key available or cancelled
-            while (!Console.KeyAvailable)
-            {
-                if (WaitForCancel(100))
-                {
-                    // Done
-                    return;
-                }
-            }
+        Log.Warning("Operation interrupted : {Signal}", context.Signal);
 
-            // Read key and hide from console display
-            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+        // Report 128 + signal number (PosixSignal enum values are abstract, so map explicitly); any other signal defaults to 128
+        s_signalExitCode =
+            context.Signal == PosixSignal.SIGINT ? 130
+            : context.Signal == PosixSignal.SIGQUIT ? 131
+            : context.Signal == PosixSignal.SIGTERM ? 143
+            : 128;
 
-            // Break on Ctrl+Q or Ctrl+Z, Ctrl+C and Ctrl+Break is handled in cancel handler
-            if (
-                keyInfo.Key is ConsoleKey.Q or ConsoleKey.Z
-                && keyInfo.Modifiers == ConsoleModifiers.Control
-            )
-            {
-                // Signal the cancel event
-                Cancel(ConsoleModifiers.Control, keyInfo.Key);
-
-                // Done
-                return;
-            }
-        }
-    }
-
-    private static void CancelEventHandler(object? sender, ConsoleCancelEventArgs eventArgs)
-    {
-        Log.Warning("Cancel event triggered : {EventType}", eventArgs.SpecialKey);
-
-        // Keep running and do graceful exit
-        eventArgs.Cancel = true;
-
-        // Signal the cancel event, use Ctrl+Break as signal
-        Cancel(ConsoleModifiers.Control, ConsoleKey.Pause);
+        // Keep running and do a graceful exit so the summary and exit code are logged
+        context.Cancel = true;
+        Cancel();
     }
 
     private static void WaitForDebugger()
@@ -189,51 +186,6 @@ public static class Program
 
         // Break into the debugger
         Debugger.Break();
-    }
-
-    private static void CreateLogger()
-    {
-        // Clear log file before creating the logger
-        if (!string.IsNullOrEmpty(Options.LogFile) && !Options.LogAppend)
-        {
-            File.Delete(Options.LogFile);
-        }
-
-        // Enable Serilog debug output to the console
-        SelfLog.Enable(Console.Error);
-
-        // Logger configuration
-        LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
-            .MinimumLevel.Is(Options.LogWarning ? LogEventLevel.Warning : LogEventLevel.Information)
-            // Set minimum to Verbose for LogOverride context
-            .MinimumLevel.Override(typeof(Extensions.LogOverride).FullName!, LogEventLevel.Verbose)
-            .Enrich.WithThreadId()
-            .WriteTo.Console(
-                theme: AnsiConsoleTheme.Code,
-                // Remove lj from default to quote strings
-                outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                formatProvider: CultureInfo.InvariantCulture
-            );
-
-        // Log to file
-        if (!string.IsNullOrEmpty(Options.LogFile))
-        {
-            _ = loggerConfiguration.WriteTo.Async(action =>
-                action.File(
-                    Options.LogFile,
-                    rollOnFileSizeLimit: true,
-                    // Remove lj from default to quote strings
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] <{ThreadId}> {Message}{NewLine}{Exception}",
-                    formatProvider: CultureInfo.InvariantCulture
-                )
-            );
-        }
-
-        // Create static Serilog logger
-        Log.Logger = loggerConfiguration.CreateLogger();
-
-        // Set library logger to Serilog logger
-        LogOptions.Logger = Log.Logger;
     }
 
     public static int DefaultSettingsCommand()
@@ -304,6 +256,70 @@ public static class Program
         // Done
         return MakeExitCode(ExitCode.Success);
     }
+
+#if PLUGINS
+    public static int CustomCommand()
+    {
+        // Create
+        if (!Create(true))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Load the plugin after config and tools are initialized (the option is required, so the
+        // path is always present here)
+        if (Options.PluginAssembly == null)
+        {
+            Log.Error("Plugin assembly path is required");
+            return MakeExitCode(ExitCode.Error);
+        }
+        IProcessPlugin? plugin = PluginLoader.Load(Options.PluginAssembly);
+        if (plugin == null)
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Get file and directory list
+        if (
+            !ProcessDriver.GetFiles(
+                Options.MediaFiles,
+                out List<string> _,
+                out List<string> fileList
+            )
+        )
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Process each file using the plugin, isolating plugin exceptions to the current file so a
+        // faulty plugin fails that file instead of aborting the entire run
+        bool ProcessFile(string fileName)
+        {
+            try
+            {
+                return plugin.ProcessFile(fileName);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                return false;
+            }
+        }
+
+        if (!ProcessDriver.ProcessFiles(fileList, plugin.Name, false, ProcessFile))
+        {
+            return MakeExitCode(ExitCode.Error);
+        }
+
+        // Done
+        return MakeExitCode(ExitCode.Success);
+    }
+#else
+    public static int CustomCommand()
+    {
+        Log.Error("Custom plugin support requires a non-AOT build");
+        return MakeExitCode(ExitCode.Error);
+    }
+#endif
 
     public static int MonitorCommand()
     {
@@ -559,12 +575,6 @@ public static class Program
     public static void Cancel() =>
         // Signal cancel
         s_cancelSource.Cancel();
-
-    public static void Cancel(ConsoleModifiers modifiers, ConsoleKey key)
-    {
-        Log.Warning("Operation interrupted : {Modifiers}+{Key}", modifiers, key);
-        Cancel();
-    }
 
     public static CancellationToken CancelToken() => s_cancelSource.Token;
 

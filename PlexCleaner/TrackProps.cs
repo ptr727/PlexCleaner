@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Serilog;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -164,7 +165,6 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Id = track.Id;
 
         // Uid: Matroska unique track id
-        // TODO: Consider switching to using uid vs. number as it is unique and deterministic in MkvMerge and MkvPropEdit
         Uid = track.Properties.Uid;
 
         // Number: Matroska track number from block header
@@ -703,8 +703,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    public virtual void WriteLine() =>
-        Log.Information(
+    // Command output (getmediainfo, etc.) uses the default Information; normal processing passes Debug
+    // so the per-file track dump is quiet unless --loglevel Debug is set
+    public virtual void WriteLine(LogEventLevel level = LogEventLevel.Information) =>
+        Log.Write(
+            level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
                 + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
@@ -782,7 +785,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 HasErrors = true;
                 State = StateType.SetFlags;
                 Flags |= item.Flag;
-                Log.Information(
+                Log.Debug(
                     "{Parser} : {Type} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, State: {State} : {FileName}",
                     Parent.Parser,
                     Type,

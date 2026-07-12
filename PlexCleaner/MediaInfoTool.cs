@@ -68,7 +68,11 @@ public partial class MediaInfo
                 // Get the latest release version number from github releases
                 // https://github.com/MediaArea/MediaInfo
                 const string repo = "MediaArea/MediaInfo";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Strip the "v", v23.09 -> 23.09
                 Debug.Assert(mediaToolInfo.Version.StartsWith('v'));
@@ -107,7 +111,7 @@ public partial class MediaInfo
                 .Build();
 
             // Execute command
-            Log.Information("Getting media info : {FileName}", fileName);
+            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
@@ -115,12 +119,11 @@ public partial class MediaInfo
             if (result.ExitCode != 0)
             {
                 Log.Error(
-                    "{ToolType} : Failed to to get media info : {FileName}",
+                    "{ToolType} : Failed to get media info : {FileName}",
                     GetToolType(),
                     fileName
                 );
-                Log.Error("{ToolType} : {Error}", GetToolType(), result.StandardError.Trim());
-                return false;
+                return LogFailedResult(result);
             }
             if (result.StandardError.Length > 0)
             {

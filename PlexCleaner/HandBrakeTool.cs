@@ -68,7 +68,11 @@ public partial class HandBrake
                 // Get the latest release version number from github releases
                 // https://github.com/HandBrake/HandBrake
                 const string repo = "HandBrake/HandBrake";
-                mediaToolInfo.Version = GetLatestGitHubRelease(repo);
+                if (!GetLatestGitHubRelease(repo, out string version))
+                {
+                    return false;
+                }
+                mediaToolInfo.Version = version;
 
                 // Create the filename using the version number
                 // HandBrakeCLI-1.3.2-win-x86_64.zip
@@ -92,15 +96,13 @@ public partial class HandBrake
             string inputName,
             string outputName,
             bool includeSubtitles,
-            bool deInterlace,
-            out string error
+            bool deInterlace
         )
         {
             // Delete output file
             File.Delete(outputName);
 
             // Build command line
-            error = string.Empty;
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.InputFile(inputName).TestSnippets())
@@ -121,12 +123,8 @@ public partial class HandBrake
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
-            {
-                return false;
-            }
-            error = result.StandardError.Trim();
-            return result.ExitCode == 0;
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
         }
 
         [GeneratedRegex(

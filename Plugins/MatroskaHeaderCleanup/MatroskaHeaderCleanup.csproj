@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>PlexCleaner.Plugins.MatroskaHeaderCleanup</RootNamespace>
+    <AssemblyName>MatroskaHeaderCleanup</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Compile against PlexCleaner but do not copy it, the plugin binds to the host copy at load -->
+    <ProjectReference Include="..\..\PlexCleaner\PlexCleaner.csproj" Private="false" />
+  </ItemGroup>
+</Project>

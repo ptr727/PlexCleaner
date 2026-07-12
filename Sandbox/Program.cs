@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using InsaneGenius.Utilities;
 using PlexCleaner;
+using ptr727.Utilities;
 using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
@@ -49,7 +49,9 @@ public class Program
                 formatProvider: CultureInfo.InvariantCulture
             )
             .CreateLogger();
-        LogOptions.Logger = Log.Logger;
+        using Microsoft.Extensions.Logging.ILoggerFactory loggerFactory =
+            LoggerFactory.CreateLoggerFactory(Log.Logger);
+        LogOptions.LoggerFactory = loggerFactory;
 
         // Get settings
         Dictionary<string, JsonElement>? settings = null;
