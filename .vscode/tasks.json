@@ -247,6 +247,41 @@
             }
         },
         {
+            "label": "Lint: EditorConfig",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--volume=${workspaceFolder}:/check",
+                "--workdir=/check",
+                "mstruebing/editorconfig-checker:latest"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Workflows",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "run",
+                "--rm",
+                "--volume=${workspaceFolder}:/repo",
+                "--workdir=/repo",
+                "rhysd/actionlint:latest",
+                "-color"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
             "label": "Lint: Markdown",
             "type": "shell",
             "command": "docker",
@@ -290,6 +325,8 @@
             "dependsOn": [
                 "Lint: CSharpier",
                 "Lint: Style",
+                "Lint: EditorConfig",
+                "Lint: Workflows",
                 "Lint: Markdown",
                 "Lint: Spelling"
             ],
