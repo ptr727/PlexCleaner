@@ -253,6 +253,7 @@
             "args": [
                 "run",
                 "--rm",
+                "--pull=always",
                 "--volume=${workspaceFolder}:/check",
                 "--workdir=/check",
                 "mstruebing/editorconfig-checker:latest"
@@ -270,6 +271,7 @@
             "args": [
                 "run",
                 "--rm",
+                "--pull=always",
                 "--volume=${workspaceFolder}:/repo",
                 "--workdir=/repo",
                 "rhysd/actionlint:latest",
@@ -288,6 +290,7 @@
             "args": [
                 "run",
                 "--rm",
+                "--pull=always",
                 "--volume=${workspaceFolder}:/workdir",
                 "--workdir=/workdir",
                 "davidanson/markdownlint-cli2:latest",
@@ -306,6 +309,7 @@
             "args": [
                 "run",
                 "--rm",
+                "--pull=always",
                 "--volume=${workspaceFolder}:/workdir",
                 "--workdir=/workdir",
                 "ghcr.io/streetsidesoftware/cspell:latest",
