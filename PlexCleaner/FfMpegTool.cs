@@ -179,8 +179,8 @@ public partial class FfMpeg
             }
             if (verifyResult == VerifyResult.DecodeError)
             {
-                // A silent non-zero exit has no error line, omit the empty field rather than logging blank
-                string error = CleanForLog(classifier.FirstError ?? string.Empty);
+                // Log the unique error lines, a silent non-zero exit has none so omit the empty field
+                string error = CleanForLog(string.Join(" | ", classifier.Errors));
                 if (string.IsNullOrEmpty(error))
                 {
                     Log.Error(
