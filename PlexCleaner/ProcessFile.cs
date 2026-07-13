@@ -1763,10 +1763,21 @@ public class ProcessFile
         Log.Debug("Verifying media streams : {FileName}", fileInfo.FullName);
         VerifyResult verifyResult = Tools.FfMpeg.VerifyMedia(fileInfo.FullName);
 
-        // Log the failure, unless it was a cancellation, caller updates the state
-        if (verifyResult == VerifyResult.DecodeError && !Program.IsCancelledError())
+        // Log the classified outcome so a failure is diagnosable, unless it was a cancellation
+        if (!Program.IsCancelledError())
         {
-            Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
+            if (verifyResult == VerifyResult.DecodeError)
+            {
+                Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
+            }
+            else if (verifyResult == VerifyResult.TimestampOnly)
+            {
+                // Correctable failure, the decision Warning is emitted later if the repair runs
+                Log.Information(
+                    "Verify detected non-monotonic DTS timestamps : {FileName}",
+                    fileInfo.FullName
+                );
+            }
         }
         return verifyResult;
     }

@@ -179,12 +179,25 @@ public partial class FfMpeg
             }
             if (verifyResult == VerifyResult.DecodeError)
             {
-                Log.Error(
-                    "Failed execution of {ToolType} : ExitCode: {ExitCode} : {Error}",
-                    GetToolType(),
-                    exitCode,
-                    CleanForLog(classifier.FirstError ?? string.Empty)
-                );
+                // A silent non-zero exit has no error line, omit the empty field rather than logging blank
+                string error = CleanForLog(classifier.FirstError ?? string.Empty);
+                if (string.IsNullOrEmpty(error))
+                {
+                    Log.Error(
+                        "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+                        GetToolType(),
+                        exitCode
+                    );
+                }
+                else
+                {
+                    Log.Error(
+                        "Failed execution of {ToolType} : ExitCode: {ExitCode} : {Error}",
+                        GetToolType(),
+                        exitCode,
+                        error
+                    );
+                }
             }
             return verifyResult;
         }
