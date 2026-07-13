@@ -223,10 +223,17 @@ public partial class FfProbe
                 return LogFailedResult(result);
             }
 
-            // Any video stream reporting closed captions
-            FfMpegToolJsonSchema.ClosedCaptionsProbe probe =
-                FfMpegToolJsonSchema.ClosedCaptionsProbe.FromJson(result.StandardOutput);
-            hasClosedCaptions = probe.Streams.Any(stream => stream.ClosedCaptions != 0);
+            // Any video stream reporting closed captions, FromJson throws on malformed output
+            try
+            {
+                FfMpegToolJsonSchema.ClosedCaptionsProbe probe =
+                    FfMpegToolJsonSchema.ClosedCaptionsProbe.FromJson(result.StandardOutput);
+                hasClosedCaptions = probe.Streams.Any(stream => stream.ClosedCaptions != 0);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                return false;
+            }
             return true;
         }
 
