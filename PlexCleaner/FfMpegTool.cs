@@ -356,6 +356,8 @@ public partial class FfMpeg
         {
             // Losslessly rewrite audio packet timestamps to be strictly monotonic using the setts bitstream filter
             // https://ffmpeg.org/ffmpeg-bitstream-filters.html#setts
+            // Audio only, the expression forces PTS monotonic which is safe where PTS equals DTS, applying
+            // it to video would reorder B-frames, a video-only DTS break instead fails the caller's re-verify
 
             // Delete output file
             File.Delete(outputName);
