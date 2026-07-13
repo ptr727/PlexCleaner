@@ -10,8 +10,9 @@ internal static partial class VerifyClassifier
         "non monotonically increasing dts to muxer",
     ];
 
-    // Mask pointer addresses and numbers so error lines that differ only by those collapse to one key
-    [GeneratedRegex(@"0x[0-9a-fA-F]+|\d+")]
+    // Mask pointer addresses and standalone numbers so lines differing only by those collapse to one
+    // key; word boundaries keep digits inside identifiers like h264 or mpeg2 so distinct codecs stay apart
+    [GeneratedRegex(@"0x[0-9a-fA-F]+|\b[0-9]+\b")]
     private static partial Regex VariableDataRegex();
 
     private static string NormalizeKey(string line) => VariableDataRegex().Replace(line, "*");

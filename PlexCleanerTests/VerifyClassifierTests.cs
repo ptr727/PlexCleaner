@@ -74,4 +74,15 @@ public class VerifyClassifierTests
             .Be("[pgssub @ 0x5f38] Unknown subtitle segment type 0x78, length 55981");
         _ = accumulator.Errors[1].Should().Be("[aac @ 0x62] Prediction is not allowed in AAC-LC");
     }
+
+    [Fact]
+    public void Accumulator_DifferentCodecSameMessage_NotDeduped()
+    {
+        // Digits inside a codec identifier must not be masked, so distinct codecs stay separate
+        VerifyClassifier.Accumulator accumulator = new();
+        accumulator.Add("[h264 @ 0x1] error while decoding MB 3 4");
+        accumulator.Add("[h265 @ 0x2] error while decoding MB 3 4");
+
+        _ = accumulator.Errors.Should().HaveCount(2);
+    }
 }
