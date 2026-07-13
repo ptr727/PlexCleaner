@@ -25,6 +25,22 @@ public class FfMpegToolJsonSchema
             ?? throw new JsonException("Failed to deserialize FfProbe");
     }
 
+    public class ClosedCaptionsProbe
+    {
+        [JsonPropertyName("streams")]
+        public List<ClosedCaptionsTrack> Streams { get; } = [];
+
+        public static ClosedCaptionsProbe FromJson(string json) =>
+            JsonSerializer.Deserialize(json, FfMpegToolJsonContext.Default.ClosedCaptionsProbe)
+            ?? throw new JsonException("Failed to deserialize ClosedCaptionsProbe");
+    }
+
+    public class ClosedCaptionsTrack
+    {
+        [JsonPropertyName("closed_captions")]
+        public int ClosedCaptions { get; set; }
+    }
+
     public class FormatInfo
     {
         [JsonPropertyName("format_name")]
@@ -155,4 +171,5 @@ public class FfMpegToolJsonSchema
 )]
 [JsonSerializable(typeof(FfMpegToolJsonSchema.FfProbe))]
 [JsonSerializable(typeof(FfMpegToolJsonSchema.Packet))]
+[JsonSerializable(typeof(FfMpegToolJsonSchema.ClosedCaptionsProbe))]
 internal partial class FfMpegToolJsonContext : JsonSerializerContext;

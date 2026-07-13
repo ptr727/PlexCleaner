@@ -182,6 +182,11 @@ public partial class FfMpeg
         public OutputOptions BitstreamFilterVideo(string option) =>
             BitstreamFilterVideo().Add(option);
 
+        public OutputOptions BitstreamFilterAudio() => Add("-bsf:a");
+
+        public OutputOptions BitstreamFilterAudio(string option) =>
+            BitstreamFilterAudio().Add(option);
+
         public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
             timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this

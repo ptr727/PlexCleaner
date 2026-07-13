@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -192,107 +191,68 @@ public partial class FfProbe
             }
         }
 
-        public bool GetSubCcPackets(
-            string fileName,
-            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
-        )
+        public bool GetClosedCaptions(string fileName, out bool hasClosedCaptions)
         {
-            // TODO: Switch to ffprobe and analyze_frames (when available in the shipping version).
-            // `ffprobe -i FILE -show_entries stream=closed_captions -select_streams v:0 -analyze_frames -read_intervals %X`
-
-            // Quickscan is not supported with subcc filter
-            // -t and read_intervals do not work with the subcc filter
-            // https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc
-            // ReMux using FFmpeg to a snippet file then scan the snippet file
-            Command command;
-            if (Program.Options.QuickScan)
-            {
-                // Keep in sync with FfMpegTool.ReMuxToFormat()
-
-                // Create a temp filename based on the input name
-                string tempName = Path.ChangeExtension(fileName, ".tmp13");
-                Debug.Assert(fileName != tempName);
-                File.Delete(tempName);
-
-                // Use Matroska for snippet format as it supports more stream formats
-                // E.g. DVCPRO video streams can be muxed into MKV but not into TS
-                // [mpegts @ 000001543cf744c0] Stream 0, codec dvvideo, is muxed as a private data stream and may not be recognized upon reading.
-
-                // Build command line
-                command = Tools
-                    .FfMpeg.GetBuilder()
-                    .GlobalOptions(options => options.Default())
-                    .InputOptions(options =>
-                        options.Default().SeekStop(Program.QuickScanTimeSpan).InputFile(fileName)
-                    )
-                    .OutputOptions(options =>
-                        options.MapAllCodecCopy().Default().FormatMatroska().OutputFile(tempName)
-                    )
-                    .Build();
-
-                // Execute command
-                Log.Debug("Creating temp media file : {TempFileName}", tempName);
-                if (!Tools.FfMpeg.Execute(command, true, true, out BufferedCommandResult result))
-                {
-                    Log.Error("Failed to create temp media file : {TempFileName}", tempName);
-                    LogErrorOutput(result.StandardError.Trim());
-                    File.Delete(tempName);
-                    return false;
-                }
-
-                // Use the temp file as the input file
-                fileName = tempName;
-            }
-
-            // Build command line
-            // Get packet info using subcc filter
-            // https://www.ffmpeg.org/ffmpeg-devices.html#Options-10
-            command = GetBuilder()
+            // Detect EIA-608/CTA-708 closed captions embedded in the video stream
+            // analyze_frames decodes frames to surface the stream-level closed_captions flag
+            hasClosedCaptions = false;
+            Command command = GetBuilder()
                 .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
                 .FfProbeOptions(options =>
                     options
-                        .SelectStreams("s:0")
-                        .Format("lavfi")
-                        .Input($"\"movie={EscapeMovieFileName(fileName)}[out0+subcc]\"")
-                        .ShowPackets()
+                        .SelectStreams("v:0")
+                        .AnalyzeFrames()
+                        .ReadIntervalFrames(
+                            Program.Options.QuickScan ? Program.QuickScanFrameCount : 0
+                        )
+                        .ShowEntries("stream=closed_captions")
                         .OutputFormatJson()
+                        .InputFile(fileName)
                 )
                 .Build();
 
-            // Get packet list
-            Log.Debug("Getting subcc packet info : {FileName}", fileName);
-            bool ret = GetPackets(command, packetFunc, out string error);
-            if (!ret)
+            // Execute command
+            Log.Debug("Getting closed caption info : {FileName}", fileName);
+            if (!Execute(command, false, true, out BufferedCommandResult result))
             {
-                Log.Error("Failed to get subcc packet info : {FileName}", fileName);
-                LogErrorOutput(error);
+                return false;
             }
-            if (Program.Options.QuickScan)
+            if (result.ExitCode != 0)
             {
-                // Delete the temp file
-                File.Delete(fileName);
+                Log.Error("Failed to get closed caption info : {FileName}", fileName);
+                return LogFailedResult(result);
             }
-            return ret;
+
+            // Any video stream reporting closed captions
+            FfMpegToolJsonSchema.ClosedCaptionsProbe probe =
+                FfMpegToolJsonSchema.ClosedCaptionsProbe.FromJson(result.StandardOutput);
+            hasClosedCaptions = probe.Streams.Any(stream => stream.ClosedCaptions != 0);
+            return true;
         }
 
-        public bool GetBitratePackets(
+        public bool GetAnalysisPackets(
             string fileName,
-            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc
+            Func<FfMpegToolJsonSchema.Packet, bool> packetFunc,
+            bool quickScan
         )
         {
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
                 .FfProbeOptions(options =>
-                    options.QuickScan().ShowPackets().OutputFormatJson().InputFile(fileName)
+                    options
+                        .SeekStop(quickScan ? Program.QuickScanTimeSpan : TimeSpan.Zero)
+                        .ShowPackets()
+                        .OutputFormatJson()
+                        .InputFile(fileName)
                 )
                 .Build();
 
             // Get packet list
-            Log.Debug("Getting bitrate packets : {FileName}", fileName);
+            Log.Debug("Getting analysis packets : {FileName}", fileName);
             if (!GetPackets(command, packetFunc, out string error))
             {
-                Log.Error("Failed to get bitrate packets : {FileName}", fileName);
+                Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);
                 return false;
             }
@@ -308,8 +268,7 @@ public partial class FfProbe
 
         public bool GetMediaPropsJson(string fileName, out string json)
         {
-            // TODO: Add analyze_frames when available in all FFmpeg builds
-            // https://github.com/FFmpeg/FFmpeg/commit/90af8e07b02e690a9fe60aab02a8bccd2cbf3f01
+            // Do not use analyze_frames, it would add closed_captions, film_grain, nb_read_frames but forces full decode of every stream
 
             // Build command line
             json = string.Empty;

@@ -23,6 +23,14 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
+**Version: 3.21**:
+
+**Summary:**
+
+- Verify now fails only on genuine decode corruption, and a non-monotonic DTS is repaired losslessly with the `setts` bitstream filter.
+- Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
+- Added the `DtsTimestampRepair` example plugin that revisits files a previous version marked `RepairFailed` and clears or losslessly repairs benign timestamp failures.
+
 **Version: 3.20**:
 
 **Summary:**
@@ -149,6 +157,7 @@ Common examples of issues resolved by the `process` command:
 **Performance & Integrity:**
 
 - Corrupt media streams → Verify integrity and attempt automatic repair.
+- Non-monotonic DTS timestamps → Losslessly rewrite the packet timestamps using `setts`.
 - Matroska files that fail player Direct Play despite passing tool checks → Detect an unusable seek index (SeekHead/Cues) and re-multiplex.
 - High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
 
@@ -851,7 +860,10 @@ public interface IProcessPlugin
 }
 ```
 
-`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. See the [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) example, which re-checks and repairs the Matroska seek-index structure on already-verified files.
+`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. Two examples are included:
+
+- [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) re-checks and repairs the Matroska seek-index structure on already-verified files.
+- [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) revisits files that an older version marked `RepairFailed`, re-verifies them, clears the flag when the only problem was a benign non-monotonic DTS, and losslessly repairs the timestamps (`setts`) when the DTS is demux-visible.
 
 Notes:
 
