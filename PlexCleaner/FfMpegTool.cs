@@ -171,9 +171,9 @@ public partial class FfMpeg
                 return VerifyResult.DecodeError;
             }
 
-            // A silent non-zero exit with no recognized diagnostic still fails, fail closed
+            // A non-zero exit is always a failure, fail closed even if stderr shows only the timestamp warning
             VerifyResult verifyResult = classifier.Result;
-            if (verifyResult == VerifyResult.Clean && exitCode != 0)
+            if (exitCode != 0)
             {
                 verifyResult = VerifyResult.DecodeError;
             }
