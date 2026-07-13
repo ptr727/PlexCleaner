@@ -1227,7 +1227,7 @@ public class ProcessFile
             return true;
         }
 
-        // Running lavfi is expensive, skip if already verified or closed captions already removed
+        // Running analyze_frames is expensive, skip if already verified or closed captions already removed
         if (
             conditional
             && (
