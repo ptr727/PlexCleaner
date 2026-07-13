@@ -2129,8 +2129,9 @@ public class ProcessFile
             return false;
         }
 
-        // Re-encode clears decode corruption, a timestamp-only result still passes
-        if (VerifyMediaStreams(new FileInfo(tempName)) == VerifyResult.DecodeError)
+        // Require a clean re-verify, accepting a timestamp-only result would mark a file Verified that
+        // still fails verification, and a future run would skip it as already verified
+        if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
         {
             // Failed
             File.Delete(tempName);
