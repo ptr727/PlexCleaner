@@ -27,9 +27,9 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Repair non-monotonic DTS losslessly with the `setts` bitstream filter instead of failing repair permanently; a non-monotonic DTS is a correctable verify failure, not decode corruption.
+- Treat a non-monotonic DTS as a verify failure, not decode corruption. Repair it losslessly with the `setts` bitstream filter when the break is demux-visible, otherwise keep it reported as a failure.
 - Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
-- Added the `DtsTimestampRepair` example plugin that revisits files a previous version marked `RepairFailed` and clears or losslessly repairs benign timestamp failures.
+- Added the `DtsTimestampRepair` example plugin that revisits files a previous version marked `RepairFailed` and losslessly repairs a demux-visible non-monotonic DTS, clearing the flag on success.
 
 **Version: 3.20**:
 
@@ -863,7 +863,7 @@ public interface IProcessPlugin
 `Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. Two examples are included:
 
 - [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) re-checks and repairs the Matroska seek-index structure on already-verified files.
-- [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) revisits files that an older version marked `RepairFailed`, re-verifies them, clears the flag when the only problem was a benign non-monotonic DTS, and losslessly repairs the timestamps (`setts`) when the DTS is demux-visible.
+- [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) revisits files that an older version marked `RepairFailed`, re-verifies them, and losslessly repairs the timestamps (`setts`) when the non-monotonic DTS is demux-visible, clearing the flag on success; a detected DTS it cannot repair stays reported.
 
 Notes:
 

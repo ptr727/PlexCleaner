@@ -2174,7 +2174,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 return Refresh(false);
             case VerifyResult.TimestampOnly:
-                // Benign non-monotonic DTS, clean losslessly when demux-visible
+                // Detected non-monotonic DTS, repair losslessly when demux-visible, else stays reported
                 return RepairTimestampsAndSetState(ref modified);
             case VerifyResult.DecodeError:
                 // Genuine decode corruption, not repairable here, leave the state unchanged
@@ -2184,65 +2184,45 @@ public class ProcessFile
         }
     }
 
-    private enum TimestampRepair
-    {
-        // No demux-visible break, the muxer warning is a post-decode artifact with no defect to repair
-        NotApplicable,
-
-        // Timestamps rewritten losslessly
-        Repaired,
-
-        // A demux-visible break, but the lossless repair could not complete
-        Failed,
-    }
-
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
-        switch (TryLosslessTimestampRepair())
+        // A detected non-monotonic DTS is a failure, repair it losslessly when the break is demux-visible
+        if (TryLosslessTimestampRepair())
         {
-            case TimestampRepair.Repaired:
-                _sidecarFile.State |= SidecarFile.StatesType.Verified;
-                _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-                _sidecarFile.State |= SidecarFile.StatesType.Repaired;
-                _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
-                modified = true;
-                return Refresh(true);
-            case TimestampRepair.NotApplicable:
-                // No demux-visible defect, the media is benign, mark verified without a rewrite
-                _sidecarFile.State |= SidecarFile.StatesType.Verified;
-                _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-                _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
-                return Refresh(false);
-            case TimestampRepair.Failed:
-                // Do not touch state on cancellation, the caller retries next run
-                if (Program.IsCancelled())
-                {
-                    return false;
-                }
-                // The lossless repair failed, leave it as a repair failure
-                _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
-                _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
-                _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
-                _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
-                _ = Refresh(false);
-                return false;
-            default:
-                throw new NotImplementedException();
+            _sidecarFile.State |= SidecarFile.StatesType.Verified;
+            _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+            _sidecarFile.State |= SidecarFile.StatesType.Repaired;
+            _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+            modified = true;
+            return Refresh(true);
         }
+
+        // Do not touch state on cancellation, the caller retries next run
+        if (Program.IsCancelled())
+        {
+            return false;
+        }
+
+        // A detected DTS we could not repair stays reported as a failure, a detected issue is not cleared
+        _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
+        _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
+        _ = Refresh(false);
+        return false;
     }
 
-    private TimestampRepair TryLosslessTimestampRepair()
+    private bool TryLosslessTimestampRepair()
     {
-        // Could not analyze packets, treat as a repair failure rather than assume benign
-        if (!GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo) || dtsInfo == null)
+        // Only a demux-visible non-monotonic DTS can be rewritten losslessly, a post-decode-only break has
+        // no demux target and stays a reported failure, an analysis failure is treated as unrepaired too
+        if (
+            !GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo)
+            || dtsInfo == null
+            || !dtsInfo.HasNonMonotonicDts
+        )
         {
-            return TimestampRepair.Failed;
-        }
-
-        // No demux-visible break, a post-decode-only DTS is left to verify reclassification
-        if (!dtsInfo.HasNonMonotonicDts)
-        {
-            return TimestampRepair.NotApplicable;
+            return false;
         }
 
         // Rewrite timestamps losslessly to a temp file
@@ -2254,7 +2234,7 @@ public class ProcessFile
         if (!Tools.FfMpeg.SetTimestamps(FileInfo.FullName, tempName))
         {
             File.Delete(tempName);
-            return TimestampRepair.Failed;
+            return false;
         }
 
         // Reject unless the payload is byte-identical and the result verifies clean
@@ -2264,13 +2244,13 @@ public class ProcessFile
         )
         {
             File.Delete(tempName);
-            return TimestampRepair.Failed;
+            return false;
         }
 
         // Replace the original with the repaired file
         File.Move(tempName, FileInfo.FullName, true);
         Log.Information("Timestamp repair succeeded : {FileName}", FileInfo.FullName);
-        return TimestampRepair.Repaired;
+        return true;
     }
 
     private static bool TimestampRepairRegressionGate(string original, string repaired) =>
