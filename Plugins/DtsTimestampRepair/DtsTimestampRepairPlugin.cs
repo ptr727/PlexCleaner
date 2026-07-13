@@ -81,8 +81,8 @@ public sealed class DtsTimestampRepairPlugin : IProcessPlugin
             return true;
         }
 
-        // Re-verify and losslessly repair a demux-visible DTS, clearing RepairFailed only on success, an
-        // unrepairable DTS stays reported, RepairTimestamps keeps the sidecar in sync
+        // Re-verify and losslessly repair a demux-visible DTS. Clear RepairFailed only on success.
+        // An unrepairable DTS stays reported. RepairTimestamps keeps the sidecar in sync.
         bool modified = false;
         return processFile.RepairTimestamps(ref modified);
     }
