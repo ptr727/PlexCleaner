@@ -8,7 +8,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Repair non-monotonic DTS muxer warnings losslessly instead of failing repair permanently.
     - `ffmpeg -f null` can exit `0` yet emit `Application provided invalid, non monotonically increasing dts to muxer` for files that may decode and play correctly.
     - The previous "any stderr means failure" rule promoted this muxer-interleaving artifact to a hard `VerifyFailed`/`RepairFailed`, and a re-encode could not fix it because Matroska stores no DTS and ffmpeg re-derives a non-monotonic timeline on read.
-    - Verify now classifies the decode diagnostics deterministically as clean, a benign timestamp-only failure, or a decode error; the timestamp-only failure is correctable rather than permanent, and everything else fails (fail-closed, so an unrecognized diagnostic fails as a decode error).
+    - Verify now classifies the decode diagnostics deterministically as clean, a timestamp-only failure, or a decode error; a timestamp-only failure is repaired losslessly when the break is demux-visible and otherwise stays reported, and everything else fails (fail-closed, so an unrecognized diagnostic fails as a decode error).
     - The classification streams the output line by line, so memory stays bounded even when a file emits a warning per packet ([#827](https://github.com/ptr727/PlexCleaner/issues/827)).
   - Added a lossless timestamp repair as the first repair tier.
     - When verification detects a demux-visible non-monotonic DTS, the audio packet timestamps are rewritten to be strictly monotonic using the `setts` bitstream filter with a stream copy (no re-encode), then re-verified.

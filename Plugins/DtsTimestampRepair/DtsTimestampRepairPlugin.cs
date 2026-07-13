@@ -2,10 +2,9 @@ using Serilog;
 
 namespace PlexCleaner.Plugins.DtsTimestampRepair;
 
-// Retroactively repair files that an older PlexCleaner version marked RepairFailed because verify
-// wrongly rejected a benign non-monotonic-DTS muxer warning. Re-verifies each RepairFailed file, clears
-// the flag when the only problem is timestamps, and losslessly rewrites the timestamps (setts) when the
-// DTS is demux-visible. Reuses PlexCleaner.ProcessFile.RepairTimestamps.
+// Revisit files a previous run marked RepairFailed and losslessly repair a demux-visible non-monotonic
+// DTS with the setts filter, clearing the flag only on a successful repair or a clean re-verify. A
+// detected DTS that cannot be repaired stays RepairFailed. Reuses PlexCleaner.ProcessFile.RepairTimestamps.
 public sealed class DtsTimestampRepairPlugin : IProcessPlugin
 {
     private ILogger _logger = Log.Logger;
@@ -82,8 +81,8 @@ public sealed class DtsTimestampRepairPlugin : IProcessPlugin
             return true;
         }
 
-        // Re-verify and clear the RepairFailed flag when the failure was a benign timestamp issue,
-        // losslessly repairing the timestamps when possible, RepairTimestamps keeps the sidecar in sync
+        // Re-verify and losslessly repair a demux-visible DTS, clearing RepairFailed only on success, an
+        // unrepairable DTS stays reported, RepairTimestamps keeps the sidecar in sync
         bool modified = false;
         return processFile.RepairTimestamps(ref modified);
     }

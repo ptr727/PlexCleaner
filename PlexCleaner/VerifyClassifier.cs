@@ -41,7 +41,7 @@ internal static class VerifyClassifier
                 return;
             }
 
-            // A benign muxer timestamp warning does not by itself fail verify
+            // A muxer timestamp warning classifies as TimestampOnly, distinct from a decode error
             if (
                 s_timestampSignatures.Any(sig =>
                     line.Contains(sig, StringComparison.OrdinalIgnoreCase)
