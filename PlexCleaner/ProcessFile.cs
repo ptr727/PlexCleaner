@@ -2149,8 +2149,8 @@ public class ProcessFile
 
     public bool RepairTimestamps(ref bool modified)
     {
-        // Only Matroska with a video stream can carry the non-monotonic DTS this repairs
-        if (!SidecarFile.IsMkvFile(FileInfo.FullName) || FfProbeProps.Video.Count == 0)
+        // Only process Matroska files, the audio timestamp repair does not require a video stream
+        if (!SidecarFile.IsMkvFile(FileInfo.FullName))
         {
             return true;
         }
