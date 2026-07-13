@@ -2207,10 +2207,9 @@ public class ProcessFile
         // Rewrite timestamps losslessly to a temp file
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp14");
         Debug.Assert(FileInfo.FullName != tempName);
-        Log.Information(
-            "Repairing non-monotonic timestamps using FfMpeg : {FileName}",
-            FileInfo.FullName
-        );
+
+        // Decision to modify the media, log once at Warning before the rewrite so it shows at Warning level
+        Log.Warning("Repairing non-monotonic DTS timestamps : {FileName}", FileInfo.FullName);
         if (!Tools.FfMpeg.SetTimestamps(FileInfo.FullName, tempName))
         {
             File.Delete(tempName);
