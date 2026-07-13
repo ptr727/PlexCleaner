@@ -4,6 +4,19 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.21:
+  - Repair non-monotonic DTS muxer warnings losslessly instead of failing repair permanently.
+    - `ffmpeg -f null` can exit `0` yet emit `Application provided invalid, non monotonically increasing dts to muxer` for files that may decode and play correctly.
+    - The previous "any stderr means failure" rule promoted this muxer-interleaving artifact to a hard `VerifyFailed`/`RepairFailed`, and a re-encode could not fix it because Matroska stores no DTS and ffmpeg re-derives a non-monotonic timeline on read.
+    - Verify now classifies the decode diagnostics deterministically as clean, a benign timestamp-only failure, or a decode error; the timestamp-only failure is correctable rather than permanent, and everything else fails (fail-closed, so an unrecognized diagnostic fails as a decode error).
+    - The classification streams the output line by line, so memory stays bounded even when a file emits a warning per packet ([#827](https://github.com/ptr727/PlexCleaner/issues/827)).
+  - Added a lossless timestamp repair as the first repair tier.
+    - When verification detects a demux-visible non-monotonic DTS, the audio packet timestamps are rewritten to be strictly monotonic using the `setts` bitstream filter with a stream copy (no re-encode), then re-verified.
+    - A regression gate compares the per-stream coded payload hash before and after and discards the result unless every stream is byte-identical, so the repair can never alter the media. The full re-encode repair remains for genuine decode corruption.
+  - Consolidated the bitrate and DTS packet analyses into a single `ffprobe -show_packets` pass, computing the per-second bitrate and the per-stream DTS monotonicity together instead of reading packets twice.
+  - Switched closed caption detection to `ffprobe -analyze_frames -show_entries stream=closed_captions`, replacing the `movie=...[out0+subcc]` lavfi filter and its QuickScan snippet-remux workaround; QuickScan now bounds the scan with `-read_intervals`.
+  - Added the `DtsTimestampRepair` example plugin.
+    - It revisits files that a previous version marked `RepairFailed`, re-verifies them, clears the flag when the only problem was timestamps, and losslessly repairs the timestamps when the DTS is demux-visible. Not available in AOT builds.
 - Version 3.20:
   - Switched tool downloads and the application version check to the resilient HTTP client in `ptr727.Utilities` (retry with backoff and a circuit breaker via `Microsoft.Extensions.Http.Resilience`), replacing the plain `HttpClient`.
   - Enabled closed caption removal for H.265/HEVC video: the SEI NAL unit lookup keyed on `h265` never matched FFprobe's `hevc` codec name, so HEVC files were incorrectly reported as an "Unsupported video format for Closed Captions removal". HEVC video (excluding HDR10 and HDR10+ content, which remains guarded) is now cleaned using the `filter_units=remove_types=39` bitstream filter, same as H.264 and MPEG-2.

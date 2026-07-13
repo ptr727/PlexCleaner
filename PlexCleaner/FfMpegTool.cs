@@ -152,7 +152,7 @@ public partial class FfMpeg
             return true;
         }
 
-        public bool VerifyMedia(string fileName)
+        public VerifyResult VerifyMedia(string fileName)
         {
             // Build command line
             Command command = GetBuilder()
@@ -162,12 +162,44 @@ public partial class FfMpeg
                 .OutputOptions(options => options.Default().NullOutput())
                 .Build();
 
-            // Execute command; ffmpeg can exit 0 yet still report stream errors on stderr, treat any stderr as failure
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (
-                    (result.ExitCode == 0 && result.StandardError.Trim().Length == 0)
-                    || LogFailedResult(result)
-                );
+            // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
+            // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet
+            VerifyClassifier.Accumulator classifier = new();
+            if (!ExecuteStreamStdErr(command, classifier.Add, out int exitCode))
+            {
+                // Process could not run
+                return VerifyResult.DecodeError;
+            }
+
+            // A non-zero exit is always a failure, fail closed even if stderr shows only the timestamp warning
+            VerifyResult verifyResult = classifier.Result;
+            if (exitCode != 0)
+            {
+                verifyResult = VerifyResult.DecodeError;
+            }
+            if (verifyResult == VerifyResult.DecodeError)
+            {
+                // A silent non-zero exit has no error line, omit the empty field rather than logging blank
+                string error = CleanForLog(classifier.FirstError ?? string.Empty);
+                if (string.IsNullOrEmpty(error))
+                {
+                    Log.Error(
+                        "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+                        GetToolType(),
+                        exitCode
+                    );
+                }
+                else
+                {
+                    Log.Error(
+                        "Failed execution of {ToolType} : ExitCode: {ExitCode} : {Error}",
+                        GetToolType(),
+                        exitCode,
+                        error
+                    );
+                }
+            }
+            return verifyResult;
         }
 
         public bool ReMuxToMkv(string inputName, string outputName) =>
@@ -318,6 +350,83 @@ public partial class FfMpeg
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
                 && (result.ExitCode == 0 || LogFailedResult(result));
+        }
+
+        public bool SetTimestamps(string inputName, string outputName)
+        {
+            // Losslessly rewrite audio packet timestamps to be strictly monotonic using the setts bitstream filter
+            // https://ffmpeg.org/ffmpeg-bitstream-filters.html#setts
+            // Audio only, the expression forces PTS monotonic which is safe where PTS equals DTS, applying
+            // it to video would reorder B-frames, a video-only DTS break instead fails the caller's re-verify
+
+            // Delete output file
+            File.Delete(outputName);
+
+            // Build command line, the escaped comma separates the setts option arguments
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
+                .OutputOptions(options =>
+                    options
+                        .MapAllCodecCopy()
+                        .BitstreamFilterAudio(
+                            "\"setts=pts=max(PTS\\,PREV_OUTPTS+1):dts=max(DTS\\,PREV_OUTDTS+1)\""
+                        )
+                        .Default()
+                        .FormatMatroska()
+                        .OutputFile(outputName)
+                )
+                .Build();
+
+            // Execute command
+            return Execute(command, true, true, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result));
+        }
+
+        public bool GetStreamHashes(string fileName, out Dictionary<int, string> streamHashes)
+        {
+            // Streamhash muxer hashes payload only, not timestamps, so an identical hash proves setts changed timestamps and nothing else
+            streamHashes = [];
+
+            // Build command line, stream copy to the streamhash muxer written to stdout
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default())
+                .InputOptions(options => options.Default().InputFile(fileName))
+                .OutputOptions(options =>
+                    options.MapAllCodecCopy().Format("streamhash").Add("-hash").Add("md5").Add("-")
+                )
+                .Build();
+
+            // Execute command, capturing full stdout
+            if (!Execute(command, false, true, out BufferedCommandResult result))
+            {
+                return false;
+            }
+            if (result.ExitCode != 0)
+            {
+                return LogFailedResult(result);
+            }
+
+            // Parse lines of the form "index,type,md5=value"
+            foreach (
+                string line in result.StandardOutput.Split(
+                    '\n',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                )
+            )
+            {
+                string[] parts = line.Split(',', 3);
+                if (
+                    parts.Length == 3
+                    && int.TryParse(parts[0], out int index)
+                    && !streamHashes.ContainsKey(index)
+                )
+                {
+                    // Keep type and hash so a stream reorder or payload change is detected
+                    streamHashes[index] = $"{parts[1]},{parts[2]}";
+                }
+            }
+            return streamHashes.Count > 0;
         }
 
         public bool RemoveNalUnits(string inputName, int nalUnit, string outputName)

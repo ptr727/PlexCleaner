@@ -18,7 +18,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
-    <!-- Built and copied so PluginLoaderTests can load it via the plugin loader -->
+    <!-- Built and copied so PluginLoaderTests can load them via the plugin loader -->
+    <ProjectReference Include="..\Plugins\DtsTimestampRepair\DtsTimestampRepair.csproj" />
     <ProjectReference Include="..\Plugins\MatroskaHeaderCleanup\MatroskaHeaderCleanup.csproj" />
   </ItemGroup>
 </Project>

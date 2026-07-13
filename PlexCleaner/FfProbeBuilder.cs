@@ -8,19 +8,6 @@ namespace PlexCleaner;
 
 public partial class FfProbe
 {
-    public static string EscapeMovieFileName(string fileName) =>
-        // Escape the file name so that it does not interfere with building the filter graph
-        // https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena
-        // See av_get_token() in https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/avstring.c
-        fileName
-            .Replace(@"\", @"/")
-            .Replace(@":", @"\\:")
-            .Replace(@"'", @"\\\'")
-            .Replace(@",", @"\\\,")
-            .Replace(@";", @"\\\;")
-            .Replace(@"[", @"\\\[")
-            .Replace(@"]", @"\\\]");
-
     public class GlobalOptions(ArgumentsBuilder argumentsBuilder)
     {
         public GlobalOptions Default() => AnalyzeDuration("2G").ProbeSize("2G");
@@ -109,6 +96,9 @@ public partial class FfProbe
 
         public FfProbeOptions QuickScan() =>
             Program.Options.QuickScan ? SeekStop(Program.QuickScanTimeSpan) : this;
+
+        public FfProbeOptions ReadIntervalFrames(int frames) =>
+            frames <= 0 ? this : Add("-read_intervals").Add($"%+#{frames}");
 
         public FfProbeOptions InputFile(string option) => Add($"\"{option}\"");
 

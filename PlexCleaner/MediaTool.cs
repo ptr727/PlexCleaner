@@ -248,6 +248,61 @@ public abstract class MediaTool
         }
     }
 
+    public bool ExecuteStreamStdErr(Command command, Action<string> lineAction, out int exitCode)
+    {
+        exitCode = -1;
+        int processId = -1;
+        try
+        {
+            // Stream stderr line by line to the caller instead of buffering it
+            PipeTarget stdErrTarget = PipeTarget.Create(
+                async (stream, cancellationToken) =>
+                {
+                    using StreamReader reader = new(stream, Encoding.Default, false, 1024, true);
+                    while (await reader.ReadLineAsync(cancellationToken) is { } line)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                        lineAction(line);
+                    }
+                }
+            );
+
+            CommandTask<CommandResult> task = command
+                .WithStandardOutputPipe(PipeTarget.Null)
+                .WithStandardErrorPipe(stdErrTarget)
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteAsync(CancellationToken.None, Program.CancelToken());
+            processId = task.ProcessId;
+            Log.Debug(
+                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+
+            CommandResult commandResult = task.Task.GetAwaiter().GetResult();
+            exitCode = commandResult.ExitCode;
+            return task.Task.IsCompletedSuccessfully;
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Error(
+                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                GetToolType(),
+                processId,
+                command.Arguments
+            );
+            return false;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
+        }
+    }
+
     public static PipeTarget ToStringBuilder(StringBuilder stringBuilder) =>
         PipeTarget.Create(
             async (stream, cancellationToken) =>
