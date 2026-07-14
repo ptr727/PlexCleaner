@@ -237,6 +237,53 @@ public partial class FfProbe
             return true;
         }
 
+        public bool GetStreamTimings(
+            string fileName,
+            out Dictionary<int, (double Start, double Duration)> timings
+        )
+        {
+            // Per-stream start and duration, used to verify a timestamp repair preserved A/V sync
+            timings = [];
+            Command command = GetBuilder()
+                .GlobalOptions(options => options.Default().HideBanner().LogLevelError())
+                .FfProbeOptions(options =>
+                    options
+                        .ShowStreams()
+                        .ShowEntries("stream=index,start_time,duration")
+                        .OutputFormatJson()
+                        .InputFile(fileName)
+                )
+                .Build();
+
+            // Execute command
+            Log.Debug("Getting stream timings : {FileName}", fileName);
+            if (!Execute(command, false, true, out BufferedCommandResult result))
+            {
+                return false;
+            }
+            if (result.ExitCode != 0)
+            {
+                Log.Error("Failed to get stream timings : {FileName}", fileName);
+                return LogFailedResult(result);
+            }
+
+            // FromJson throws on malformed output
+            try
+            {
+                FfMpegToolJsonSchema.StreamTimingsProbe probe =
+                    FfMpegToolJsonSchema.StreamTimingsProbe.FromJson(result.StandardOutput);
+                foreach (FfMpegToolJsonSchema.StreamTiming stream in probe.Streams)
+                {
+                    timings[stream.Index] = (stream.StartTime, stream.Duration);
+                }
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                return false;
+            }
+            return true;
+        }
+
         public bool GetAnalysisPackets(
             string fileName,
             Func<FfMpegToolJsonSchema.Packet, bool> packetFunc,

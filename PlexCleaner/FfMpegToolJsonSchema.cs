@@ -41,6 +41,29 @@ public class FfMpegToolJsonSchema
         public int ClosedCaptions { get; set; }
     }
 
+    // Per-stream start and duration, used to verify a timestamp repair did not shift A/V sync
+    public class StreamTimingsProbe
+    {
+        [JsonPropertyName("streams")]
+        public List<StreamTiming> Streams { get; } = [];
+
+        public static StreamTimingsProbe FromJson(string json) =>
+            JsonSerializer.Deserialize(json, FfMpegToolJsonContext.Default.StreamTimingsProbe)
+            ?? throw new JsonException("Failed to deserialize StreamTimingsProbe");
+    }
+
+    public class StreamTiming
+    {
+        [JsonPropertyName("index")]
+        public int Index { get; set; }
+
+        [JsonPropertyName("start_time")]
+        public double StartTime { get; set; } = double.NaN;
+
+        [JsonPropertyName("duration")]
+        public double Duration { get; set; } = double.NaN;
+    }
+
     public class FormatInfo
     {
         [JsonPropertyName("format_name")]
@@ -172,4 +195,5 @@ public class FfMpegToolJsonSchema
 [JsonSerializable(typeof(FfMpegToolJsonSchema.FfProbe))]
 [JsonSerializable(typeof(FfMpegToolJsonSchema.Packet))]
 [JsonSerializable(typeof(FfMpegToolJsonSchema.ClosedCaptionsProbe))]
+[JsonSerializable(typeof(FfMpegToolJsonSchema.StreamTimingsProbe))]
 internal partial class FfMpegToolJsonContext : JsonSerializerContext;
