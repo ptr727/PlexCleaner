@@ -262,7 +262,7 @@ public partial class MkvMerge
                 .InputOptions(options =>
                     options.Default().SelectTracks(selectMediaProps.Selected).InputFile(inputName)
                 )
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
@@ -279,7 +279,7 @@ public partial class MkvMerge
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().InputFile(inputName))
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
@@ -296,7 +296,7 @@ public partial class MkvMerge
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().NoSubtitles().InputFile(inputName))
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
@@ -330,7 +330,7 @@ public partial class MkvMerge
                         .SelectTracks(keepTwo)
                         .InputFile(sourceTwo)
                 )
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command

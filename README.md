@@ -27,7 +27,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Treat non-monotonic DTS errors as a verify failure, and attempt to repair it losslessly with the `setts` bitstream filter.
+- Treat a non-monotonic DTS as a verify failure, and attempt to repair it losslessly with the `setts` bitstream filter.
 - Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
 - Added the `DtsTimestampRepair` example plugin that attempts non-monotonic DTS repairs on `RepairFailed` files.
 

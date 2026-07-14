@@ -213,7 +213,7 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
+                .InputOptions(options => options.Default().InputFile(inputName))
                 .OutputOptions(options =>
                     options.MapAllCodecCopy().Default().Format(format).OutputFile(outputName)
                 )
@@ -442,7 +442,7 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
+                .InputOptions(options => options.Default().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .MapAllCodecCopy()
