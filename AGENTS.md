@@ -177,7 +177,7 @@ Anti-pattern: don't keep flipping the code on the same style point. Flip the rul
 - **Brownfield analyzer relaxations.** `Directory.Build.props` sets strict analysis; because this is a pre-existing console app, a specific set of analyzer rules are relaxed to suggestion in [`.editorconfig`](./.editorconfig), each documented inline. Prefer fixing new violations over adding relaxations.
 - **Spell check.** The cspell word list and path exclusions live in [`cspell.json`](./cspell.json), the single source shared by the editor and CI. Do not keep a parallel word list in the `.code-workspace` file.
 - **Run CI CLI tooling via Docker.** The linters CI uses (actionlint, markdownlint-cli2, shellcheck, cspell, etc.) need not be installed on the host - run them from their official images (e.g. `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint`) to reproduce a CI check locally before pushing.
-- **Release notes.** Keep a short summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release.
+- **Release notes.** Keep a short summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md); update both when cutting a release. `README.md` carries the summary for the **current version only** - when bumping the version, replace the previous version's summary rather than appending; prior versions live in `HISTORY.md`.
 
 ## Communicating with the User
 

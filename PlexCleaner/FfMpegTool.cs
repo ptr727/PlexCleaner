@@ -363,9 +363,11 @@ public partial class FfMpeg
             File.Delete(outputName);
 
             // Build command line, the escaped comma separates the setts option arguments
+            // No TestSnippets: this lossless stream-copy repair must produce the full file so the
+            // byte-identical gate and re-verify validate the whole file, not an unrepresentative snippet
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
-                .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
+                .InputOptions(options => options.Default().InputFile(inputName))
                 .OutputOptions(options =>
                     options
                         .MapAllCodecCopy()
