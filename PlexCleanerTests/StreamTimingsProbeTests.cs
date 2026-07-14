@@ -26,7 +26,8 @@ public class StreamTimingsProbeTests
     [Fact]
     public void FromJson_MissingTiming_DefaultsToNaN()
     {
-        // A stream without start_time or duration keeps the NaN sentinel, treated as unchanged by the gate
+        // A stream without start_time or duration keeps the NaN sentinel; the gate treats it as unchanged
+        // only when both sides are NaN, and fails closed when a value is present on only one side
         // lang=json
         const string json = """
             { "streams": [ { "index": 1 } ] }

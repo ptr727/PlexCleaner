@@ -2296,10 +2296,10 @@ public class ProcessFile
         );
 
     private static bool WithinSyncTolerance(double before, double after) =>
-        // A missing value (NaN) cannot be compared, so treat it as unchanged rather than fail the repair
-        double.IsNaN(before)
-        || double.IsNaN(after)
-        || Math.Abs(after - before) <= SyncToleranceSeconds;
+        // A value present on only one side cannot be verified, so fail closed; both sides missing (NaN)
+        // is symmetric and uncomparable, treat as unchanged; otherwise the shift must be within tolerance
+        double.IsNaN(before) == double.IsNaN(after)
+        && (double.IsNaN(before) || Math.Abs(after - before) <= SyncToleranceSeconds);
 
     public bool SetLastWriteTimeUtc(DateTime lastWriteTimeUtc)
     {
