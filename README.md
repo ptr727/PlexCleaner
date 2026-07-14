@@ -27,20 +27,9 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Treat a non-monotonic DTS as a verify failure, not decode corruption. Repair it losslessly with the `setts` bitstream filter when the break is demux-visible, otherwise keep it reported as a failure.
+- Treat non-monotonic DTS errors as a verify failure, and attempt to repair it losslessly with the `setts` bitstream filter.
 - Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
-- Added the `DtsTimestampRepair` example plugin that revisits files a previous version marked `RepairFailed` and losslessly repairs a demux-visible non-monotonic DTS, clearing the flag on success.
-
-**Version: 3.20**:
-
-**Summary:**
-
-- Reworked logging: added `--loglevel` (`Verbose` ... `Fatal`) to select the log level, `--logclear` (the log file now appends by default), and `--logelevate` to opt into raising a file's level to `Information` after a warning or error. `--logwarning` and `--logappend` are deprecated. Low-level tool and per-track chatter is now logged at `Debug`/`Verbose`.
-- Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
-- Normalize multiple or redundant `Default` track flags instead of only warning about them.
-- Fixed an `idet` interlace-detection defect where ffmpeg emitting its statistics more than once could cause the counts to parse incorrectly and detection to fail; also improved detection reporting (detection source and a self-describing reason).
-- Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
-- Fixed closed caption removal for H.265/HEVC video that was incorrectly reported as an unsupported format (HDR10 and HDR10+ HEVC content remains guarded).
+- Added the `DtsTimestampRepair` example plugin that attempts non-monotonic DTS repairs on `RepairFailed` files.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
