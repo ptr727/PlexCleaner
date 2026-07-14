@@ -2214,12 +2214,13 @@ public class ProcessFile
 
     private bool TryLosslessTimestampRepair()
     {
-        // Only a demux-visible non-monotonic DTS can be rewritten losslessly, a post-decode-only break has
-        // no demux target and stays a reported failure, an analysis failure is treated as unrepaired too
+        // The audio-only setts filter can repair only an audio-stream DTS, so attempt it only when every
+        // non-monotonic stream is audio; a video or subtitle DTS, a post-decode-only break with no demux
+        // target, or an analysis failure all stay reported failures without a wasted rewrite
         if (
             !GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo)
             || dtsInfo == null
-            || !dtsInfo.HasNonMonotonicDts
+            || !dtsInfo.NonMonotonicIsAudioOnly
         )
         {
             return false;
@@ -2253,13 +2254,52 @@ public class ProcessFile
         return true;
     }
 
-    private static bool TimestampRepairRegressionGate(string original, string repaired) =>
-        // Lossless requires every stream's coded payload to be byte-identical before and after
-        // The streamhash muxer hashes packet data only, so a matching hash proves only timestamps changed
-        Tools.FfMpeg.GetStreamHashes(original, out Dictionary<int, string> before)
-        && Tools.FfMpeg.GetStreamHashes(repaired, out Dictionary<int, string> after)
+    // A timestamp nudge must not shift a stream's start or duration by more than the A/V-sync
+    // perceptibility threshold, so the repair never introduces audible drift
+    private const double SyncToleranceSeconds = 0.040;
+
+    private static bool TimestampRepairRegressionGate(string original, string repaired)
+    {
+        // Payload must be byte-identical; the streamhash muxer hashes packet data only, not timestamps,
+        // so a matching hash proves only the timestamps changed
+        if (
+            !Tools.FfMpeg.GetStreamHashes(original, out Dictionary<int, string> beforeHash)
+            || !Tools.FfMpeg.GetStreamHashes(repaired, out Dictionary<int, string> afterHash)
+            || beforeHash.Count != afterHash.Count
+            || !beforeHash.All(kvp =>
+                afterHash.TryGetValue(kvp.Key, out string? hash) && hash == kvp.Value
+            )
+        )
+        {
+            return false;
+        }
+
+        // Timing must be preserved; the streamhash proves the samples are identical but not where they
+        // play, so verify no stream's start or duration moved beyond the A/V-sync tolerance
+        return TimestampRepairSyncPreserved(original, repaired);
+    }
+
+    private static bool TimestampRepairSyncPreserved(string original, string repaired) =>
+        Tools.FfProbe.GetStreamTimings(
+            original,
+            out Dictionary<int, (double Start, double Duration)> before
+        )
+        && Tools.FfProbe.GetStreamTimings(
+            repaired,
+            out Dictionary<int, (double Start, double Duration)> after
+        )
         && before.Count == after.Count
-        && before.All(kvp => after.TryGetValue(kvp.Key, out string? hash) && hash == kvp.Value);
+        && before.All(kvp =>
+            after.TryGetValue(kvp.Key, out (double Start, double Duration) other)
+            && WithinSyncTolerance(kvp.Value.Start, other.Start)
+            && WithinSyncTolerance(kvp.Value.Duration, other.Duration)
+        );
+
+    private static bool WithinSyncTolerance(double before, double after) =>
+        // A missing value (NaN) cannot be compared, so treat it as unchanged rather than fail the repair
+        double.IsNaN(before)
+        || double.IsNaN(after)
+        || Math.Abs(after - before) <= SyncToleranceSeconds;
 
     public bool SetLastWriteTimeUtc(DateTime lastWriteTimeUtc)
     {
