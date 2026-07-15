@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 // https://ffmpeg.org/ffmpeg.html
 
@@ -221,7 +220,7 @@ public partial class FfMpeg
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         private static void CreateTrackArgs(
@@ -321,7 +320,7 @@ public partial class FfMpeg
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         public bool ConvertToMkv(string inputName, string outputName)
@@ -349,7 +348,7 @@ public partial class FfMpeg
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         public bool SetTimestamps(string inputName, string outputName)
@@ -382,7 +381,7 @@ public partial class FfMpeg
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         public bool GetStreamHashes(string fileName, out Dictionary<int, string> streamHashes)
@@ -406,7 +405,7 @@ public partial class FfMpeg
             }
             if (result.ExitCode != 0)
             {
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
 
             // Parse lines of the form "index,type,md5=value"
@@ -455,7 +454,7 @@ public partial class FfMpeg
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         public bool GetIdetText(string fileName, out string text)
@@ -481,7 +480,7 @@ public partial class FfMpeg
                 return false;
             }
             text = result.StandardError.Trim();
-            return result.ExitCode == 0 || LogFailedResult(result);
+            return result.ExitCode == 0 || LogFailedResult(result, fileName);
         }
 
         [GeneratedRegex(

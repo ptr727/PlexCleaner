@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using ptr727.Utilities;
-using Serilog;
 using Serilog.Events;
 
 namespace PlexCleaner;

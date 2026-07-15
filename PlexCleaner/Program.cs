@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ptr727.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 

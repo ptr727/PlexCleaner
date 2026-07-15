@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
-using Serilog;
 
 namespace PlexCleaner;
 

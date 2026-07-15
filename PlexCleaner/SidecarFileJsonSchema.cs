@@ -3,7 +3,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ptr727.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 

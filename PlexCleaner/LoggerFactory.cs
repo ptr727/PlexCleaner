@@ -1,5 +1,4 @@
 using System.Globalization;
-using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;

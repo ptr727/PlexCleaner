@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using Serilog;
 using Serilog.Events;
 
 namespace PlexCleaner;

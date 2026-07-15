@@ -1,8 +1,8 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -94,70 +94,56 @@ public abstract class MediaTool
         return GitHubRelease.GetLatestRelease(repo, out version);
     }
 
-    public bool Execute(Command command, out CommandResult commandResult)
-    {
-        commandResult = null!;
-        int processId = -1;
-        try
-        {
-            CommandTask<CommandResult> task = command
-                .WithValidation(CommandResultValidation.None)
-                .ExecuteAsync(CancellationToken.None, Program.CancelToken());
-            processId = task.ProcessId;
-            Log.Debug(
-                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                processId,
-                command.Arguments
-            );
+    public bool Execute(
+        Command command,
+        out BufferedCommandResult bufferedCommandResult,
+        [CallerMemberName] string operation = ""
+    ) => Execute(command, false, false, out bufferedCommandResult, operation);
 
-            commandResult = task.Task.GetAwaiter().GetResult();
-            return task.Task.IsCompletedSuccessfully;
-        }
-        catch (OperationCanceledException)
-        {
-            Log.Error(
-                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                processId,
-                command.Arguments
-            );
-            return false;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
-        {
-            return false;
-        }
-    }
-
-    public bool Execute(Command command, out BufferedCommandResult bufferedCommandResult) =>
-        Execute(command, false, false, out bufferedCommandResult);
-
-    // Stream carrying tool error text; stderr by default, stdout for MkvMerge
+    // Stream carrying tool error text; stderr by default, stdout for the mkvtoolnix tools
     protected virtual string GetErrorOutput(BufferedCommandResult result) => result.StandardError;
 
-    protected bool LogFailedResult(BufferedCommandResult result)
+    protected bool LogFailedResult(
+        BufferedCommandResult result,
+        string fileName,
+        [CallerMemberName] string operation = ""
+    )
     {
         // ffmpeg can exit 0 yet report a fatal error on stderr (see FfMpegTool), so failures may carry
         // an error summary. Log the summary as its own value with the " : " separator in the template.
         // Folding the separator into a quoted string value instead puts the quote right after the exit
         // code, rendering: ExitCode: 0" : ... instead of the correct ExitCode: 0 : "...".
-        string summary = CleanForLog(Summarize(GetErrorOutput(result).Trim()));
+        // Prefer the stream the tool writes errors to (GetErrorOutput), fall back to the other captured
+        // stream so the error is logged even if the tool used the unexpected stream.
+        string error = GetErrorOutput(result).Trim();
+        if (string.IsNullOrEmpty(error))
+        {
+            error = result.StandardError.Trim();
+            if (string.IsNullOrEmpty(error))
+            {
+                error = result.StandardOutput.Trim();
+            }
+        }
+        string summary = CleanForLog(Summarize(error));
         if (string.IsNullOrEmpty(summary))
         {
             Log.Error(
-                "Failed execution of {ToolType} : ExitCode: {ExitCode}",
+                "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
                 GetToolType(),
-                result.ExitCode
+                operation,
+                result.ExitCode,
+                fileName
             );
         }
         else
         {
             Log.Error(
-                "Failed execution of {ToolType} : ExitCode: {ExitCode} : {Error}",
+                "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {Error} : {FileName}",
                 GetToolType(),
+                operation,
                 result.ExitCode,
-                summary
+                summary,
+                fileName
             );
         }
         return false;
@@ -179,21 +165,12 @@ public abstract class MediaTool
         return builder.ToString().Trim();
     }
 
-    protected bool LogFailedResult(CommandResult result)
-    {
-        Log.Error(
-            "Failed execution of {ToolType} : ExitCode: {ExitCode}",
-            GetToolType(),
-            result.ExitCode
-        );
-        return false;
-    }
-
     public bool Execute(
         Command command,
         bool stdOutSummary,
         bool stdErrSummary,
-        out BufferedCommandResult bufferedCommandResult
+        out BufferedCommandResult bufferedCommandResult,
+        [CallerMemberName] string operation = ""
     )
     {
         bufferedCommandResult = null!;
@@ -216,8 +193,9 @@ public abstract class MediaTool
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
             Log.Debug(
-                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                "Executing {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
+                operation,
                 processId,
                 command.Arguments
             );
@@ -235,8 +213,9 @@ public abstract class MediaTool
         catch (OperationCanceledException)
         {
             Log.Error(
-                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
+                operation,
                 processId,
                 command.Arguments
             );
@@ -248,7 +227,12 @@ public abstract class MediaTool
         }
     }
 
-    public bool ExecuteStreamStdErr(Command command, Action<string> lineAction, out int exitCode)
+    public bool ExecuteStreamStdErr(
+        Command command,
+        Action<string> lineAction,
+        out int exitCode,
+        [CallerMemberName] string operation = ""
+    )
     {
         exitCode = -1;
         int processId = -1;
@@ -277,8 +261,9 @@ public abstract class MediaTool
                 .ExecuteAsync(CancellationToken.None, Program.CancelToken());
             processId = task.ProcessId;
             Log.Debug(
-                "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                "Executing {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
+                operation,
                 processId,
                 command.Arguments
             );
@@ -290,8 +275,9 @@ public abstract class MediaTool
         catch (OperationCanceledException)
         {
             Log.Error(
-                "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
+                operation,
                 processId,
                 command.Arguments
             );

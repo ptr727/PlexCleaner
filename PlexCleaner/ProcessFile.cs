@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Serilog;
 using Serilog.Events;
 
 namespace PlexCleaner;
@@ -1760,7 +1759,6 @@ public class ProcessFile
     public static VerifyResult VerifyMediaStreams(FileInfo fileInfo)
     {
         // Verify
-        Log.Debug("Verifying media streams : {FileName}", fileInfo.FullName);
         VerifyResult verifyResult = Tools.FfMpeg.VerifyMedia(fileInfo.FullName);
 
         // Log the classified outcome so a failure is diagnosable, unless it was a cancellation
@@ -1920,7 +1918,6 @@ public class ProcessFile
         // https://en.wikipedia.org/wiki/YIFY
 
         // Calculate bitrate
-        Log.Debug("Calculating bitrate info : {FileName}", FileInfo.FullName);
         if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
             // Error
@@ -2579,7 +2576,6 @@ public class ProcessFile
     private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
-        Log.Debug("Counting interlaced frames : {FileName}", FileInfo.FullName);
         if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
         {
             // Cancel requested

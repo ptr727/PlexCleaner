@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 // http://manpages.ubuntu.com/manpages/zesty/man1/mediainfo.1.html
 
@@ -111,19 +110,13 @@ public partial class MediaInfo
                 .Build();
 
             // Execute command
-            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                Log.Error(
-                    "{ToolType} : Failed to get media info : {FileName}",
-                    GetToolType(),
-                    fileName
-                );
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
             if (result.StandardError.Length > 0)
             {

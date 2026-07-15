@@ -47,13 +47,23 @@ public class ToolFailureLogFormatTests
             return false;
         }
 
-        public bool InvokeLogFailedResult(BufferedCommandResult result) => LogFailedResult(result);
+        public bool InvokeLogFailedResult(
+            BufferedCommandResult result,
+            string fileName,
+            string operation
+        ) => LogFailedResult(result, fileName, operation);
     }
 
     // Call LogFailedResult with the given exit code and stderr, capturing the emitted event by
     // temporarily redirecting the static Serilog logger, then render it through the {Message} template
     // the console and file sinks use
-    private static string RenderLogFailedResult(int exitCode, string stderr)
+    private static string RenderLogFailedResult(
+        int exitCode,
+        string stderr,
+        string fileName = "file.mkv",
+        string stdout = "",
+        string operation = "Verify"
+    )
     {
         CapturingSink sink = new();
         ILogger original = Log.Logger;
@@ -66,10 +76,10 @@ public class ToolFailureLogFormatTests
                 exitCode,
                 DateTimeOffset.MinValue,
                 DateTimeOffset.MinValue,
-                string.Empty,
+                stdout,
                 stderr
             );
-            _ = tool.InvokeLogFailedResult(result).Should().BeFalse();
+            _ = tool.InvokeLogFailedResult(result, fileName, operation).Should().BeFalse();
         }
         finally
         {
@@ -97,14 +107,29 @@ public class ToolFailureLogFormatTests
         // The error text is quoted as its own value, opening after the " : " separator
         _ = rendered.Should().Contain("ExitCode: 0 : \"");
         _ = rendered.Should().Contain(Stderr);
+        // The file name follows as the last quoted value
+        _ = rendered.Should().EndWith("\"file.mkv\"");
         // The stray-quote bug rendered "ExitCode: 0\" : ..." with the quote right after the number
         _ = rendered.Should().NotContain("ExitCode: 0\"");
     }
 
     [Fact]
-    public void LogFailedResult_WithoutStderr_HasNoTrailingSeparatorOrQuote()
+    public void LogFailedResult_WithoutStderr_HasNoErrorValueButKeepsFileName()
     {
+        // With no output on either stream the error value is omitted, leaving the operation, exit code
+        // and file name
         string rendered = RenderLogFailedResult(2, string.Empty);
-        _ = rendered.Should().Be("Failed execution of FfMpeg : ExitCode: 2");
+        _ = rendered
+            .Should()
+            .Be("Failed execution of FfMpeg : Verify : ExitCode: 2 : \"file.mkv\"");
+    }
+
+    [Fact]
+    public void LogFailedResult_ErrorOnStdout_FallsBackToStdout()
+    {
+        // A tool that writes its error to stdout with an empty stderr (e.g. mkvtoolnix) is still logged
+        const string StdoutError = "Error: the file could not be opened for reading";
+        string rendered = RenderLogFailedResult(2, string.Empty, stdout: StdoutError);
+        _ = rendered.Should().Contain(StdoutError);
     }
 }

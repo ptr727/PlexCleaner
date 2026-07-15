@@ -17,7 +17,7 @@ public interface IPluginHost
     string Runtime { get; }
 
     // Plugin log events flow to the host sinks and end-of-run summary
-    Serilog.ILogger Logger { get; }
+    ILogger Logger { get; }
 }
 
 public interface IProcessPlugin

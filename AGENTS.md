@@ -203,6 +203,16 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
 
+### Tool execution and failure logging
+
+- **Run every tool through `MediaTool.Execute`, always buffered.** A subprocess whose stdout/stderr is not consumed can deadlock once it fills the pipe buffer, so do not add an unbuffered/streaming variant for a tool that produces output - capture it (buffered, or summarized when the output is huge). `Execute`, its cancellation path, and `LogFailedResult` all record the **operation** (the calling method, captured via `[CallerMemberName]`, rendered with `:l`) so a command line ties to its purpose in a parallel log without correlating separate lines.
+- **Tools write errors to different streams.** ffmpeg, ffprobe, and HandBrake use **stderr**; the mkvtoolnix tools (mkvmerge, mkvpropedit) and MediaInfo write everything including errors to **stdout** (confirmed from the mkvtoolnix source - all output goes through the one stdout object); 7-Zip uses **stderr**. `GetErrorOutput` names a tool's stream via a per-tool override, and `LogFailedResult` falls back to the other captured stream so an error is never lost.
+- **Do not add a per-method debug line that just restates the command about to run** (e.g. `Getting media info`); the `Executing {Tool} : {operation} : args` line from `Execute` already covers it.
+
+### Failure-handling philosophy
+
+An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail); an **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error, so the bug surfaces and gets fixed rather than being masked by a fallback that silently mis-processes at scale.
+
 ## Project Structure
 
 - **PlexCleaner** (`PlexCleaner/PlexCleaner.csproj`)
