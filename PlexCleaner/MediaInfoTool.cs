@@ -118,12 +118,13 @@ public partial class MediaInfo
             {
                 return LogFailedResult(result, fileName);
             }
-            if (result.StandardError.Length > 0)
+            string warning = CleanForLog(result.StandardError.Trim());
+            if (!string.IsNullOrEmpty(warning))
             {
                 Log.Warning(
                     "{ToolType} : Warning getting media info : {Warning} : {FileName}",
                     GetToolType(),
-                    CleanForLog(result.StandardError.Trim()),
+                    warning,
                     fileName
                 );
             }
