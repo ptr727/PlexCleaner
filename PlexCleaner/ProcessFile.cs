@@ -1186,7 +1186,7 @@ public class ProcessFile
         // Count the frame types using the idet filter
         if (!GetIdetInfo(out idetInfo) || idetInfo == null)
         {
-            // Error
+            // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
             return false;
         }
 
