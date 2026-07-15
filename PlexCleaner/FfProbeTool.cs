@@ -223,7 +223,6 @@ public partial class FfProbe
             }
             if (result.ExitCode != 0)
             {
-                Log.Error("Failed to get closed caption info : {FileName}", fileName);
                 return LogFailedResult(result, fileName);
             }
 
@@ -266,7 +265,6 @@ public partial class FfProbe
             }
             if (result.ExitCode != 0)
             {
-                Log.Error("Failed to get stream timings : {FileName}", fileName);
                 return LogFailedResult(result, fileName);
             }
 
