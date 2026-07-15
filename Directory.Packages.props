@@ -3,18 +3,18 @@
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="CliWrap" Version="3.10.2" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.39" />
-    <PackageVersion Include="ptr727.Utilities" Version="4.0.7" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.44" />
+    <PackageVersion Include="ptr727.Utilities" Version="4.0.15" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.9" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.10" />
     <PackageVersion Include="Utf8JsonAsyncStreamReader" Version="2.1.0" />
     <PackageVersion Include="xunit.analyzers" Version="1.27.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
