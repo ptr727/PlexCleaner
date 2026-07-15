@@ -113,17 +113,15 @@ public abstract class MediaTool
         // an error summary. Log the summary as its own value with the " : " separator in the template.
         // Folding the separator into a quoted string value instead puts the quote right after the exit
         // code, rendering: ExitCode: 0" : ... instead of the correct ExitCode: 0 : "...".
-        // Prefer the stream the tool writes errors to (GetErrorOutput), fall back to the other captured
-        // stream so the error is logged even if the tool used the unexpected stream.
-        string error = GetErrorOutput(result).Trim();
-        if (string.IsNullOrEmpty(error))
-        {
-            error = result.StandardError.Trim();
-            if (string.IsNullOrEmpty(error))
-            {
-                error = result.StandardOutput.Trim();
-            }
-        }
+        // Prefer the stream the tool writes errors to (GetErrorOutput); if it is empty, fall back to the
+        // other captured stream so an error on an unexpected stream is still logged.
+        string stdErr = result.StandardError.Trim();
+        string stdOut = result.StandardOutput.Trim();
+        string primary = GetErrorOutput(result).Trim();
+        string error =
+            !string.IsNullOrEmpty(primary) ? primary
+            : !string.IsNullOrEmpty(stdErr) ? stdErr
+            : stdOut;
         string summary = CleanForLog(Summarize(error));
         if (string.IsNullOrEmpty(summary))
         {
