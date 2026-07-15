@@ -1858,8 +1858,8 @@ public class ProcessFile
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
-        // Non-monotonic DTS is a repairable failure, fix it losslessly with setts
-        // A re-encode cannot fix timestamps so it is not a fallback here
+        // Non-monotonic DTS is a repairable failure; try a lossless surgical setts repair first, then fall
+        // through to the shared remux and re-encode tiers for a video or post-decode DTS setts cannot fix
         if (_lastVerifyResult == VerifyResult.TimestampOnly)
         {
             return RepairTimestampsAndSetState(ref modified);
@@ -2074,7 +2074,20 @@ public class ProcessFile
         // https://ffmpeg.org/ffmpeg-filters.html#crop
         // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
-        // Repair to temp file, only if verify is successful replace original file
+        // Tier 1: a plain remux rewrites the container and its timestamps, clearing a demux-visible break
+        // such as a non-monotonic DTS without re-encoding; it cannot fix decode-level corruption
+        if (TryRemuxRepair())
+        {
+            Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
+            return true;
+        }
+        if (Program.IsCancelledError())
+        {
+            return false;
+        }
+
+        // Tier 2: re-encode rebuilds the streams, fixing decode corruption and timestamp breaks a remux
+        // cannot. Repair to temp file, only if verify is successful replace original file
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp12");
         Debug.Assert(FileInfo.FullName != tempName);
 
@@ -2148,6 +2161,34 @@ public class ProcessFile
         return true;
     }
 
+    private bool TryRemuxRepair()
+    {
+        // Remux to a temp file, only replace the original if the re-verify is clean
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp11");
+        Debug.Assert(FileInfo.FullName != tempName);
+
+        Log.Information(
+            "Attempting media repair by remuxing using MkvMerge : {FileName}",
+            FileInfo.FullName
+        );
+        if (!Tools.MkvMerge.ReMuxToMkv(FileInfo.FullName, tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Require a clean re-verify, a remux that still fails falls through to the re-encode tier
+        if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Verify succeeded, replace the original with the remuxed file
+        File.Move(tempName, FileInfo.FullName, true);
+        return true;
+    }
+
     public bool RepairTimestamps(ref bool modified)
     {
         // Only process Matroska files, the audio timestamp repair does not require a video stream
@@ -2186,8 +2227,10 @@ public class ProcessFile
 
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
-        // A detected non-monotonic DTS is a failure, repair it losslessly when the break is demux-visible
-        if (TryLosslessTimestampRepair())
+        // Escalate through the repair tiers: a lossless surgical setts repair for a demux-visible audio
+        // DTS, then the shared remux and re-encode ladder for a video or post-decode DTS setts cannot fix.
+        // The first tier whose re-verify is clean wins
+        if (TryLosslessTimestampRepair() || RepairAndReVerify())
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
             _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
@@ -2203,7 +2246,8 @@ public class ProcessFile
             return false;
         }
 
-        // A detected DTS we could not repair stays reported as a failure, a detected issue is not cleared
+        // No tier could repair the detected DTS, it stays reported as a failure, a detected issue is
+        // not cleared
         _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
         _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
