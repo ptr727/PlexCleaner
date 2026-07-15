@@ -319,7 +319,7 @@ public partial class MkvMerge
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode is 0 or 1 || LogFailedResult(result, outputName));
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result, sourceOne));
         }
 
         [GeneratedRegex(
