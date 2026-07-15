@@ -138,11 +138,11 @@ public partial class MkvMerge
             {
                 // TODO: This probably never gets hit due to mkvmerge not using stderr
                 Log.Warning(
-                    "{ToolType} : Warning getting media info : {FileName}",
+                    "{ToolType} : Warning getting media info : {Warning} : {FileName}",
                     GetToolType(),
+                    CleanForLog(result.StandardError.Trim()),
                     fileName
                 );
-                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get JSON from stdout

@@ -30,8 +30,9 @@ public static class Tools
             && !Program.Config.ToolsOptions.UseSystem
         )
         {
-            Log.Warning("Folder tools are not supported on Linux");
-            Log.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
+            Log.Warning(
+                "Folder tools are not supported on Linux, setting 'ToolsOptions:UseSystem' to 'true'"
+            );
             Program.Config.ToolsOptions.UseSystem = true;
         }
 

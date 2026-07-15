@@ -128,11 +128,11 @@ public partial class MediaInfo
             if (result.StandardError.Length > 0)
             {
                 Log.Warning(
-                    "{ToolType} : Warning getting media info : {FileName}",
+                    "{ToolType} : Warning getting media info : {Warning} : {FileName}",
                     GetToolType(),
+                    CleanForLog(result.StandardError.Trim()),
                     fileName
                 );
-                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get JSON output
