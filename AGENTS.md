@@ -198,10 +198,20 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
   - A "modification" is a write to the **media file**, including in-place metadata edits (MkvPropEdit flags/language/title) and container remuxes/renames. Sidecar cache writes and the results file are bookkeeping, not media modifications - they are Debug/Information, not Warnings.
   - **The media-manipulation code itself does not emit Warning.** Doing a remux or re-encode is that code's job, not a warning. Only the decision to run it is the Warning. Do not sprinkle Warnings through `Convert`, the media-tool wrappers, or the worker methods.
 - **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics: startup (banner, settings, tool versions), discovery (`Discovered N files`), batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary), the per-file entry, read-only outcomes of note (skips), a worker **doing its job** (e.g. `Convert.ReMux` logging `Remux using MkvMerge`), and the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
-- **Debug** - troubleshooting detail; *how* the work is done: raw tool invocations and command lines (`Executing MkvMerge : args`), read/probe mechanics (`Getting media info`, `Reading media info from sidecar`, temp files, packet probes), per-track structural dumps during normal processing, inspection sub-steps (verify, bitrate, idet counting), and sidecar cache bookkeeping.
+- **Debug** - troubleshooting detail; *how* the work is done: raw tool invocations and command lines (`Executing MkvMerge : GetMediaPropsJson : args`, which carry the operation so a per-method "doing X" line is not needed), read/probe mechanics (`Reading media info from sidecar`, temp files, packet probes), per-track structural dumps during normal processing, inspection sub-steps (verify, bitrate, idet counting), and sidecar cache bookkeeping.
 - **Verbose** - very granular: filesystem-watcher events, per-packet/byte-level progress.
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
+
+### Tool execution and failure logging
+
+- **Always consume a tool's output.** A subprocess whose stdout/stderr is not read can deadlock once it fills the pipe buffer, so never run a tool without consuming its pipes: `MediaTool.Execute` buffers them (summarize when the output is huge), and `ExecuteStreamStdErr` streams stderr line by line for the unbounded `-f null` verify pass. `Execute`, its cancellation path, and `LogFailedResult` record the **operation** (the calling method, captured via `[CallerMemberName]`, rendered with `:l`) so a command line ties to its purpose in a parallel log without correlating separate lines.
+- **Tools write errors to different streams.** ffmpeg, ffprobe, HandBrake, and 7-Zip use **stderr**; the mkvtoolnix tools (mkvmerge, mkvpropedit) write everything including errors to **stdout** (confirmed from the mkvtoolnix source - all output goes through the one stdout object) and override `GetErrorOutput` to it. MediaInfo also emits to stdout but keeps the stderr default; its errors are caught by the `LogFailedResult` fallback, which reads the other captured stream when the tool's declared stream is empty, so an error is never lost.
+- **Do not add a per-method debug line that just restates the command about to run** (e.g. `Getting media info`); the `Executing {Tool} : {operation} : args` line from `Execute` already covers it.
+
+### Failure-handling philosophy
+
+An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail); an **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error, so the bug surfaces and gets fixed rather than being masked by a fallback that silently mis-processes at scale.
 
 ## Project Structure
 

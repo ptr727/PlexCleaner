@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 // 7za <command> [<switches>...] <archive_name> [<file_names>...] [<@listfiles...>]
 
@@ -137,8 +136,8 @@ public partial class SevenZip
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode == 0 || LogFailedResult(result, inputFile));
         }
 
         public bool BootstrapDownload()

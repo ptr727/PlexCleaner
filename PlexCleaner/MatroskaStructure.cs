@@ -1,5 +1,4 @@
 using NEbml.Core;
-using Serilog;
 
 namespace PlexCleaner;
 

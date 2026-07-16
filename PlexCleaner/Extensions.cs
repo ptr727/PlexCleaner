@@ -1,5 +1,3 @@
-using Serilog;
-
 namespace PlexCleaner;
 
 public static class Extensions

@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using ptr727.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 

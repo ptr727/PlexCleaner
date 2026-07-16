@@ -1,10 +1,10 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Stream;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 // https://ffmpeg.org/ffprobe.html
 
@@ -56,13 +56,15 @@ public partial class FfProbe
         public bool GetPackets(
             Command command,
             Func<FfMpegToolJsonSchema.Packet, bool> packetFunc,
-            out string error
+            out string error,
+            [CallerMemberName] string operation = ""
         )
         {
             // Wrap async function in a task
             (bool result, string error) result = GetPacketsAsync(
                     command,
-                    async packet => await Task.FromResult(packetFunc(packet))
+                    async packet => await Task.FromResult(packetFunc(packet)),
+                    operation
                 )
                 .GetAwaiter()
                 .GetResult();
@@ -72,7 +74,8 @@ public partial class FfProbe
 
         public async Task<(bool result, string error)> GetPacketsAsync(
             Command command,
-            Func<FfMpegToolJsonSchema.Packet, Task<bool>> packetFunc
+            Func<FfMpegToolJsonSchema.Packet, Task<bool>> packetFunc,
+            [CallerMemberName] string operation = ""
         )
         {
             int processId = -1;
@@ -165,8 +168,9 @@ public partial class FfProbe
                     .ExecuteAsync(CancellationToken.None, Program.CancelToken());
                 processId = task.ProcessId;
                 Log.Debug(
-                    "Executing {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                    "Executing {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                     GetToolType(),
+                    operation,
                     processId,
                     command.Arguments
                 );
@@ -178,8 +182,9 @@ public partial class FfProbe
             catch (OperationCanceledException)
             {
                 Log.Error(
-                    "Cancelled execution of {ToolType} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+                    "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                     GetToolType(),
+                    operation,
                     processId,
                     command.Arguments
                 );
@@ -212,15 +217,13 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Debug("Getting closed caption info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                Log.Error("Failed to get closed caption info : {FileName}", fileName);
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
 
             // Any video stream reporting closed captions, FromJson throws on malformed output
@@ -256,15 +259,13 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Debug("Getting stream timings : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                Log.Error("Failed to get stream timings : {FileName}", fileName);
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
 
             // FromJson throws on malformed output
@@ -303,7 +304,6 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            Log.Debug("Getting analysis packets : {FileName}", fileName);
             if (!GetPackets(command, packetFunc, out string error))
             {
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
@@ -334,28 +334,23 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            Log.Debug("{ToolType} : Getting media info : {FileName}", GetToolType(), fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                Log.Error(
-                    "{ToolType} : Failed to get media info : {FileName}",
-                    GetToolType(),
-                    fileName
-                );
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
-            if (result.StandardError.Length > 0)
+            string warning = CleanForLog(result.StandardError.Trim());
+            if (!string.IsNullOrEmpty(warning))
             {
                 Log.Warning(
-                    "{ToolType} : Warning getting media info : {FileName}",
+                    "{ToolType} : Warning getting media info : {Warning} : {FileName}",
                     GetToolType(),
+                    warning,
                     fileName
                 );
-                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
             }
 
             // Get JSON output
