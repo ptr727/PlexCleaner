@@ -1,19 +1,18 @@
 name: Merge bot pull request action
 
-# Enable auto-merge once per PR on opened/reopened; disable it when a maintainer pushes to a bot branch. Merge
-# method by base branch (develop = squash, main = merge). App token so the merge fires downstream workflows
-# (GITHUB_TOKEN pushes don't) and so the disable job has write access on read-only Dependabot PRs.
-
-# `pull_request_target` (not `pull_request`): these jobs hold the App private key, so the workflow definition and
-# its action SHAs must resolve from the trusted base branch, not the PR head. Safe because no job checks out PR
-# code - each only runs `gh pr merge` against the PR by URL.
+# Auto-merges in-repo Dependabot PRs: enable on opened/reopened, disable on a maintainer push. Carried from the
+# fleet reference trimmed to the Dependabot jobs - no codegen bot opens PRs against this repo.
+# - Merge method by base: develop = squash, main = merge.
+# - App token, not GITHUB_TOKEN: fires downstream workflows on merge, and grants write on read-only Dependabot PRs.
+# - pull_request_target, not pull_request: jobs hold the App key, so the workflow + action SHAs resolve from the
+#   trusted base, not PR head. Safe because no job checks out PR code (each runs gh pr merge by URL).
 on:
   pull_request_target:
     types: [opened, reopened, synchronize]
 
-# Per-PR group: under `pull_request_target` `github.ref` is the base branch, which would serialize every bot PR
-# against that base; key on the PR number so each PR's events queue independently. `cancel-in-progress: false` so a
-# follow-up synchronize doesn't cancel an in-flight `opened` run before it enables auto-merge.
+# Concurrency keys on the PR number, not github.ref (the base branch under pull_request_target, which would
+# serialize every bot PR against it), so each PR queues independently. cancel-in-progress: false so a follow-up
+# synchronize doesn't cancel an in-flight opened run before it enables auto-merge.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -23,8 +22,7 @@ jobs:
   merge-dependabot:
     name: Merge dependabot pull request job
     runs-on: ubuntu-latest
-    # In-repo Dependabot PRs only, on opened/reopened so the disable job stays sticky. Every tier
-    # auto-merges, semver-major included: the required checks are the gate, not the version bump.
+    # Dependabot PRs from this repo (not forks). Only on opened/reopened so the disable job stays sticky.
     if: >-
       (github.event.action == 'opened' || github.event.action == 'reopened') &&
       github.event.pull_request.user.login == 'dependabot[bot]' &&
@@ -42,6 +40,7 @@ jobs:
           client-id: ${{ secrets.CODEGEN_APP_CLIENT_ID }}
           private-key: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}
 
+      # Auto-merge every tier, semver-major included: the required checks are the gate, not the bump magnitude.
       - name: Merge pull request step
         run: |
           set -euo pipefail
@@ -53,7 +52,7 @@ jobs:
               exit 1
               ;;
           esac
-          gh pr merge --auto --delete-branch "$method" "$PR_URL"
+          gh pr merge --auto "$method" "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -62,7 +61,7 @@ jobs:
     name: Disable auto-merge on maintainer push job
     runs-on: ubuntu-latest
     # Fires when a maintainer pushes to a bot's branch (synchronize, actor != bot). Disables auto-merge so the
-    # maintainer's commits don't merge with the bot's; they re-enable it manually. The disable call is idempotent.
+    # maintainer's commits don't merge with the bot's, and they re-enable it manually. The disable call is idempotent.
     if: >-
       github.event.action == 'synchronize' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
