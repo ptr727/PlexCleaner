@@ -1,194 +1,102 @@
 #!/usr/bin/env bash
-# Repository configuration as code - the secrets, branch rulesets, and settings the workflows assume
-# (see WORKFLOW.md section 6, guarantee D10). Idempotent: `apply` configures a repo to match the JSON in
-# this directory; `check` validates an existing repo and exits non-zero on drift (the 5D audit). Run from
-# anywhere; the target repo is resolved from the current `gh` context unless $REPO is set (owner/name).
+# Apply the committed fleet configuration in this directory to the repository via the GitHub API:
+#   1. General repository settings from settings.json (PATCH /repos/{owner}/{repo}), plus the two settings that depend on
+#      per-repo state - has_discussions (public repos only) and default_branch (main, only if it exists).
+#   2. The branch rulesets. main.json is shared by both workflow models; the develop ruleset is model-specific -
+#      release repos use develop.json (PR-gated), operational repos use operational/develop.json (direct signed
+#      pushes). The model is read from ../registry/repos.json (per-repo workflowModel, else defaults.workflowModel,
+#      else release) and can be overridden with the second argument. Each <name>.json holds the writable ruleset
+#      subset {name, target, enforcement, bypass_actors, conditions, rules}. An existing ruleset (matched by name)
+#      is updated with a full-payload PUT (partial PUTs 422); a missing one is created with POST.
+# Rerunning is idempotent.
 #
-#   ./repo-config/configure.sh check     # validate only, no writes (the 5D audit)
-#   ./repo-config/configure.sh apply     # create-or-update rulesets + settings (writes)
-#
-# Requires gh and jq. Both modes read the rulesets and secrets endpoints, which need admin on the repo, so
-# gh must be authenticated with admin for `check` as well as `apply`. `check` only reads; `apply` writes.
-
+# Usage: repo-config/configure.sh [owner/repo] [release|operational]   (repo defaults to the current repo via gh;
+#        model defaults to the registry lookup)
 set -euo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="${REPO:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
+repo="${1:-$(gh repo view --json nameWithOwner --jq '.nameWithOwner')}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Secrets by store (names only; values are never readable via the API). The Docker Hub credentials, the
-# merge-bot App credentials, and CODECOV_TOKEN must be set in BOTH stores: a Dependabot-triggered run gets the
-# Dependabot secret store, not Actions secrets, and that run's push CI builds the Docker smoke (logs in to
-# Docker Hub) and runs the validate job (uploads coverage to Codecov). Publishing the GitHub release uses the
-# built-in GITHUB_TOKEN (no secret needed).
-REQUIRED_ACTIONS_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY CODECOV_TOKEN)
-REQUIRED_DEPENDABOT_SECRETS=(DOCKER_HUB_USERNAME DOCKER_HUB_ACCESS_TOKEN CODEGEN_APP_CLIENT_ID CODEGEN_APP_PRIVATE_KEY CODECOV_TOKEN)
-REQUIRED_CHECK="Check pull request workflow status job"
-
-note()  { printf '  %s\n' "$*"; }
-pass()  { printf '  \033[32mok\033[0m   %s\n' "$*"; }
-fail()  { printf '  \033[31mFAIL\033[0m %s\n' "$*"; FAILED=1; }
-FAILED=0
-
-ruleset_id() { # name -> id (empty if absent); aborts with a visible reason on an API error
-  local out
-  # An absent ruleset is a successful call with no match (empty); only a real API error fails. Let gh print its
-  # own error on stderr (do not suppress it); add a generic context line and return non-zero so the run stops
-  # (the caller's $(...) cannot print the cause itself).
-  # per_page=100 returns every ruleset in one array (a repo has only a handful); the default page size is 30.
-  if ! out="$(gh api "repos/$REPO/rulesets?per_page=100")"; then
-    echo "ERROR: could not list rulesets for $REPO (see gh error above)" >&2
-    return 1
-  fi
-  # shellcheck disable=SC2016  # $n is a jq variable (--arg n), not a shell expansion
-  # Select the first match inside jq (not `| head -1`): under pipefail, head closing the pipe early can
-  # SIGPIPE jq and fail the function.
-  jq -r --arg n "$1" '[.[] | select(.name==$n) | .id] | first // empty' <<<"$out"
-}
-
-apply_ruleset() {
-  local file="$1" name id
-  name="$(jq -r .name "$file")"
-  id="$(ruleset_id "$name")"
-  if [[ -n "$id" ]]; then
-    gh api -X PUT "repos/$REPO/rulesets/$id" --input "$file" >/dev/null
-    note "updated ruleset '$name' (#$id)"
-  else
-    gh api -X POST "repos/$REPO/rulesets" --input "$file" >/dev/null
-    note "created ruleset '$name'"
-  fi
-}
-
-cmd_apply() {
-  echo "Applying repository configuration to $REPO"
-  apply_ruleset "$DIR/ruleset-develop.json"
-  apply_ruleset "$DIR/ruleset-main.json"
-  gh api -X PATCH "repos/$REPO" --input "$DIR/settings.json" >/dev/null
-  note "patched repository settings"
-  gh api -X PUT "repos/$REPO/vulnerability-alerts" >/dev/null
-  gh api -X PUT "repos/$REPO/automated-security-fixes" >/dev/null
-  note "enabled Dependabot alerts + security updates"
-  echo "Done. Run '$0 check' to validate."
-}
-
-# --- validation (5D) -------------------------------------------------------------------------------
-
-# assert MESSAGE TEST... - run the test command; pass on success, fail on non-zero (proper if/else, not
-# the A && B || C footgun). The test command may read stdin (e.g. a `<<<` heredoc on the assert call).
-# Do not redirect the assert call's stdout - that would also swallow the pass/fail line; commands that
-# print (jq) use `jq_has`, which silences only itself.
-assert() {
-  local msg="$1"; shift
-  if "$@"; then pass "$msg"; else fail "$msg"; fi
-}
-
-# jq_has FILTER... - true iff the jq filter selects something; jq's own output is discarded, not the
-# caller's. Reads JSON from stdin.
-jq_has() { jq -e "$@" >/dev/null 2>&1; }
-
-# jq_lacks FILTER... - true iff the jq filter yields no truthy value (selects nothing, or only false/null).
-# `jq -e` exits 1 (last output false/null) or 4 (no output at all) for the "lacks" cases, 0 for a truthy
-# match, and 2/3/5 for a real error (malformed filter or input), which is propagated so the calling assert
-# fails loudly. The `|| rc=$?` keeps jq in a list (exempt from set -e) so a non-zero exit captures rc instead
-# of aborting. Only stdout is discarded - jq's stderr is kept so a real error shows its diagnostic.
-jq_lacks() { local rc=0; jq -e "$@" >/dev/null || rc=$?; case "$rc" in 0) return 1 ;; 1|4) return 0 ;; *) return "$rc" ;; esac; }
-
-check_ruleset() { # name  expected-merge-method  expect-linear(true/false)
-  local name="$1" method="$2" linear="$3" id rs
-  id="$(ruleset_id "$name")"
-  if [[ -z "$id" ]]; then fail "ruleset '$name' missing"; return; fi
-  rs="$(gh api "repos/$REPO/rulesets/$id")"
-  assert "ruleset '$name' active" \
-    test "$(jq -r '.enforcement' <<<"$rs")" = active
-  assert "'$name' merge method = $method" \
-    test "$(jq -r '.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods | join(",")' <<<"$rs")" = "$method"
-  assert "'$name' requires signed commits" \
-    jq_has '.rules[] | select(.type=="required_signatures")' <<<"$rs"
-  assert "'$name' strict status policy off" \
-    test "$(jq -r '.rules[] | select(.type=="required_status_checks") | .parameters.strict_required_status_checks_policy' <<<"$rs")" = false
-  # shellcheck disable=SC2016  # $c is a jq variable (--arg c), not a shell expansion
-  assert "'$name' requires '$REQUIRED_CHECK'" \
-    jq_has --arg c "$REQUIRED_CHECK" '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[] | select(.context==$c)' <<<"$rs"
-  if [[ "$linear" == "true" ]]; then
-    assert "'$name' requires linear history" \
-      jq_has '.rules[] | select(.type=="required_linear_history")' <<<"$rs"
-  else
-    # main must NOT require linear history - it would block the develop -> main merge-commit promotion.
-    assert "'$name' does not require linear history" \
-      jq_lacks '.rules[] | select(.type=="required_linear_history")' <<<"$rs"
-  fi
-}
-
-# gh_ok ENDPOINT... - true iff the gh api call succeeds (2xx, including 204). Output and errors are
-# discarded, so it is safe to pass to `assert`.
-gh_ok() { gh api "$@" >/dev/null 2>&1; }
-
-check_settings() {
-  local s; s="$(gh api "repos/$REPO")"
-  # Drive every assertion from settings.json, so the check covers exactly the applied desired state and
-  # never drifts from the file (add a key there and it is audited here automatically).
-  local key want got
-  while IFS=$'\t' read -r key want; do
-    # shellcheck disable=SC2016  # $k is a jq variable (--arg k), not a shell expansion
-    got="$(jq -r --arg k "$key" '.[$k]' <<<"$s")"
-    assert "setting $key = $want" test "$got" = "$want"
-  done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$DIR/settings.json")
-}
-
-check_security() {
-  # apply enables both; audit that they are still on. vulnerability-alerts returns 204 when enabled and
-  # 404 when disabled; automated-security-fixes returns { "enabled": true/false }.
-  assert "Dependabot vulnerability alerts enabled" gh_ok "repos/$REPO/vulnerability-alerts"
-  assert "Dependabot automated security updates enabled" \
-    jq_has '.enabled == true' < <(gh api "repos/$REPO/automated-security-fixes")
-}
-
-check_secrets() {
-  # --paginate: the secrets endpoints page at 30, so without it a repo with many secrets could miss a
-  # required name and report a false failure. An API/auth error FAILs fast (the required secrets cannot be
-  # verified, so reporting "matches" would be wrong) - distinct from a genuinely missing secret, which also
-  # FAILs. gh prints its own error (stderr not suppressed) so the cause is actionable.
-  local actions deps
-  if ! actions="$(gh api --paginate "repos/$REPO/actions/secrets" --jq '.secrets[].name')"; then
-    fail "could not list Actions secrets (API error - cannot verify required secrets)"; return
-  fi
-  if ! deps="$(gh api --paginate "repos/$REPO/dependabot/secrets" --jq '.secrets[].name')"; then
-    fail "could not list Dependabot secrets (API error - cannot verify required secrets)"; return
-  fi
-  for s in "${REQUIRED_ACTIONS_SECRETS[@]}"; do
-    assert "actions secret $s present" grep -qx "$s" <<<"$actions"
-  done
-  for s in "${REQUIRED_DEPENDABOT_SECRETS[@]}"; do
-    assert "dependabot secret $s present" grep -qx "$s" <<<"$deps"
-  done
-}
-
-check_app() {
-  # Best-effort: confirm a GitHub App installation backs the merge-bot automation. A precise check
-  # requires app-level auth; presence of the App secrets above is the practical proxy.
-  if gh api "repos/$REPO/installation" >/dev/null 2>&1; then
-    pass "a GitHub App is installed on the repo"
-  else
-    note "could not confirm App installation via this token (verify the merge-bot App is installed)"
-  fi
-}
-
-cmd_check() {
-  echo "Validating repository configuration for $REPO"
-  check_ruleset develop squash true
-  check_ruleset main   merge  false
-  check_settings
-  check_security
-  check_secrets
-  check_app
-  # Not checkable via gh api beyond name presence: that DOCKER_HUB_ACCESS_TOKEN is valid and has push
-  # access to docker.io/ptr727/plexcleaner. Verify it by hand in the Docker Hub account.
-  note "verify manually: Docker Hub access token valid with push to docker.io/ptr727/plexcleaner"
-  if [[ "$FAILED" -ne 0 ]]; then echo "Configuration drift detected."; exit 1; fi
-  echo "Configuration matches."
-}
-
-case "${1:-check}" in
-  apply) cmd_apply ;;
-  check) cmd_check ;;
-  *) echo "usage: $0 [apply|check]" >&2; exit 2 ;;
+# ----- Resolve the workflow model (selects the develop ruleset) -----
+registry="$script_dir/../registry/repos.json"
+name="${repo##*/}"
+model="${2:-}"
+if [ -z "$model" ]; then
+    if [ -f "$registry" ]; then
+        # Fail fast on a jq/parse error (malformed registry) instead of silently applying the release default
+        # to a repo whose lookup actually broke. A repo simply absent from the registry is not an error: the
+        # expression falls back through defaults.workflowModel to "release", so jq still exits 0 with a value.
+        if ! model="$(jq -r --arg n "$name" '(.repos[] | select(.name==$n) | .workflowModel) // .defaults.workflowModel // "release"' "$registry")"; then
+            echo "Failed to read workflowModel from $registry (invalid JSON?). Pass the model explicitly as arg 2." >&2
+            exit 1
+        fi
+    else
+        # No registry to consult (e.g. running the script standalone) - default, but say so.
+        echo "Registry $registry not found; defaulting workflow model to release." >&2
+        model="release"
+    fi
+fi
+case "$model" in
+    release) develop_ruleset="$script_dir/develop.json" ;;
+    operational) develop_ruleset="$script_dir/operational/develop.json" ;;
+    *) echo "Unknown workflow model '$model' (expected release or operational)." >&2; exit 1 ;;
 esac
+echo "Workflow model for $repo: $model"
+
+# ----- General repository settings -----
+settings_file="$script_dir/settings.json"
+if [ -e "$settings_file" ]; then
+    # has_discussions: enabled on public repos only (fleet policy); never on private.
+    private="$(gh api "repos/$repo" --jq '.private')"
+    disc=false; [ "$private" = "false" ] && disc=true
+    # default_branch main, but only point it at main when main exists - never set the default to a missing
+    # branch (e.g. a repo still on a rework branch).
+    if gh api "repos/$repo/branches/main" --jq '.name' >/dev/null 2>&1; then
+        payload="$(jq --argjson d "$disc" '. + {has_discussions: $d, default_branch: "main"}' "$settings_file")"
+    else
+        payload="$(jq --argjson d "$disc" '. + {has_discussions: $d}' "$settings_file")"
+        echo "Warning: $repo has no 'main' branch; leaving default_branch unchanged." >&2
+    fi
+    echo "Applying general settings to $repo (has_discussions=$disc)"
+    printf '%s' "$payload" | gh api --method PATCH "repos/$repo" --input - >/dev/null
+fi
+
+# ----- Branch rulesets -----
+# main.json is shared; the develop ruleset was selected by workflow model above. A missing or nameless
+# payload aborts - silently skipping it would report success on a partially-applied configuration.
+for file in "$develop_ruleset" "$script_dir/main.json"; do
+    if [ ! -e "$file" ]; then
+        echo "Ruleset payload $file not found; aborting to avoid a partially-applied configuration." >&2
+        exit 1
+    fi
+    ruleset_name="$(jq -r '.name // empty' "$file")"
+    if [ -z "$ruleset_name" ]; then
+        echo "Ruleset payload $file has no name; aborting to avoid a partially-applied configuration." >&2
+        exit 1
+    fi
+    # Paginate so a name match on a later page is never missed (which would create a duplicate ruleset), and
+    # fail loudly if the API call itself fails (auth/404/network) rather than treating it as "not found".
+    if ! ids="$(gh api --paginate "repos/$repo/rulesets" --jq ".[] | select(.name==\"$ruleset_name\") | .id")"; then
+        echo "Failed to list rulesets for $repo (check auth and repo access)." >&2
+        exit 1
+    fi
+    # Pre-existing drift can leave more than one ruleset with the same name; update the first and warn. Guard
+    # on non-empty so `grep -c` (which exits non-zero on empty input under `set -e`) can't abort the create path.
+    id=""
+    if [ -n "$ids" ]; then
+        count="$(printf '%s\n' "$ids" | grep -c .)"
+        if [ "$count" -gt 1 ]; then
+            echo "Warning: $count rulesets named '$ruleset_name' on $repo; updating the first (resolve the duplicates)." >&2
+        fi
+        id="$(printf '%s\n' "$ids" | sed -n '1p')"
+    fi
+    if [ -n "$id" ]; then
+        echo "Updating ruleset '$ruleset_name' (id $id) on $repo"
+        gh api --method PUT "repos/$repo/rulesets/$id" --input "$file" >/dev/null
+    else
+        echo "Creating ruleset '$ruleset_name' on $repo"
+        gh api --method POST "repos/$repo/rulesets" --input "$file" >/dev/null
+    fi
+done
+
+echo "Configuration applied to $repo"
