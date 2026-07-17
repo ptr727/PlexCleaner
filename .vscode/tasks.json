@@ -324,6 +324,60 @@
             }
         },
         {
+            "label": "Lint: Ruff",
+            "type": "shell",
+            "command": "uvx",
+            "args": [
+                "ruff@0.15.22",
+                "check",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/RegressionTests"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Ruff Format",
+            "type": "shell",
+            "command": "uvx",
+            "args": [
+                "ruff@0.15.22",
+                "format",
+                "--check",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/RegressionTests"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Mypy",
+            "type": "shell",
+            "command": "uvx",
+            "args": [
+                "mypy@2.3.0",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/RegressionTests"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
             "label": "Lint: All (CI parity)",
             "dependsOrder": "sequence",
             "dependsOn": [
@@ -332,7 +386,10 @@
                 "Lint: EditorConfig",
                 "Lint: Workflows",
                 "Lint: Markdown",
-                "Lint: Spelling"
+                "Lint: Spelling",
+                "Lint: Ruff",
+                "Lint: Ruff Format",
+                "Lint: Mypy"
             ],
             "problemMatcher": [],
             "presentation": {
