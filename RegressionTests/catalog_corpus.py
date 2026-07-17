@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 catalog_corpus.py - derive a reproducible, machine-readable issue catalog for a media corpus
 from a versioned PlexCleaner regression run.

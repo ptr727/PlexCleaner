@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build the reduced (quickscan) corpus: shrink samples while PROVING every issue survives.
 
 Each candidate clip is processed through the PlexCleaner image and must match the source's

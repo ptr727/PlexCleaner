@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 audit_physical.py - physical-error-shape audit of the reduced corpus.
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Find WHERE a localized decode signature lives, so a short issue-complete clip can be cut.
 
 Strategy (cheapest first):
