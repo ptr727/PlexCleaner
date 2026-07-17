@@ -122,21 +122,21 @@ ProvisionDataset() {
   Origin="$(zfs get -H -o value origin "$TestDataset" 2>/dev/null || true)"
   if [[ "$Origin" == "$CorpusSnap" ]]; then
     echo "Test clone current ($CorpusSnap) - rolling back"
-    sudo zfs rollback "$Snapshot"
+    zfs rollback "$Snapshot"
     return
   fi
 
   echo "Provisioning $TestDataset as a clone of $CorpusSnap"
   if zfs list "$TestDataset" >/dev/null 2>&1; then
-    sudo zfs rename "$TestDataset" "$TestDataset-retired-$(date +%s)"
+    zfs rename "$TestDataset" "$TestDataset-retired-$(date +%s)"
   fi
-  sudo zfs clone "$CorpusSnap" "$TestDataset"
-  sudo zfs snapshot "$Snapshot"
+  zfs clone "$CorpusSnap" "$TestDataset"
+  zfs snapshot "$Snapshot"
 
   # best-effort cleanup of retired clones (succeeds once the holders have restarted/closed)
   local Retired
   for Retired in $(zfs list -H -o name 2>/dev/null | grep -E "^$TestDataset-retired-" || true); do
-    sudo zfs destroy -r "$Retired" 2>/dev/null &&
+    zfs destroy -r "$Retired" 2>/dev/null &&
       echo "Destroyed retired clone $Retired" ||
       echo "Retired clone $Retired still held; will retry next run" >&2
   done
@@ -145,7 +145,7 @@ ProvisionDataset() {
 # Restore the test dataset (clone) to its pristine post-provision state
 RestoreDataset() {
   echo "Restoring test dataset"
-  sudo zfs rollback "$Snapshot"
+  zfs rollback "$Snapshot"
 }
 
 # GetImageVersion Tag -> prints the build version from the image "version" label

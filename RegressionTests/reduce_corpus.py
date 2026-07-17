@@ -128,11 +128,15 @@ def make_clip(
     return out.exists() and out.stat().st_size > 0
 
 
-def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set[str]]]:
+def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set[str]] | None]:
     """Process ``workdir/media`` through the image; return (parsed log map, {stem: state set}).
 
     Log + results go to ``workdir/out``, a SEPARATE mount: PlexCleaner deletes unwanted non-media
     files inside the media dir, so a log written there is deleted by the very run that wrote it.
+
+    The State map is ``None`` when the run did not complete (missing or unreadable results file),
+    so a failed run cannot be mistaken for an empty-State PASS and silently weaken the gate. A
+    completed run always writes ``clip_results.json``, even when a file's State is empty.
     """
     media, out = workdir / "media", workdir / "out"
     out.mkdir(parents=True, exist_ok=True)
@@ -166,15 +170,19 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
         stderr=subprocess.DEVNULL,
     )
     logmap = parse_log(out / "clip_process.log")
-    states: dict[str, set[str]] = {}
+    results_file = out / "clip_results.json"
+    if not results_file.exists():
+        return logmap, None  # run did not complete: not an empty result, a failure
     try:
-        res = json.loads((out / "clip_results.json").read_text())
-        for r in res["Results"]["Results"]:
-            states[stem_of(os.path.basename(r["OriginalFileName"]))] = {
-                s.strip() for s in (r.get("State") or "").split(",") if s.strip()
-            }
-    except Exception:
-        pass
+        res = json.loads(results_file.read_text())
+        results = res["Results"]["Results"]
+    except (json.JSONDecodeError, KeyError, OSError):
+        return logmap, None
+    states: dict[str, set[str]] = {}
+    for r in results:
+        states[stem_of(os.path.basename(r["OriginalFileName"]))] = {
+            s.strip() for s in (r.get("State") or "").split(",") if s.strip()
+        }
     return logmap, states
 
 
@@ -296,6 +304,10 @@ def main() -> None:
             shutil.copy2(pristine, fw / "media" / name)
 
             logmap, states = process_clip(fw, settings_dir)
+            if states is None:
+                # processing did not complete: a failed run must not pass as an empty result
+                attempt = {"cutter": cutter, "error": "PROCESS FAILED"}
+                continue
             cl = logmap.get(stem, {"detections": set(), "errors": set()})
             cl_state = states.get(stem, set())
             miss_d = gt_det - cl["detections"]
