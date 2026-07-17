@@ -84,9 +84,10 @@ jobs:
             HISTORY.md
           incremental_files_only: false
 
-      # Lint the RegressionTests Python tooling with ruff + mypy, pinned to the same versions the
-      # editor tasks run, via uvx (no project install; the tooling is stdlib-only). Config lives in
-      # RegressionTests/pyproject.toml, so run from that directory (mypy resolves config from CWD).
+      # Lint the RegressionTests Python tooling with ruff + mypy via uvx (no project install; the
+      # tooling is stdlib-only). Versions are pinned here in CI (bumpable) for a reproducible gate;
+      # the VSCode tasks run the latest tools, so local may differ slightly by design. Config lives
+      # in RegressionTests/pyproject.toml, so run from that directory (mypy resolves config from CWD).
       - name: Setup uv step
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
 
