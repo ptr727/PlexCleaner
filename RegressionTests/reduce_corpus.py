@@ -140,7 +140,9 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
     media, out = workdir / "media", workdir / "out"
     out.mkdir(parents=True, exist_ok=True)
     uid, gid = os.getuid(), os.getgid()
-    subprocess.run(
+    # Capture the container output so a failed run (crash or container that never starts) can be
+    # diagnosed; on success it is discarded, on failure its tail is printed with the error below.
+    proc = subprocess.run(
         [
             "docker",
             "run",
@@ -165,17 +167,26 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
             "--parallel",
             "--testsnippets",
         ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        errors="replace",
     )
     logmap = parse_log(out / "clip_process.log")
     results_file = out / "clip_results.json"
     if not results_file.exists():
+        tail = "\n".join((proc.stdout or "").splitlines()[-15:])
+        print(
+            f"    run did not complete (exit {proc.returncode}); no results file:\n{tail}",
+            file=sys.stderr,
+        )
         return logmap, None  # run did not complete: not an empty result, a failure
     try:
         res = json.loads(results_file.read_text())
         results = res["Results"]["Results"]
-    except (json.JSONDecodeError, KeyError, OSError):
+    except (json.JSONDecodeError, KeyError, OSError) as e:
+        print(f"    results file present but unreadable: {e}", file=sys.stderr)
         return logmap, None
     states: dict[str, set[str]] = {}
     for r in results:
