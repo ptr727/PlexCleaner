@@ -1,8 +1,7 @@
 # Linter-only configuration for the RegressionTests Python utilities.
 #
 # These are standalone stdlib-only scripts (no runtime dependencies), so this file carries no
-# project/build metadata - only the ruff + mypy config, mirroring the ptr727 Financial-Modeling
-# conventions. Run the tools with uv (no install needed):
+# project/build metadata - only the ruff + mypy config. Run the tools with uv (no install needed):
 #
 #   uvx ruff check .
 #   uvx ruff format --check .

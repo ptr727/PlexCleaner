@@ -60,16 +60,16 @@ public partial class FfProbe
             [CallerMemberName] string operation = ""
         )
         {
-            // Wrap async function in a task
-            (bool result, string error) result = GetPacketsAsync(
+            // Run the async worker synchronously; deconstruct so the tuple does not shadow the error out-param
+            (bool ok, string packetError) = GetPacketsAsync(
                     command,
                     async packet => await Task.FromResult(packetFunc(packet)),
                     operation
                 )
                 .GetAwaiter()
                 .GetResult();
-            error = result.error;
-            return result.result;
+            error = packetError;
+            return ok;
         }
 
         public async Task<(bool result, string error)> GetPacketsAsync(
