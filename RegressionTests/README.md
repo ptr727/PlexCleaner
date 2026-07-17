@@ -173,10 +173,11 @@ are linted with ruff and type-checked with mypy; the configuration is in
 [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
 
 ```shell
-uvx ruff check .
-uvx ruff format --check .
-uvx mypy .
+uvx ruff@0.15.22 check .
+uvx ruff@0.15.22 format --check .
+uvx mypy@2.3.0 .
 ```
 
-The same commands run in CI and are available as VSCode tasks. Python source is CRLF, matching the
-repository's default line-ending convention.
+The versions are pinned so local runs match CI exactly; the same pinned commands run in CI and are
+available as VSCode tasks. Python source is CRLF, matching the repository's default line-ending
+convention.

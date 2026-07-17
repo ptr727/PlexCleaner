@@ -349,6 +349,11 @@ RunRegressionTests() {
     fi
   done
 
+  # The version directory was populated as root (mkdir, settings copy, buildinfo, plugin DLLs), but
+  # the containers run as nobody:users and write their logs and results into it; hand it to that
+  # user so the writes succeed regardless of the parent directory's ownership or ACLs.
+  chown -R nobody:users "$VersionDir"
+
   RunDefaultSettings "$Tag" "$Version"
   # RunCreateSchema "$Tag" "$Version"
 

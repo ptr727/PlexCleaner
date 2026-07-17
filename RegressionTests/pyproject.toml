@@ -4,9 +4,11 @@
 # project/build metadata - only the ruff + mypy config, mirroring the ptr727 Financial-Modeling
 # conventions. Run the tools with uv (no install needed):
 #
-#   uvx ruff check .
-#   uvx ruff format --check .
-#   uvx mypy .
+#   uvx ruff@0.15.22 check .
+#   uvx ruff@0.15.22 format --check .
+#   uvx mypy@2.3.0 .
+#
+# The versions are pinned to match CI (.github/workflows/validate-task.yml) and the VSCode tasks.
 
 [tool.ruff]
 target-version = "py313"
