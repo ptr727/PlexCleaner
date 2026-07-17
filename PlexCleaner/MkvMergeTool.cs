@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 using ptr727.Utilities;
-using Serilog;
 
 // https://mkvtoolnix.download/doc/mkvmerge.html
 
@@ -120,30 +119,15 @@ public partial class MkvMerge
                 .Build();
 
             // Execute command
-            Log.Debug("Getting media info : {FileName}", fileName);
             if (!Execute(command, false, true, out BufferedCommandResult result))
             {
                 return false;
             }
             if (result.ExitCode != 0)
             {
-                Log.Error(
-                    "{ToolType} : Failed to get media info : {FileName}",
-                    GetToolType(),
-                    fileName
-                );
-                return LogFailedResult(result);
+                return LogFailedResult(result, fileName);
             }
-            if (result.StandardError.Length > 0)
-            {
-                // TODO: This probably never gets hit due to mkvmerge not using stderr
-                Log.Warning(
-                    "{ToolType} : Warning getting media info : {FileName}",
-                    GetToolType(),
-                    fileName
-                );
-                Log.Warning("{ToolType} : {Warning}", GetToolType(), result.StandardError.Trim());
-            }
+            // Ignore "if (result.StandardError.Length > 0)" pattern, mkv tools only emit to stdout
 
             // Get JSON from stdout
             json = result.StandardOutput;
@@ -262,12 +246,12 @@ public partial class MkvMerge
                 .InputOptions(options =>
                     options.Default().SelectTracks(selectMediaProps.Selected).InputFile(inputName)
                 )
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result, inputName));
         }
 
         public bool ReMuxToMkv(string inputName, string outputName)
@@ -279,12 +263,12 @@ public partial class MkvMerge
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().InputFile(inputName))
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result, inputName));
         }
 
         public bool RemoveSubtitles(string inputName, string outputName)
@@ -296,12 +280,12 @@ public partial class MkvMerge
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().NoSubtitles().InputFile(inputName))
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result, inputName));
         }
 
         public bool MergeToMkv(
@@ -330,12 +314,12 @@ public partial class MkvMerge
                         .SelectTracks(keepTwo)
                         .InputFile(sourceTwo)
                 )
-                .OutputOptions(options => options.TestSnippets().OutputFile(outputName))
+                .OutputOptions(options => options.OutputFile(outputName))
                 .Build();
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode is 0 or 1 || LogFailedResult(result));
+                && (result.ExitCode is 0 or 1 || LogFailedResult(result, sourceOne));
         }
 
         [GeneratedRegex(

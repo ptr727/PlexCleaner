@@ -1,7 +1,10 @@
 {
-  "allow_squash_merge": true,
+  "has_wiki": false,
+  "has_projects": false,
   "allow_merge_commit": true,
+  "allow_squash_merge": true,
   "allow_rebase_merge": false,
   "allow_auto_merge": true,
+  "allow_update_branch": true,
   "delete_branch_on_merge": false
 }

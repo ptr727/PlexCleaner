@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ptr727.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -30,8 +29,9 @@ public static class Tools
             && !Program.Config.ToolsOptions.UseSystem
         )
         {
-            Log.Warning("Folder tools are not supported on Linux");
-            Log.Warning("Set 'ToolsOptions:UseSystem' to 'true' on Linux");
+            Log.Warning(
+                "Folder tools are not supported on Linux, forcing 'ToolsOptions:UseSystem' to 'true'"
+            );
             Program.Config.ToolsOptions.UseSystem = true;
         }
 

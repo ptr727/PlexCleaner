@@ -25,6 +25,10 @@ public partial class MkvPropEdit
 
         public IGlobalOptions GetBuilder() => Builder.Create(GetToolPath());
 
+        // mkvpropedit, like all mkvtoolnix tools, writes errors to stdout, not stderr
+        protected override string GetErrorOutput(BufferedCommandResult result) =>
+            result.StandardOutput;
+
         public override bool GetInstalledVersion(out MediaToolInfo mediaToolInfo)
         {
             // Get version info
@@ -70,8 +74,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode is 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result, fileName));
         }
 
         public bool SetTrackFlags(string fileName, MediaProps mediaProps)
@@ -101,8 +105,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode is 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result, fileName));
         }
 
         public bool ClearDefaultFlags(string fileName, IEnumerable<TrackProps> trackList)
@@ -130,8 +134,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode is 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result, fileName));
         }
 
         public bool ClearTags(string fileName, MediaProps mediaProps)
@@ -166,8 +170,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode is 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result, fileName));
         }
 
         public bool ClearAttachments(string fileName, MediaProps mediaProps)
@@ -194,8 +198,8 @@ public partial class MkvPropEdit
                 .Build();
 
             // Execute command
-            return Execute(command, out CommandResult result)
-                && (result.ExitCode is 0 || LogFailedResult(result));
+            return Execute(command, out BufferedCommandResult result)
+                && (result.ExitCode is 0 || LogFailedResult(result, fileName));
         }
     }
 }

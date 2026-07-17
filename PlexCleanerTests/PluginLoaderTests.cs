@@ -23,6 +23,19 @@ public class PluginLoaderTests
     }
 
     [Fact]
+    public void Load_DtsTimestampRepairPlugin_ReturnsInitializedPlugin()
+    {
+        IProcessPlugin? plugin = PluginLoader.Load(
+            new FileInfo(Path.Combine(AppContext.BaseDirectory, "DtsTimestampRepair.dll"))
+        );
+
+        _ = plugin.Should().NotBeNull();
+        IProcessPlugin loaded = plugin;
+        _ = loaded.Name.Should().Be("DtsTimestampRepair");
+        _ = loaded.GetType().Assembly.GetName().Name.Should().Be("DtsTimestampRepair");
+    }
+
+    [Fact]
     public void Load_MissingAssembly_ReturnsNull()
     {
         IProcessPlugin? plugin = PluginLoader.Load(

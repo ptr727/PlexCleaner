@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using AwesomeAssertions;
 using PlexCleaner;
 using PlexCleanerTests;
@@ -86,51 +85,44 @@ public class FfMpegIdetParsingTests
                     },
                 }
             },
+            {
+                // ffmpeg interleaves other stderr lines between the idet stats; on a source with
+                // non-monotonic DTS the -f null muxer emits "non monotonically increasing dts" warnings
+                // between the three lines (the VC1 regression). The three lines must parse independently
+                new string(
+                    """
+                    [Parsed_idet_0 @ 0x7ec7fc004280] Repeated Fields: Neither:139809 Top:     2 Bottom:     0
+                    [null @ 0x5a4c] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 42 >= 42
+                    [Parsed_idet_0 @ 0x7ec7fc004280] Single frame detection: TFF:   333 BFF:   259 Progressive:138387 Undetermined:   832
+                    [null @ 0x5a4c] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 43 >= 43
+                    [Parsed_idet_0 @ 0x7ec7fc004280] Multi frame detection: TFF:     4 BFF:    44 Progressive:139709 Undetermined:    54
+                    """
+                ),
+                new FfMpegIdetInfo
+                {
+                    RepeatedFields = new FfMpegIdetInfo.Repeated
+                    {
+                        Neither = 139809,
+                        Top = 2,
+                        Bottom = 0,
+                    },
+                    SingleFrame = new FfMpegIdetInfo.Frames
+                    {
+                        Tff = 333,
+                        Bff = 259,
+                        Progressive = 138387,
+                        Undetermined = 832,
+                    },
+                    MultiFrame = new FfMpegIdetInfo.Frames
+                    {
+                        Tff = 4,
+                        Bff = 44,
+                        Progressive = 139709,
+                        Undetermined = 54,
+                    },
+                }
+            },
         };
-
-    [Theory]
-    [MemberData(nameof(Data))]
-    [SuppressMessage(
-        "Usage",
-        "xUnit1045:Avoid using TheoryData type arguments that might not be serializable",
-        Justification = "FfMpegIdetInfoSerializer"
-    )]
-    public void Parse_Idet_Field_Test(string text, FfMpegIdetInfo idetInfo)
-    {
-        // Follow same pattern as in FfMpegIdetInfo.Parse() : use the last triple
-        text = text.Replace("\r\n", "\n", StringComparison.Ordinal);
-        MatchCollection matches = FfMpegIdetInfo.IdetRegex().Matches(text);
-        _ = matches.Count.Should().BeGreaterThan(0);
-        Match match = matches[^1];
-
-        _ = idetInfo
-            .RepeatedFields.Neither.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "repeated_neither"));
-        _ = idetInfo
-            .RepeatedFields.Top.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "repeated_top"));
-        _ = idetInfo
-            .RepeatedFields.Bottom.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "repeated_bottom"));
-
-        _ = idetInfo.SingleFrame.Tff.Should().Be(FfMpegIdetInfo.ParseGroupInt(match, "single_tff"));
-        _ = idetInfo.SingleFrame.Bff.Should().Be(FfMpegIdetInfo.ParseGroupInt(match, "single_bff"));
-        _ = idetInfo
-            .SingleFrame.Progressive.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "single_prog"));
-        _ = idetInfo
-            .SingleFrame.Undetermined.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "single_und"));
-
-        _ = idetInfo.MultiFrame.Tff.Should().Be(FfMpegIdetInfo.ParseGroupInt(match, "multi_tff"));
-        _ = idetInfo.MultiFrame.Bff.Should().Be(FfMpegIdetInfo.ParseGroupInt(match, "multi_bff"));
-        _ = idetInfo
-            .MultiFrame.Progressive.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "multi_prog"));
-        _ = idetInfo
-            .MultiFrame.Undetermined.Should()
-            .Be(FfMpegIdetInfo.ParseGroupInt(match, "multi_und"));
-    }
 
     [Theory]
     [MemberData(nameof(Data))]

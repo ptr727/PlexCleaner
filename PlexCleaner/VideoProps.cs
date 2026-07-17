@@ -1,4 +1,3 @@
-using Serilog;
 using Serilog.Events;
 
 // TODO: Find a better way to create profile levels

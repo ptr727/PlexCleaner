@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
-using Serilog;
 
 // https://handbrake.fr/docs/en/latest/cli/command-line-reference.html
 
@@ -124,7 +123,7 @@ public partial class HandBrake
 
             // Execute command
             return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result));
+                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         [GeneratedRegex(

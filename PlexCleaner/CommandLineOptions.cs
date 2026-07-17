@@ -116,7 +116,8 @@ public class CommandLineParser
 
     private readonly Option<bool> _testSnippetsOption = new("--testsnippets")
     {
-        Description = "Create short media file clips",
+        Description =
+            "Shorten re-encoded output to a clip to speed up testing (does not affect remux or copy operations)",
         HelpName = "boolean",
     };
 

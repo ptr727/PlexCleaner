@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Serilog;
 using Serilog.Events;
 
 namespace PlexCleaner;
@@ -22,6 +21,9 @@ public class ProcessFile
     ];
 
     private SidecarFile _sidecarFile;
+
+    // Classification of the most recent stream verify, used to choose the repair strategy
+    private VerifyResult _lastVerifyResult;
 
     public ProcessFile(string mediaFile)
     {
@@ -1183,7 +1185,7 @@ public class ProcessFile
         // Count the frame types using the idet filter
         if (!GetIdetInfo(out idetInfo) || idetInfo == null)
         {
-            // Error
+            // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
             return false;
         }
 
@@ -1224,7 +1226,7 @@ public class ProcessFile
             return true;
         }
 
-        // Running lavfi is expensive, skip if already verified or closed captions already removed
+        // Running analyze_frames is expensive, skip if already verified or closed captions already removed
         if (
             conditional
             && (
@@ -1238,20 +1240,9 @@ public class ProcessFile
             return true;
         }
 
-        // Get packet info using ccsub filter
-        bool packetsFound = false;
+        // Detect closed captions embedded in the video stream
         Log.Information("Finding Closed Captions in video stream : {FileName}", FileInfo.FullName);
-        if (
-            !Tools.FfProbe.GetSubCcPackets(
-                FileInfo.FullName,
-                _ =>
-                {
-                    // Stop processing more packets
-                    packetsFound = true;
-                    return false;
-                }
-            )
-        )
+        if (!Tools.FfProbe.GetClosedCaptions(FileInfo.FullName, out bool hasClosedCaptions))
         {
             // Error
             Log.Error(
@@ -1261,8 +1252,8 @@ public class ProcessFile
             return false;
         }
 
-        // Any packets means there are subtitles present in the video stream
-        if (packetsFound)
+        // Mark the first video track when captions are present
+        if (hasClosedCaptions)
         {
             // Use the first video track from FfProbe
             videoProps = FfProbeProps.Video.First();
@@ -1757,32 +1748,36 @@ public class ProcessFile
         // Will update sidecar state if bitrate exceeded
         _ = VerifyBitrate();
 
-        // Verify media streams, repair is possible
+        // Verify media streams, both failure kinds are repairable
         canRepair = true;
-        return VerifyMediaStreams(FileInfo);
+        _lastVerifyResult = VerifyMediaStreams(FileInfo);
+
+        // Deterministic: pass only when clean, a timestamp-only or decode result is a repairable failure
+        return _lastVerifyResult == VerifyResult.Clean;
     }
 
-    public static bool VerifyMediaStreams(FileInfo fileInfo)
+    public static VerifyResult VerifyMediaStreams(FileInfo fileInfo)
     {
         // Verify
-        Log.Debug("Verifying media streams : {FileName}", fileInfo.FullName);
-        if (!Tools.FfMpeg.VerifyMedia(fileInfo.FullName))
+        VerifyResult verifyResult = Tools.FfMpeg.VerifyMedia(fileInfo.FullName);
+
+        // Log the classified outcome so a failure is diagnosable, unless it was a cancellation
+        if (!Program.IsCancelledError())
         {
-            // Cancel requested
-            if (Program.IsCancelledError())
+            if (verifyResult == VerifyResult.DecodeError)
             {
-                return false;
+                Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
             }
-
-            // Failed stream validation
-            Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
-
-            // Caller should update the state
-            return false;
+            else if (verifyResult == VerifyResult.TimestampOnly)
+            {
+                // Correctable failure, the decision Warning is emitted later if the repair runs
+                Log.Information(
+                    "Verify detected non-monotonic DTS timestamps : {FileName}",
+                    fileInfo.FullName
+                );
+            }
         }
-
-        // Verified
-        return true;
+        return verifyResult;
     }
 
     public bool DeleteFailedFile()
@@ -1861,6 +1856,13 @@ public class ProcessFile
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
+        // Non-monotonic DTS is a repairable failure; try a lossless surgical setts repair first, then fall
+        // through to the shared remux and re-encode tiers for a video or post-decode DTS setts cannot fix
+        if (_lastVerifyResult == VerifyResult.TimestampOnly)
+        {
+            return RepairTimestampsAndSetState(ref modified);
+        }
+
         // Attempt repair, if repair fails the original file will not be modified
         bool repaired = RepairAndReVerify();
 
@@ -1916,7 +1918,6 @@ public class ProcessFile
         // https://en.wikipedia.org/wiki/YIFY
 
         // Calculate bitrate
-        Log.Debug("Calculating bitrate info : {FileName}", FileInfo.FullName);
         if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
             // Error
@@ -2056,22 +2057,12 @@ public class ProcessFile
         // [h264 @ 000002a21166bd00] Invalid NAL unit size (-1148261185 > 8772).
         // [matroska,webm @ 0000029a256d9280] Length 7 indicated by an EBML number's first byte 0x02 at pos 1601277 (0x186efd) exceeds max length 4.
 
-        // TODO: Can we ignore the monotonically increasing display time stamp issue?
-        // Lots of similar reports, can't find a CLI option to disable or ignore this as an error
-        // Also see FFmpeg AVFMT_TS_NONSTRICT option
-        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 8 >= 8
-        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 12 >= 12
-        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 16 >= 16
-        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 20 >= 20
-        // [null @ 0000018cd6bf1800] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 348 >= 348
-
         // TODO: HandBrake sometimes fails with what looks like a remux error
         // ERROR: avformatMux: track 1, av_interleaved_write_frame failed with error 'Invalid argument'
         // M[15:35:43] libhb: work result = 4
 
         // TODO: FfMpeg fails to decode some files
         // https://trac.ffmpeg.org/search?q=%22Invalid+NAL+unit+size%22&noquickjump=1&milestone=on&ticket=on&wiki=on
-        // https://trac.ffmpeg.org/search?q=%22non+monotonically+increasing+dts+to+muxer%22&noquickjump=1&milestone=on&ticket=on&wiki=on
 
         // TODO: FfMpeg x265 requires input resolution to be multiple of chroma subsampling
         // https://stackoverflow.com/questions/50371919/ffmpeg-cannot-open-libx265-encoder-error-initializing-output-stream-00-err
@@ -2080,7 +2071,20 @@ public class ProcessFile
         // https://ffmpeg.org/ffmpeg-filters.html#crop
         // -vf crop='iw-mod(iw,4)':'ih-mod(ih,4)'
 
-        // Repair to temp file, only if verify is successful replace original file
+        // Tier 1: a plain remux rewrites the container and its timestamps, clearing a demux-visible break
+        // such as a non-monotonic DTS without re-encoding; it cannot fix decode-level corruption
+        if (TryRemuxRepair())
+        {
+            Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
+            return true;
+        }
+        if (Program.IsCancelledError())
+        {
+            return false;
+        }
+
+        // Tier 2: re-encode rebuilds the streams, fixing decode corruption and timestamp breaks a remux
+        // cannot. Repair to temp file, only if verify is successful replace original file
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp12");
         Debug.Assert(FileInfo.FullName != tempName);
 
@@ -2135,8 +2139,9 @@ public class ProcessFile
             return false;
         }
 
-        // Re-encoding succeeded, re-verify the temp file
-        if (!VerifyMediaStreams(new FileInfo(tempName)))
+        // Require a clean re-verify, accepting a timestamp-only result would mark a file Verified that
+        // still fails verification, and a future run would skip it as already verified
+        if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
         {
             // Failed
             File.Delete(tempName);
@@ -2152,6 +2157,190 @@ public class ProcessFile
         // Caller will update state
         return true;
     }
+
+    private bool TryRemuxRepair()
+    {
+        // Remux to a temp file, only replace the original if the re-verify is clean
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp11");
+        Debug.Assert(FileInfo.FullName != tempName);
+
+        Log.Information(
+            "Attempting media repair by remuxing using MkvMerge : {FileName}",
+            FileInfo.FullName
+        );
+        if (!Tools.MkvMerge.ReMuxToMkv(FileInfo.FullName, tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Require a clean re-verify, a remux that still fails falls through to the re-encode tier
+        if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Verify succeeded, replace the original with the remuxed file
+        File.Move(tempName, FileInfo.FullName, true);
+        return true;
+    }
+
+    public bool RepairTimestamps(ref bool modified)
+    {
+        // Only process Matroska files, the audio timestamp repair does not require a video stream
+        if (!SidecarFile.IsMkvFile(FileInfo.FullName))
+        {
+            return true;
+        }
+
+        // Classify the current verify state
+        _lastVerifyResult = VerifyMediaStreams(FileInfo);
+
+        // Cancel requested
+        if (Program.IsCancelled())
+        {
+            return false;
+        }
+
+        switch (_lastVerifyResult)
+        {
+            case VerifyResult.Clean:
+                // Nothing to repair, clear any stale failure flags and mark verified
+                _sidecarFile.State |= SidecarFile.StatesType.Verified;
+                _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+                _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+                return Refresh(false);
+            case VerifyResult.TimestampOnly:
+                // Detected non-monotonic DTS, repair losslessly when demux-visible, else stays reported
+                return RepairTimestampsAndSetState(ref modified);
+            case VerifyResult.DecodeError:
+                // Genuine decode corruption, not repairable here, leave the state unchanged
+                return true;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    private bool RepairTimestampsAndSetState(ref bool modified)
+    {
+        // Escalate through the repair tiers: a lossless surgical setts repair for a demux-visible audio
+        // DTS, then the shared remux and re-encode ladder for a video or post-decode DTS setts cannot fix.
+        // The first tier whose re-verify is clean wins
+        if (TryLosslessTimestampRepair() || RepairAndReVerify())
+        {
+            _sidecarFile.State |= SidecarFile.StatesType.Verified;
+            _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+            _sidecarFile.State |= SidecarFile.StatesType.Repaired;
+            _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+            modified = true;
+            return Refresh(true);
+        }
+
+        // Do not touch state on cancellation, the caller retries next run
+        if (Program.IsCancelled())
+        {
+            return false;
+        }
+
+        // No tier could repair the detected DTS, it stays reported as a failure, a detected issue is
+        // not cleared
+        _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
+        _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
+        _ = Refresh(false);
+        return false;
+    }
+
+    private bool TryLosslessTimestampRepair()
+    {
+        // The audio-only setts filter can repair only an audio-stream DTS, so attempt it only when every
+        // non-monotonic stream is audio; a video or subtitle DTS, a post-decode-only break with no demux
+        // target, or an analysis failure all stay reported failures without a wasted rewrite
+        if (
+            !GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo)
+            || dtsInfo == null
+            || !dtsInfo.NonMonotonicIsAudioOnly
+        )
+        {
+            return false;
+        }
+
+        // Rewrite timestamps losslessly to a temp file
+        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp14");
+        Debug.Assert(FileInfo.FullName != tempName);
+
+        // Decision to modify the media, log once at Warning before the rewrite so it shows at Warning level
+        Log.Warning("Repairing non-monotonic DTS timestamps : {FileName}", FileInfo.FullName);
+        if (!Tools.FfMpeg.SetTimestamps(FileInfo.FullName, tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Reject unless the payload is byte-identical and the result verifies clean
+        if (
+            !TimestampRepairRegressionGate(FileInfo.FullName, tempName)
+            || VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean
+        )
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // Replace the original with the repaired file
+        File.Move(tempName, FileInfo.FullName, true);
+        Log.Information("Timestamp repair succeeded : {FileName}", FileInfo.FullName);
+        return true;
+    }
+
+    // A timestamp nudge must not shift a stream's start or duration by more than the A/V-sync
+    // perceptibility threshold, so the repair never introduces audible drift
+    private const double SyncToleranceSeconds = 0.040;
+
+    private static bool TimestampRepairRegressionGate(string original, string repaired)
+    {
+        // Payload must be byte-identical; the streamhash muxer hashes packet data only, not timestamps,
+        // so a matching hash proves only the timestamps changed
+        if (
+            !Tools.FfMpeg.GetStreamHashes(original, out Dictionary<int, string> beforeHash)
+            || !Tools.FfMpeg.GetStreamHashes(repaired, out Dictionary<int, string> afterHash)
+            || beforeHash.Count != afterHash.Count
+            || !beforeHash.All(kvp =>
+                afterHash.TryGetValue(kvp.Key, out string? hash) && hash == kvp.Value
+            )
+        )
+        {
+            return false;
+        }
+
+        // Timing must be preserved; the streamhash proves the samples are identical but not where they
+        // play, so verify no stream's start or duration moved beyond the A/V-sync tolerance
+        return TimestampRepairSyncPreserved(original, repaired);
+    }
+
+    private static bool TimestampRepairSyncPreserved(string original, string repaired) =>
+        Tools.FfProbe.GetStreamTimings(
+            original,
+            out Dictionary<int, (double Start, double Duration)> before
+        )
+        && Tools.FfProbe.GetStreamTimings(
+            repaired,
+            out Dictionary<int, (double Start, double Duration)> after
+        )
+        && before.Count == after.Count
+        && before.All(kvp =>
+            after.TryGetValue(kvp.Key, out (double Start, double Duration) other)
+            && WithinSyncTolerance(kvp.Value.Start, other.Start)
+            && WithinSyncTolerance(kvp.Value.Duration, other.Duration)
+        );
+
+    private static bool WithinSyncTolerance(double before, double after) =>
+        // A value present on only one side cannot be verified, so fail closed; both sides missing (NaN)
+        // is symmetric and uncomparable, treat as unchanged; otherwise the shift must be within tolerance
+        double.IsNaN(before) == double.IsNaN(after)
+        && (double.IsNaN(before) || Math.Abs(after - before) <= SyncToleranceSeconds);
 
     public bool SetLastWriteTimeUtc(DateTime lastWriteTimeUtc)
     {
@@ -2333,7 +2522,14 @@ public class ProcessFile
         return true;
     }
 
-    public bool GetBitrateInfo(out BitrateInfo? bitrateInfo)
+    public bool GetBitrateInfo(out BitrateInfo? bitrateInfo) =>
+        GetPacketAnalysis(Program.Options.QuickScan, out bitrateInfo, out _);
+
+    public bool GetPacketAnalysis(
+        bool quickScan,
+        out BitrateInfo? bitrateInfo,
+        out DtsInfo? dtsInfo
+    )
     {
         // Use the default track, else the first track
         VideoProps? videoProps = FfProbeProps.Video.Find(item =>
@@ -2345,22 +2541,25 @@ public class ProcessFile
         );
         audioProps ??= FfProbeProps.Audio.FirstOrDefault();
 
-        // Add all packets
+        // Read all packets once, computing the bitrate and the DTS monotonicity in a single pass
         bitrateInfo = null;
+        dtsInfo = null;
         BitrateInfo packetBitrate = new(
             videoProps?.Id ?? -1,
             audioProps?.Id ?? -1,
             Program.Config.VerifyOptions.MaximumBitrate / 8
         );
+        DtsInfo packetDts = new();
         if (
-            !Tools.FfProbe.GetBitratePackets(
+            !Tools.FfProbe.GetAnalysisPackets(
                 FileInfo.FullName,
                 packet =>
                 {
-                    // Convert from void to bool return
                     packetBitrate.Add(packet);
+                    packetDts.Add(packet);
                     return true;
-                }
+                },
+                quickScan
             )
         )
         {
@@ -2370,13 +2569,13 @@ public class ProcessFile
         // Calculate bitrate
         packetBitrate.Calculate();
         bitrateInfo = packetBitrate;
+        dtsInfo = packetDts;
         return true;
     }
 
     private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
-        Log.Debug("Counting interlaced frames : {FileName}", FileInfo.FullName);
         if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
         {
             // Cancel requested

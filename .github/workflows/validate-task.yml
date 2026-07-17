@@ -84,6 +84,21 @@ jobs:
             HISTORY.md
           incremental_files_only: false
 
+      # Lint the RegressionTests Python tooling with ruff + mypy via uvx (no project install; the
+      # tooling is stdlib-only). Versions are pinned here in CI (bumpable) for a reproducible gate;
+      # the VSCode tasks run the latest tools, so local may differ slightly by design. Config lives
+      # in RegressionTests/pyproject.toml, so run from that directory (mypy resolves config from CWD).
+      - name: Setup uv step
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+
+      - name: Lint Python step
+        working-directory: RegressionTests
+        run: |
+          set -euo pipefail
+          uvx ruff@0.15.22 check .
+          uvx ruff@0.15.22 format --check .
+          uvx mypy@2.3.0 .
+
       - name: Lint workflows step
         uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
 

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "_comment": "Example media-specific reduction rules. The real file lives WITH the corpus (never in source control) so private filenames stay out of the repo. reduce_corpus.py reads the 'regions' map; locate_issue.py --write-rules generates entries by locating a decode signature in the source. Keys are source basenames as they appear in the corpus catalog.json; the names below are synthetic placeholders.",
+  "regions": {
+    "Example Show - S01E01.mkv": {
+      "start": 540,
+      "end": 620,
+      "note": "decode signature at ~560s, deep in the file (head-clip misses it)"
+    },
+    "Example Movie (2020).mkv": {
+      "start": 1810,
+      "end": 1890,
+      "note": "interlaced-decode error near the 30m mark"
+    }
+  }
+}

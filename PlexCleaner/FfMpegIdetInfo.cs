@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -105,43 +104,56 @@ public partial class FfMpegIdetInfo
         // [out#0/null @ 000001c11d401040] video:32843KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
         // frame=76434 fps=1114 q=-0.0 Lsize=N/A time=00:42:30.68 bitrate=N/A speed=37.2x
 
-        // Match (regex construction uses \n for new line)
-        // idet can emit its stats more than once (an early empty pass before the final counts),
-        // so match every triple and use the last, which holds the final cumulative counts
-        MatchCollection matches = IdetRegex()
-            .Matches(text.Replace("\r\n", "\n", StringComparison.Ordinal));
-        if (matches.Count == 0)
+        // Match each of the three stat lines independently and take the last of each. idet emits its
+        // stats more than once (an early empty pass before the final cumulative counts), and ffmpeg can
+        // interleave other stderr lines between them (e.g. -f null muxer "non monotonically increasing
+        // dts" warnings when the source has non-monotonic DTS), so a single contiguous three-line match
+        // is unreliable; the last of each line is the final cumulative value
+        string normalized = text.Replace("\r\n", "\n", StringComparison.Ordinal);
+        Match? repeated = LastMatch(RepeatedFieldsRegex(), normalized);
+        Match? single = LastMatch(SingleFrameRegex(), normalized);
+        Match? multi = LastMatch(MultiFrameRegex(), normalized);
+        if (repeated == null || single == null || multi == null)
         {
-            Log.Error("Failed to parse idet output");
+            // Log the output that failed to parse so the failure is diagnosable, joined to one line
+            Log.Error("Failed to parse idet output : {Output}", text.ReplaceLineEndings(" | "));
             return false;
         }
-        Match match = matches[^1];
 
         // Get the frame counts
-        RepeatedFields.Neither = ParseGroupInt(match, "repeated_neither");
-        RepeatedFields.Top = ParseGroupInt(match, "repeated_top");
-        RepeatedFields.Bottom = ParseGroupInt(match, "repeated_bottom");
+        RepeatedFields.Neither = ParseGroupInt(repeated, "repeated_neither");
+        RepeatedFields.Top = ParseGroupInt(repeated, "repeated_top");
+        RepeatedFields.Bottom = ParseGroupInt(repeated, "repeated_bottom");
 
-        SingleFrame.Tff = ParseGroupInt(match, "single_tff");
-        SingleFrame.Bff = ParseGroupInt(match, "single_bff");
-        SingleFrame.Progressive = ParseGroupInt(match, "single_prog");
-        SingleFrame.Undetermined = ParseGroupInt(match, "single_und");
+        SingleFrame.Tff = ParseGroupInt(single, "single_tff");
+        SingleFrame.Bff = ParseGroupInt(single, "single_bff");
+        SingleFrame.Progressive = ParseGroupInt(single, "single_prog");
+        SingleFrame.Undetermined = ParseGroupInt(single, "single_und");
 
-        MultiFrame.Tff = ParseGroupInt(match, "multi_tff");
-        MultiFrame.Bff = ParseGroupInt(match, "multi_bff");
-        MultiFrame.Progressive = ParseGroupInt(match, "multi_prog");
-        MultiFrame.Undetermined = ParseGroupInt(match, "multi_und");
+        MultiFrame.Tff = ParseGroupInt(multi, "multi_tff");
+        MultiFrame.Bff = ParseGroupInt(multi, "multi_bff");
+        MultiFrame.Progressive = ParseGroupInt(multi, "multi_prog");
+        MultiFrame.Undetermined = ParseGroupInt(multi, "multi_und");
         return true;
+    }
+
+    private static Match? LastMatch(Regex regex, string text)
+    {
+        MatchCollection matches = regex.Matches(text);
+        return matches.Count > 0 ? matches[^1] : null;
     }
 
     internal static int ParseGroupInt(Match match, string groupName) =>
         int.Parse(match.Groups[groupName].Value.Trim(), CultureInfo.InvariantCulture);
 
-    [GeneratedRegex(
-        $"{IdetRepeatedFields}\n{IdetSingleFrame}\n{IdetMultiFrame}",
-        RegexOptions.IgnoreCase | RegexOptions.Multiline
-    )]
-    public static partial Regex IdetRegex();
+    [GeneratedRegex(IdetRepeatedFields, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex RepeatedFieldsRegex();
+
+    [GeneratedRegex(IdetSingleFrame, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex SingleFrameRegex();
+
+    [GeneratedRegex(IdetMultiFrame, RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex MultiFrameRegex();
 
     public class Repeated
     {

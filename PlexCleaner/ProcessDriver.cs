@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -178,8 +177,10 @@ public static class ProcessDriver
                             fileName
                         );
 
-                        // Perform the task
+                        // Perform the task, timing this file's work
+                        long startTimestamp = Stopwatch.GetTimestamp();
                         bool taskResult = taskFunc(fileName);
+                        TimeSpan taskElapsed = Stopwatch.GetElapsedTime(startTimestamp);
 
                         // Handle cancel request
                         Program.CancelToken().ThrowIfCancellationRequested();
@@ -198,9 +199,10 @@ public static class ProcessDriver
                             totalCount
                         );
                         Log.Information(
-                            "{TaskName} ({Processed:F2}%) After : {FileName}",
+                            "{TaskName} ({Processed:F2}%) Elapsed : {Elapsed:l} : After : {FileName}",
                             taskName,
                             processedPercentage,
+                            FormatDuration(taskElapsed),
                             fileName
                         );
                     }
@@ -222,7 +224,8 @@ public static class ProcessDriver
 
         // Done, force logging so the summary survives the warning floor and an interrupted run
         Log.Logger.LogOverrideContext().Information("Completed {TaskName}", taskName);
-        Log.Logger.LogOverrideContext().Information("Processing time : {Elapsed}", timer.Elapsed);
+        Log.Logger.LogOverrideContext()
+            .Information("Processing time : {Elapsed:l}", FormatDuration(timer.Elapsed));
         Log.Logger.LogOverrideContext().Information("Total files : {Count}", totalCount);
         Log.Logger.LogOverrideContext().Information("Error files : {Count}", errorCount);
 
@@ -476,6 +479,10 @@ public static class ProcessDriver
                 return true;
             }
         );
+
+    internal static string FormatDuration(TimeSpan value) =>
+        // Consistent HH:mm:ss.fff across log entries; hours from TotalHours so a multi-day run never wraps
+        $"{(int)value.TotalHours:D2}:{value.Minutes:D2}:{value.Seconds:D2}.{value.Milliseconds:D3}";
 
     private static double GetPercentage(int dividend, int divisor)
     {

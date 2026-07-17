@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ptr727.Utilities;
-using Serilog;
 
 namespace PlexCleaner;
 
@@ -13,12 +12,13 @@ public static class Program
     // Exit code for an OS-signal interruption (128 + signal number), else 0; set only by PosixSignalHandler
     private static volatile int s_signalExitCode;
 
-    // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers; lives for the
-    // process lifetime and is disposed at shutdown alongside the logger
+    // Serilog to Microsoft.Extensions.Logging bridge shared with library loggers
     private static Microsoft.Extensions.Logging.ILoggerFactory? s_libraryLoggerFactory;
 
     public static readonly TimeSpan SnippetTimeSpan = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan QuickScanTimeSpan = TimeSpan.FromMinutes(3);
+    public const int QuickScanFrameCount = 1000;
+
     public static CommandLineOptions Options { get; set; } = null!;
     public static ConfigFileJsonSchema Config { get; set; } = null!;
 

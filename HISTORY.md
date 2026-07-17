@@ -4,6 +4,27 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.21:
+  - Repair non-monotonic DTS muxer warnings losslessly instead of failing repair permanently.
+    - `ffmpeg -f null` can exit `0` yet emit `Application provided invalid, non monotonically increasing dts to muxer` for files that may decode and play correctly.
+    - The previous "any stderr means failure" rule promoted this muxer-interleaving artifact to a hard `VerifyFailed`/`RepairFailed`, and a re-encode could not fix it because Matroska stores no DTS and ffmpeg re-derives a non-monotonic timeline on read.
+    - Verify now classifies the decode diagnostics deterministically as clean, a timestamp-only failure, or a decode error; a timestamp-only failure is a repairable failure and everything else fails (fail-closed, so an unrecognized diagnostic fails as a decode error).
+    - The classification streams the output line by line, so memory stays bounded even when a file emits a warning per packet ([#827](https://github.com/ptr727/PlexCleaner/issues/827)).
+  - Added a lossless timestamp repair as the first repair tier, escalating to remux and re-encode when it cannot apply.
+    - When verification detects a demux-visible non-monotonic DTS on an audio stream, the audio packet timestamps are rewritten to be strictly monotonic using the `setts` bitstream filter with a stream copy (no re-encode), then re-verified.
+    - A regression gate compares the per-stream coded payload hash and the per-stream start and duration before and after, discarding the result unless every stream is byte-identical and no stream shifted beyond the A/V-sync tolerance, so the lossless repair can neither alter the media nor drift the audio out of sync.
+    - A non-monotonic DTS the `setts` repair cannot fix - a video stream (where a `setts` would reorder B-frames), or a break visible only after decode - falls through to a remux and then a full re-encode that rebuilds the timestamps, matching the general detect -> surgical -> remux -> re-encode -> fail escalation, instead of stopping at `RepairFailed`. The re-encode tier also repairs genuine decode corruption.
+  - Consolidated the bitrate and DTS packet analyses into a single `ffprobe -show_packets` pass, computing the per-second bitrate and the per-stream DTS monotonicity together instead of reading packets twice.
+  - Switched closed caption detection to `ffprobe -analyze_frames -show_entries stream=closed_captions`, replacing the `movie=...[out0+subcc]` lavfi filter and its QuickScan snippet-remux workaround; QuickScan now bounds the scan with `-read_intervals`.
+  - Added the `DtsTimestampRepair` example plugin.
+    - It revisits files that a previous version marked `RepairFailed`, re-verifies them, clears the flag when the only problem was timestamps, and losslessly repairs the timestamps when the DTS is demux-visible. Not available in AOT builds.
+  - Restricted `--testsnippets` to slow re-encode and deinterlace operations. Fast remux, stream-copy, and the lossless timestamp repair now always produce full output, so a repair or remux is validated on the whole file rather than an unrepresentative leading clip; a snippet had caused the timestamp-repair byte-identical gate to fail during testing.
+  - Hardened interlace detection against interleaved `idet` output. On a source with non-monotonic DTS, `ffmpeg -fflags +genpts` emits muxer warnings between the `idet` stat lines; the parser now matches each stat line independently instead of requiring a contiguous block, so a full-file scan no longer fails to parse and abort the file. The raw output is logged on a parse failure.
+  - Improved tool execution logging for troubleshooting.
+    - A tool failure now logs the tool's error output on a single line with the exit code, the operation, and the file name, instead of a bare exit code with the error text discarded or split across lines.
+    - The error text is read from the stream the tool writes to (stderr for the ffmpeg family, HandBrake, and 7-Zip; stdout for the mkvtoolnix tools), falling back to the other captured stream so output on an unexpected stream, such as MediaInfo's stdout, is never lost. The previously non-buffered mkvpropedit and 7-Zip executions now buffer their output, so their failures log the error text instead of nothing.
+    - The operation (the calling method, via `[CallerMemberName]`) is included in the execution, cancellation, and failure lines, so a command can be tied to its purpose in a parallel log without correlating separate lines. Redundant per-operation debug lines already covered by the command execution log were removed.
+    - Added per-file elapsed processing time to the `ProcessFiles` result line, formatted consistently with the run total.
 - Version 3.20:
   - Switched tool downloads and the application version check to the resilient HTTP client in `ptr727.Utilities` (retry with backoff and a circuit breaker via `Microsoft.Extensions.Http.Resilience`), replacing the plain `HttpClient`.
   - Enabled closed caption removal for H.265/HEVC video: the SEI NAL unit lookup keyed on `h265` never matched FFprobe's `hevc` codec name, so HEVC files were incorrectly reported as an "Unsupported video format for Closed Captions removal". HEVC video (excluding HDR10 and HDR10+ content, which remains guarded) is now cleaned using the `filter_units=remove_types=39` bitstream filter, same as H.264 and MPEG-2.
@@ -21,6 +42,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Handle the `SIGINT`, `SIGTERM`, and `SIGQUIT` termination signals (`docker stop`, `Ctrl+C`) so processing is interrupted gracefully and the summary and exit code are logged before exit. The custom `Ctrl+Q`/`Ctrl+Z` exit keys are removed in favor of the standard signals.
   - Normalize `Default` track flags instead of only warning about them: clear the flag on a lone track of a type, keep the preferred audio track as the single default when multiple are flagged, and clear all default flags on subtitle tracks.
   - Added a `custom` command that loads a user-provided plugin assembly implementing `IProcessPlugin` and runs it over the media files, reusing the file iteration and processing API for bespoke re-processing or repair. Includes the `MatroskaHeaderCleanup` example plugin. Not available in AOT builds.
+  - Added a regression test suite and reduced-corpus tooling under `RegressionTests/`: a ZFS-clone harness and Python catalog / reduce / locate / audit utilities that verify processing decisions stay consistent across versions. No application changes.
 - Version 3.19:
   - Reworked the CI/CD pipeline to a branch-scoped self-publishing model: a weekly scheduled run (and manual dispatch) publishes both `main` (stable, Docker `latest`) and `develop` (prerelease, Docker `develop`) - native executables, the multi-arch Docker image, and the GitHub release - while merges accumulate until the next run. No application changes.
   - Added `WORKFLOW.md` (the canonical CI/CD specification) and `repo-config/` (rulesets and repository settings as code).

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace PlexCleaner;
 
 public static class PluginApi
@@ -16,7 +18,13 @@ public interface IPluginHost
     string OperatingSystem { get; }
     string Runtime { get; }
 
-    // Plugin log events flow to the host sinks and end-of-run summary
+    // Plugin log events flow to the host sinks and end-of-run summary. Fully qualified so plugin authors
+    // are not left guessing between Serilog.ILogger and Microsoft.Extensions.Logging.ILogger
+    [SuppressMessage(
+        "Style",
+        "IDE0001:Simplify Names",
+        Justification = "Disambiguate the public plugin logger type"
+    )]
     Serilog.ILogger Logger { get; }
 }
 

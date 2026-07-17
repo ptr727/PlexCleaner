@@ -23,16 +23,13 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.20**:
+**Version: 3.21**:
 
 **Summary:**
 
-- Reworked logging: added `--loglevel` (`Verbose` ... `Fatal`) to select the log level, `--logclear` (the log file now appends by default), and `--logelevate` to opt into raising a file's level to `Information` after a warning or error. `--logwarning` and `--logappend` are deprecated. Low-level tool and per-track chatter is now logged at `Debug`/`Verbose`.
-- Always log the end-of-run summary, and handle stop signals (`docker stop`, `Ctrl+C`) so processing stops gracefully and the summary and exit code are logged before exit.
-- Normalize multiple or redundant `Default` track flags instead of only warning about them.
-- Fixed an `idet` interlace-detection defect where ffmpeg emitting its statistics more than once could cause the counts to parse incorrectly and detection to fail; also improved detection reporting (detection source and a self-describing reason).
-- Added a `custom` command that runs a user-provided plugin assembly over the media files for bespoke re-processing or repair, see [Custom Plugins](#custom-plugins).
-- Fixed closed caption removal for H.265/HEVC video that was incorrectly reported as an unsupported format (HDR10 and HDR10+ HEVC content remains guarded).
+- Treat a non-monotonic DTS as a verify failure, and attempt to repair it losslessly with the `setts` bitstream filter.
+- Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
+- Added the `DtsTimestampRepair` example plugin that attempts non-monotonic DTS repairs on `RepairFailed` files.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -149,6 +146,7 @@ Common examples of issues resolved by the `process` command:
 **Performance & Integrity:**
 
 - Corrupt media streams → Verify integrity and attempt automatic repair.
+- Non-monotonic DTS timestamps → Losslessly rewrite the packet timestamps using `setts`.
 - Matroska files that fail player Direct Play despite passing tool checks → Detect an unusable seek index (SeekHead/Cues) and re-multiplex.
 - High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
 
@@ -851,7 +849,10 @@ public interface IProcessPlugin
 }
 ```
 
-`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. See the [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) example, which re-checks and repairs the Matroska seek-index structure on already-verified files.
+`Initialize` receives an `IPluginHost` with the deterministic `PluginApiVersion`, the application and OS versions, and a `Serilog.ILogger` to log through. `ProcessFile` reuses the public processing API, for example `new ProcessFile(fileName)` then `RepairMatroskaStructure(...)`. Two examples are included:
+
+- [`MatroskaHeaderCleanup`](./Plugins/MatroskaHeaderCleanup/) re-checks and repairs the Matroska seek-index structure on already-verified files.
+- [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) revisits files that an older version marked `RepairFailed`, re-verifies them, and losslessly repairs the timestamps (`setts`) when the non-monotonic DTS is demux-visible, clearing the flag on success; a detected DTS it cannot repair stays reported.
 
 Notes:
 
@@ -935,69 +936,9 @@ docker run \
 
 ### Regression Testing
 
-Regression testing ensures consistent behavior across versions by comparing processing results on the same media files.
+Regression testing ensures consistent behavior across versions by comparing processing results on the same media files, down to the per-file processing decision.
 
-The behavior of the tool is very dependent on the media files being tested, and the following process can facilitate regressions testing, assuring that the process results between versions remain consistent.
-
-- Maintain a collection of troublesome media files that resulted in functional changes.
-- Create a ZFS snapshot of the media files to test.
-- Process the files, using a known good version, and save the results in JSON format using the `--resultsfile` option.
-- Restore the ZFS snapshot allowing repetitive testing using the original files.
-- Process the files again using the under test version.
-- Compare the JSON results file from the known good version with the version under test.
-- Investigate any file comparison discrepancies.
-
-E.g.
-
-```shell
-# Copy troublesome files
-rsync -av --delete --progress /data/media/Troublesome/. /data/media/test
-chown -R nobody:users /data/media/test
-chmod -R ug=rwx,o=rx /data/media/test
-
-# Take snapshot
-zfs destroy hddpool/media/test@backup
-zfs snapshot hddpool/media/test@backup
-```
-
-```shell
-# Config
-PlexCleanerApp=/PlexCleaner/Debug/PlexCleaner
-MediaPath=/Test/Media
-ConfigPath=/Test/Config
-
-# Test function
-RunContainer () {
-  local Image=$1
-  local Tag=$2
-
-  # Rollback to snapshot
-  sudo zfs rollback hddpool/media/test@backup
-
-  # Process files
-  docker run \
-    -it \
-    --rm \
-    --pull always \
-    --name PlexCleaner-Test \
-    --user nobody:users \
-    --env TZ=America/Los_Angeles \
-    --volume /data/media/test:$MediaPath:rw \
-    --volume /data/media/PlexCleaner:$ConfigPath:rw \
-    $Image:$Tag \
-    $PlexCleanerApp process \
-      --settingsfile=$ConfigPath/PlexCleaner.json \
-      --logfile=$ConfigPath/PlexCleaner-$Tag.log \
-      --mediafiles=$MediaPath \
-      --testsnippets \
-      --quickscan \
-      --resultsfile=$ConfigPath/Results-$Tag.json
-}
-
-# Test containers
-RunContainer docker.io/ptr727/plexcleaner latest
-RunContainer docker.io/ptr727/plexcleaner develop
-```
+The behavior of the tool is very dependent on the media files being tested. A reproducible process and its tooling live under [`RegressionTests/`](./RegressionTests/): a ZFS-clone harness that processes a curated collection of troublesome media through a given image tag, plus utilities that derive a machine-readable issue catalog, build a proven-equivalent reduced collection, and audit physical-error coverage. See [`RegressionTests/README.md`](./RegressionTests/README.md) for details.
 
 ## Development Tooling
 

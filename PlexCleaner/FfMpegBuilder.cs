@@ -89,6 +89,8 @@ public partial class FfMpeg
         public InputOptions SeekStop(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero ? this : SeekStop().Add($"{(int)timeSpan.TotalSeconds}");
 
+        // Apply only to slow encode operations; fast stream-copy and remux operations produce full output
+        // so a repair or remux is validated on the whole file, not an unrepresentative snippet
         public InputOptions TestSnippets() =>
             Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
 
@@ -181,6 +183,11 @@ public partial class FfMpeg
 
         public OutputOptions BitstreamFilterVideo(string option) =>
             BitstreamFilterVideo().Add(option);
+
+        public OutputOptions BitstreamFilterAudio() => Add("-bsf:a");
+
+        public OutputOptions BitstreamFilterAudio(string option) =>
+            BitstreamFilterAudio().Add(option);
 
         public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
             timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
