@@ -142,6 +142,7 @@ def full_decode_locate(src: Path, needles: list[str]) -> float | None:
 def write_region(rules_path: Path, name: str, start: int, end: int, note: str) -> None:
     """Merge a region window for name into the external rules file (create if absent)."""
     data = json.loads(rules_path.read_text()) if rules_path.exists() else {}
+    data.setdefault("schema", 1)  # keep the file self-describing, matching the shipped example
     data.setdefault("regions", {})[name] = {"start": start, "end": end, "note": note}
     rules_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 

@@ -54,7 +54,7 @@ Mode="${1:-quick}"
 case "$Mode" in
   quick | full) ;;
   *)
-    echo "Usage: $0 [quick|full] [tag]" >&2
+    echo "Usage: $0 [quick|full] [tag] [full|reduced] [plugin...]" >&2
     exit 1
     ;;
 esac
@@ -360,11 +360,15 @@ RunRegressionTests() {
   # Provision a pristine clone of the corpus, process it, then run each built plugin on the
   # processed results to confirm it loads and runs; per-plugin behaviour is verified in isolation
   ProvisionDataset
+  # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e,
+  # so a failed run never leaves the shared test dataset mutated; disarmed after the clean restore.
+  trap 'RestoreDataset' EXIT
   RunProcess "$Tag" "$Version"
   for Dll in "${BuiltPlugins[@]}"; do
     RunPlugin "$Tag" "$Version" "$Dll"
   done
   RestoreDataset
+  trap - EXIT
 }
 
 echo "Starting tests in $Mode mode"
