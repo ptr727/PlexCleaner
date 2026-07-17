@@ -32,15 +32,19 @@
     },
     "extensions": {
         "recommendations": [
+            "charliermarsh.ruff",
             "csharpier.csharpier-vscode",
             "davidanson.vscode-markdownlint",
             "editorconfig.editorconfig",
+            "fanaticpythoner.better-todo-tree",
             "github.vscode-github-actions",
             "ms-azuretools.vscode-docker",
             "ms-dotnettools.csdevkit",
+            "ms-python.mypy-type-checker",
+            "ms-python.python",
+            "ms-python.vscode-pylance",
             "streetsidesoftware.code-spell-checker",
-            "yzhang.markdown-all-in-one",
-            "fanaticpythoner.better-todo-tree"
+            "yzhang.markdown-all-in-one"
         ]
     }
 }

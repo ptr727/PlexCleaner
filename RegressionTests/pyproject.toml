@@ -1,0 +1,26 @@
+# Linter-only configuration for the RegressionTests Python utilities.
+#
+# These are standalone stdlib-only scripts (no runtime dependencies), so this file carries no
+# project/build metadata - only the ruff + mypy config, mirroring the ptr727 Financial-Modeling
+# conventions. Run the tools with uv (no install needed):
+#
+#   uvx ruff check .
+#   uvx ruff format --check .
+#   uvx mypy .
+#
+# These run the latest tools, matching the VSCode tasks; CI (.github/workflows/validate-task.yml)
+# pins exact versions (bumpable there), so local results may differ slightly - by design, so local
+# tooling never silently falls behind.
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["I"]  # import sorting (isort)
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true

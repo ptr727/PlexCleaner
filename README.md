@@ -936,69 +936,9 @@ docker run \
 
 ### Regression Testing
 
-Regression testing ensures consistent behavior across versions by comparing processing results on the same media files.
+Regression testing ensures consistent behavior across versions by comparing processing results on the same media files, down to the per-file processing decision.
 
-The behavior of the tool is very dependent on the media files being tested, and the following process can facilitate regressions testing, assuring that the process results between versions remain consistent.
-
-- Maintain a collection of troublesome media files that resulted in functional changes.
-- Create a ZFS snapshot of the media files to test.
-- Process the files, using a known good version, and save the results in JSON format using the `--resultsfile` option.
-- Restore the ZFS snapshot allowing repetitive testing using the original files.
-- Process the files again using the under test version.
-- Compare the JSON results file from the known good version with the version under test.
-- Investigate any file comparison discrepancies.
-
-E.g.
-
-```shell
-# Copy troublesome files
-rsync -av --delete --progress /data/media/Troublesome/. /data/media/test
-chown -R nobody:users /data/media/test
-chmod -R ug=rwx,o=rx /data/media/test
-
-# Take snapshot
-zfs destroy hddpool/media/test@backup
-zfs snapshot hddpool/media/test@backup
-```
-
-```shell
-# Config
-PlexCleanerApp=/PlexCleaner/Debug/PlexCleaner
-MediaPath=/Test/Media
-ConfigPath=/Test/Config
-
-# Test function
-RunContainer () {
-  local Image=$1
-  local Tag=$2
-
-  # Rollback to snapshot
-  sudo zfs rollback hddpool/media/test@backup
-
-  # Process files
-  docker run \
-    -it \
-    --rm \
-    --pull always \
-    --name PlexCleaner-Test \
-    --user nobody:users \
-    --env TZ=America/Los_Angeles \
-    --volume /data/media/test:$MediaPath:rw \
-    --volume /data/media/PlexCleaner:$ConfigPath:rw \
-    $Image:$Tag \
-    $PlexCleanerApp process \
-      --settingsfile=$ConfigPath/PlexCleaner.json \
-      --logfile=$ConfigPath/PlexCleaner-$Tag.log \
-      --mediafiles=$MediaPath \
-      --testsnippets \
-      --quickscan \
-      --resultsfile=$ConfigPath/Results-$Tag.json
-}
-
-# Test containers
-RunContainer docker.io/ptr727/plexcleaner latest
-RunContainer docker.io/ptr727/plexcleaner develop
-```
+The behavior of the tool is very dependent on the media files being tested. A reproducible process and its tooling live under [`RegressionTests/`](./RegressionTests/): a ZFS-clone harness that processes a curated collection of troublesome media through a given image tag, plus utilities that derive a machine-readable issue catalog, build a proven-equivalent reduced collection, and audit physical-error coverage. See [`RegressionTests/README.md`](./RegressionTests/README.md) for details.
 
 ## Development Tooling
 

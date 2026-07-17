@@ -316,6 +316,10 @@ Check states with `HasFlag()`, combine with `|=`
 - Docker tests: Download Matroska test files from GitHub
 - CI: Separate workflows for build tests and Docker tests
 
+### Regression Testing
+
+- Cross-version processing-consistency checks against a curated media collection, with a ZFS-clone harness and Python catalog / reduce / locate / audit tooling under `RegressionTests/`. See [`RegressionTests/README.md`](./RegressionTests/README.md).
+
 ## Build and Release
 
 The authoritative release and workflow governance is in [AGENTS.md](./AGENTS.md). This section is a short architectural summary.

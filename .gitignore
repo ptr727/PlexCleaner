@@ -12,3 +12,9 @@ coverage/
 
 *.log
 *.user
+
+# Python tooling (RegressionTests/)
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/

@@ -106,6 +106,7 @@ Applies to code and workflow (`#`) comments alike.
 
 - [`.editorconfig`](./.editorconfig) is the single source of truth for line endings: CRLF for `.md`, `.cs`, XML/`.csproj`/`.props`, non-workflow `.yml`/`.yaml`, `.json`, `.cmd`/`.bat`/`.ps1`; LF for `.sh`, Dockerfiles, and workflow YAML (`.github/workflows/*.{yml,yaml}`). Workflow YAML is pinned LF because Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of mixed; git still leaves endings alone (`* -text`) and CI's `editorconfig-checker` enforces it. The `[*.cs]`/ReSharper style block applies because this repo ships .NET.
 - **Always honor the `.editorconfig` ending.** Create a file with its spec ending; when editing a file, bring the whole file to spec (a file-wide EOL fix alongside the content change is expected, not a violation); if you come across a file with the wrong ending, fix it. [`.gitattributes`](./.gitattributes) (`* -text`) governs git's own normalization - it is not a license to leave a file on the wrong ending. Verify with `file <path>` after writing.
+- **Python (`.py`) and `.toml` are CRLF.** They have no `[*.py]`/`[*.toml]` override, so they inherit the `[*]` CRLF default (matching the audited convention that keeps Python on the repo default rather than pinning LF). Only the `.sh` harness is LF.
 
 ### Quantitative Claims
 
@@ -221,6 +222,7 @@ An **expected, recoverable** failure escalates through the standard repair tiers
 - **PlexCleanerTests** (`PlexCleanerTests/PlexCleanerTests.csproj`)
   - xUnit v3 test suite. Assertions via AwesomeAssertions.
 - **`Docker/`** - multi-arch Linux container build (`ubuntu:rolling`, `linux/amd64` + `linux/arm64`); runs as a `nonroot` user, mounts media under `/media`.
+- **`RegressionTests/`** - regression harness and tooling: a ZFS-clone Bash harness plus standalone stdlib-only Python utilities (catalog / reduce / locate / audit) that verify processing decisions stay consistent across versions against a curated media collection. The Python tooling is linted with ruff and type-checked with mypy (config in `RegressionTests/pyproject.toml`); it is the only Python in the repo. No media or media filenames are committed - media-specific reduction rules live with the media as an external JSON file, and the repo ships only a synthetic example. See [`RegressionTests/README.md`](./RegressionTests/README.md).
 - **Build configuration**:
   - Common MSBuild properties (`TargetFramework`, `Nullable`, `ImplicitUsings`, `AnalysisLevel`, etc.) live in `Directory.Build.props` at the solution root. Do not duplicate these in individual `.csproj` files - only add a property to a `.csproj` when it is project-specific or overrides the shared default.
   - All NuGet package versions are centralised in `Directory.Packages.props`. `PackageReference` elements in `.csproj` files must not include a `Version` attribute. Asset metadata (`PrivateAssets`, `IncludeAssets`) stays in the `.csproj` `PackageReference` element.
