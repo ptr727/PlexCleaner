@@ -152,7 +152,22 @@ The corpus is built from real troublesome media, but many issues are *structural
 flags, tags, language, container, HDR, closed captions) and depend on nothing copyrighted. Those can
 be reproduced by **fully synthetic** files -- ffmpeg `lavfi` video/audio (`testsrc2`, `sine`) plus
 a targeted mux -- so a fixture can be regenerated anywhere with no media to ship. The
-[`synthetic/`](synthetic/) library is the start of this:
+[`synthetic/`](synthetic/) library is the start of this.
+
+### Objectives
+
+Synthetic generation is a *targeted* tool, not a wholesale replacement for the real corpus:
+
+1. **Fill sample gaps** -- build a fixture for a code path or detection the corpus does not yet
+   cover, without sourcing (often unobtainable) real media.
+2. **Substitute oversized files** -- replace an excessively large sample with a small synthetic that
+   reproduces the same issue set (e.g. a multi-GB 4K HDR title cut to a few MB), reducing run time
+   with no loss of coverage.
+3. **On-the-fly coverage generation (the larger goal)** -- generate inputs during testing to
+   exercise code paths and grow coverage at CI time (generate a file, run the test, repeat); see
+   *Toward xUnit coverage generation* below.
+
+### Components
 
 - [`synthetic/synthesize.py`](synthetic/synthesize.py) -- generation primitives (HDR10 base, SDR
   video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
@@ -201,6 +216,22 @@ Add a builder function that constructs the target with the primitives, register 
 and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit
 copyrighted media or media filenames. Candidate next steps: interlaced, cover-art, and
 container-specific (AVI / WMV / MPEG-2) targets, and per-frame-varying HDR10+ metadata.
+
+### Toward xUnit coverage generation
+
+Objective 3 is the direction of travel: raise unit-test **code coverage** by synthesizing inputs
+inside the tests rather than shipping fixtures -- generate a targeted file, run the code over it,
+assert, repeat, all in one CI run. This Python library already serves objectives 1 and 2 and can run
+as a CI step (generate files, then process them), but the xUnit suite ([`PlexCleanerTests/`](../PlexCleanerTests/))
+is C#, and an xUnit test that generates its own input must call the generation logic **in-process**.
+
+So the coverage-expansion work needs a **C# equivalent** of these builders and injectors -- the
+ffmpeg / mkvmerge orchestration plus the SEI / NAL construction -- callable from `PlexCleanerTests`,
+so a test can synthesize a file targeting a specific code path, run the relevant PlexCleaner logic
+over it, and assert, with the exercised paths counted by the coverage gate. This Python library is
+the reference implementation and the proving ground for what each target must contain (verified
+against the processing image); a C# port carries those recipes into the coverage-measured test path.
+Objectives 1 and 2 stay well served by Python; only objective 3's in-process generation requires C#.
 
 ## Naming conventions
 
