@@ -18,6 +18,7 @@ Or import ``inject(hevc_bytes) -> hevc_bytes`` from another script.
 
 import re
 import sys
+from pathlib import Path
 
 
 def build_cc_sei(cc_count: int = 1) -> bytes:
@@ -76,9 +77,7 @@ def inject(data: bytes) -> bytes:
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit("usage: inject_cc_sei.py <in.hevc> <out.hevc>")
-    data = open(sys.argv[1], "rb").read()
-    result = inject(data)
-    open(sys.argv[2], "wb").write(result)
+    Path(sys.argv[2]).write_bytes(inject(Path(sys.argv[1]).read_bytes()))
     print(f"injected CC SEI before each VCL NAL -> {sys.argv[2]}")
 
 
