@@ -9,7 +9,7 @@ PlexCleaner's behavior depends heavily on the specific media it processes: most 
 The committed contents are code plus a synthetic example. No media and no media filenames live in the repository:
 
 - The **media collection** lives on a server, next to the media (like a Plex library would). It is never committed. The copyrighted filenames stay out of source control entirely.
-- The **media-specific reduction rules** (issue-localized cut windows) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`](reduction-rules.example.json) with synthetic placeholder names.
+- The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`](reduction-rules.example.json) with synthetic placeholder names.
 
 ## Layout
 
