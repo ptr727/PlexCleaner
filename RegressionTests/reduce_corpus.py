@@ -318,10 +318,19 @@ def main() -> None:
         elif src.suffix.lower() == ".mkv":
             # artificial-container is a last-resort rung: it only reproduces a renamed-MP4 source,
             # so it sits after every real MKV cutter and is reached only when they all fail.
-            ladder = [
-                "mkvmerge", "mkvmerge-noietf", "ffmpeg-fixietf", "ffmpeg", "ffmpeg-tags",
-                "artificial-container",
-            ]  # fmt: skip
+            if gt_subs:
+                # decode-signature file: the defect lives in the video packets, which an ffmpeg
+                # stream-copy preserves faithfully. mkvmerge can pass the coarse gate while losing
+                # the physical error shape, so try the ffmpeg cutters first for these.
+                ladder = [
+                    "ffmpeg", "ffmpeg-fixietf", "ffmpeg-tags", "mkvmerge", "mkvmerge-noietf",
+                    "artificial-container",
+                ]  # fmt: skip
+            else:
+                ladder = [
+                    "mkvmerge", "mkvmerge-noietf", "ffmpeg-fixietf", "ffmpeg", "ffmpeg-tags",
+                    "artificial-container",
+                ]  # fmt: skip
         else:
             ladder = ["ffmpeg"]
 

@@ -71,7 +71,7 @@ Any miss keeps the original whole, so an issue is never dropped.
 
 Cutting a clip can silently repair the very defect the sample exists to capture, and the two cutters have mirror-image side effects: an `mkvmerge` cut preserves timestamp defects but strips language-IETF metadata, while an `ffmpeg` cut preserves metadata but normalizes some timestamp defects. So the tool tries a ladder of cutters plus in-place metadata surgery and lets the prove-equivalence gate pick the one that keeps this file's issues:
 
-- head clips and region clips via `mkvmerge` and `ffmpeg`.
+- head clips and region clips via `mkvmerge` and `ffmpeg`. The order is defect-type driven: a decode-signature file (its defect lives in the video packets) tries the `ffmpeg` stream-copy first, because `mkvmerge` can pass the coarse gate while losing the physical error shape; other files try `mkvmerge` first, to preserve timestamp defects `ffmpeg` would normalize.
 - surgical rungs that edit the header in place with no remux: a `noietf` rung re-injects the missing-IETF-metadata defect an `mkvmerge` cut would repair, and a `fixietf` rung sets IETF on an `ffmpeg` cut so a timestamp defect drives the verify-and-repair chain.
 - an `artificial-container` last-resort rung that re-muxes the head with the MP4 muxer under the `.mkv` name, reproducing a source that IS a renamed MP4. It sits after every real MKV cutter, so a genuine MKV never reaches it (and would be rejected by the gate if it did).
 

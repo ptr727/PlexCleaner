@@ -312,6 +312,10 @@ def error_shape(e):
     s = re.sub(r"\[dec:(\w+) @ 0xADDR\]\s*", r"[\1] ", s)  # [dec:h264 @ ..]
     s = re.sub(r"\[(\w+) @ 0xADDR\]", r"[\1]", s)  # [h264 @ ..]
     s = re.sub(r"\[SWR @ 0xADDR\]", "[SWR]", s)
+    # collapse the collection subdir in an embedded source path: the ground run processes files
+    # under full/ while a clip is processed at the media root, so a path-bearing message (e.g. the
+    # unsupported-container error) would otherwise never match between ground and clip
+    s = re.sub(r"<MEDIA>/\w+/", "<MEDIA>/", s)
     s = re.sub(r"stream \d+", "stream N", s)
     s = re.sub(r"-?\b\d+(\.\d+)?\b", "N", s)  # coordinates/ids/sizes
     return re.sub(r"\s+", " ", s).strip()
