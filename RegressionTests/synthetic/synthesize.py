@@ -123,7 +123,11 @@ def build_hdr10_multitrack(out: Path) -> None:
 
 
 def _build_hdr_cc(out: Path, sei: bytes) -> None:
-    """Generate the HDR10 base, inject ``sei`` (HDR + CC) before every VCL NAL, and remux to MKV."""
+    """Generate the HDR10 base, inject the given SEI NAL(s) before every VCL NAL, and remux to MKV.
+
+    ``sei`` is the caption SEI, optionally preceded by an HDR10+ (ST 2094) SEI; the HDR10 (ST 2086)
+    base metadata always comes from the x265 encode of the base.
+    """
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         base, annexb, ccb = work / "base.mkv", work / "base.hevc", work / "cc.hevc"
