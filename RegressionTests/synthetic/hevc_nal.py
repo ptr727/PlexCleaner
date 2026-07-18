@@ -62,8 +62,10 @@ def wrap_sei_t35(payload: bytes) -> bytes:
 def insert_before_vcl(data: bytes, sei: bytes) -> bytes:
     """Return the Annex-B HEVC stream with ``sei`` inserted before every VCL NAL.
 
-    ``re.finditer`` on ``00 00 01`` matches both 3- and 4-byte start codes (a 4-byte code's leading
-    ``00`` is trimmed from the previous NAL). Empty NALs from consecutive start codes are skipped.
+    ``re.finditer`` on ``00 00 01`` locates each start code; any number of leading ``zero_byte``
+    padding before it (a 4-byte ``00 00 00 01`` or more) is stripped from the previous NAL, which is
+    safe because a well-formed NAL never ends in ``0x00``. Empty NALs from consecutive start codes
+    are skipped.
     """
     starts = [m.start() for m in re.finditer(b"\x00\x00\x01", data)]
     if not starts:
@@ -72,8 +74,9 @@ def insert_before_vcl(data: bytes, sei: bytes) -> bytes:
     for i, start in enumerate(starts):
         payload_start = start + 3
         if i + 1 < len(starts):
-            nxt = starts[i + 1]
-            payload_end = nxt - 1 if data[nxt - 1] == 0 else nxt
+            payload_end = starts[i + 1]
+            while payload_end > payload_start and data[payload_end - 1] == 0:
+                payload_end -= 1
         else:
             payload_end = len(data)
         nal = data[payload_start:payload_end]
