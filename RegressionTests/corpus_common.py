@@ -11,6 +11,7 @@ appended {FileName} after the error, so a fixed regex tied to the old shape woul
 all errors on newer logs.
 """
 
+import glob
 import json
 import re
 import sys
@@ -193,7 +194,9 @@ def make_head_clip(src, out, seconds, run=None, cutter="mkvmerge"):
     import subprocess as _sp
 
     src, out = Path(src), Path(out)
-    for p in out.parent.glob(out.stem + ".*"):
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, leaving stale outputs or matching others
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
 
     def _run(cmd):
