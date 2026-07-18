@@ -512,7 +512,7 @@ public static class Process
                 {
                     Metrics.RecordModified();
                 }
-                if (state.HasFlag(SidecarFile.StatesType.VerifyFailed))
+                if ((state & SidecarFile.StatesType.VerifyFailed) != 0)
                 {
                     Metrics.RecordVerifyFailed();
                 }

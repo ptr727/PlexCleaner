@@ -54,12 +54,16 @@ internal static class Metrics
     private static long s_runInflight;
     private static long s_runStartTimestamp;
 
-    // Cached once so the per-file RecordStates does not allocate an enum-values array (or box via
-    // HasFlag) on every processed file.
-    private static readonly SidecarFile.StatesType[] s_stateFlags =
+    // Cached once: each State flag (minus None) with its pre-built tag, so the per-file RecordStates
+    // allocates nothing - no enum-values array, no HasFlag boxing, and no per-flag tag string.
+    private static readonly (
+        SidecarFile.StatesType Flag,
+        KeyValuePair<string, object?> Tag
+    )[] s_stateTags =
     [
         .. Enum.GetValues<SidecarFile.StatesType>()
-            .Where(flag => flag != SidecarFile.StatesType.None),
+            .Where(flag => flag != SidecarFile.StatesType.None)
+            .Select(flag => (flag, new KeyValuePair<string, object?>("state", flag.ToString()))),
     ];
 
     static Metrics()
@@ -136,9 +140,12 @@ internal static class Metrics
 
     internal static void RecordStates(SidecarFile.StatesType state)
     {
-        foreach (SidecarFile.StatesType flag in EnumerateSetStates(state))
+        foreach ((SidecarFile.StatesType flag, KeyValuePair<string, object?> tag) in s_stateTags)
         {
-            s_filesProcessed.Add(1, new KeyValuePair<string, object?>("state", flag.ToString()));
+            if ((state & flag) == flag)
+            {
+                s_filesProcessed.Add(1, tag);
+            }
         }
     }
 
@@ -177,7 +184,7 @@ internal static class Metrics
         SidecarFile.StatesType state
     )
     {
-        foreach (SidecarFile.StatesType flag in s_stateFlags)
+        foreach ((SidecarFile.StatesType flag, _) in s_stateTags)
         {
             if ((state & flag) == flag)
             {
