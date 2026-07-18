@@ -73,8 +73,11 @@ Cutting a clip can silently repair the very defect the sample exists to capture,
 
 - head clips and region clips via `mkvmerge` and `ffmpeg`.
 - surgical rungs that edit the header in place with no remux: a `noietf` rung re-injects the missing-IETF-metadata defect an `mkvmerge` cut would repair, and a `fixietf` rung sets IETF on an `ffmpeg` cut so a timestamp defect drives the verify-and-repair chain.
+- an `artificial-container` last-resort rung that re-muxes the head with the MP4 muxer under the `.mkv` name, reproducing a source that IS a renamed MP4. It sits after every real MKV cutter, so a genuine MKV never reaches it (and would be rejected by the gate if it did).
 
 Samples at or near the window length ship verbatim, because any cut remuxes and would repair container or metadata defects.
+
+Some samples reproduce their defect but diverge from the source by a known, benign amount -- a downstream artifact of a repair that depends on full-file content, not the defect itself (for example a remux the 60s clip cannot trigger). Rather than keep the whole source, an `accept` rule in the external rules file declares the exact, bounded State/detection delta tolerated for a named rung; a clip within that bound passes as `relaxed` and the catalog records the delta so the divergence stays explicit.
 
 ### Region rules (generate on demand)
 
@@ -90,7 +93,7 @@ python3 locate_issue.py --catalog /path/to/full/catalog.json --full --write-rule
 python3 reduce_corpus.py --catalog /path/to/full/catalog.json --mode generate --out /path/to/reduced
 ```
 
-The rules schema is a `regions` map keyed by source basename; see [`reduction-rules.example.json`](reduction-rules.example.json). If the rules file is absent, every file is head-clipped and the tool says so.
+The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename; see [`reduction-rules.example.json`](reduction-rules.example.json). If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
 
 ## Physical-shape coverage audit
 
