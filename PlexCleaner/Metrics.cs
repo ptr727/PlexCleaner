@@ -54,6 +54,14 @@ internal static class Metrics
     private static long s_runInflight;
     private static long s_runStartTimestamp;
 
+    // Cached once so the per-file RecordStates does not allocate an enum-values array (or box via
+    // HasFlag) on every processed file.
+    private static readonly SidecarFile.StatesType[] s_stateFlags =
+    [
+        .. Enum.GetValues<SidecarFile.StatesType>()
+            .Where(flag => flag != SidecarFile.StatesType.None),
+    ];
+
     static Metrics()
     {
         _ = s_meter.CreateObservableGauge(
@@ -169,9 +177,9 @@ internal static class Metrics
         SidecarFile.StatesType state
     )
     {
-        foreach (SidecarFile.StatesType flag in Enum.GetValues<SidecarFile.StatesType>())
+        foreach (SidecarFile.StatesType flag in s_stateFlags)
         {
-            if (flag != SidecarFile.StatesType.None && state.HasFlag(flag))
+            if ((state & flag) == flag)
             {
                 yield return flag;
             }
