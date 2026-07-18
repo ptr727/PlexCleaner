@@ -35,6 +35,8 @@ the repository:
   collection.
 - [`reduction-rules.example.json`](reduction-rules.example.json) -- synthetic example of the
   external rules schema.
+- [`synthetic/`](synthetic/) -- the synthetic-targeting library: build small, fully synthetic
+  fixtures that reproduce specific detections without any copyrighted media (see below).
 - [`pyproject.toml`](pyproject.toml) -- ruff and mypy configuration for the Python tooling.
 
 ## The collection
@@ -143,6 +145,54 @@ shape (the exact message template, with run- and site-varying content normalized
 ground run and from each reduced clip, and reports any source shape a clip fails to reproduce. It
 augments the reduced `catalog.json` with per-file and corpus-level coverage figures, so an
 under-covered area is always visible and it is known when a change warrants a full-collection run.
+
+## Synthetic file generation
+
+The corpus is built from real troublesome media, but many issues are *structural* (track layout,
+flags, tags, language, container, HDR, closed captions) and depend on nothing copyrighted. Those can
+be reproduced by **fully synthetic** files -- ffmpeg `lavfi` video/audio (`testsrc2`, `sine`) plus
+a targeted mux -- so a fixture can be regenerated anywhere with no media to ship. The
+[`synthetic/`](synthetic/) library is the start of this:
+
+- [`synthetic/synthesize.py`](synthetic/synthesize.py) -- generation primitives (HDR10 base, SDR
+  video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
+- [`synthetic/inject_cc_sei.py`](synthetic/inject_cc_sei.py) -- insert CEA-608 closed-caption SEI
+  into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops
+  captions), preserving any HDR SEI. Importable, or a standalone CLI.
+
+Requires `ffmpeg` (with libx265) and `mkvmerge` on `PATH`. Examples:
+
+```shell
+python3 synthetic/synthesize.py hdr10-multitrack -o multitrack.mkv   # targets the track-structure set
+python3 synthetic/synthesize.py hdr10-cc -o hdr-cc.mkv               # HDR10 HEVC with closed captions
+```
+
+### Targeting methodology
+
+Pick the detections a fixture must reproduce, build a candidate, then **validate by processing it
+through the PlexCleaner image** and confirming its detections and State -- the same
+prove-equivalence idea the reduced corpus uses. Iterate the construction against the log until it
+matches the target. The builders encode what actually triggers each detection (verified this way):
+
+- **Duplicate tracks** -- the dedup keeps every *flagged* track and only dedups the rest by
+  preferred codec, so a duplicate pair must be **unflagged** and in a keep language.
+- **Track flags to be set** -- a title-implied flag (SDH / CC / Commentary / Forced) that is not
+  set as an actual flag (e.g. a subtitle titled "Forced" without the forced flag).
+- **Unwanted language tracks** -- a language not in `KeepLanguages` and not the original.
+- **Redundant Default flags** -- two or more tracks of a type flagged default.
+- **Extra video tracks** -- a second video stream.
+- **Tags** -- mkvmerge statistics tags plus a container title.
+- **HDR survives remux** -- the HDR SEI is copied through an mkvmerge remux; pairing it with a
+  removable track (above) forces the remux, so the fixture guards HDR passthrough during cleanup.
+- **Closed captions on HDR** -- an injected A53 CC SEI on an HDR (ST 2086 / 2094) HEVC stream
+  reaches the CC-on-HDR branch (which refuses removal to avoid stripping HDR metadata).
+
+### Extending the library
+
+Add a builder function that constructs the target with the primitives, register it in `TARGETS`,
+and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit
+copyrighted media or media filenames. Candidate next steps: an HDR10+ (ST 2094) SEI injector to make
+the closed-caption fixture true HDR10+, and interlaced / cover-art / container-specific targets.
 
 ## Naming conventions
 
