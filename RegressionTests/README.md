@@ -228,7 +228,8 @@ is C#, and an xUnit test that generates its own input must call the generation l
 So the coverage-expansion work needs a **C# equivalent** of these builders and injectors -- the
 ffmpeg / mkvmerge orchestration plus the SEI / NAL construction -- callable from `PlexCleanerTests`,
 so a test can synthesize a file targeting a specific code path, run the relevant PlexCleaner logic
-over it, and assert, with the exercised paths counted by the coverage gate. This Python library is
+over it, and assert, with the exercised paths counted in the (report-only) coverage measurement.
+This Python library is
 the reference implementation and the proving ground for what each target must contain (verified
 against the processing image); a C# port carries those recipes into the coverage-measured test path.
 Objectives 1 and 2 stay well served by Python; only objective 3's in-process generation requires C#.
