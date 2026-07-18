@@ -59,6 +59,16 @@ internal static class Metrics
             .Select(flag => (flag, new KeyValuePair<string, object?>("state", flag.ToString()))),
     ];
 
+    // Each tool with its pre-built tag, so RecordToolDuration allocates nothing per invocation.
+    private static readonly Dictionary<
+        MediaTool.ToolType,
+        KeyValuePair<string, object?>
+    > s_toolTags = Enum.GetValues<MediaTool.ToolType>()
+        .ToDictionary(
+            tool => tool,
+            tool => new KeyValuePair<string, object?>("tool", tool.ToString())
+        );
+
     static Metrics()
     {
         _ = s_meter.CreateObservableGauge(
@@ -141,10 +151,7 @@ internal static class Metrics
     }
 
     internal static void RecordToolDuration(MediaTool.ToolType tool, double milliseconds) =>
-        s_toolDuration.Record(
-            milliseconds,
-            new KeyValuePair<string, object?>("tool", tool.ToString())
-        );
+        s_toolDuration.Record(milliseconds, s_toolTags[tool]);
 
     internal static void Dispose() => s_meter.Dispose();
 
