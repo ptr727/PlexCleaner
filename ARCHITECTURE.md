@@ -81,7 +81,7 @@ All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap)
 
 - Hooks: `ProcessDriver.ProcessFiles` (the choke point every command and monitor cycle funnels through) drives the file/byte/in-flight instruments and the byte-weighted `progress.ratio`; `Process.ProcessFiles` records the per-`SidecarFile.StatesType` outcomes; `MediaTool` execution paths record `tool.duration`.
 - Progress is weighted by input bytes (summed once up front and credited at completion from the same map), not file count.
-- Run-scoped gauges (totals, in-flight, progress, ETA) reset per `ProcessFiles` call; the counters stay cumulative for the process. All writers use `Interlocked`, so the parallel loop needs no lock; observable-gauge callbacks only read. Tags are bounded (`state`, `tool`) — no filename tags.
+- Run-scoped gauges (totals, in-flight, progress, ETA) reset per `ProcessFiles` call; the counters stay cumulative for the process. All writers use `Interlocked`, so the parallel loop needs no lock; observable-gauge callbacks only read. Tags are bounded (`state`, `tool`) - no filename tags.
 
 ### Sidecar File System
 

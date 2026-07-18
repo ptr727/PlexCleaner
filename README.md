@@ -841,8 +841,8 @@ PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics`
 
 Read the meter with [`dotnet-counters`](https://learn.microsoft.com/dotnet/core/diagnostics/dotnet-counters):
 
-- Local: `dotnet-counters monitor -p <pid> PlexCleaner.Process`
-- Docker: `docker exec <container> counters` (a bundled wrapper that targets the in-container process)
+- Local: `dotnet-counters monitor -p <pid> --counters PlexCleaner.Process`
+- Docker: `docker exec <container> counters` (a bundled wrapper that runs the same command against the in-container process)
 
 ## Custom Plugins
 

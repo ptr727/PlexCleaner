@@ -125,6 +125,12 @@ public static class ProcessDriver
         long totalBytes = 0;
         foreach (string file in fileList)
         {
+            // Weight only the files that will actually be processed: a mkvFilesOnly command skips
+            // non-MKV files, so they are excluded from the totals and never credited as completed.
+            if (mkvFilesOnly && !SidecarFile.IsMkvFile(file))
+            {
+                continue;
+            }
             long length = 0;
             try
             {
@@ -137,7 +143,7 @@ public static class ProcessDriver
             fileSizes[file] = length;
             totalBytes += length;
         }
-        Metrics.BeginRun(totalCount, totalBytes);
+        Metrics.BeginRun(fileSizes.Count, totalBytes);
 
         int processedCount = 0;
         int errorCount = 0;
@@ -188,11 +194,6 @@ public static class ProcessDriver
                                 taskName,
                                 processedPercentage,
                                 fileName
-                            );
-                            // Credit skipped files so byte-weighted progress can still reach 1.0
-                            Metrics.FileCompleted(
-                                fileSizes.GetValueOrDefault(fileName),
-                                TimeSpan.Zero
                             );
                             continue;
                         }
