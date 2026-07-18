@@ -15,6 +15,10 @@ class BitWriter:
         self._bits: list[int] = []
 
     def write(self, value: int, count: int) -> None:
+        if count < 1:
+            raise ValueError("count must be >= 1")
+        if not 0 <= value < (1 << count):
+            raise ValueError(f"value {value} does not fit in {count} bits")
         for i in range(count - 1, -1, -1):
             self._bits.append((value >> i) & 1)
 
