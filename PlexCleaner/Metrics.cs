@@ -3,17 +3,11 @@ using System.Diagnostics.Metrics;
 
 namespace PlexCleaner;
 
-// Always-on runtime metrics published via System.Diagnostics.Metrics, readable with dotnet-counters
-// (no config flag; instruments are inert until a listener observes them). Overall progress is
-// weighted by input bytes, not file count, so a run with one small and one huge file reports real
-// work done. Aggregate only: no filename tags (unbounded cardinality) - the state and tool tags are
-// bounded enums.
 internal static class Metrics
 {
     private static readonly Meter s_meter = new("PlexCleaner.Process");
 
-    // Cumulative counters live for the whole process (correct for dotnet-counters rate display) and
-    // are NOT reset between runs or monitor cycles.
+    // Cumulative for the process lifetime, not reset between runs.
     private static readonly Counter<long> s_filesCompleted = s_meter.CreateCounter<long>(
         "plexcleaner.files.completed",
         description: "Files finished, any outcome"
@@ -46,16 +40,15 @@ internal static class Metrics
         description: "Per media-tool invocation time, tagged by tool"
     );
 
-    // Run-scoped state, reset by BeginRun and only read by the observable gauges. All access is via
-    // Interlocked so the parallel per-file loop needs no lock.
+    // Run-scoped state, reset by BeginRun, read by the observable gauges.
+    // All access is via Interlocked so the parallel loop needs no lock.
     private static long s_runFilesTotal;
     private static long s_runBytesTotal;
     private static long s_runBytesCompleted;
     private static long s_runInflight;
     private static long s_runStartTimestamp;
 
-    // Cached once: each State flag (minus None) with its pre-built tag, so the per-file RecordStates
-    // allocates nothing - no enum-values array, no HasFlag boxing, and no per-flag tag string.
+    // Each State flag (minus None) with its tag, pre-built once so RecordStates allocates nothing per file.
     private static readonly (
         SidecarFile.StatesType Flag,
         KeyValuePair<string, object?> Tag
@@ -108,8 +101,7 @@ internal static class Metrics
         );
     }
 
-    // Start a new run: reset the run-scoped gauges and the ETA clock. Called at every
-    // ProcessDriver.ProcessFiles entry, so back-to-back commands and each monitor cycle restart clean.
+    // Reset the run-scoped gauges and ETA clock, called once per ProcessFiles run.
     internal static void BeginRun(long totalFiles, long totalBytes)
     {
         _ = Interlocked.Exchange(ref s_runFilesTotal, totalFiles);
@@ -123,8 +115,7 @@ internal static class Metrics
 
     internal static void FileInflightDone() => Interlocked.Decrement(ref s_runInflight);
 
-    // A file finished (any outcome): credit its whole size (no partial credit in v1) and record its
-    // wall-clock time.
+    // A finished file credits its whole size (no partial credit in v1) and its wall-clock time.
     internal static void FileCompleted(long sizeBytes, TimeSpan wall)
     {
         _ = Interlocked.Add(ref s_runBytesCompleted, sizeBytes);
@@ -157,15 +148,15 @@ internal static class Metrics
 
     internal static void Dispose() => s_meter.Dispose();
 
-    // Byte-weighted progress; guards a zero (or not-yet-started) total.
+    // Byte-weighted progress, guards a zero (or not-yet-started) total.
     internal static double ComputeProgress()
     {
         long total = Interlocked.Read(ref s_runBytesTotal);
         return total <= 0 ? 0.0 : (double)Interlocked.Read(ref s_runBytesCompleted) / total;
     }
 
-    // Linear extrapolation from weighted progress and elapsed time; 0 until there is progress, and
-    // never a non-finite value (which dotnet-counters would render as NaN/Infinity).
+    // Linear extrapolation from weighted progress and elapsed time.
+    // Returns 0 before any progress and never a non-finite value.
     internal static double ComputeEtaSeconds()
     {
         double ratio = ComputeProgress();

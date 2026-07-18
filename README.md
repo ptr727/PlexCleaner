@@ -23,13 +23,12 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.21**:
+**Version: 3.22**:
 
 **Summary:**
 
-- Treat a non-monotonic DTS as a verify failure, and attempt to repair it losslessly with the `setts` bitstream filter.
-- Switched closed caption detection to `ffprobe -analyze_frames`, and consolidated the bitrate and DTS packet analyses into a single packet pass.
-- Added the `DtsTimestampRepair` example plugin that attempts non-monotonic DTS repairs on `RepairFailed` files.
+- Added always-on runtime metrics with byte-weighted progress, published via `System.Diagnostics.Metrics` and readable with `dotnet-counters`.
+- Bundled a `counters` wrapper in the Docker image for reading the metrics with a single command.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 

@@ -118,15 +118,13 @@ public static class ProcessDriver
         // Process all files in parallel
         int totalCount = fileList.Count;
 
-        // Size map for the byte-weighted progress metrics: sum once up front and credit the same size
-        // at completion, so a remux or rename mid-run cannot drift the total. Missing files weight as
-        // zero. BeginRun resets the run-scoped gauges, covering back-to-back commands and monitor cycles.
+        // Sum sizes up front and credit the same size at completion, so a mid-run rename cannot drift the total.
+        // Missing files weight as zero.
         Dictionary<string, long> fileSizes = new(totalCount, StringComparer.Ordinal);
         long totalBytes = 0;
         foreach (string file in fileList)
         {
-            // Weight only the files that will actually be processed: a mkvFilesOnly command skips
-            // non-MKV files, so they are excluded from the totals and never credited as completed.
+            // Exclude non-MKV files from the totals when mkvFilesOnly, since they are skipped not processed.
             if (mkvFilesOnly && !SidecarFile.IsMkvFile(file))
             {
                 continue;
@@ -205,8 +203,8 @@ public static class ProcessDriver
                             fileName
                         );
 
-                        // Perform the task, timing this file's work. Track the in-flight count around
-                        // the task in a finally so a cancellation cannot leak it.
+                        // Perform the task, timing this file's work.
+                        // Decrement the in-flight count in a finally so a cancellation cannot leak it.
                         long fileSize = fileSizes.GetValueOrDefault(fileName);
                         Metrics.FileStarted();
                         long startTimestamp = Stopwatch.GetTimestamp();
