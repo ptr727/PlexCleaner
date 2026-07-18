@@ -159,12 +159,18 @@ a targeted mux -- so a fixture can be regenerated anywhere with no media to ship
 - [`synthetic/inject_cc_sei.py`](synthetic/inject_cc_sei.py) -- insert CEA-608 closed-caption SEI
   into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops
   captions), preserving any HDR SEI. Importable, or a standalone CLI.
+- [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal
+  SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so
+  MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
+- [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a
+  T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
 
 Requires `ffmpeg` (with libx265) and `mkvmerge` on `PATH`. Examples:
 
 ```shell
 python3 synthetic/synthesize.py hdr10-multitrack -o multitrack.mkv   # targets the track-structure set
-python3 synthetic/synthesize.py hdr10-cc -o hdr-cc.mkv               # HDR10 HEVC with closed captions
+python3 synthetic/synthesize.py hdr10-cc -o hdr-cc.mkv               # HDR10 (ST 2086) HEVC + closed captions
+python3 synthetic/synthesize.py hdr10plus-cc -o hdr10plus-cc.mkv     # true HDR10+ (ST 2094) HEVC + closed captions
 ```
 
 ### Targeting methodology
@@ -184,15 +190,17 @@ matches the target. The builders encode what actually triggers each detection (v
 - **Tags** -- mkvmerge statistics tags plus a container title.
 - **HDR survives remux** -- the HDR SEI is copied through an mkvmerge remux; pairing it with a
   removable track (above) forces the remux, so the fixture guards HDR passthrough during cleanup.
-- **Closed captions on HDR** -- an injected A53 CC SEI on an HDR (ST 2086 / 2094) HEVC stream
-  reaches the CC-on-HDR branch (which refuses removal to avoid stripping HDR metadata).
+- **Closed captions on HDR** -- an injected A53 CC SEI on an HDR HEVC stream reaches the CC-on-HDR
+  branch (which refuses removal to avoid stripping HDR metadata). `hdr10-cc` builds the static
+  ST 2086 case; `hdr10plus-cc` also injects an ST 2094-40 SEI so the branch fires over the *dynamic*
+  HDR10+ metadata that is genuinely at risk when the CC SEI is removed.
 
 ### Extending the library
 
 Add a builder function that constructs the target with the primitives, register it in `TARGETS`,
 and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit
-copyrighted media or media filenames. Candidate next steps: an HDR10+ (ST 2094) SEI injector to make
-the closed-caption fixture true HDR10+, and interlaced / cover-art / container-specific targets.
+copyrighted media or media filenames. Candidate next steps: interlaced, cover-art, and
+container-specific (AVI / WMV / MPEG-2) targets, and per-frame-varying HDR10+ metadata.
 
 ## Naming conventions
 
