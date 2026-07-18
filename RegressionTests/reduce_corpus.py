@@ -17,11 +17,17 @@ Cutting strategy per file:
   windows for defects deep in the file
 - the cutter ladder tries mkvmerge and ffmpeg cuts plus in-place IETF surgery, because the cutters
   have mirror-image side effects and only the prove-equivalence gate can pick the safe one
+- ``artificial-container``: last-resort rung that re-muxes the head with the MP4 muxer under the
+  ``.mkv`` name, reproducing a source that IS a renamed MP4 (a genuine MKV fails the gate here)
+- relaxed acceptance (from the rules file): a named file may declare a bounded, benign delta in
+  State, detections, or verify-error signatures, so a clip whose only shortfall is a documented
+  downstream artifact still passes
 
 The source corpus is READ-ONLY. Clips, work dirs, and outputs live under scratch / --out.
 
-Media-specific region windows are NOT hard-coded here (that would embed private filenames); they
-live in an external rules file next to the corpus. See ``reduction-rules.example.json``.
+Media-specific data is NOT hard-coded here (that would embed private filenames); the region windows
+AND the relaxed-acceptance overrides live in an external rules file next to the corpus. See
+``reduction-rules.example.json``.
 
 Modes:
 
@@ -31,6 +37,7 @@ Modes:
 """
 
 import argparse
+import glob
 import json
 import os
 import shutil
@@ -74,6 +81,39 @@ def load_regions(path: Path) -> dict[str, Region]:
     return {name: (int(r["start"]), int(r["end"])) for name, r in data.get("regions", {}).items()}
 
 
+def load_accept(path: Path) -> dict[str, dict]:
+    """Load relaxed-acceptance overrides from the external rules file.
+
+    A file with a genuine, benign divergence between its full-source and best-clip processing (a
+    downstream artifact of a repair that depends on full-file content, not the defect itself) would
+    otherwise fail the strict gate and be kept whole. An ``accept`` entry declares the exact,
+    bounded delta that is allowed for a NAMED rung, so the clip still ships while the divergence
+    stays explicit. Absent file / no ``accept`` section -> strict gate everywhere. See
+    ``reduction-rules.example.json`` for the schema.
+    """
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text()).get("accept", {})
+    if not isinstance(raw, dict):
+        return {}
+    # the file is hand-edited, so validate each rule's shape and skip (with a warning) anything
+    # malformed - a well-formed rule is a dict whose bounded-delta fields, when present, are lists.
+    # This keeps the strict-gate fallback reliable and avoids a stray string becoming a set of
+    # characters. The "_comment" metadata key is dropped the same way.
+    bound_fields = ("state_missing", "state_extra", "detections_missing", "signatures_missing")
+    accept: dict[str, dict] = {}
+    for name, rule in raw.items():
+        if name.startswith("_"):
+            continue
+        if not isinstance(rule, dict) or not all(
+            isinstance(rule.get(f, []), list) for f in bound_fields
+        ):
+            print(f"Ignoring malformed accept rule for {name!r} in {path}")
+            continue
+        accept[name] = rule
+    return accept
+
+
 def make_clip(
     src: Path, out: Path, seconds: int, regions: dict[str, Region], cutter: str = "mkvmerge"
 ) -> bool:
@@ -82,7 +122,9 @@ def make_clip(
     if not region:
         return make_head_clip(src, out, seconds)
     start, end = region
-    for p in out.parent.glob(out.stem + ".*"):
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, deleting the wrong files or none
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
     if cutter == "ffmpeg":
         # ffmpeg region cut gives cleaner timestamps at the cut boundary (a mkvmerge region cut can
@@ -125,6 +167,30 @@ def make_clip(
             if numbered.exists():
                 numbered.rename(out)
     return out.exists() and out.stat().st_size > 0
+
+
+def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
+    """Head-clip [0, seconds] with the MP4 muxer but keep the ``.mkv`` name.
+
+    Reproduces a source that IS a renamed MP4: the byte stream is MP4 while the extension claims
+    Matroska, which PlexCleaner detects as a container mismatch and remuxes. For a genuine MKV this
+    produces an unrelated file that the prove-equivalence gate rejects, so it is only ever reached
+    as the last ladder rung, after the real MKV cutters have failed.
+    """
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, deleting the wrong files or none
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
+        p.unlink()
+    proc = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
+         "-t", str(seconds), "-map", "0", "-c", "copy", "-f", "mp4", str(out)],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )  # fmt: skip
+    # this remux has clean success/fail semantics (unlike the mkv cutters, which can exit non-zero
+    # yet leave a usable file), so require a clean exit as well as a non-empty output
+    return proc.returncode == 0 and out.exists() and out.stat().st_size > 0
 
 
 def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set[str]] | None]:
@@ -227,8 +293,12 @@ def main() -> None:
     entries = {e["file"]: e for e in catalog["files"]}
     rules_path = Path(args.rules) if args.rules else catalog_path.parent / "reduction-rules.json"
     regions = load_regions(rules_path)
+    accept = load_accept(rules_path)
     print(f"Catalog      : {args.catalog}  ({len(entries)} files)")
-    print(f"Head window  : {args.seconds}s   regions: {len(regions)}   mode={args.mode}\n")
+    print(
+        f"Head window  : {args.seconds}s   regions: {len(regions)}   "
+        f"relaxed: {len(accept)}   mode={args.mode}\n"
+    )
 
     sources = args.sources or sorted(entries)
     settings_dir = Path(args.settings)
@@ -263,7 +333,21 @@ def main() -> None:
         if name in regions:
             ladder = ["region", "region-noietf", "region-ffmpeg", "region-ffmpeg-fixietf"]
         elif src.suffix.lower() == ".mkv":
-            ladder = ["mkvmerge", "mkvmerge-noietf", "ffmpeg-fixietf", "ffmpeg", "ffmpeg-tags"]
+            # artificial-container is a last-resort rung: it only reproduces a renamed-MP4 source,
+            # so it sits after every real MKV cutter and is reached only when they all fail.
+            if gt_subs:
+                # decode-signature file: the defect lives in the video packets, which an ffmpeg
+                # stream-copy preserves faithfully. mkvmerge can pass the coarse gate while losing
+                # the physical error shape, so try the ffmpeg cutters first for these.
+                ladder = [
+                    "ffmpeg", "ffmpeg-fixietf", "ffmpeg-tags", "mkvmerge", "mkvmerge-noietf",
+                    "artificial-container",
+                ]  # fmt: skip
+            else:
+                ladder = [
+                    "mkvmerge", "mkvmerge-noietf", "ffmpeg-fixietf", "ffmpeg", "ffmpeg-tags",
+                    "artificial-container",
+                ]  # fmt: skip
         else:
             ladder = ["ffmpeg"]
 
@@ -287,6 +371,8 @@ def main() -> None:
                     regions,
                     cutter="ffmpeg" if base == "region-ffmpeg" else "mkvmerge",
                 )
+            elif base == "artificial-container":
+                made = make_artificial_container(src, pristine, args.seconds)
             else:
                 made = make_head_clip(src, pristine, args.seconds, cutter=base)
             if made and cutter.endswith("-noietf"):
@@ -301,7 +387,11 @@ def main() -> None:
             verbatim = pristine.stat().st_size >= 0.5 * ssz
             if verbatim:
                 shutil.copy2(src, pristine)
-            elif pristine.suffix.lower() == ".mkv" and "ClearedTags" not in gt_state:
+            elif (
+                pristine.suffix.lower() == ".mkv"
+                and base != "artificial-container"  # an MP4-in-mkv clip is not real Matroska
+                and "ClearedTags" not in gt_state
+            ):
                 # both cutters add their own track tags (ffmpeg DURATION / mkvmerge statistics);
                 # when the source had none, strip them in place (no remux, defects untouched) so
                 # the clip does not pick up a spurious ClearedTags state
@@ -326,7 +416,24 @@ def main() -> None:
             # source, which a single-site clip can never string-match
             miss_e = gt_subs - classify_signature(cl["errors"])
             state_ok = cl_state == gt_state
-            ok = state_ok and not miss_d and not miss_e
+            state_extra = cl_state - gt_state
+            state_short = gt_state - cl_state
+            strict_ok = state_ok and not miss_d and not miss_e
+            # Relaxed acceptance: when strict fails, an ``accept`` rule for THIS file and THIS rung
+            # may permit a bounded, documented delta (a benign downstream artifact) so the clip
+            # still passes; the clip is accepted only if every shortfall stays within the bound.
+            acc = accept.get(name)
+            relaxed = False
+            delta: dict = {}
+            if acc and cutter == acc.get("method") and not strict_ok:
+                over_short = state_short - set(acc.get("state_missing", []))
+                over_extra = state_extra - set(acc.get("state_extra", []))
+                over_d = miss_d - set(acc.get("detections_missing", []))
+                over_e = miss_e - set(acc.get("signatures_missing", []))
+                if not (over_short or over_extra or over_d or over_e):
+                    relaxed = True
+                    delta = {"missing": sorted(state_short), "extra": sorted(state_extra)}
+            ok = strict_ok or relaxed
             attempt = {
                 "cutter": cutter,
                 "pristine": pristine,
@@ -336,6 +443,8 @@ def main() -> None:
                 "miss_e": miss_e,
                 "state_ok": state_ok,
                 "verbatim": verbatim,
+                "relaxed": relaxed,
+                "state_delta": delta,
             }
             attempts.append(attempt)
             if ok or verbatim:
@@ -343,7 +452,11 @@ def main() -> None:
 
         csz = attempt.get("csz", ssz)
         ratio = f"{ssz / csz:.0f}x"
-        result = f"PASS ({attempt.get('cutter')})" if ok else "FAIL"
+        result = (
+            f"PASS ({attempt.get('cutter')}{', relaxed' if attempt.get('relaxed') else ''})"
+            if ok
+            else "FAIL"
+        )
         print(f"{short:54} {human(ssz):>7} {human(csz):>7} {ratio:>6}  {result}")
         if not ok and "error" in attempt:
             print(f"    {attempt['error']}")
@@ -383,6 +496,13 @@ def main() -> None:
                 "ground_state": sorted(gt_state),
                 "missing_detections": sorted(attempt.get("miss_d", set())),
                 "missing_signatures": sorted(attempt.get("miss_e", set())),
+                # relaxed passes carry the documented delta they were accepted with, so a divergence
+                # from ground stays explicit in the catalog rather than looking like a clean match
+                **(
+                    {"relaxed": True, "state_delta": attempt["state_delta"]}
+                    if ok and attempt.get("relaxed")
+                    else {}
+                ),
             }
         )
 

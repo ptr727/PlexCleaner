@@ -11,6 +11,7 @@ appended {FileName} after the error, so a fixed regex tied to the old shape woul
 all errors on newer logs.
 """
 
+import glob
 import json
 import re
 import sys
@@ -193,7 +194,9 @@ def make_head_clip(src, out, seconds, run=None, cutter="mkvmerge"):
     import subprocess as _sp
 
     src, out = Path(src), Path(out)
-    for p in out.parent.glob(out.stem + ".*"):
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, leaving stale outputs or matching others
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
 
     def _run(cmd):
@@ -312,6 +315,11 @@ def error_shape(e):
     s = re.sub(r"\[dec:(\w+) @ 0xADDR\]\s*", r"[\1] ", s)  # [dec:h264 @ ..]
     s = re.sub(r"\[(\w+) @ 0xADDR\]", r"[\1]", s)  # [h264 @ ..]
     s = re.sub(r"\[SWR @ 0xADDR\]", "[SWR]", s)
+    # collapse the known collection subdir in an embedded source path: the ground run processes
+    # files under full/ while a clip is processed at the media root, so a path-bearing message
+    # (e.g. the unsupported-container error) would otherwise never match between ground and clip.
+    # Restricted to the corpus dirs so a real top-level path component is never stripped.
+    s = re.sub(r"<MEDIA>/(?:full|reduced)/", "<MEDIA>/", s)
     s = re.sub(r"stream \d+", "stream N", s)
     s = re.sub(r"-?\b\d+(\.\d+)?\b", "N", s)  # coordinates/ids/sizes
     return re.sub(r"\s+", " ", s).strip()
