@@ -77,7 +77,7 @@ Cutting a clip can silently repair the very defect the sample exists to capture,
 
 Samples at or near the window length ship verbatim, because any cut remuxes and would repair container or metadata defects.
 
-Some samples reproduce their defect but diverge from the source by a known, benign amount -- a downstream artifact of a repair that depends on full-file content, not the defect itself (for example a remux the 60s clip cannot trigger). Rather than keep the whole source, an `accept` rule in the external rules file declares the exact, bounded State/detection delta tolerated for a named rung; a clip within that bound passes as `relaxed` and the catalog records the delta so the divergence stays explicit.
+Some samples reproduce their defect but diverge from the source by a known, benign amount -- a downstream artifact of a repair that depends on full-file content, not the defect itself (for example a remux the 60s clip cannot trigger). Rather than keep the whole source, an `accept` rule in the external rules file declares the exact, bounded delta tolerated for a named rung -- in State, detections, or verify-error signatures; a clip within that bound passes as `relaxed` and the catalog records the delta so the divergence stays explicit.
 
 ### Region rules (generate on demand)
 

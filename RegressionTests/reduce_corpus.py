@@ -19,8 +19,9 @@ Cutting strategy per file:
   have mirror-image side effects and only the prove-equivalence gate can pick the safe one
 - ``artificial-container``: last-resort rung that re-muxes the head with the MP4 muxer under the
   ``.mkv`` name, reproducing a source that IS a renamed MP4 (a genuine MKV fails the gate here)
-- relaxed acceptance (from the rules file): a named file may declare a bounded, benign State /
-  detection delta so a clip whose only shortfall is a documented downstream artifact still passes
+- relaxed acceptance (from the rules file): a named file may declare a bounded, benign delta in
+  State, detections, or verify-error signatures, so a clip whose only shortfall is a documented
+  downstream artifact still passes
 
 The source corpus is READ-ONLY. Clips, work dirs, and outputs live under scratch / --out.
 
@@ -36,6 +37,7 @@ Modes:
 """
 
 import argparse
+import glob
 import json
 import os
 import shutil
@@ -91,7 +93,10 @@ def load_accept(path: Path) -> dict[str, dict]:
     """
     if not path.exists():
         return {}
-    return json.loads(path.read_text()).get("accept", {})
+    raw = json.loads(path.read_text()).get("accept", {})
+    # keep only real rules: drop the "_comment" metadata key (and any non-dict value) so the
+    # relaxed count and the per-file lookup never treat a non-rule entry as an override
+    return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, dict)}
 
 
 def make_clip(
@@ -102,7 +107,9 @@ def make_clip(
     if not region:
         return make_head_clip(src, out, seconds)
     start, end = region
-    for p in out.parent.glob(out.stem + ".*"):
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, deleting the wrong files or none
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
     if cutter == "ffmpeg":
         # ffmpeg region cut gives cleaner timestamps at the cut boundary (a mkvmerge region cut can
@@ -155,7 +162,9 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     produces an unrelated file that the prove-equivalence gate rejects, so it is only ever reached
     as the last ladder rung, after the real MKV cutters have failed.
     """
-    for p in out.parent.glob(out.stem + ".*"):
+    # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
+    # glob would read as character classes and mis-match, deleting the wrong files or none
+    for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
     subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
@@ -352,7 +361,11 @@ def main() -> None:
             verbatim = pristine.stat().st_size >= 0.5 * ssz
             if verbatim:
                 shutil.copy2(src, pristine)
-            elif pristine.suffix.lower() == ".mkv" and "ClearedTags" not in gt_state:
+            elif (
+                pristine.suffix.lower() == ".mkv"
+                and base != "artificial-container"  # an MP4-in-mkv clip is not real Matroska
+                and "ClearedTags" not in gt_state
+            ):
                 # both cutters add their own track tags (ffmpeg DURATION / mkvmerge statistics);
                 # when the source had none, strip them in place (no remux, defects untouched) so
                 # the clip does not pick up a spurious ClearedTags state

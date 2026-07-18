@@ -14,7 +14,7 @@
     }
   },
   "accept": {
-    "_comment": "Relaxed acceptance. A clip whose issues reproduce but whose processing State/detections diverge from the source by a KNOWN, benign amount (a downstream artifact of a repair that depends on full-file content, not the defect itself) still passes, instead of keeping the whole source. 'method' names the exact ladder rung the override applies to; the four *_missing/*_extra sets bound the tolerated delta - a clip is accepted only when its shortfall stays within them. Any state the clip GAINS must be listed in state_extra; anything it fails to reproduce, in state_missing / detections_missing / signatures_missing. (Artificial-container needs no entry here: it is a normal ladder rung that either reproduces a renamed-MP4 source cleanly or is rejected by the strict gate.)",
+    "_comment": "Relaxed acceptance. A clip whose issues reproduce but whose processing State, detections, or verify-error signatures diverge from the source by a KNOWN, benign amount (a downstream artifact of a repair that depends on full-file content, not the defect itself) still passes, instead of keeping the whole source. 'method' names the exact ladder rung the override applies to; the three *_missing sets plus state_extra bound the tolerated delta - a clip is accepted only when its shortfall stays within them. Any state the clip GAINS must be listed in state_extra; anything it fails to reproduce, in state_missing / detections_missing / signatures_missing. (Artificial-container needs no entry here: it is a normal ladder rung that either reproduces a renamed-MP4 source cleanly or is rejected by the strict gate.)",
     "Example Deep-Repair Show - S02E03.mkv": {
       "method": "ffmpeg-fixietf",
       "state_missing": ["ReMuxed"],
