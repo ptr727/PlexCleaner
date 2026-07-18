@@ -114,6 +114,7 @@ public static class Program
         Log.Logger.LogOverrideContext().Information("Exit Code : {ExitCode}", exitCode);
         Log.CloseAndFlush();
         s_libraryLoggerFactory?.Dispose();
+        Metrics.Dispose();
 
         return exitCode;
     }

@@ -4,6 +4,13 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.22:
+  - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure ([#848](https://github.com/ptr727/PlexCleaner/issues/848)).
+    - Overall progress is weighted by input bytes rather than file count, so a run mixing tiny and huge files reports the actual work completed; in this first version an in-flight file contributes no partial credit until it finishes.
+    - Instruments include the run file and byte totals, in-flight and active-thread counts, completed bytes, the weighted `progress.ratio` and `eta.seconds`, cumulative per-outcome counters (completed, modified, errors, verify-failed, and a per-`State`-flag tally), and the `file.duration` and per-tool `tool.duration` histograms. Metrics are aggregate only, with bounded `state` and `tool` tags and no filename tags.
+    - The run-scoped gauges reset at the start of every processing pass, so monitor mode and back-to-back commands each report their own run, while the counters stay cumulative for rate display.
+    - Instruments are inert until a listener observes them, so the feature is always on with no configuration flag and negligible idle overhead.
+    - The Docker image ships a `counters` wrapper, so reading the metrics is `docker exec <container> counters`.
 - Version 3.21:
   - Repair non-monotonic DTS muxer warnings losslessly instead of failing repair permanently.
     - `ffmpeg -f null` can exit `0` yet emit `Application provided invalid, non monotonically increasing dts to muxer` for files that may decode and play correctly.

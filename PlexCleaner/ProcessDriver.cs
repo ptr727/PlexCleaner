@@ -117,6 +117,28 @@ public static class ProcessDriver
 
         // Process all files in parallel
         int totalCount = fileList.Count;
+
+        // Size map for the byte-weighted progress metrics: sum once up front and credit the same size
+        // at completion, so a remux or rename mid-run cannot drift the total. Missing files weight as
+        // zero. BeginRun resets the run-scoped gauges, covering back-to-back commands and monitor cycles.
+        Dictionary<string, long> fileSizes = new(totalCount, StringComparer.Ordinal);
+        long totalBytes = 0;
+        foreach (string file in fileList)
+        {
+            long length = 0;
+            try
+            {
+                length = new FileInfo(file).Length;
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                // Length unavailable: weight this file as zero
+            }
+            fileSizes[file] = length;
+            totalBytes += length;
+        }
+        Metrics.BeginRun(totalCount, totalBytes);
+
         int processedCount = 0;
         int errorCount = 0;
         bool error = false;
@@ -167,6 +189,11 @@ public static class ProcessDriver
                                 processedPercentage,
                                 fileName
                             );
+                            // Credit skipped files so byte-weighted progress can still reach 1.0
+                            Metrics.FileCompleted(
+                                fileSizes.GetValueOrDefault(fileName),
+                                TimeSpan.Zero
+                            );
                             continue;
                         }
 
@@ -177,9 +204,20 @@ public static class ProcessDriver
                             fileName
                         );
 
-                        // Perform the task, timing this file's work
+                        // Perform the task, timing this file's work. Track the in-flight count around
+                        // the task in a finally so a cancellation cannot leak it.
+                        long fileSize = fileSizes.GetValueOrDefault(fileName);
+                        Metrics.FileStarted();
                         long startTimestamp = Stopwatch.GetTimestamp();
-                        bool taskResult = taskFunc(fileName);
+                        bool taskResult;
+                        try
+                        {
+                            taskResult = taskFunc(fileName);
+                        }
+                        finally
+                        {
+                            Metrics.FileInflightDone();
+                        }
                         TimeSpan taskElapsed = Stopwatch.GetElapsedTime(startTimestamp);
 
                         // Handle cancel request
@@ -191,6 +229,7 @@ public static class ProcessDriver
                             // Error
                             Log.Error("{TaskName} Error : {FileName}", taskName, fileName);
                             _ = Interlocked.Increment(ref errorCount);
+                            Metrics.FileErrored();
                         }
 
                         // Log completion % after task completes
@@ -198,6 +237,7 @@ public static class ProcessDriver
                             Interlocked.Increment(ref processedCount),
                             totalCount
                         );
+                        Metrics.FileCompleted(fileSize, taskElapsed);
                         Log.Information(
                             "{TaskName} ({Processed:F2}%) Elapsed : {Elapsed:l} : After : {FileName}",
                             taskName,

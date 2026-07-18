@@ -86,6 +86,7 @@ See [Installation](#installation) for detailed setup instructions and other plat
   - [Process Command](#process-command)
   - [Monitor Command](#monitor-command)
   - [Other Commands](#other-commands)
+- [Runtime Metrics](#runtime-metrics)
 - [Custom Plugins](#custom-plugins)
 - [Testing](#testing)
   - [Unit Testing](#unit-testing)
@@ -833,6 +834,15 @@ Additional commands for specific tasks, organized by category:
   - Useful to show how different media tools interprets the same attributes.
 - `getmediainfo`:
   - Print media file information and track details.
+
+## Runtime Metrics
+
+PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, so a long-running `process` or `monitor` pass can be watched live with no extra setup. Overall progress is weighted by input bytes, not file count, so a run mixing small and large files reflects the actual work completed.
+
+Read the meter with [`dotnet-counters`](https://learn.microsoft.com/dotnet/core/diagnostics/dotnet-counters):
+
+- Local: `dotnet-counters monitor -p <pid> PlexCleaner.Process`
+- Docker: `docker exec <container> counters` (a bundled wrapper that targets the in-container process)
 
 ## Custom Plugins
 

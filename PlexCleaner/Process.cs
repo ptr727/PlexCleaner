@@ -506,6 +506,17 @@ public static class Process
                     return processResult;
                 }
 
+                // Per-outcome metrics: this is the only place the State flags are known
+                Metrics.RecordStates(state);
+                if (modified)
+                {
+                    Metrics.RecordModified();
+                }
+                if (state.HasFlag(SidecarFile.StatesType.VerifyFailed))
+                {
+                    Metrics.RecordVerifyFailed();
+                }
+
                 // Save result
                 lock (resultLock)
                 {
