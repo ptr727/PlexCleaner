@@ -94,9 +94,24 @@ def load_accept(path: Path) -> dict[str, dict]:
     if not path.exists():
         return {}
     raw = json.loads(path.read_text()).get("accept", {})
-    # keep only real rules: drop the "_comment" metadata key (and any non-dict value) so the
-    # relaxed count and the per-file lookup never treat a non-rule entry as an override
-    return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, dict)}
+    if not isinstance(raw, dict):
+        return {}
+    # the file is hand-edited, so validate each rule's shape and skip (with a warning) anything
+    # malformed - a well-formed rule is a dict whose bounded-delta fields, when present, are lists.
+    # This keeps the strict-gate fallback reliable and avoids a stray string becoming a set of
+    # characters. The "_comment" metadata key is dropped the same way.
+    bound_fields = ("state_missing", "state_extra", "detections_missing", "signatures_missing")
+    accept: dict[str, dict] = {}
+    for name, rule in raw.items():
+        if name.startswith("_"):
+            continue
+        if not isinstance(rule, dict) or not all(
+            isinstance(rule.get(f, []), list) for f in bound_fields
+        ):
+            print(f"Ignoring malformed accept rule for {name!r} in {path}")
+            continue
+        accept[name] = rule
+    return accept
 
 
 def make_clip(
