@@ -28,7 +28,9 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-from inject_cc_sei import inject
+from hevc_nal import insert_before_vcl
+from inject_cc_sei import build_cc_sei
+from inject_hdr10plus_sei import build_hdr10plus_sei
 
 FFMPEG = "ffmpeg"
 MKVMERGE = "mkvmerge"
@@ -120,37 +122,37 @@ def build_hdr10_multitrack(out: Path) -> None:
         )  # fmt: skip
 
 
-def build_hdr10_cc(out: Path) -> None:
-    """HDR10 HEVC with embedded CEA-608 closed captions, targeting the CC-on-HDR branch.
-
-    HDR10 (ST 2086) is enough to reach the branch. For the true HDR10+ (ST 2094) case - the dynamic
-    metadata genuinely at risk when the CC SEI is removed - also inject an ST 2094-40 SEI.
-    """
+def _build_hdr_cc(out: Path, sei: bytes) -> None:
+    """Generate the HDR10 base, inject ``sei`` (HDR + CC) before every VCL NAL, and remux to MKV."""
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         base, annexb, ccb = work / "base.mkv", work / "base.hevc", work / "cc.hevc"
         gen_hdr10_base(base)
-        run(
-            [
-                FFMPEG,
-                "-y",
-                "-i",
-                str(base),
-                "-c:v",
-                "copy",
-                "-bsf:v",
-                "hevc_mp4toannexb",
-                str(annexb),
-            ]
-        )
-        ccb.write_bytes(inject(annexb.read_bytes()))
+        run([FFMPEG, "-y", "-i", str(base), "-c:v", "copy", "-bsf:v", "hevc_mp4toannexb", str(annexb)])  # fmt: skip
+        ccb.write_bytes(insert_before_vcl(annexb.read_bytes(), sei))
         run([MKVMERGE, "-o", str(out), "--default-duration", "0:24fps", str(ccb)])
+
+
+def build_hdr10_cc(out: Path) -> None:
+    """HDR10 (ST 2086) HEVC with CEA-608 closed captions, reaching the CC-on-HDR branch."""
+    _build_hdr_cc(out, build_cc_sei())
+
+
+def build_hdr10plus_cc(out: Path) -> None:
+    """True HDR10+ (ST 2094) HEVC with CEA-608 closed captions.
+
+    Injects both an ST 2094-40 HDR10+ SEI and the CC SEI, so the CC-on-HDR branch fires over the
+    dynamic metadata that is genuinely at risk when the CC SEI is removed (MediaInfo reports
+    "SMPTE ST 2094 App 4"), not just the static ST 2086 case.
+    """
+    _build_hdr_cc(out, build_hdr10plus_sei() + build_cc_sei())
 
 
 TARGETS: dict[str, Callable[[Path], None]] = {
     "hdr10-base": gen_hdr10_base,
     "hdr10-multitrack": build_hdr10_multitrack,
     "hdr10-cc": build_hdr10_cc,
+    "hdr10plus-cc": build_hdr10plus_cc,
 }
 
 
