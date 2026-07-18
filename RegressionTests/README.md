@@ -160,8 +160,8 @@ a targeted mux -- so a fixture can be regenerated anywhere with no media to ship
   into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops
   captions), preserving any HDR SEI. Importable, or a standalone CLI.
 - [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal
-  SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so a base
-  reports "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
+  SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so
+  MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a
   T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
 
