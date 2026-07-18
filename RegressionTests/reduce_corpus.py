@@ -166,14 +166,16 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     # glob would read as character classes and mis-match, deleting the wrong files or none
     for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
-    subprocess.run(
+    proc = subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
          "-t", str(seconds), "-map", "0", "-c", "copy", "-f", "mp4", str(out)],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )  # fmt: skip
-    return out.exists() and out.stat().st_size > 0
+    # this remux has clean success/fail semantics (unlike the mkv cutters, which can exit non-zero
+    # yet leave a usable file), so require a clean exit as well as a non-empty output
+    return proc.returncode == 0 and out.exists() and out.stat().st_size > 0
 
 
 def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set[str]] | None]:
