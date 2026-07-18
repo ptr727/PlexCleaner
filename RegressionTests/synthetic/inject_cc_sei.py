@@ -27,9 +27,11 @@ def build_cc_sei(cc_count: int = 1) -> bytes:
     enough for the decoder to attach A53 side data and set the closed-captions property. Emulation
     prevention (``0x000003``) is applied to the RBSP.
     """
+    if not 1 <= cc_count <= 31:
+        raise ValueError("cc_count must be 1..31 (the cc_count field is 5 bits)")
     triples = bytes([0xFC, 0x80, 0x80]) * cc_count
     payload = (
-        bytes([0xB5, 0x00, 0x31, 0x47, 0x41, 0x39, 0x34, 0x03, 0xC0 | (cc_count & 0x1F), 0xFF])
+        bytes([0xB5, 0x00, 0x31, 0x47, 0x41, 0x39, 0x34, 0x03, 0xC0 | cc_count, 0xFF])
         + triples
         + bytes([0xFF])
     )
@@ -49,7 +51,11 @@ def build_cc_sei(cc_count: int = 1) -> bytes:
 def inject(data: bytes) -> bytes:
     """Return the Annex-B HEVC stream with a CC SEI inserted before every VCL NAL."""
     cc = build_cc_sei()
+    # re.finditer on 00 00 01 matches both 3- and 4-byte start codes (the 4-byte code's trailing
+    # 00 00 01 is found; its leading 00 is trimmed from the previous NAL below).
     starts = [m.start() for m in re.finditer(b"\x00\x00\x01", data)]
+    if not starts:
+        raise ValueError("input is not an Annex-B HEVC stream (no start codes found)")
     out = bytearray()
     for i, start in enumerate(starts):
         payload_start = start + 3
@@ -59,6 +65,8 @@ def inject(data: bytes) -> bytes:
         else:
             payload_end = len(data)
         nal = data[payload_start:payload_end]
+        if not nal:  # consecutive start codes -> empty NAL, skip
+            continue
         if (nal[0] >> 1) & 0x3F < 32:  # VCL NAL -> prepend the CC SEI
             out += cc
         out += b"\x00\x00\x00\x01" + nal

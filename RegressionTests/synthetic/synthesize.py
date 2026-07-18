@@ -42,13 +42,19 @@ HDR10_X265 = (
 
 
 def run(cmd: list[str]) -> None:
-    subprocess.run(
+    # Capture combined output and surface its tail on failure, so a regeneration error on another
+    # machine is diagnosable rather than a bare non-zero exit.
+    proc = subprocess.run(
         cmd,
-        check=True,
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        errors="replace",
     )
+    if proc.returncode != 0:
+        tail = "\n".join((proc.stdout or "").splitlines()[-20:])
+        raise RuntimeError(f"command failed (exit {proc.returncode}): {' '.join(cmd)}\n{tail}")
 
 
 def gen_hdr10_base(out: Path, seconds: int = 6, width: int = 3840, height: int = 2160) -> None:
