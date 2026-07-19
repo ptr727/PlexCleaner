@@ -27,7 +27,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Added always-on runtime metrics with byte-weighted progress, published via `System.Diagnostics.Metrics` and readable with `dotnet-counters`.
+- Added always-on runtime metrics with operation-weighted progress, published via `System.Diagnostics.Metrics` and readable with `dotnet-counters`.
 - Bundled a `counters` wrapper in the Docker image for reading the metrics with a single command.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
@@ -836,7 +836,7 @@ Additional commands for specific tasks, organized by category:
 
 ## Runtime Metrics
 
-PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, so a long-running `process` or `monitor` pass can be watched live with no extra setup. Overall progress is weighted by input bytes, not file count, so a run mixing small and large files reflects the actual work completed. Progress advances smoothly during a long operation because each in-flight file contributes partial credit from the running tool (the full-file scan, the re-encode, and the deinterlace).
+PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, so a long-running `process` or `monitor` pass can be watched live with no extra setup. Overall progress is operation-weighted: each heavy full-file operation on a file (closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, verify) counts the file's size as work to do when it starts and as work done when it finishes. A run mixing small and large files therefore reflects the actual work completed, and because the per-file path is not fixed the total grows as operations are discovered. The meter publishes `progress.ratio` and `eta.seconds`, the `work.total`/`work.completed` byte counters behind them, `bytes.total` (input size), `files.total`/`files.inflight`/`files.completed`, and per-tool timing histograms.
 
 Read the meter with [`dotnet-counters`][dotnet-counters-link]:
 

@@ -226,7 +226,10 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            if (!Execute(command, false, true, out BufferedCommandResult result))
+            Metrics.OpStarted();
+            bool executed = Execute(command, false, true, out BufferedCommandResult result);
+            Metrics.OpCompleted();
+            if (!executed)
             {
                 return false;
             }
@@ -313,7 +316,10 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            if (!GetPackets(command, packetFunc, out string error))
+            Metrics.OpStarted();
+            bool got = GetPackets(command, packetFunc, out string error);
+            Metrics.OpCompleted();
+            if (!got)
             {
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
@@ -6,27 +5,6 @@ namespace PlexCleaner;
 
 internal static class Metrics
 {
-    // Per-file partial credit for the in-flight fold.
-    internal sealed class FileSink
-    {
-        internal long Bytes { get; init; }
-
-        // Written on the worker thread and read on the tool pipe thread, so accessed via Volatile.
-        private long _durationUs;
-
-        internal long DurationUs => Volatile.Read(ref _durationUs);
-
-        internal void SetDurationUs(long durationUs) => Volatile.Write(ref _durationUs, durationUs);
-
-        // Fraction as a 0..10000 permyriad so it reads and writes atomically as an int.
-        private int _permyriad;
-
-        internal double Fraction => Volatile.Read(ref _permyriad) / 10000.0;
-
-        internal void SetFraction(double fraction) =>
-            Volatile.Write(ref _permyriad, (int)Math.Clamp(fraction * 10000.0, 0.0, 10000.0));
-    }
-
     private static readonly Meter s_meter = new("PlexCleaner.Process");
 
     // Cumulative for the process lifetime, not reset between runs.
@@ -66,13 +44,15 @@ internal static class Metrics
     // All access is via Interlocked so the parallel loop needs no lock.
     private static long s_runFilesTotal;
     private static long s_runBytesTotal;
-    private static long s_runBytesCompleted;
+
+    // Operation-weighted progress: each heavy full-file operation adds the file size to the work total when it starts and the completed total when it ends.
+    private static long s_runWorkTotal;
+    private static long s_runWorkCompleted;
     private static long s_runInflight;
     private static long s_runStartTimestamp;
 
-    // The current file is exposed via ThreadLocal so a worker-thread call site can capture it for a tool closure.
-    private static readonly ConcurrentDictionary<FileSink, byte> s_runInflightSinks = new();
-    private static readonly ThreadLocal<FileSink?> s_currentFileSink = new();
+    // The current file's size, set on the worker thread so OpStarted and OpCompleted can weight by it.
+    private static readonly ThreadLocal<long> s_currentFileSize = new();
 
     // Each State flag (minus None) with its tag, pre-built once so RecordStates allocates nothing per file.
     private static readonly (
@@ -119,15 +99,21 @@ internal static class Metrics
             description: "Sum of input sizes in the current run"
         );
         _ = s_meter.CreateObservableGauge(
-            "plexcleaner.bytes.completed",
-            () => Interlocked.Read(ref s_runBytesCompleted),
+            "plexcleaner.work.total",
+            () => Interlocked.Read(ref s_runWorkTotal),
             unit: "By",
-            description: "Bytes of finished files (no partial credit for in-flight files)"
+            description: "Operation work discovered, file size added per heavy operation, grows as the path unfolds"
+        );
+        _ = s_meter.CreateObservableGauge(
+            "plexcleaner.work.completed",
+            () => Interlocked.Read(ref s_runWorkCompleted),
+            unit: "By",
+            description: "Operation work finished, file size added per completed heavy operation"
         );
         _ = s_meter.CreateObservableGauge(
             "plexcleaner.progress.ratio",
             ComputeProgress,
-            description: "Byte-weighted overall progress [0..1]"
+            description: "Operation-weighted overall progress [0..1]"
         );
         _ = s_meter.CreateObservableGauge(
             "plexcleaner.eta.seconds",
@@ -142,50 +128,34 @@ internal static class Metrics
     {
         _ = Interlocked.Exchange(ref s_runFilesTotal, totalFiles);
         _ = Interlocked.Exchange(ref s_runBytesTotal, totalBytes);
-        _ = Interlocked.Exchange(ref s_runBytesCompleted, 0);
+        _ = Interlocked.Exchange(ref s_runWorkTotal, 0);
+        _ = Interlocked.Exchange(ref s_runWorkCompleted, 0);
         _ = Interlocked.Exchange(ref s_runInflight, 0);
         _ = Interlocked.Exchange(ref s_runStartTimestamp, Stopwatch.GetTimestamp());
-        s_runInflightSinks.Clear();
     }
 
     internal static void FileStarted(long sizeBytes)
     {
-        FileSink sink = new() { Bytes = sizeBytes };
-        _ = s_runInflightSinks.TryAdd(sink, 0);
-        s_currentFileSink.Value = sink;
+        s_currentFileSize.Value = sizeBytes;
         _ = Interlocked.Increment(ref s_runInflight);
     }
 
-    // Remove the current file's partial credit before FileCompleted folds its whole size.
     internal static void FileInflightDone()
     {
-        FileSink? sink = s_currentFileSink.Value;
-        s_currentFileSink.Value = null;
-        if (sink != null)
-        {
-            _ = s_runInflightSinks.TryRemove(sink, out _);
-        }
+        s_currentFileSize.Value = 0;
         _ = Interlocked.Decrement(ref s_runInflight);
     }
 
-    internal static FileSink? CurrentFileSink => s_currentFileSink.Value;
+    // A heavy full-file operation started, count the current file's size as work to do.
+    internal static void OpStarted() =>
+        Interlocked.Add(ref s_runWorkTotal, s_currentFileSize.Value);
 
-    internal static void SetCurrentFileDurationUs(long durationUs)
+    // The heavy operation finished, count the same size as work done.
+    internal static void OpCompleted() =>
+        Interlocked.Add(ref s_runWorkCompleted, s_currentFileSize.Value);
+
+    internal static void FileCompleted(TimeSpan wall)
     {
-        if (s_currentFileSink.Value is { } sink)
-        {
-            sink.SetDurationUs(durationUs);
-        }
-    }
-
-    // Safe to call from a tool's pipe thread.
-    internal static void ReportFileFraction(FileSink? sink, double fraction) =>
-        sink?.SetFraction(fraction);
-
-    // A finished file credits its whole size and its wall-clock time.
-    internal static void FileCompleted(long sizeBytes, TimeSpan wall)
-    {
-        _ = Interlocked.Add(ref s_runBytesCompleted, sizeBytes);
         s_filesCompleted.Add(1);
         s_fileDuration.Record(wall.TotalMilliseconds);
     }
@@ -212,23 +182,19 @@ internal static class Metrics
 
     internal static void Dispose()
     {
-        s_currentFileSink.Dispose();
+        s_currentFileSize.Dispose();
         s_meter.Dispose();
     }
 
-    // Completed bytes plus each in-flight file's partial credit, byte-weighted, guarding a zero total.
+    // Completed operation work over discovered operation work, guarding a zero total.
     internal static double ComputeProgress()
     {
-        long total = Interlocked.Read(ref s_runBytesTotal);
+        long total = Interlocked.Read(ref s_runWorkTotal);
         if (total <= 0)
         {
             return 0.0;
         }
-        double completed = Interlocked.Read(ref s_runBytesCompleted);
-        foreach (KeyValuePair<FileSink, byte> entry in s_runInflightSinks)
-        {
-            completed += entry.Key.Bytes * entry.Key.Fraction;
-        }
+        double completed = Interlocked.Read(ref s_runWorkCompleted);
         return Math.Clamp(completed / total, 0.0, 1.0);
     }
 

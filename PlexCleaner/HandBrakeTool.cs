@@ -121,7 +121,7 @@ public partial class HandBrake
 
             // Build command line
             Command command = GetBuilder()
-                .GlobalOptions(options => options.Default().Json())
+                .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.InputFile(inputName).TestSnippets())
                 .OutputOptions(options =>
                     options
@@ -140,20 +140,10 @@ public partial class HandBrake
                 .Build();
 
             // Execute command
-            Metrics.FileSink? sink = Metrics.CurrentFileSink;
-            return ExecuteStreamStdOut(
-                    command,
-                    line =>
-                    {
-                        double? fraction = ParseProgressFraction(line);
-                        if (fraction.HasValue)
-                        {
-                            Metrics.ReportFileFraction(sink, fraction.Value);
-                        }
-                    },
-                    out int exitCode,
-                    out string standardError
-                ) && (exitCode == 0 || LogFailedResult(exitCode, standardError, inputName));
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            Metrics.OpCompleted();
+            return executed && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
         [GeneratedRegex(

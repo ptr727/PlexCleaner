@@ -2551,11 +2551,6 @@ public class ProcessFile
         );
         DtsInfo packetDts = new();
 
-        // Capture the sink here so the pipe-thread packet lambda can report pts over duration.
-        Metrics.FileSink? sink = Metrics.CurrentFileSink;
-        double durationSeconds = FfProbeProps.Duration.TotalSeconds;
-        double maxPtsSeconds = 0;
-
         if (
             !Tools.FfProbe.GetAnalysisPackets(
                 FileInfo.FullName,
@@ -2563,16 +2558,6 @@ public class ProcessFile
                 {
                     packetBitrate.Add(packet);
                     packetDts.Add(packet);
-                    // Track the max pts so reordered packet timestamps only move the fraction forward.
-                    if (
-                        durationSeconds > 0
-                        && double.IsFinite(packet.PtsTime)
-                        && packet.PtsTime > maxPtsSeconds
-                    )
-                    {
-                        maxPtsSeconds = packet.PtsTime;
-                        Metrics.ReportFileFraction(sink, maxPtsSeconds / durationSeconds);
-                    }
                     return true;
                 },
                 quickScan

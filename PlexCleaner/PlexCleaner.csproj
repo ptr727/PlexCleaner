@@ -35,6 +35,10 @@
   <PropertyGroup Condition="'$(PublishAot)' != 'true'">
     <DefineConstants>$(DefineConstants);PLUGINS</DefineConstants>
   </PropertyGroup>
+  <!-- NativeAOT links the disabled EventPipe and omits the diagnostics IPC server by default, opt in so dotnet-counters and dotnet-monitor can read the runtime metrics from an AOT build -->
+  <PropertyGroup Condition="'$(PublishAot)' == 'true'">
+    <EventSourceSupport>true</EventSourceSupport>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md">
       <Pack>True</Pack>
