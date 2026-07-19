@@ -166,12 +166,12 @@ public partial class FfMpeg
             VerifyClassifier.Accumulator classifier = new();
             Metrics.OpStarted();
             bool executed = ExecuteStreamStdErr(command, classifier.Add, out int exitCode);
-            Metrics.OpCompleted();
             if (!executed)
             {
                 // Process could not run
                 return VerifyResult.DecodeError;
             }
+            Metrics.OpCompleted();
 
             // A non-zero exit is always a failure, fail closed even if stderr shows only the timestamp warning
             VerifyResult verifyResult = classifier.Result;
@@ -352,8 +352,12 @@ public partial class FfMpeg
             // Execute command
             Metrics.OpStarted();
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                return false;
+            }
             Metrics.OpCompleted();
-            return executed && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool ConvertToMkv(string inputName, string outputName)
@@ -382,8 +386,12 @@ public partial class FfMpeg
             // Execute command
             Metrics.OpStarted();
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                return false;
+            }
             Metrics.OpCompleted();
-            return executed && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool SetTimestamps(string inputName, string outputName)
@@ -512,11 +520,11 @@ public partial class FfMpeg
             // Execute command
             Metrics.OpStarted();
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
-            Metrics.OpCompleted();
             if (!executed)
             {
                 return false;
             }
+            Metrics.OpCompleted();
             text = result.StandardError.Trim();
             return result.ExitCode == 0 || LogFailedResult(result, fileName);
         }

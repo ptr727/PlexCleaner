@@ -142,8 +142,12 @@ public partial class HandBrake
             // Execute command
             Metrics.OpStarted();
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                return false;
+            }
             Metrics.OpCompleted();
-            return executed && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         [GeneratedRegex(
