@@ -152,11 +152,6 @@ public static class Process
                 break;
             }
 
-            // Seed the ffmpeg progress denominator now that the duration is known
-            Metrics.SetCurrentFileDurationUs(
-                (long)processFile.FfProbeProps.Duration.TotalMicroseconds
-            );
-
             // ReMux non-MKV containers using MKV file extensions
             // Conditional on ReMux option, fails if not Matroska and ReMux is not enabled
             operation = nameof(processFile.RemuxNonMkvContainer);

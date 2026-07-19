@@ -118,8 +118,7 @@ public static class ProcessDriver
         // Process all files in parallel
         int totalCount = fileList.Count;
 
-        // Sum sizes up front and credit the same size at completion, so a mid-run rename cannot drift the total.
-        // Missing files weight as zero.
+        // Sum input sizes up front for bytes.total and to weight each file's operations, a missing file counts as zero.
         Dictionary<string, long> fileSizes = new(totalCount, StringComparer.Ordinal);
         long totalBytes = 0;
         foreach (string file in fileList)
@@ -236,7 +235,7 @@ public static class ProcessDriver
                             Interlocked.Increment(ref processedCount),
                             totalCount
                         );
-                        Metrics.FileCompleted(fileSize, taskElapsed);
+                        Metrics.FileCompleted(taskElapsed);
                         Log.Information(
                             "{TaskName} ({Processed:F2}%) Elapsed : {Elapsed:l} : After : {FileName}",
                             taskName,

@@ -164,11 +164,15 @@ public partial class FfMpeg
             // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
             // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet
             VerifyClassifier.Accumulator classifier = new();
-            if (!ExecuteStreamStdErr(command, classifier.Add, out int exitCode))
+            Metrics.OpStarted();
+            bool executed = ExecuteStreamStdErr(command, classifier.Add, out int exitCode);
+            if (!executed)
             {
                 // Process could not run
+                Metrics.OpAborted();
                 return VerifyResult.DecodeError;
             }
+            Metrics.OpCompleted();
 
             // A non-zero exit is always a failure, fail closed even if stderr shows only the timestamp warning
             VerifyResult verifyResult = classifier.Result;
@@ -310,24 +314,6 @@ public partial class FfMpeg
             };
         }
 
-        private bool ExecuteEncodeWithProgress(Command command, string inputName)
-        {
-            Metrics.FileSink? sink = Metrics.CurrentFileSink;
-            return ExecuteStreamStdOut(
-                    command,
-                    line =>
-                    {
-                        double? fraction = ParseProgressFraction(line, sink?.DurationUs ?? 0);
-                        if (fraction.HasValue)
-                        {
-                            Metrics.ReportFileFraction(sink, fraction.Value);
-                        }
-                    },
-                    out int exitCode,
-                    out string standardError
-                ) && (exitCode == 0 || LogFailedResult(exitCode, standardError, inputName));
-        }
-
         public bool ConvertToMkv(
             string inputName,
             SelectMediaProps? selectMediaProps,
@@ -351,10 +337,7 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options =>
-                    options
-                        .Default()
-                        .Progress()
-                        .Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
+                    options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -368,7 +351,15 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return ExecuteEncodeWithProgress(command, inputName);
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                Metrics.OpAborted();
+                return false;
+            }
+            Metrics.OpCompleted();
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool ConvertToMkv(string inputName, string outputName)
@@ -379,10 +370,7 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options =>
-                    options
-                        .Default()
-                        .Progress()
-                        .Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
+                    options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -398,7 +386,15 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return ExecuteEncodeWithProgress(command, inputName);
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                Metrics.OpAborted();
+                return false;
+            }
+            Metrics.OpCompleted();
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool SetTimestamps(string inputName, string outputName)
@@ -525,10 +521,14 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
+            Metrics.OpCompleted();
             text = result.StandardError.Trim();
             return result.ExitCode == 0 || LogFailedResult(result, fileName);
         }
