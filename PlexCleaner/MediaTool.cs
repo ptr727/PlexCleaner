@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -173,6 +174,7 @@ public abstract class MediaTool
     {
         bufferedCommandResult = null!;
         int processId = -1;
+        long startTimestamp = Stopwatch.GetTimestamp();
         try
         {
             StringBuilder stdOutBuilder = new();
@@ -223,6 +225,13 @@ public abstract class MediaTool
         {
             return false;
         }
+        finally
+        {
+            Metrics.RecordToolDuration(
+                GetToolType(),
+                Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds
+            );
+        }
     }
 
     public bool ExecuteStreamStdErr(
@@ -234,6 +243,7 @@ public abstract class MediaTool
     {
         exitCode = -1;
         int processId = -1;
+        long startTimestamp = Stopwatch.GetTimestamp();
         try
         {
             // Stream stderr line by line to the caller instead of buffering it
@@ -284,6 +294,13 @@ public abstract class MediaTool
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             return false;
+        }
+        finally
+        {
+            Metrics.RecordToolDuration(
+                GetToolType(),
+                Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds
+            );
         }
     }
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -79,6 +80,7 @@ public partial class FfProbe
         )
         {
             int processId = -1;
+            long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
                 // Pipe target to deserialize JSON packets
@@ -193,6 +195,13 @@ public partial class FfProbe
             catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
                 return (false, string.Empty);
+            }
+            finally
+            {
+                Metrics.RecordToolDuration(
+                    GetToolType(),
+                    Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds
+                );
             }
         }
 

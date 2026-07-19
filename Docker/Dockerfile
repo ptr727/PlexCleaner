@@ -134,6 +134,9 @@ COPY --chmod=ug=rwx,o=rx ./Docker/InstallDebugTools.sh ./
 RUN ./InstallDebugTools.sh \
     && rm -rf ./InstallDebugTools.sh
 
+# Wrapper to read the PlexCleaner.Process metrics: "docker exec <container> counters"
+COPY --chmod=ug=rwx,o=rx ./Docker/counters.sh /usr/local/bin/counters
+
 # Copy version script
 COPY --chmod=ug=rwx,o=rx ./Docker/Version.sh /PlexCleaner/
 
