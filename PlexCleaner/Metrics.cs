@@ -10,7 +10,13 @@ internal static class Metrics
     internal sealed class FileSink
     {
         internal long Bytes { get; init; }
-        internal long DurationUs { get; set; }
+
+        // Written on the worker thread and read on the tool pipe thread, so accessed via Volatile.
+        private long _durationUs;
+
+        internal long DurationUs => Volatile.Read(ref _durationUs);
+
+        internal void SetDurationUs(long durationUs) => Volatile.Write(ref _durationUs, durationUs);
 
         // Fraction as a 0..10000 permyriad so it reads and writes atomically as an int.
         private int _permyriad;
@@ -168,7 +174,7 @@ internal static class Metrics
     {
         if (s_currentFileSink.Value is { } sink)
         {
-            sink.DurationUs = durationUs;
+            sink.SetDurationUs(durationUs);
         }
     }
 
