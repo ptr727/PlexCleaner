@@ -118,7 +118,7 @@ See [Installation](#installation) for detailed setup instructions and other plat
 
 ## Use Cases
 
-> **ℹ️ TL;DR**: *Direct Play* means your media server (Plex/Emby/Jellyfin) sends the file directly to your player without transcoding on the server or the client. This saves server CPU, reduces power consumption, preserves quality, and enables playback on low-power devices. The **objective of PlexCleaner** is to *modify media content* such that it will always Direct Play in [Plex](https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/), [Emby](https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding), [Jellyfin](https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html), etc.
+> **ℹ️ TL;DR**: *Direct Play* means your media server (Plex/Emby/Jellyfin) sends the file directly to your player without transcoding on the server or the client. This saves server CPU, reduces power consumption, preserves quality, and enables playback on low-power devices. The **objective of PlexCleaner** is to *modify media content* such that it will always Direct Play in [Plex][plex-directplay-link], [Emby][emby-directplay-link], [Jellyfin][jellyfin-playmethod-link], etc.
 
 Common examples of issues resolved by the `process` command:
 
@@ -161,7 +161,7 @@ PlexCleaner is optimized for processing large media libraries efficiently. Key p
 > - **Large libraries**: Use `--parallel` to process multiple files concurrently.
 > - **Testing**: Combine `--testsnippets` and `--quickscan` for faster test iterations.
 > - **Network storage**: Process files locally when possible to avoid network bottlenecks.
-> - **Docker logging**: Configure [log rotation](https://docs.docker.com/config/containers/logging/configure/) to prevent large log files.
+> - **Docker logging**: Configure [log rotation][docker-logging-link] to prevent large log files.
 > - **Thread count**: Default is half of CPU cores (max 4); adjust with `--threadcount` if needed.
 
 **Sidecar Files:**
@@ -178,7 +178,7 @@ PlexCleaner is optimized for processing large media libraries efficiently. Key p
 
 **Docker Considerations:**
 
-- Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging](https://docs.docker.com/config/containers/logging/configure/) options.
+- Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging][docker-logging-link] options.
 
 ## Installation
 
@@ -300,13 +300,13 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
 
 **Prerequisites:**
 
-- For pre-compiled binaries: Install [.NET Runtime](https://docs.microsoft.com/en-us/dotnet/core/install/windows) (smaller, runtime only).
-- For compiling from source: Install [.NET SDK](https://dotnet.microsoft.com/download) (includes build tools).
+- For pre-compiled binaries: Install [.NET Runtime][dotnet-install-windows-link] (smaller, runtime only).
+- For compiling from source: Install [.NET SDK][dotnet-download-link] (includes build tools).
 
 **Installation Steps:**
 
-1. Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries.
-   - Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [VSCode](https://code.visualstudio.com/download) with the .NET SDK.
+1. Download [PlexCleaner][releases-latest-link] and extract the pre-compiled binaries.
+   - Or compile from [code][clone-link] using [Visual Studio][visualstudio-link] or [VSCode][vscode-link] with the .NET SDK.
 
 2. Create a default JSON settings file using the `defaultsettings` command:
    - `PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
@@ -321,7 +321,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Keep the 3rd party tools updated by periodically running the `checkfornewtools` command, or update tools on every run by setting `ToolsOptions:AutoUpdate` to `true`.
 
    **Option B: System-wide installation via winget**
-   - Run from an elevated shell e.g. using [`gsudo`](https://github.com/gerardog/gsudo), else [symlinks will not be created](https://github.com/microsoft/winget-cli/issues/3437).
+   - Run from an elevated shell e.g. using [`gsudo`][gsudo-link], else [symlinks will not be created][winget-cli-issue-link].
    - `winget install --id=Gyan.FFmpeg --exact`
    - `winget install --id=MediaArea.MediaInfo --exact`
    - `winget install --id=HandBrake.HandBrake.CLI --exact`
@@ -329,31 +329,31 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
 
    **Option C: Manual download**
-   - [FfMpeg Full](https://github.com/GyanD/codexffmpeg/releases), e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
-   - [HandBrake CLI x64](https://github.com/HandBrake/HandBrake/releases), e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
-   - [MediaInfo CLI x64](https://mediaarea.net/en/MediaInfo/Download/Windows), e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
-   - [MkvToolNix Portable x64](https://mkvtoolnix.download/downloads.html#windows), e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
-   - [7-Zip Extra](https://www.7-zip.org/download.html), e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
+   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+   - [HandBrake CLI x64][handbrake-releases-link], e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
+   - [MediaInfo CLI x64][mediainfo-download-link], e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
+   - [MkvToolNix Portable x64][mkvtoolnix-download-link], e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
+   - [7-Zip Extra][sevenzip-download-link], e.g. `7z2301-extra.7z`: `\Tools\SevenZip`
    - Set `ToolsOptions:UseSystem` to `false` and `ToolsOptions:AutoUpdate` to `false`.
 
 ### Linux
 
 - Automatic downloading of Linux 3rd party tools are not supported, consider using the [Docker](#docker) build instead.
 - Manually install the 3rd party tools, e.g. following steps similar to the [Docker](./Docker) file commands.
-- Download [PlexCleaner](https://github.com/ptr727/PlexCleaner/releases/latest) and extract the pre-compiled binaries matching your platform.
-- Or compile from [code](https://github.com/ptr727/PlexCleaner.git) using the [.NET SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux).
+- Download [PlexCleaner][releases-latest-link] and extract the pre-compiled binaries matching your platform.
+- Or compile from [code][clone-link] using the [.NET SDK][dotnet-install-linux-link].
 - Create a default JSON settings file using the `defaultsettings` command:
   - `./PlexCleaner defaultsettings --settingsfile PlexCleaner.json`
   - Modify the settings to suit your needs.
 
 ### macOS
 
-- macOS x64 and Arm64 binaries are built as part of [Releases](https://github.com/ptr727/PlexCleaner/releases/latest), but are not tested during CI.
+- macOS x64 and Arm64 binaries are built as part of [Releases][releases-latest-link], but are not tested during CI.
 
 ### AOT
 
 Ahead-of-time compiled self-contained binaries do not require any .NET runtime components to be installed.\
-AOT builds are [platform specific](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot), require a platform native compiler, and are created using [`dotnet publish`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish).
+AOT builds are [platform specific][native-aot-link], require a platform native compiler, and are created using [`dotnet publish`][dotnet-publish-link].
 
 > **ℹ️ Note**: AOT binaries are not published in CI/CD due to being platform specific, and cross compilation of AOT binaries are not supported.
 
@@ -492,7 +492,7 @@ Quick configuration examples for common use cases. Edit your `PlexCleaner.json` 
 
 ### IETF Language Matching
 
-> **ℹ️ TL;DR**: Language tag matching supports [IETF / RFC 5646 / BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag formats as implemented by [MkvMerge](https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix).
+> **ℹ️ TL;DR**: Language tag matching supports [IETF / RFC 5646 / BCP 47][ietf-language-tag-link] tag formats as implemented by [MkvMerge][mkvtoolnix-languages-link].
 
 **Common Use Cases:**
 
@@ -766,7 +766,7 @@ Options:
 The `monitor` command will watch the specified folders for file changes, and periodically run the `process` command on the changed folders:
 
 - All the referenced directories will be watched for changes, and any changes will be added to a queue to be periodically processed.
-- The [FileSystemWatcher](https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher) used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
+- The [FileSystemWatcher][filesystemwatcher-link] used to monitor for changes may not always work as expected when changes are made via virtual or network filesystem, e.g. NFS or SMB backed volumes may not detect changes made directly to the underlying ZFS filesystem, while running directly on ZFS will work fine.
 
 Options:
 
@@ -836,12 +836,14 @@ Additional commands for specific tasks, organized by category:
 
 ## Runtime Metrics
 
-PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, so a long-running `process` or `monitor` pass can be watched live with no extra setup. Overall progress is weighted by input bytes, not file count, so a run mixing small and large files reflects the actual work completed.
+PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, so a long-running `process` or `monitor` pass can be watched live with no extra setup. Overall progress is weighted by input bytes, not file count, so a run mixing small and large files reflects the actual work completed. Progress advances smoothly during a long operation because each in-flight file contributes partial credit from the running tool (the full-file scan, the re-encode, and the deinterlace).
 
-Read the meter with [`dotnet-counters`](https://learn.microsoft.com/dotnet/core/diagnostics/dotnet-counters):
+Read the meter with [`dotnet-counters`][dotnet-counters-link]:
 
 - Local: `dotnet-counters monitor -p <pid> --counters PlexCleaner.Process`
 - Docker: `docker exec <container> counters` (a bundled wrapper that runs the same command against the in-container process)
+
+The meter is also OpenTelemetry and [`dotnet-monitor`][dotnet-monitor-link] compatible if you want an HTTP or Prometheus surface.
 
 ## Custom Plugins
 
@@ -933,7 +935,7 @@ The [`Test.sh`](./Docker/Test.sh) script validates basic container functionality
 
 The [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.
 
-If an external media path is not specified the test will download and use the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip).
+If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
 docker run \
@@ -981,63 +983,121 @@ Some ideas being considered:
 
 ## 3rd Party Tools
 
-- [7-Zip](https://www.7-zip.org/)
-- [AwesomeAssertions](https://awesomeassertions.org/)
+- [7-Zip][sevenzip-link]
+- [AwesomeAssertions][awesomeassertions-link]
 - [CliWrap][cliwrap-link]
-- [Docker Hub Description](https://github.com/marketplace/actions/docker-hub-description)
-- [Docker Run Action](https://github.com/marketplace/actions/docker-run-action)
-- [dotnet-outdated](https://github.com/dotnet-outdated/dotnet-outdated)
-- [FFmpeg](https://www.ffmpeg.org/)
-- [Git Auto Commit](https://github.com/marketplace/actions/git-auto-commit)
-- [GitHub Actions](https://github.com/actions)
-- [GitHub Dependabot](https://github.com/dependabot)
-- [HandBrake](https://handbrake.fr/)
-- [Husky.Net](https://alirezanet.github.io/Husky.Net/)
-- [ISO 639-2 language tags](https://www.loc.gov/standards/iso639-2/langhome.html)
-- [ISO 639-3 language tags](https://iso639-3.sil.org/)
+- [Docker Hub Description][docker-hub-description-action-link]
+- [Docker Run Action][docker-run-action-link]
+- [dotnet-outdated][dotnet-outdated-link]
+- [FFmpeg][ffmpeg-link]
+- [Git Auto Commit][git-auto-commit-action-link]
+- [GitHub Actions][github-actions-link]
+- [GitHub Dependabot][dependabot-link]
+- [HandBrake][handbrake-link]
+- [Husky.Net][husky-link]
+- [ISO 639-2 language tags][iso639-2-link]
+- [ISO 639-3 language tags][iso639-3-link]
 - [JSON2CSharp][json2csharp-link]
-- [MediaInfo](https://mediaarea.net/en-us/MediaInfo/)
-- [MKVToolNix](https://mkvtoolnix.download/)
-- [NEbml](https://github.com/OlegZee/NEbml)
-- [Nerdbank.GitVersioning](https://github.com/marketplace/actions/nerdbank-gitversioning)
-- [regex101.com](https://regex101.com/)
-- [RFC 5646 language tags](https://www.rfc-editor.org/rfc/rfc5646.html)
-- [Serilog](https://serilog.net/)
+- [MediaInfo][mediainfo-link]
+- [MKVToolNix][mkvtoolnix-link]
+- [NEbml][nebml-link]
+- [Nerdbank.GitVersioning][nerdbank-gitversioning-action-link]
+- [regex101.com][regex101-link]
+- [RFC 5646 language tags][rfc5646-link]
+- [Serilog][serilog-link]
 - [Utf8JsonAsyncStreamReader][utf8jsonasync-link]
-- [Xml2CSharp](http://xmltocsharp.azurewebsites.net/)
-- [xUnit.Net](https://xunit.net/)
+- [Xml2CSharp][xmltocsharp-link]
+- [xUnit.Net][xunit-link]
 
 ## Sample Media Files
 
-- [DemoWorld](https://www.demo-world.eu/2d-demo-trailers-hd/)
-- [JellyFish](http://jell.yfish.us/)
-- [Kodi](https://kodi.wiki/view/Samples)
-- [Matroska](https://github.com/ietf-wg-cellar/matroska-test-files)
-- [MPlayer](https://samples.mplayerhq.hu/)
+- [DemoWorld][demo-world-link]
+- [JellyFish][jellyfish-link]
+- [Kodi][kodi-samples-link]
+- [Matroska][matroska-test-files-link]
+- [MPlayer][mplayer-samples-link]
 
 ## License
 
 Licensed under the [MIT License][license-link]\
 ![GitHub License][license-shield]
 
-[actions-link]: https://github.com/ptr727/PlexCleaner/actions
-[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
-[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
-[discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
+<!-- Shields -->
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
-[docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Docker%20Build
-[github-link]: https://github.com/ptr727/PlexCleaner
-[plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
-[issues-link]: https://github.com/ptr727/PlexCleaner/issues
-[json2csharp-link]: https://json2csharp.com
 [last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
-[license-link]: ./LICENSE
 [license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
 [pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
 [release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Releases%20Build
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
+
+<!-- Internal -->
+[actions-link]: https://github.com/ptr727/PlexCleaner/actions
+[clone-link]: https://github.com/ptr727/PlexCleaner.git
+[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
+[docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
+[github-link]: https://github.com/ptr727/PlexCleaner
+[issues-link]: https://github.com/ptr727/PlexCleaner/issues
+[license-link]: ./LICENSE
+[plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
+[releases-latest-link]: https://github.com/ptr727/PlexCleaner/releases/latest
 [releases-link]: https://github.com/ptr727/PlexCleaner/releases
+
+<!-- External -->
+[awesomeassertions-link]: https://awesomeassertions.org/
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
+[codexffmpeg-releases-link]: https://github.com/GyanD/codexffmpeg/releases
+[demo-world-link]: https://www.demo-world.eu/2d-demo-trailers-hd/
+[dependabot-link]: https://github.com/dependabot
+[docker-hub-description-action-link]: https://github.com/marketplace/actions/docker-hub-description
+[docker-logging-link]: https://docs.docker.com/config/containers/logging/configure/
+[docker-run-action-link]: https://github.com/marketplace/actions/docker-run-action
+[dotnet-counters-link]: https://learn.microsoft.com/dotnet/core/diagnostics/dotnet-counters
+[dotnet-download-link]: https://dotnet.microsoft.com/download
+[dotnet-install-linux-link]: https://docs.microsoft.com/en-us/dotnet/core/install/linux
+[dotnet-install-windows-link]: https://docs.microsoft.com/en-us/dotnet/core/install/windows
+[dotnet-monitor-link]: https://learn.microsoft.com/dotnet/core/diagnostics/dotnet-monitor
+[dotnet-outdated-link]: https://github.com/dotnet-outdated/dotnet-outdated
+[dotnet-publish-link]: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish
+[emby-directplay-link]: https://support.emby.media/support/solutions/articles/44001920144-direct-play-vs-direct-streaming-vs-transcoding
+[ffmpeg-link]: https://www.ffmpeg.org/
+[filesystemwatcher-link]: https://docs.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher
+[git-auto-commit-action-link]: https://github.com/marketplace/actions/git-auto-commit
+[github-actions-link]: https://github.com/actions
+[gsudo-link]: https://github.com/gerardog/gsudo
+[handbrake-link]: https://handbrake.fr/
+[handbrake-releases-link]: https://github.com/HandBrake/HandBrake/releases
+[husky-link]: https://alirezanet.github.io/Husky.Net/
+[ietf-language-tag-link]: https://en.wikipedia.org/wiki/IETF_language_tag
+[iso639-2-link]: https://www.loc.gov/standards/iso639-2/langhome.html
+[iso639-3-link]: https://iso639-3.sil.org/
+[jellyfin-playmethod-link]: https://jellyfin.org/docs/plugin-api/MediaBrowser.Model.Session.PlayMethod.html
+[jellyfish-link]: http://jell.yfish.us/
+[json2csharp-link]: https://json2csharp.com
+[kodi-samples-link]: https://kodi.wiki/view/Samples
+[matroska-test-files-link]: https://github.com/ietf-wg-cellar/matroska-test-files
+[matroska-test-files-zip-link]: https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
+[mediainfo-download-link]: https://mediaarea.net/en/MediaInfo/Download/Windows
+[mediainfo-link]: https://mediaarea.net/en-us/MediaInfo/
+[mkvtoolnix-download-link]: https://mkvtoolnix.download/downloads.html#windows
+[mkvtoolnix-languages-link]: https://codeberg.org/mbunkus/mkvtoolnix/wiki/Languages-in-Matroska-and-MKVToolNix
+[mkvtoolnix-link]: https://mkvtoolnix.download/
+[mplayer-samples-link]: https://samples.mplayerhq.hu/
+[native-aot-link]: https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot
+[nebml-link]: https://github.com/OlegZee/NEbml
+[nerdbank-gitversioning-action-link]: https://github.com/marketplace/actions/nerdbank-gitversioning
+[plex-directplay-link]: https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/
+[regex101-link]: https://regex101.com/
+[rfc5646-link]: https://www.rfc-editor.org/rfc/rfc5646.html
+[serilog-link]: https://serilog.net/
+[sevenzip-download-link]: https://www.7-zip.org/download.html
+[sevenzip-link]: https://www.7-zip.org/
 [ubuntu-hub-link]: https://hub.docker.com/_/ubuntu
 [utf8jsonasync-link]: https://github.com/gragra33/Utf8JsonAsyncStreamReader
+[visualstudio-link]: https://visualstudio.microsoft.com/downloads/
+[vscode-link]: https://code.visualstudio.com/download
+[winget-cli-issue-link]: https://github.com/microsoft/winget-cli/issues/3437
+[xmltocsharp-link]: http://xmltocsharp.azurewebsites.net/
+[xunit-link]: https://xunit.net/

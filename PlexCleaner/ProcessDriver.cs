@@ -206,7 +206,7 @@ public static class ProcessDriver
                         // Perform the task, timing this file's work.
                         // Decrement the in-flight count in a finally so a cancellation cannot leak it.
                         long fileSize = fileSizes.GetValueOrDefault(fileName);
-                        Metrics.FileStarted();
+                        Metrics.FileStarted(fileSize);
                         long startTimestamp = Stopwatch.GetTimestamp();
                         bool taskResult;
                         try
