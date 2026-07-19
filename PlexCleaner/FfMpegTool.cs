@@ -289,6 +289,45 @@ public partial class FfMpeg
             outputMap = outputMap.Trim();
         }
 
+        // Parse an ffmpeg -progress line to a fraction, or null. out_time_us and out_time_ms are microseconds.
+        internal static double? ParseProgressFraction(string line, long durationUs)
+        {
+            int separator = line.IndexOf('=');
+            if (separator <= 0)
+            {
+                return null;
+            }
+            string value = line[(separator + 1)..];
+            return line[..separator] switch
+            {
+                "progress" when value == "end" => 1.0,
+                "out_time_us"
+                or "out_time_ms"
+                    when durationUs > 0
+                        && long.TryParse(value, CultureInfo.InvariantCulture, out long microseconds)
+                        && microseconds > 0 => (double)microseconds / durationUs,
+                _ => null,
+            };
+        }
+
+        private bool ExecuteEncodeWithProgress(Command command, string inputName)
+        {
+            Metrics.FileSink? sink = Metrics.CurrentFileSink;
+            return ExecuteStreamStdOut(
+                    command,
+                    line =>
+                    {
+                        double? fraction = ParseProgressFraction(line, sink?.DurationUs ?? 0);
+                        if (fraction.HasValue)
+                        {
+                            Metrics.ReportFileFraction(sink, fraction.Value);
+                        }
+                    },
+                    out int exitCode,
+                    out string standardError
+                ) && (exitCode == 0 || LogFailedResult(exitCode, standardError, inputName));
+        }
+
         public bool ConvertToMkv(
             string inputName,
             SelectMediaProps? selectMediaProps,
@@ -312,7 +351,10 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options =>
-                    options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
+                    options
+                        .Default()
+                        .Progress()
+                        .Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -326,8 +368,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            return ExecuteEncodeWithProgress(command, inputName);
         }
 
         public bool ConvertToMkv(string inputName, string outputName)
@@ -338,7 +379,10 @@ public partial class FfMpeg
             // Build command line
             Command command = GetBuilder()
                 .GlobalOptions(options =>
-                    options.Default().Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
+                    options
+                        .Default()
+                        .Progress()
+                        .Add(Program.Config.ConvertOptions.FfMpegOptions.Global)
                 )
                 .InputOptions(options => options.Default().TestSnippets().InputFile(inputName))
                 .OutputOptions(options =>
@@ -354,8 +398,7 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            return ExecuteEncodeWithProgress(command, inputName);
         }
 
         public bool SetTimestamps(string inputName, string outputName)
