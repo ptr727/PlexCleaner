@@ -104,14 +104,13 @@ public class MetricsTests
         );
         listener.Start();
 
-        // Two files start; one finishes 400 of 1000 bytes (leaves flight and is credited); record a
-        // two-flag outcome for it
+        // One file completes at 400 bytes and a second stays in flight, so byte-weighted progress is 0.4
         Metrics.BeginRun(2, 1000);
-        Metrics.FileStarted(500);
-        Metrics.FileStarted(500);
+        Metrics.FileStarted(400);
         Metrics.FileInflightDone();
         Metrics.FileCompleted(400, TimeSpan.Zero);
         Metrics.RecordStates(SidecarFile.StatesType.ReMuxed | SidecarFile.StatesType.Verified);
+        Metrics.FileStarted(600);
         listener.RecordObservableInstruments();
 
         // The counter fired one measurement per set flag with the state tag
@@ -134,6 +133,9 @@ public class MetricsTests
             .ContainSingle(m => m.Name == "plexcleaner.progress.ratio")
             .Which.Value.Should()
             .BeApproximately(0.4, 1e-9);
+
+        // Clear the in-flight file's thread-local sink
+        Metrics.FileInflightDone();
     }
 
     [Fact]
