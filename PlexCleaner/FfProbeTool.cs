@@ -318,13 +318,17 @@ public partial class FfProbe
             // Get packet list
             Metrics.OpStarted();
             bool got = GetPackets(command, packetFunc, out string error);
+            // GetPackets also returns false on a non-zero exit where the scan still ran, so count completion unless cancelled
+            if (!Program.IsCancelled())
+            {
+                Metrics.OpCompleted();
+            }
             if (!got)
             {
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);
                 return false;
             }
-            Metrics.OpCompleted();
             return true;
         }
 
