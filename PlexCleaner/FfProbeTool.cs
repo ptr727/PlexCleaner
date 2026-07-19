@@ -230,6 +230,7 @@ public partial class FfProbe
             bool executed = Execute(command, false, true, out BufferedCommandResult result);
             if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
             Metrics.OpCompleted();
@@ -322,6 +323,10 @@ public partial class FfProbe
             if (got || !string.IsNullOrEmpty(error))
             {
                 Metrics.OpCompleted();
+            }
+            else
+            {
+                Metrics.OpAborted();
             }
             if (!got)
             {

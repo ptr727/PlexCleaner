@@ -144,6 +144,7 @@ public partial class HandBrake
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
             if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
             Metrics.OpCompleted();

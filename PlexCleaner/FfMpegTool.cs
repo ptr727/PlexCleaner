@@ -169,6 +169,7 @@ public partial class FfMpeg
             if (!executed)
             {
                 // Process could not run
+                Metrics.OpAborted();
                 return VerifyResult.DecodeError;
             }
             Metrics.OpCompleted();
@@ -354,6 +355,7 @@ public partial class FfMpeg
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
             if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
             Metrics.OpCompleted();
@@ -388,6 +390,7 @@ public partial class FfMpeg
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
             if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
             Metrics.OpCompleted();
@@ -522,6 +525,7 @@ public partial class FfMpeg
             bool executed = Execute(command, true, true, out BufferedCommandResult result);
             if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
             Metrics.OpCompleted();

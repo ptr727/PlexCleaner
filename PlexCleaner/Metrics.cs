@@ -154,6 +154,10 @@ internal static class Metrics
     internal static void OpCompleted() =>
         Interlocked.Add(ref s_runWorkCompleted, s_currentFileSize.Value);
 
+    // The heavy operation never ran, roll its size back out of the total so progress can still converge.
+    internal static void OpAborted() =>
+        Interlocked.Add(ref s_runWorkTotal, -s_currentFileSize.Value);
+
     internal static void FileCompleted(TimeSpan wall)
     {
         s_filesCompleted.Add(1);

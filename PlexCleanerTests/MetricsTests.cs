@@ -158,6 +158,26 @@ public class MetricsTests
     }
 
     [Fact]
+    public void OpAborted_RollsBackTheStartedWork()
+    {
+        // An operation that never ran rolls its size back out of the total so progress still converges
+        Metrics.BeginRun(1, 1000);
+        Metrics.FileStarted(400);
+
+        Metrics.OpStarted();
+        Metrics.OpCompleted();
+        _ = Metrics.ComputeProgress().Should().Be(1.0);
+
+        // A second operation starts then aborts, the total returns to the completed work
+        Metrics.OpStarted();
+        _ = Metrics.ComputeProgress().Should().BeApproximately(0.5, 1e-9);
+        Metrics.OpAborted();
+        _ = Metrics.ComputeProgress().Should().Be(1.0);
+
+        Metrics.FileInflightDone();
+    }
+
+    [Fact]
     public void OpAfterInflightDone_CountsNothing()
     {
         // FileInflightDone clears the current file size, so a stray late op adds no work
