@@ -1,12 +1,12 @@
 <Project>
   <ItemGroup>
-    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.5.0" />
     <PackageVersion Include="CliWrap" Version="3.10.2" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.48" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.53" />
     <PackageVersion Include="ptr727.Utilities" Version="4.0.18" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
