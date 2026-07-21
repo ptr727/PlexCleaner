@@ -6,8 +6,8 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.53" />
-    <PackageVersion Include="ptr727.Utilities" Version="4.0.18" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.56" />
+    <PackageVersion Include="ptr727.Utilities" Version="4.0.28" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
