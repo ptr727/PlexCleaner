@@ -110,9 +110,10 @@ from racing a publish on the same ref.*
 
 A publish builds exactly **one** branch - the run's trigger ref. The **schedule** always runs on the default
 branch, so it rebuilds `main`; a **dispatch** runs on the branch it is started from (`main` or `develop`). The
-single `publish` job passes `github.ref_name` as both `ref` and `branch`, so the branch built, versioned, and
-tagged is always the run's own ref. *No matrix and no cross-branch ref mixing - `github.ref` is the branch
-being published.* The job is guarded to the long-lived branches (`main` / `develop`); a stray dispatch from a
+single `publish` job passes `github.sha` as `ref` and `github.ref_name` as `branch`, so the branch built,
+versioned, and tagged is always the run's own ref, pinned to the exact commit the run started from - a push
+landing mid-run is never released unvalidated. *No matrix and no cross-branch ref mixing - `github.ref` is the
+branch being published.* The job is guarded to the long-lived branches (`main` / `develop`); a stray dispatch from a
 feature branch is a no-op. To release `develop`, dispatch the workflow from `develop`.
 
 Because the run's ref **is** the built branch, GitHub resolves the local `uses: ./...` reusable workflows from
@@ -277,9 +278,10 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 - **D0.1 CI is one run, one branch.** Input: any push. Output: `test-pull-request` builds/validates exactly
   `github.ref_name` and publishes nothing. *Prevents cross-branch ref mixing in CI.*
-- **D0.2 The publisher builds one branch: the trigger ref.** Output: the `publish` job passes
-  `github.ref_name` as `ref` and `branch`, so it checks out, versions, and tags exactly the run's own branch
-  (the schedule's default branch, or a dispatch's branch). No matrix; the job is guarded to `main`/`develop`.
+- **D0.2 The publisher builds one branch: the trigger ref.** Output: the `publish` job passes `github.sha` as
+  `ref` and `github.ref_name` as `branch`, so it checks out, versions, and tags exactly the commit the run
+  started from on the run's own branch (the schedule's default branch, or a dispatch's branch). No matrix; the
+  job is guarded to `main`/`develop`.
   *Prevents cross-branch ref mixing - `github.ref` is the branch being published.*
 - **D0.3 One version, threaded.** Output: NBGV runs once, every consumer reads it via
   `needs:` outputs; no consumer recomputes it. *Allowed:* checking out a specific commit to compile it, and
@@ -337,8 +339,9 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   targets and creates the GitHub release for `github.ref_name` - the schedule rebuilds `main` (stable /
   `latest`); a dispatch publishes its own branch (`main` stable / `latest`, `develop` prerelease / `develop`).
   *Prevents a half-published release set and cross-branch ref mixing.*
-- **D4.3 Tag the built commit.** Output: the release `target_commitish` is the run's `GitCommitId` (the tip of
-  `github.ref_name`), never `github.sha`. *Prevents the tag landing on the wrong commit.*
+- **D4.3 Tag the built commit.** Output: the release `target_commitish` is the run's `GitCommitId` - the commit
+  NBGV versioned - never a branch name or a separately re-resolved ref. *Prevents the tag landing on the wrong
+  commit.*
 - **D4.4 Release contents and flag.** Output: each release is a tag on the built commit plus the auto source
   zip, README, and LICENSE, with the multi-runtime `PlexCleaner.7z` attached via the `release-asset-*` seam.
   The GitHub-release `prerelease` boolean is `inputs.branch != 'main'`. The Docker target attaches no asset;
@@ -427,9 +430,9 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 Read the workflow files plus `version.json` and assert the fact behind each applicable guarantee with a
 `file:line` citation:
 
-- **D0:** CI has no branch matrix; the publisher's single `publish` job passes `github.ref_name` as
-  `ref`/`branch` and is guarded to `main`/`develop`; NBGV invoked once, every other consumer reads it via
-  `needs:`; the run builds the trigger ref so `GITHUB_REF` matches the versioned branch.
+- **D0:** CI has no branch matrix; the publisher's single `publish` job passes `github.sha` as `ref` and
+  `github.ref_name` as `branch` and is guarded to `main`/`develop`; NBGV invoked once, every other consumer
+  reads it via `needs:`; the run builds the trigger ref so `GITHUB_REF` matches the versioned branch.
 - **D1:** CI runs on `push` with no paths filter; `validate` + `smoke-build` (both targets, `smoke: true`)
   run; every build `upload-artifact` is gated `!smoke`; `lint` runs CSharpier, `dotnet format style`,
   markdownlint, cspell on README/HISTORY, actionlint; the aggregator `needs:` both and blocks on non-success.
@@ -438,7 +441,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   `^refs/heads/main$`.
 - **D4:** `publish-release` triggers are `schedule` + `workflow_dispatch` only (no `push`, no
   `PUBLISH_ON_MERGE`); the single `publish` job is guarded to `github.ref_name` in (`main`, `develop`) and
-  passes it as `ref`/`branch`; `target_commitish` is `GitCommitId`; the
+  passes `github.sha` as `ref` and `github.ref_name` as `branch`; `target_commitish` is `GitCommitId`; the
   `prerelease` boolean `== (inputs.branch != 'main')`; the executable attaches `PlexCleaner.7z` via
   `release-asset-*`; the Docker job logs in with `DOCKER_HUB_*` and pushes `latest`/`develop` + `:SemVer2`;
   release-create gated `exists == false || workflow_dispatch`; Docker buildcache is branch-scoped and

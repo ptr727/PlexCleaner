@@ -37,7 +37,7 @@ ARG TARGETPLATFORM \
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
-ARG BUILD_CONFIGURATION="Debug" \
+ARG BUILD_CONFIGURATION="Release" \
     BUILD_VERSION="1.0.0.0" \
     BUILD_FILE_VERSION="1.0.0.0" \
     BUILD_ASSEMBLY_VERSION="1.0.0.0" \

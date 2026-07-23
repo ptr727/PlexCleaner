@@ -4,7 +4,7 @@ Repository and branch configuration held as committed files, kept out of `.githu
 
 - `main.json` plus one `develop` variant - the branch rulesets as the writable API subset (`name`, `target`, `enforcement`, `bypass_actors`, `conditions`, `rules`). The `develop` payload is `develop.json` (`release` repos) or `operational/develop.json` (`operational` repos); the hub keeps both, a carried copy only its own model's (see "Downstream Carry"). These are the canonical expected payloads that the audit (the hub's fleet-wide `AUDIT.md`, or a carried repo-scoped adaptation - see "Downstream Carry") diffs the live rulesets against.
 - `operational/develop.json` - the `develop` ruleset for **operational** repos (registry `workflowModel: operational`): direct signed pushes, no PR gate. Present at the hub and in operational carries only - a carried `release` repo does not have it. See "Rulesets" below.
-- `configure.sh` - applies the rulesets to a repository via the GitHub API (create or full-payload update, idempotent). Run `repo-config/configure.sh [owner/repo] [release|operational]`; the model defaults to the registry `workflowModel` lookup.
+- `configure.sh` - two modes over the GitHub API. `configure.sh apply [owner/repo] [release|operational]` creates-or-updates the settings, the Dependabot security features, and the rulesets idempotently (a full-payload update). `configure.sh check [owner/repo] [release|operational]` is the read-only inverse and exits non-zero on any drift, with the ruleset and settings assertions driven by the committed payloads so they stay repo-agnostic (rule presence, merge methods, and required checks, not a byte diff - so a GitHub-normalized stored ruleset does not false-positive). The command defaults to `apply`, the repo to the current one, and the model to the registry `workflowModel` lookup (or, absent a registry, inference from the carried `develop` payload - an ambiguous layout aborts rather than guesses). The model may be passed as the sole positional (`configure.sh check operational`).
 
 ## Downstream Carry
 
@@ -47,7 +47,7 @@ Publish credentials required per mechanism are enumerated in `spec/secrets.json`
 
 ## Repo Settings
 
-The fleet-standard general settings live in [`settings.json`][settings-json] and are applied idempotently by `configure.sh` alongside the rulesets (`gh api PATCH /repos/{owner}/{repo}`). The two settings that depend on per-repo state - `has_discussions` (visibility) and `default_branch` (main-must-exist) - are computed by the script, not stored in the file.
+The fleet-standard general settings live in [`settings.json`][settings-json] and are applied idempotently by `configure.sh apply` alongside the rulesets (`gh api PATCH /repos/{owner}/{repo}`). The two settings that depend on per-repo state - `has_discussions` (visibility) and `default_branch` (main-must-exist) - are computed by the script, not stored in the file. `configure.sh apply` also enables Dependabot vulnerability alerts and automated security updates - fleet policy applied via the API, not a `settings.json` key. `configure.sh check` validates all of these and exits non-zero on drift.
 
 - **Default branch `main`** (the script sets it only when a `main` branch exists, never pointing the default at a missing branch).
 - **Merge methods**: `Allow merge commits` and `Allow squash merging` on, **rebase off** - each branch ruleset then picks its method (merge on `main`, squash on `develop`).
