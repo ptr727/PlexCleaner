@@ -384,7 +384,7 @@ Two-phase model - reusable `*-task.yml` workflows orchestrated by two entry poin
 - Reusable tasks: `build-release-task.yml`, `build-executable-task.yml`, `build-docker-task.yml`, `build-toolversions-task.yml`, `publish-docker-readme-task.yml`, `build-datebadge-task.yml`, `get-version-task.yml`. Most thread a required `branch` input (config keys off it, never `github.ref_name`) plus `ref`/`smoke`. Exception: `build-datebadge-task.yml` takes no `branch` input - it's caller-gated (the publisher invokes it only when `main` is published), since the badge tracks the last `main` build and has no per-branch context.
 - Version info: `version.json` with Nerdbank.GitVersioning format. `get-version-task.yml` surfaces `SemVer2`, the assembly versions, and `GitCommitId` (used to pin the release `target_commitish`).
 - Branches: `main` (stable releases, `latest`), `develop` (pre-releases, `develop`).
-- Release notes: keep a short current-version summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md), updating both when cutting a release. `README.md` carries only the current version's summary - when bumping the version, replace the previous summary rather than appending; prior versions live in `HISTORY.md`.
+- Release notes: keep a short current-version summary in [`README.md`](./README.md) and the full history in [`HISTORY.md`](./HISTORY.md), updating both when cutting a release. `README.md` carries only the current version's summary - when bumping the version, replace the previous summary rather than appending, and prior versions live in `HISTORY.md`.
 
 ### Docker
 

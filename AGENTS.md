@@ -329,7 +329,7 @@ When pulling a public image fails on a Docker-Desktop/WSL credential-helper erro
 
 ## Devcontainer
 
-This repo ships no committed devcontainer. Development is native on the .NET 10 SDK plus the external media tools PlexCleaner orchestrates (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip); the multi-arch [Docker image](./Docker/) bundles those tools and doubles as a ready-made environment. The toolchain and the clean-compile tasks are documented in [`CODESTYLE.md`](./CODESTYLE.md).
+This repo ships no committed devcontainer. Development is native on the .NET 10 SDK plus the external media tools PlexCleaner orchestrates (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip). The multi-arch [Docker image](./Docker/) bundles those tools and doubles as a ready-made environment. The toolchain and the clean-compile tasks are documented in [`CODESTYLE.md`](./CODESTYLE.md).
 
 ## Editor and Tasks
 
