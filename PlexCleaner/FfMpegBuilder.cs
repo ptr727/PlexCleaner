@@ -29,6 +29,8 @@ public partial class FfMpeg
 
         public GlobalOptions NoStats() => Add("-nostats");
 
+        public GlobalOptions Progress() => Add("-progress").Add("pipe:1");
+
         public GlobalOptions ExitOnError() => Add("-xerror");
 
         public GlobalOptions AbortOn() => Add("-abort_on");

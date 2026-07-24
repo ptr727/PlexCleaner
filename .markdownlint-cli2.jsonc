@@ -1,10 +1,9 @@
 {
     "config": {
-        // Prose paragraphs and data-heavy tables/URLs are intentionally long;
-        // reflowing at 80 cols hurts readability and churns diffs.
+        // Prose paragraphs and data-heavy tables/URLs are intentionally long.
+        // Reflowing at 80 cols hurts readability and churns diffs.
         "MD013": false,
-        // Inline HTML is used for reference-link section dividers.
-        "MD033": false,
+        // MD033 (inline HTML) stays enabled: HTML comments (reference-link dividers) pass it, and elements are flagged so native markdown wins.
         // Require fenced code blocks over the legacy 4-space-indented style.
         "MD046": { "style": "fenced" },
         // MD060 (table column style) is not enforced - allow both compact

@@ -63,7 +63,7 @@ jobs:
 
       - name: Check C# formatting step
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
           dotnet tool restore
           dotnet csharpier check .
 
@@ -94,7 +94,7 @@ jobs:
       - name: Lint Python step
         working-directory: RegressionTests
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
           uvx ruff@0.15.22 check .
           uvx ruff@0.15.22 format --check .
           uvx mypy@2.3.0 .

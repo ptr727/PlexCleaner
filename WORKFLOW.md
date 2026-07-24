@@ -86,7 +86,7 @@ Legibility rules. Necessary but not sufficient: a perfectly styled workflow can 
   a manual dispatch, or back-to-back dispatches against the shared Docker tags) and none is cancelled
   mid-release. The merge-bot also overrides it: it keys on the PR number with `cancel-in-progress: false`
   so each PR's events run to completion in order.
-- **Shells.** Every multi-line bash `run:` starts with `set -euo pipefail`.
+- **Shells.** Every multi-line bash `run:` starts with `set -Eeuo pipefail`.
 - **Conditionals.** Multi-line `if:` uses the folded scalar `if: >-`.
 - **Boolean inputs.** A boolean used by both `workflow_call` and `workflow_dispatch` is declared in both
   trigger blocks and compared against `true` and `'true'`.
@@ -94,7 +94,9 @@ Legibility rules. Necessary but not sufficient: a perfectly styled workflow can 
   job needs valid permissions. Grant least privilege; a callee's extra scope is granted by the caller.
 - **Allowlist `success` and `skipped` explicitly** across an optional dependency: use
   `(needs.X.result == 'success' || needs.X.result == 'skipped')`, not `!= 'failure'`.
-- **Line endings.** Workflow YAML follows [`.editorconfig`](./.editorconfig) (CRLF). Preserve on every edit.
+- **Line endings.** Workflow YAML follows [`.editorconfig`](./.editorconfig), which pins
+  `.github/workflows/*.{yml,yaml}` to **LF** (Dependabot and Actions rewrite these files with LF). Preserve on
+  every edit.
 
 ## 3. Architecture
 
@@ -110,9 +112,10 @@ from racing a publish on the same ref.*
 
 A publish builds exactly **one** branch - the run's trigger ref. The **schedule** always runs on the default
 branch, so it rebuilds `main`; a **dispatch** runs on the branch it is started from (`main` or `develop`). The
-single `publish` job passes `github.ref_name` as both `ref` and `branch`, so the branch built, versioned, and
-tagged is always the run's own ref. *No matrix and no cross-branch ref mixing - `github.ref` is the branch
-being published.* The job is guarded to the long-lived branches (`main` / `develop`); a stray dispatch from a
+single `publish` job passes `github.sha` as `ref` and `github.ref_name` as `branch`, so the branch built,
+versioned, and tagged is always the run's own ref, pinned to the exact commit the run started from - a push
+landing mid-run is never released unvalidated. *No matrix and no cross-branch ref mixing - `github.ref` is the
+branch being published.* The job is guarded to the long-lived branches (`main` / `develop`); a stray dispatch from a
 feature branch is a no-op. To release `develop`, dispatch the workflow from `develop`.
 
 Because the run's ref **is** the built branch, GitHub resolves the local `uses: ./...` reusable workflows from
@@ -131,12 +134,13 @@ NBGV classifies `publicReleaseRefSpec` from the `GITHUB_REF` environment variabl
 the **trigger ref** (one branch per run), `GITHUB_REF` already equals the branch being versioned - a schedule or
 `main` dispatch classifies as public (clean `X.Y.<height>`), a `develop` dispatch as prerelease
 (`X.Y.<height>-g<sha>`) - so no `GITHUB_REF` override is needed. (`IGNORE_GITHUB_REF` is only for matrix
-publishers that build a non-trigger branch.) The main-version backstop (D2.2) catches any misclassification.
+publishers that build a non-trigger branch.) The release-version gate (D2.2) catches any misclassification.
 
 ### Validate at entry
 
-A run that carries a cross-input invariant (e.g. `main` must not carry a prerelease suffix) asserts it once
-with `::error::` before any publish. Downstream jobs `needs:` it.
+A run that carries a cross-input invariant asserts it once with `::error::` before any build, not after one.
+The `validate-release` job is that gate: `main` must not carry a prerelease suffix, and every other branch
+must. Downstream jobs `needs:` it.
 
 ### Fast CI feedback, head-resolved
 
@@ -211,9 +215,9 @@ flowchart TD
 ```
 
 **Publish - `publish-release.yml` -> `build-release-task.yml`.** A weekly schedule (rebuilds `main`) or a
-dispatch on the started branch validates, versions once with NBGV, builds the per-RID executable 7z and the
-multi-arch Docker image, then cuts the GitHub release and pushes to Docker Hub (D2, D3, D4). Both output
-sinks are shown.
+dispatch on the started branch validates, versions once with NBGV, gates on the branch matching that version's
+classification, builds the per-RID executable 7z and the multi-arch Docker image, then cuts the GitHub release
+and pushes to Docker Hub (D2, D3, D4). Both output sinks are shown.
 
 ```mermaid
 flowchart TD
@@ -226,20 +230,20 @@ flowchart TD
         VAL["Validate job<br/>(validate-task.yml, branch ref)"] --> VG{"validate succeeded<br/>or skipped?"}:::gate
         VG -- "failed" --> VFAIL(["build + release skipped"]):::stop
         GV["Get version job<br/>NBGV @master, runs once<br/>SemVer2 + GitCommitId"]
+        GV --> VR{"Validate release job<br/>branch vs version classification<br/>(skipped on smoke)"}:::gate
+        VR -- "mismatch" --> VRX(["fail ::error::<br/>refuse to publish"]):::stop
         VG -- "ok" --> BE
-        VG -- "ok" --> BD
-        GV --> BE
-        GV --> BD
+        VR -- "ok" --> BE
         BE["Build executable job<br/>RID matrix: win-x64, linux-x64,<br/>linux-musl-x64, linux-arm, linux-arm64,<br/>osx-x64, osx-arm64 -> PlexCleaner.7z<br/>release-asset-&lt;branch&gt;-executable"]
-        BD["Build Docker job<br/>linux/amd64 + linux/arm64<br/>tags: latest|develop + :SemVer2"]
+        BE --> BD
+        BD["Build Docker job<br/>linux/amd64 + linux/arm64<br/>tags: latest|develop + :SemVer2<br/>skipped if any earlier build failed"]
         BD --> DH[("Docker Hub push<br/>ptr727/plexcleaner<br/>latest|develop + :SemVer2 (multi-arch)<br/>+ overview on main")]:::pub
         BE --> GR
         BD --> GR
-        GR{"github-release job<br/>main version clean?<br/>(strip +meta, no '-')"}:::gate
-        GR -- "main carries prerelease '-'" --> GRX(["fail ::error::<br/>refuse to publish"]):::stop
-        GR -- "ok" --> EX{"tag exists<br/>and not dispatch?"}:::gate
+        GR["github-release job"] --> EX{"tag exists<br/>and not dispatch?"}:::gate
         EX -- "exists, schedule" --> NOP(["skip release-create<br/>artifact reclaimed by backstop"]):::stop
         EX -- "create or dispatch refresh" --> REL[("GitHub release<br/>tag = SemVer2 at GitCommitId<br/>PlexCleaner.7z + README + LICENSE<br/>prerelease = branch != main")]:::pub
+        REL --> CLN(["delete release-asset-* artifacts<br/>best-effort, gated to the create"])
     end
     classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
     classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
@@ -277,9 +281,10 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 - **D0.1 CI is one run, one branch.** Input: any push. Output: `test-pull-request` builds/validates exactly
   `github.ref_name` and publishes nothing. *Prevents cross-branch ref mixing in CI.*
-- **D0.2 The publisher builds one branch: the trigger ref.** Output: the `publish` job passes
-  `github.ref_name` as `ref` and `branch`, so it checks out, versions, and tags exactly the run's own branch
-  (the schedule's default branch, or a dispatch's branch). No matrix; the job is guarded to `main`/`develop`.
+- **D0.2 The publisher builds one branch: the trigger ref.** Output: the `publish` job passes `github.sha` as
+  `ref` and `github.ref_name` as `branch`, so it checks out, versions, and tags exactly the commit the run
+  started from on the run's own branch (the schedule's default branch, or a dispatch's branch). No matrix; the
+  job is guarded to `main`/`develop`.
   *Prevents cross-branch ref mixing - `github.ref` is the branch being published.*
 - **D0.3 One version, threaded.** Output: NBGV runs once, every consumer reads it via
   `needs:` outputs; no consumer recomputes it. *Allowed:* checking out a specific commit to compile it, and
@@ -310,9 +315,11 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 
 - **D2.1 Validate before publishing.** Output: a dedicated job/step asserts each cross-input invariant and
   fails fast with `::error::` before a publish; downstream jobs `needs:` it.
-- **D2.2 Main matches version classification.** Input: a real (non-smoke) publish run for `main`. Output: the
-  release fails loudly if `main` carries a prerelease suffix. It strips `+buildmetadata` before testing for
-  the prerelease `-`. Skipped on smoke. *Prevents a develop build published as the stable `latest`.*
+- **D2.2 Branch matches version classification.** Input: a real (non-smoke) publish run. Output: the dedicated
+  `validate-release` entry job fails loudly if `main` carries a prerelease suffix **or** a non-`main` branch
+  carries none. It strips `+buildmetadata` before testing for the prerelease `-` (only a core/prerelease `-`
+  counts), and it is skipped on smoke (a detached PR head always versions as prerelease). *Prevents a develop
+  build published as the stable `latest`, a develop leg classified public, and a build-metadata false positive.*
 
 ### D3 - Versioning and classification
 
@@ -337,8 +344,9 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   targets and creates the GitHub release for `github.ref_name` - the schedule rebuilds `main` (stable /
   `latest`); a dispatch publishes its own branch (`main` stable / `latest`, `develop` prerelease / `develop`).
   *Prevents a half-published release set and cross-branch ref mixing.*
-- **D4.3 Tag the built commit.** Output: the release `target_commitish` is the run's `GitCommitId` (the tip of
-  `github.ref_name`), never `github.sha`. *Prevents the tag landing on the wrong commit.*
+- **D4.3 Tag the built commit.** Output: the release `target_commitish` is the run's `GitCommitId` - the commit
+  NBGV versioned - never a branch name or a separately re-resolved ref. *Prevents the tag landing on the wrong
+  commit.*
 - **D4.4 Release contents and flag.** Output: each release is a tag on the built commit plus the auto source
   zip, README, and LICENSE, with the multi-runtime `PlexCleaner.7z` attached via the `release-asset-*` seam.
   The GitHub-release `prerelease` boolean is `inputs.branch != 'main'`. The Docker target attaches no asset;
@@ -368,6 +376,14 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 - **D5.2 Transfer artifacts consumed by pattern.** The `github-release` job collects `release-asset-<branch>-*`
   by glob, so adding/removing a file-producing target needs no release-job edit.
 - **D5.3 Never blanket-delete.** Cleanup MUST NOT enumerate and delete the run's whole artifact set.
+- **D5.4 Delete at the point of consumption, gated to the consumer, best-effort.** The `github-release` job
+  deletes the `release-asset-<branch>-*` artifacts by exact pattern once they are attached to the release,
+  under the **same** condition as the release-create step - so a no-op re-run that skips the create also skips
+  the delete, and the `retention-days: 1` backstop reclaims those artifacts instead. The step is
+  `continue-on-error`, tolerates a failed listing, and deletes every matching id. It needs `actions: write`,
+  granted by the caller (`publish-release.yml`'s publish job). *Prevents transfer artifacts accumulating
+  against the storage quota, freshly built assets being deleted on a no-op re-run, and a cleanup hiccup
+  reddening a job whose publish succeeded.*
 
 ### D6 - Self-testing workflows
 
@@ -427,24 +443,27 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 Read the workflow files plus `version.json` and assert the fact behind each applicable guarantee with a
 `file:line` citation:
 
-- **D0:** CI has no branch matrix; the publisher's single `publish` job passes `github.ref_name` as
-  `ref`/`branch` and is guarded to `main`/`develop`; NBGV invoked once, every other consumer reads it via
-  `needs:`; the run builds the trigger ref so `GITHUB_REF` matches the versioned branch.
+- **D0:** CI has no branch matrix; the publisher's single `publish` job passes `github.sha` as `ref` and
+  `github.ref_name` as `branch` and is guarded to `main`/`develop`; NBGV invoked once, every other consumer
+  reads it via `needs:`; the run builds the trigger ref so `GITHUB_REF` matches the versioned branch.
 - **D1:** CI runs on `push` with no paths filter; `validate` + `smoke-build` (both targets, `smoke: true`)
   run; every build `upload-artifact` is gated `!smoke`; `lint` runs CSharpier, `dotnet format style`,
   markdownlint, cspell on README/HISTORY, actionlint; the aggregator `needs:` both and blocks on non-success.
-- **D2:** the main release backstop checks the prerelease `-`, strips `+buildmetadata`, self-skips on smoke.
-- **D3:** `main` appears in the backstop and the `prerelease` expression; `publicReleaseRefSpec` is
+- **D2:** a dedicated `validate-release` job runs before the build jobs and they `needs:` it; it checks both
+  arms (main without a prerelease `-`, every other branch with one), strips `+buildmetadata`, self-skips on
+  smoke.
+- **D3:** `main` appears in the release-version gate and the `prerelease` expression; `publicReleaseRefSpec` is
   `^refs/heads/main$`.
 - **D4:** `publish-release` triggers are `schedule` + `workflow_dispatch` only (no `push`, no
   `PUBLISH_ON_MERGE`); the single `publish` job is guarded to `github.ref_name` in (`main`, `develop`) and
-  passes it as `ref`/`branch`; `target_commitish` is `GitCommitId`; the
+  passes `github.sha` as `ref` and `github.ref_name` as `branch`; `target_commitish` is `GitCommitId`; the
   `prerelease` boolean `== (inputs.branch != 'main')`; the executable attaches `PlexCleaner.7z` via
   `release-asset-*`; the Docker job logs in with `DOCKER_HUB_*` and pushes `latest`/`develop` + `:SemVer2`;
   release-create gated `exists == false || workflow_dispatch`; Docker buildcache is branch-scoped and
   write-gated on push; the Docker Hub overview push is gated to `main`.
 - **D5:** every upload sets `retention-days: 1`; the release job collects `release-asset-<branch>-*` by
-  pattern; no blanket artifact delete.
+  pattern and deletes those same artifacts by pattern under the release-create condition, `continue-on-error`;
+  the caller grants `actions: write`; no blanket artifact delete.
 - **D6:** CI is `push` on every branch; the aggregator context has exactly one producer; no
   `pull_request`-triggered fallback.
 - **D7:** the publisher group is ref-independent with `cancel-in-progress: false`; the merge-bot keys on PR
@@ -458,12 +477,12 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 
 | # | Input | Expected output | Exercises |
 | --- | --- | --- | --- |
-| S1 | push touching `PlexCleaner/**` | `validate` + `smoke-build` run; both targets compile/pack, **no push, no uploads, no release**; aggregator success; no dangling artifacts | D0.1, D1 |
+| S1 | push touching `PlexCleaner/**` | `validate` + `smoke-build` run; both targets compile/pack, **no push, no uploads, no release**; `validate-release` self-skips (smoke); aggregator success; no dangling artifacts | D0.1, D1, D2.2 |
 | S2 | push changing only docs | `validate` (lint checks markdown) + `smoke-build` run; nothing publishes | D1, D1.5 |
 | S3 | push changing only `.github/workflows/**` | `smoke-build` exercises the changed reusable workflow head-resolved; `lint` runs actionlint; aggregator success | D1.1, D6.1 |
 | S4 | weekly `schedule` | builds + publishes `main` only: stable release + refreshed `latest` (multi-arch) + `PlexCleaner.7z`; `target_commitish` = main's SHA; develop is not touched; no dangling artifacts | D4.1, D4.2, D4.4 |
 | S5 | `workflow_dispatch` from `develop` | builds + publishes `develop`: prerelease `X.Y.<height>-g<sha>` + `develop` image + `PlexCleaner.7z`; `github.ref` is develop, so NBGV classifies it non-public | D4.1, D4.2, D3.2 |
-| S6 | `workflow_dispatch` re-run, no new commits | release-create refreshed on dispatch (or skipped if the tag exists on schedule); Docker re-pushed (base refresh); no duplicate release | D4.5 |
+| S6 | `workflow_dispatch` re-run, no new commits | release-create refreshed on dispatch (or skipped if the tag exists on schedule); the `release-asset-*` delete is gated to the create, so a skipped create leaves them to the retention backstop; Docker re-pushed (base refresh); no duplicate release | D4.5, D5.4 |
 | S7 | `workflow_dispatch` from a feature branch | the `publish` job's `github.ref_name in (main, develop)` guard skips it -> no publish | D4.1 |
 | S8 | merged dependency bump (any) | `Directory.Packages.props` is not a shipped input and merges don't publish -> **no release**; ships in the next weekly run | D4.1, D8.2 |
 | S9 | merged GitHub-Actions bump | not a shipped input, merges don't publish -> **no release** | D4.1 |
@@ -471,6 +490,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | S11 | `version.json` floor bump merged | merges don't publish -> no immediate release; the new floor ships in the next weekly publish | D3.3, D4.1 |
 | S12 | Dependabot semver-major bump (any ecosystem) | auto-merges on green like every other tier; the required checks are the gate | D8.2 |
 | S13 | `develop` -> `main` promotion (merge commit) | the merge itself does not publish; `main`'s accumulated changes ship in the next weekly run | D4.1, D8.1 |
+| S14 | branch and version classification disagree (NBGV mis-classifies) | `validate-release` **fails loud** with `::error::`; the build and publish jobs skip, so nothing is built or pushed | D2.2 |
 
 ### 5C. Live probe (where warranted, never publishing)
 

@@ -37,7 +37,7 @@ ARG TARGETPLATFORM \
     BUILDPLATFORM
 
 # PlexCleaner build attribute configuration
-ARG BUILD_CONFIGURATION="Debug" \
+ARG BUILD_CONFIGURATION="Release" \
     BUILD_VERSION="1.0.0.0" \
     BUILD_FILE_VERSION="1.0.0.0" \
     BUILD_ASSEMBLY_VERSION="1.0.0.0" \
@@ -133,6 +133,9 @@ COPY --chmod=ug=rwx,o=rx ./Docker/Test.sh /Test/
 COPY --chmod=ug=rwx,o=rx ./Docker/InstallDebugTools.sh ./
 RUN ./InstallDebugTools.sh \
     && rm -rf ./InstallDebugTools.sh
+
+# Wrapper to read the PlexCleaner.Process metrics: "docker exec <container> counters"
+COPY --chmod=ug=rwx,o=rx ./Docker/counters.sh /usr/local/bin/counters
 
 # Copy version script
 COPY --chmod=ug=rwx,o=rx ./Docker/Version.sh /PlexCleaner/

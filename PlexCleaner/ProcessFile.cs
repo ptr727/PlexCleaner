@@ -2550,6 +2550,7 @@ public class ProcessFile
             Program.Config.VerifyOptions.MaximumBitrate / 8
         );
         DtsInfo packetDts = new();
+
         if (
             !Tools.FfProbe.GetAnalysisPackets(
                 FileInfo.FullName,

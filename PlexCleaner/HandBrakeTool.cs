@@ -91,6 +91,24 @@ public partial class HandBrake
             return true;
         }
 
+        // Parse a HandBrake --json line to a fraction, or null. Progress is 0..1 across scan, work, and mux.
+        internal static double? ParseProgressFraction(string line)
+        {
+            Match match = ProgressRegex().Match(line);
+            return
+                match.Success
+                && double.TryParse(
+                    match.Groups[1].Value,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out double progress
+                )
+                ? progress
+                : null;
+        }
+
+        [GeneratedRegex("\"Progress\":\\s*([0-9.]+)")]
+        private static partial Regex ProgressRegex();
+
         public bool ConvertToMkv(
             string inputName,
             string outputName,
@@ -122,8 +140,15 @@ public partial class HandBrake
                 .Build();
 
             // Execute command
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                Metrics.OpAborted();
+                return false;
+            }
+            Metrics.OpCompleted();
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         [GeneratedRegex(
