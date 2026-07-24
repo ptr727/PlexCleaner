@@ -35,6 +35,8 @@ jobs:
     secrets: inherit
     permissions:
       contents: write
+      # The release job deletes the release-asset-* transfer artifacts once they are attached to the release.
+      actions: write
     with:
       # Pin the exact dispatch/schedule-time commit: a push landing mid-run must not be released unvalidated.
       ref: ${{ github.sha }}
