@@ -6,7 +6,7 @@
 #   docker exec <container> counters             # live monitor of the PlexCleaner.Process meter
 #   docker exec <container> counters collect ... # any other dotnet-counters verb/args, passed through
 
-set -euo pipefail
+set -Eeuo pipefail
 
 export DOTNET_BUNDLE_EXTRACT_BASE_DIR="${DOTNET_BUNDLE_EXTRACT_BASE_DIR:-/tmp}"
 

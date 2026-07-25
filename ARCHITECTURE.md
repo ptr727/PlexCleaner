@@ -79,8 +79,8 @@ All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap)
 
 `Metrics.cs` owns a single `System.Diagnostics.Metrics.Meter` (`PlexCleaner.Process`) published for the whole process and read externally with `dotnet-counters` (no config flag, and instruments are inert until observed).
 
-- Hooks: `ProcessDriver.ProcessFiles` (the choke point every command and monitor cycle funnels through) drives the file/byte/in-flight instruments and the byte-weighted `progress.ratio`. `Process.ProcessFiles` records the per-`SidecarFile.StatesType` outcomes. `MediaTool` execution paths record `tool.duration`.
-- Progress is weighted by input bytes (summed once up front and credited at completion from the same map), not file count.
+- Hooks: `ProcessDriver.ProcessFiles` (the choke point every command and monitor cycle funnels through) drives the file/byte/in-flight instruments and the operation-weighted `progress.ratio`. `Process.ProcessFiles` records the per-`SidecarFile.StatesType` outcomes. `MediaTool` execution paths record `tool.duration`.
+- Progress is operation-weighted, not file count: each heavy full-file operation counts the file's size as work to do when it starts and as work done when it finishes, so the total grows as operations are discovered rather than being summed up front.
 - Run-scoped gauges (totals, in-flight, progress, ETA) reset per `ProcessFiles` call, while the counters stay cumulative for the process. All writers use `Interlocked`, so the parallel loop needs no lock, and observable-gauge callbacks only read. Tags are bounded (`state`, `tool`) - no filename tags.
 
 ### Sidecar File System
