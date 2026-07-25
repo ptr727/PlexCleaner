@@ -1,8 +1,8 @@
 name: Get version information task
 
-# Run NBGV once and expose the version outputs. The publisher passes its trigger branch as ref so the run
-# versions the branch it publishes; github.ref matches that branch (one branch per run), so NBGV classifies it
-# correctly without overriding github.ref.
+# Run NBGV once and expose the version outputs. The publisher passes the exact commit it publishes as ref, and
+# github.ref still names the branch that commit belongs to (one branch per run), so NBGV classifies it correctly
+# without overriding github.ref.
 on:
   workflow_call:
     inputs:

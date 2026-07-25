@@ -164,11 +164,15 @@ public partial class FfMpeg
             // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
             // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet
             VerifyClassifier.Accumulator classifier = new();
-            if (!ExecuteStreamStdErr(command, classifier.Add, out int exitCode))
+            Metrics.OpStarted();
+            bool executed = ExecuteStreamStdErr(command, classifier.Add, out int exitCode);
+            if (!executed)
             {
                 // Process could not run
+                Metrics.OpAborted();
                 return VerifyResult.DecodeError;
             }
+            Metrics.OpCompleted();
 
             // A non-zero exit is always a failure, fail closed even if stderr shows only the timestamp warning
             VerifyResult verifyResult = classifier.Result;
@@ -289,6 +293,27 @@ public partial class FfMpeg
             outputMap = outputMap.Trim();
         }
 
+        // Parse an ffmpeg -progress line to a fraction, or null. out_time_us and out_time_ms are microseconds.
+        internal static double? ParseProgressFraction(string line, long durationUs)
+        {
+            int separator = line.IndexOf('=');
+            if (separator <= 0)
+            {
+                return null;
+            }
+            string value = line[(separator + 1)..];
+            return line[..separator] switch
+            {
+                "progress" when value == "end" => 1.0,
+                "out_time_us"
+                or "out_time_ms"
+                    when durationUs > 0
+                        && long.TryParse(value, CultureInfo.InvariantCulture, out long microseconds)
+                        && microseconds > 0 => (double)microseconds / durationUs,
+                _ => null,
+            };
+        }
+
         public bool ConvertToMkv(
             string inputName,
             SelectMediaProps? selectMediaProps,
@@ -326,8 +351,15 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                Metrics.OpAborted();
+                return false;
+            }
+            Metrics.OpCompleted();
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool ConvertToMkv(string inputName, string outputName)
@@ -354,8 +386,15 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            return Execute(command, true, true, out BufferedCommandResult result)
-                && (result.ExitCode == 0 || LogFailedResult(result, inputName));
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
+            {
+                Metrics.OpAborted();
+                return false;
+            }
+            Metrics.OpCompleted();
+            return result.ExitCode == 0 || LogFailedResult(result, inputName);
         }
 
         public bool SetTimestamps(string inputName, string outputName)
@@ -482,10 +521,14 @@ public partial class FfMpeg
                 .Build();
 
             // Execute command
-            if (!Execute(command, true, true, out BufferedCommandResult result))
+            Metrics.OpStarted();
+            bool executed = Execute(command, true, true, out BufferedCommandResult result);
+            if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
+            Metrics.OpCompleted();
             text = result.StandardError.Trim();
             return result.ExitCode == 0 || LogFailedResult(result, fileName);
         }

@@ -54,7 +54,7 @@ jobs:
     steps:
       - name: Check workflow results step
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
           for result in "validate:${{ needs.validate.result }}" "smoke-build:${{ needs.smoke-build.result }}"; do
             name="${result%%:*}"
             value="${result#*:}"

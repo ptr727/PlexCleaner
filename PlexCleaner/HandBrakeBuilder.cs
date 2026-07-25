@@ -10,6 +10,8 @@ public partial class HandBrake
         // TODO: Consolidate
         public GlobalOptions Default() => this;
 
+        public GlobalOptions Json() => Add("--json");
+
         public GlobalOptions Add(string option) => Add(option, false);
 
         public GlobalOptions Add(string option, bool escape)

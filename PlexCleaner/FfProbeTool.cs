@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -79,6 +80,7 @@ public partial class FfProbe
         )
         {
             int processId = -1;
+            long startTimestamp = Stopwatch.GetTimestamp();
             try
             {
                 // Pipe target to deserialize JSON packets
@@ -194,6 +196,13 @@ public partial class FfProbe
             {
                 return (false, string.Empty);
             }
+            finally
+            {
+                Metrics.RecordToolDuration(
+                    GetToolType(),
+                    Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds
+                );
+            }
         }
 
         public bool GetClosedCaptions(string fileName, out bool hasClosedCaptions)
@@ -217,10 +226,14 @@ public partial class FfProbe
                 .Build();
 
             // Execute command
-            if (!Execute(command, false, true, out BufferedCommandResult result))
+            Metrics.OpStarted();
+            bool executed = Execute(command, false, true, out BufferedCommandResult result);
+            if (!executed)
             {
+                Metrics.OpAborted();
                 return false;
             }
+            Metrics.OpCompleted();
             if (result.ExitCode != 0)
             {
                 return LogFailedResult(result, fileName);
@@ -304,7 +317,18 @@ public partial class FfProbe
                 .Build();
 
             // Get packet list
-            if (!GetPackets(command, packetFunc, out string error))
+            Metrics.OpStarted();
+            bool got = GetPackets(command, packetFunc, out string error);
+            // GetPackets is false on a non-zero exit where the scan still ran, count completion when it ran (exit 0 or stderr output), not on cancellation or a failure to start
+            if (got || !string.IsNullOrEmpty(error))
+            {
+                Metrics.OpCompleted();
+            }
+            else
+            {
+                Metrics.OpAborted();
+            }
+            if (!got)
             {
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);

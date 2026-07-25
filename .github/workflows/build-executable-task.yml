@@ -57,6 +57,7 @@ jobs:
 
       - name: Build executable project step
         run: |
+          set -Eeuo pipefail
           dotnet publish ./PlexCleaner/PlexCleaner.csproj \
             --runtime ${{ matrix.runtime }} \
             -property:PublishDir=${{ runner.temp }}/publish/${{ matrix.runtime }}/ \

@@ -18,6 +18,15 @@ Summarized for VS Code's generators; the full rules, rationale, and examples are
 - US English, title case with lowercase short bind words; no vague titles, no `Co-Authored-By:` unless asked, no release-bump magnitude (NBGV handles versioning). Dependabot's `Bump X from Y to Z` titles are fine.
 - develop PRs squash-merge (`gh pr merge --squash`), main PRs merge-commit (`--merge`); a mismatched flag is rejected by branch protection.
 
+## Reviewing Carried Fleet Content
+
+Several of this repository's governance files are carried from a shared template and kept in sync across a fleet of sibling repositories - among them `AGENTS.md`, `CODESTYLE.md`, `WORKFLOW.md`, this file, and the `repo-config/` rulesets. Most of `AGENTS.md` is universal fleet law - every section that states a rule, as opposed to the two that describe this repository's own directory tree and devcontainer, is byte-locked and verified by an automated byte-for-byte match against the template canonical, not by line-by-line review.
+
+Two constraints follow when reviewing that content.
+
+- **A reference inside byte-locked text to a path or section this repository does not carry is intentional, not a broken link.** Universal rule text names shared infrastructure - a fleet registry, a reusable config snippet, the other workflow model's ruleset payload - that a given repository legitimately may not contain. Editing the text to "fix" such a reference would break the fleet audit that governs it, so the reference is correct as written. Do not report it as a dead link, a missing file, or a broken cross-reference.
+- **A genuine substantive defect is still worth raising.** Byte-locked is not unreviewable. A self-contradiction, a factual error, or a real typo in the canonical prose is a valid finding - note that the fix lands at the template and re-vendors to every repository, rather than proposing a local edit the audit would reject.
+
 ## GitHub Copilot Review Runbook
 
 > This runbook implements the [AGENTS.md "PR Review Etiquette"](../AGENTS.md#pr-review-etiquette) review-loop contract for GitHub Copilot. Without it in-repo, an agent has no pointer to the reliable Copilot mechanics and falls back to known-broken paths (the no-op `POST /requested_reviewers`, the wrong bot-login filter). In the API snippets below, `<N>` is the PR number.
@@ -153,4 +162,4 @@ After the final push, sweep-resolve stale older threads for removed code paths.
 
 Read [AGENTS.md](../AGENTS.md) for this repo's conventions and [../ARCHITECTURE.md](../ARCHITECTURE.md) for PlexCleaner's architecture, processing pipeline, and design patterns. For code-style rules, [`CODESTYLE.md`](../CODESTYLE.md) is authoritative. Don't restate any of these files' rules in commit bodies or PR descriptions - keep those focused on the change itself.
 
-**In a derived repo:** if you find a discrepancy that should be fixed in the template itself (this file or AGENTS.md is out of date, a rule is missing, something bit this repo and would bite the next), open an issue upstream in [`ptr727/ProjectTemplate`](https://github.com/ptr727/ProjectTemplate) rather than only fixing it locally - see the template's [AGENTS.md "Staying in Sync and Reporting Drift Upstream"](https://github.com/ptr727/ProjectTemplate/blob/main/AGENTS.md#staying-in-sync-and-reporting-drift-upstream).
+**Shared conventions:** if you find a discrepancy that looks like it should be fixed in the shared conventions rather than only locally (this file or AGENTS.md is out of date, a rule is missing, something bit this repo and would bite the next), raise it with the maintainer rather than only patching it here.
