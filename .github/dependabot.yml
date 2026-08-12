@@ -1,17 +1,12 @@
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# The github-actions ecosystem is the only one this repo ships.
+# Both main and develop are targeted so each stays current independently of the develop to main release cadence.
+# The merge-bot auto-merges each base with its per-base method.
+# See catalog/snippets/configs/dependabot.yml for the multi-ecosystem reference, covering nuget and uv, that a code-shipping repo uses.
 version: 2
 updates:
 
-  # main
-  - package-ecosystem: "nuget"
-    target-branch: "main"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    groups:
-      nuget-deps:
-        patterns:
-          - "*"
   - package-ecosystem: "github-actions"
     target-branch: "main"
     directory: "/"
@@ -22,16 +17,6 @@ updates:
         patterns:
           - "*"
 
-  # develop
-  - package-ecosystem: "nuget"
-    target-branch: "develop"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    groups:
-      nuget-deps:
-        patterns:
-          - "*"
   - package-ecosystem: "github-actions"
     target-branch: "develop"
     directory: "/"

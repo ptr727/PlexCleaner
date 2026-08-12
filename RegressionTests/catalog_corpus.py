@@ -40,7 +40,7 @@ def build(run):
         if Path(name).suffix.lower() not in MEDIA_EXTS:
             continue
         stem = stem_of(name)
-        state = set(s.strip() for s in (r.get("State") or "").split(",") if s.strip())
+        state = {s.strip() for s in (r.get("State") or "").split(",") if s.strip()}
         lg = log.get(stem, {"detections": set(), "errors": set(), "tracks": []})
         sig = classify_signature(lg["errors"])
         buckets = buckets_for(state, lg["detections"], sig, stem in err_files)

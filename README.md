@@ -6,20 +6,20 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - **Source Code**: [GitHub][github-link] - Full source code, issues, and CI/CD pipelines.
 - **Binary Releases**: [GitHub Releases][releases-link] - Pre-compiled executables for Windows, Linux, and macOS.
-- **Docker Images**: [Docker Hub][docker-link] - Container images with all tools pre-installed.
+- **Docker Images**: [Docker Hub][docker-hub-link] - Container images with all tools pre-installed.
 
 ### Build Status
 
 [![Release Status][release-status-shield]][actions-link]\
 [![Docker Status][docker-status-shield]][actions-link]\
-[![Last Commit][last-commit-shield]][commit-link]
+[![Last Commit][last-commit-shield]][commits-link]
 
 ### Releases
 
 [![GitHub Release][release-version-shield]][releases-link]\
 [![GitHub Pre-Release][pre-release-version-shield]][releases-link]\
-[![Docker Latest][docker-latest-version-shield]][docker-link]\
-[![Docker Develop][docker-develop-version-shield]][docker-link]
+[![Docker Latest][docker-latest-version-shield]][docker-hub-link]\
+[![Docker Develop][docker-develop-version-shield]][docker-hub-link]
 
 ### Release Notes
 
@@ -64,8 +64,8 @@ See [Installation](#installation) for detailed setup instructions and other plat
   - [Release Notes](#release-notes)
 - [Getting Started](#getting-started)
 - [Table of Contents](#table-of-contents)
+- [Overview](#overview)
 - [Questions or Issues](#questions-or-issues)
-- [Use Cases](#use-cases)
 - [Performance Considerations](#performance-considerations)
 - [Installation](#installation)
   - [Docker](#docker)
@@ -97,26 +97,7 @@ See [Installation](#installation) for detailed setup instructions and other plat
 - [Sample Media Files](#sample-media-files)
 - [License](#license)
 
-## Questions or Issues
-
-**For General Questions:**
-
-- Use the [Discussions][discussions-link] forum for general questions, feature requests, and sharing working configurations.
-
-**For Bug Reports:**
-
-- Ask in the [Discussions][discussions-link] forum if you are not sure if it is a bug.
-- Check the [Issues][issues-link] tracker for known problems first.
-- When reporting a new bug, please include:
-  - PlexCleaner version (`PlexCleaner --version`).
-  - Operating system and architecture (Windows/Linux/Docker, x64/arm64).
-  - Media tool versions (`PlexCleaner gettoolinfo`).
-  - Complete command line and relevant configuration settings.
-  - Full log output with `--debug` flag enabled.
-  - Sample media file information (`PlexCleaner getmediainfo --mediafiles <file>`).
-  - Steps to reproduce the issue.
-
-## Use Cases
+## Overview
 
 > **ℹ️ TL;DR**: *Direct Play* means your media server (Plex/Emby/Jellyfin) sends the file directly to your player without transcoding on the server or the client. This saves server CPU, reduces power consumption, preserves quality, and enables playback on low-power devices. The **objective of PlexCleaner** is to *modify media content* such that it will always Direct Play in [Plex][plex-directplay-link], [Emby][emby-directplay-link], [Jellyfin][jellyfin-playmethod-link], etc.
 
@@ -151,6 +132,25 @@ Common examples of issues resolved by the `process` command:
 - High bitrate content → Warn when exceeding network capacity (WiFi/100Mbps Ethernet).
 
 See the [`process` command](#process-command) for detailed workflow and the [Common Configuration Examples](#common-configuration-examples) for quick setup examples.
+
+## Questions or Issues
+
+**For General Questions:**
+
+- Use the [Discussions][discussions-link] forum for general questions, feature requests, and sharing working configurations.
+
+**For Bug Reports:**
+
+- Ask in the [Discussions][discussions-link] forum if you are not sure if it is a bug.
+- Check the [Issues][issues-link] tracker for known problems first.
+- When reporting a new bug, please include:
+  - PlexCleaner version (`PlexCleaner --version`).
+  - Operating system and architecture (Windows/Linux/Docker, x64/arm64).
+  - Media tool versions (`PlexCleaner gettoolinfo`).
+  - Complete command line and relevant configuration settings.
+  - Full log output with `--debug` flag enabled.
+  - Sample media file information (`PlexCleaner getmediainfo --mediafiles <file>`).
+  - Steps to reproduce the issue.
 
 ## Performance Considerations
 
@@ -206,8 +206,8 @@ Choose an installation method based on your platform and requirements:
 
 ### Docker
 
-- Builds are published on [Docker Hub][plexcleaner-hub-link].
-- See the [Docker README][docker-link] for current distribution and media tool versions.
+- Builds are published on [Docker Hub][docker-hub-link].
+- See the [Docker README](./Docker/README.md) for current distribution and media tool versions.
 - `ptr727/plexcleaner:latest` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `main` branch.
 - `ptr727/plexcleaner:develop` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `develop` branch.
 - Docker images and GitHub Releases for both branches are published on a weekly schedule (and on demand), each refreshed with the latest upstream and base-image updates. Pull requests are smoke-tested only and do not publish.
@@ -983,31 +983,33 @@ Some ideas being considered:
 
 ## 3rd Party Tools
 
-- [7-Zip][sevenzip-link]
-- [AwesomeAssertions][awesomeassertions-link]
-- [CliWrap][cliwrap-link]
-- [Docker Hub Description][docker-hub-description-action-link]
-- [Docker Run Action][docker-run-action-link]
-- [dotnet-outdated][dotnet-outdated-link]
-- [FFmpeg][ffmpeg-link]
-- [Git Auto Commit][git-auto-commit-action-link]
-- [GitHub Actions][github-actions-link]
-- [GitHub Dependabot][dependabot-link]
-- [HandBrake][handbrake-link]
-- [Husky.Net][husky-link]
-- [ISO 639-2 language tags][iso639-2-link]
-- [ISO 639-3 language tags][iso639-3-link]
-- [JSON2CSharp][json2csharp-link]
-- [MediaInfo][mediainfo-link]
-- [MKVToolNix][mkvtoolnix-link]
-- [NEbml][nebml-link]
-- [Nerdbank.GitVersioning][nerdbank-gitversioning-action-link]
-- [regex101.com][regex101-link]
-- [RFC 5646 language tags][rfc5646-link]
-- [Serilog][serilog-link]
-- [Utf8JsonAsyncStreamReader][utf8jsonasync-link]
-- [Xml2CSharp][xmltocsharp-link]
-- [xUnit.Net][xunit-link]
+The third-party tools, libraries, and actions this project depends on.
+
+- [7-Zip][sevenzip-link] - File archiver.
+- [AwesomeAssertions][awesomeassertions-link] - Assertion library for .NET tests.
+- [CliWrap][cliwrap-link] - Process execution library for .NET.
+- [Docker Hub Description][docker-hub-description-action-link] - GitHub action that publishes a Docker Hub repository overview.
+- [Docker Run Action][docker-run-action-link] - GitHub action that runs a step inside a container.
+- [dotnet-outdated][dotnet-outdated-link] - Outdated NuGet dependency reporter.
+- [FFmpeg][ffmpeg-link] - Media transcoder.
+- [Git Auto Commit][git-auto-commit-action-link] - GitHub action that commits workspace changes.
+- [GitHub Actions][github-actions-link] - CI and automation runner.
+- [GitHub Dependabot][dependabot-link] - Dependency update bot.
+- [HandBrake][handbrake-link] - Video transcoder.
+- [Husky.Net][husky-link] - Git hook manager for .NET.
+- [ISO 639-2 language tags][iso639-2-link] - Language code standard.
+- [ISO 639-3 language tags][iso639-3-link] - Language code standard.
+- [JSON2CSharp][json2csharp-link] - JSON to C# class generator.
+- [MediaInfo][mediainfo-link] - Media file inspector.
+- [MKVToolNix][mkvtoolnix-link] - Matroska container toolset.
+- [NEbml][nebml-link] - EBML reader and writer for .NET.
+- [Nerdbank.GitVersioning][nerdbank-gitversioning-link] - Version computation from git height.
+- [regex101.com][regex101-link] - Regular expression tester.
+- [RFC 5646 language tags][rfc5646-link] - Language tag standard.
+- [Serilog][serilog-link] - Structured logging library for .NET.
+- [Utf8JsonAsyncStreamReader][utf8jsonasync-link] - Streaming JSON reader for .NET.
+- [Xml2CSharp][xml2csharp-link] - XML to C# class generator.
+- [xUnit.Net][xunit-link] - Test framework for .NET.
 
 ## Sample Media Files
 
@@ -1019,7 +1021,7 @@ Some ideas being considered:
 
 ## License
 
-Licensed under the [MIT License][license-link]\
+Licensed under the [MIT License][license]\
 ![GitHub License][license-shield]
 
 <!-- Shields -->
@@ -1032,18 +1034,19 @@ Licensed under the [MIT License][license-link]\
 [release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Releases%20Build
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
 
-<!-- Internal -->
+<!-- Distribution -->
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [clone-link]: https://github.com/ptr727/PlexCleaner.git
-[commit-link]: https://github.com/ptr727/PlexCleaner/commits/main
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
-[docker-link]: https://hub.docker.com/r/ptr727/plexcleaner
+[docker-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [github-link]: https://github.com/ptr727/PlexCleaner
 [issues-link]: https://github.com/ptr727/PlexCleaner/issues
-[license-link]: ./LICENSE
-[plexcleaner-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [releases-latest-link]: https://github.com/ptr727/PlexCleaner/releases/latest
 [releases-link]: https://github.com/ptr727/PlexCleaner/releases
+
+<!-- Repo -->
+[commits-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[license]: ./LICENSE
 
 <!-- External -->
 [awesomeassertions-link]: https://awesomeassertions.org/
@@ -1087,7 +1090,7 @@ Licensed under the [MIT License][license-link]\
 [mplayer-samples-link]: https://samples.mplayerhq.hu/
 [native-aot-link]: https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot
 [nebml-link]: https://github.com/OlegZee/NEbml
-[nerdbank-gitversioning-action-link]: https://github.com/marketplace/actions/nerdbank-gitversioning
+[nerdbank-gitversioning-link]: https://github.com/dotnet/Nerdbank.GitVersioning
 [plex-directplay-link]: https://support.plex.tv/articles/200250387-streaming-media-direct-play-and-direct-stream/
 [regex101-link]: https://regex101.com/
 [rfc5646-link]: https://www.rfc-editor.org/rfc/rfc5646.html
@@ -1099,5 +1102,5 @@ Licensed under the [MIT License][license-link]\
 [visualstudio-link]: https://visualstudio.microsoft.com/downloads/
 [vscode-link]: https://code.visualstudio.com/download
 [winget-cli-issue-link]: https://github.com/microsoft/winget-cli/issues/3437
-[xmltocsharp-link]: http://xmltocsharp.azurewebsites.net/
+[xml2csharp-link]: https://xmltocsharp.azurewebsites.net/
 [xunit-link]: https://xunit.net/

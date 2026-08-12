@@ -1,9 +1,8 @@
 name: Test pull request action
 
 # CI for every branch. Runs on push so the reusable tasks resolve from the pushed head: a PR that edits a
-# workflow tests its own copy. validate (unit tests + lint) and smoke-build run on every push with no paths
-# filter, so a reusable-workflow change is always exercised. The aggregator below is the ruleset required
-# status check, produced here on the head SHA. CI never publishes (the publisher runs on schedule/dispatch).
+# workflow tests its own copy. Validation always runs; the paths filter smoke-builds only changed targets.
+# The aggregator below is the ruleset required status check, produced here on the head SHA. CI never publishes.
 #
 # There is deliberately no pull_request trigger: a fork PR cannot push to this repo, so it produces no run
 # and cannot satisfy the required check. A maintainer lands such a contribution on an in-repo branch (which
@@ -29,11 +28,37 @@ jobs:
     # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
     secrets: inherit
 
-  # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. Docker smoke is
-  # amd64-only and seeds from the branch-scoped cache, so it stays fast.
+  changes:
+    name: Detect changed targets job
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    outputs:
+      executable: ${{ steps.filter.outputs.executable }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - name: Checkout code step
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Detect changed targets step
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            executable:
+              - 'PlexCleaner/**'
+              - 'PlexCleanerTests/**'
+              - 'Directory.*'
+              - '*.slnx'
+              - '.github/workflows/build-executable-task.yml'
+            docker:
+              - 'Docker/**'
+              - '.github/workflows/build-docker-task.yml'
+
+  # Build only targets changed by the push to prove they still ship, publishing nothing. Docker smoke is amd64-only
+  # and seeds from the branch-scoped cache, so it stays fast.
   smoke-build:
     name: Smoke build job
     if: ${{ !github.event.deleted }}
+    needs: [changes]
     uses: ./.github/workflows/build-release-task.yml
     secrets: inherit
     with:
@@ -42,6 +67,8 @@ jobs:
       github: false
       dockerhub: false
       branch: ${{ github.ref_name }}
+      enable_executable: ${{ needs.changes.outputs.executable == 'true' }}
+      enable_docker: ${{ needs.changes.outputs.docker == 'true' }}
 
   # Single required status check. Its name is the ruleset-bound context in repo-config/ruleset-*.json. Do
   # not rename it without updating those in lockstep. Must succeed, not merely not-fail. Skips on a branch
@@ -49,13 +76,13 @@ jobs:
   check-workflow-status:
     name: Check pull request workflow status job
     runs-on: ubuntu-latest
-    needs: [validate, smoke-build]
+    needs: [changes, validate, smoke-build]
     if: ${{ always() && !github.event.deleted }}
     steps:
       - name: Check workflow results step
         run: |
           set -Eeuo pipefail
-          for result in "validate:${{ needs.validate.result }}" "smoke-build:${{ needs.smoke-build.result }}"; do
+          for result in "changes:${{ needs.changes.result }}" "validate:${{ needs.validate.result }}" "smoke-build:${{ needs.smoke-build.result }}"; do
             name="${result%%:*}"
             value="${result#*:}"
             if [[ "$value" != "success" ]]; then

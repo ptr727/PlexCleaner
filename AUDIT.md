@@ -58,7 +58,7 @@ done
 
 ## Verdict and Follow-Up
 
-A missing required item or a divergent payload is a **defect** (not operational); an equivalent outcome in a non-standard form is a **drift finding**. N/A items are excluded, never counted as failures. Surface findings as repository issues; fixes land as a pull request to `develop` per [AGENTS.md "Branching Model"][agents-branching-model]. To re-apply the whole baseline, run `repo-config/configure.sh` (see [repo-config/README.md][repo-config-readme]).
+A missing required item or a divergent payload is a **defect** (not operational); an equivalent outcome in a non-standard form is a **drift finding**. N/A items are excluded, never counted as failures. Surface findings as repository issues; fixes land as a pull request to `develop` per [AGENTS.md "Branching Model"][agents-branching-model]. To re-apply the whole baseline, run the hub-hosted repository configuration command from a private hub checkout (see [repo-config/README.md][repo-config-readme]).
 
 <!-- Repo -->
 

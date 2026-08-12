@@ -135,18 +135,22 @@ def strip_language_ietf(path):
     try:
         ident = json.loads(
             _sp.run(
-                ["mkvmerge", "-J", str(path)], stdin=_sp.DEVNULL, capture_output=True, text=True
+                ["mkvmerge", "-J", str(path)],
+                stdin=_sp.DEVNULL,
+                capture_output=True,
+                text=True,
+                check=False,
             ).stdout
         )
         ntracks = len(ident.get("tracks", []))
-    except Exception:
+    except (OSError, json.JSONDecodeError, TypeError):
         return False
     if not ntracks:
         return False
     cmd = ["mkvpropedit", str(path)]
     for i in range(1, ntracks + 1):
         cmd += ["--edit", f"track:@{i}", "--delete", "language-ietf"]
-    r = _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    r = _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, check=False)
     return r.returncode == 0
 
 
@@ -162,11 +166,15 @@ def set_language_ietf(path):
     try:
         ident = json.loads(
             _sp.run(
-                ["mkvmerge", "-J", str(path)], stdin=_sp.DEVNULL, capture_output=True, text=True
+                ["mkvmerge", "-J", str(path)],
+                stdin=_sp.DEVNULL,
+                capture_output=True,
+                text=True,
+                check=False,
             ).stdout
         )
         tracks = ident.get("tracks", [])
-    except Exception:
+    except (OSError, json.JSONDecodeError, TypeError):
         return False
     if not tracks:
         return False
@@ -174,7 +182,7 @@ def set_language_ietf(path):
     for i, t in enumerate(tracks, start=1):
         lang = t.get("properties", {}).get("language", "und") or "und"
         cmd += ["--edit", f"track:@{i}", "--set", f"language-ietf={lang}"]
-    r = _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    r = _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, check=False)
     return r.returncode == 0
 
 
@@ -202,7 +210,7 @@ def make_head_clip(src, out, seconds, run=None, cutter="mkvmerge"):
     def _run(cmd):
         if run:
             return run(cmd)
-        return _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        return _sp.run(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, check=False)
 
     if cutter == "mkvmerge" and src.suffix.lower() == ".mkv":
         _run(["mkvmerge", "-o", str(out), "--split", f"parts:00:00:00-{hms(seconds)}", str(src)])
@@ -363,7 +371,7 @@ def find_run(explicit, channel="develop"):
         try:
             if json.loads(bi.read_text()).get("Channel") != channel:
                 continue
-        except Exception:
+        except (OSError, json.JSONDecodeError, TypeError):
             continue
         if log.stat().st_mtime > best_mt:
             best, best_mt = d, log.stat().st_mtime

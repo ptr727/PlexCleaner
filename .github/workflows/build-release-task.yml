@@ -34,6 +34,14 @@ on:
         required: false
         type: boolean
         default: true
+      enable_executable:
+        required: false
+        type: boolean
+        default: true
+      enable_docker:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
 
@@ -90,8 +98,8 @@ jobs:
   # Build only when validation passed (success) or was skipped (smoke); never when it failed.
   build-executable:
     name: Build executable job
+    if: ${{ inputs.enable_executable && !cancelled() && needs.get-version.result == 'success' && needs.validate-release.result == 'success' && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     needs: [get-version, validate, validate-release]
-    if: ${{ !cancelled() && needs.get-version.result == 'success' && needs.validate-release.result == 'success' && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     uses: ./.github/workflows/build-executable-task.yml
     secrets: inherit
     with:
@@ -112,7 +120,11 @@ jobs:
   build-docker:
     name: Build Docker job
     needs: [get-version, validate, validate-release, build-executable]
-    if: ${{ !failure() && !cancelled() }}
+    if: >-
+      ${{ always() && inputs.enable_docker && !failure() && !cancelled() &&
+      needs.get-version.result == 'success' && needs.validate-release.result == 'success' &&
+      (needs.validate.result == 'success' || needs.validate.result == 'skipped') &&
+      (needs.build-executable.result == 'success' || needs.build-executable.result == 'skipped') }}
     uses: ./.github/workflows/build-docker-task.yml
     secrets: inherit
     with:

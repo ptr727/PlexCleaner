@@ -53,6 +53,7 @@ def run(cmd: list[str]) -> None:
         stderr=subprocess.STDOUT,
         text=True,
         errors="replace",
+        check=False,
     )
     if proc.returncode != 0:
         tail = "\n".join((proc.stdout or "").splitlines()[-20:])

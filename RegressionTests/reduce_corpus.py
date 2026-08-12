@@ -153,6 +153,7 @@ def make_clip(
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            check=False,
         )
     else:
         # mkvmerge region cut preserves timestamp defects (ffmpeg -copyts normalizes some away)
@@ -161,6 +162,7 @@ def make_clip(
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            check=False,
         )
         if not out.exists():
             numbered = out.with_name(out.stem + "-001" + out.suffix)
@@ -184,9 +186,10 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     proc = subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
          "-t", str(seconds), "-map", "0", "-c", "copy", "-f", "mp4", str(out)],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+         stdin=subprocess.DEVNULL,
+         stdout=subprocess.DEVNULL,
+         stderr=subprocess.DEVNULL,
+         check=False,
     )  # fmt: skip
     # this remux has clean success/fail semantics (unlike the mkv cutters, which can exit non-zero
     # yet leave a usable file), so require a clean exit as well as a non-empty output
@@ -237,6 +240,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        check=False,
         errors="replace",
     )
     logmap = parse_log(out / "clip_process.log")
@@ -400,6 +404,7 @@ def main() -> None:
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
+                    check=False,
                 )
             shutil.copy2(pristine, fw / "media" / name)
 

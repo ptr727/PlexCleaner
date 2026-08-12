@@ -1,17 +1,20 @@
-# Default: do not normalize line endings (`* -text`); .editorconfig end_of_line rules guide what the editor writes.
-# The exception pins below are git's own enforcement - they force LF for execution-sensitive classes regardless of editor.
-# git config --global core.autocrlf false
-# git add --renormalize .
-# git ls-files --eol
+# Default: git does not normalize line endings (`* -text`), and .editorconfig end_of_line rules guide what the editor writes.
+# The exception pins below are git's own enforcement, forcing LF for execution-sensitive classes regardless of editor.
+# Configure with: git config --global core.autocrlf false
+# Renormalize with: git add --renormalize .
+# Inspect with: git ls-files --eol
 * -text
 
-# Exception: scripts must stay LF regardless of the `* -text` default - a CRLF shebang breaks execution. `.editorconfig`
-# covers `*.sh`, but extensionless executables match no extension rule, so pin them here so git enforces LF on checkout
-# and `--renormalize`. Any repo whose tooling ships extensionless scripts adds the matching path pin, e.g. s6-overlay
-# init `Docker/s6-overlay/** text eol=lf` or husky/git hooks `.husky/pre-commit text eol=lf`.
+# Exception: scripts must stay LF regardless of the `* -text` default, because a CRLF shebang breaks execution.
+# `.editorconfig` covers `*.sh`, but an extensionless executable matches no extension rule.
+# Pin those here, so git enforces LF on checkout and on `--renormalize`.
+# Any repo whose tooling ships extensionless scripts adds the matching path pin.
+# The s6-overlay init is `Docker/s6-overlay/** text eol=lf`, and a husky or git hook is `.husky/pre-commit text eol=lf`.
 *.sh text eol=lf
+# This repository's own hook, which is the extensionless case the comment above names.
 .husky/pre-commit text eol=lf
 
-# Dockerfiles must be LF - a CRLF breaks RUN heredocs and line continuations.
+# Dockerfiles must be LF, because a CRLF breaks RUN heredocs and line continuations.
+# A repo with no Dockerfile is unaffected, so these pins are forward-declared.
 Dockerfile text eol=lf
 *.Dockerfile text eol=lf
