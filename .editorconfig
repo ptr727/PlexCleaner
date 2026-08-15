@@ -8,12 +8,17 @@
 # https://github.com/dotnet/runtime/blob/main/.editorconfig
 
 # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format
-# dotnet format style --verify-no-changes --severity=info --verbosity=detailed
+# Verify with: dotnet format style --verify-no-changes --severity=info --verbosity=detailed
 
 # Root config
 root = true
 
-# Defaults
+# Defaults: CRLF is the default, and only the LF exceptions below are declared.
+# Most LF pins are shared with `.gitattributes`, which git enforces: `*.sh`, the husky pre-commit shebang, `uv.lock`, and Dockerfiles.
+# The workflow-YAML pin (`.github/workflows/*`) is `.editorconfig`-only.
+# For those, git stays passive (`* -text`) and CI (editorconfig-checker) enforces LF.
+# Keep the `[*]` `end_of_line = crlf` default, which the Windows-GUI and WSL-engine workflow requires because Windows tooling misbehaves on LF.
+# Every uncovered file type relies on that default too.
 [*]
 charset = utf-8
 end_of_line = crlf
@@ -24,59 +29,55 @@ trim_trailing_whitespace = true
 
 # Markdown files
 [*.md]
-end_of_line = crlf
 trim_trailing_whitespace = false
 
 # Xml files
 [*.{xml,csproj,props,targets}]
-end_of_line = crlf
 indent_size = 2
 
 # Yaml files
 [*.{yml,yaml}]
-end_of_line = crlf
 indent_size = 2
 
-# Workflow YAML is LF: Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of
-# mixed. git still leaves endings alone (`* -text`); this and CI (editorconfig-checker) enforce it. Other YAML is CRLF.
+# Workflow YAML is LF, because Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of mixed.
+# Endings are still left alone by git (`* -text`), and this file plus CI (editorconfig-checker) enforce it.
+# Other YAML stays CRLF.
 [.github/workflows/*.{yml,yaml}]
 end_of_line = lf
 
-# JSON and JSONC files
-[*.{json,jsonc}]
-end_of_line = crlf
+# This repository's own hook, paired with the `.gitattributes` pin.
+# The git pin alone leaves the editor free to write a CRLF shebang, which would break it.
+[.husky/pre-commit]
+end_of_line = lf
 
 # Linux scripts
 [*.sh]
 end_of_line = lf
 
-# Husky git hook is an extensionless shell script - LF like other scripts (matches the .gitattributes pin)
-[.husky/pre-commit]
+# The uv tool regenerates uv.lock with LF on every platform, so pin it here.
+# Without the pin an EOL check (editorconfig-checker or CI) fails on every `uv lock` or `uv sync` until the file is manually reconverted.
+# The rationale matches the shebang and Dockerfile pins, where a tool owns the ending.
+# A Python repo on the CRLF default carries this, and a repo with no lockfile is unaffected.
+[uv.lock]
 end_of_line = lf
 
-# Dockerfiles - CRLF breaks RUN heredocs and line continuations
+# Dockerfiles are LF, because CRLF breaks RUN heredocs and line continuations.
 [{Dockerfile,*.Dockerfile}]
 end_of_line = lf
 
-# Windows scripts
-[*.{cmd,bat,ps1}]
-end_of_line = crlf
-
-# --- .NET-only below: C# and ReSharper style. Everything above is the line-ending
-# governance for the .NET style block below. ---
+# .NET-only below, covering C# and ReSharper style.
+# Everything above is the line-ending governance every derived repo carries.
 
 # C# files
 [*.cs]
-end_of_line = crlf
-# Suppressions follow CODESTYLE.md "Analyzer Diagnostics and Suppressions": prefer a
-# [SuppressMessage] attribute or the owning project's .editorconfig; relax a rule
-# repo-wide here only when it applies to every project (never a brownfield batch).
+# Suppressions follow CODESTYLE.md "Analyzer Diagnostics and Suppressions".
+# Prefer a [SuppressMessage] attribute, or the owning project's .editorconfig.
+# Relax a rule repo-wide here only when it applies to every project, never for a brownfield batch.
 dotnet_diagnostic.IDE0055.severity = none
 dotnet_analyzer_diagnostic.severity = suggestion
 
-# PlexCleaner adaptation: repo-wide CA relaxations that apply to every project here (a console app, not a
-# reusable library). Per CODESTYLE.md these are justified repo-wide because they hold for all projects.
-# Public API surface rules: not applicable, this is a console app not a reusable library
+# Repo-wide CA relaxations that apply to every project here, since PlexCleaner is a console app rather than a reusable library.
+# Public API surface rules do not apply to a console app.
 dotnet_diagnostic.CA1002.severity = none  # Do not expose List<T>
 dotnet_diagnostic.CA1024.severity = none  # Use properties where appropriate
 dotnet_diagnostic.CA1034.severity = none  # Nested types should not be visible

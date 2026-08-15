@@ -1,6 +1,6 @@
 # PlexCleaner Architecture
 
-This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md](./AGENTS.md), C# code style in [CODESTYLE.md](./CODESTYLE.md), and GitHub Copilot review mechanics in [.github/copilot-instructions.md](./.github/copilot-instructions.md).
+This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md](./AGENTS.md) and [GOVERNANCE.md](./GOVERNANCE.md), the CI/CD workflow contract in [WORKFLOW.md](./WORKFLOW.md), C# code style in [CODESTYLE.md](./CODESTYLE.md), and GitHub Copilot review mechanics in [.github/copilot-instructions.md](./.github/copilot-instructions.md).
 
 ## Project Overview
 
@@ -354,7 +354,7 @@ Check states with `HasFlag()`, combine with `|=`
 
 ## Build and Release
 
-The authoritative release and workflow governance is in [AGENTS.md](./AGENTS.md). This section is a short architectural summary.
+The authoritative release governance is [GOVERNANCE.md](./GOVERNANCE.md) "Release Model" and the workflow contract is [WORKFLOW.md](./WORKFLOW.md). This section is a short architectural summary.
 
 ### Local Development
 
