@@ -143,11 +143,11 @@ jobs:
         with:
           ref: ${{ needs.get-version.outputs.GitCommitId }}
 
-      # Collect assets by the `release-asset-<branch>-*` pattern so this step is target-agnostic: subset releases by
-      # deleting the target, not `enable_*: false` (a skipped `needs` job would skip this release job too). The release
-      # step guards `fail_on_unmatched_files: true`, so at least one `release-asset-*` must match; a repo that drops
-      # every file-producing target (e.g. a Docker-only repo, whose release carries only source zip + README + LICENSE)
-      # relaxes that guard.
+      # Collect assets by the `release-asset-<branch>-*` pattern so this step is target-agnostic.
+      # Subset releases by deleting the target rather than by `enable_*: false`, since a skipped `needs` job would skip this release job too.
+      # The release step guards `fail_on_unmatched_files: true`, so at least one `release-asset-*` must match.
+      # A repo that drops every file-producing target relaxes that guard.
+      # A Docker-only repo is the case, its release carrying only the source zip + README + LICENSE.
       - name: Download release asset artifacts step
         if: ${{ inputs.expect_release_assets }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -156,8 +156,8 @@ jobs:
           merge-multiple: true
           path: ./Publish
 
-      # The weekly publisher re-runs even with no new commits, so the version may already be released. Skip the release
-      # step when a release for this tag already exists to avoid a no-op republish.
+      # The weekly publisher re-runs even with no new commits, so the version may already be released.
+      # Skip the release step when a release for this tag already exists, to avoid a no-op republish.
       - name: Check for existing release step
         id: release-exists
         env:
@@ -179,10 +179,10 @@ jobs:
       # `target_commitish` must be set explicitly: otherwise GitHub's REST API tags the release on the default branch.
       # Pin it to `GitCommitId` so the tag is on the exact built commit, consistent with the SemVer2 tag and artifacts.
       # Skip when the release already exists, but always let a manual `workflow_dispatch` through to refresh it.
-      # Every release (any branch, any target) is a tag on the built commit plus the auto-attached source zip, README,
-      # and LICENSE; targets amend it by uploading `release-asset-*` files (binaries/packages) or pushing elsewhere
-      # (image/registry). `fail_on_unmatched_files: true` fails loudly if a promised `release-asset-*` is missing or
-      # misnamed; a no-file-target repo relaxes it (see download step).
+      # Every release, on any branch and for any target, is a tag on the built commit plus the auto-attached source zip, README, and LICENSE.
+      # Targets amend it by uploading `release-asset-*` files (binaries/packages) or by pushing elsewhere (image/registry).
+      # `fail_on_unmatched_files: true` fails loudly if a promised `release-asset-*` is missing or misnamed.
+      # A no-file-target repo relaxes it (see download step).
       - name: Create GitHub release step
         if: ${{ steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
@@ -197,16 +197,17 @@ jobs:
             README.md
             ./Publish/*
 
-      # Surgical cleanup at the point of consumption: the release-asset-<branch>-* transfer artifacts now have durable
-      # copies on the release, so delete them by exact pattern to free the storage quota - scoped to this branch's
-      # assets, leaving diagnostics and any other artifacts. Gated to the same condition as the create step so it only
-      # deletes when a release was actually created/refreshed this run; on a skipped create (existing tag, no new
-      # commits) the fresh artifacts stay for the run, reaped by the retention-days: 1 backstop. Needs the caller to
-      # grant `actions: write` (publish-release's publish job does).
+      # Surgical cleanup at the point of consumption, since the release-asset-<branch>-* transfer artifacts now have durable copies on the release.
+      # Delete them by exact pattern to free the storage quota.
+      # The pattern is scoped to this branch's assets, leaving diagnostics and any other artifacts.
+      # It is gated to the same condition as the create step, so it only deletes when a release was actually created or refreshed this run.
+      # On a skipped create (an existing tag, no new commits) the fresh artifacts stay for the run, reaped by the retention-days: 1 backstop.
+      # It needs the caller to grant `actions: write`, which publish-release's publish job does.
       - name: Delete consumed release asset artifacts step
         if: ${{ inputs.expect_release_assets && (steps.release-exists.outputs.exists == 'false' || github.event_name == 'workflow_dispatch') }}
-        # Best-effort: the release is already published, so a listing/delete hiccup must never red the job; the
-        # retention-days: 1 backstop reaps anything missed. Deletes every matching id (a rerun can upload duplicates).
+        # Best-effort, since the release is already published, so a listing or delete hiccup must never red the job.
+        # The retention-days: 1 backstop reaps anything missed.
+        # It deletes every matching id, because a rerun can upload duplicates.
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -218,6 +219,7 @@ jobs:
             ids=""
           fi
           for id in $ids; do
-            gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" \
-              || echo "::warning::Failed to delete artifact $id; retention-days backstop will reap it."
+            if ! gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"; then
+              echo "::warning::Failed to delete artifact $id; retention-days backstop will reap it."
+            fi
           done

@@ -331,7 +331,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `publicReleaseRefSpec` is `^refs/heads/main$`.
 - **D3.3 Version floor + git height.** Output: `version.json` sets the major.minor floor, NBGV appends the
   git height as the patch, never bumped on a cadence. *(Who raises the floor and when is a human-process rule
-  in `AGENTS.md`.)*
+  in `GOVERNANCE.md` "Release Model".)*
 
 ### D4 - Release / publish
 
@@ -369,6 +369,12 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   (`buildcache-main`, `buildcache-develop`) and writes only its own branch's cache, only when pushing, so a
   `main` and a `develop` publish never overwrite each other's cache. *Prevents one branch's publish destroying
   the other's cache hit-rate.*
+- **D4.9 A build failure blocks every publish target.** Input: a real publish where one build fails. Output:
+  nothing publishes. `github-release` needs both builds, so a failed build skips it (no tag, no release), and
+  the Docker push is the terminal registry push, so `build-docker` needs `build-executable` and guards with
+  `!failure() && !cancelled()`: a failed build skips it (no image, no push), while a skipped `validate` on a
+  smoke run does not, so Docker still builds on smoke. *Prevents a half-published release set where the image
+  ships without the executable, or the tag lands without the image.*
 
 ### D5 - Resource cleanup
 
@@ -504,10 +510,11 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 
 ### 5D. Configuration audit
 
-Run [`repo-config/configure.sh check`](./repo-config/). It confirms the listed secrets exist, the
-`main`/`develop` rulesets enforce the required merge method + status check + signed commits + strict-off, and
-the repository settings are in place, exiting non-zero on drift. Secret *values* cannot be read back, so it
-asserts the names exist (failing if it cannot query them). The GitHub App installation is a best-effort
+Run the hub-hosted `configure.sh check` from a hub checkout, naming this repository and its `release`
+model (see [`repo-config/README.md`](./repo-config/README.md)), or the self-audit in [`AUDIT.md`](./AUDIT.md).
+It confirms the listed secrets exist, the `main`/`develop` rulesets enforce the required merge method + status
+check + signed commits + strict-off, and the repository settings are in place, exiting non-zero on drift.
+Secret *values* cannot be read back, so it asserts the names exist (failing if it cannot query them). The GitHub App installation is a best-effort
 check (a precise check needs app-level auth, so it notes rather than fails). The Docker Hub token's validity and push scope are a
 manual checklist item.
 
@@ -553,6 +560,7 @@ the configuration is part of "operational" (D10; audit 5D).
 branch to one); rebase off; auto-delete-on-merge **off** (so `main`/`develop` survive a promotion). Dependabot
 version **and** security updates enabled. The GitHub App installed with the scopes above.
 
-**Validation.** This configuration is codified in [`repo-config/`](./repo-config/) and applied/audited by
-`repo-config/configure.sh`; `check` is the 5D audit. Secret values cannot be read back, so the audit asserts
-the names exist (failing if they cannot be queried); the App installation is a best-effort check.
+**Validation.** This configuration is codified in [`repo-config/`](./repo-config/) and applied and audited by
+the hub-hosted `configure.sh` (see [`repo-config/README.md`](./repo-config/README.md)), whose `check` mode is
+the 5D audit. Secret values cannot be read back, so the audit asserts the names exist (failing if they cannot
+be queried), and the App installation is a best-effort check.
