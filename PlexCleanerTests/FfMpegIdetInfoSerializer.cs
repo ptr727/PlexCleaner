@@ -31,9 +31,15 @@ public class FfMpegIdetInfoSerializer : IXunitSerializer
                 $"Invalid type for serialization: {value.GetType().FullName} is not supported by {nameof(FfMpegIdetInfoSerializer)}."
             );
 
+    // Deserializes to FfMpegIdetInfo, the type xUnit asked for, not to this serializer.
+    // A null result throws rather than degrading to a bare object, since either would be handed to a
+    // theory parameter typed FfMpegIdetInfo and fail there instead of here.
     public object Deserialize(Type type, string serializedValue) =>
         type == typeof(FfMpegIdetInfo)
-            ? JsonSerializer.Deserialize<FfMpegIdetInfoSerializer>(serializedValue) ?? new object()
+            ? JsonSerializer.Deserialize<FfMpegIdetInfo>(serializedValue)
+                ?? throw new InvalidOperationException(
+                    $"Deserialization returned null for {type.FullName}: {serializedValue}"
+                )
             : throw new ArgumentException(
                 $"Invalid type for deserialization: {type.FullName} is not supported by {nameof(FfMpegIdetInfoSerializer)}"
             );
