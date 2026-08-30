@@ -10,11 +10,16 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-    <PackageReference Include="coverlet.collector">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <!-- Microsoft.Testing.Extensions.CodeCoverage replaces coverlet.MTP, per WORKFLOW.md D1.2.
+         Like it, and unlike the VSTest coverlet.collector both displace, it is a native
+         Microsoft.Testing.Platform extension rather than a build-time-only tool: its
+         self-registration codegen needs the package on this project's own compile-time closure, so
+         IncludeAssets must not exclude "compile" (the collector's restricted list omitted it, which
+         is fine for a VSTest data collector but breaks a compiled-against library). A build failure
+         is what enforces that, since the generated SelfRegisteredExtensions.cs calls into the
+         package directly. PrivateAssets is unrelated and stays unset, since it only controls
+         exposure to downstream consumers, which this test project has none of. -->
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />

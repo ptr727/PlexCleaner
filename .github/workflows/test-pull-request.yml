@@ -18,32 +18,49 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# GITHUB_TOKEN gets no scope by default, and each job below grants only what its task reads with.
+permissions: {}
+
 jobs:
 
   # `!github.event.deleted` skips a branch-deletion push (github.sha is all-zeros, so checkout/build fail).
   # The same unit-test + lint gate the publisher runs, so the PR gate and the publish gate are identical.
+  # Still this repo's own validate-task.yml rather than the hub's. The unit-test step matches the hub's now,
+  # but the hub's task declares no ref input, which publish-release.yml's own validate job needs (see there).
   validate:
     name: Validate job
     if: ${{ !github.event.deleted }}
     uses: ./.github/workflows/validate-task.yml
+    permissions:
+      contents: read
     # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
     secrets: inherit
 
-  # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. Docker smoke is
-  # amd64-only and seeds from the branch-scoped cache, so it stays fast.
+  # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. smoke: true
+  # hard-disables every publish path in the hub release task, so a smoke run cannot release or push an image.
   smoke-build:
     name: Smoke build job
     if: ${{ !github.event.deleted }}
-    uses: ./.github/workflows/build-release-task.yml
-    secrets: inherit
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@a3781210c622a61bdd3bbe31a6ac7a431c4a163d # 2.0.525
+    permissions:
+      contents: read
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     with:
       smoke: true
       # Never publish from CI.
       github: false
       dockerhub: false
       branch: ${{ github.ref_name }}
+      enable_docker: true
+      enable_dotnet_publish: true
+      enable_nuget: false
+      enable_pypi: false
+      docker_image: ptr727/plexcleaner
+      dotnet_publish_project: ./PlexCleaner/PlexCleaner.csproj
 
-  # Single required status check. Its name is the ruleset-bound context in repo-config/ruleset-*.json. Do
+  # Single required status check. Its name is the ruleset-bound context in the hub's repo-config payloads. Do
   # not rename it without updating those in lockstep. Must succeed, not merely not-fail. Skips on a branch
   # deletion (when validate/smoke-build also skip), so the deletion push does not fail this required check.
   check-workflow-status:

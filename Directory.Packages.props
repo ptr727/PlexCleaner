@@ -1,13 +1,26 @@
 <Project>
   <ItemGroup>
-    <PackageVersion Include="AwesomeAssertions" Version="9.5.0" />
-    <PackageVersion Include="CliWrap" Version="3.10.4" />
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
+    <PackageVersion Include="CliWrap" Version="3.10.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
+    <!-- The MTP-native coverage extension WORKFLOW.md D1.2 requires of an MTP-based test project.
+         It replaces coverlet.MTP here, the interim choice made before ptr727/ProjectTemplate#1088
+         resolved the fleet on this package. The baseline it displaces further back is the VSTest
+         coverlet.collector, whose data collector MTP ignores without failing, which is the wording
+         D1.2 itself uses.
+         The 18.9.0 floor is load-bearing rather than cautionary, and it takes two reasons rather
+         than one. Below 18.1.0 the extension is built against Microsoft.Testing.Platform 1.x, so an
+         18.0.x resolution throws a TypeLoadException against the 2.x platform xunit.v3 4.0.0
+         carries, runs zero tests, and still writes a well-formed Cobertura file reporting full
+         coverage, leaving only the non-zero exit to say the run reported nothing. 18.9.0 is then
+         the first release on Microsoft.Testing.Platform 2.3.x, where every test project writes into
+         the one shared results directory the invocation names rather than resolving that relative
+         path per project. Do not lower the floor to 18.1.0 on the first reason alone. -->
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.82" />
-    <PackageVersion Include="ptr727.Utilities" Version="4.0.28" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.90" />
+    <PackageVersion Include="ptr727.Utilities" Version="4.0.38" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
@@ -16,8 +29,7 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="System.CommandLine" Version="2.0.11" />
     <PackageVersion Include="Utf8JsonAsyncStreamReader" Version="2.1.0" />
-    <PackageVersion Include="xunit.analyzers" Version="1.27.0" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.analyzers" Version="2.0.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.0" />
   </ItemGroup>
 </Project>

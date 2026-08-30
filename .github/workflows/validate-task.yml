@@ -31,9 +31,21 @@ jobs:
           ref: ${{ inputs.ref }}
 
       # Builds with TreatWarningsAsErrors, so analyzer and code-style warnings fail here.
-      # --collect drives coverlet.collector to emit Cobertura XML into ./coverage/<guid>/.
+      # global.json opts dotnet test into Microsoft.Testing.Platform (MTP), the .NET 10 SDK's replacement for
+      # the VSTest runner, and Microsoft.Testing.Extensions.CodeCoverage emits the Cobertura XML.
+      # --coverage-output stays unset, since pinning one filename gives every test project in the solution the
+      # same path and the last to finish overwrites the rest. The default <guid>.cobertura.xml it writes instead
+      # is a name codecov-cli's own file finder does not match, its patterns being *coverage*.* and an exact
+      # cobertura.xml, so each report is prefixed rather than renamed, keeping the guid that makes it unique.
+      # This step is byte-identical to the hub validator's own, so the two gates cannot drift on coverage.
       - name: Run unit tests step
-        run: dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+        run: |
+          set -Eeuo pipefail
+          dotnet test --coverage --coverage-output-format cobertura --results-directory ./coverage
+          for report in ./coverage/*.cobertura.xml; do
+            [ -e "$report" ] || continue
+            mv "$report" "./coverage/coverage-$(basename "$report")"
+          done
 
       # Report-only: fail_ci_if_error is false so a Codecov hiccup or an absent token never fails the gate.
       - name: Upload coverage to Codecov step
