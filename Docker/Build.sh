@@ -10,7 +10,13 @@ set -e
 dotnet build ./PlexCleaner/PlexCleaner.csproj
 
 # Test the solution
-dotnet test ./PlexCleanerTests/PlexCleanerTests.csproj
+# --project, not a positional path. Under Microsoft.Testing.Platform (global.json) no 10.x SDK honors a
+# positional project, and the two SDKs this repo meets differ only in how loudly they say so: 10.0.400
+# ignores the path and resolves from the current directory instead, while the newer dotnet-sdk-10.0 apt
+# package the builder above installs fails with "Specifying a project for 'dotnet test' should be via
+# '--project'". The quiet arm is the worse one here, since /Builder carries no solution and no root
+# project for that fallback to find.
+dotnet test --project ./PlexCleanerTests/PlexCleanerTests.csproj
 
 # Build release and debug builds
 dotnet publish ./PlexCleaner/PlexCleaner.csproj \
