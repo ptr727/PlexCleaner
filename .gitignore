@@ -8,6 +8,9 @@
 .artifacts
 .codex
 coverage/
+# MTP writes <guid>.cobertura.xml, into ./TestResults when a run names no --results-directory.
+*.cobertura.xml
+TestResults/
 .DS_Store
 
 *.log

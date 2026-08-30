@@ -25,8 +25,8 @@ jobs:
 
   # `!github.event.deleted` skips a branch-deletion push (github.sha is all-zeros, so checkout/build fail).
   # The same unit-test + lint gate the publisher runs, so the PR gate and the publish gate are identical.
-  # Still this repo's own validate-task.yml rather than the hub's: the hub's unit-test step is the VSTest
-  # invocation that Microsoft.Testing.Platform rejects on the .NET 10 SDK (ptr727/ProjectTemplate#1088).
+  # Still this repo's own validate-task.yml rather than the hub's. The unit-test step matches the hub's now,
+  # but the hub's task declares no ref input, which publish-release.yml's own validate job needs (see there).
   validate:
     name: Validate job
     if: ${{ !github.event.deleted }}

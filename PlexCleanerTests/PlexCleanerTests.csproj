@@ -10,14 +10,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- coverlet.MTP is a native Microsoft.Testing.Platform extension, not a build-time-only tool
-         like the VSTest coverlet.collector was: its self-registration codegen needs the package on
-         this project's own compile-time closure, so IncludeAssets must not exclude "compile" (the
-         collector's restricted list omitted it, which is fine for a VSTest data collector but
-         breaks a compiled-against library). PrivateAssets is unrelated to that and stays unset,
-         since it only controls exposure to downstream consumers, which this test project has none
-         of. xunit.runner.visualstudio is gone with the VSTest runner it adapted. -->
-    <PackageReference Include="coverlet.MTP" />
+    <!-- Microsoft.Testing.Extensions.CodeCoverage is a native Microsoft.Testing.Platform extension,
+         not a build-time-only tool like the VSTest coverlet.collector was: its self-registration
+         codegen needs the package on this project's own compile-time closure, so IncludeAssets must
+         not exclude "compile" (the collector's restricted list omitted it, which is fine for a
+         VSTest data collector but breaks a compiled-against library). PrivateAssets is unrelated to
+         that and stays unset, since it only controls exposure to downstream consumers, which this
+         test project has none of. xunit.runner.visualstudio is gone with the VSTest runner it
+         adapted. -->
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlexCleaner\PlexCleaner.csproj" />
