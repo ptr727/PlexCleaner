@@ -330,9 +330,21 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         _ = schemaObject.TryAdd("$id", SchemaUri);
         _ = schemaObject.TryAdd("$schema", "https://json-schema.org/draft/2020-12/schema");
 
-        // Write to file
-        string schemaJson = schemaObject.ToJsonString(ConfigFileJsonContext.Default.Options);
-        File.WriteAllText(path, schemaJson);
+        // Write to file.
+        // LF and a trailing newline, rather than the context's own CRLF, because this file is generated
+        // rather than edited: the tracked PlexCleaner.schema.json is what `createschema` emits, and
+        // `.editorconfig` puts every file in this repository on LF with a final newline. Writing the
+        // context's CRLF here made a regeneration a whole-file working-tree diff.
+        // The change is scoped to this method rather than to ConfigFileJsonContext, because that context
+        // also writes the user's own PlexCleaner.json, through WriteDefaultsToFile, OpenAndUpgrade's
+        // schema upgrade, and the RegisterInvalidFiles ignore-list update. Flipping it there would
+        // rewrite a Windows user's settings file to LF on the next run that upgrades it.
+        JsonSerializerOptions schemaOptions = new(ConfigFileJsonContext.Default.Options)
+        {
+            NewLine = "\n",
+        };
+        string schemaJson = schemaObject.ToJsonString(schemaOptions);
+        File.WriteAllText(path, schemaJson + "\n");
     }
 }
 
