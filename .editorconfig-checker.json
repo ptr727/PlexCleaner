@@ -1,4 +1,11 @@
 {
+  "Exclude": [
+    "(^|/)__pycache__/",
+    "(^|/)\\.mypy_cache/",
+    "(^|/)\\.pytest_cache/",
+    "(^|/)\\.ruff_cache/",
+    "(^|/)\\.venv/"
+  ],
   "Disable": {
     "Charset": true,
     "Indentation": true,

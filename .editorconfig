@@ -13,15 +13,12 @@
 # Root config
 root = true
 
-# Defaults: CRLF is the default, and only the LF exceptions below are declared.
-# Most LF pins are shared with `.gitattributes`, which git enforces: `*.sh`, the husky pre-commit shebang, `uv.lock`, and Dockerfiles.
-# The workflow-YAML pin (`.github/workflows/*`) is `.editorconfig`-only.
-# For those, git stays passive (`* -text`) and CI (editorconfig-checker) enforces LF.
-# Keep the `[*]` `end_of_line = crlf` default, which the Windows-GUI and WSL-engine workflow requires because Windows tooling misbehaves on LF.
-# Every uncovered file type relies on that default too.
+# Defaults: LF is the default, and only the CRLF exception below is declared.
+# `.gitattributes` mirrors these two defaults as Git's normalization fallback.
+# CI verifies the committed bytes against this file.
 [*]
 charset = utf-8
-end_of_line = crlf
+end_of_line = lf
 indent_size = 4
 indent_style = space
 insert_final_newline = true
@@ -39,34 +36,12 @@ indent_size = 2
 [*.{yml,yaml}]
 indent_size = 2
 
-# Workflow YAML is LF, because Dependabot and Actions rewrite it with LF, so declaring LF keeps it consistent instead of mixed.
-# Endings are still left alone by git (`* -text`), and this file plus CI (editorconfig-checker) enforce it.
-# Other YAML stays CRLF.
-[.github/workflows/*.{yml,yaml}]
-end_of_line = lf
-
-# This repository's own hook, paired with the `.gitattributes` pin.
-# The git pin alone leaves the editor free to write a CRLF shebang, which would break it.
-[.husky/pre-commit]
-end_of_line = lf
-
-# Linux scripts
-[*.sh]
-end_of_line = lf
-
-# The uv tool regenerates uv.lock with LF on every platform, so pin it here.
-# Without the pin an EOL check (editorconfig-checker or CI) fails on every `uv lock` or `uv sync` until the file is manually reconverted.
-# The rationale matches the shebang and Dockerfile pins, where a tool owns the ending.
-# A Python repo on the CRLF default carries this, and a repo with no lockfile is unaffected.
-[uv.lock]
-end_of_line = lf
-
-# Dockerfiles are LF, because CRLF breaks RUN heredocs and line continuations.
-[{Dockerfile,*.Dockerfile}]
-end_of_line = lf
+# Windows batch and command scripts: the one CRLF exception to the `[*]` LF default above.
+[*.{bat,cmd}]
+end_of_line = crlf
 
 # .NET-only below, covering C# and ReSharper style.
-# Everything above is the line-ending governance every derived repo carries.
+# Everything above is the line-ending governance every derived repo carries, and a non-.NET repo carries this section unused, per CODESTYLE.md's whole-file model.
 
 # C# files
 [*.cs]
