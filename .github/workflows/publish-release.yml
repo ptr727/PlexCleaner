@@ -42,8 +42,10 @@ jobs:
       ref_name: ${{ github.ref_name }}
 
   # The same gate the PR runs, on the branch tip, running only when a publish will happen. Still this repo's
-  # own validate-task.yml rather than the hub's: the hub's unit-test step is the VSTest invocation that
-  # Microsoft.Testing.Platform rejects on the .NET 10 SDK (ptr727/ProjectTemplate#1088).
+  # own validate-task.yml rather than the hub's. The unit-test step matches the hub's now that
+  # ptr727/ProjectTemplate#1107 migrated it, but the hub's task declares no ref input and checks out the
+  # caller's default ref, where ref: github.sha below is what makes the publish gate validate the exact commit
+  # being published, per D4.6. Adopting it as-is would validate a different tree.
   validate:
     name: Validate job
     needs: [plan]
