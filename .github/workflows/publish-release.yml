@@ -31,7 +31,8 @@ permissions: {}
 jobs:
 
   # Single source of the release-gate decision (publish or not, stable or not), reused by every job below.
-  # Only the long-lived branches publish; a stray dispatch from a feature branch resolves publish == false.
+  # Only the long-lived branches publish; a dispatch from any other branch fails here with an ::error::
+  # rather than resolving publish == false, so a mistyped release attempt is visible instead of a silent no-op.
   plan:
     name: Plan release job
     uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@a3781210c622a61bdd3bbe31a6ac7a431c4a163d # 2.0.525

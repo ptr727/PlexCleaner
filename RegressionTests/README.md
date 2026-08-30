@@ -182,4 +182,4 @@ uvx ruff format --check .
 uvx mypy .
 ```
 
-These run the latest tools and are available as VSCode tasks; CI pins exact versions (bumpable there), so local results may differ slightly - by design, so local tooling never silently falls behind. Python source is CRLF, matching the repository's default line-ending convention.
+These run the latest tools and are available as VSCode tasks; CI pins exact versions (bumpable there), so local results may differ slightly - by design, so local tooling never silently falls behind. Python source is LF, matching the repository's default line-ending convention.
