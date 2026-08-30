@@ -30,9 +30,12 @@ Dependabot pull requests merge themselves once their checks pass.
 The **build, publish, plan, merge-bot and Docker-Hub-overview jobs are thin callers of hub-hosted reusable
 tasks** in `ptr727/ProjectTemplate`, reached by a commit-SHA `uses:` pin that Dependabot bumps, per that
 repo's `docs/reusable-workflows.md`. This repo carries no copy of them. The one task still carried here is
-`validate-task.yml`, because the hub's own unit-test step is the VSTest invocation that
-Microsoft.Testing.Platform rejects on the .NET 10 SDK (ptr727/ProjectTemplate#1088); it converges once that
-lands.
+`validate-task.yml`. Its unit-test step is now byte-identical to the hub's, which
+ptr727/ProjectTemplate#1107 migrated to Microsoft.Testing.Platform, so that is no longer what blocks
+adoption. What blocks it is that the hub's task declares no `ref` input and checks out the caller's default
+ref, where the `validate` job in `publish-release.yml` passes `github.sha` so the publish gate validates the
+exact commit being published, which is D4.6. Adopting the hub task without a `ref` input there would
+silently validate a different tree.
 
 ### Glossary
 
@@ -333,8 +336,20 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 - **D1.2 Unit tests always run.** Output: `validate-task`'s `unit-test` job runs `dotnet test` (build with
   `TreatWarningsAsErrors`, so analyzer/style warnings fail here). [`global.json`](./global.json) opts the run
   into Microsoft.Testing.Platform, which the .NET 10 SDK requires of a test project carrying
-  `Microsoft.Testing.Platform.MSBuild`, and `--coverlet --coverlet-output-format cobertura` drives
-  `coverlet.MTP` to emit the Cobertura XML the Codecov upload reads.
+  `Microsoft.Testing.Platform.MSBuild`, and `--coverage --coverage-output-format cobertura` drives
+  `Microsoft.Testing.Extensions.CodeCoverage` to emit the Cobertura XML the Codecov upload reads. Two details
+  of that invocation are load-bearing and neither fails the job on its own, so both are asserted in 5A.
+  `--coverage-output` stays unset, because pinning one filename gives every test project in the solution the
+  same path and the last to finish overwrites the rest. The `<guid>.cobertura.xml` default it writes instead is
+  a name `codecov-cli`'s own file finder does not match (its patterns are `*coverage*.*` and an exact
+  `cobertura.xml`), so the step prefixes each report to `coverage-<guid>.cobertura.xml`, keeping the guid that
+  makes it unique. The extension is pinned at or above **18.9.0**, for two reasons rather than one. Below
+  18.1.0 it is built against Microsoft.Testing.Platform 1.x, so an 18.0.x resolution throws a
+  `TypeLoadException` against the 2.x platform xunit.v3 4.0.0 carries, runs zero tests, and still writes a
+  well-formed Cobertura file reporting full coverage, leaving only the non-zero exit to say the run reported
+  nothing. 18.9.0 is then the first release on Microsoft.Testing.Platform 2.3.x, where every test project
+  writes into the one shared `--results-directory` the invocation names rather than resolving that relative
+  path per project, which is what the rename loop's glob depends on.
 - **D1.3 Lint enforces the editor checks in CI.** Output: `validate-task`'s `lint` job runs CSharpier check,
   `dotnet format style --verify-no-changes`, `markdownlint-cli2`, `cspell` on the user-facing docs (README,
   HISTORY), `ruff` and `mypy` over the `RegressionTests` Python tooling, `actionlint` (which shellchecks every
@@ -507,8 +522,11 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   exists under `.github/workflows/`.
 - **D1:** CI runs on `push` with no paths filter; `validate` + `smoke-build` (both targets, `smoke: true`)
   run; every build `upload-artifact` is gated `!smoke`; `global.json` declares
-  `test.runner = Microsoft.Testing.Platform` and the unit-test step passes `--coverlet
-  --coverlet-output-format cobertura`; `lint` runs CSharpier, `dotnet format style`, markdownlint, cspell on
+  `test.runner = Microsoft.Testing.Platform`, the unit-test step passes `--coverage
+  --coverage-output-format cobertura` with no `--coverage-output`, and prefixes each report to
+  `coverage-<guid>.cobertura.xml` before the upload reads the directory;
+  `Directory.Packages.props` pins `Microsoft.Testing.Extensions.CodeCoverage` at 18.9.0 or above;
+  `lint` runs CSharpier, `dotnet format style`, markdownlint, cspell on
   README/HISTORY, ruff, mypy, actionlint, editorconfig-checker; the aggregator `needs:` both and blocks on
   non-success.
 - **D2:** the hub task's `validate-release` job runs before the build jobs and they `needs:` it; it checks
