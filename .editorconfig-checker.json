@@ -1,10 +1,13 @@
 {
   "Exclude": [
-    "(^|/)__pycache__/",
+    "(^|/)\\.artifacts/",
     "(^|/)\\.mypy_cache/",
     "(^|/)\\.pytest_cache/",
     "(^|/)\\.ruff_cache/",
-    "(^|/)\\.venv/"
+    "(^|/)\\.venv/",
+    "(^|/)__pycache__/",
+    "(^|/)bin/",
+    "(^|/)obj/"
   ],
   "Disable": {
     "Charset": true,
