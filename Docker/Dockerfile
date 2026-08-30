@@ -64,6 +64,8 @@ COPY ./Plugins/. ./Plugins/.
 COPY ./.editorconfig ./
 COPY ./Directory.Build.props ./
 COPY ./Directory.Packages.props ./
+# global.json opts dotnet test into Microsoft.Testing.Platform, so the builder needs it before Build.sh runs the tests.
+COPY ./global.json ./
 
 # Build project
 COPY --chmod=ug=rwx,o=rx ./Docker/Build.sh ./
