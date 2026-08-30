@@ -9,6 +9,10 @@ name: Publish project release action
 # Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run. To
 # release develop, dispatch this workflow from the develop branch. CI/validation runs separately on push
 # (test-pull-request); this never runs on push.
+#
+# The release-gate decision, the build/version/publish job graph, the Docker core, and the Docker Hub
+# overview are hub-hosted reusable tasks, per docs/reusable-workflows.md "Adopting the Release Chain". The
+# trigger policy below stays this repo's own.
 on:
   workflow_dispatch:
   schedule:
@@ -21,21 +25,51 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
+# GITHUB_TOKEN gets no scope by default, and each job below grants only what its task writes with.
+permissions: {}
+
 jobs:
 
-  # Publish the trigger branch in full (native binaries + Docker + GitHub release). The schedule always runs on
-  # the default branch (main); a dispatch runs on whatever branch it is started from. build-release-task
-  # validates, versions, and tags that one branch; the no-op guard skips release creation when the version is
-  # unchanged while the Docker push still refreshes the base image.
+  # Single source of the release-gate decision (publish or not, stable or not), reused by every job below.
+  # Only the long-lived branches publish; a stray dispatch from a feature branch resolves publish == false.
+  plan:
+    name: Plan release job
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@a3781210c622a61bdd3bbe31a6ac7a431c4a163d # 2.0.525
+    with:
+      event_name: ${{ github.event_name }}
+      actor: ${{ github.actor }}
+      ref_name: ${{ github.ref_name }}
+
+  # The same gate the PR runs, on the branch tip, running only when a publish will happen. Still this repo's
+  # own validate-task.yml rather than the hub's: the hub's unit-test step is the VSTest invocation that
+  # Microsoft.Testing.Platform rejects on the .NET 10 SDK (ptr727/ProjectTemplate#1088).
+  validate:
+    name: Validate job
+    needs: [plan]
+    if: ${{ needs.plan.outputs.publish == 'true' }}
+    uses: ./.github/workflows/validate-task.yml
+    permissions:
+      contents: read
+    # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
+    secrets: inherit
+    with:
+      ref: ${{ github.sha }}
+
+  # Build, version, and publish the triggering branch: the multi-runtime PlexCleaner.7z and the multi-arch
+  # Docker image, then the GitHub release. Grants the write scopes the hub task needs, since it declares none
+  # of its own: contents: write for the release, and actions: write to delete the consumed release-asset-*
+  # transfer artifacts.
   publish:
     name: Publish project release job
-    # Only the long-lived branches publish; a stray dispatch from a feature branch is a no-op.
-    if: ${{ github.ref_name == 'main' || github.ref_name == 'develop' }}
-    uses: ./.github/workflows/build-release-task.yml
-    secrets: inherit
+    needs: [plan, validate]
+    if: >-
+      ${{ needs.plan.outputs.publish == 'true' && needs.validate.result == 'success' }}
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@a3781210c622a61bdd3bbe31a6ac7a431c4a163d # 2.0.525
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     permissions:
       contents: write
-      # The release job deletes the release-asset-* transfer artifacts once they are attached to the release.
       actions: write
     with:
       # Pin the exact dispatch/schedule-time commit: a push landing mid-run must not be released unvalidated.
@@ -44,3 +78,28 @@ jobs:
       smoke: false
       github: true
       dockerhub: true
+      enable_docker: true
+      enable_dotnet_publish: true
+      enable_nuget: false
+      enable_pypi: false
+      docker_image: ptr727/plexcleaner
+      dotnet_publish_project: ./PlexCleaner/PlexCleaner.csproj
+
+  # The Docker Hub overview, published once per release rather than once per image build, which is why it is
+  # its own job here rather than a step inside the Docker build. The task gates itself on branch == main, so a
+  # develop publish is a harmless no-op.
+  publish-docker-readme:
+    name: Publish Docker Hub readme job
+    needs: [plan, publish]
+    if: >-
+      ${{ needs.plan.outputs.publish == 'true' && needs.publish.result == 'success' }}
+    permissions:
+      contents: read
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-docker-readme-task.yml@a3781210c622a61bdd3bbe31a6ac7a431c4a163d # 2.0.525
+    with:
+      ref: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+      repositories: '["ptr727/plexcleaner"]'
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
