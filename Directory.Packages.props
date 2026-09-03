@@ -17,9 +17,9 @@
          the first release on Microsoft.Testing.Platform 2.3.x, where every test project writes into
          the one shared results directory the invocation names rather than resolving that relative
          path per project. Do not lower the floor to 18.1.0 on the first reason alone. -->
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.0" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.90" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.100" />
     <PackageVersion Include="ptr727.Utilities" Version="4.1.4" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
