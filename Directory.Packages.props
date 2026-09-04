@@ -19,8 +19,8 @@
          path per project. Do not lower the floor to 18.1.0 on the first reason alone. -->
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.0" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.100" />
-    <PackageVersion Include="ptr727.Utilities" Version="4.1.4" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.104" />
+    <PackageVersion Include="ptr727.Utilities" Version="4.1.6" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
