@@ -11,11 +11,13 @@ description: >-
   promoting develop to main, resolving a develop -> main merge conflict, deciding whether a
   release repo's config change needs a PR versus an operational repo's config change can commit
   straight to develop, bumping version.json, adding or dropping a release target, or reasoning
-  about why a merge did or didn't trigger a publish. Triggers even when the request sounds like
-  ordinary git housekeeping ("just push this config fix", "merge develop into main", "cut a
-  release"), because the two workflow models genuinely differ (a direct-to-develop commit that is
-  correct in an operational repo is a rule violation in a release repo, and vice versa) and
-  applying the wrong one is not obviously wrong to a reader who only knows one of the two.
+  about why a merge did or didn't trigger a publish. This is the git half, and the
+  workflow-ci-contract skill keeps the YAML half, the D1-D9 contract and the job graph that
+  implements this policy. Triggers even when the request sounds like ordinary git housekeeping
+  ("just push this config fix", "merge develop into main", "cut a release"), because the two
+  workflow models genuinely differ (a direct-to-develop commit that is correct in an operational
+  repo is a rule violation in a release repo, and vice versa) and applying the wrong one is not
+  obviously wrong to a reader who only knows one of the two.
 ---
 
 # Operational vs. Release Workflow
@@ -104,9 +106,14 @@ rather than guessing from the repo's contents.
   `HISTORY.md`, and release notes name the version as `Version 1.0` (the floor), never the concrete
   build height, which is both wrong (the real height differs) and a maintenance trap.
   "Correcting" `1.0` to `1.0.0` is a defect.
-- **A no-op publish (unchanged NBGV `SemVer2`) re-pushes nothing to any target keyed on the
-  version string, except Docker, which always re-pushes** to pick up upstream base-image
+- **A no-op publish on a schedule or push trigger (unchanged NBGV `SemVer2`) re-pushes nothing to
+  any target keyed on the version string, except Docker, which always re-pushes** (a dispatch
+  refreshes the release instead of skipping) to pick up upstream base-image
   refreshes. Full guarantee and the `version.json` `pathFilters` boundary:
+  `references/release-publish-mechanics.md`.
+- **A package push can fail after the release is already cut**, since it runs after the release
+  task and no gate covers it. A full re-run is always available inside its bounded
+  window and is the only route once the branch tip has moved:
   `references/release-publish-mechanics.md`.
 - **Adding, dropping, or wiring a release target** (which leaf task, which artifact-naming
   contract, which seam a given output belongs to: a GitHub Release asset, a package-registry push,

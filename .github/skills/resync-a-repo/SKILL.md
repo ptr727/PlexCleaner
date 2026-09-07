@@ -36,23 +36,26 @@ anything else. The finding kind names the procedure the repo is owed.
 
 ## Reach the hub and measure before changing anything
 
-Fetch a hub checkout of your own immediately before reading it, per RESYNC.md section 1, since a
-stale clone answers confidently instead of failing. Never operate against an existing checkout
-already present at a known or shared path, the maintainer's own primary checkout included, even
-one that looks current -- always fetch into a private worktree of your own, per `repo-worktree`.
-On Claude Code this is now also a mechanical stop for most such commands (a `PreToolUse` hook
-denies a mutating git operation run directly in a primary checkout), though this prose is still
-the only enforcement for a non-Claude-Code agent, and for the narrow shapes the hook itself
-exempts, so following it here is not optional even where no hook can catch a lapse. Verify the
-host with `python3 scripts/host_gate.py --repo <path-to-target-checkout>`. Then run the audit end
-to end,
-RESYNC.md section 2, against the target's `main` branch, never `develop`. A finding is a snapshot,
-so quote the run stamp in anything derived from it and re-run before acting on a finding read
-earlier in the session.
-File any hub defect this work exposes against `ptr727/ProjectTemplate`.
-Examples include bugs, conflicting sources, unclear or incomplete instructions, missing capabilities, and Copilot findings about any of them.
-Search open and closed issues first, then update the matching issue or file a new one.
-Preserve the evidence RESYNC.md section 2 requires, and do not leave the finding only in chat, a review thread, the downstream repo, or agent memory.
+Fetch a hub checkout of your own immediately before reading it, per the hub-only `RESYNC.md`
+section 1, a file fetched with the hub rather than present in a carrier, since a stale clone
+answers confidently instead of failing. Never do the resync's own work in a checkout another task
+may be using, the maintainer's own primary checkout included, even one that looks current: for the
+hub and for the target repo alike, create a worktree of your own off that base clone and work
+there, per `repo-worktree`. On a machine carrying the hub's agent-safety install, Claude Code also
+refuses a mutating git command run directly in a primary checkout, though its rules classify git
+and gh commands only, so a plain file write is never denied and the re-vendoring this skill exists
+to govern goes uncaught. A compound command is judged whole, so a copy chained to a denied git
+write does not run either. Prose is the enforcement here, and following it is not optional. Verify
+the host with `python3 scripts/host_gate.py --repo <path-to-target-worktree>`, run from your hub
+worktree, since `scripts/` is hub-hosted and no carrier holds it. Then run the audit end to end,
+`RESYNC.md` section 2, against the target's `main` branch, never `develop`. A finding is a
+snapshot, so quote the run stamp in anything derived from it and re-run before acting on a finding
+read earlier in the session. File any hub defect this work exposes against
+`ptr727/ProjectTemplate`. Examples include bugs, conflicting sources, unclear or incomplete
+instructions, missing capabilities, and Copilot findings about any of them. Search open and closed
+issues first, then update the matching issue or file a new one. Preserve the evidence `RESYNC.md`
+section 2 requires, and do not leave the finding only in chat, a review thread, the downstream
+repo, or agent memory.
 
 ## Apply, in this order
 

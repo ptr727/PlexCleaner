@@ -92,13 +92,22 @@ repo's type checker: `uv run pyright`, or `uv run mypy src` where mypy is the CI
 where the repo runs both (see Type checking above). Run it, plus `uv run pytest`, before
 committing. A **lint-only** profile's clean-compile substitutes its `uvx` and `unittest`
 equivalents, per Two Profiles above, and has no such command to run before committing beyond
-those. These are documented commands, and an optional VS Code tasks mirror (all `type: process`,
-no `&&` shell chaining, so it runs the same on any task shell) is in the hub
-`vscode-tasks-python.json` snippet. CI runs the same clean-compile commands as the authoritative
-backstop. A working local hook is strongly suggested, not opt-in: wire the Python `pre-commit`
-framework from the canonical `catalog/snippets/pre-commit/.pre-commit-config.yaml`. See
-GOVERNANCE.md "Running the Linters Locally" for what the hook must cover and what its absence
-means.
+those. These are documented commands, and the hub's `vscode-tasks-python.json` snippet carries the
+VS Code tasks mirror that the fleet baseline expects. Every command-executing task in it is
+`type: process`, and every aggregator is `dependsOn`-only. Neither chains with `&&`, so the mirror
+runs the same on any task shell. CI runs the same clean-compile commands as the authoritative
+backstop. A repo that keeps no .NET tool manifest declaring Husky.Net, or one that prefers the
+`pre-commit` framework, wires its local hook from the canonical `catalog/snippets/pre-commit/` directory,
+hub-local and not carried into every fleet repo. Any repo may instead wire an equivalent hook of
+its own at `.husky/pre-commit`, enabled with `core.hooksPath` and sourcing nothing. That path and
+`.pre-commit-config.yaml` are the two the audit reads. The runner is bounded by the toolchain the
+repo already keeps rather than by the languages the hook checks, so a repo keeping a Husky.Net
+manifest may run these same Python checks from the `catalog/snippets/husky/` shape instead. Each
+shape carries whichever language checks its own repo keeps. The `pre-commit` directory's own
+README names the second file to copy alongside the config.
+GOVERNANCE.md's hub-only "Running the Linters Locally (Known-Working Invocations)" section carries
+the obligation itself, what the hook must cover, its audit treatment, and the per-clone enablement
+steps.
 
 A restricted executor gives each task a cache directory under a writable temporary root. Point
 `UV_CACHE_DIR`, `RUFF_CACHE_DIR`, `MYPY_CACHE_DIR`, and `COVERAGE_FILE` into that directory before

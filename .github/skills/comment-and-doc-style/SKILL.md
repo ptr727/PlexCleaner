@@ -65,15 +65,15 @@ boundary before repository mounts begin. Each Docker command has a timeout and v
 Lint containers disable networking and mount the checkout read-only. Persist approval only when
 the executor constrains that whole shape. Never allow an unconstrained `docker run` prefix.
 PSScriptAnalyzer downloads its pinned module in a separate container that has network access and
-no repository mount. `GOVERNANCE.md` "Running the Linters Locally (Known-Working Invocations)"
-owns the exact invocation and full authorization model.
+no repository mount. `GOVERNANCE.md`'s hub-only "Running the Linters Locally (Known-Working
+Invocations)" section owns the exact invocation and full authorization model.
 
 Agent-specific authorization stays in provider-labeled bullets so one agent's configuration does
 not read as a shared requirement:
 
-- **Codex:** rules cannot safely cover changing worktree paths and digests. Smart Approvals can
-  prompt per task. No-prompt operation is supported only inside an external sandbox because it
-  removes command-wide protection.
+- **Codex:** execution rules match exact argument prefixes, so they cannot safely cover changing
+  worktree paths and digests. Smart Approvals can prompt per task. No-prompt operation is
+  supported only inside an external sandbox because it removes command-wide protection.
 
 ## Markdown formatting
 
@@ -230,7 +230,7 @@ hub-hosted tool the reader runs, are in `references/carried-doc-references.md`.
 - **Rules**: no vague titles (`update stuff`, `wip`). Dependabot's default `Bump X from Y to Z`
   titles are fine as-is. No `Co-Authored-By:` lines unless the developer explicitly asks. No
   release-bump magnitude in the title ("minor", "patch", "release v0.2.0"), Nerdbank.GitVersioning
-  computes the next version from `version.json` and git history, a dependency version in a
+  computes the next version from `version.json` and git history. A dependency version in a
   dependency-bump title is fine and expected. US English spelling, and title case with lowercase
   short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from), a hyphenated
   compound capitalizes both parts unless the second is a short preposition (*Built-in*,
@@ -241,7 +241,7 @@ Add Structured Logging Extensions to Library
 Pin softprops/action-gh-release to Commit SHA
 Drop net8.0 Multi-Targeting from Console Project
 Bump xunit.v3 from 3.2.2 to 3.3.0
-Clarify devcontainer Setup Steps in README
+Clarify Devcontainer Setup Steps in README
 ```
 
 ## Quantitative claims
