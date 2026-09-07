@@ -18,10 +18,10 @@ The audit is the fleet's measurement procedure, and the two failure shapes it gu
 
 ## Measuring
 
-- **Resolve the repo's types from `registry/repos.json`** and classify a `classificationPending` entry from the tree (`AUDIT.md` section 2). The applicability gate is `WORKFLOW.md` section 1: a check governing an absent construct is N/A, excluded from the verdict, and never a defect (`AUDIT.md` section 3).
+- **Resolve the repo's types from `registry/repos.json`** and classify a `classificationPending` entry from the tree (`AUDIT.md` section 2). The applicability gate is `WORKFLOW.md` section 1, extended to `AUDIT.md`'s own checks: an item or check governing an absent construct is N/A, excluded from the verdict, and never a defect (`AUDIT.md` section 3).
 - **Know what the runner does and does not prove.** `spec/audit.py` mechanizes the deterministic subset only: settings, rulesets, secret names, file and section presence, verbatim hashing, interface wiring, Dependabot coverage, branch facts. It evaluates no check under a type in `spec/project-types.json`, so every per-type check is judged by hand, and a clean run is no evidence for them (`AUDIT.md` section 4). Silence from a tool that was never looking reads exactly like a pass.
 - **Judge letter and intent per check** and keep the vocabulary: letter miss with intent satisfied is a drift finding, both missing is a defect, and operational is binary over the applicable set (`AUDIT.md` sections 4 and 7). Do not invent a parallel scheme.
-- **Assert the Actions implement `WORKFLOW.md`** by outcome, not by matching catalog snippets byte for byte: the 5A static audit with a `file:line` citation per applicable guarantee, then the 5B trace scenarios (`AUDIT.md` section 5). The `workflow-ci-contract` skill summarizes that contract.
+- **Assert the Actions implement `WORKFLOW.md`** by outcome, not by matching catalog snippets byte for byte: the 5A static audit, each applicable guarantee cited in the form 5A sets out, then the 5B trace scenarios (`AUDIT.md` section 5). Read a workflow the repo only calls at the SHA it pins, for both. The `workflow-ci-contract` skill summarizes that contract.
 - **Check live settings, rulesets, and secrets from a hub checkout at `main`** with `AUDIT.md` section 6. Run `repo-config/configure.sh check` with the target repository and model for settings and rulesets, and `spec/audit.py [RepoName]` for secrets, rather than constructing a local comparison. The hub payloads are the only repository-configuration source.
 
 ## Reporting

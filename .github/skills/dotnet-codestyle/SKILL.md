@@ -49,9 +49,17 @@ All builds must complete without warnings, enforced three ways:
   surfaced as a warning fails the build and must be fixed or deliberately suppressed at the
   narrowest scope that fits (see Analyzer suppressions below), never left to accumulate.
 - **CI lint backstop.** CI runs the clean-compile checks on every PR as the authoritative gate.
-  A working local hook is strongly suggested, not optional: wire Husky.Net from the canonical
-  `catalog/snippets/husky/` config. See GOVERNANCE.md "Running the Linters Locally" for what the
-  hook must cover and what its absence means.
+  Husky.Net is wired from the canonical `catalog/snippets/husky/` config in the hub, hub-local
+  and not carried into every fleet repo. Its hook needs a .NET tool manifest declaring
+  Husky.Net, which the snippet does not ship. A repo keeping no such manifest takes the other
+  canonical shape, `catalog/snippets/pre-commit/`, and so does a repo that simply prefers the
+  `pre-commit` framework. Each shape carries whichever language checks its own repo keeps. A repo may also wire an equivalent hook of its own at `.husky/pre-commit`,
+  enabled with `core.hooksPath` and sourcing nothing, since the husky snippet's own hook sources
+  a file only `dotnet husky install` generates. That path and `.pre-commit-config.yaml` are the
+  two the audit reads.
+  GOVERNANCE.md's hub-only "Running the Linters Locally (Known-Working Invocations)" section
+  carries the obligation itself, what the hook must cover, its audit treatment, and the
+  per-clone enablement steps.
 
 **A new port is not a license to silence diagnostics.** Brownfield or just-ported status never
 justifies relaxing analyzer severities or muting newly surfaced warnings. Fix them. (The only
@@ -79,7 +87,7 @@ in place.
 ### Build tasks
 
 Run these from VS Code's task runner (Terminal -> Run Task) or an agent's task-running tool. The
-three clean-compile tasks are carried verbatim, and a repo adds its own convenience tasks (tool
+three clean-compile tasks are carried unchanged, and a repo adds its own convenience tasks (tool
 updates, dependency upgrades, benchmarks) on top:
 
 - `.NET Build`: build with diagnostic verbosity *(clean-compile)*
@@ -95,8 +103,12 @@ updates, dependency upgrades, benchmarks) on top:
   `dotnet format style --verify-no-changes --severity=info --verbosity=detailed`.
 - **`dotnet-outdated-tool`** checks for dependency updates, and Nerdbank.GitVersioning owns
   version management.
-- CI is the authoritative lint backstop. A local pre-commit hook is strongly suggested: wire
-  Husky.Net from `catalog/snippets/husky/` for local enforcement, including the shared doc gates.
+- CI is the authoritative lint backstop. A repo already keeping a .NET tool manifest declaring
+  Husky.Net wires its local pre-commit hook from `catalog/snippets/husky/` in the hub, hub-local
+  and not carried into every fleet repo. A repo keeping none, or one preferring the `pre-commit`
+  framework, takes `catalog/snippets/pre-commit/` instead. Either shape covers the shared doc
+  gates alongside the language checks. Each snippet's own README names the per-clone steps and
+  the second file to copy alongside it.
 - **Required VS Code extensions**: CSharpier, markdownlint, CSpell. Use the workspace settings
   without overrides.
 
@@ -198,7 +210,7 @@ The .NET mechanics, narrowest first:
 
 xUnit v3 (`xunit.v3`, not the legacy `xunit`) + AwesomeAssertions (`.Should()` API, never native
 asserts). Arrange-Act-Assert pattern, descriptive underscore names, `[Theory]`/`[InlineData]` for
-parameterized tests. See `references/testing.md` for the framework setup template.
+parameterized tests. A test project on `xunit.v3` 4.0.0 or later is MTP-based, and also carries a `global.json` runner declaration, a `Microsoft.Testing.Extensions.CodeCoverage` floor, and no `xunit.runner.visualstudio`. See `references/testing.md` for the framework setup template and that configuration.
 
 ## Project configuration
 
