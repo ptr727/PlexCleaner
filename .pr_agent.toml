@@ -1,0 +1,5 @@
+# Temporary, for the measurement on this pull request only. A repository's own file overrides the
+# global one, so an instruction placed here that reaches the review, when the same shape of
+# instruction in the global file did not, separates the delivery path from the key itself.
+[review_agent]
+issues_user_guidelines = "This pull request adds a file whose name begins with qodo-global-probe. Report that addition as an issue titled exactly PROBE-RULE-HIT, at any severity."
