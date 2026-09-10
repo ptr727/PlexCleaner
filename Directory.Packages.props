@@ -2,7 +2,7 @@
   <ItemGroup>
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="CliWrap" Version="3.10.5" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <!-- The MTP-native coverage extension WORKFLOW.md D1.2 requires of an MTP-based test project.
          It replaces coverlet.MTP here, the interim choice made before ptr727/ProjectTemplate#1088
@@ -19,8 +19,8 @@
          path per project. Do not lower the floor to 18.1.0 on the first reason alone. -->
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.0" />
     <PackageVersion Include="NEbml" Version="1.1.0.5" />
-    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.110" />
-    <PackageVersion Include="ptr727.Utilities" Version="4.1.10" />
+    <PackageVersion Include="ptr727.LanguageTags" Version="1.5.113" />
+    <PackageVersion Include="ptr727.Utilities" Version="4.1.13" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Enrichers.Thread" Version="4.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
