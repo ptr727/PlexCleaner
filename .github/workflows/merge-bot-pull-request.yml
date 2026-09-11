@@ -19,7 +19,7 @@ jobs:
 
   merge-bot:
     name: Merge bot pull request job
-    uses: ptr727/ProjectTemplate/.github/workflows/merge-bot-task.yml@bb352c64b54511c536e06a235ca86d287de3627b # 2.0.584
+    uses: ptr727/ProjectTemplate/.github/workflows/merge-bot-task.yml@6c88850128629bb449fd73c7fbf82968c6cd1557 # 2.0.587
     secrets:
       CODEGEN_APP_CLIENT_ID: ${{ secrets.CODEGEN_APP_CLIENT_ID }}
       CODEGEN_APP_PRIVATE_KEY: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}
