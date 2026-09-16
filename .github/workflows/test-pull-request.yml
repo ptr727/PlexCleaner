@@ -41,7 +41,7 @@ jobs:
   smoke-build:
     name: Smoke build job
     if: ${{ !github.event.deleted }}
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@32a07834788f8048ff88e9ac63a6644aaaf459fb # 2.0.623
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@4dedf8404da64a06864ebd89fdd8b6b50396b553 # 2.0.625
     permissions:
       contents: read
     secrets:
