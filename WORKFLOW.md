@@ -344,12 +344,12 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   a name `codecov-cli`'s own file finder does not match (its patterns are `*coverage*.*` and an exact
   `cobertura.xml`), so the step prefixes each report to `coverage-<guid>.cobertura.xml`, keeping the guid that
   makes it unique. `Directory.Packages.props` pins the extension at or above the compatibility floor the
-  fleet's `dotnet-codestyle` testing guidance defines, for two reasons rather than one. An older release
-  built against the Microsoft.Testing.Platform major version before the one xunit.v3 carries throws a
-  `TypeLoadException`, runs zero tests, and still writes a well-formed Cobertura file reporting full
-  coverage, leaving only the non-zero exit to say the run reported nothing. And the floor is the first
-  release where every test project writes into the one shared `--results-directory` the invocation names
-  rather than resolving that relative path per project, which is what the rename loop's glob depends on.
+  fleet's `dotnet-codestyle` testing guidance defines, for two reasons rather than one. First, an older
+  release is built against the Microsoft.Testing.Platform major version before the one xunit.v3 carries.
+  It throws a `TypeLoadException` and runs zero tests. It still writes a well-formed Cobertura file
+  reporting full coverage, so only the non-zero exit says the run reported nothing. Second, the floor is
+  the first release where every test project writes into the one shared `--results-directory` the
+  invocation names. The rename loop's glob depends on that, rather than on a path resolved per project.
 - **D1.3 Lint enforces the editor checks in CI.** Output: `validate-task`'s `lint` job runs CSharpier check,
   `dotnet format style --verify-no-changes`, `markdownlint-cli2`, `cspell` on the user-facing docs (README,
   HISTORY), `ruff` and `mypy` over the `RegressionTests` Python tooling, `actionlint` (which shellchecks every
