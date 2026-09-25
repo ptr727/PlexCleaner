@@ -344,8 +344,9 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   a name `codecov-cli`'s own file finder does not match (its patterns are `*coverage*.*` and an exact
   `cobertura.xml`), so the step prefixes each report to `coverage-<guid>.cobertura.xml`, keeping the guid that
   makes it unique. `Directory.Packages.props` pins the extension at or above the compatibility floor the
-  fleet's `dotnet-codestyle` testing guidance defines (`.agents/skills/dotnet-codestyle/references/testing.md`
-  in the hub), for two reasons rather than one. First, an older
+  fleet's `dotnet-codestyle` testing guidance defines
+  ([`.github/skills/dotnet-codestyle/references/testing.md`](.github/skills/dotnet-codestyle/references/testing.md)),
+  for two reasons rather than one. First, an older
   release is built against the Microsoft.Testing.Platform major version before the one xunit.v3 carries.
   It throws a `TypeLoadException` and runs zero tests. It still writes a well-formed Cobertura file
   reporting full coverage, so only the non-zero exit says the run reported nothing. Second, the floor is
