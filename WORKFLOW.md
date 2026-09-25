@@ -343,13 +343,14 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   same path and the last to finish overwrites the rest. The `<guid>.cobertura.xml` default it writes instead is
   a name `codecov-cli`'s own file finder does not match (its patterns are `*coverage*.*` and an exact
   `cobertura.xml`), so the step prefixes each report to `coverage-<guid>.cobertura.xml`, keeping the guid that
-  makes it unique. The extension is pinned at or above **18.9.0**, for two reasons rather than one. Below
-  18.1.0 it is built against Microsoft.Testing.Platform 1.x, so an 18.0.x resolution throws a
-  `TypeLoadException` against the 2.x platform xunit.v3 4.0.0 carries, runs zero tests, and still writes a
+  makes it unique. The extension is pinned at or above the minimum version `Directory.Packages.props`
+  declares, for two reasons rather than one. Below an earlier release in that line it is built against
+  Microsoft.Testing.Platform's older major version, so resolving one of those earlier releases throws a
+  `TypeLoadException` against the newer platform xunit.v3 carries, runs zero tests, and still writes a
   well-formed Cobertura file reporting full coverage, leaving only the non-zero exit to say the run reported
-  nothing. 18.9.0 is then the first release on Microsoft.Testing.Platform 2.3.x, where every test project
-  writes into the one shared `--results-directory` the invocation names rather than resolving that relative
-  path per project, which is what the rename loop's glob depends on.
+  nothing. The pinned minimum is then the first release on the newer platform's own later minor line, where
+  every test project writes into the one shared `--results-directory` the invocation names rather than
+  resolving that relative path per project, which is what the rename loop's glob depends on.
 - **D1.3 Lint enforces the editor checks in CI.** Output: `validate-task`'s `lint` job runs CSharpier check,
   `dotnet format style --verify-no-changes`, `markdownlint-cli2`, `cspell` on the user-facing docs (README,
   HISTORY), `ruff` and `mypy` over the `RegressionTests` Python tooling, `actionlint` (which shellchecks every
@@ -525,7 +526,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   `test.runner = Microsoft.Testing.Platform`, the unit-test step passes `--coverage
   --coverage-output-format cobertura` with no `--coverage-output`, and prefixes each report to
   `coverage-<guid>.cobertura.xml` before the upload reads the directory;
-  `Directory.Packages.props` pins `Microsoft.Testing.Extensions.CodeCoverage` at 18.9.0 or above;
+  `Directory.Packages.props` pins `Microsoft.Testing.Extensions.CodeCoverage` at a minimum version;
   `lint` runs CSharpier, `dotnet format style`, markdownlint, cspell on
   README/HISTORY, ruff, mypy, actionlint, editorconfig-checker; the aggregator `needs:` both and blocks on
   non-success.
