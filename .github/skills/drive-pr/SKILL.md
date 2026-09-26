@@ -33,7 +33,8 @@ promotion PR once the fix lands, is the early exit this skill exists to prevent.
 
 - Read the invocation for an explicit target first. "To develop" or "to dev" means stop once
   merged into develop. "To main", "through to main", or "all the way" means continue to a
-  mergeable promotion PR. Act on either without asking.
+  mergeable promotion PR. Act on either without asking. `session-handoff`'s attended session,
+  invoked by "resume the handoff", states the second, and naming that procedure names this skill.
 - When the request names no target ("drive this PR", "land it", "take this PR"), ask once,
   before the first push: develop only, or all the way to a mergeable main promotion PR. Recommend
   "all the way to main" as the default, a promotion PR left to go stale once develop is ready is
@@ -56,7 +57,7 @@ promotion PR once the fix lands, is the early exit this skill exists to prevent.
   Authorizes" keeps tied to something the maintainer actually said.
 - A repo on the operational workflow model (registry `workflowModel: operational`) has no
   standing promotion PR expectation, confirm whether a promotion PR is even wanted before opening
-  one, per operational-vs-release-workflow's "Operational repositories (the complete delta)"
+  one, per branching-and-release-model's "Operational repositories (the complete delta)"
   section.
 
 ## What Invoking This Skill Authorizes
@@ -78,10 +79,14 @@ promotion PR once the fix lands, is the early exit this skill exists to prevent.
 
 1. Isolate into a worktree per repo-worktree, based on the branch that skill's base rule names, develop unless the task is explicitly about main-only content, before the first edit.
 2. Commit the work, then run `local-strict-review` and record its pass in the order that skill
-   gives, its diff receipt following the commit, and its carried-content record instead preceding
-   the commit where the change moves a carried canonical unit in the repository that authors one,
-   because that ledger is tracked. Then push the branch and open the feature -> develop PR if it
-   does not exist yet. A push refused by a `.husky/pre-push` hook, which the hub carries and a
+   gives, its diff receipt following the commit. Where the change also carries the canonical ledger,
+   that skill's carried-content records instead precede the commit, because that ledger is tracked.
+   Then push the branch and open the feature -> develop PR if it does not exist yet. Open it
+   carrying the `comments` label where the change adds or edits a comment line in code or config,
+   since the prose gate refuses one otherwise and reads the label off the event that started the
+   run, so adding it after a failing check applies to the next push rather than to a re-run of
+   that one.
+   A push refused by a `.husky/pre-push` hook, which the hub carries and a
    repository has only if it adds one, is that gate working rather than an
    obstacle to route around, and that
    skill's refusal table says what each refusal means and what clears it.
@@ -141,9 +146,13 @@ maintainer when".
 
 <!-- include: .agents/skills/pr-review-conduct/SKILL.md > Every finding ends in one of five outcomes -->
 
-1. **Real, so fix it.** Take the fix through `local-strict-review` the same way the push that
-   opened the pull request went, per `pr-review-conduct` "Expected review loop", then reply with
-   the fixing commit SHA. A branch already reviewed once has not been reviewed for the fix, which
+1. **Real, so fix it, and fix the class rather than the instance.** A reviewer samples rather
+   than enumerates, so sweep for the finding's siblings before replying and fix each one sitting
+   in a file the diff already touches or that this change itself made wrong, filing the rest, per
+   `GOVERNANCE.md` "Verification Discipline". That sweep is owed the first time the finding is
+   raised, not once it recurs. Take the fix through `local-strict-review` the same way the push
+   that opened the pull request went, per `pr-review-conduct` "Expected review loop", then reply
+   with the fixing commit SHA. A branch already reviewed once has not been reviewed for the fix, which
    is the round the `local-strict-review` pass gets dropped on and the churn `local-strict-review`
    exists to stop. For a finding on platform-specific code (PowerShell, a macOS- or WSL-only
    path), "fixed" means executed on that platform, per
@@ -154,8 +163,12 @@ maintainer when".
    impossible, or the rule that governs it. A finding that is factually correct but not this
    repo's to fix (a verbatim-fidelity manifest entry byte-locking the section, ownership that
    sits elsewhere) declines the same way: name the boundary and cite what proves it. Either shape
-   closes the thread on its own evidence. An assertion ("this is fine") does not close a finding,
-   a decline needs evidence the reviewer itself could check.
+   closes the thread on its own evidence, and the agent resolves such a thread itself rather than
+   leaving it for the maintainer. What makes that safe is the evidence being checkable by anyone,
+   a command and its output, the code path, the quoted rule, a byte-identical diff, so a decline
+   resting on anything weaker is not one of these. An assertion ("this is fine") does not close a
+   finding, and outcome 3's value call is the maintainer's, so that thread stays open until they
+   answer it.
 3. **Real, fixable here, but deliberately left as is, a value call rather than a scope
    boundary, so it is the maintainer's, not the agent's.** Reach for this only once outcome 2 is
    ruled out, since a scope boundary declines on its own evidence and never needs this outcome at
@@ -164,11 +177,16 @@ maintainer when".
    attention moves elsewhere. If the maintainer is not reachable right now, leave the thread open
    and say so, rather than treating the intention to ask as the asking.
 4. **Real and worth doing later, so file the issue first, then reply with its link.** A deferral
-   noted only in a thread is lost the moment the PR merges.
-5. **Keeps recurring, so fix the class, not the instance.** A finding raised repeatedly against
-   correct code means the code is not communicating something: add the comment, sharpen the name,
-   narrow the interface, or fix the rule if the rule is wrong. Bouncing the same point across
-   rounds is the signal to escalate the rule itself, not to keep re-arguing it.
+   noted only in a thread is lost the moment the PR merges. File it in the repository where the
+   fix has to land, which for a finding against carried content is the repository that authors
+   that content rather than the one carrying it, since an issue filed where nobody may make the
+   fix is a deferral nobody can close.
+5. **Keeps recurring although the class was swept, so the rule is what needs fixing.** A finding
+   raised repeatedly against correct code means the code is not communicating something: add the
+   comment, sharpen the name, narrow the interface, or fix the rule if the rule is wrong.
+   Bouncing the same point across rounds is the signal to escalate the rule itself, not to keep
+   re-arguing it. This is not where the class sweep lives, outcome 1 already owing that on the
+   first instance, and reaching here means the sweep ran and the finding came back anyway.
 
 **A disposition decided on one PR does not carry to the next.** The same finding shape recurring
 on a sibling repo or PR, even within one batch or one session, gets its own outcome: its own
@@ -184,7 +202,7 @@ instance's outcome is context for the new one, never a standing answer to reuse 
 
 - Review loop mechanics, the Merge Gate, and `scripts/pr_review.py`: pr-review-conduct.
 - Branch rules, never delete develop, the EOL-only conflict, issue-closing keywords belonging on
-  the promotion PR: operational-vs-release-workflow.
+  the promotion PR: branching-and-release-model.
 - Worktree isolation and post-merge cleanup: repo-worktree.
 
 ## Stop and Ask, Beyond the How-Far Question

@@ -19,7 +19,7 @@ description: >-
 
 ## Why this exists
 
-The fleet's own branching model (`operational-vs-release-workflow`) governs repos the maintainer
+The fleet's own branching model (`branching-and-release-model`) governs repos the maintainer
 controls end to end: squash-only feature branches, merge-commit promotions, signed commits under
 his own identity. None of that applies to someone else's repository. A PR into a third-party
 project answers to that project's own maintainers, on their own timeline, with their own review

@@ -43,7 +43,7 @@ Application logging is Serilog, to the console and, with `--logfile`, to a file,
 The application orchestrates FFmpeg, HandBrake, MkvToolNix, MediaInfo, and 7-Zip through CLI wrappers, and the Docker image bundles tested versions of all of them, so the image is the reference environment for reproducing a media-processing result. On Windows `checkfornewtools` downloads newer tool versions and `gettoolinfo` prints the installed ones, and the [README](./README.md) covers each platform.
 
 The doc linters run through the hub-hosted wrapper, whose invocations and rationale are
-[GOVERNANCE.md "Running the Linters Locally"](./GOVERNANCE.md#running-the-linters-locally-known-working-invocations),
+[the hub's GOVERNANCE.md "Running the Linters Locally"](https://github.com/ptr727/ProjectTemplate/blob/main/GOVERNANCE.md#running-the-linters-locally-known-working-invocations),
 not restated here.
 
 The `.NET Tool Update` and `.NET Outdated Upgrade` tasks refresh the local .NET tools and prompt through dependency updates, and `dotnet husky install` reinstalls the commit hook after a fresh clone.

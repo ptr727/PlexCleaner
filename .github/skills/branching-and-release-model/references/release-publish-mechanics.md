@@ -30,36 +30,13 @@ are target-agnostic.
 
 ## Orchestration vs. build: the override seam
 
-The pipeline splits into two layers. The **orchestration** layer is generic and is the
-standardization baseline: `publish-release.yml` (single-branch publish plan), the `get-version`
-task plus `github-release` job inside `build-release-task.yml`, `get-version-task.yml`, and the
-aggregator shape of `test-pull-request.yml`. Within
-`test-pull-request.yml`, only the `changes -> smoke-build -> check-workflow-status` aggregator
-wiring and the ruleset-bound job name are verbatim orchestration, while the `dorny/paths-filter`
-entries are owned/per-target. The validation job is a call to the reusable validator, whose own
-jobs a caller cannot address. The **build** layer is a hook: a composite
-action at `.github/actions/build-<target>` the hub-hosted `build-release-task.yml` reaches. The
-hub defaults require explicit project paths. A project needing more than a path override carries
-its own hook.
-
-The contract that keeps the seam clean: **a target contributes files to the GitHub release by
-uploading a workflow artifact named `release-asset-<branch>-<target>`.** The `github-release` job
-collects every `release-asset-<branch>-*` artifact by pattern, so its `download-artifact` step
-uses `pattern:`/`merge-multiple:`, **never an `artifact-ids:` that names a build job's output**
-(the producing build jobs still appear in `needs` for sequencing). That makes the tag-the-commit
-plus create-the-release plus attach-the-assets logic reusable **as-is** across repos. **This
-name-pattern handoff is canonical for every repo, single-target included**: name your one asset
-`release-asset-<branch>-<target>` and the verbatim `github-release` globs it. Do not switch a
-single-target repo to an `artifact-id` output plus `download-artifact` `artifact-ids:`, which
-looks tidier for 1:1 but forks the `github-release` download and breaks its verbatim carry.
-
-**What a repo still curates** (by design, not a leak): which `enable_<target>` inputs its caller
-stub sets, per the per-target subsetting rule above. `build-release-task.yml` is hub-hosted
-(the hub's `docs/reusable-workflows.md` "Stage 4: The Release Chain and the Docker Core"), so its job graph
-and its `github-release` job are the hub's, not a per-repo file a caller edits. A repo adopting the
-release chain carries only the caller stub in its own `publish-release.yml` and
-`test-pull-request.yml`, naming the hub task by pin and setting the `enable_*`, `docker_image`,
-and project-path inputs its targets need.
+The split between the generic **orchestration** layer and the repo-owned **build** layer, the
+`release-asset-<branch>-<target>` pattern handoff that keeps the seam between them clean, and
+what a repo curates when it adds or drops a target are `WORKFLOW.md` section 3's, under "Two
+Layers: Orchestration vs Build" and "The Seam Contract", which the `workflow-ci-contract` skill
+carries whole as its `references/architecture.md`. A caller of the hub-hosted
+`build-release-task.yml` also sets the inputs its enabled targets need, `docker_image` and the
+project-path inputs among them.
 
 ## Map your outputs to the right seam
 

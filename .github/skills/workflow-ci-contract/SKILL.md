@@ -1,7 +1,20 @@
 ---
 name: workflow-ci-contract
 description: >-
-  Governs the WORKFLOW.md CI/CD behavioral contract for every ptr727/ProjectTemplate fleet repo: the D1-D9 guarantees, the output seam by destination (a file on the GitHub release, a package-registry push, an image-registry push, or a filesystem on a host the project owns), the artifact lifecycle, NBGV versioning and classification, validate-at-entry, and the 5A/5B/5C test methodology. Use this whenever writing or editing anything under .github/workflows/ or a composite action under .github/actions/, editing version.json, adding or dropping a release target, auditing a repo's workflows, or tracing which job, input, or condition made a publish run or skip. This is the YAML half of the pipeline, and the operational-vs-release-workflow skill keeps the git half (branching, promotion, publish policy), so which branch a change targets, and which events the fleet allows to publish at all, go there while the job graph implementing that policy is here. Triggers even when the edit looks mechanical, such as bumping an action, renaming a job, or adding one upload step, because SHA pinning, the ruleset-bound aggregator name, smoke gating on uploads, and retention-days are each easy to break in a one-line diff that no build fails on: an upload a smoke run should have skipped succeeds instead of erroring, retention-days sits on an upload step no smoke run reaches, the aggregator's name is bound by a branch ruleset no build reads, and a PR changing only .github/workflows/ is deliberately not smoke-built. WORKFLOW.md keeps authority, and GOVERNANCE.md's Workflow YAML Conventions and Release Model sections win where those two overlap.
+  Governs the WORKFLOW.md CI/CD behavioral contract for every ptr727/ProjectTemplate fleet repo:
+  the D1-D9 guarantees, the output seam by destination (a GitHub release file, a package-registry
+  push, an image-registry push, or a filesystem on a host the project owns), the artifact
+  lifecycle, NBGV versioning and classification, validate-at-entry, and the 5A/5B/5C test
+  methodology. Use this whenever writing or editing anything under .github/workflows/ or a
+  composite action under .github/actions/, editing version.json, adding or dropping a release
+  target, auditing a repo's workflows, or tracing which job, input, or condition made a publish
+  run or skip. This is the YAML half of the pipeline, and `branching-and-release-model` keeps the
+  git half, which branch a change targets and which events may publish at all. Triggers even when
+  the edit looks mechanical, such as bumping an action, renaming a job, or adding one upload step,
+  because SHA pinning, the ruleset-bound aggregator name, smoke gating on uploads, and
+  retention-days are each easy to break in a one-line diff that no build fails on. WORKFLOW.md
+  keeps authority, and GOVERNANCE.md's Workflow YAML Conventions and Release Model sections win
+  where those two overlap.
 ---
 
 # Workflow CI Contract
@@ -29,3 +42,9 @@ description: >-
 ## After Any Workflow Edit
 
 A workflow-only change is not smoke-built, and actionlint still runs on it in CI. `GOVERNANCE.md` "Verification Discipline" requires the repository's whole lint gate before every push, rather than actionlint alone. A workflow change is still only fully exercised by CI, per the same "Verification Discipline" section.
+
+**actionlint discovers `.github/workflows/` recursively, both extensions, and opens no action file on its own.** It reaches a local action's `action.yml` only through a workflow's `uses: ./<path>`, wherever in the tree that path leads, and reports everything it finds there against the calling workflow: the caller's `with:` block against the action's declared inputs, the caller's `steps.<id>.outputs.<name>` against its declared outputs, and the action's own `name`, top-level `description` and `runs.using`. A missing per-input `description` and an unexpected top-level key are the metadata it does not reach that way. Pointing it at an action file directly makes it parse the file as a workflow and report several syntax-check errors, so widening its file list is not available. **Where no workflow in the repository names the action, actionlint reaches it not at all**, which is the ordinary shape for a repository whose hooks are invoked from a hub reusable workflow rather than from a workflow of its own.
+
+**A schema check covers the action file itself**, `check-jsonschema`'s `vendor.github-actions` builtin, run as `uvx check-jsonschema@latest --builtin-schema vendor.github-actions -- <files>`. That one reads every tracked `action.yml` and `action.yaml` under `.github/actions/`, whether or not a workflow references it, and reaches the structure and the keys rather than the caller's contract. The schema and actionlint do not agree on every key: the schema accepts `runs.using: node16`, which actionlint rejects as an invalid runner, so a green schema run is not a statement about what GitHub currently accepts. An action file outside `.github/actions/` keeps actionlint's caller check and gets no schema check at all.
+
+**Neither check reads a composite action's `run:` bodies or its `if:` expressions.** Measured on a referenced action carrying both a malformed `if:` and an unterminated shell `if` in a `run:` block: actionlint and the schema check each pass it. A broken expression or shell body in a composite action therefore surfaces when a run executes it.

@@ -1,14 +1,16 @@
 ---
-name: code-review
+name: fleet-code-review
 description: >-
   Reviews a pull request or change set against the repository's contracts, with explicit diff
-  coverage and no suppressed findings. Use this whenever asked to review code, a pull request,
-  a patch, or a proposed change, and whenever GitHub Copilot performs code review. Triggers even
+  coverage and no suppressed findings. Use this whenever asked to review code, a pull request, a
+  patch, or a proposed change, and whenever GitHub Copilot performs code review. Triggers even
   when the diff is documentation-only or workflow-only, because the review must load the
-  applicable general, language, documentation, and workflow skills before judging the change.
+  applicable general, language, documentation, and workflow skills before judging the change. This
+  skill judges a diff: disposing of a pull request's findings is `pr-review-conduct`, and the
+  pre-push pass over this branch is `local-strict-review`, which reuses this skill's criteria.
 ---
 
-# Code Review
+# Fleet Code Review
 
 ## Establish the Contract
 
