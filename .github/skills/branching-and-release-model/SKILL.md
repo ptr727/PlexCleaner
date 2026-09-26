@@ -1,26 +1,22 @@
 ---
-name: operational-vs-release-workflow
+name: branching-and-release-model
 description: >-
-  Governs how a ptr727/ProjectTemplate fleet repo branches, promotes, and publishes: the
-  feature -> develop -> main flow, squash-only vs. merge-commit-only branch protection, the two
-  develop -> main promotion traps (never delete develop, EOL-only conflicts), the two-phase
-  publish model (PRs smoke-test only, a human merge never auto-publishes), NBGV semantic
-  versioning, and the operational-repo delta (direct-to-develop commits, advisory CI, dispatch-only
-  release) that applies instead whenever the registry's workflowModel field for this repo reads
-  operational rather than release. Use this whenever choosing a target branch for a change,
-  promoting develop to main, resolving a develop -> main merge conflict, deciding whether a
-  release repo's config change needs a PR versus an operational repo's config change can commit
-  straight to develop, bumping version.json, adding or dropping a release target, or reasoning
-  about why a merge did or didn't trigger a publish. This is the git half, and the
-  workflow-ci-contract skill keeps the YAML half, the D1-D9 contract and the job graph that
-  implements this policy. Triggers even when the request sounds like ordinary git housekeeping
-  ("just push this config fix", "merge develop into main", "cut a release"), because the two
-  workflow models genuinely differ (a direct-to-develop commit that is correct in an operational
-  repo is a rule violation in a release repo, and vice versa) and applying the wrong one is not
-  obviously wrong to a reader who only knows one of the two.
+  Governs how a ptr727/ProjectTemplate fleet repo branches, promotes, and publishes: the feature
+  -> develop -> main flow, squash-only vs. merge-commit-only branch protection, the two promotion
+  traps (never delete develop, EOL-only conflicts), the two-phase publish model (PRs smoke-test
+  only, a human merge never auto-publishes), NBGV versioning, and the operational-repo delta
+  (direct-to-develop commits, advisory CI, dispatch-only release) that applies whenever the
+  registry's workflowModel reads operational. Use this whenever choosing a target branch,
+  promoting develop to main, resolving a promotion conflict, deciding whether a config change
+  needs a PR or can commit straight to develop, bumping version.json, adding or dropping a release
+  target, or reasoning about why a merge did or didn't publish. Triggers even when the request
+  sounds like ordinary git housekeeping ("just push this config fix", "merge develop into main"),
+  because the two workflow models genuinely differ and a step correct in one is a rule violation
+  in the other. This is the git policy: `workflow-ci-contract` keeps the YAML half, and performing
+  a promotion merge or a release dispatch is `merge-and-release`, which wins where both fire.
 ---
 
-# Operational vs. Release Workflow
+# Branching and Release Model
 
 ## Why this exists
 

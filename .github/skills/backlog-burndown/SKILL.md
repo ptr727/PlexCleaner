@@ -4,16 +4,18 @@ description: >-
   Burns a ptr727/ProjectTemplate fleet repository's open-issue backlog down by rounds: rank the
   open issues, group them so no two groups touch the same file, dispatch one subagent per group to
   drive its own feature -> develop pull request to merge, open at most one develop -> main
-  promotion pull request per round for the maintainer to merge, then re-rank and go again,
-  because every review round files new issues that change what the next round should pick. Use
-  this whenever asked to work the backlog, burn the backlog down, clear the open issues, resolve
-  or cull the backlog, or run issues in parallel until they are gone, and whenever the ask is a
+  promotion pull request per round for the maintainer to merge, then re-rank and go again, because
+  every review round files new issues that change what the next round should pick. Use this
+  whenever asked to work the backlog, burn the backlog down, clear the open issues, resolve or
+  cull the backlog, or run issues in parallel until they are gone, and whenever the ask is a
   standing one rather than a single named issue. Triggers even when the backlog looks small enough
   to work by hand, because the failure it exists to prevent is two agents editing the same
   prose-heavy Markdown file in the same round, which surfaces as a merge conflict long after both
   branches are already deep in review. Drives one repository, the one the session is in, never a
   fleet-wide sweep. Ends when a re-rank finds nothing left it can act on, and never merges main,
-  which stays the maintainer's own step through merge-and-release.
+  which stays the maintainer's own step through merge-and-release. With no maintainer present, the
+  loop is `unattended-handoff` instead, which works one issue needing no decision per round and
+  parks the rest.
 ---
 
 # Backlog Burndown
@@ -107,6 +109,25 @@ Rank on these, highest first where they conflict:
 - **It is small and self-contained**, as a tie-break only. Size breaks a tie between two issues of
   equal value, and it never promotes a trivial issue over a real defect.
 
+An issue carrying the `handoff` label is not ranked and is not counted. It is a link in the session
+handoff chain `AGENTS.md` "Session Scope" defines, so it records work to do next rather than work of
+its own, and an open one is present by design for as long as that chain is in use. Counting it
+inflates the number this run reports as the backlog by one for every lane in use, and a backlog
+count this fleet reports wrong is a failure with its own history, so filter the label out of the
+ranking and out of every count of the open backlog rather than out of the ranking alone.
+
+An issue carrying the `blocked` label is counted and is not ranked while its blocker stands. It
+records real work this repository owes, which is why it stays in the count, and the label says the
+work cannot start yet, per `GOVERNANCE.md` "Durable Knowledge and Self-Improvement". So until the
+blocker clears it has no group, no worker, and no claim, and spends none of the round's four worker
+slots. Whether the blocker still stands is read from what its body names rather than from the label,
+since the label comes off by hand and lags the fix, and a fix merged into `develop` leaves the issue
+it fixes open, per "Grouping and File Claims" below on closing keywords. Where that read cannot be
+made, from a private or deleted repository or a reference nothing can be read from, the blocker
+stands rather than being assumed cleared. The round's report names every issue it held back this way
+and the blocker each one waits on, since the maintainer reads the report rather than the issue
+bodies, and a stuck issue nobody names reads as ordinary backlog that simply never moves.
+
 An issue that asks a question rather than states a defect is not ranked and is never guessed at.
 It has no group, no worker, and no claim, so nothing in "Raising a Blocked Question" applies to it
 except how the question travels. It goes to the maintainer at the end of ranking, per
@@ -125,7 +146,7 @@ for, and it binds harder than any throughput target.
 - **Genuine duplicates are one group.** Never close an issue during triage on the orchestrator's
   own judgment. Comment to cross-link the pair, and let the fix close both.
 - **Closing keywords go on the promotion pull request**, not the feature pull request, per
-  `operational-vs-release-workflow`. A feature pull request merging into develop fires no
+  `branching-and-release-model`. A feature pull request merging into develop fires no
   auto-close, so a `Fixes #N` line there closes nothing. **The feature pull request body instead
   carries a line reading `Closes on promotion: #N`**, listing every issue that pull request
   actually fixes and nothing it merely mentions, which is the line the promotion body is assembled
@@ -251,7 +272,7 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
 ### Cleanup Is the Orchestrator's
 
 `repo-worktree`'s post-merge procedure returns the base clone to current develop before proving
-the cleanup, and `operational-vs-release-workflow` states that requirement independently. Four workers doing
+the cleanup, and `branching-and-release-model` states that requirement independently. Four workers doing
 that concurrently mutate one shared checkout, which `GOVERNANCE.md` "Repository Boundaries and
 Write Safety" forbids. A worker also cannot
 finish the procedure from inside its own worktree, since removing that worktree leaves it with no
@@ -479,17 +500,17 @@ body when it lands rather than leaving the issue to be closed by hand.
 The run ends at either of two points, and they are different endings.
 
 - **The backlog is worked out**, meaning a full re-rank finds no open issue this skill can act on.
-  That is not the same as zero open issues, since a backlog of nothing but maintainer questions is
-  a finished run. Report it as finished, with the questions put to the maintainer.
+  That is not the same as zero open issues, since a backlog of nothing but maintainer questions and
+  issues whose blockers still stand is a finished run. Report it as finished, with the questions put to the maintainer.
 - **The session ends**, for a context limit or because the maintainer stops it. The run ends with
   it, since the merge authorization was bounded to that session. What the rounds already landed
   stands on its own in GitHub, and the branches, claim comments, and questions left behind are
   what a later run reads to pick the work up. That later run is a new run, named again, not this
   one continuing.
 
-Report at every round boundary and at either ending: what merged to develop, what the promotion
-pull request carries, what was newly filed, what is stopped and on which question, and what the
-next round would pick.
+Report at every round boundary and at either ending: what merged to develop, what the promotion pull
+request carries, what was newly filed, what is stopped and on which question, what was held back and
+on which blocker, and what the next round would pick.
 
 ## Mechanics Live Elsewhere
 
@@ -498,7 +519,7 @@ next round would pick.
 - Driving one pull request, and the promotion-pull-request wrinkle: `drive-pr`.
 - Worktree isolation, the base branch, and the cleanup procedure this skill re-seats:
   `repo-worktree`.
-- Closing keywords, branch protection, and the promotion trap: `operational-vs-release-workflow`.
+- Closing keywords, branch protection, and the promotion trap: `branching-and-release-model`.
 - The pre-push adversarial pass and its recorded receipt: `local-strict-review`.
 - Merging the promotion pull request and dispatching a release: `merge-and-release`, invoked
   separately.
