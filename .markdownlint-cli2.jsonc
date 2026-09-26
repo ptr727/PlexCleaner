@@ -3,6 +3,7 @@
         // Prose paragraphs and data-heavy tables or URLs are intentionally long.
         // Reflowing at 80 columns hurts readability and churns diffs.
         "MD013": false,
+        "MD024": { "siblings_only": true },
         // MD033 (inline HTML) stays enabled so native Markdown wins.
         // HTML comments, used as reference-link dividers, pass it.
         // The details and summary elements are allowed for GitHub collapsibles, which have no Markdown equivalent.
@@ -14,5 +15,12 @@
         // (`|a|b|`) and padded (`| a | b |`) table pipe spacing.
         "MD060": false
     },
-    "gitignore": true
+    "gitignore": true,
+    // Declared here rather than only as the CI action's globs input, because the ignores entry below only subtracts, so without a positive glob a run lints nothing and exits clean.
+    "globs": ["**/*.md"],
+    // Third-party Markdown under node_modules is not authored prose, and a repository's .gitignore does not reliably exclude it.
+    // A bare `node_modules` entry would match the root copy only.
+    // This list is fleet-wide. A repository excluding a subtree of its own adds no entry here, and puts a `.markdownlint-cli2.jsonc` carrying its own `ignores` beside that content instead, which a bare local run and CI both honor.
+    // Those `ignores` patterns resolve against the directory holding that file rather than against the repository root, so each entry names its target as seen from that directory and a repository-root path matches nothing there, reporting no error saying so.
+    "ignores": ["**/node_modules/**"]
 }

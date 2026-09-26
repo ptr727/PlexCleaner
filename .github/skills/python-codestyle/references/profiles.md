@@ -15,8 +15,6 @@ in review). The axes that commonly vary per repo:
 - **Versioning / publishing**: a published package (`_version.py` plus a version source,
   `uv build`, and a PyPI publish step), or a source-only repo with a static `version` and no
   publish step (see Versioning below).
-- **Disabled markdownlint rules**: repo-specific, `.markdownlint-cli2.jsonc` at the repo root is
-  the source of truth, not any example rule named here.
 - **VS Code config home**: editor settings/extensions may live in `.vscode/*.json` or the
   `<Repo>.code-workspace`, while tasks/launch/debug configs can only be external `.vscode/*.json`
   (they cannot live in the workspace file). The repo's own `tasks.json` sits wherever it keeps it,

@@ -40,6 +40,24 @@ Use each tool's official casing in task labels, docs, and prose: `.NET` (not `.N
   disables (for example `MD013` line length) stays disabled, do not "fix" it. `MD033` inline HTML
   stays enabled: HTML comments, and `details`/`summary` (no Markdown equivalent for a
   collapsible), are allowed, everything else with a native Markdown equivalent uses the Markdown.
+- **A repo-local exclusion goes in a nested config, never in the root one.** The shared
+  `.markdownlint-cli2.jsonc` at the repo root is fleet-fixed, and its `ignores` list covers only
+  what every repo has, third-party Markdown under `node_modules`. A repo excluding a subtree of
+  its own that it does not treat as authored prose, a committed data archive, a vendored theme,
+  or a hand-maintained record, puts a `.markdownlint-cli2.jsonc` carrying its own `ignores`
+  beside that content. A config inside a
+  tree that is re-imported or re-vendored wholesale is deleted by the next refresh, so it is
+  re-added with the import. Excluding through the CI workflow's negated glob input instead is a
+  CI-only fix, and leaves those same files flagged for anyone who runs the linter locally.
+- **What decides whether a nested config works.** It applies to the directory it sits in and to
+  every subdirectory below it, and it filters those files even when a run names them explicitly
+  as arguments, so a bare local run and the CI step honor it alike. Its `ignores` patterns
+  resolve against that directory rather than against the repo root, so an entry written
+  repo-root-relative matches nothing and reports no error saying so. Its settings
+  merge with those above it rather than replacing them, so the fleet rule block still governs
+  the files it does not exclude. And the exclusion has to be expressed as `ignores`: the `globs`
+  and `gitignore` keys are read only from the config in the directory the linter is run from, so
+  a nested copy of either is inert.
 - **Spelling is US English**, checked by CSpell against the shared `cspell.json`
   (`"language": "en-US"`, so a British spelling is flagged). Add a project term to `cspell.json`'s
   `words` list, never to a `.code-workspace`'s own `cspell.words` block.
@@ -65,15 +83,15 @@ boundary before repository mounts begin. Each Docker command has a timeout and v
 Lint containers disable networking and mount the checkout read-only. Persist approval only when
 the executor constrains that whole shape. Never allow an unconstrained `docker run` prefix.
 PSScriptAnalyzer downloads its pinned module in a separate container that has network access and
-no repository mount. `GOVERNANCE.md` "Running the Linters Locally (Known-Working Invocations)"
-owns the exact invocation and full authorization model.
+no repository mount. `GOVERNANCE.md`'s hub-only "Running the Linters Locally (Known-Working
+Invocations)" section owns the exact invocation and full authorization model.
 
 Agent-specific authorization stays in provider-labeled bullets so one agent's configuration does
 not read as a shared requirement:
 
-- **Codex:** rules cannot safely cover changing worktree paths and digests. Smart Approvals can
-  prompt per task. No-prompt operation is supported only inside an external sandbox because it
-  removes command-wide protection.
+- **Codex:** execution rules match exact argument prefixes, so they cannot safely cover changing
+  worktree paths and digests. Smart Approvals can prompt per task. No-prompt operation is
+  supported only inside an external sandbox because it removes command-wide protection.
 
 ## Markdown formatting
 
@@ -158,6 +176,111 @@ Sub-topics take a `-` after the comment marker, each elaborating a distinct item
 # - template-compile-test builds one example device per template.
 ```
 
+A change that adds a comment line in code or config fails the `comment-added` rule in the prose
+gate. It reports a prose comment that opens its own line, in the diff's scope, and a diff counts a
+modified line as an added one, so rewording one and re-indenting one each report it. That is the
+rule's cost and the label is its answer, since a comment worth keeping takes the same label as a
+comment worth writing. A trailing comment is out of scope, since which mid-line marker opens a
+comment differs by language in ways a gate cannot settle from the marker alone. A docstring is not
+a comment line, an instruction to a tool is not a comment the rule reads, and Markdown is out of
+scope.
+
+Deleting the comment is the ordinary answer, since the bullets above already say what one has to
+earn. Where a comment is genuinely owed, and a rule requiring one is the clearest case of that, the
+pull request carries the `comments` label and the gate stands down for that change. Locally a
+`PROSE_ALLOW_COMMENTS` does the same, for as long as it is set to anything but a false spelling,
+and `--allow-comments` does it for one run by hand. The label and the variable are separate deliberately, so a variable
+left exported reaches the commit and never the merge gate.
+
+Three things about reaching those escapes read as a broken gate until they are known. The label is read off the event that started the run, so a label added after a run fails
+applies to the next push rather than to a re-run of that one, and labeling the pull request when it
+is opened is what avoids the round trip. The label reaches a repository only when the fleet label
+set is applied to it, so a repository that has not had that applied since the label was declared
+cannot carry it, and there the finding names a remedy that is not yet available. And the local
+escape reaches a commit before any of that, which is where a repository meets this rule first, since
+a hook runs on every commit while the label decides a pull request.
+
+## Issue, pull request, and commit references
+
+No comment, no docstring, and no instruction document names an issue, a pull request, or a commit.
+The surfaces are code and workflow comments, a docstring, a documentation comment, the Skills trees,
+and the fleet's own rule documents: `AGENTS.md`, `AUDIT.md`, `CLAUDE.md`, `CODESTYLE.md`,
+`GOVERNANCE.md`, `OPERATIONS.md`, `RESYNC.md`, `STANDUP.md`, `WORKFLOW.md`, and
+`.github/copilot-instructions.md`. A tracker, a history, a plan, and a README outside those trees
+are the repository's own narrative and keep their references, as do a commit message and a pull
+request body, which are the surfaces a reference belongs on.
+
+Two carve-outs, each stated as a single case. Whatever neither of them affirmatively permits is
+banned by the paragraph above, which is the whole of the test and is why no list of banned cases
+follows. The first: **in a code or workflow comment, a URL naming an issue or a pull request on a
+public repository other than this one is a source citation and is permitted.** It does the same job
+as the datasheet link, the vendor wiki link, and the SDK doc link the rule already leaves alone on
+the adjacent line. The second is the revision record in the paragraph below.
+
+The second carve-out: a record whose subject is the revision itself keeps it. A disproved-claims
+entry in `.github/copilot-instructions.md` names the revision its proof was read against, since a
+proof is true of one tree at one revision and an entry whose subject has moved is deleted rather
+than edited to look current. The revision there is the record's own load-bearing field rather than a
+citation beside a claim, which is the distinction this rule turns on.
+
+Separately, `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, and `WORKFLOW.md` carry no three-part
+version and no commit SHA, full or abbreviated, whether a pin's value, an example, a minimum
+version, or a fixed constant, since a pin's copy goes stale at the next Dependabot bump and every
+other kind reads exactly like one. Neither carve-out above lifts this ban. Item 3 of this skill's
+carried-doc-references reference says what to write instead of each and carries the audit that flags
+a literal.
+
+Three reasons, and the first decides it.
+
+- **A reference is a second lookup, and the reader is already holding the file.** A comment earns
+  its place by explaining the line under it to whoever reads that line now. A number they have to
+  go and resolve somewhere else is the opposite of that.
+- **The lookup can be impossible.** A repository may be private, so a reference in content carried
+  into a public one names something its reader cannot open at all.
+- **It pollutes the content.** A rationale block that takes one more citation per round is how a
+  file comes to teach a house style the rules forbid, which is what happened here.
+
+The first carve-out is where all three fail at once, which is what makes it one case rather than a
+taxonomy. Another repository's status is not a fact this file can hold, it changes without anyone
+touching this file, and the constraint the citation stands in for is therefore unwritable. The
+lookup is not impossible, that repository being public. And a URL line is not pollution on a surface
+where the datasheet, the forum thread, and the component docs already sit on the adjacent lines, the
+hostname being the only thing that separates them. A workaround whose justification is an open
+report on the project it works around is the routine case, and a reader revisiting the workaround
+needs to know whether the cause still stands.
+
+Move one of that carve-out's conditions and a reason comes back. An instruction document states its
+constraint rather than citing a tracker for it, so the first reason holds there whatever the tracker
+names. A private repository's tracker cannot be opened by a reader of the content carried into a
+public repository, which is the second reason exactly. This repository's own tracker holds status
+this file can state, so the first and the third hold on every surface. And a bare reference carries
+no destination a reader can open at all, the hash-and-number form resolving against whichever
+repository the reader happens to be in, which is why that carve-out is written as a URL.
+
+Write the constraint the reference was standing in for, or drop the clause where the reference was
+the whole of its value. "A prior version re-scanned from every unmatched open, which was O(N^2)"
+carries what the reader needs, and the number of the round that found it does not. Inside the
+carve-out there is nothing to rewrite, the referenced thing being live status somewhere else, and
+the carve-out is why that case needs no remedy rather than a remedy an author is expected to find.
+
+The `issue-ref` rule in the prose gate reads the pattern-detectable half of this: a bare reference
+in a comment, in a Python docstring, and in instruction text, and in instruction text a URL naming
+an issue or a pull request as well, written as an inline link destination, as a reference
+definition, or bare in the prose. It reads one forge's URL paths, so a URL naming a tracker it does
+not know is banned there and goes unreported. Whatever a gate does not reach is unlicensed all the
+same, since the rule binds a reader rather than a scan. Reading the URL in instruction text is what
+stops the gate reporting the bare spelling and passing the URL on the one surface it reads both,
+since an author met by the bare form's finding is otherwise pointed at respelling the reference
+rather than at removing it. On every other surface the gate reads the bare form alone, so a banned
+URL is banned there and goes unreported.
+
+A bare commit reference is not a shape the prose gate can read, since a short SHA carries the same
+shape as a blob id, a version fragment, and a fixture hash. The audit's version-literal scan reads it
+in `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, and `WORKFLOW.md`, bare or inside a URL, and
+elsewhere the text above is the whole of what covers a commit. A reference in a
+string literal is not read either: a test builds the numbers it asserts against, and reading those
+would report a fixture rather than a claim about this repository.
+
 ## Character set
 
 Agent-authored text is ASCII by default: documentation, code, comments, commit messages, and PR
@@ -230,7 +353,7 @@ hub-hosted tool the reader runs, are in `references/carried-doc-references.md`.
 - **Rules**: no vague titles (`update stuff`, `wip`). Dependabot's default `Bump X from Y to Z`
   titles are fine as-is. No `Co-Authored-By:` lines unless the developer explicitly asks. No
   release-bump magnitude in the title ("minor", "patch", "release v0.2.0"), Nerdbank.GitVersioning
-  computes the next version from `version.json` and git history, a dependency version in a
+  computes the next version from `version.json` and git history. A dependency version in a
   dependency-bump title is fine and expected. US English spelling, and title case with lowercase
   short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from), a hyphenated
   compound capitalizes both parts unless the second is a short preposition (*Built-in*,
@@ -241,7 +364,7 @@ Add Structured Logging Extensions to Library
 Pin softprops/action-gh-release to Commit SHA
 Drop net8.0 Multi-Targeting from Console Project
 Bump xunit.v3 from 3.2.2 to 3.3.0
-Clarify devcontainer Setup Steps in README
+Clarify Devcontainer Setup Steps in README
 ```
 
 ## Quantitative claims

@@ -14,7 +14,7 @@ verbatim, and this rule does not reach them.
 
 ## What is banned
 
-Two things, in the files above:
+Three things, in the files above:
 
 1. **Any reference to the template repo**, in prose or in a link. The coordination flow that
    produced a carried file is machinery a consumer of that repo should never have to see, and
@@ -25,6 +25,21 @@ Two things, in the files above:
 2. **A sibling fleet repo named as an illustrative example** ("repo X does it this way", "see repo
    Y's adoption"), which couples the repos and rots as they diverge. To point at a current good
    example, name it in the onboarding or conformance issue, never in a carried doc.
+3. **A three-part version or a commit SHA**, full or abbreviated, of any kind, in `AGENTS.md`,
+   `GOVERNANCE.md`, `CODESTYLE.md`, or `WORKFLOW.md`. The other files above are outside this item. A
+   pin's value ("SHA-pinned at hub release 2.0.x", with a real number in place of the x) is stale at
+   the next Dependabot bump, since the pin lives in the workflow or manifest that uses it, and it
+   sends the next agent to edit governance for a change that needed none. An illustrative example, a
+   minimum version, and a fixed constant read exactly like a copied pin, so no check can tell them
+   apart, and the rule covers them too. Write each as its mechanism instead: a pin as "SHA-pinned to
+   a hub release, with the release in a trailing comment", an example with a placeholder (`1.0.N`
+   publishing as `1.0.(N+1)`, or a dependency bump "from X to Y"), a minimum version by naming the
+   manifest or skill that holds it, and a fixed constant by what it is ("the all-zero placeholder
+   version"). A two-part language or runtime version, such as a minimum Python minor, stays. The
+   audit flags a three-part version, a full SHA, or an abbreviated one in those four files, outside
+   their verbatim sections downstream and across the whole file in the hub.
+   `.github/copilot-instructions.md` is outside it, since its disproved-claims records name a
+   revision by design, which the revision carve-out in `GOVERNANCE.md` "References" permits.
 
 ## The two exceptions
 

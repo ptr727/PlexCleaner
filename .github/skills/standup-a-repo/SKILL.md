@@ -7,7 +7,7 @@ description: >-
   bootstrap, or onboard a new fleet repo, or to onboard a new repo type. Needs a hub checkout and
   a target repo, new or partially started, to mean anything, so it does not usefully trigger
   inside an already-operational downstream repo's own session with no hub checkout present, that
-  case is resync-a-repo for drift or fleet-conformance-check for a self-check instead. Triggers
+  case is resync-a-repo for drift or check-this-repo for a self-check instead. Triggers
   even when the request sounds like "just copy the template over" or "spin up a quick repo,"
   because skipping the ordered signing, branch, and instruction-set steps below is exactly how a
   repo ends up unsigned, unrecoverable, or authored against unknown rules.

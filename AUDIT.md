@@ -10,7 +10,7 @@ This is a release-model repo: the self-audit covers the `main` and `develop` rul
 
 ## General Settings and Rulesets
 
-Fetch the hub and check out `main`. Run `repo-config/configure.sh check ptr727/PlexCleaner release` from that checkout. The command checks the shared settings, the two state-dependent settings (`has_discussions` follows visibility, `default_branch` is `main`), Dependabot security features, and both the `develop` and `main` rulesets against the hub payloads, and preserves and reports `bypass_actors` without asserting them, since who may bypass a ruleset is a human decision no payload declares.
+Fetch the hub and check out `main`. Run `repo-config/configure.sh check ptr727/PlexCleaner release` from that checkout. The command checks the shared settings, the two state-dependent settings (`has_discussions` follows visibility, `default_branch` is `main`), Dependabot security features, the fleet label set, the fleet project link, any deployment environments this repo's registry entry declares, and both the `develop` and `main` rulesets against the hub payloads, and preserves and reports `bypass_actors` without asserting them, since who may bypass a ruleset is a human decision no payload declares.
 
 The result must be exactly two rulesets named `develop` and `main`. A missing ruleset or a divergent payload is a **defect**, and a duplicate or stray ruleset is a **drift finding**.
 

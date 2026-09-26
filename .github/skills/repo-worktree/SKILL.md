@@ -62,16 +62,19 @@ from `develop` unless the task is explicitly about `main`-only content, per `GOV
 is whatever it last fetched rather than the branch it names.
 
 The base clone is a fetch source, not a place to do task work. `fetch` and `worktree add` run
-against it for that purpose, and outside "Listing and Cleanup"'s own terminal step below, nothing
-else does: never `checkout`, `pull`, `reset`, `commit`, or any other command that mutates its own
-working tree, index, or HEAD while a task is in progress. That distinction is the one a real
-incident missed, reusing a primary checkout as the working directory itself rather than only as
-the source a worktree is created from. On Claude Code this is also a mechanical stop for most
-of that list. `merge --ff-only`/`pull --ff-only` and a `checkout <ref>`/`switch <ref>` carrying no
-force flag stay exempt even there, matching this skill's own cleanup step below, which needs
-exactly those.
-Prose remains the only enforcement for a non-Claude-Code agent, and for the shapes the hook itself
-exempts.
+against it for that purpose, and outside two steps below, nothing else mutates its working tree,
+index, or HEAD while a task is in progress: never `checkout`, `pull`, `reset`, `commit`, or any
+other such command. Those two are "Listing and Cleanup"'s own terminal step and "Creating a
+Worktree"'s return of the base clone to its own working branch where a continuation finds the task
+branch checked out there. That distinction is the one a real incident missed, where an agent
+reused a primary checkout as the working directory itself rather than only as the source a
+worktree is created from. On a machine carrying the hub's agent-safety install, Claude Code also
+makes this a mechanical stop for most of that list. `merge --ff-only`/`pull --ff-only` stay exempt
+even there, and so does a `checkout <ref>`/`switch <ref>` naming exactly one positional that
+resolves as a ref, with no force flag and no `--` separator, which is the shape both of this
+skill's own steps below run. A `checkout -- .` or a `switch -c <new>` is denied, being neither.
+Prose remains the only enforcement for a non-Claude-Code agent, for a machine without that
+install, and for the shapes the hook itself exempts.
 
 ## Creating a Worktree
 
@@ -109,8 +112,8 @@ such a clone is never a push out of it: fork the upstream first, per the
 namespace above, under the name this one already has.
 
 ```sh
-git -C ~/repos/<Repo> fetch origin develop
-git -C ~/repos/<Repo> worktree add ~/repos/worktrees/<Repo>-<task-slug> -b <task-branch> origin/develop
+git -C ~/repos/"<Repo>" fetch origin develop
+git -C ~/repos/"<Repo>" worktree add ~/repos/worktrees/"<Repo>-<task-slug>" -b "<task-branch>" origin/develop
 ```
 
 The registered worktree above is the normal path. It keeps the task visible in `git worktree
@@ -129,18 +132,26 @@ command. A declared sandbox boundary is the reason to request that approval, not
 reason to skip the registered worktree.
 
 Use the standard layout when both locations are writable or the executor approves the scoped
-write. When approval is unavailable or denied, create a standalone clone under a writable
-temporary root. Name it `<temporary-root>/<Repo>-<task-slug>`, fetch immediately, and create the
-task branch from `origin/develop`. A standalone clone keeps its worktree and Git administrative
-directory under the same writable root. It therefore supports edits, explicit-path staging,
-commits, and branch updates without sharing the base clone's index.
+write. When approval for the worktree path is unavailable or denied, create a standalone clone
+under a writable temporary root. Name it `<temporary-root>/<Repo>-<task-slug>`, fetch immediately,
+and create the task branch from `origin/develop`. On Claude Code that clone needs a grant of its
+own before its git steps will run, per the paragraph below, so ask for both together rather than
+meeting the second after the clone exists. A standalone clone keeps its worktree and Git
+administrative directory under the same writable root. It therefore supports edits, explicit-path
+staging, commits, and branch updates without sharing the base clone's index.
 
 On Claude Code, a standalone clone is structurally a primary checkout to `gh-write-guard.py`'s own
 rule 6 test (`--git-dir` equals `--git-common-dir` there too, since it is not a linked worktree of
-anything), so the hook denies the very commits/edits this fallback exists to make. Set
-`GH_WRITE_GUARD_ALLOW_PRIMARY_CHECKOUT` for the session before using one -- the same escape hatch
-`host-setup/agent-safety/README.md`'s requirement 6 already documents -- since this fallback is
-exactly the narrow, already-approval-gated case that grant exists for.
+anything), so the hook denies the git commands this fallback exists to run. Its rules classify git
+and gh commands only, so a plain file edit is never denied there and only the git steps need the
+grant, though a compound command is judged whole, so an edit chained to a denied git write does
+not run either. That grant is `GH_WRITE_GUARD_ALLOW_PRIMARY_CHECKOUT`, the same escape hatch
+`host-setup/agent-safety/README.md` in the hub already documents as its requirement 6, not a
+repo-relative link since that path is hub-local and not carried into every fleet repo. The
+maintainer sets it before the session starts, and an agent cannot set it for itself: the guard
+reads it from the environment the session was launched with, never from an inline `VAR=x` prefix
+or an `export` the agent runs, so ask for it rather than trying to set it mid-session. This
+fallback is exactly the narrow, already-approval-gated case that grant exists for.
 
 A temporary standalone clone is a degraded handoff, not an equivalent location. The base clone
 does not register it, `git worktree list` does not show it, and an IDE opened on the base clone
@@ -150,10 +161,10 @@ and again in the handoff. Do not present work there as ordinarily reviewable fro
 workspace.
 
 ```sh
-TASK_ORIGIN="$(git -C <base-clone> remote get-url origin)"
-git clone --no-checkout "$TASK_ORIGIN" <temporary-root>/<Repo>-<task-slug>
-git -C <temporary-root>/<Repo>-<task-slug> fetch origin develop
-git -C <temporary-root>/<Repo>-<task-slug> switch -c <task-branch> origin/develop
+TASK_ORIGIN="$(git -C "<base-clone>" remote get-url origin)"
+git clone --no-checkout "$TASK_ORIGIN" "<temporary-root>/<Repo>-<task-slug>"
+git -C "<temporary-root>/<Repo>-<task-slug>" fetch origin develop
+git -C "<temporary-root>/<Repo>-<task-slug>" switch -c "<task-branch>" origin/develop
 ```
 
 Do not use a linked worktree under the temporary root when the base clone's Git metadata is
@@ -164,17 +175,27 @@ registered path and its approval route are unavailable.
 A continuation attaches the task's existing branch rather than forking a fresh one:
 
 ```sh
-git -C ~/repos/<Repo> fetch origin <task-branch>
-git -C ~/repos/<Repo> worktree add ~/repos/worktrees/<Repo>-<task-slug> <task-branch>
+git -C ~/repos/"<Repo>" fetch origin "<task-branch>"
+git -C ~/repos/"<Repo>" worktree add ~/repos/worktrees/"<Repo>-<task-slug>" "<task-branch>"
 ```
 
-When the base clone holds only the remote-tracking ref, the same command creates the local
-branch tracking `origin/<task-branch>` through git's ordinary checkout guessing, so a fresh
-clone needs no separate branch setup. Git refuses to attach a branch that is already checked
-out somewhere else, and that refusal is the mandate working, since the branch sitting checked
-out in a shared tree is the hazard the continuation rule exists for. Return that checkout to
-its own working branch first when its tree is clean, and stop when it is not, because a dirty
-tree there may be another task's uncommitted work.
+When the base clone holds only the remote-tracking ref, the same command creates the local branch
+tracking `origin/<task-branch>` through git's ordinary checkout guessing, so a fresh clone needs
+no separate branch setup. Git refuses to attach a branch that is already checked out somewhere
+else, and that refusal is the mandate working, since the branch sitting checked out in a shared
+tree is the hazard the continuation rule exists for. `git worktree list` names the checkout
+holding it and prints the base clone first, and what to do there depends on which checkout that is.
+
+The base clone holding it is the case "The Base Branch" excepts. Return it to its own working
+branch when its tree is clean, `git -C ~/repos/<Repo> checkout develop`, and then create the
+worktree. Stop when it is not clean, because a dirty shared checkout is the signal that another
+task may be live there.
+
+A previous session's own worktree holding it is retired rather than switched. It normally sits at
+the very `~/repos/worktrees/<Repo>-<task-slug>` path the command above wants, so `worktree add`
+aborts on the existing directory whatever its branch is. Remove it when it is clean, and stop when
+it is not, because a dirty tree there may be uncommitted work. `backlog-burndown` calls this
+retire-then-dispatch and cites this skill for it.
 
 A machine not yet migrated to this layout still isolates exactly the same way, since the mandate
 is the isolation rather than the path: create the worktree beside whatever layout the machine

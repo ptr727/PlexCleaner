@@ -1,5 +1,5 @@
 ---
-name: fleet-conformance-check
+name: check-this-repo
 description: >-
   Checks, from inside a downstream repo's own session, whether this repo and this machine are
   current against the ptr727/ProjectTemplate hub, and safely self-applies what it can. Use this
@@ -15,12 +15,12 @@ description: >-
   out first.
 ---
 
-# Fleet Conformance Check
+# Check This Repo
 
 ## Why this exists
 
-A downstream repo today only finds out it has drifted when someone runs a hub-driven resync
-against it by name. Nothing notices from the inside on its own. This skill is that inside check,
+A downstream repo today only finds out it has drifted when someone runs an audit or a resync
+against it. Nothing notices from the inside on its own. This skill is that inside check,
 run with no hub-side operator watching, so a stale Skills install or an out-of-date `AGENTS.md`
 pointer gets noticed and fixed without waiting for a fleet-wide sweep to reach this particular
 repo.
@@ -30,9 +30,13 @@ repo.
 1. **Is the Skills install current on this machine.** `scripts/` is hub-hosted and reached rather
    than carried, per GOVERNANCE.md "Hub-Hosted Tooling", so fetch a hub checkout
    (`github.com/ptr727/ProjectTemplate`, `main` branch, fetched fresh) and run
-   `python3 scripts/skills_install.py --report` from it. A stale or missing stamp is very often
+   `python3 scripts/skills_install.py --report` from it. A snapshot not current, or no stamp, is very often
    the direct answer to "why isn't a fleet rule applying": the harness never loaded the current
-   content in the first place, and no amount of re-reading `GOVERNANCE.md` fixes that.
+   content in the first place, and no amount of re-reading `GOVERNANCE.md` fixes that. For a
+   Claude Code session, read `live` as well, since that channel loads the registered checkout in
+   place rather than the copy: a checkout that is missing, detached, or on an old branch is an
+   answer there whatever the exit code says, and moving that checkout is the fix rather than
+   re-installing.
 2. **Does this repo's own carried content still match the hub.** Compare `AGENTS.md`'s
    "Where the Rules Live" pointer text, and any other verbatim `AGENTS.md`/`GOVERNANCE.md` section
    this repo carries, against the same hub checkout's current wording, by reading the text rather
@@ -40,18 +44,21 @@ repo.
 
 ## What it is safe to fix on its own
 
-- **Re-run the installer**, `python3 scripts/skills_install.py`, when the stamp reports stale.
+- **Re-run the installer**, `python3 scripts/skills_install.py`, from that same `main` checkout,
+  when `--report` exits non-zero.
   This is a per-machine, local-only change, nothing in it touches this repo's git history or
   needs a review.
 
 Nothing else. This skill never re-vendors a carried file, never deletes one, and never applies a
-setting or ruleset. Those are `resync-a-repo`'s job, driven from the hub with a named target,
-never a downstream repo acting on itself.
+setting or ruleset. Converging that drift is a resync, a separate change on its own branch, run
+per the hub's `RESYNC.md` by this repo's own session or by `resync-a-repo` from a hub checkout.
 
 ## Refresh cadence
 
-Re-run the installer when `--report` exits non-zero, and after any hub merge that touches
-`.agents/skills/`. Session entry runs no automatic check, by design: the trigger is suspicion,
+Re-run the installer from a hub checkout on a freshly fetched `main` when `--report` exits
+non-zero, and after any promotion to `main` that touches `.agents/skills/`. A copy taken from
+`develop` reads not current by design, since the snapshot is judged against the promoted
+revision. Session entry runs no automatic check, by design: the trigger is suspicion,
 and the restated-rule symptom below is the loudest form of it. `docs/host-setup.md`
 "Fleet Skills Install" in the hub states the same cadence for the host side, and an automated
 refresh stays out of scope until the fleet has evidence the manual cadence fails.
@@ -60,12 +67,11 @@ refresh stays out of scope until the fleet has evidence the manual cadence fails
 
 - **A carried section that differs from the hub in a way that reads as a genuine local addition**
   rather than plain staleness, the exact case `carried-instruction-file-guard` exists to protect.
-  Report precisely what differs and stop there. Per AUDIT.md, a downstream repo does not write its
-  own audit report or resync itself against the hub, it names what it found and points at
-  `resync-a-repo`, run from a hub checkout, as the next step.
+  Report precisely what differs and stop there, naming a resync as the next step, where
+  `carried-instruction-file-guard` decides the merge.
 - **Anything the installer alone cannot resolve**, a broken `claude` CLI marketplace
   registration, a settings or ruleset drift, a workflow interface mismatch. Name it and hand it to
-  the maintainer or a hub-driven resync rather than patching around it locally.
+  the maintainer or a resync per the hub's `RESYNC.md` rather than patching around it locally.
 
 ## Answering "why isn't a fleet rule applying"
 

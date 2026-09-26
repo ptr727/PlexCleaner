@@ -7,9 +7,11 @@ description: >-
   with the hub, or to run a conformance sweep against a named repo and apply what it finds. Needs
   a hub checkout and a named target repo to mean anything, so it does not usefully trigger from
   inside a downstream repo's own session with no target named and no hub checkout present, that
-  case is fleet-conformance-check instead. Triggers even when the request sounds routine, such as
-  "just copy AGENTS.md over" or "make repo X match the hub," because that phrasing is exactly how
-  the AGENTS.md-overwrite incident happened.
+  case is check-this-repo instead. Triggers even when the request sounds routine, such as "just
+  copy AGENTS.md over" or "make repo X match the hub," because that phrasing is exactly how the
+  AGENTS.md-overwrite incident happened. It co-fires with `carried-instruction-file-guard` and
+  `copilot-instructions-keeper`, which guard each carried file's merge, rather than replacing
+  them.
 ---
 
 # Resync a Repo
@@ -29,30 +31,39 @@ change from one resync to the next.
 
 Read RESYNC.md section 0. A repo with no instruction set at all, or a partial one, is not this
 skill's job, it is STANDUP.md sections 1A and 2 instead, since an absent carried file is a
-baseline that never arrived rather than drift to converge. Run `spec/audit.py <RepoName>`, the
-target's `registry/repos.json` `name` field rather than an `owner/repo` slug or a checkout path,
-and read whether the findings are letters (absent) or drift (present but stale) before doing
+baseline that never arrived rather than drift to converge. Run `python3 spec/audit.py <RepoName>`,
+the target's `registry/repos.json` `name` field rather than an `owner/repo` slug or a checkout
+path, and read whether the findings are letters (absent) or drift (present but stale) before doing
 anything else. The finding kind names the procedure the repo is owed.
 
 ## Reach the hub and measure before changing anything
 
-Fetch a hub checkout of your own immediately before reading it, per RESYNC.md section 1, since a
-stale clone answers confidently instead of failing. Never operate against an existing checkout
-already present at a known or shared path, the maintainer's own primary checkout included, even
-one that looks current -- always fetch into a private worktree of your own, per `repo-worktree`.
-On Claude Code this is now also a mechanical stop for most such commands (a `PreToolUse` hook
-denies a mutating git operation run directly in a primary checkout), though this prose is still
-the only enforcement for a non-Claude-Code agent, and for the narrow shapes the hook itself
-exempts, so following it here is not optional even where no hook can catch a lapse. Verify the
-host with `python3 scripts/host_gate.py --repo <path-to-target-checkout>`. Then run the audit end
-to end,
-RESYNC.md section 2, against the target's `main` branch, never `develop`. A finding is a snapshot,
-so quote the run stamp in anything derived from it and re-run before acting on a finding read
-earlier in the session.
-File any hub defect this work exposes against `ptr727/ProjectTemplate`.
-Examples include bugs, conflicting sources, unclear or incomplete instructions, missing capabilities, and Copilot findings about any of them.
-Search open and closed issues first, then update the matching issue or file a new one.
-Preserve the evidence RESYNC.md section 2 requires, and do not leave the finding only in chat, a review thread, the downstream repo, or agent memory.
+Fetch a hub checkout of your own immediately before reading it, per the hub-only `RESYNC.md`
+section 1, a file fetched with the hub rather than present in a carrier, since a stale clone
+answers confidently instead of failing. Never do the resync's own work in a checkout another task
+may be using, the maintainer's own primary checkout included, even one that looks current: for the
+hub and for the target repo alike, create a worktree of your own off that base clone and work
+there, per `repo-worktree`. On a machine carrying the hub's agent-safety install, Claude Code also
+refuses a mutating git command run directly in a primary checkout, though its rules classify git
+and gh commands only, so a plain file write is never denied and the re-vendoring this skill exists
+to govern goes uncaught. A compound command is judged whole, so a copy chained to a denied git
+write does not run either. Prose is the enforcement here, and following it is not optional. Verify
+the host with `python3 scripts/host_gate.py --repo <path-to-target-worktree>`, run from your hub
+worktree, since `scripts/` is hub-hosted and no carrier holds it. Then run the audit end to end,
+`RESYNC.md` section 2. `python3 spec/audit.py <RepoName>` measures the target's ground-truth
+branch, which the registry's `groundTruthBranch` names and which is `main` for every cataloged
+repo today, never `develop`. That is the invocation "Confirm the procedure before starting"
+already ran, run again here. Convergence lands on a ref `main` does not hold yet, so a run that
+previews in-flight work names that ref: `python3 spec/audit.py --branch <ref> <RepoName>`. Use it
+to check whether a fix landed, since a run against `main` still reports what the in-flight ref
+already fixed. Section 2 carries two further commands that neither of these replaces. A finding is
+a snapshot, so quote the run stamp in anything derived from it and re-run before acting on a
+finding read earlier in the session. File any hub defect this work exposes against
+`ptr727/ProjectTemplate`. Examples include bugs, conflicting sources, unclear or incomplete
+instructions, missing capabilities, and Copilot findings about any of them. Search open and closed
+issues first, then update the matching issue or file a new one. Preserve the evidence `RESYNC.md`
+section 2 requires, and do not leave the finding only in chat, a review thread, the downstream
+repo, or agent memory.
 
 ## Apply, in this order
 
@@ -68,7 +79,7 @@ Preserve the evidence RESYNC.md section 2 requires, and do not leave the finding
 5. **Settings, rulesets, and secrets.** Run
    `repo-config/configure.sh check "<owner>/<repo>" release` (substitute `operational` for an
    operational repo) from the hub at `main`, then `apply` for what it reports, never from a
-   carried copy. Run `spec/audit.py [RepoName]` from the same checkout for secrets.
+   carried copy. Run `python3 spec/audit.py <RepoName>` from the same checkout for secrets.
 6. **Intent files last, and by hand,** since nothing mechanical judges these.
 
 Reconcile the registry entry (`status`, `types`, `releaseTrigger`, `workflowModel`,
@@ -80,6 +91,7 @@ rather than leaving it standing.
 One focused pull request per drift class, branched from the target's `develop`, never a direct
 push to a protected branch and never a hand edit outside a pull request. Close the review loop,
 per the `pr-review-conduct` skill, before asking the maintainer for merge permission. The
-maintainer merges, the agent drives to green and stops. Re-run the audit after the merge and
-commit the report once authorized, per `git-commit-conventions`, done means measured, not
-applied.
+maintainer merges, the agent drives to green and stops. Re-run the audit after the merge and,
+from the hub checkout, commit the report under the hub's own `reports/` once authorized, per
+`AUDIT.md` section 8 and `git-commit-conventions`. A session resyncing its own repository
+leaves the report to a hub-side audit instead. Done means measured, not applied.
