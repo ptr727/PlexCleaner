@@ -42,7 +42,7 @@ Get started with PlexCleaner in three easy steps using Docker (recommended):
 >
 > **ℹ️ Note**: Replace `/data/media` with your actual host media directory path. All examples map the host directory to `/media` inside the container.
 >
-> **ℹ️ Note**: The examples run as a `nonroot` user in the `users` group that own your media, so files PlexCleaner writes stay readable by the rest of your stack. Set `USER_NONROOT_ID` and `USERS_GROUP_ID` to your own numeric IDs, and see [Docker Run Examples](#docker-run-examples) to prepare the media directory.
+> **ℹ️ Note**: The examples run as the `nonroot` user and `users` group that own your media. Files PlexCleaner writes then stay readable by the rest of your stack. Set `USER_NONROOT_ID` and `USERS_GROUP_ID` to your own numeric IDs, and see [Docker Run Examples](#docker-run-examples) to prepare the media directory.
 
 ```shell
 # Replace with your own IDs, from `id -u nonroot` and `getent group users`
@@ -244,14 +244,14 @@ For a simple one-time process operation, see the [Getting Started](#getting-star
 PlexCleaner runs as a non-root user, so the media directory must be owned by and writable for that user and group. Prepare it once:
 
 ```shell
-# Create the nonroot system user in the users group
+# Create the nonroot system user in the users group, with the Debian or Ubuntu adduser
 sudo adduser --no-create-home --disabled-password --system --ingroup users nonroot
 
 # Give nonroot:users ownership, with group read and write
 sudo chown -R nonroot:users /data/media
 sudo chmod -R ug=rwX,o=rX /data/media
 
-# Keep new files in the users group and group writable
+# Keep new files in the users group and group writable, needs the acl package and a filesystem with ACL support
 sudo find /data/media -type d -exec chmod g+s {} + -exec setfacl -m d:g:users:rwx {} +
 
 # The numeric IDs the examples use as USER_NONROOT_ID and USERS_GROUP_ID
