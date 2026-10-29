@@ -172,7 +172,7 @@ aggregator job, the ruleset-bound required check, gates the merge and passes a s
 On a `pull_request` event the entry workflow and its hub pins come from the pull request's merge commit. A
 pull request that edits CI therefore tests its own definition. The publisher calls the same hub validator
 against the commit it publishes, so the CI gate and the publish gate apply one definition. A hub-pin bump
-changes only workflow files, so its pull request validates at the new pin without a smoke build, and a
+changes only workflow files, so its pull request validates at the new pin without a smoke build. A
 Dependabot bump merges itself. The first build at a new release-task pin is then the next pull request
 touching a release path, or a dispatch, on that branch. For `main` it can also be the scheduled publish.
 
