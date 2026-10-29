@@ -24,6 +24,21 @@ Merges never publish. The publisher (`publish-release.yml`) runs on a weekly sch
 docker run -it --rm --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/Test.sh
 ```
 
+### Test an unreleased build in the image
+
+The image is the reference environment, so a branch build is tested inside it before an image carries it. Publish the build framework-dependent and run it with the image's own .NET runtime:
+
+```sh
+dotnet publish PlexCleaner -c Release --no-self-contained -o ./publish
+docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" --entrypoint dotnet \
+  docker.io/ptr727/plexcleaner:latest /test/publish/PlexCleaner.dll process \
+  --settingsfile /test/PlexCleaner.json --mediafiles /test/media
+```
+
+A self-contained publish crashes in the image with `No usable version of libssl`. The image's Ubuntu ships an OpenSSL that only Ubuntu's own .NET runtime supports.
+
+To test a different FFmpeg version, mount a static FFmpeg build into the container and put its directory first on `PATH` with `--env PATH=...`. Startup logs the FFmpeg version in use, and the minimum tool version check applies to it. A distribution image with FFmpeg from apt is a quick way to check a single command line against an older FFmpeg release.
+
 ### Run the regression tests
 
 The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image tag on a ZFS clone and compares the results across versions down to the per-file processing decision. The collection and its media-specific reduction rules live with the media on a server and are never committed, so this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.

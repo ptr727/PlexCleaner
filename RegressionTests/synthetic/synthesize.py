@@ -22,6 +22,7 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
   stream, which reaches PlexCleaner's CC-on-HDR branch.
 - DTS time base: a healthy cadence denser than the default duration, a false DTS only in a 1/framerate encoder time base.
 - DTS duplicate PTS: one repeated frame timestamp, a real repeat that verify reports at native precision.
+- DTS mixed: a demux-visible audio timestamp step back plus a B-frame video timestamp swap that only surfaces after decode.
 """
 
 import argparse
@@ -35,6 +36,7 @@ from inject_cc_sei import build_cc_sei
 from inject_hdr10plus_sei import build_hdr10plus_sei
 
 FFMPEG = "ffmpeg"
+FFPROBE = "ffprobe"
 MKVMERGE = "mkvmerge"
 
 # x265 params for a synthetic HDR10 (SMPTE ST 2086) stream: BT.2020 / PQ + mastering-display + MaxCLL
@@ -45,7 +47,7 @@ HDR10_X265 = (
 )
 
 
-def run(cmd: list[str]) -> None:
+def run(cmd: list[str]) -> str:
     # Capture combined output and surface its tail on failure, so a regeneration error on another
     # machine is diagnosable rather than a bare non-zero exit.
     proc = subprocess.run(
@@ -59,6 +61,7 @@ def run(cmd: list[str]) -> None:
     if proc.returncode != 0:
         tail = "\n".join((proc.stdout or "").splitlines()[-20:])
         raise RuntimeError(f"command failed (exit {proc.returncode}): {' '.join(cmd)}\n{tail}")
+    return proc.stdout or ""
 
 
 def gen_hdr10_base(out: Path, seconds: int = 6, width: int = 3840, height: int = 2160) -> None:
@@ -78,13 +81,14 @@ def gen_sdr_video(
     height: int = 240,
     rate: str = "24",
     frames: int = 0,
+    preset: str = "ultrafast",
 ) -> None:
     """Generate a small SDR H.264 clip, an extra video track or a raw stream to retime by frame count."""
     limit = ["-frames:v", str(frames)] if frames else []
     run(
         [FFMPEG, "-y", "-f", "lavfi",
          "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate={rate}", *limit,
-         "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(out)]
+         "-c:v", "libx264", "-preset", preset, "-pix_fmt", "yuv420p", str(out)]
     )  # fmt: skip
 
 
@@ -162,15 +166,21 @@ def build_hdr10plus_cc(out: Path) -> None:
     _build_hdr_cc(out, build_hdr10plus_sei() + build_cc_sei())
 
 
+def _write_timestamps(out: Path, timestamps: list[float], fmt: str = "v2") -> None:
+    """Write an mkvmerge timestamps file, one millisecond timestamp per frame, v4 keeping the order unsorted."""
+    out.write_text(
+        f"# timestamp format {fmt}\n" + "".join(f"{t:.3f}\n" for t in timestamps),
+        encoding="utf-8",
+    )
+
+
 def _build_retimed(out: Path, timestamps: list[float]) -> None:
     """Mux one H.264 frame per millisecond timestamp, under a 23.976 default duration."""
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         video, timecodes = work / "video.h264", work / "timestamps.txt"
         gen_sdr_video(video, seconds=len(timestamps), rate="24000/1001", frames=len(timestamps))
-        timecodes.write_text(
-            "# timestamp format v2\n" + "".join(f"{t:.3f}\n" for t in timestamps), encoding="utf-8"
-        )
+        _write_timestamps(timecodes, timestamps)
         run(
             [MKVMERGE, "-o", str(out), "--default-duration", "0:24000/1001p",
              "--timestamps", f"0:{timecodes}", str(video)]
@@ -195,6 +205,40 @@ def build_dts_duplicate_pts(out: Path) -> None:
     _build_retimed(out, timestamps)
 
 
+def _count_packets(media: Path) -> int:
+    return int(
+        run(
+            [FFPROBE, "-v", "error", "-select_streams", "0", "-count_packets",
+             "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", str(media)]
+        ).strip()
+    )  # fmt: skip
+
+
+def build_dts_mixed(out: Path) -> None:
+    """B-frame video with two frame timestamps swapped, plus AAC audio with one packet timestamp stepping back.
+
+    The demuxer derives video DTS from the sorted timestamps, so only the decoded display order runs backward.
+    The audio step is demux-visible, and the lossless setts tier repairs it alone.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        video, video_tc = work / "video.h264", work / "video.txt"
+        audio, audio_tc = work / "audio.aac", work / "audio.txt"
+        video_ts = [i * 1001 / 24 for i in range(96)]
+        video_ts[48], video_ts[49] = video_ts[49], video_ts[48]
+        gen_sdr_video(video, rate="24000/1001", frames=len(video_ts), preset="veryfast")
+        _write_timestamps(video_tc, video_ts, "v4")
+        gen_audio(audio, seconds=4)
+        audio_ts = [i * 1024 * 1000 / 44100 for i in range(_count_packets(audio))]
+        audio_ts[100] = audio_ts[99] - 5
+        _write_timestamps(audio_tc, audio_ts, "v4")
+        run(
+            [MKVMERGE, "-o", str(out), "--default-duration", "0:24000/1001p",
+             "--timestamps", f"0:{video_tc}", str(video),
+             "--timestamps", f"0:{audio_tc}", str(audio)]
+        )  # fmt: skip
+
+
 TARGETS: dict[str, Callable[[Path], None]] = {
     "hdr10-base": gen_hdr10_base,
     "hdr10-multitrack": build_hdr10_multitrack,
@@ -202,6 +246,7 @@ TARGETS: dict[str, Callable[[Path], None]] = {
     "hdr10plus-cc": build_hdr10plus_cc,
     "dts-timebase": build_dts_timebase,
     "dts-duplicate-pts": build_dts_duplicate_pts,
+    "dts-mixed": build_dts_mixed,
 }
 
 

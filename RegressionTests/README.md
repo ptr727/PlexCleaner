@@ -9,6 +9,7 @@ PlexCleaner's behavior depends heavily on the specific media it processes: most 
 The committed contents are code plus a synthetic example. No media and no media filenames live in the repository:
 
 - The **media collection** lives on a server, next to the media (like a Plex library would). It is never committed. The copyrighted filenames stay out of source control entirely.
+- The same holds for issues, pull requests, and commit messages, per [GOVERNANCE.md](../GOVERNANCE.md) "Representative Data in Agent-Authored Text". A defect found in the collection is reported with a synthetic fixture that carries the triggering property.
 - The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`](reduction-rules.example.json) with synthetic placeholder names.
 
 ## Layout
@@ -44,6 +45,8 @@ sudo ./RegressionTest.sh [quick|full] [tag] [corpus] [plugin...]
 - `tag` is the Docker image tag to test (default `develop`).
 - `corpus` selects `full` (default) or `reduced`.
 - `plugin` names optional example plugins to build and run after processing, to confirm a plugin loads and runs against the processed dataset.
+
+The harness tests a published image tag. To test a build before any image carries it, run it inside the image as [OPERATIONS.md](../OPERATIONS.md) "Test an unreleased build in the image" describes.
 
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
@@ -118,7 +121,7 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 - [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
 
-Requires `ffmpeg` (with libx265) and `mkvmerge` on `PATH`. Examples:
+Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
 ```shell
 python3 synthetic/synthesize.py hdr10-multitrack -o multitrack.mkv   # targets the track-structure set
@@ -126,6 +129,7 @@ python3 synthetic/synthesize.py hdr10-cc -o hdr-cc.mkv               # HDR10 (ST
 python3 synthetic/synthesize.py hdr10plus-cc -o hdr10plus-cc.mkv     # true HDR10+ (ST 2094) HEVC + closed captions
 python3 synthetic/synthesize.py dts-timebase -o dts-timebase.mkv     # healthy VFR cadence, verifies clean
 python3 synthetic/synthesize.py dts-duplicate-pts -o dts-dup.mkv     # one repeated frame timestamp, fails verify
+python3 synthetic/synthesize.py dts-mixed -o dts-mixed.mkv           # audio DTS break plus post-decode video break
 ```
 
 ### Targeting methodology
@@ -142,6 +146,7 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Closed captions on HDR** -- an injected A53 CC SEI on an HDR HEVC stream reaches the CC-on-HDR branch (which refuses removal to avoid stripping HDR metadata). `hdr10-cc` builds the static ST 2086 case; `hdr10plus-cc` also injects an ST 2094-40 SEI so the branch fires over the *dynamic* HDR10+ metadata that is genuinely at risk when the CC SEI is removed.
 - **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
 - **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision. The demuxer derives a DTS from the repeated timestamp, so the repeat is demux-visible and takes the full repair ladder.
+- **Verify DTS mixed** -- `dts-mixed` swaps two B-frame video timestamps and steps one AAC packet timestamp back, using the unsorted mkvmerge v4 timestamps format. The demuxer derives video DTS from the sorted timestamps, so only the audio break is demux-visible, while the decoded video display order runs backward. The lossless `setts` tier repairs the audio but leaves the video failing verify, so the repair stops after the remux and marks the file `RepairFailed`. The v2 timestamps format cannot build this fixture, because mkvmerge sorts v2 timestamps and so removes both the swap and the step back.
 
 ### Extending the library
 
