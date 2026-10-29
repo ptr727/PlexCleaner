@@ -38,7 +38,7 @@ set -e
 if [ ! -d $MediaPath ]; then
     # Download Matroska test files: https://github.com/ietf-wg-cellar/matroska-test-files
     wget --progress=bar:force -O $TestPath/matroska-test-files.zip https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
-    7z e -o$MediaPath $TestPath/matroska-test-files.zip *.mkv -r
+    7z e -o$MediaPath $TestPath/matroska-test-files.zip '*.mkv' -r
     rm $TestPath/matroska-test-files.zip
 fi
 

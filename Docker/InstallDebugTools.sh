@@ -17,8 +17,7 @@ rm -f getvsdbg.sh
 
 # Get the RID for this OS using the same technique as used by getvsdbg.sh get_dotnet_runtime_id()
 __RuntimeID=
-get_dotnet_runtime_id()
-{
+get_dotnet_runtime_id() {
     if [ "$(uname)" = "Darwin" ]; then
         if [ "$(uname -m)" = "arm64" ]; then
             __RuntimeID=osx-arm64
@@ -28,7 +27,7 @@ get_dotnet_runtime_id()
     elif [ "$(uname -m)" = "x86_64" ]; then
         __RuntimeID=linux-x64
         if [ -e /etc/os-release ]; then
-            # '.' is the same as 'source' but is POSIX compliant
+            # shellcheck source=/dev/null
             . /etc/os-release
             if [ "$ID" = "alpine" ]; then
                 __RuntimeID=linux-musl-x64
@@ -37,9 +36,9 @@ get_dotnet_runtime_id()
     elif [ "$(uname -m)" = "armv7l" ]; then
         __RuntimeID=linux-arm
     elif [ "$(uname -m)" = "aarch64" ]; then
-         __RuntimeID=linux-arm64
-         if [ -e /etc/os-release ]; then
-            # '.' is the same as 'source' but is POSIX compliant
+        __RuntimeID=linux-arm64
+        if [ -e /etc/os-release ]; then
+            # shellcheck source=/dev/null
             . /etc/os-release
             if [ "$ID" = "alpine" ]; then
                 __RuntimeID=linux-musl-arm64
