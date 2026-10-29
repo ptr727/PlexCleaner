@@ -217,6 +217,7 @@ Conventions used in every diagram:
 - A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. A name more than one class defines takes its type.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
+- A tool step drawn without a fail edge still fails the file when its tool fails.
 - A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches](#suspect-branches).
 - Change a diagram in the same change that moves a branch it draws.
 
@@ -242,7 +243,8 @@ flowchart TD
   D -->|error or cancel| R1
   D --> F["Process.ProcessFiles(): see Dispatch and Results"]
   F -->|"cancel, or an exception while processing"| R1
-  F -.->|"exception writing the settings or results file, S13"| CRASH(["Unhandled exception ends the process"]):::suspect
+  F -.->|"exception writing the settings or results file, S13"| CRASH["The command-line default handler prints it to stderr, skips DeleteEmptyFolders()"]:::suspect
+  CRASH --> R1
   F --> G["Process.DeleteEmptyFolders(): DeleteEmptyFolders option, input folders only"]
   G -->|error or cancel| R1
   G -->|"monitor batch done"| MON2(["Back to the monitor loop"])
@@ -301,7 +303,7 @@ flowchart TD
 
 `Process.ProcessFile()` runs one file through the steps below, in this order. The node ids `P01` onward follow the order of the step calls in `Process.ProcessFile()`, and `ArchitectureDiagramTests` fails when they differ.
 
-A step that returns false leaves the chain at the abort node. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them.
+A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them.
 
 ```mermaid
 flowchart TD
@@ -384,7 +386,7 @@ flowchart TD
   M2 --> T1{"SidecarUpdateOnToolChange on and IsToolsCurrent() false?"}
   T1 -->|yes| T2["Clear Verified"]
   T1 -->|no| T3
-  T2 --> T3{"Media or tools out of date?"}
+  T2 --> T3{"Media changed, or the tool change above applied?"}
   T3 -->|yes| T4["Treat as modified"]
   T3 -->|no| U0
   T4 --> U0{"Modified, or state differs from the JSON?"}
@@ -398,7 +400,7 @@ flowchart TD
 
 ### Remux and Container Steps
 
-These steps rewrite the container with MkvMerge, and each sets `ReMuxed` when it changes the file.
+The remux steps rewrite the container and set `ReMuxed`. `RemoveTags()` and `RemoveAttachments()` edit the file in place with MkvPropEdit.
 
 ```mermaid
 flowchart TD
@@ -434,9 +436,12 @@ flowchart TD
   D3 -->|yes| D4["RemoveCoverArtMkvMerge(): remux without the first cover art track, sets RemovedCoverArt"]
   D3 -->|no| D5
   D4 --> D5{"FfProbe reports cover art?"}
-  D5 -->|yes| D6["RemoveCoverArtFfProbe(): RemoveAttachments(), then RemoveTags() ignoring the option, no re-check, S10"]:::suspect
+  D5 -->|yes| D6["RemoveCoverArtFfProbe(): RemoveAttachments()"]
   D5 -->|no| D7["Continue, cover art seen only by MediaInfo stays, S10"]:::suspect
-  D6 --> D7
+  D6 --> D8{"FfProbe still reports cover art?"}
+  D8 -->|no| D7
+  D8 -->|yes| D9["RemoveTags() ignoring the option, no re-check after it, S10"]:::suspect
+  D9 --> D7
   E0["RemoveTags(): RemoveTags option, or forced by cover art removal"] --> E1["RemoveAttachments()"]
   E1 --> E4{"MkvMerge reports attachments?"}
   E4 -->|yes| E5["MkvPropEdit clears attachments, sets RemovedAttachments"]
@@ -690,7 +695,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-The `RepairFailed` check before a repair does not change the outcome in `process`, since every path that sets `RepairFailed` also sets `VerifyFailed`. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off clears `VerifyFailed` and keeps `RepairFailed`, and a later verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 
@@ -718,19 +723,19 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 
 Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
 
-- **S1** ([#1068](https://github.com/ptr727/PlexCleaner/issues/1068)): Any failure after the state holder exists reaches `DeleteFailedFile()`. That includes a cancel and the read-only file and sidecar paths the log calls skipping. With `DeleteInvalidFiles` on, this deletes the media file and its sidecar. On Windows, deleting a read-only file throws instead, which becomes S2.
+- **S1** ([#1068](https://github.com/ptr727/PlexCleaner/issues/1068)): Any failure after the state holder exists reaches `DeleteFailedFile()`. That includes a cancel and the read-only file and sidecar paths the log calls skipping. With `DeleteInvalidFiles` on, this deletes the media file and its sidecar. The sidecar it deletes is the one named after the file, so a failed `name.avi` deletes the sidecar of a sibling `name.mkv`. On Windows, deleting a read-only file throws instead, which becomes S2.
 - **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans.
-- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A later failure leaves the rewritten file with no state flag and the file not reported as modified. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
+- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failed remux or language restore after that leaves the rewritten file with no state flag and the file not reported as modified. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. Output that still matches their selection is processed again on every run.
-- **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path. Only a debug assertion catches the leftover.
+- **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
 - **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair and never cleared. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
-- **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. A write failure ends the process with an unhandled exception rather than exit code 1.
+- **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.
 
 ## Code Conventions
