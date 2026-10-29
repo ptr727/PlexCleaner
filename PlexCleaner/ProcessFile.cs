@@ -2238,8 +2238,8 @@ public class ProcessFile
         // Escalate from setts to remux to re-encode, and the first clean re-verify wins
         // A post-decode only DTS stops after the remux
         if (
-            TryLosslessTimestampRepair(dtsInfo)
-            || RepairAndReVerify(DtsInfo.IsPostDecodeOnly(dtsInfo))
+            TryLosslessTimestampRepair(dtsInfo, out bool residualPostDecode)
+            || RepairAndReVerify(residualPostDecode || DtsInfo.IsPostDecodeOnly(dtsInfo))
         )
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
@@ -2266,9 +2266,10 @@ public class ProcessFile
         return false;
     }
 
-    private bool TryLosslessTimestampRepair(DtsInfo? dtsInfo)
+    private bool TryLosslessTimestampRepair(DtsInfo? dtsInfo, out bool residualPostDecode)
     {
         // The audio-only setts filter repairs only an audio DTS, so it runs only when every flagged stream is audio
+        residualPostDecode = false;
         if (dtsInfo == null || !dtsInfo.NonMonotonicIsAudioOnly)
         {
             return false;
@@ -2287,11 +2288,19 @@ public class ProcessFile
         }
 
         // Reject unless the payload is byte-identical and the result verifies clean
-        if (
-            !TimestampRepairRegressionGate(FileInfo.FullName, tempName)
-            || VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean
-        )
+        if (!TimestampRepairRegressionGate(FileInfo.FullName, tempName))
         {
+            File.Delete(tempName);
+            return false;
+        }
+        VerifyResult verifyResult = VerifyMediaStreams(new FileInfo(tempName));
+        if (verifyResult != VerifyResult.Clean)
+        {
+            // A timestamp failure left after setts cleared every demux-visible DTS arises after decode
+            residualPostDecode =
+                verifyResult == VerifyResult.TimestampOnly
+                && GetPacketAnalysis(tempName, false, out _, out DtsInfo? residualDtsInfo)
+                && DtsInfo.IsPostDecodeOnly(residualDtsInfo);
             File.Delete(tempName);
             return false;
         }
@@ -2536,6 +2545,13 @@ public class ProcessFile
         bool quickScan,
         out BitrateInfo? bitrateInfo,
         out DtsInfo? dtsInfo
+    ) => GetPacketAnalysis(FileInfo.FullName, quickScan, out bitrateInfo, out dtsInfo);
+
+    private bool GetPacketAnalysis(
+        string fileName,
+        bool quickScan,
+        out BitrateInfo? bitrateInfo,
+        out DtsInfo? dtsInfo
     )
     {
         // Use the default track, else the first track
@@ -2560,7 +2576,7 @@ public class ProcessFile
 
         if (
             !Tools.FfProbe.GetAnalysisPackets(
-                FileInfo.FullName,
+                fileName,
                 packet =>
                 {
                     packetBitrate.Add(packet);

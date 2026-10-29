@@ -53,6 +53,15 @@ public abstract class MediaTool
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
+    // Oldest version whose command line the tool wrapper relies on, null when any version works
+    public virtual Version? MinimumVersion => null;
+
+    // An unparsed version is taken to be a current git build, so it passes the gate
+    public static bool IsSupportedVersion(string version, Version? minimumVersion) =>
+        minimumVersion == null
+        || !Version.TryParse(version, out Version? parsed)
+        || parsed >= minimumVersion;
+
     // Tool subfolder, e.g. /x64, /bin
     protected virtual string GetSubFolder() => string.Empty;
 

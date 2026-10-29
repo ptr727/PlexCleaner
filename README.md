@@ -29,6 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
 - Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
+- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 6.1.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -185,6 +186,8 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
+PlexCleaner requires FFmpeg 6.1 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+
 ### Docker
 
 - Builds are published on [Docker Hub][docker-hub-link].
@@ -310,7 +313,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
 
    **Option C: Manual download**
-   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-9.0.2-full_build.7z`: `\Tools\FfMpeg`
    - [HandBrake CLI x64][handbrake-releases-link], e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
    - [MediaInfo CLI x64][mediainfo-download-link], e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
    - [MkvToolNix Portable x64][mkvtoolnix-download-link], e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`

@@ -11,7 +11,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Video with a cadence denser than its nominal frame rate (VFR, telecine remnants, odd nominal rates, or millisecond jitter) reported an equal `N >= N` DTS.
     - The decoder output was never at fault, the repeated values only existed after rounding into the encoder time base.
     - Verify now encodes video in the input stream time base, which keeps the decoded timestamps at their native precision.
-    - The option is `-enc_time_base:v demux`, or `-enc_time_base:v -1` for FFmpeg versions older than 6.1, which do not accept `demux`.
+    - The option is `-enc_time_base:v demux`, and FFmpeg 6.1 introduced the `demux` keyword.
     - Audio keeps its default `1/sample_rate` encoder time base, which is already sample accurate.
     - A genuinely repeated or backward timestamp is still reported, as are demux-visible audio DTS breaks and decode corruption.
     - Files that previously failed with this false positive verify clean with no repair.
@@ -20,10 +20,21 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - When the demux packet analysis finds no non-monotonic audio or video DTS, the repair tries only the remux tier.
     - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
     - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
+    - A file can also carry both a demux-visible audio DTS break and a post-decode video DTS break.
+    - The lossless `setts` tier repairs the audio, but the rewrite still fails verify on the video and is discarded.
+    - When that rewrite leaves no demux-visible audio or video DTS, the remaining failure is post-decode, and the repair stops after the remux tier.
+    - Before, such a file fell through to the re-encode, which dropped the colliding video frame and padded the end of the stream.
+  - Added a minimum supported tool version, checked once at startup when the tools are verified.
+    - PlexCleaner exits with an error before processing any media when an installed tool is older than its minimum.
+    - The minimum FFmpeg version is 6.1, the first version that accepts the `demux` encoder time base verify uses.
+    - The Docker image and the Windows automatic tool download provide a newer FFmpeg.
+    - A winget, manually downloaded, Linux, or macOS FFmpeg older than 6.1 must be updated.
+    - Version-dependent tool behavior raises the minimum rather than adding per-version command line branches.
   - Files an earlier version marked `VerifyFailed` are not re-verified automatically.
     - The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed` and clears those that now verify clean.
     - The `createsidecar` command resets the processing state of all files, so the next run verifies them again.
   - Added the `dts-timebase` and `dts-duplicate-pts` synthetic regression fixtures, a healthy VFR file that must verify clean and a repeated frame timestamp that must still fail.
+  - Added the `dts-mixed` synthetic regression fixture, a demux-visible audio DTS break plus a post-decode video DTS break that must stop after the remux tier.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

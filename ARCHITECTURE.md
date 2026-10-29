@@ -104,6 +104,8 @@ Critical performance feature - DO NOT break compatibility:
 - Tool paths: `ToolsOptions.UseSystem` or `RootPath + ToolFamily/SubFolder/ToolName`
 - Tool execution: Base `Execute()` method with cancellation, logging, and error handling
 - Version checking: `GetInstalledVersion()`, `GetLatestVersion()` (Windows only)
+- Minimum version: a tool overrides `MinimumVersion`, and `Tools.VerifyTools()` fails startup before processing when an installed tool is older
+- Version-dependent tool behavior raises `MinimumVersion` rather than branching per version at a call site
 
 ### Media Properties and Track Management
 
@@ -260,7 +262,7 @@ The elevation trigger (Warning) must be preserved: keep exactly one decision-War
 
 ### Failure-handling philosophy
 
-An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail). A non-monotonic DTS that is only visible after decode stops after the remux, since a re-encode passes it only by dropping frames. An **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error. The bug then surfaces and gets fixed, rather than being masked by a fallback that silently mis-processes at scale.
+An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail). A non-monotonic DTS that is only visible after decode stops after the remux, since a re-encode passes it only by dropping frames. A timestamp failure that remains once the surgical tier clears every demux-visible DTS also stops after the remux. An **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error. The bug then surfaces and gets fixed, rather than being masked by a fallback that silently mis-processes at scale.
 
 ## Common Patterns
 
