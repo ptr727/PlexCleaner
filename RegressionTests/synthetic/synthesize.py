@@ -5,7 +5,7 @@ target specific PlexCleaner detections, so a regression fixture can be reproduce
 shipping media. Validate a generated file the same way the reduced corpus proves equivalence:
 process it through the PlexCleaner image and confirm its detections and State.
 
-Requires ffmpeg (with libx265) and mkvmerge on PATH.
+Requires ffmpeg (with libx265), ffprobe, and mkvmerge on PATH.
 
 Targeting notes - the PlexCleaner behaviors these builders exploit (see the README):
 
@@ -226,6 +226,7 @@ def build_dts_mixed(out: Path) -> None:
         audio, audio_tc = work / "audio.aac", work / "audio.txt"
         video_ts = [i * 1001 / 24 for i in range(96)]
         video_ts[48], video_ts[49] = video_ts[49], video_ts[48]
+        # The veryfast preset keeps B-frames, which the ultrafast default disables
         gen_sdr_video(video, rate="24000/1001", frames=len(video_ts), preset="veryfast")
         _write_timestamps(video_tc, video_ts, "v4")
         gen_audio(audio, seconds=4)
