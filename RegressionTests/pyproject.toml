@@ -8,7 +8,7 @@
 #   uvx mypy .
 #
 # These run the latest tools, matching the VSCode tasks.
-# CI runs the hub's reusable validator, which pins its own versions, so local results may differ slightly.
+# CI runs the same latest tools through the hub's reusable validator.
 
 [tool.ruff]
 target-version = "py313"

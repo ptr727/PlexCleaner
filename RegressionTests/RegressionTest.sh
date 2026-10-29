@@ -332,7 +332,7 @@ RunRegressionTests() {
     # Debug level logs each tool invocation with its command line, so a failure can be reproduced directly
     local LogOptions=(--logclear --loglevel Debug)
 
-    # Build each requested plugin from the source tag matching the image; skip any that fail to build
+    # Build each requested plugin from the source tag matching the image, and skip any that fail to build.
     local Plugin Entry Project Dll
     local -a BuiltPlugins=()
     for Plugin in "${Plugins[@]}"; do

@@ -111,7 +111,7 @@ This is packaged as the `python-codestyle` Skill at `.agents/skills/python-codes
 
 ### PlexCleaner Python Conventions
 
-The only Python in this repo is the stdlib-only tooling under `RegressionTests/`, and it follows the **lint-only profile**: no `uv.lock`, no project or build metadata, and `RegressionTests/pyproject.toml` carries only the ruff and mypy configuration. Its `unittest` suite lives in `RegressionTests/tests/`, and CI runs it under coverage with `uvx coverage run -m unittest discover -s tests`. Run the tools with `uvx` from that directory (`uvx ruff check .`, `uvx ruff format --check .`, `uvx mypy .`), or through the `Lint: Ruff`, `Lint: Ruff Format`, and `Lint: Mypy` VS Code tasks. CI runs these through the hub's reusable validator, which pins its own tool versions, so a local run on the latest tools may differ slightly.
+The only Python in this repo is the stdlib-only tooling under `RegressionTests/`, and it follows the **lint-only profile**. It has no `uv.lock` and no project or build metadata, and `RegressionTests/pyproject.toml` carries only the ruff and mypy configuration. Its `unittest` suite lives in `RegressionTests/tests/`, and CI runs it under coverage with `uvx coverage run -m unittest discover -s tests`. Run the tools with `uvx` from that directory (`uvx ruff check .`, `uvx ruff format --check .`, `uvx mypy .`), or through the `Lint: Ruff`, `Lint: Ruff Format`, and `Lint: Mypy` VS Code tasks. CI runs the same latest tools through the hub's reusable validator.
 
 ## Shell
 

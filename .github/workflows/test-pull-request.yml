@@ -24,11 +24,8 @@ jobs:
     outputs:
       release: ${{ steps.filter.outputs.release }}
     steps:
-      # A workflow_dispatch run has no pull request to query, so the filter diffs locally and needs the history.
       - name: Checkout code step
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
       - name: Filter changed paths step
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -43,7 +40,6 @@ jobs:
               - 'Docker/*.sh'
               - '.dockerignore'
               - '.editorconfig'
-              - '.config/dotnet-tools.json'
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
               - 'global.json'

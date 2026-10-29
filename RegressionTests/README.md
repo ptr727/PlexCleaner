@@ -23,6 +23,7 @@ The committed contents are code plus a synthetic example. No media and no media 
 - [`reduction-rules.example.json`](reduction-rules.example.json) -- synthetic example of the external rules schema.
 - [`synthetic/`](synthetic/) -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
 - [`pyproject.toml`](pyproject.toml) -- ruff and mypy configuration for the Python tooling.
+- [`tests/`](tests/) -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
 
 ## The collection
 
@@ -183,12 +184,13 @@ The working loop when the collection changes:
 
 ## Python tooling
 
-The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff and type-checked with mypy; the configuration is in [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
+The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`](tests/). The configuration is in [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
 
 ```shell
 uvx ruff check .
 uvx ruff format --check .
 uvx mypy .
+uvx coverage run -m unittest discover -s tests
 ```
 
-These run the latest tools and are available as VSCode tasks; CI pins exact versions (bumpable there), so local results may differ slightly - by design, so local tooling never silently falls behind. Python source is LF, matching the repository's default line-ending convention.
+These run the latest tools and are available as VSCode tasks. CI runs the same latest tools through the hub's reusable validator. Python source is LF, matching the repository's default line-ending convention.
