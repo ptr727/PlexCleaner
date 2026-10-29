@@ -177,19 +177,7 @@
         {
             "label": "Test Dockerfile",
             "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                {
-                    "value": "--user=$(id -u nonroot):$(getent group users | cut -d: -f3)",
-                    "quoting": "weak"
-                },
-                "--name=PlexCleaner-Test",
-                "plexcleaner:ubuntu",
-                "/Test/test.sh"
-            ],
+            "command": "USER_NONROOT_ID=$(id -u nonroot) && USERS_GROUP_ID=$(getent group users | cut -d: -f3) && [ -n \"$USERS_GROUP_ID\" ] && docker run -it --rm --user=$USER_NONROOT_ID:$USERS_GROUP_ID --name=PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh",
             "dependsOrder": "sequence",
             "dependsOn": [
                 "Load Dockerfile"

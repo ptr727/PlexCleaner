@@ -42,17 +42,21 @@ Get started with PlexCleaner in three easy steps using Docker (recommended):
 >
 > **ℹ️ Note**: Replace `/data/media` with your actual host media directory path. All examples map the host directory to `/media` inside the container.
 >
-> **ℹ️ Note**: Replace `nonroot:users` with the user and group that own your media. The examples resolve their IDs on the host, so files PlexCleaner writes stay readable by the rest of your stack.
+> **ℹ️ Note**: The examples run as a `nonroot` user in the `users` group that own your media, so files PlexCleaner writes stay readable by the rest of your stack. Set `USER_NONROOT_ID` and `USERS_GROUP_ID` to your own numeric IDs, and see [Docker Run Examples](#docker-run-examples) to prepare the media directory.
 
 ```shell
+# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # 1. Create a default settings file
-docker run --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner defaultsettings --settingsfile /media/PlexCleaner/PlexCleaner.json
 
 # 2. Edit /data/media/PlexCleaner/PlexCleaner.json to suit your needs
 
 # 3. Process your media files
-docker run --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log \
   process --settingsfile /media/PlexCleaner/PlexCleaner.json \
   --mediafiles /media/Movies --mediafiles /media/Series
@@ -214,7 +218,7 @@ services:
     container_name: PlexCleaner
     restart: unless-stopped
     stop_grace_period: 30s  # Allow time to finish the current file and log the summary on stop
-    user: 1000:100  # Change to match your nonroot:users
+    user: ${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}  # Set in .env to your own IDs, e.g. USER_NONROOT_ID=1001 and USERS_GROUP_ID=100
     command:
       - /PlexCleaner/PlexCleaner
       - monitor  # Monitor command
@@ -235,24 +239,38 @@ On stop (`docker stop`, or Compose shutdown), PlexCleaner handles the terminatio
 
 For a simple one-time process operation, see the [Getting Started](#getting-started) example.
 
-**Setup Permissions** (if running as non-root user):
+**Setup Permissions:**
+
+PlexCleaner runs as a non-root user, so the media directory must be owned by and writable for that user and group. Prepare it once:
 
 ```shell
-# Create nonroot user and set media directory permissions
-sudo adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
+# Create the nonroot system user in the users group
+sudo adduser --no-create-home --disabled-password --system --ingroup users nonroot
+
+# Give nonroot:users ownership, with group read and write
 sudo chown -R nonroot:users /data/media
-sudo chmod -R ug=rwx,o=rx /data/media
+sudo chmod -R ug=rwX,o=rX /data/media
+
+# Keep new files in the users group and group writable
+sudo find /data/media -type d -exec chmod g+s {} + -exec setfacl -m d:g:users:rwx {} +
+
+# The numeric IDs the examples use as USER_NONROOT_ID and USERS_GROUP_ID
+id -u nonroot
+getent group users | cut -d: -f3
 ```
 
 **Interactive Shell Access:**
 
 ```shell
+# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # Replace /data/media with your actual media directory
-# Replace nonroot:users with the user and group that own your media
 docker run \
   -it --rm --pull always \
   --name PlexCleaner \
-  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -268,11 +286,15 @@ exit
 screen
 # Or: screen -rd
 
+# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # Run monitor (adjust paths as needed)
 docker run -it --rm --pull always \
   --log-driver json-file --log-opt max-size=10m \
   --name PlexCleaner --env TZ=America/Los_Angeles \
-  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --loglevel Warning --logelevate \
@@ -882,7 +904,7 @@ services:
   plexcleaner-custom:
     image: docker.io/ptr727/plexcleaner:latest
     container_name: PlexCleaner-Custom
-    user: 1000:100  # Change to match your nonroot:users
+    user: ${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}  # Set in .env to your own IDs, e.g. USER_NONROOT_ID=1001 and USERS_GROUP_ID=100
     command:
       - /PlexCleaner/PlexCleaner
       - custom
@@ -945,10 +967,13 @@ The [`test.sh`](./Docker/test.sh) test script is included in the docker build an
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
-# Replace nonroot:users with the user and group that own your media
+# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 docker run \
   -it --rm \
-  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --name PlexCleaner-Test \
   docker.io/ptr727/plexcleaner:latest \
   /Test/test.sh
