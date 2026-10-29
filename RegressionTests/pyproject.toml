@@ -3,9 +3,9 @@
 # These are standalone stdlib-only scripts (no runtime dependencies), so this file carries no
 # project/build metadata - only the ruff + mypy config. Run the tools with uv (no install needed):
 #
-#   uvx ruff check .
-#   uvx ruff format --check .
-#   uvx mypy .
+#   uvx ruff@latest check .
+#   uvx ruff@latest format --check .
+#   uvx mypy@latest
 #
 # These run the latest tools, matching the VSCode tasks.
 # CI runs the same latest tools through the hub's reusable validator.

@@ -187,10 +187,10 @@ The working loop when the collection changes:
 The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`](tests/). The configuration is in [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
 
 ```shell
-uvx ruff check .
-uvx ruff format --check .
-uvx mypy .
-uvx coverage run -m unittest discover -s tests
+uvx ruff@latest check .
+uvx ruff@latest format --check .
+uvx mypy@latest
+uvx coverage@latest run -m unittest discover -s tests
 ```
 
 These run the latest tools and are available as VSCode tasks. CI runs the same latest tools through the hub's reusable validator. Python source is LF, matching the repository's default line-ending convention.
