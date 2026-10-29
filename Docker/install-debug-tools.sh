@@ -1,10 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 
-# Echo commands
+set -Eeuo pipefail
+
+case "${1-}" in
+-h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "install-debug-tools.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
+    echo "Usage: install-debug-tools.sh"
+    echo "Installs vsdbg to /vsdbg and the .NET diagnostic tools to /dotnet-tools."
+    exit 0
+    ;;
+esac
+if [[ $# -ne 0 ]]; then
+    echo "install-debug-tools.sh: unknown argument: $1, it takes no arguments, see --help" >&2
+    exit 2
+fi
+
 set -x
-
-# Exit on error
-set -e
 
 # Install VS debug tools to /vsdbg
 # https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh

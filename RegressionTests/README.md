@@ -14,7 +14,7 @@ The committed contents are code plus a synthetic example. No media and no media 
 
 ## Layout
 
-- [`RegressionTest.sh`](RegressionTest.sh) -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
+- [`regression-test.sh`](regression-test.sh) -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
 - [`corpus_common.py`](corpus_common.py) -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
 - [`catalog_corpus.py`](catalog_corpus.py) -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
 - [`reduce_corpus.py`](reduce_corpus.py) -- build and validate a reduced collection: shrink each sample while proving every issue survives.
@@ -36,10 +36,10 @@ Both are read-only during a run. The harness never mutates the collection; it pr
 
 ## Running the harness
 
-`RegressionTest.sh` provisions a disposable test dataset as a zero-copy ZFS clone of the newest collection snapshot, processes it through a single Docker image tag, and writes results into a directory named after the image build version so runs stay durable and version-to-version comparable.
+`regression-test.sh` provisions a disposable test dataset as a zero-copy ZFS clone of the newest collection snapshot. It processes the clone through a single Docker image tag. It writes the results into a directory named after the image build version, so runs stay durable and comparable across versions.
 
 ```shell
-sudo ./RegressionTest.sh [quick|full] [tag] [corpus] [plugin...]
+sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 ```
 
 - `quick` (default) keeps full-file scanning as in production but writes short test snippets to shorten remux and re-encode. `full` also processes the complete media.

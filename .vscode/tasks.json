@@ -182,9 +182,13 @@
                 "run",
                 "-it",
                 "--rm",
+                {
+                    "value": "--user=$(id -u nonroot):$(getent group users | cut -d: -f3)",
+                    "quoting": "weak"
+                },
                 "--name=PlexCleaner-Test",
                 "plexcleaner:ubuntu",
-                "/Test/Test.sh"
+                "/Test/test.sh"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [

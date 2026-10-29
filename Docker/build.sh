@@ -1,10 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 
-# Echo commands
+set -Eeuo pipefail
+
+case "${1-}" in
+-h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "build.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
+    echo "Usage: build.sh"
+    echo "Builds, tests, and publishes PlexCleaner in the Docker builder stage."
+    exit 0
+    ;;
+esac
+if [[ $# -ne 0 ]]; then
+    echo "build.sh: unknown argument: $1, it takes no arguments, see --help" >&2
+    exit 2
+fi
+
 set -x
-
-# Exit on error
-set -e
 
 # Build the solution
 dotnet build ./PlexCleaner/PlexCleaner.csproj
