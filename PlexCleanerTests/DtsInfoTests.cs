@@ -143,6 +143,16 @@ public class DtsInfoTests
     }
 
     [Fact]
+    public void IsPostDecodeOnly_DemuxVisibleVideoDts_False()
+    {
+        DtsInfo dtsInfo = new();
+        dtsInfo.Add(Packet(0, 0.08, "video"));
+        dtsInfo.Add(Packet(0, 0.08, "video"));
+
+        _ = DtsInfo.IsPostDecodeOnly(dtsInfo).Should().BeFalse();
+    }
+
+    [Fact]
     public void IsPostDecodeOnly_DemuxVisibleDts_False()
     {
         DtsInfo dtsInfo = new();

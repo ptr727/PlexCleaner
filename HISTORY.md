@@ -20,7 +20,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - When the demux packet analysis finds no non-monotonic audio or video DTS, the repair tries only the remux tier.
     - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
     - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
-  - Processing does not re-verify a file already marked `VerifyFailed`.
+  - Files an earlier version marked `VerifyFailed` are not re-verified automatically.
     - The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed` and clears those that now verify clean.
     - The `createsidecar` command resets the processing state of all files, so the next run verifies them again.
   - Added the `dts-timebase` and `dts-duplicate-pts` synthetic regression fixtures, a healthy VFR file that must verify clean and a repeated frame timestamp that must still fail.
