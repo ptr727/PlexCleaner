@@ -11,7 +11,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Video with a cadence denser than its nominal frame rate (VFR, telecine remnants, odd nominal rates, or millisecond jitter) reported an equal `N >= N` DTS.
     - The decoder output was never at fault, the repeated values only existed after rounding into the encoder time base.
     - Verify now encodes video in the input stream time base, which keeps the decoded timestamps at their native precision.
-    - The option is `-enc_time_base:v demux`, which FFmpeg 6.1 introduced.
+    - The option is `-enc_time_base:v demux`, and FFmpeg 6.1 introduced the `demux` keyword.
     - Audio keeps its default `1/sample_rate` encoder time base, which is already sample accurate.
     - A genuinely repeated or backward timestamp is still reported, as are demux-visible audio DTS breaks and decode corruption.
     - Files that previously failed with this false positive verify clean with no repair.
@@ -27,8 +27,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Added a minimum supported tool version, checked once at startup when the tools are verified.
     - PlexCleaner exits with an error before processing any media when an installed tool is older than its minimum.
     - The minimum FFmpeg version is 6.1, the first version that accepts the `demux` encoder time base verify uses.
-    - The Docker image and the Windows tool downloads ship a newer FFmpeg.
-    - Only system tools with an older FFmpeg are affected, such as an older Linux distribution package.
+    - The Docker image and the Windows automatic tool download provide a newer FFmpeg.
+    - A winget, manually downloaded, Linux, or macOS FFmpeg older than 6.1 must be updated.
     - Version-dependent tool behavior raises the minimum rather than adding per-version command line branches.
   - Files an earlier version marked `VerifyFailed` are not re-verified automatically.
     - The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed` and clears those that now verify clean.

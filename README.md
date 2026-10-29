@@ -186,6 +186,8 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
+PlexCleaner requires FFmpeg 6.1 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+
 ### Docker
 
 - Builds are published on [Docker Hub][docker-hub-link].
@@ -311,7 +313,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
 
    **Option C: Manual download**
-   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-9.0.2-full_build.7z`: `\Tools\FfMpeg`
    - [HandBrake CLI x64][handbrake-releases-link], e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
    - [MediaInfo CLI x64][mediainfo-download-link], e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
    - [MkvToolNix Portable x64][mkvtoolnix-download-link], e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
@@ -322,7 +324,6 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
 
 - Automatic downloading of Linux 3rd party tools are not supported, consider using the [Docker](#docker) build instead.
 - Manually install the 3rd party tools, e.g. following steps similar to the [Docker](./Docker) file commands.
-- FFmpeg 6.1 or newer is required, PlexCleaner exits with an error at startup when an installed tool is older than its minimum version.
 - Download [PlexCleaner][releases-latest-link] and extract the pre-compiled binaries matching your platform.
 - Or compile from [code][clone-link] using the [.NET SDK][dotnet-install-linux-link].
 - Create a default JSON settings file using the `defaultsettings` command:

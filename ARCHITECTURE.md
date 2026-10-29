@@ -104,7 +104,7 @@ Critical performance feature - DO NOT break compatibility:
 - Tool paths: `ToolsOptions.UseSystem` or `RootPath + ToolFamily/SubFolder/ToolName`
 - Tool execution: Base `Execute()` method with cancellation, logging, and error handling
 - Version checking: `GetInstalledVersion()`, `GetLatestVersion()` (Windows only)
-- Minimum version: a tool overrides `MinimumVersion`, and `Tools.VerifyTools()` exits before processing when an installed tool is older
+- Minimum version: a tool overrides `MinimumVersion`, and `Tools.VerifyTools()` fails startup before processing when an installed tool is older
 - Version-dependent tool behavior raises `MinimumVersion` rather than branching per version at a call site
 
 ### Media Properties and Track Management
