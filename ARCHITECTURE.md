@@ -143,7 +143,7 @@ Critical performance feature - DO NOT break compatibility:
 
 **Language processing:**
 
-- MediaInfo reports both ISO 639-2B and IETF tags (if set)
+- Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
@@ -271,7 +271,7 @@ flowchart TD
   E --> L1{"Cancelled?"}
   L1 -->|yes| L2["Return false, no result row"]
   L1 -->|no| L3{"Ignored?"}
-  L3 -->|yes| L4["Return the result, no metrics and no result row"]
+  L3 -->|yes| L4["Return the result, no state metrics and no result row"]
   L3 -->|no| L5["Record metrics and a result row"]
   L2 --> K{"Cancel requested?"}
   L4 --> K
@@ -680,7 +680,8 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|fail| R4["HandBrake re-encode to .tmp12, subtitles included"]
+  R3 -->|"fail, not cancelled"| R4["HandBrake re-encode to .tmp12, subtitles included"]
+  R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
   R3 --> R5["Convert.ReMux(), then re-verify Clean"]
   R4 --> R5
@@ -717,7 +718,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
 | `ReEncode()` | `ReEncoded`, `ReMuxed` | |
 | `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed` |
-| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified` on a tool change |
+| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified` on a tool change with `SidecarUpdateOnToolChange` on |
 
 ### Suspect Branches
 
@@ -810,7 +811,7 @@ Uses `System.CommandLine` (v2.x):
 
 - `--parallel` flag enables concurrent file processing
 - Uses `ProcessDriver.cs` with `AsParallel()` and `WithDegreeOfParallelism()`
-- Thread count: 1 without `--parallel`, else `--threadcount`, where 0 means half the cores clamped to 1 through 4
+- Thread count: 1 without `--parallel`, else `--threadcount` clamped to 1 through the core count, where 0 means half the cores clamped to 1 through 4
 - Lock-based collection updates in parallel contexts
 - File grouping: Groups by path (excluding extension) to prevent concurrent access to same file
 
