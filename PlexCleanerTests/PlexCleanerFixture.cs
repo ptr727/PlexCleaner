@@ -23,17 +23,19 @@ public sealed class SequentialCollectionDefinition;
 // One instance for all tests in the assembly
 public sealed class PlexCleanerFixture : IDisposable
 {
-    internal static string GetSamplesAbsoluteDirectory()
+    internal static string GetSamplesAbsoluteDirectory() =>
+        Path.Combine(GetRepoAbsoluteDirectory(), "Samples", "PlexCleaner");
+
+    internal static string GetRepoAbsoluteDirectory()
     {
-        // Relative path to the Samples directory from the assembly output directory
-        const string samplesDirectory = "../../../../Samples/PlexCleaner";
+        const string repoDirectory = "../../../..";
 
         // Get absolute path
         Assembly entryAssembly = Assembly.GetEntryAssembly()!;
         Debug.Assert(entryAssembly != null);
         string assemblyDirectory = Path.GetDirectoryName(entryAssembly.Location)!;
         Debug.Assert(!string.IsNullOrEmpty(assemblyDirectory));
-        return Path.GetFullPath(Path.Combine(assemblyDirectory, samplesDirectory));
+        return Path.GetFullPath(Path.Combine(assemblyDirectory, repoDirectory));
     }
 
     public PlexCleanerFixture()

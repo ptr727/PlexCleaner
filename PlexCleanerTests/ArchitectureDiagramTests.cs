@@ -9,8 +9,6 @@ namespace PlexCleanerTests;
 
 public partial class ArchitectureDiagramTests
 {
-    private static readonly string s_docsDirectory = Path.Combine(AppContext.BaseDirectory, "Docs");
-
     private static readonly Type[] s_unqualifiedTypes =
     [
         typeof(ProcessFile),
@@ -28,7 +26,7 @@ public partial class ArchitectureDiagramTests
     [GeneratedRegex(@"\bP(\d{2})\[""(\w+)\(\)")]
     private static partial Regex PipelineNodeRegex();
 
-    [GeneratedRegex(@"[\[{(]""(?:(\w+)\.)?(\w+)\(\)")]
+    [GeneratedRegex(@"(?<!\bP\d\d)[\[{(]""(?:(\w+)\.)?(\w+)\(\)")]
     private static partial Regex MethodLabelRegex();
 
     [Fact]
@@ -37,7 +35,7 @@ public partial class ArchitectureDiagramTests
         List<string> codeSteps =
         [
             .. ProcessStepRegex()
-                .Matches(ReadDoc("Process.cs"))
+                .Matches(ReadRepoFile("PlexCleaner", "Process.cs"))
                 .Select(match => match.Groups[1].Value),
         ];
         _ = codeSteps.Should().NotBeEmpty();
@@ -100,13 +98,15 @@ public partial class ArchitectureDiagramTests
             typeName == null ? s_unqualifiedTypes
             : qualified == null ? []
             : [qualified];
-        return types.Any(type =>
-            type.GetMethods(flags).Any(info => info.Name.Equals(method, StringComparison.Ordinal))
-        );
+        return types.Count(type =>
+                type.GetMethods(flags)
+                    .Any(info => info.Name.Equals(method, StringComparison.Ordinal))
+            ) == 1;
     }
 
-    private static string ReadDoc(string fileName) =>
-        File.ReadAllText(Path.Combine(s_docsDirectory, fileName)).ReplaceLineEndings("\n");
+    private static string ReadRepoFile(params string[] path) =>
+        File.ReadAllText(Path.Combine([PlexCleanerFixture.GetRepoAbsoluteDirectory(), .. path]))
+            .ReplaceLineEndings("\n");
 
     private static List<string> GetMermaidBlocks(string heading)
     {
@@ -115,7 +115,7 @@ public partial class ArchitectureDiagramTests
         List<string>? block = null;
         bool inSection = false;
         bool inFence = false;
-        foreach (string line in ReadDoc("ARCHITECTURE.md").Split('\n'))
+        foreach (string line in ReadRepoFile("ARCHITECTURE.md").Split('\n'))
         {
             if (line.StartsWith("```", StringComparison.Ordinal))
             {
