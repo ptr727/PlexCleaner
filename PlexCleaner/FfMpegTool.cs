@@ -152,6 +152,7 @@ public partial class FfMpeg
         }
 
         // FFmpeg 6.1 and later accept the demux keyword, older versions spell the input stream time base as -1
+        // An unparsed version is a git build, which postdates 6.1 and may no longer accept -1
         internal static string GetDemuxTimeBase(string version) =>
             Version.TryParse(version, out Version? parsed) && parsed < new Version(6, 1)
                 ? "-1"

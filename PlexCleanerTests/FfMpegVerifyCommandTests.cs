@@ -18,6 +18,24 @@ public class FfMpegVerifyCommandTests
     public void GetDemuxTimeBase_SelectsSpellingByVersion(string version, string expected) =>
         _ = FfMpeg.Tool.GetDemuxTimeBase(version).Should().Be(expected);
 
+    [Theory]
+    [InlineData("ffmpeg version 8.1.2-2ubuntu2 Copyright (c) 2000-2026", "8.1.2", "demux")]
+    [InlineData("ffmpeg version 7.1.1-full_build-www.gyan.dev Copyright", "7.1.1", "demux")]
+    [InlineData("ffmpeg version 5.1.6-0+deb12u1 Copyright (c) 2000-2024", "5.1.6", "-1")]
+    [InlineData("ffmpeg version 4.4.2-0ubuntu0.22.04.1 Copyright (c) 2000", "4.4.2", "-1")]
+    public void GetVersion_DistroVersionLine_SelectsSpelling(
+        string versionLine,
+        string expectedVersion,
+        string expectedTimeBase
+    )
+    {
+        MediaToolInfo mediaToolInfo = new();
+        _ = FfMpeg.Tool.GetVersion(versionLine, mediaToolInfo).Should().BeTrue();
+
+        _ = mediaToolInfo.Version.Should().Be(expectedVersion);
+        _ = FfMpeg.Tool.GetDemuxTimeBase(mediaToolInfo.Version).Should().Be(expectedTimeBase);
+    }
+
     [Fact]
     public void GetVerifyMediaCommand_EncodesVideoInDemuxTimeBase()
     {
