@@ -12,14 +12,14 @@ case "${1-}" in
 Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
 Uses /Test/PlexCleaner.json when present, otherwise the default settings.
-Writes its output to a new temporary directory, so it runs as a non-root user.
-Replace nonroot with the user that owns the media, its primary group is used.
+Writes its output under /tmp/PlexCleaner-Test, so it runs as a non-root user.
+Replace nonroot:users with the user and group that own the media.
 
 Test a local build:
-  docker run -it --rm --user "$(id -u nonroot):$(id -g nonroot)" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
+  docker run -it --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
 
 Test a published image against local media and settings:
-  docker run -it --rm --pull always --user "$(id -u nonroot):$(id -g nonroot)" --name PlexCleaner-Test \
+  docker run -it --rm --pull always --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --name PlexCleaner-Test \
     --env TZ=America/Los_Angeles \
     --volume /data/media/test:/Test/Media:rw \
     --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
@@ -42,8 +42,10 @@ MediaPath=/Test/Media
 # Settings file
 SettingsFile=/Test/PlexCleaner.json
 
-# The image's /Test is root-owned, so output goes to a directory any user can write.
-TestPath="$(mktemp -d)"
+# The image's /Test is root-owned, so output goes under /tmp, which any user can write.
+# A fixed path keeps a mounted settings file from registering new media paths on every run.
+TestPath=/tmp/PlexCleaner-Test
+mkdir -p "$TestPath"
 
 set -x
 

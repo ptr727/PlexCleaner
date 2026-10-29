@@ -104,6 +104,7 @@
     "Genericize",
     "genpts",
     "getbitrateinfo",
+    "getent",
     "getmediainfo",
     "getsidecar",
     "getsidecarinfo",

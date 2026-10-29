@@ -40,7 +40,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - The image version script is `/PlexCleaner/version.sh`, it was `/PlexCleaner/Version.sh`.
     - Each renamed script answers `--help` and refuses an argument it does not recognize.
   - The image test script runs as a non-root user, such as the `nonroot:users` user that owns the media.
-    - It writes its output and any downloaded test media to a new temporary directory, since the image's `/Test` is owned by root.
+    - It writes its output and any downloaded test media under `/tmp/PlexCleaner-Test`, since the image's `/Test` is owned by root.
     - It still reads `/Test/Media` and `/Test/PlexCleaner.json` when they are mounted.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.

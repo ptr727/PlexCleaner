@@ -41,16 +41,18 @@ Get started with PlexCleaner in three easy steps using Docker (recommended):
 > **⚠️ Important**: PlexCleaner modifies media files in place. Always maintain backups of your media library before processing. Consider testing on sample files first.
 >
 > **ℹ️ Note**: Replace `/data/media` with your actual host media directory path. All examples map the host directory to `/media` inside the container.
+>
+> **ℹ️ Note**: Replace `nonroot:users` with the user and group that own your media. The examples resolve their IDs on the host, so files PlexCleaner writes stay readable by the rest of your stack.
 
 ```shell
 # 1. Create a default settings file
-docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner defaultsettings --settingsfile /media/PlexCleaner/PlexCleaner.json
 
 # 2. Edit /data/media/PlexCleaner/PlexCleaner.json to suit your needs
 
 # 3. Process your media files
-docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log \
   process --settingsfile /media/PlexCleaner/PlexCleaner.json \
   --mediafiles /media/Movies --mediafiles /media/Series
@@ -246,11 +248,11 @@ sudo chmod -R ug=rwx,o=rx /data/media
 
 ```shell
 # Replace /data/media with your actual media directory
-# Replace nonroot with the user that owns your media, its primary group is used
+# Replace nonroot:users with the user and group that own your media
 docker run \
   -it --rm --pull always \
   --name PlexCleaner \
-  --user "$(id -u nonroot):$(id -g nonroot)" \
+  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -270,6 +272,7 @@ screen
 docker run -it --rm --pull always \
   --log-driver json-file --log-opt max-size=10m \
   --name PlexCleaner --env TZ=America/Los_Angeles \
+  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --loglevel Warning --logelevate \
@@ -937,15 +940,15 @@ dotnet test
 
 The [`test.sh`](./Docker/test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
 
-The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container. It writes its output to a temporary directory, so it runs as the same non-root user as the rest of the stack.
+The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container. It writes its output under `/tmp/PlexCleaner-Test`, so it runs as the same non-root user as the rest of the stack.
 
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
-# Replace nonroot with the user that owns your media, its primary group is used
+# Replace nonroot:users with the user and group that own your media
 docker run \
   -it --rm \
-  --user "$(id -u nonroot):$(id -g nonroot)" \
+  --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" \
   --name PlexCleaner-Test \
   docker.io/ptr727/plexcleaner:latest \
   /Test/test.sh

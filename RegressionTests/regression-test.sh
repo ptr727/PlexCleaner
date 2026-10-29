@@ -112,7 +112,7 @@ DockerCommon=(
     "${TtyArg[@]}"
     --rm
     --name PlexCleaner-RegressionTest
-    --user "$(id -u nonroot):$(id -g nonroot)"
+    --user "$(id -u nonroot):$(getent group users | cut -d: -f3)"
     --env TZ=America/Los_Angeles
 )
 

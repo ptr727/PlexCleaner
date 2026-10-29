@@ -183,7 +183,7 @@
                 "-it",
                 "--rm",
                 {
-                    "value": "--user=$(id -u nonroot):$(id -g nonroot)",
+                    "value": "--user=$(id -u nonroot):$(getent group users | cut -d: -f3)",
                     "quoting": "weak"
                 },
                 "--name=PlexCleaner-Test",
