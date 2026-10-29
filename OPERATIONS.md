@@ -18,7 +18,7 @@ Merges never publish. The publisher (`publish-release.yml`) runs on a weekly sch
 
 ### Test the Docker image
 
-[Docker/test.sh](./Docker/test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container. It writes its output under `/tmp/PlexCleaner-Test`, so it runs as the non-root user that owns the media:
+[Docker/test.sh](./Docker/test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container. It writes its output under `/tmp/PlexCleaner-Test`, so it runs as the non-root user that owns the media. Replace `nonroot:users` in the command with the user and group that own your media:
 
 ```sh
 docker run -it --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/test.sh
