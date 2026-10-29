@@ -13,13 +13,15 @@ Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
 Uses /Test/PlexCleaner.json when present, otherwise the default settings.
 Writes its output under /tmp/PlexCleaner-Test, so it runs as a non-root user.
-Replace nonroot:users with the user and group that own the media.
+Run it as the nonroot user and users group that own the media:
+  USER_NONROOT_ID=1001  # Replace with your own, from: id -u nonroot
+  USERS_GROUP_ID=100    # Replace with your own, from: getent group users | cut -d: -f3
 
 Test a local build:
-  docker run -it --rm --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
+  docker run -it --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
 
 Test a published image against local media and settings:
-  docker run -it --rm --pull always --user "$(id -u nonroot):$(getent group users | cut -d: -f3)" --name PlexCleaner-Test \
+  docker run -it --rm --pull always --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test \
     --env TZ=America/Los_Angeles \
     --volume /data/media/test:/Test/Media:rw \
     --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \

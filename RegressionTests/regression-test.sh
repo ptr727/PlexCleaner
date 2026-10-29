@@ -104,6 +104,10 @@ if [[ "$Mode" == "quick" ]]; then
     ProcessOptions+=(--testsnippets)
 fi
 
+# Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
+USER_NONROOT_ID=$(id -u nonroot)
+USERS_GROUP_ID=$(getent group users | cut -d: -f3)
+
 # Common docker run arguments
 # Allocate a TTY only when attached to one, so the script also runs non-interactively (CI, background)
 TtyArg=()
@@ -112,7 +116,7 @@ DockerCommon=(
     "${TtyArg[@]}"
     --rm
     --name PlexCleaner-RegressionTest
-    --user "$(id -u nonroot):$(getent group users | cut -d: -f3)"
+    --user "$USER_NONROOT_ID:$USERS_GROUP_ID"
     --env TZ=America/Los_Angeles
 )
 
