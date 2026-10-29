@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Plugins\DtsTimestampRepair\DtsTimestampRepair.csproj" />
     <ProjectReference Include="..\Plugins\MatroskaHeaderCleanup\MatroskaHeaderCleanup.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ARCHITECTURE.md" Link="Docs\ARCHITECTURE.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\PlexCleaner\Process.cs" Link="Docs\Process.cs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
