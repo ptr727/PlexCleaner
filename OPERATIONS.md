@@ -21,7 +21,7 @@ Merges never publish. The publisher (`publish-release.yml`) runs on a weekly sch
 [Docker/test.sh](./Docker/test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container. The image has no `USER` directive and defaults to root, so the command below passes the host's `nonroot` user and `users` group with `--user`. The test then cannot write to the root-owned `/Test`, so it writes its output under `/tmp/PlexCleaner-Test`:
 
 ```sh
-# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
 USER_NONROOT_ID=1001
 USERS_GROUP_ID=100
 docker run -it --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/test.sh

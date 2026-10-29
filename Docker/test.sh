@@ -15,7 +15,7 @@ Uses /Test/PlexCleaner.json when present, otherwise the default settings.
 Writes its output under /tmp/PlexCleaner-Test, so it runs as a non-root user.
 Run it as the nonroot user and users group that own the media:
   USER_NONROOT_ID=1001  # Replace with your own, from: id -u nonroot
-  USERS_GROUP_ID=100    # Replace with your own, from: getent group users
+  USERS_GROUP_ID=100    # Replace with your own, from: getent group users | cut -d: -f3
 
 Test a local build:
   docker run -it --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh

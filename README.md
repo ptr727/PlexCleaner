@@ -45,7 +45,7 @@ Get started with PlexCleaner in three easy steps using Docker (recommended):
 > **ℹ️ Note**: The examples run as the `nonroot` user and `users` group that own your media. Files PlexCleaner writes then stay readable by the rest of your stack. Set `USER_NONROOT_ID` and `USERS_GROUP_ID` to your own numeric IDs, and see [Docker Run Examples](#docker-run-examples) to prepare the media directory.
 
 ```shell
-# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
 USER_NONROOT_ID=1001
 USERS_GROUP_ID=100
 
@@ -265,7 +265,7 @@ getent group users | cut -d: -f3
 **Interactive Shell Access:**
 
 ```shell
-# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
 USER_NONROOT_ID=1001
 USERS_GROUP_ID=100
 
@@ -289,7 +289,7 @@ exit
 screen
 # Or: screen -rd
 
-# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
 USER_NONROOT_ID=1001
 USERS_GROUP_ID=100
 
@@ -970,7 +970,7 @@ The [`test.sh`](./Docker/test.sh) test script is included in the docker build an
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
-# Replace with your own IDs, from `id -u nonroot` and `getent group users`
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
 USER_NONROOT_ID=1001
 USERS_GROUP_ID=100
 
