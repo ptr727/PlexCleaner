@@ -251,8 +251,11 @@ sudo adduser --no-create-home --disabled-password --system --ingroup users nonro
 sudo chown -R nonroot:users /data/media
 sudo chmod -R ug=rwX,o=rX /data/media
 
-# Keep new files in the users group and group writable, needs the acl package and a filesystem with ACL support
-sudo find /data/media -type d -exec chmod g+s {} + -exec setfacl -m d:g:users:rwx {} +
+# New files keep the users group
+sudo find /data/media -type d -exec chmod g+s {} +
+
+# New files stay group writable, which needs the acl package and a filesystem with ACL support
+sudo find /data/media -type d -exec setfacl -m d:g:users:rwx {} +
 
 # The numeric IDs the examples use as USER_NONROOT_ID and USERS_GROUP_ID
 id -u nonroot
