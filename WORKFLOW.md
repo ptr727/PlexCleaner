@@ -172,9 +172,9 @@ aggregator job, the ruleset-bound required check, gates the merge and passes a s
 On a `pull_request` event the entry workflow and its hub pins come from the pull request's merge commit. A
 pull request that edits CI therefore tests its own definition. The publisher calls the same hub validator
 against the commit it publishes, so the CI gate and the publish gate apply one definition. A hub-pin bump
-changes only workflow files, so its pull request validates at the new pin without a smoke build. Nothing
-dispatches a smoke build for it, and a Dependabot bump merges itself. So the first build at a new release-task
-pin is the next scheduled publish, unless a maintainer dispatches CI on the bump branch before it merges.
+changes only workflow files, so its pull request validates at the new pin without a smoke build, and a
+Dependabot bump merges itself. The first build at a new release-task pin is then the next pull request
+touching a release path, or a dispatch, on that branch. For `main` it can also be the scheduled publish.
 
 ### The two-target release seam
 
@@ -606,7 +606,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | S10 | PR with a CSharpier / format / markdown / workflow-YAML violation, or a spelling violation in README.md or HISTORY.md | the validator's `lint` job fails, so the aggregator blocks the merge | D1.2, D1.5 |
 | S11 | `version.json` floor bump merged | merges don't publish -> no immediate release; the new floor ships in the next weekly publish | D3.3, D4.1 |
 | S12 | Dependabot semver-major bump (any ecosystem) | auto-merges on green like every other tier; the required checks are the gate | D8.2 |
-| S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A `workflow_dispatch` of CI on the bump branch smoke-builds the new release-task pin before it merges | D0.4, D1.4, D6.1 |
+| S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A maintainer can dispatch CI on the bump branch to smoke-build the new release-task pin before it merges | D0.4, D1.4, D6.1 |
 | S13 | `develop` -> `main` promotion (merge commit) | the merge itself does not publish; `main`'s accumulated changes ship in the next weekly run | D4.1, D8.1 |
 | S14 | branch and version classification disagree (NBGV mis-classifies) | `validate-release` **fails loud** with `::error::`; the build and publish jobs skip, so nothing is built or pushed | D2.2 |
 | S16 | `workflow_dispatch` of `test-pull-request` on a branch | the filter is bypassed, so `validate` and `smoke-build` both run with `smoke: true` and the branch's own pins. Nothing publishes | D1.1, D1.2, D6.1 |
