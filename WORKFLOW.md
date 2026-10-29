@@ -172,8 +172,9 @@ aggregator job, the ruleset-bound required check, gates the merge and passes a s
 On a `pull_request` event the entry workflow and its hub pins come from the pull request's merge commit. A
 pull request that edits CI therefore tests its own definition. The publisher calls the same hub validator
 against the commit it publishes, so the CI gate and the publish gate apply one definition. A hub-pin bump
-changes only workflow files, so its pull request validates at the new pin without a smoke build. A
-`workflow_dispatch` of CI on the bump branch smoke-builds the new release-task pin before it merges.
+changes only workflow files, so its pull request validates at the new pin without a smoke build. Nothing
+dispatches a smoke build for it, and a Dependabot bump merges itself. So the first build at a new release-task
+pin is the next scheduled publish, unless a maintainer dispatches CI on the bump branch before it merges.
 
 ### The two-target release seam
 
@@ -313,7 +314,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 ### D0 - Architecture
 
 - **D0.1 CI is one run, one branch.** Input: a pull request or a dispatch. Output: `test-pull-request`
-  validates and smoke-builds the run's own `github.sha` and publishes nothing. The smoke build's `branch` is
+  validates the run's own `github.sha` and publishes nothing. It smoke-builds that commit when the release
+  target changed, and on every dispatch. The smoke build's `branch` is
   the pull request's base, or the dispatched branch. *Prevents cross-branch ref mixing in CI.*
 - **D0.2 The publisher builds one branch: the trigger ref.** Output: the `publish` job passes `github.sha` as
   `ref` and `github.ref_name` as `branch`, so it checks out, versions, and tags exactly the commit the run
@@ -593,7 +595,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | # | Input | Expected output | Exercises |
 | --- | --- | --- | --- |
 | S1 | PR touching `PlexCleaner/**` | `changes` marks `release`, so `validate` and `smoke-build` run. Both targets compile/pack, with **no push, no uploads, no release**. `validate-release` self-skips (smoke). The aggregator succeeds and no artifacts dangle | D0.1, D1.1, D1.3, D2.2 |
-| S2 | PR changing only docs | `changes` marks nothing, so `smoke-build` skips. `validate` runs markdownlint, cspell, and the prose gate. The aggregator passes the skip and nothing publishes | D1.4, D1.5 |
+| S2 | PR changing only docs | `changes` marks nothing, so `smoke-build` skips. `validate` runs markdownlint, cspell on README.md and HISTORY.md, and the prose gate. The aggregator passes the skip and nothing publishes | D1.4, D1.5 |
 | S3 | PR changing only `.github/workflows/**` | `changes` marks nothing, so `smoke-build` skips. `validate` runs at the PR's own pin and its `lint` job runs actionlint. The aggregator succeeds | D1.4, D6.1 |
 | S4 | weekly `schedule` | builds + publishes `main` only: stable release + refreshed `latest` (multi-arch) + `PlexCleaner.7z`; `target_commitish` = main's SHA; develop is not touched; no dangling artifacts | D4.1, D4.2, D4.4 |
 | S5 | `workflow_dispatch` from `develop` | builds + publishes `develop`: prerelease `X.Y.<height>-g<sha>` + `develop` image + `PlexCleaner.7z`; `github.ref` is develop, so NBGV classifies it non-public | D4.1, D4.2, D3.2 |
@@ -601,7 +603,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | S7 | `workflow_dispatch` from a feature branch | the `plan` job fails with `::error::Dispatch a release from main or develop`; every later job skips -> no publish, and the run is red rather than a silent success | D4.1 |
 | S8 | merged dependency bump (any) | `Directory.Packages.props` is not a shipped input and merges don't publish -> **no release**; ships in the next weekly run | D4.1, D8.2 |
 | S9 | merged GitHub-Actions bump | not a shipped input, merges don't publish -> **no release** | D4.1 |
-| S10 | PR with a CSharpier / format / markdown / spelling / workflow-YAML violation | the validator's `lint` job fails, so the aggregator blocks the merge | D1.2, D1.5 |
+| S10 | PR with a CSharpier / format / markdown / workflow-YAML violation, or a spelling violation in README.md or HISTORY.md | the validator's `lint` job fails, so the aggregator blocks the merge | D1.2, D1.5 |
 | S11 | `version.json` floor bump merged | merges don't publish -> no immediate release; the new floor ships in the next weekly publish | D3.3, D4.1 |
 | S12 | Dependabot semver-major bump (any ecosystem) | auto-merges on green like every other tier; the required checks are the gate | D8.2 |
 | S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A `workflow_dispatch` of CI on the bump branch smoke-builds the new release-task pin before it merges | D0.4, D1.4, D6.1 |
