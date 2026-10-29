@@ -71,11 +71,19 @@ def gen_hdr10_base(out: Path, seconds: int = 6, width: int = 3840, height: int =
     )  # fmt: skip
 
 
-def gen_sdr_video(out: Path, seconds: int = 6, width: int = 320, height: int = 240) -> None:
-    """Generate a small SDR H.264 clip, used as an extra (second) video track."""
+def gen_sdr_video(
+    out: Path,
+    seconds: int = 6,
+    width: int = 320,
+    height: int = 240,
+    rate: str = "24",
+    frames: int = 0,
+) -> None:
+    """Generate a small SDR H.264 clip, an extra video track or a raw stream to retime by frame count."""
+    limit = ["-frames:v", str(frames)] if frames else []
     run(
         [FFMPEG, "-y", "-f", "lavfi",
-         "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate=24",
+         "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate={rate}", *limit,
          "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(out)]
     )  # fmt: skip
 
@@ -85,14 +93,6 @@ def gen_audio(out: Path, seconds: int = 6, freq: int = 440) -> None:
     run(
         [FFMPEG, "-y", "-f", "lavfi", "-i", f"sine=frequency={freq}:duration={seconds}",
          "-c:a", "aac", "-b:a", "128k", str(out)]
-    )  # fmt: skip
-
-
-def gen_h264_es(out: Path, frames: int) -> None:
-    """Generate a raw H.264 elementary stream, retimed later by an mkvmerge timestamps file."""
-    run(
-        [FFMPEG, "-y", "-f", "lavfi", "-i", "testsrc2=size=320x240:rate=24000/1001",
-         "-frames:v", str(frames), "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(out)]
     )  # fmt: skip
 
 
@@ -167,7 +167,7 @@ def _build_retimed(out: Path, timestamps: list[float]) -> None:
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         video, timecodes = work / "video.h264", work / "timestamps.txt"
-        gen_h264_es(video, len(timestamps))
+        gen_sdr_video(video, seconds=len(timestamps), rate="24000/1001", frames=len(timestamps))
         timecodes.write_text(
             "# timestamp format v2\n" + "".join(f"{t:.3f}\n" for t in timestamps), encoding="utf-8"
         )

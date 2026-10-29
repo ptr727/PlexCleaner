@@ -26,7 +26,7 @@ public sealed class DtsInfo
             && codecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
         );
 
-    // Verify decodes only audio and video, so a subtitle DTS cannot be the source of its timestamp failure
+    // Verify decodes no subtitles, so only an audio or video DTS can be the source of its timestamp failure
     public bool HasNonMonotonicAudioVideoDts =>
         _nonMonotonicByStream.Keys.Any(index =>
             _codecTypeByStream.TryGetValue(index, out string? codecType)
