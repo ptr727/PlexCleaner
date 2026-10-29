@@ -174,8 +174,8 @@ pull request that edits CI therefore tests its own definition. The publisher cal
 against the commit it publishes, so the CI gate and the publish gate apply one definition. A hub-pin bump
 changes only workflow files, so its pull request validates at the new pin without a smoke build. A
 Dependabot bump merges itself. The first build at a new release-task pin is then the next pull request
-touching a release path on the branch the bump targets. A maintainer can instead dispatch CI on the bump
-branch before it merges. For `main` it can also be the scheduled publish.
+touching a release path on the branch the bump targets. A dispatch of CI on that branch after the merge
+builds it sooner. For `main` it can also be the scheduled publish.
 
 ### The two-target release seam
 
@@ -361,7 +361,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `.github/workflows/**`, or only documentation. Output: the filter marks nothing, so `smoke-build` skips and
   the aggregator passes the skip. The `release` entry reaches this by leaving workflow and doc paths out.
   *Implication: a hub-pin bump is not smoke-built on its pull request. The validator still runs actionlint
-  on it, and a `workflow_dispatch` of CI on its branch smoke-builds the new pin.*
+  on it, and a `workflow_dispatch` of CI on the branch it targets, after it merges, smoke-builds the new pin.*
 - **D1.5 One required aggregator gates merge.** Output: a single aggregator job runs under `if: always()`
   and `needs:` `changes`, `validate`, and `smoke-build`. It must **succeed**, not merely "not fail". It
   requires `changes` and `validate` to succeed, passes a skipped `smoke-build`, and blocks on failure or
@@ -607,7 +607,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | S10 | PR with a CSharpier / format / markdown / workflow-YAML violation, or a spelling violation in README.md or HISTORY.md | the validator's `lint` job fails, so the aggregator blocks the merge | D1.2, D1.5 |
 | S11 | `version.json` floor bump merged | merges don't publish -> no immediate release; the new floor ships in the next weekly publish | D3.3, D4.1 |
 | S12 | Dependabot semver-major bump (any ecosystem) | auto-merges on green like every other tier; the required checks are the gate | D8.2 |
-| S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A maintainer can dispatch CI on the bump branch to smoke-build the new release-task pin before it merges | D0.4, D1.4, D6.1 |
+| S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A dispatch of CI on the target branch after the merge smoke-builds the new release-task pin | D0.4, D1.4, D6.1 |
 | S13 | `develop` -> `main` promotion (merge commit) | the merge itself does not publish; `main`'s accumulated changes ship in the next weekly run | D4.1, D8.1 |
 | S14 | branch and version classification disagree (NBGV mis-classifies) | `validate-release` **fails loud** with `::error::`; the build and publish jobs skip, so nothing is built or pushed | D2.2 |
 | S16 | `workflow_dispatch` of `test-pull-request` on a branch | the filter is bypassed, so `validate` and `smoke-build` both run with `smoke: true` and the branch's own pins. Nothing publishes | D1.1, D1.2, D6.1 |
