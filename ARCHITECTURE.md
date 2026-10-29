@@ -695,7 +695,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off clears `VerifyFailed` and keeps `RepairFailed`, and a later verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off sets `Verified`, clears `VerifyFailed` and keeps `RepairFailed`. A later tool change with `SidecarUpdateOnToolChange` on clears `Verified`, and the next failed verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 
@@ -727,11 +727,11 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans.
-- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failed remux or language restore after that leaves the rewritten file with no state flag and the file not reported as modified. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
+- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failure after that leaves the rewritten file with no state flag and the file not reported as modified. That is the remux or language restore in `ReEncode()`, and the language restore in `DeInterlace()`. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
-- **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. Output that still matches their selection is processed again on every run.
+- **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
 - **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
 - **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair and never cleared. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
@@ -955,7 +955,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 ### Performance Considerations
 
-- Sidecar files enable fast re-processing (skip verified files)
+- Sidecar files enable fast re-processing (cached media info, and a `Verified` state skips verification and the scans)
 - `--parallel` most effective with I/O-bound operations (re-mux)
 - `--quickscan` limits scan to 3 minutes (trades accuracy for speed)
 - `--testsnippets` creates 30s clips for testing
@@ -979,7 +979,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 - Language-based grouping with flag preservation
 - Preferred audio codec selection via `FindPreferredAudio()`
-- Keeps one flagged track per flag type, one non-flagged track
+- Keeps every flagged track, plus the first non-flagged track of each type, per language
 
 **Language Mismatches:**
 
