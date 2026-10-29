@@ -131,6 +131,18 @@ public class DtsInfoTests
     }
 
     [Fact]
+    public void IsPostDecodeOnly_SubtitleDtsOnly_True()
+    {
+        DtsInfo dtsInfo = new();
+        dtsInfo.Add(Packet(0, double.NaN, "video"));
+        dtsInfo.Add(Packet(2, 1.5, "subtitle"));
+        dtsInfo.Add(Packet(2, 1.5, "subtitle"));
+
+        _ = dtsInfo.HasNonMonotonicDts.Should().BeTrue();
+        _ = DtsInfo.IsPostDecodeOnly(dtsInfo).Should().BeTrue();
+    }
+
+    [Fact]
     public void IsPostDecodeOnly_DemuxVisibleDts_False()
     {
         DtsInfo dtsInfo = new();

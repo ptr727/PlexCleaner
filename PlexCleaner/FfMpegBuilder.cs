@@ -196,14 +196,6 @@ public partial class FfMpeg
         public OutputOptions EncoderTimeBaseVideo(string option) =>
             EncoderTimeBaseVideo().Add(option);
 
-        public OutputOptions EncoderTimeBaseAudio() => Add("-enc_time_base:a");
-
-        public OutputOptions EncoderTimeBaseAudio(string option) =>
-            EncoderTimeBaseAudio().Add(option);
-
-        public OutputOptions EncoderTimeBaseDemux() =>
-            EncoderTimeBaseVideo("demux").EncoderTimeBaseAudio("demux");
-
         public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
             timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this

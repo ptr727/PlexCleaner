@@ -26,9 +26,19 @@ public sealed class DtsInfo
             && codecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
         );
 
+    // Verify decodes only audio and video, so a subtitle DTS cannot be the source of its timestamp failure
+    public bool HasNonMonotonicAudioVideoDts =>
+        _nonMonotonicByStream.Keys.Any(index =>
+            _codecTypeByStream.TryGetValue(index, out string? codecType)
+            && (
+                codecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
+                || codecType.Equals("video", StringComparison.OrdinalIgnoreCase)
+            )
+        );
+
     // A clean demux analysis means a verify DTS failure arises after decode, where a re-encode passes only by dropping frames
     public static bool IsPostDecodeOnly(DtsInfo? dtsInfo) =>
-        dtsInfo is { HasNonMonotonicDts: false };
+        dtsInfo is { HasNonMonotonicAudioVideoDts: false };
 
     public void Add(FfMpegToolJsonSchema.Packet packet)
     {

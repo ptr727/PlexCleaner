@@ -1856,8 +1856,7 @@ public class ProcessFile
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
-        // Non-monotonic DTS is a repairable failure; try a lossless surgical setts repair first, then fall
-        // through to the shared remux and re-encode tiers for a video or post-decode DTS setts cannot fix
+        // Non-monotonic DTS takes the timestamp repair ladder
         if (_lastVerifyResult == VerifyResult.TimestampOnly)
         {
             return RepairTimestampsAndSetState(ref modified);
@@ -2035,7 +2034,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool RepairAndReVerify()
+    private bool RepairAndReVerify(bool remuxOnly = false)
     {
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
@@ -2080,6 +2079,16 @@ public class ProcessFile
         }
         if (Program.IsCancelledError())
         {
+            return false;
+        }
+
+        // A re-encode passes a post-decode only DTS by dropping the colliding frames
+        if (remuxOnly)
+        {
+            Log.Warning(
+                "Non-monotonic DTS is post-decode only, skipping re-encode repair : {FileName}",
+                FileInfo.FullName
+            );
             return false;
         }
 
@@ -2174,7 +2183,7 @@ public class ProcessFile
             return false;
         }
 
-        // Require a clean re-verify, a remux that still fails falls through to the re-encode tier
+        // Require a clean re-verify before replacing the original
         if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
         {
             File.Delete(tempName);
@@ -2212,7 +2221,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 return Refresh(false);
             case VerifyResult.TimestampOnly:
-                // Detected non-monotonic DTS, repair losslessly when demux-visible, else stays reported
+                // Detected non-monotonic DTS, run the timestamp repair ladder
                 return RepairTimestampsAndSetState(ref modified);
             case VerifyResult.DecodeError:
                 // Genuine decode corruption, not repairable here, leave the state unchanged
@@ -2230,11 +2239,7 @@ public class ProcessFile
         // A post-decode only DTS stops after the remux
         if (
             TryLosslessTimestampRepair(dtsInfo)
-            || (
-                DtsInfo.IsPostDecodeOnly(dtsInfo)
-                    ? TryPostDecodeTimestampRepair()
-                    : RepairAndReVerify()
-            )
+            || RepairAndReVerify(DtsInfo.IsPostDecodeOnly(dtsInfo))
         )
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
@@ -2261,25 +2266,9 @@ public class ProcessFile
         return false;
     }
 
-    private bool TryPostDecodeTimestampRepair()
-    {
-        Log.Warning(
-            "Non-monotonic DTS is post-decode only, skipping re-encode repair : {FileName}",
-            FileInfo.FullName
-        );
-        if (!TryRemuxRepair())
-        {
-            return false;
-        }
-        Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
-        return true;
-    }
-
     private bool TryLosslessTimestampRepair(DtsInfo? dtsInfo)
     {
-        // The audio-only setts filter can repair only an audio-stream DTS, so attempt it only when every
-        // non-monotonic stream is audio; a video or subtitle DTS, a post-decode-only break with no demux
-        // target, or an analysis failure all stay reported failures without a wasted rewrite
+        // The audio-only setts filter repairs only an audio DTS, so it runs only when every flagged stream is audio
         if (dtsInfo == null || !dtsInfo.NonMonotonicIsAudioOnly)
         {
             return false;

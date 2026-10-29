@@ -260,7 +260,7 @@ The elevation trigger (Warning) must be preserved: keep exactly one decision-War
 
 ### Failure-handling philosophy
 
-An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail); an **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error, so the bug surfaces and gets fixed rather than being masked by a fallback that silently mis-processes at scale.
+An **expected, recoverable** failure escalates through the standard repair tiers (detect -> surgical -> remux -> re-encode -> fail). A non-monotonic DTS that is only visible after decode stops after the remux, since a re-encode passes it only by dropping frames. An **unexpected or logic** failure (e.g. tool output that will not parse) aborts the file and stays a hard error. The bug then surfaces and gets fixed, rather than being masked by a fallback that silently mis-processes at scale.
 
 ## Common Patterns
 

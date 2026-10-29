@@ -141,7 +141,7 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **HDR survives remux** -- the HDR SEI is copied through an mkvmerge remux; pairing it with a removable track (above) forces the remux, so the fixture guards HDR passthrough during cleanup.
 - **Closed captions on HDR** -- an injected A53 CC SEI on an HDR HEVC stream reaches the CC-on-HDR branch (which refuses removal to avoid stripping HDR metadata). `hdr10-cc` builds the static ST 2086 case; `hdr10plus-cc` also injects an ST 2094-40 SEI so the branch fires over the *dynamic* HDR10+ metadata that is genuinely at risk when the CC SEI is removed.
 - **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
-- **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision, and the demux analysis sees no DTS, so the repair stops after the remux tier instead of re-encoding.
+- **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision. The demuxer derives a DTS from the repeated timestamp, so the repeat is demux-visible and takes the full repair ladder.
 
 ### Extending the library
 
