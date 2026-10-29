@@ -478,8 +478,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 - **D6.1 A change is testable on its own branch.** Output: CI runs on the pull request that introduces a
   change, from that pull request's merge commit, with no dependency on reaching `main` first. A build change
   smoke-builds there. A workflow-only change, a hub-pin bump included, runs the validator at its own pin. A
-  `workflow_dispatch` of CI on its branch smoke-builds it too. A hub-pin bump merges itself, so its smoke build
-  is a dispatch on the target branch after the merge (D1.4).
+  `workflow_dispatch` of CI on its branch smoke-builds it too. A hub-pin bump merges itself, so its first smoke
+  build is on the target branch after the merge (D1.4).
 - **D6.2 Single producer, fork runs.** Output: only `test-pull-request.yml` defines the aggregator, so its
   ruleset-bound `context:` has one producing workflow. Dependabot PRs are in-repo branches, validated the same
   way. A fork pull request gets a run with a read-only token and no secrets. A fork change that skips the
