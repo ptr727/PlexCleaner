@@ -4,6 +4,10 @@ set -Eeuo pipefail
 
 case "${1-}" in
 -h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "version.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
     echo "Usage: version.sh"
     echo "Prints the OS, .NET, PlexCleaner, and media tool versions."
     exit 0

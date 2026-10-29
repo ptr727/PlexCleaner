@@ -56,6 +56,7 @@ UnknownArgument() {
 
 case "${1-}" in
 -h | --help)
+    [[ $# -eq 1 ]] || UnknownArgument "$2"
     Usage
     exit 0
     ;;

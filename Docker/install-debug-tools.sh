@@ -4,6 +4,10 @@ set -Eeuo pipefail
 
 case "${1-}" in
 -h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "install-debug-tools.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
     echo "Usage: install-debug-tools.sh"
     echo "Installs vsdbg to /vsdbg and the .NET diagnostic tools to /dotnet-tools."
     exit 0

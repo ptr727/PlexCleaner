@@ -4,6 +4,10 @@ set -Eeuo pipefail
 
 case "${1-}" in
 -h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "build.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
     echo "Usage: build.sh"
     echo "Builds, tests, and publishes PlexCleaner in the Docker builder stage."
     exit 0

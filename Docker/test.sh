@@ -4,6 +4,10 @@ set -Eeuo pipefail
 
 case "${1-}" in
 -h | --help)
+    if [[ $# -ne 1 ]]; then
+        echo "test.sh: unknown argument: $2, it takes no arguments, see --help" >&2
+        exit 2
+    fi
     cat <<'EOF'
 Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
