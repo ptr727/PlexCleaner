@@ -68,6 +68,8 @@ def verify_args(input_path: str, stats: str = "-nostats") -> list[str]:
         input_path,
         "-max_muxing_queue_size",
         "1024",
+        "-enc_time_base:v",
+        "demux",
         "-f",
         "null",
         "-",
