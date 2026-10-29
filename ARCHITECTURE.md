@@ -93,7 +93,7 @@ Critical performance feature - DO NOT break compatibility:
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
 - A `Verified` or `VerifyFailed` state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
-- Sidecar operations: `Create()`, `Read()`, `Update()`, `Delete()`
+- Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh](#sidecar-refresh)
 
 ### Media Tool Abstraction
 
@@ -214,7 +214,7 @@ The diagrams below trace the `process` command from the command line to the resu
 
 Conventions used in every diagram:
 
-- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. A name more than one class defines takes its type.
+- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists, and one that more of them define takes its type.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
@@ -370,7 +370,7 @@ Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `Fil
 
 ```mermaid
 flowchart TD
-  R0["Refresh(): modified true reloads, false only saves state"] --> R1{"UseSidecarFiles option on?"}
+  R0["Refresh(): modified true forces a sidecar update"] --> R1{"UseSidecarFiles option on?"}
   R1 -->|no| R2["MediaProps.GetMediaProps(): run all tools, state is not persisted"]
   R1 -->|yes| O0["SidecarFile.Open()"]
   O0 --> O1{"Sidecar already loaded in this run?"}
@@ -810,7 +810,7 @@ Uses `System.CommandLine` (v2.x):
 
 - `--parallel` flag enables concurrent file processing
 - Uses `ProcessDriver.cs` with `AsParallel()` and `WithDegreeOfParallelism()`
-- Default thread count: min(CPU/2, 4), configurable via `--threadcount`
+- Thread count: 1 without `--parallel`, else `--threadcount`, where 0 means half the cores clamped to 1 through 4
 - Lock-based collection updates in parallel contexts
 - File grouping: Groups by path (excluding extension) to prevent concurrent access to same file
 
@@ -849,8 +849,7 @@ Check states with `HasFlag()`, combine with `|=`. [State Flags by Step](#state-f
 ### Cancellation Handling
 
 - Global token source: `Program.s_cancelSource`
-- Console handlers: Ctrl+C, Ctrl+Z, Ctrl+Q
-- Keyboard monitoring: Separate task for key press handling
+- Signal handlers: SIGINT, SIGTERM and SIGQUIT cancel the run and set exit codes 130, 143 and 131
 - Tool execution: All CliWrap calls use `Program.CancelToken()`
 - Graceful cleanup: Logs cancellation messages, disables file watchers
 
