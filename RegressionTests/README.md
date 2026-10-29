@@ -124,6 +124,8 @@ Requires `ffmpeg` (with libx265) and `mkvmerge` on `PATH`. Examples:
 python3 synthetic/synthesize.py hdr10-multitrack -o multitrack.mkv   # targets the track-structure set
 python3 synthetic/synthesize.py hdr10-cc -o hdr-cc.mkv               # HDR10 (ST 2086) HEVC + closed captions
 python3 synthetic/synthesize.py hdr10plus-cc -o hdr10plus-cc.mkv     # true HDR10+ (ST 2094) HEVC + closed captions
+python3 synthetic/synthesize.py dts-timebase -o dts-timebase.mkv     # healthy VFR cadence, verifies clean
+python3 synthetic/synthesize.py dts-duplicate-pts -o dts-dup.mkv     # one repeated frame timestamp, fails verify
 ```
 
 ### Targeting methodology
@@ -138,6 +140,8 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Tags** -- mkvmerge statistics tags plus a container title.
 - **HDR survives remux** -- the HDR SEI is copied through an mkvmerge remux; pairing it with a removable track (above) forces the remux, so the fixture guards HDR passthrough during cleanup.
 - **Closed captions on HDR** -- an injected A53 CC SEI on an HDR HEVC stream reaches the CC-on-HDR branch (which refuses removal to avoid stripping HDR metadata). `hdr10-cc` builds the static ST 2086 case; `hdr10plus-cc` also injects an ST 2094-40 SEI so the branch fires over the *dynamic* HDR10+ metadata that is genuinely at risk when the CC SEI is removed.
+- **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
+- **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision, and the demux analysis sees no DTS, so the repair stops after the remux tier instead of re-encoding.
 
 ### Extending the library
 

@@ -26,6 +26,10 @@ public sealed class DtsInfo
             && codecType.Equals("audio", StringComparison.OrdinalIgnoreCase)
         );
 
+    // A clean demux analysis means a verify DTS failure arises after decode, where a re-encode passes only by dropping frames
+    public static bool IsPostDecodeOnly(DtsInfo? dtsInfo) =>
+        dtsInfo is { HasNonMonotonicDts: false };
+
     public void Add(FfMpegToolJsonSchema.Packet packet)
     {
         // Assess only packets that carry a real DTS. A missing DTS (e.g. Matroska video, which stores no

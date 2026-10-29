@@ -2224,10 +2224,18 @@ public class ProcessFile
 
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
-        // Escalate through the repair tiers: a lossless surgical setts repair for a demux-visible audio
-        // DTS, then the shared remux and re-encode ladder for a video or post-decode DTS setts cannot fix.
-        // The first tier whose re-verify is clean wins
-        if (TryLosslessTimestampRepair() || RepairAndReVerify())
+        _ = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
+
+        // Escalate from setts to remux to re-encode, and the first clean re-verify wins
+        // A post-decode only DTS stops after the remux
+        if (
+            TryLosslessTimestampRepair(dtsInfo)
+            || (
+                DtsInfo.IsPostDecodeOnly(dtsInfo)
+                    ? TryPostDecodeTimestampRepair()
+                    : RepairAndReVerify()
+            )
+        )
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
             _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
@@ -2253,16 +2261,26 @@ public class ProcessFile
         return false;
     }
 
-    private bool TryLosslessTimestampRepair()
+    private bool TryPostDecodeTimestampRepair()
+    {
+        Log.Warning(
+            "Non-monotonic DTS is post-decode only, skipping re-encode repair : {FileName}",
+            FileInfo.FullName
+        );
+        if (!TryRemuxRepair())
+        {
+            return false;
+        }
+        Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
+        return true;
+    }
+
+    private bool TryLosslessTimestampRepair(DtsInfo? dtsInfo)
     {
         // The audio-only setts filter can repair only an audio-stream DTS, so attempt it only when every
         // non-monotonic stream is audio; a video or subtitle DTS, a post-decode-only break with no demux
         // target, or an analysis failure all stay reported failures without a wasted rewrite
-        if (
-            !GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo)
-            || dtsInfo == null
-            || !dtsInfo.NonMonotonicIsAudioOnly
-        )
+        if (dtsInfo == null || !dtsInfo.NonMonotonicIsAudioOnly)
         {
             return false;
         }

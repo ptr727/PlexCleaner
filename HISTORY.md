@@ -4,6 +4,22 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ## Release History
 
+- Version 3.23:
+  - Fixed a verify false positive that reported healthy video as `non monotonically increasing dts to muxer` and sent it down the full repair ladder.
+    - Verify decodes to the ffmpeg `null` muxer, which passes frames through with no timestamp fixup.
+    - The verify encoder used the default `1/framerate` time base, so frames closer together than one nominal frame interval rounded onto the same tick.
+    - Video with a cadence denser than its nominal frame rate (VFR, telecine remnants, odd nominal rates, or millisecond jitter) reported an equal `N >= N` DTS.
+    - The decoder output was never at fault, the repeated values only existed after rounding into the encoder time base.
+    - Verify now encodes in the demuxer time base (`-enc_time_base:v demux -enc_time_base:a demux`), which keeps the decoded timestamps at their native precision.
+    - A genuinely repeated or backward timestamp is still reported, as are demux-visible audio DTS breaks and decode corruption.
+    - Files that previously failed with this false positive verify clean with no repair.
+    - They no longer waste a re-encode on a file that was never broken.
+  - A non-monotonic DTS that only appears after decode no longer falls through to the re-encode repair tiers.
+    - When the demux packet analysis finds no non-monotonic DTS, the repair tries the lossless `setts` and remux tiers only.
+    - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
+    - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
+  - Files marked `RepairFailed` by the false positive are cleared by reprocessing them, or by the [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin, which re-verifies them.
+  - Added the `dts-timebase` and `dts-duplicate-pts` synthetic regression fixtures, a healthy VFR file that must verify clean and a repeated frame timestamp that must still fail.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

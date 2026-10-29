@@ -113,4 +113,30 @@ public class DtsInfoTests
 
         _ = dtsInfo.NonMonotonicIsAudioOnly.Should().BeFalse();
     }
+
+    [Fact]
+    public void IsPostDecodeOnly_NullAnalysis_False() =>
+        _ = DtsInfo.IsPostDecodeOnly(null).Should().BeFalse();
+
+    [Fact]
+    public void IsPostDecodeOnly_MatroskaVideoWithoutDts_True()
+    {
+        DtsInfo dtsInfo = new();
+        dtsInfo.Add(Packet(0, double.NaN, "video"));
+        dtsInfo.Add(Packet(0, double.NaN, "video"));
+        dtsInfo.Add(Packet(1, 0.04, "audio"));
+        dtsInfo.Add(Packet(1, 0.08, "audio"));
+
+        _ = DtsInfo.IsPostDecodeOnly(dtsInfo).Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsPostDecodeOnly_DemuxVisibleDts_False()
+    {
+        DtsInfo dtsInfo = new();
+        dtsInfo.Add(Packet(1, 0.08, "audio"));
+        dtsInfo.Add(Packet(1, 0.08, "audio"));
+
+        _ = DtsInfo.IsPostDecodeOnly(dtsInfo).Should().BeFalse();
+    }
 }

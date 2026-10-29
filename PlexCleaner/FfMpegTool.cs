@@ -151,15 +151,20 @@ public partial class FfMpeg
             return true;
         }
 
-        public VerifyResult VerifyMedia(string fileName)
-        {
-            // Build command line
-            Command command = GetBuilder()
+        internal static Command GetVerifyMediaCommand(string toolPath, string fileName) =>
+            Builder
+                .Create(toolPath)
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
                 .InputOptions(options => options.Default().QuickScan().InputFile(fileName))
-                .OutputOptions(options => options.Default().NullOutput())
+                // The default 1/framerate encoder time base rounds close frames onto one tick, a false non-monotonic DTS
+                // The demuxer time base keeps decoded timestamps at native precision, so only a real repeat is reported
+                .OutputOptions(options => options.Default().EncoderTimeBaseDemux().NullOutput())
                 .Build();
+
+        public VerifyResult VerifyMedia(string fileName)
+        {
+            Command command = GetVerifyMediaCommand(GetToolPath(), fileName);
 
             // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
             // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet
