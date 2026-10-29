@@ -18,6 +18,7 @@ line-length = 100
 extend-select = ["I"]  # import sorting (isort)
 
 [tool.mypy]
+files = ["."]
 python_version = "3.13"
 warn_unused_ignores = true
 warn_redundant_casts = true

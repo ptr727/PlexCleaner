@@ -150,6 +150,7 @@ def make_clip(
                 "-bitexact",
                 str(out),
             ],
+            check=False,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -158,6 +159,7 @@ def make_clip(
         # mkvmerge region cut preserves timestamp defects (ffmpeg -copyts normalizes some away)
         subprocess.run(
             ["mkvmerge", "-o", str(out), "--split", f"parts:{hms(start)}-{hms(end)}", str(src)],
+            check=False,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -184,6 +186,7 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     proc = subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
          "-t", str(seconds), "-map", "0", "-c", "copy", "-f", "mp4", str(out)],
+        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -233,6 +236,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
             "--parallel",
             "--testsnippets",
         ],
+        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -397,6 +401,7 @@ def main() -> None:
                 # the clip does not pick up a spurious ClearedTags state
                 subprocess.run(
                     ["mkvpropedit", str(pristine), "--tags", "all:"],
+                    check=False,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,

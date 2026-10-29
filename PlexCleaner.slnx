@@ -3,7 +3,6 @@
         <File Path=".github/workflows/merge-bot-pull-request.yml" />
         <File Path=".github/workflows/publish-release.yml" />
         <File Path=".github/workflows/test-pull-request.yml" />
-        <File Path=".github/workflows/validate-task.yml" />
     </Folder>
     <Folder Name="/CoPilot/">
         <File Path=".github/copilot-instructions.md" />

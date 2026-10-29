@@ -88,8 +88,10 @@ class ParseLogTests(unittest.TestCase):
             "10:00:01 [INF] <1> Interlaced video detected",
             '10:00:02 [INF] <1> MkvMerge : Video : Format: "HEVC" : Interlaced: True',
             '10:00:02 [INF] <1> MkvMerge : Video : Format: "HEVC" : Interlaced: True',
-            "2026-01-02 10:00:03.123 -07:00 [ERR] <1> Failed execution of FfMpeg : Verify : "
-            'ExitCode: 183 : "bad thing | other" : "/media/Show A.mkv"',
+            (
+                "2026-01-02 10:00:03.123 -07:00 [ERR] <1> Failed execution of FfMpeg : Verify : "
+                'ExitCode: 183 : "bad thing | other" : "/media/Show A.mkv"'
+            ),
             '10:00:04 [INF] <2> ProcessFiles : Skipping non-MKV file : "/media/B.avi"',
             "10:00:05 [ERR] <2> Failed execution of FfMpeg : ExitCode: 1",
             "not a log line",

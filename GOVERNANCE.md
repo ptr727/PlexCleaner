@@ -1,6 +1,6 @@
 # Fleet Governance Rules
 
-The cross-cutting rules every repo in the fleet follows. [`AGENTS.md`](./AGENTS.md) is the entry point agents read first and maps each task to the section here that governs it, and this file holds the rule text itself. Code style lives in [`CODESTYLE.md`](./CODESTYLE.md) and the CI/CD workflow contract in [`WORKFLOW.md`](./WORKFLOW.md).
+The cross-cutting rules every repo in the fleet follows. [`AGENTS.md`](./AGENTS.md) is the entry point agents read first and maps each task to the section here that governs it. This file holds the rule text itself. Code style lives in [`CODESTYLE.md`](./CODESTYLE.md) and the CI/CD workflow contract in [`WORKFLOW.md`](./WORKFLOW.md).
 
 Read the one section a task needs rather than the whole file. `grep -n '^## ' GOVERNANCE.md` lists them.
 
