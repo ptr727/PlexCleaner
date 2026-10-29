@@ -2,7 +2,7 @@
 name: dotnet-codestyle
 description: >-
   Governs C#/.NET code style for ptr727/ProjectTemplate fleet repos: the zero-warnings build
-  policy and its three-task clean-compile chain, central Directory.Build.props/
+  policy and its clean-compile task chain, central Directory.Build.props/
   Directory.Packages.props configuration, C# language and naming conventions, XML documentation,
   analyzer suppression scope, the library-versus-application logging split, async and
   error-handling patterns, xUnit v3 + AwesomeAssertions testing conventions, and AOT-compatible
@@ -24,39 +24,40 @@ description: >-
 This is the .NET-specific half of the fleet's code style guide, kept in one place instead of
 re-derived per repo or per session. CODESTYLE.md's General section still owns the rules every
 language shares (clean-compile verification as a concept, the suppression-scope order, tooling
-casing in prose), this Skill is everything specific to a C#/.NET project on top of that: the
-concrete `.NET Format` task chain, the analyzer configuration that makes the zero-warnings policy
-real, and the language, naming, logging, and testing conventions.
+casing in prose). On top of that, this Skill is everything specific to a C#/.NET project. That is
+the concrete `.NET Format` task chain, the analyzer configuration that makes the zero-warnings
+policy real, and the language, naming, logging, and testing conventions.
 
 ## Build requirements
 
 ### Zero warnings policy
 
-All builds must complete without warnings, enforced three ways:
+All builds must complete without warnings, enforced as follows:
 
 - **The `.NET Format` clean-compile task.** It chains `CSharpier Format` -> `.NET Build` ->
-  `dotnet format style --verify-no-changes`. A repo carries those three task definitions in its
+  `dotnet format style --verify-no-changes`. A repo carries those task definitions in its
   own `.vscode/tasks.json`, matching the canonical `vscode-tasks.json` snippet at
   `github.com/ptr727/ProjectTemplate/blob/main/catalog/snippets/configs/vscode-tasks.json`. Run
   the `.NET Format` task after any code change, before commit. To run it natively instead,
   reproduce that exact task chain (`CSharpier Format`, then `.NET Build`, then
-  `dotnet format style --verify-no-changes --severity=info --verbosity=detailed`) without dropping
-  or loosening any argument, reading it from that same canonical snippet. Bare `dotnet format`
+  `dotnet format style --verify-no-changes --severity=info --verbosity=detailed`), reading it from
+  that same canonical snippet. Reproduce it without dropping or loosening any argument. Bare `dotnet format`
   alone, skipping CSharpier or the build, is not sufficient.
 - **Analyzer configuration.** `<EnableNETAnalyzers>true</EnableNETAnalyzers>` with
   `<AnalysisLevel>latest-all</AnalysisLevel>` and `<AnalysisMode>All</AnalysisMode>` (the full
-  analyzer set), plus `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`, so any diagnostic
-  surfaced as a warning fails the build and must be fixed or deliberately suppressed at the
+  analyzer set), plus `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`. With that, any diagnostic
+  surfaced as a warning fails the build. Such a diagnostic must be fixed or deliberately suppressed at the
   narrowest scope that fits (see Analyzer suppressions below), never left to accumulate.
 - **CI lint backstop.** CI runs the clean-compile checks on every PR as the authoritative gate.
   Husky.Net is wired from the canonical `catalog/snippets/husky/` config in the hub, hub-local
   and not carried into every fleet repo. Its hook needs a .NET tool manifest declaring
   Husky.Net, which the snippet does not ship. A repo keeping no such manifest takes the other
   canonical shape, `catalog/snippets/pre-commit/`, and so does a repo that simply prefers the
-  `pre-commit` framework. Each shape carries whichever language checks its own repo keeps. A repo may also wire an equivalent hook of its own at `.husky/pre-commit`,
-  enabled with `core.hooksPath` and sourcing nothing, since the husky snippet's own hook sources
+  `pre-commit` framework. Each shape carries whichever language checks its own repo keeps.
+  A repo may also wire an equivalent hook of its own at `.husky/pre-commit`, enabled with
+  `core.hooksPath`. That hook sources nothing, since the husky snippet's own hook sources
   a file only `dotnet husky install` generates. That path and `.pre-commit-config.yaml` are the
-  two the audit reads.
+  ones the audit reads.
   GOVERNANCE.md's hub-only "Running the Linters Locally (Known-Working Invocations)" section
   carries the obligation itself, what the hook must cover, its audit treatment, and the
   per-clone enablement steps.
@@ -64,30 +65,30 @@ All builds must complete without warnings, enforced three ways:
 **A new port is not a license to silence diagnostics.** Brownfield or just-ported status never
 justifies relaxing analyzer severities or muting newly surfaced warnings. Fix them. (The only
 brownfield allowance in the fleet is the one-time git-signing / line-ending migration described in
-GOVERNANCE.md and README.md, which has nothing to do with code analysis.)
+GOVERNANCE.md and README.md. That migration has nothing to do with code analysis.)
 
 ### Central build and package configuration
 
 Shared MSBuild configuration is centralized at the repository root, never duplicated per project:
 
-- **`Directory.Build.props`** carries the properties every project shares: the analyzer set and
+- **`Directory.Build.props`** carries the properties every project shares. Those are the analyzer set and
   `TreatWarningsAsErrors` from the zero-warnings policy above, plus `LangVersion`,
   `TargetFramework` where uniform, and any repo-wide build metadata. A `.csproj` carries only what
   is genuinely project-specific (`OutputType`, `IsPackable`, project references).
-- **`Directory.Packages.props`** owns central package management: it sets
+- **`Directory.Packages.props`** owns central package management. It sets
   `ManagePackageVersionsCentrally` to `true` (in this file, not `Directory.Build.props`) and
-  declares every dependency version once as a `PackageVersion` item, so a `.csproj`'s
+  declares every dependency version once as a `PackageVersion` item. As a result, a `.csproj`'s
   `PackageReference` items are versionless. One file to review on a bump, one Dependabot surface,
   no version skew between projects.
 
 A repo whose projects still carry per-project analyzer settings or versioned `PackageReference`
-items is drifted, move the shared property or version up to the root file rather than editing it
+items is drifted. Move the shared property or version up to the root file rather than editing it
 in place.
 
 ### Build tasks
 
 Run these from VS Code's task runner (Terminal -> Run Task) or an agent's task-running tool. The
-three clean-compile tasks are carried unchanged, and a repo adds its own convenience tasks (tool
+clean-compile tasks are carried unchanged, and a repo adds its own convenience tasks (tool
 updates, dependency upgrades, benchmarks) on top:
 
 - `.NET Build`: build with diagnostic verbosity *(clean-compile)*
@@ -104,7 +105,7 @@ updates, dependency upgrades, benchmarks) on top:
 - **`dotnet-outdated-tool`** checks for dependency updates, and Nerdbank.GitVersioning owns
   version management.
 - CI is the authoritative lint backstop. A repo already keeping a .NET tool manifest declaring
-  Husky.Net wires its local pre-commit hook from `catalog/snippets/husky/` in the hub, hub-local
+  Husky.Net wires its local pre-commit hook from `catalog/snippets/husky/` in the hub. That snippet is hub-local
   and not carried into every fleet repo. A repo keeping none, or one preferring the `pre-commit`
   framework, takes `catalog/snippets/pre-commit/` instead. Either shape covers the shared doc
   gates alongside the language checks. Each snippet's own README names the per-clone steps and
@@ -125,7 +126,7 @@ For language features, naming, code structure, and XML documentation examples, s
 ## Analyzer suppressions (.NET)
 
 CODESTYLE.md's General section sets the suppression-scope order fleet-wide: narrowest scope first,
-symbol-scoped before project-scoped before repo-wide, and only for a genuine false-positive or a
+symbol-scoped before project-scoped before repo-wide. That section allows suppression only for a genuine false-positive or a
 deliberate, documented exception, never a blanket relaxation to get a brownfield port to build.
 The .NET mechanics, narrowest first:
 
@@ -158,7 +159,7 @@ The .NET mechanics, narrowest first:
    ```
 
 2. **Libraries log through abstractions, never a concrete backend.** A NuGet library depends only
-   on `Microsoft.Extensions.Logging.Abstractions` and exposes an `ILoggerFactory` seam: a settable
+   on `Microsoft.Extensions.Logging.Abstractions` and exposes an `ILoggerFactory` seam. That seam is a settable
    global factory defaulting to `NullLoggerFactory.Instance` (fallback `NullLogger.Instance`) with
    `SetFactory`/`TrySetFactory`, and/or an `ILoggerFactory`/`ILogger` parameter in its API. It
    must not reference Serilog or any sink, which would force a logging framework on every consumer
@@ -214,7 +215,7 @@ parameterized tests. A test project on `xunit.v3` 4.0.0 or later is MTP-based, a
 
 ## Project configuration
 
-.NET 10.0 target, AOT-compatible (`IsAotCompatible=true`, `VerifyReferenceAotCompatibility=true`),
+.NET 10.0 target, AOT-compatible (`IsAotCompatible=true`, with `VerifyReferenceAotCompatibility=true` only under the `PublishAot` condition),
 SourceLink, embedded untracked sources, `InternalsVisibleTo` for test/benchmark access. See
 `references/project-config.md` for the full property list.
 

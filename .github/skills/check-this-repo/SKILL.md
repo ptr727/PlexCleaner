@@ -21,52 +21,67 @@ description: >-
 
 A downstream repo today only finds out it has drifted when someone runs an audit or a resync
 against it. Nothing notices from the inside on its own. This skill is that inside check,
-run with no hub-side operator watching, so a stale Skills install or an out-of-date `AGENTS.md`
-pointer gets noticed and fixed without waiting for a fleet-wide sweep to reach this particular
-repo.
+run with no hub-side operator watching. It lets a stale Skills install or an out-of-date
+`AGENTS.md` pointer get noticed and fixed. That happens without waiting for a fleet-wide sweep to
+reach this particular repo.
 
 ## What it checks
 
 1. **Is the Skills install current on this machine.** `scripts/` is hub-hosted and reached rather
-   than carried, per GOVERNANCE.md "Hub-Hosted Tooling", so fetch a hub checkout
+   than carried, per GOVERNANCE.md "Hub-Hosted Tooling". So fetch a hub checkout
    (`github.com/ptr727/ProjectTemplate`, `main` branch, fetched fresh) and run
    `python3 scripts/skills_install.py --report` from it. A snapshot not current, or no stamp, is very often
-   the direct answer to "why isn't a fleet rule applying": the harness never loaded the current
+   the direct answer to "why isn't a fleet rule applying". That is because the harness never loaded the current
    content in the first place, and no amount of re-reading `GOVERNANCE.md` fixes that. For a
-   Claude Code session, read `live` as well, since that channel loads the registered checkout in
-   place rather than the copy: a checkout that is missing, detached, or on an old branch is an
-   answer there whatever the exit code says, and moving that checkout is the fix rather than
-   re-installing.
+   Claude Code session, read `live` as well, since that channel loads the registered directory in
+   place rather than the copy. A registered directory that is missing is an answer there whatever
+   the exit code says. So is a `live.plugin` reading `installed: false` or `enabled: false`. That reading
+   describes the user-scope install the installer makes, as Claude Code reports it for the
+   directory the report runs in. A project-level install does not count. A null there means the plugin listing could not be read.
+   - Where `live` carries `vcs: archive`, the channel serves the tree the hub's
+     `host-setup/bootstrap.sh` or `bootstrap.ps1` keeps. That tree has no git, so `branch: null` there
+     is not a detached checkout. A `live.commit` behind the hub's `main` is the answer. So is
+     a null one, which means the bootstrap could not resolve the commit it fetched. Re-running
+     `bootstrap.sh --skills` or `bootstrap.ps1 -Skills` is the fix. Where an earlier run kept the tree somewhere other than the
+     default, pass the re-run `--dir` or `-Dir` naming the parent of `live.checkout`. That is because re-running the installer from any other directory leaves an existing
+     registration where it is.
+   - Where `live` carries no `vcs` and a non-null `commit`, it names a git checkout. One that
+     is detached, `branch: null`, or on an old branch is an answer too. Moving that checkout
+     is the fix rather than re-installing.
+   - Any other shape names no registration, or one this report could not read, and the `reason`
+     it carries, where it carries one, says which.
 2. **Does this repo's own carried content still match the hub.** Compare `AGENTS.md`'s
    "Where the Rules Live" pointer text, and any other verbatim `AGENTS.md`/`GOVERNANCE.md` section
-   this repo carries, against the same hub checkout's current wording, by reading the text rather
+   this repo carries, against the same hub checkout's current wording. Do it by reading the text rather
    than by feel.
 
 ## What it is safe to fix on its own
 
-- **Re-run the installer**, `python3 scripts/skills_install.py`, from that same `main` checkout,
-  when `--report` exits non-zero.
+- **Re-run the installer**, `python3 scripts/skills_install.py --snapshot-only`, from that same
+  `main` checkout, when `--report` exits non-zero. `--snapshot-only` refreshes the copy and leaves
+  the Claude Code registration alone, since a fetched checkout is not one that registration should
+  load from.
   This is a per-machine, local-only change, nothing in it touches this repo's git history or
   needs a review.
 
 Nothing else. This skill never re-vendors a carried file, never deletes one, and never applies a
-setting or ruleset. Converging that drift is a resync, a separate change on its own branch, run
+setting or ruleset. Converging that drift is a resync, a separate change on its own branch. It is run
 per the hub's `RESYNC.md` by this repo's own session or by `resync-a-repo` from a hub checkout.
 
 ## Refresh cadence
 
-Re-run the installer from a hub checkout on a freshly fetched `main` when `--report` exits
-non-zero, and after any promotion to `main` that touches `.agents/skills/`. A copy taken from
-`develop` reads not current by design, since the snapshot is judged against the promoted
-revision. Session entry runs no automatic check, by design: the trigger is suspicion,
-and the restated-rule symptom below is the loudest form of it. `docs/host-setup.md`
-"Fleet Skills Install" in the hub states the same cadence for the host side, and an automated
-refresh stays out of scope until the fleet has evidence the manual cadence fails.
+This skill refreshes only when `--report` exits non-zero, and only with the `--snapshot-only` run
+above, from its own freshly fetched `main` checkout. A copy taken from `develop` reads not current
+by design, since the snapshot is judged against the promoted revision. Session entry runs no
+automatic check, by design. The trigger is suspicion, and the restated-rule symptom this skill
+triggers on is the loudest form of it. The refresh from the maintainer's own long-lived hub
+checkout is a different run, and `docs/host-setup.md` "Fleet Skills Install" in the hub states its
+cadence.
 
 ## What it escalates instead of touching
 
 - **A carried section that differs from the hub in a way that reads as a genuine local addition**
-  rather than plain staleness, the exact case `carried-instruction-file-guard` exists to protect.
+  rather than plain staleness. That is the exact case `carried-instruction-file-guard` exists to protect.
   Report precisely what differs and stop there, naming a resync as the next step, where
   `carried-instruction-file-guard` decides the merge.
 - **Anything the installer alone cannot resolve**, a broken `claude` CLI marketplace
