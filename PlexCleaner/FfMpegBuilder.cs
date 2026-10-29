@@ -191,6 +191,11 @@ public partial class FfMpeg
         public OutputOptions BitstreamFilterAudio(string option) =>
             BitstreamFilterAudio().Add(option);
 
+        public OutputOptions EncoderTimeBaseVideo() => Add("-enc_time_base:v");
+
+        public OutputOptions EncoderTimeBaseVideo(string option) =>
+            EncoderTimeBaseVideo().Add(option);
+
         public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
             timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
                 ? this

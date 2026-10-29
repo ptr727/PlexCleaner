@@ -20,6 +20,8 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
 - HDR survives remux: the HDR SEI is copied through an mkvmerge remux (a regression guard).
 - Closed captions on HDR: an A53 CC SEI (see ``inject_cc_sei``) on an HDR (ST 2086 / 2094) HEVC
   stream, which reaches PlexCleaner's CC-on-HDR branch.
+- DTS time base: a healthy cadence denser than the default duration, a false DTS only in a 1/framerate encoder time base.
+- DTS duplicate PTS: one repeated frame timestamp, a real repeat that verify reports at native precision.
 """
 
 import argparse
@@ -69,11 +71,19 @@ def gen_hdr10_base(out: Path, seconds: int = 6, width: int = 3840, height: int =
     )  # fmt: skip
 
 
-def gen_sdr_video(out: Path, seconds: int = 6, width: int = 320, height: int = 240) -> None:
-    """Generate a small SDR H.264 clip, used as an extra (second) video track."""
+def gen_sdr_video(
+    out: Path,
+    seconds: int = 6,
+    width: int = 320,
+    height: int = 240,
+    rate: str = "24",
+    frames: int = 0,
+) -> None:
+    """Generate a small SDR H.264 clip, an extra video track or a raw stream to retime by frame count."""
+    limit = ["-frames:v", str(frames)] if frames else []
     run(
         [FFMPEG, "-y", "-f", "lavfi",
-         "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate=24",
+         "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate={rate}", *limit,
          "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", str(out)]
     )  # fmt: skip
 
@@ -152,11 +162,46 @@ def build_hdr10plus_cc(out: Path) -> None:
     _build_hdr_cc(out, build_hdr10plus_sei() + build_cc_sei())
 
 
+def _build_retimed(out: Path, timestamps: list[float]) -> None:
+    """Mux one H.264 frame per millisecond timestamp, under a 23.976 default duration."""
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        video, timecodes = work / "video.h264", work / "timestamps.txt"
+        gen_sdr_video(video, seconds=len(timestamps), rate="24000/1001", frames=len(timestamps))
+        timecodes.write_text(
+            "# timestamp format v2\n" + "".join(f"{t:.3f}\n" for t in timestamps), encoding="utf-8"
+        )
+        run(
+            [MKVMERGE, "-o", str(out), "--default-duration", "0:24000/1001p",
+             "--timestamps", f"0:{timecodes}", str(video)]
+        )  # fmt: skip
+
+
+def build_dts_timebase(out: Path) -> None:
+    """Healthy VFR video, 23.976 cadence followed by a denser 29.97 cadence.
+
+    Every timestamp increases at 1 ms precision.
+    Verify reports a false non-monotonic DTS only when it encodes in the 1/framerate time base.
+    """
+    timestamps = [i * 1001 / 24 for i in range(48)]
+    timestamps += [timestamps[-1] + i * 1001 / 30 for i in range(1, 49)]
+    _build_retimed(out, timestamps)
+
+
+def build_dts_duplicate_pts(out: Path) -> None:
+    """23.976 video with one repeated frame timestamp, a real repeat at native precision."""
+    timestamps = [i * 1001 / 24 for i in range(96)]
+    timestamps[48] = timestamps[47]
+    _build_retimed(out, timestamps)
+
+
 TARGETS: dict[str, Callable[[Path], None]] = {
     "hdr10-base": gen_hdr10_base,
     "hdr10-multitrack": build_hdr10_multitrack,
     "hdr10-cc": build_hdr10_cc,
     "hdr10plus-cc": build_hdr10plus_cc,
+    "dts-timebase": build_dts_timebase,
+    "dts-duplicate-pts": build_dts_duplicate_pts,
 }
 
 

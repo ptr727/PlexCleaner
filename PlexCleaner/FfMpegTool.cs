@@ -151,15 +151,36 @@ public partial class FfMpeg
             return true;
         }
 
-        public VerifyResult VerifyMedia(string fileName)
-        {
-            // Build command line
-            Command command = GetBuilder()
+        // FFmpeg 6.1 and later accept the demux keyword, older versions spell the input stream time base as -1
+        // An unparsed version is taken to be a current git build, which may no longer accept -1
+        internal static string GetDemuxTimeBase(string version) =>
+            Version.TryParse(version, out Version? parsed) && parsed < new Version(6, 1)
+                ? "-1"
+                : "demux";
+
+        internal static Command GetVerifyMediaCommand(
+            string toolPath,
+            string toolVersion,
+            string fileName
+        ) =>
+            Builder
+                .Create(toolPath)
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
                 .InputOptions(options => options.Default().QuickScan().InputFile(fileName))
-                .OutputOptions(options => options.Default().NullOutput())
+                // The default 1/framerate encoder time base rounds close frames onto one tick, a false non-monotonic DTS
+                // The demuxer time base keeps decoded timestamps at native precision, so only a real repeat is reported
+                .OutputOptions(options =>
+                    options
+                        .Default()
+                        .EncoderTimeBaseVideo(GetDemuxTimeBase(toolVersion))
+                        .NullOutput()
+                )
                 .Build();
+
+        public VerifyResult VerifyMedia(string fileName)
+        {
+            Command command = GetVerifyMediaCommand(GetToolPath(), Info.Version, fileName);
 
             // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
             // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet

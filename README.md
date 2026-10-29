@@ -23,12 +23,12 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.22**:
+**Version: 3.23**:
 
 **Summary:**
 
-- Added always-on runtime metrics with operation-weighted progress, published via `System.Diagnostics.Metrics` and readable with `dotnet-counters`.
-- Bundled a `counters` wrapper in the Docker image for reading the metrics with a single command.
+- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
+- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
