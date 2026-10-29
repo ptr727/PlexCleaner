@@ -246,11 +246,11 @@ sudo chmod -R ug=rwx,o=rx /data/media
 
 ```shell
 # Replace /data/media with your actual media directory
-# Replace the 1001:100 with your nonroot:users
+# Replace nonroot with the user that owns your media, its primary group is used
 docker run \
   -it --rm --pull always \
   --name PlexCleaner \
-  --user 1001:100 \
+  --user "$(id -u nonroot):$(id -g nonroot)" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -937,13 +937,15 @@ dotnet test
 
 The [`test.sh`](./Docker/test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
 
-The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.
+The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container. It writes its output to a temporary directory, so it runs as the same non-root user as the rest of the stack.
 
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
+# Replace nonroot with the user that owns your media, its primary group is used
 docker run \
   -it --rm \
+  --user "$(id -u nonroot):$(id -g nonroot)" \
   --name PlexCleaner-Test \
   docker.io/ptr727/plexcleaner:latest \
   /Test/test.sh

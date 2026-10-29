@@ -182,6 +182,10 @@
                 "run",
                 "-it",
                 "--rm",
+                {
+                    "value": "--user=$(id -u nonroot):$(id -g nonroot)",
+                    "quoting": "weak"
+                },
                 "--name=PlexCleaner-Test",
                 "plexcleaner:ubuntu",
                 "/Test/test.sh"

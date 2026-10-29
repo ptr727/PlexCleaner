@@ -112,7 +112,7 @@ DockerCommon=(
     "${TtyArg[@]}"
     --rm
     --name PlexCleaner-RegressionTest
-    --user nobody:users
+    --user "$(id -u nonroot):$(id -g nonroot)"
     --env TZ=America/Los_Angeles
 )
 
@@ -357,9 +357,9 @@ RunRegressionTests() {
         fi
     done
 
-    # Root populates the version directory, but the containers run as nobody:users and write into it.
+    # Root populates the version directory, but the containers run as nonroot:users and write into it.
     # Hand it to that user so the writes succeed regardless of the parent directory's ownership or ACLs.
-    chown -R nobody:users "$VersionDir"
+    chown -R nonroot:users "$VersionDir"
 
     RunDefaultSettings "$Tag" "$Version"
     # RunCreateSchema "$Tag" "$Version"

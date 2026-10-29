@@ -12,12 +12,14 @@ case "${1-}" in
 Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
 Uses /Test/PlexCleaner.json when present, otherwise the default settings.
+Writes its output to a new temporary directory, so it runs as a non-root user.
+Replace nonroot with the user that owns the media, its primary group is used.
 
 Test a local build:
-  docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
+  docker run -it --rm --user "$(id -u nonroot):$(id -g nonroot)" --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
 
 Test a published image against local media and settings:
-  docker run -it --rm --pull always --user nobody:users --name PlexCleaner-Test \
+  docker run -it --rm --pull always --user "$(id -u nonroot):$(id -g nonroot)" --name PlexCleaner-Test \
     --env TZ=America/Los_Angeles \
     --volume /data/media/test:/Test/Media:rw \
     --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
@@ -40,61 +42,63 @@ MediaPath=/Test/Media
 # Settings file
 SettingsFile=/Test/PlexCleaner.json
 
-# Test path
-TestPath=/Test
+# The image's /Test is root-owned, so output goes to a directory any user can write.
+TestPath="$(mktemp -d)"
 
 set -x
 
 # Test for "/Test/Media" directory
-if [ ! -d $MediaPath ]; then
+if [ ! -d "$MediaPath" ]; then
+    MediaPath="$TestPath/Media"
     # Download Matroska test files: https://github.com/ietf-wg-cellar/matroska-test-files
-    wget --progress=bar:force -O $TestPath/matroska-test-files.zip https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
-    7z e -o$MediaPath $TestPath/matroska-test-files.zip '*.mkv' -r
-    rm $TestPath/matroska-test-files.zip
+    wget --progress=bar:force -O "$TestPath/matroska-test-files.zip" https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
+    7z e -o"$MediaPath" "$TestPath/matroska-test-files.zip" '*.mkv' -r
+    rm "$TestPath/matroska-test-files.zip"
 fi
 
 # Basic commands (no settings file required)
 $PlexCleanerApp --version
 $PlexCleanerApp --help
-$PlexCleanerApp defaultsettings --settingsfile $TestPath/PlexCleaner.default.json
-$PlexCleanerApp createschema --schemafile $TestPath/PlexCleaner.schema.json
+$PlexCleanerApp defaultsettings --settingsfile "$TestPath/PlexCleaner.default.json"
+$PlexCleanerApp createschema --schemafile "$TestPath/PlexCleaner.schema.json"
 
 # Test for "/Test/PlexCleaner.json" file
-if [ ! -e $SettingsFile ]; then
+if [ ! -e "$SettingsFile" ]; then
     # Use default config
-    cp $TestPath/PlexCleaner.default.json $SettingsFile
+    SettingsFile="$TestPath/PlexCleaner.json"
+    cp "$TestPath/PlexCleaner.default.json" "$SettingsFile"
 fi
 
 # Basic commands (settings file required)
-$PlexCleanerApp getversioninfo --settingsfile $SettingsFile
+$PlexCleanerApp getversioninfo --settingsfile "$SettingsFile"
 
 # Not supported on Linux
-# $PlexCleanerApp checkfornewtools --settingsfile $SettingsFile
+# $PlexCleanerApp checkfornewtools --settingsfile "$SettingsFile"
 
 # File processing commands (settings file required, media files required)
 # Take care of order of commands to not interfere with sidecar logic
 
 # Run process command first
-$PlexCleanerApp process --settingsfile $SettingsFile --logfile $TestPath/PlexCleaner.log --logwarning --mediafiles $MediaPath --testsnippets --resultsfile $TestPath/Results.json
+$PlexCleanerApp process --settingsfile "$SettingsFile" --logfile "$TestPath/PlexCleaner.log" --logwarning --mediafiles "$MediaPath" --testsnippets --resultsfile "$TestPath/Results.json"
 
 # Info/Testing commands
-$PlexCleanerApp verify --settingsfile $SettingsFile --mediafiles $MediaPath --quickscan
-$PlexCleanerApp testmediainfo --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp updatesidecar --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp getsidecarinfo --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp gettagmap --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp getmediainfo --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp gettoolinfo --settingsfile $SettingsFile --mediafiles $MediaPath
+$PlexCleanerApp verify --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
+$PlexCleanerApp testmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp updatesidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp getsidecarinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp gettagmap --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp getmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp gettoolinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
 
 # Run createsidecar after sidecar state is no longer required
-$PlexCleanerApp createsidecar --settingsfile $SettingsFile --mediafiles $MediaPath
+$PlexCleanerApp createsidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
 
 # Processing commands
-$PlexCleanerApp remux --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp reencode --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp deinterlace --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp removesubtitles --settingsfile $SettingsFile --mediafiles $MediaPath
-$PlexCleanerApp removeclosedcaptions --settingsfile $SettingsFile --mediafiles $MediaPath --quickscan
+$PlexCleanerApp remux --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp reencode --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp deinterlace --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp removesubtitles --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+$PlexCleanerApp removeclosedcaptions --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
 
 # Not readily testable
-# $PlexCleanerApp monitor --settingsfile $SettingsFile --mediafiles $MediaPath
+# $PlexCleanerApp monitor --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
