@@ -5,7 +5,7 @@
 #
 #   uvx ruff@latest check .
 #   uvx ruff@latest format --check .
-#   uvx mypy@latest
+#   uvx mypy@latest .
 #
 # These run the latest tools, matching the VSCode tasks.
 # CI runs the same latest tools through the hub's reusable validator.
