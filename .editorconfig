@@ -13,9 +13,9 @@
 # Root config
 root = true
 
-# Defaults: LF is the default, and only the CRLF exception below is declared.
+# Defaults: LF is the default, and only the CRLF exceptions below are declared.
 # `.gitattributes` mirrors these two defaults as Git's normalization fallback.
-# CI verifies the committed bytes against this file.
+# CI verifies the checked-out files against this file.
 [*]
 charset = utf-8
 end_of_line = lf
@@ -36,7 +36,7 @@ indent_size = 2
 [*.{yml,yaml}]
 indent_size = 2
 
-# Windows batch and command scripts: the one CRLF exception to the `[*]` LF default above.
+# Windows batch and command scripts: a CRLF exception to the `[*]` LF default above.
 [*.{bat,cmd}]
 end_of_line = crlf
 

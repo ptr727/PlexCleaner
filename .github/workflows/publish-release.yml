@@ -6,9 +6,9 @@ name: Publish project release action
 # stable/`latest`, develop => prerelease/`develop`). Building only the trigger branch keeps github.ref aligned
 # with the branch being versioned, so NBGV classifies it correctly with no matrix and no cross-branch ref leak.
 #
-# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run. To
-# release develop, dispatch this workflow from the develop branch. CI/validation runs separately on push
-# (test-pull-request); this never runs on push.
+# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run.
+# To release develop, dispatch this workflow from the develop branch.
+# CI validation runs separately on each pull request (test-pull-request), and this never runs on push.
 #
 # The release-gate decision, the build/version/publish job graph, the Docker core, and the Docker Hub
 # overview are hub-hosted reusable tasks, per docs/reusable-workflows.md "Adopting the Release Chain". The
@@ -19,10 +19,10 @@ on:
     # Weekly rebuild/publish of main (Mon 02:00 UTC) to pick up base-image updates.
     - cron: '0 2 * * MON'
 
-# Global, ref-independent group so two publishes never overlap (a schedule + a manual dispatch, or back-to-back
-# dispatches). cancel-in-progress: false so a publish is never cancelled mid-release.
+# GOVERNANCE.md "Workflow YAML Conventions" Concurrency exception (2).
+# There is no push trigger and the schedule publishes, so no run appends the run_id suffix D7.1 describes.
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 # GITHUB_TOKEN gets no scope by default, and each job below grants only what its task writes with.
@@ -35,28 +35,25 @@ jobs:
   # rather than resolving publish == false, so a mistyped release attempt is visible instead of a silent no-op.
   plan:
     name: Plan release job
-    uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@ab9d050b55e246c8e5563ac1264709d1c33b5552 # 2.0.1198
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
     with:
       event_name: ${{ github.event_name }}
       actor: ${{ github.actor }}
       ref_name: ${{ github.ref_name }}
 
-  # The same gate the PR runs, on the branch tip, running only when a publish will happen. Still this repo's
-  # own validate-task.yml rather than the hub's. The unit-test step matches the hub's now that
-  # ptr727/ProjectTemplate#1107 migrated it, but the hub's task declares no ref input and checks out the
-  # caller's default ref, where ref: github.sha below is what makes the publish gate validate the exact commit
-  # being published, per D4.6. Adopting it as-is would validate a different tree.
+  # The same reusable gate the PR runs, on the branch tip, running only when a publish will happen.
   validate:
     name: Validate job
     needs: [plan]
     if: ${{ needs.plan.outputs.publish == 'true' }}
-    uses: ./.github/workflows/validate-task.yml
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
     permissions:
       contents: read
-    # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
-    secrets: inherit
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
-      ref: ${{ github.sha }}
+      python-directories: |
+        RegressionTests
 
   # Build, version, and publish the triggering branch: the multi-runtime PlexCleaner.7z and the multi-arch
   # Docker image, then the GitHub release. Grants the write scopes the hub task needs, since it declares none
@@ -67,7 +64,7 @@ jobs:
     needs: [plan, validate]
     if: >-
       ${{ needs.plan.outputs.publish == 'true' && needs.validate.result == 'success' }}
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@ab9d050b55e246c8e5563ac1264709d1c33b5552 # 2.0.1198
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
@@ -98,7 +95,7 @@ jobs:
       ${{ needs.plan.outputs.publish == 'true' && needs.publish.result == 'success' }}
     permissions:
       contents: read
-    uses: ptr727/ProjectTemplate/.github/workflows/publish-docker-readme-task.yml@ab9d050b55e246c8e5563ac1264709d1c33b5552 # 2.0.1198
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-docker-readme-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
     with:
       ref: ${{ github.sha }}
       branch: ${{ github.ref_name }}

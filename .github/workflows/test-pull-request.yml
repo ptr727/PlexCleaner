@@ -1,17 +1,8 @@
 name: Test pull request action
 
-# CI for every branch. Runs on push so the reusable tasks resolve from the pushed head: a PR that edits a
-# workflow tests its own copy. validate (unit tests + lint) and smoke-build run on every push with no paths
-# filter, so a reusable-workflow change is always exercised. The aggregator below is the ruleset required
-# status check, produced here on the head SHA. CI never publishes (the publisher runs on schedule/dispatch).
-#
-# There is deliberately no pull_request trigger: a fork PR cannot push to this repo, so it produces no run
-# and cannot satisfy the required check. A maintainer lands such a contribution on an in-repo branch (which
-# pushes, and so validates) before merging. This is the documented exception (see WORKFLOW.md).
 on:
-  # All branches, but not tags: release tags must not re-run CI.
-  push:
-    branches: ['**']
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
@@ -23,25 +14,55 @@ permissions: {}
 
 jobs:
 
-  # `!github.event.deleted` skips a branch-deletion push (github.sha is all-zeros, so checkout/build fail).
-  # The same unit-test + lint gate the publisher runs, so the PR gate and the publish gate are identical.
-  # Still this repo's own validate-task.yml rather than the hub's. The unit-test step matches the hub's now,
-  # but the hub's task declares no ref input, which publish-release.yml's own validate job needs (see there).
-  validate:
-    name: Validate job
-    if: ${{ !github.event.deleted }}
-    uses: ./.github/workflows/validate-task.yml
+  # The repo builds one combined release target, executable plus Docker image, so one entry lists its paths (D1.1).
+  changes:
+    name: Detect changed targets job
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-    # Thread CODECOV_TOKEN through so the unit-test job can upload coverage.
-    secrets: inherit
+      pull-requests: read
+    outputs:
+      release: ${{ steps.filter.outputs.release }}
+    steps:
+      - name: Checkout code step
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Filter changed paths step
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            release:
+              - 'PlexCleaner/**'
+              - 'PlexCleanerTests/**'
+              - 'Plugins/**'
+              - 'Samples/**'
+              - 'Docker/Dockerfile'
+              - 'Docker/*.sh'
+              - '.dockerignore'
+              - '.editorconfig'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'version.json'
 
-  # Build and pack both targets (executable + Docker) to prove they ship, publishing nothing. smoke: true
-  # hard-disables every publish path in the hub release task, so a smoke run cannot release or push an image.
+  validate:
+    name: Validate sources job
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
+    permissions:
+      contents: read
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      python-directories: |
+        RegressionTests
+
+  # Never publishes and never uploads (D1.3), since smoke: true disables every publish path in build-release-task.
+  # The Docker Hub secrets are mapped even on smoke, since the hub task logs in on every build for the higher rate limit.
   smoke-build:
     name: Smoke build job
-    if: ${{ !github.event.deleted }}
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@ab9d050b55e246c8e5563ac1264709d1c33b5552 # 2.0.1198
+    needs: [changes]
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.release == 'true'
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@77d7ca35011a92edb39d403f961040df3e7dd411 # 2.0.1251
     permissions:
       contents: read
     secrets:
@@ -49,30 +70,29 @@ jobs:
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     with:
       smoke: true
-      # Never publish from CI.
       github: false
       dockerhub: false
-      branch: ${{ github.ref_name }}
       enable_docker: true
       enable_dotnet_publish: true
       enable_nuget: false
       enable_pypi: false
       docker_image: ptr727/plexcleaner
       dotnet_publish_project: ./PlexCleaner/PlexCleaner.csproj
+      # On a pull_request event github.ref_name is the PR ref, so the logical branch reads base_ref first.
+      branch: ${{ github.base_ref || github.ref_name }}
 
-  # Single required status check. Its name is the ruleset-bound context in the hub's repo-config payloads. Do
-  # not rename it without updating those in lockstep. Must succeed, not merely not-fail. Skips on a branch
-  # deletion (when validate/smoke-build also skip), so the deletion push does not fail this required check.
+  # Single required status check, its name bound to the ruleset context (D1.5).
+  # A skipped smoke-build, an unchanged target, passes, and a failure or cancellation blocks.
   check-workflow-status:
     name: Check pull request workflow status job
     runs-on: ubuntu-latest
-    needs: [validate, smoke-build]
-    if: ${{ always() && !github.event.deleted }}
+    needs: [changes, validate, smoke-build]
+    if: always()
     steps:
       - name: Check workflow results step
         run: |
           set -Eeuo pipefail
-          for result in "validate:${{ needs.validate.result }}" "smoke-build:${{ needs.smoke-build.result }}"; do
+          for result in "changes:${{ needs.changes.result }}" "validate:${{ needs.validate.result }}"; do
             name="${result%%:*}"
             value="${result#*:}"
             if [[ "$value" != "success" ]]; then
@@ -80,3 +100,7 @@ jobs:
               exit 1
             fi
           done
+          if [[ "${{ needs.smoke-build.result }}" != "success" && "${{ needs.smoke-build.result }}" != "skipped" ]]; then
+            echo "::error::Job 'smoke-build' did not succeed (${{ needs.smoke-build.result }})."
+            exit 1
+          fi

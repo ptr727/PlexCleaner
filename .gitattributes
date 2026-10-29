@@ -1,5 +1,7 @@
-# Normalize every detected text file to LF in the index and on checkout.
-# `text=auto` leaves binary files byte-preserved.
+# Normalize a detected text file to LF in the index when it is first added or renormalized.
+# Check such a file out to LF except where a CRLF pin below applies.
+# `text=auto` byte-preserves only files Git's heuristic detects as binary.
+# A text-shaped file whose bytes have to be kept needs its own `-text` or `binary` pin.
 * text=auto eol=lf
 
 # Windows command scripts require CRLF.

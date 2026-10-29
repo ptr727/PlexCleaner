@@ -18,8 +18,8 @@ description: >-
 ## Why this exists
 
 STANDUP.md's own section order exists because several of its steps close a window that cannot be
-reopened cheaply: commit signing has to be correct before the first commit, the long-lived
-branches have to exist before any standup commit lands on one, and the instruction set has to be
+reopened cheaply. Commit signing has to be correct before the first commit. The long-lived
+branches have to exist before any standup commit lands on one. The instruction set has to be
 carried before anything else is authored against it. This skill exists so that order survives
 contact with a real, time-pressured standup instead of depending on an agent remembering to run
 each gate unprompted. It is a driver over STANDUP.md, not a replacement for it. Read STANDUP.md
@@ -29,8 +29,8 @@ cold-start self-test.
 ## Before starting
 
 Read STANDUP.md section 0A first. Nothing in this procedure creates the GitHub repository, its
-App, or its secrets, each an outward-facing write that needs the maintainer's explicit permission
-and inputs, so hand that checklist over before step 1 rather than discovering the gap partway
+App, or its secrets. Each is an outward-facing write that needs the maintainer's explicit permission
+and inputs. So hand that checklist over before step 1 rather than discovering the gap partway
 through. A repo with no remote is not partially stood up, it is not started, and only the
 maintainer can supply what section 0A lists.
 
@@ -51,42 +51,46 @@ maintainer can supply what section 0A lists.
    section 2, then write or repair its `registry/repos.json` entry and confirm it with
    `spec/validate.py`.
 
-4. **The instruction set, before authoring anything.** STANDUP.md section 1A: carry `CLAUDE.md`,
+4. **The instruction set, before authoring anything.** STANDUP.md section 1A. An existing
+   repository that `docs/eol-lf-rollout.md` "Per-Repo Conversion" says needs a line-ending
+   conversion lands that conversion first, as its own merged pull request. In that case, the feature
+   branch from step 2 is cut again from `develop` after that pull request merges. Then carry `CLAUDE.md`,
    `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, `WORKFLOW.md` and `AUDIT.md`, adapted rather
    than cloned for the ones that describe a repo, plus `.markdownlint-cli2.jsonc` and
    `cspell.json`. `CLAUDE.md` is the fixed, verbatim `@AGENTS.md`-import file that gets
-   `AGENTS.md` into a Claude Code session's context at all, a separate baseline entry from
+   `AGENTS.md` into a Claude Code session's context at all. It is a separate baseline entry from
    `AGENTS.md` itself, so carrying one without the other still leaves that provider unconfigured.
    Read `CODESTYLE.md` and the `GOVERNANCE.md` documentation-style rules before writing any repo
    content of your own, the same window-closes shape as signing in step 1.
 
 5. **Capture the source, if one exists.** STANDUP.md section 1B, only when the repo's content
-   replaces a live external system: capture it and verify the capture against the source before
-   anything is scaffolded from it, since the source is not under version control and cannot be
+   replaces a live external system. In that case, capture it and verify the capture against the source before
+   anything is scaffolded from it. The reason is that the source is not under version control and cannot be
    re-derived once it stops serving.
 
 6. **The baseline files.** STANDUP.md section 2: copy every `spec/files.json` entry whose
-   `appliesTo` matches the repo's selector set, adapted rather than cloned, and choose
+   `appliesTo` matches the repo's selector set, adapted rather than cloned. Also choose
    `version.json`'s version floor deliberately rather than propagating the template's. Carry
-   `AGENTS.md`'s skill-dependency pointer paragraph, naming `scripts/skills_install.py` and where
-   the fleet's Skills live, as one more verbatim unit in this same step, not a separate pass, the
-   identical requirement `RESYNC.md` places on a repo already stood up.
+   `AGENTS.md`'s skill-dependency pointer paragraph in this same step, as one more verbatim unit
+   and not a separate pass. The paragraph names `scripts/skills_install.py` and where
+   the fleet's Skills live. `RESYNC.md` places the
+   same carry requirement on a repo already stood up.
 
 7. **The workflows.** STANDUP.md section 3: implement the Actions `WORKFLOW.md` requires for the
    repo's type, reusing `catalog/snippets/workflows/` as the reference implementation rather than
    inventing a shape.
 
 8. **Settings, rulesets, and secrets.** STANDUP.md section 4: confirm the remote and the GitHub
-   repository agree before running anything else here, then run
+   repository agree before running anything else here. Then run
    `repo-config/configure.sh check owner/repo release` (substitute `operational` for an
    operational repo) from the hub at `main`. A non-zero exit there means drift was found, not a
-   command failure. Review what it reports. Then run the same command's `apply` subcommand, which
+   command failure. Review what it reports. Then run the same command's `apply` subcommand, never from a hand-built or carried copy. It
    idempotently reconciles the repo to the full committed configuration regardless of what `check`
-   reported, never from a hand-built or carried copy.
+   reported.
 
 9. **Verify with the audit.** STANDUP.md section 5: run `AUDIT.md` end to end. The repo is stood
-   up only when it passes for its type, or its residual deltas are tracked in
-   `reports/<repo>/audit.md` plus an issue.
+   up only when it passes for its type, or a hub-committed `reports/<repo>/audit.md`
+   plus an issue tracks its residual deltas.
 
 ## Onboarding a new repo type
 
@@ -94,7 +98,7 @@ When a repo matches no existing type in `spec/project-types.json`, that is a typ
 a repo to force into the nearest existing one. STANDUP.md's "Onboarding a New Repo Type" section
 covers the manifest additions (`spec/project-types.json`, `spec/files.json`, `spec/secrets.json`,
 `spec/scope-model.md`, `spec/type-model.md`, and the `registry/repos.schema.json` target enum for
-a new publish destination) and the cold-start self-test that proves the result usable by a
+a new publish destination). It also covers the cold-start self-test, which proves the result usable by a
 context-free agent, not just by the one that wrote it.
 
 ## Ship it

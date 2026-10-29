@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck source=/dev/null
 . "$(dirname "$0")/_/husky.sh"
 
 # C# formatting and style (CSharpier + dotnet format), see task-runner.json

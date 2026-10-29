@@ -52,6 +52,7 @@ def run(cmd: list[str]) -> str:
     # machine is diagnosable rather than a bare non-zero exit.
     proc = subprocess.run(
         cmd,
+        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
