@@ -256,7 +256,7 @@
                 "--pull=always",
                 "--volume=${workspaceFolder}:/check",
                 "--workdir=/check",
-                "mstruebing/editorconfig-checker:latest"
+                "ghcr.io/editorconfig-checker/editorconfig-checker:latest"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -367,6 +367,28 @@
             "args": [
                 "mypy",
                 "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/RegressionTests"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Python Test",
+            "type": "shell",
+            "command": "uvx",
+            "args": [
+                "coverage@latest",
+                "run",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/RegressionTests"
