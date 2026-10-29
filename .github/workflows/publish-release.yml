@@ -6,9 +6,9 @@ name: Publish project release action
 # stable/`latest`, develop => prerelease/`develop`). Building only the trigger branch keeps github.ref aligned
 # with the branch being versioned, so NBGV classifies it correctly with no matrix and no cross-branch ref leak.
 #
-# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run. To
-# release develop, dispatch this workflow from the develop branch. CI validation runs separately on each
-# pull request (test-pull-request); this never runs on push.
+# Merges do NOT publish: accumulated changes (mostly Dependabot bumps) ship in the next scheduled run.
+# To release develop, dispatch this workflow from the develop branch.
+# CI validation runs separately on each pull request (test-pull-request), and this never runs on push.
 #
 # The release-gate decision, the build/version/publish job graph, the Docker core, and the Docker Hub
 # overview are hub-hosted reusable tasks, per docs/reusable-workflows.md "Adopting the Release Chain". The

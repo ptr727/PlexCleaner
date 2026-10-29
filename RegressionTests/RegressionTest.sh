@@ -133,7 +133,7 @@ ProvisionDataset() {
     zfs clone "$CorpusSnap" "$TestDataset"
     zfs snapshot "$Snapshot"
 
-    # best-effort cleanup of retired clones (succeeds once the holders have restarted/closed)
+    # Clean up retired clones on a best-effort basis, which succeeds once the holders have restarted or closed.
     local Retired
     for Retired in $(zfs list -H -o name 2>/dev/null | grep -E "^$TestDataset-retired-" || true); do
         zfs destroy -r "$Retired" 2>/dev/null &&
@@ -317,8 +317,8 @@ RunRegressionTests() {
     fi
     echo "Build version for $Image:$Tag is $Version"
 
-    # Create the version directory, overwriting existing files on a re-run of the same build
-    # reduced-corpus runs get their own results directory so they never clobber the full baseline
+    # Create the version directory, overwriting existing files on a re-run of the same build.
+    # A reduced-corpus run gets its own results directory, so it never clobbers the full baseline.
     local VersionDir="$HostConfig/$Version"
     [[ "$Corpus" == "reduced" ]] && VersionDir="$HostConfig/$Version-reduced"
     mkdir -p "$VersionDir"
@@ -328,7 +328,7 @@ RunRegressionTests() {
 
     WriteBuildInfo "$Tag" "$Version" "$VersionDir"
 
-    # v3.20+ appends to the log file by default and supports --logclear to clear on re-run
+    # Version 3.20 and later append to the log file by default and support --logclear to clear on re-run.
     # Debug level logs each tool invocation with its command line, so a failure can be reproduced directly
     local LogOptions=(--logclear --loglevel Debug)
 
@@ -349,19 +349,18 @@ RunRegressionTests() {
         fi
     done
 
-    # The version directory was populated as root (mkdir, settings copy, buildinfo, plugin DLLs), but
-    # the containers run as nobody:users and write their logs and results into it; hand it to that
-    # user so the writes succeed regardless of the parent directory's ownership or ACLs.
+    # Root populates the version directory, but the containers run as nobody:users and write into it.
+    # Hand it to that user so the writes succeed regardless of the parent directory's ownership or ACLs.
     chown -R nobody:users "$VersionDir"
 
     RunDefaultSettings "$Tag" "$Version"
     # RunCreateSchema "$Tag" "$Version"
 
-    # Provision a pristine clone of the corpus, process it, then run each built plugin on the
-    # processed results to confirm it loads and runs; per-plugin behaviour is verified in isolation
+    # Provision a pristine clone of the corpus, process it, then run each built plugin on the results.
+    # This only confirms each plugin loads and runs, since per-plugin behavior is verified in isolation.
     ProvisionDataset
-    # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e,
-    # so a failed run never leaves the shared test dataset mutated; disarmed after the clean restore.
+    # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e.
+    # A failed run then never leaves the shared test dataset mutated, and the clean restore disarms the trap.
     trap 'RestoreDataset' EXIT
     RunProcess "$Tag" "$Version"
     for Dll in "${BuiltPlugins[@]}"; do

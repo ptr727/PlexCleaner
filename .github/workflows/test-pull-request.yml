@@ -61,7 +61,7 @@ jobs:
         RegressionTests
 
   # Never publishes and never uploads (D1.3), since smoke: true disables every publish path in build-release-task.
-  # The Docker Hub secrets are mapped even on smoke, since the hub task logs in to Docker Hub on every build for the higher rate limit.
+  # The Docker Hub secrets are mapped even on smoke, since the hub task logs in on every build for the higher rate limit.
   smoke-build:
     name: Smoke build job
     needs: [changes]
