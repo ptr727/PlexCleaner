@@ -1,14 +1,7 @@
 # Linter-only configuration for the RegressionTests Python utilities.
 #
-# These are standalone stdlib-only scripts (no runtime dependencies), so this file carries no
-# project/build metadata - only the ruff + mypy config. Run the tools with uv (no install needed):
-#
-#   uvx ruff@latest check .
-#   uvx ruff@latest format --check .
-#   uvx mypy@latest .
-#
-# These run the latest tools, matching the VSCode tasks.
-# CI runs the same latest tools through the hub's reusable validator.
+# The scripts are stdlib-only, so this file carries only the ruff and mypy config.
+# README.md "Python tooling" gives the commands, which run the latest tools as the VS Code tasks and CI do.
 
 [tool.ruff]
 target-version = "py313"
