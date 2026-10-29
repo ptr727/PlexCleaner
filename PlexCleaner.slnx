@@ -12,6 +12,7 @@
     </Folder>
     <Folder Name="/Docker/">
         <File Path="Docker/build.sh" />
+        <File Path="Docker/counters.sh" />
         <File Path="Docker/install-debug-tools.sh" />
         <File Path="Docker/README.md" />
         <File Path="Docker/test.sh" />

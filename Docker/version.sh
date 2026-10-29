@@ -10,7 +10,7 @@ case "${1-}" in
     ;;
 esac
 if [[ $# -ne 0 ]]; then
-    echo "version.sh: unknown argument: $1" >&2
+    echo "version.sh: unknown argument: $1, it takes no arguments, see --help" >&2
     exit 2
 fi
 

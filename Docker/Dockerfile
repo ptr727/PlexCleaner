@@ -64,7 +64,7 @@ COPY ./Plugins/. ./Plugins/.
 COPY ./.editorconfig ./
 COPY ./Directory.Build.props ./
 COPY ./Directory.Packages.props ./
-# The builder needs global.json before build.sh runs the tests, since it opts dotnet test into Microsoft.Testing.Platform.
+# The global.json file opts dotnet test into Microsoft.Testing.Platform, so the builder needs it before build.sh runs the tests.
 COPY ./global.json ./
 
 # Build project

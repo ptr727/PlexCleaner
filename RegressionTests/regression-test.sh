@@ -49,7 +49,7 @@ EOF
 }
 
 UnknownArgument() {
-    echo "regression-test.sh: unknown argument: $1" >&2
+    echo "regression-test.sh: unknown argument: '$1'" >&2
     Usage >&2
     exit 2
 }
@@ -64,7 +64,7 @@ for Arg in "$@"; do
     [[ "$Arg" == -* ]] && UnknownArgument "$Arg"
 done
 
-Mode="${1:-quick}"
+Mode="${1-quick}"
 case "$Mode" in
 quick | full) ;;
 *) UnknownArgument "$Mode" ;;
@@ -378,7 +378,7 @@ RunRegressionTests() {
 }
 
 Tag="${2:-develop}"
-Corpus="${3:-full}"
+Corpus="${3-full}"
 case "$Corpus" in
 full | reduced) ;;
 *) UnknownArgument "$Corpus" ;;
@@ -386,7 +386,10 @@ esac
 Plugins=("${@:4}")
 [[ ${#Plugins[@]} -eq 0 ]] && Plugins=("$DefaultPlugin")
 for Plugin in "${Plugins[@]}"; do
-    [[ -v "PluginRegistry[$Plugin]" ]] || UnknownArgument "$Plugin"
+    if [[ ! -v "PluginRegistry[$Plugin]" ]]; then
+        echo "Known plugins: ${!PluginRegistry[*]}" >&2
+        UnknownArgument "$Plugin"
+    fi
 done
 
 if [[ "$(id -u)" -ne 0 ]]; then
