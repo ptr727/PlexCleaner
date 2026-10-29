@@ -174,8 +174,8 @@ pull request that edits CI therefore tests its own definition. The publisher cal
 against the commit it publishes, so the CI gate and the publish gate apply one definition. A hub-pin bump
 changes only workflow files, so its pull request validates at the new pin without a smoke build. A
 Dependabot bump merges itself. The first build at a new release-task pin is then the next pull request
-touching a release path on the branch the bump targets, or a dispatch of CI on the bump branch before it
-merges. For `main` it can also be the scheduled publish.
+touching a release path on the branch the bump targets. A maintainer can instead dispatch CI on the bump
+branch before it merges. For `main` it can also be the scheduled publish.
 
 ### The two-target release seam
 
