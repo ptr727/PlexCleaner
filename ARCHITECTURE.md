@@ -395,8 +395,8 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - Supported architectures: `linux/amd64`, `linux/arm64` (no longer supporting `linux/arm/v7`)
 - Tool installation: Ubuntu package manager (apt)
 - Media tool versions match Windows versions for consistent behavior
-- Test script: `Docker/Test.sh` validates all commands
-- Version extraction: `Docker/Version.sh` captures tool versions for README
+- Test script: `Docker/test.sh` validates all commands
+- Version extraction: `Docker/version.sh` captures tool versions for README
 - User: Runs as `nonroot` user in containers
 - Volumes: `/media` for media files and configuration
 

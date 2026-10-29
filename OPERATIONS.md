@@ -18,10 +18,10 @@ Merges never publish. The publisher (`publish-release.yml`) runs on a weekly sch
 
 ### Test the Docker image
 
-[Docker/Test.sh](./Docker/Test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container:
+[Docker/test.sh](./Docker/test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container:
 
 ```sh
-docker run -it --rm --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/Test.sh
+docker run -it --rm --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/test.sh
 ```
 
 ### Test an unreleased build in the image

@@ -1,20 +1,31 @@
-#!/bin/sh
+#!/bin/bash
 
-# Test from local build:
-# docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /Test/Test.sh
+set -Eeuo pipefail
 
-# Test from docker hub build using local media:
-# docker run \
-#   -it \
-#   --rm \
-#   --pull always \
-#   --user nobody:users \
-#   --name PlexCleaner-Test \
-#   --env TZ=America/Los_Angeles \
-#   --volume /data/media/test:/Test/Media:rw \
-#   --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
-#   docker.io/ptr727/plexcleaner:ubuntu \
-#   /Test/Test.sh
+case "${1-}" in
+-h | --help)
+    cat <<'EOF'
+Usage: test.sh
+Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
+Uses /Test/PlexCleaner.json when present, otherwise the default settings.
+
+Test a local build:
+  docker run -it --rm --name PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh
+
+Test a published image against local media and settings:
+  docker run -it --rm --pull always --user nobody:users --name PlexCleaner-Test \
+    --env TZ=America/Los_Angeles \
+    --volume /data/media/test:/Test/Media:rw \
+    --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
+    docker.io/ptr727/plexcleaner:ubuntu /Test/test.sh
+EOF
+    exit 0
+    ;;
+esac
+if [[ $# -ne 0 ]]; then
+    echo "test.sh: unknown argument: $1" >&2
+    exit 2
+fi
 
 # Use debug build for testing
 PlexCleanerApp=/PlexCleaner/Debug/PlexCleaner
@@ -28,11 +39,7 @@ SettingsFile=/Test/PlexCleaner.json
 # Test path
 TestPath=/Test
 
-# Echo commands
 set -x
-
-# Exit on error
-set -e
 
 # Test for "/Test/Media" directory
 if [ ! -d $MediaPath ]; then

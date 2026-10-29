@@ -11,12 +11,12 @@
         <File Path=".github/dependabot.yml" />
     </Folder>
     <Folder Name="/Docker/">
-        <File Path="Docker/Build.sh" />
-        <File Path="Docker/InstallDebugTools.sh" />
+        <File Path="Docker/build.sh" />
+        <File Path="Docker/install-debug-tools.sh" />
         <File Path="Docker/README.md" />
-        <File Path="Docker/Test.sh" />
+        <File Path="Docker/test.sh" />
         <File Path="Docker/Dockerfile" />
-        <File Path="Docker/Version.sh" />
+        <File Path="Docker/version.sh" />
     </Folder>
     <Folder Name="/Docs/">
         <File Path="Docs/ClosedCaptions.md" />

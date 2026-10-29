@@ -184,7 +184,7 @@
                 "--rm",
                 "--name=PlexCleaner-Test",
                 "plexcleaner:ubuntu",
-                "/Test/Test.sh"
+                "/Test/test.sh"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [

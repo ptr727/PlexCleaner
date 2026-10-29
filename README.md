@@ -30,6 +30,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
 - Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
 - Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 6.1.
+- Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -934,9 +935,9 @@ dotnet test
 
 ### Docker Testing
 
-The [`Test.sh`](./Docker/Test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
+The [`test.sh`](./Docker/test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
 
-The [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.
+The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.
 
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
@@ -945,7 +946,7 @@ docker run \
   -it --rm \
   --name PlexCleaner-Test \
   docker.io/ptr727/plexcleaner:latest \
-  /Test/Test.sh
+  /Test/test.sh
 ```
 
 ### Regression Testing

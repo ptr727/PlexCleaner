@@ -3,13 +3,6 @@
 # Regression test harness: process the ZFS test dataset through a single PlexCleaner Docker
 # image tag and write per-version results/logs for diffing against other runs.
 #
-# Usage: RegressionTest.sh [quick|full] [tag] [corpus] [plugin...]
-#   quick (default)  full-file scan as in production, remux/re-encode to short testsnippets
-#   full   also remux/re-encode the complete media (slowest)
-#   tag    docker image tag to test, default develop; the runner specifies one tag per run
-#   corpus full (default) or reduced - which corpus subdirectory of the test clone to process
-#   plugin optional plugin name(s) from the registry to run after processing, default MatroskaHeaderCleanup
-#
 # Test data provisioning (2026-07-16): the corpus lives in the snapshotted dataset
 # hddpool/media/troublesome (full/ + reduced/); each run provisions hddpool/media/test as an
 # instant zero-copy ZFS CLONE of the newest corpus snapshot (no rsync, no drift - the clone
@@ -41,22 +34,40 @@
 # the .NET SDK on the host; the custom run is skipped with a warning if they are missing or the version
 # tag cannot be checked out.
 
-set -euxo pipefail
+set -Eeuo pipefail
 
-# Run as root to allow ZFS snapshot rollback
-if [[ "$(id -u)" -ne 0 ]]; then
-    echo "This script must be run as root" >&2
-    exit 1
-fi
+Usage() {
+    cat <<'EOF'
+Usage: regression-test.sh [quick|full] [tag] [full|reduced] [plugin...]
+  quick    full-file scan as in production, remux and re-encode to short testsnippets (default)
+  full     also remux and re-encode the complete media (slowest)
+  tag      Docker image tag to test (default develop)
+  corpus   full or reduced corpus subdirectory of the test clone to process (default full)
+  plugin   registry plugin names to run after processing (default MatroskaHeaderCleanup)
+Runs as root, since it clones and rolls back ZFS datasets.
+EOF
+}
 
-# Test mode, default quick
+UnknownArgument() {
+    echo "regression-test.sh: unknown argument: $1" >&2
+    Usage >&2
+    exit 2
+}
+
+case "${1-}" in
+-h | --help)
+    Usage
+    exit 0
+    ;;
+esac
+for Arg in "$@"; do
+    [[ "$Arg" == -* ]] && UnknownArgument "$Arg"
+done
+
 Mode="${1:-quick}"
 case "$Mode" in
 quick | full) ;;
-*)
-    echo "Usage: $0 [quick|full] [tag] [full|reduced] [plugin...]" >&2
-    exit 1
-    ;;
+*) UnknownArgument "$Mode" ;;
 esac
 
 # Paths
@@ -336,11 +347,7 @@ RunRegressionTests() {
     local Plugin Entry Project Dll
     local -a BuiltPlugins=()
     for Plugin in "${Plugins[@]}"; do
-        Entry="${PluginRegistry[$Plugin]:-}"
-        if [[ -z "$Entry" ]]; then
-            echo "Skipping unknown plugin: $Plugin" >&2
-            continue
-        fi
+        Entry="${PluginRegistry[$Plugin]}"
         read -r Project Dll <<<"$Entry"
         if BuildPlugin "$Tag" "$Version" "$VersionDir" "$Project" "$Dll"; then
             BuiltPlugins+=("$Dll")
@@ -370,23 +377,25 @@ RunRegressionTests() {
     trap - EXIT
 }
 
-echo "Starting tests in $Mode mode"
-
-# Single image tag to test (default develop), corpus selection (full|reduced subdirectory of the
-# test clone, default full), and optional plugins to run after processing (default the
-# MatroskaHeaderCleanup example), e.g.
-#   RegressionTest.sh quick develop reduced DtsTimestampRepair MatroskaHeaderCleanup
 Tag="${2:-develop}"
 Corpus="${3:-full}"
 case "$Corpus" in
 full | reduced) ;;
-*)
-    echo "Usage: $0 [quick|full] [tag] [full|reduced] [plugin...]" >&2
-    exit 1
-    ;;
+*) UnknownArgument "$Corpus" ;;
 esac
 Plugins=("${@:4}")
 [[ ${#Plugins[@]} -eq 0 ]] && Plugins=("$DefaultPlugin")
+for Plugin in "${Plugins[@]}"; do
+    [[ -v "PluginRegistry[$Plugin]" ]] || UnknownArgument "$Plugin"
+done
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    echo "This script must be run as root" >&2
+    exit 1
+fi
+
+set -x
+echo "Starting tests in $Mode mode"
 RunRegressionTests "$Tag"
 
 echo "Done with tests"
