@@ -7,9 +7,8 @@
 #   uvx ruff format --check .
 #   uvx mypy .
 #
-# These run the latest tools, matching the VSCode tasks; CI (.github/workflows/validate-task.yml)
-# pins exact versions (bumpable there), so local results may differ slightly - by design, so local
-# tooling never silently falls behind.
+# These run the latest tools, matching the VSCode tasks.
+# CI runs the hub's reusable validator, which pins its own versions, so local results may differ slightly.
 
 [tool.ruff]
 target-version = "py313"

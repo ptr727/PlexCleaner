@@ -318,7 +318,7 @@ Every repo's GitHub repository details (the About panel) follow a fixed conventi
 - [`AUDIT.md`](./AUDIT.md): how this repo self-audits its rulesets, settings, and secret names. The payloads and the secrets declaration are hub-hosted rather than carried here, per "Hub-Hosted Tooling".
 - [`global.json`](./global.json): opts `dotnet test` into Microsoft.Testing.Platform, which the .NET 10 SDK requires of a test project carrying `Microsoft.Testing.Platform.MSBuild`.
 - [`host-tools.json`](./host-tools.json): the tools a host needs to work on this repo beyond the fleet's own declaration, layered over it tighten-only by the hub's host gate.
-- [`.github/workflows/`](./.github/workflows/): this repo's CI and release entry points plus the carried `validate-task.yml`. The build, publish, plan, merge-bot and Docker-Hub-overview tasks are hub-hosted and reached by a SHA pin, per "Hub-Hosted Tooling" and [`WORKFLOW.md`](./WORKFLOW.md).
+- [`.github/workflows/`](./.github/workflows/): this repo's CI and release entry points. The validate, build, publish, plan, merge-bot and Docker-Hub-overview tasks are hub-hosted and reached by a SHA pin, per "Hub-Hosted Tooling" and [`WORKFLOW.md`](./WORKFLOW.md).
 - [`.github/skills/`](./.github/skills/): the fleet Skills, carried whole from the hub and never edited here.
 - [`.github/copilot-instructions.md`](./.github/copilot-instructions.md): the Copilot review runbook.
 
