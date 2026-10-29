@@ -377,7 +377,8 @@ RunRegressionTests() {
     trap - EXIT
 }
 
-Tag="${2:-develop}"
+Tag="${2-develop}"
+[[ -n "$Tag" ]] || UnknownArgument "$Tag"
 Corpus="${3-full}"
 case "$Corpus" in
 full | reduced) ;;
@@ -386,7 +387,7 @@ esac
 Plugins=("${@:4}")
 [[ ${#Plugins[@]} -eq 0 ]] && Plugins=("$DefaultPlugin")
 for Plugin in "${Plugins[@]}"; do
-    if [[ ! -v "PluginRegistry[$Plugin]" ]]; then
+    if [[ -z "$Plugin" || -z "${PluginRegistry[$Plugin]+set}" ]]; then
         echo "Known plugins: ${!PluginRegistry[*]}" >&2
         UnknownArgument "$Plugin"
     fi
