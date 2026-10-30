@@ -43,7 +43,7 @@ public sealed class ReplaceOriginalTests : IDisposable
         return processFile;
     }
 
-    // Each fake writes its tool name to the temp output it is given, MkvPropEdit logs the file it edits
+    // Each fake writes its tool name into every argument matching the patterns, MkvPropEdit logs the file it edits
     private static string WriteFakeTools(string tempOutputs, int propEditExit)
     {
         string write =
