@@ -4,6 +4,7 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
+[Collection("Sequential")]
 public sealed class ToolErrorScopeTests
 {
     [Fact]
@@ -22,5 +23,37 @@ public sealed class ToolErrorScopeTests
         ToolErrorScope.Record();
 
         _ = ToolErrorScope.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public void ProcessFiles_BeginsScopePerFile()
+    {
+        int threadCount = Program.Options.ThreadCount;
+        Program.Options.ThreadCount = 1;
+        try
+        {
+            List<int> counts = [];
+            _ = ProcessDriver
+                .ProcessFiles(
+                    ["first.mkv", "second.mkv"],
+                    nameof(ProcessFiles_BeginsScopePerFile),
+                    false,
+                    _ =>
+                    {
+                        ToolErrorScope.Record();
+                        counts.Add(ToolErrorScope.Count);
+                        return true;
+                    }
+                )
+                .Should()
+                .BeTrue();
+
+            _ = counts.Should().Equal(1, 1);
+            _ = ToolErrorScope.Count.Should().Be(0);
+        }
+        finally
+        {
+            Program.Options.ThreadCount = threadCount;
+        }
     }
 }

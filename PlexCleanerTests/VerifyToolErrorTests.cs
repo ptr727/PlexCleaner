@@ -58,6 +58,18 @@ public sealed class VerifyToolErrorTests : IDisposable
         return fileName;
     }
 
+    private static void WriteScript(string fileName, string body, bool executable)
+    {
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(fileName)!);
+        File.WriteAllText(fileName, "#!/bin/sh\n" + body);
+        File.SetUnixFileMode(
+            fileName,
+            UnixFileMode.UserRead
+                | UnixFileMode.UserWrite
+                | (executable ? UnixFileMode.UserExecute : UnixFileMode.None)
+        );
+    }
+
     // The sample sidecar supplies the media props, so only the verify needs a tool
     private string CopyUnverifiedSample()
     {
@@ -143,9 +155,7 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         // The first verify reads a decode error, then every repair tool fails to launch
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(ffMpeg)!);
-        File.WriteAllText(ffMpeg, "#!/bin/sh\nrm -f \"$0\"\nexit 1\n");
-        File.SetUnixFileMode(ffMpeg, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        WriteScript(ffMpeg, "rm -f \"$0\"\nexit 1\n", true);
 
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
@@ -156,5 +166,43 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
         _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_RepairAfterToolError_SetsRepaired()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        // The remux tier's MkvMerge fails to launch, then the re-encode tier makes it executable
+        string mkvMerge = Tools.MkvMerge.GetToolPath();
+        WriteScript(mkvMerge, "for a; do out=$a; done\n: > \"$out\"\n", false);
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        WriteScript(
+            ffMpeg,
+            $$"""
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            for a; do out=$a; done
+            case $step in
+            1) exit 1 ;;
+            2) chmod u+x "{{mkvMerge}}" && : > "$out" ;;
+            esac
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified);
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
+        _ = processFile
+            .State.Should()
+            .HaveFlag(SidecarFile.StatesType.Verified)
+            .And.HaveFlag(SidecarFile.StatesType.Repaired);
+        _ = modified.Should().BeTrue();
     }
 }
