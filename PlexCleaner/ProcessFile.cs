@@ -1401,7 +1401,7 @@ public class ProcessFile
             return false;
         }
 
-        // Replace the original only after every step succeeded
+        // Replace the original only after every rewriting step succeeds
         File.Move(remuxName, FileInfo.FullName, true);
 
         // Refresh
@@ -1893,15 +1893,17 @@ public class ProcessFile
         int toolErrors = ToolErrorScope.Count;
         bool repaired = RepairAndReVerify();
 
+        // Cancel requested
+        if (Program.IsCancelled())
+        {
+            return false;
+        }
+
         // Repair failed
         if (!repaired)
         {
-            // Cancel requested, a repair tool did not run, or a signal ended a verify, leave the state unchanged
-            if (
-                Program.IsCancelled()
-                || ToolErrorScope.Count != toolErrors
-                || ToolErrorScope.SignalCount > 0
-            )
+            // A repair tool did not run or a signal ended a verify, leave the state unchanged
+            if (ToolErrorScope.Count != toolErrors || ToolErrorScope.SignalCount > 0)
             {
                 return false;
             }

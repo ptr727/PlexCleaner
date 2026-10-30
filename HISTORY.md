@@ -57,9 +57,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - The error summary names the failed step beside the state of each file that failed processing, such as `VerifyFailed, VerifyAndRepair`.
   - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
     - The next run retries the repair.
-  - A re-encode or deinterlace replaces the media file only after every step succeeds, the track language restore included.
+  - A re-encode or deinterlace replaces the media file only after every rewriting step succeeds, the track language restore included.
     - Before, a failure in a later step left the rewritten file with its state unchanged and reported it as not modified.
-  - A cancel after a repair already replaced the media file reports the file as modified.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

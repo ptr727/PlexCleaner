@@ -58,37 +58,6 @@ public sealed class VerifyToolErrorTests : IDisposable
         return fileName;
     }
 
-    private static void WriteScript(string fileName, string body, bool executable)
-    {
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(fileName)!);
-        File.WriteAllText(fileName, "#!/bin/sh\n" + body);
-        File.SetUnixFileMode(
-            fileName,
-            UnixFileMode.UserRead
-                | UnixFileMode.UserWrite
-                | (executable ? UnixFileMode.UserExecute : UnixFileMode.None)
-        );
-    }
-
-    // The sample sidecar supplies the media props, so only the verify needs a tool
-    private string CopyUnverifiedSample()
-    {
-        Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "8.0.1" };
-        Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "96.0" };
-        Tools.MediaInfo.Info = new MediaToolInfo(Tools.MediaInfo) { Version = "25.10" };
-
-        string sampleDirectory = PlexCleanerFixture.GetSamplesAbsoluteDirectory();
-        string mediaFile = Path.Combine(_directory, "name.mkv");
-        File.Copy(Path.Combine(sampleDirectory, "Sidecar.v5.mkv"), mediaFile);
-
-        JsonNode sidecar = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(sampleDirectory, "Sidecar.v5.PlexCleaner"))
-        )!;
-        sidecar["State"] = (int)SidecarFile.StatesType.None;
-        File.WriteAllText(Path.Combine(_directory, "name.PlexCleaner"), sidecar.ToJsonString());
-        return mediaFile;
-    }
-
     [Fact]
     public void VerifyMedia_ToolDoesNotRun_IsToolError() =>
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.ToolError);
@@ -101,7 +70,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        WriteScript(Tools.FfMpeg.GetToolPath(), $"kill -{signal} $$\n", true);
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), $"kill -{signal} $$\n", true);
 
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
         _ = ToolErrorScope.SignalCount.Should().Be(1);
@@ -116,7 +85,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        WriteScript(Tools.FfMpeg.GetToolPath(), $"exit {exitCode}\n", true);
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), $"exit {exitCode}\n", true);
 
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
         _ = ToolErrorScope.SignalCount.Should().Be(0);
@@ -161,15 +130,15 @@ public sealed class VerifyToolErrorTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         Program.Config.VerifyOptions.AutoRepair = autoRepair;
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n", true);
-        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n", true);
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
+        FakeTools.WriteScript(
             ffMpeg,
             $$"""
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
@@ -199,16 +168,20 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.FfProbe.GetToolPath(), "exit 1\n", true);
-        WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
-        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(Tools.FfProbe.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            "for a; do out=$a; done\n: > \"$out\"\n",
+            true
+        );
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
+        FakeTools.WriteScript(
             ffMpeg,
             """
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
@@ -240,16 +213,20 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.FfProbe.GetToolPath(), "echo '{\"packets\":[]}'\n", true);
-        WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
-        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(Tools.FfProbe.GetToolPath(), "echo '{\"packets\":[]}'\n", true);
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            "for a; do out=$a; done\n: > \"$out\"\n",
+            true
+        );
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
+        FakeTools.WriteScript(
             ffMpeg,
             """
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
@@ -291,7 +268,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
         sidecar["State"] = (int)(
@@ -303,7 +280,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
 
         bool modified = false;
         _ = processFile.RepairTimestamps(ref modified).Should().BeTrue();
@@ -328,7 +305,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         Program.Config.ProcessOptions.Verify = verify;
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
         sidecar["State"] = (int)SidecarFile.StatesType.PostDecodeTimestamps;
@@ -336,7 +313,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
 
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
@@ -349,7 +326,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
         sidecar["State"] = (int)(
@@ -361,12 +338,16 @@ public sealed class VerifyToolErrorTests : IDisposable
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(Tools.FfProbe.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(Tools.FfProbe.GetToolPath(), "exit 1\n", true);
         _ = processFile.GetPacketAnalysis(false, out _, out _).Should().BeFalse();
-        WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
-        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            "for a; do out=$a; done\n: > \"$out\"\n",
+            true
+        );
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
+        FakeTools.WriteScript(
             ffMpeg,
             """
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
@@ -402,7 +383,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     public void VerifyAndRepair_ToolError_KeepsStateAndFiles()
     {
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
@@ -453,14 +434,14 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
         // The first verify reads a decode error, then every repair tool fails to launch
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(ffMpeg, "rm -f \"$0\"\nexit 1\n", true);
+        FakeTools.WriteScript(ffMpeg, "rm -f \"$0\"\nexit 1\n", true);
 
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
@@ -478,15 +459,15 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = CopyUnverifiedSample();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
         // The remux tier's MkvMerge fails to launch, then the re-encode tier makes it executable
         string mkvMerge = Tools.MkvMerge.GetToolPath();
-        WriteScript(mkvMerge, "for a; do out=$a; done\n: > \"$out\"\n", false);
+        FakeTools.WriteScript(mkvMerge, "for a; do out=$a; done\n: > \"$out\"\n", false);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
+        FakeTools.WriteScript(
             ffMpeg,
             $$"""
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))

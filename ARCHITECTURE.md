@@ -628,11 +628,11 @@ flowchart TD
   S4 -->|yes| S5["Warn when ReEncoded is already set, S9"]:::suspect
   S5 --> C1["Convert.ConvertToMkv(): FfMpeg to .tmp1"]
   C1 -->|fail| FAIL(["Fail"])
-  C1 --> C2["Convert.ReMux() of .tmp1"]
+  C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["MkvPropEdit restores the track languages in .tmp1"]
+  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
-  C3 --> C6["Move .tmp1 over the original"]
+  C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
   C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
   C4 --> C5{"Track order matches?"}
   C5 -->|no| FAIL
@@ -698,7 +698,10 @@ flowchart TD
   R4 --> R5
   R5 -->|fail| RF
   R5 -->|pass| R6
-  R6 --> RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
+  R6 -->|"TimestampOnly path"| RS
+  R6 -->|"DecodeError path"| RC{"Cancelled?"}
+  RC -->|"yes, the next run verifies the replaced media again"| FAIL
+  RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
   RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
