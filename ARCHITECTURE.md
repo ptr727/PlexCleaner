@@ -455,7 +455,7 @@ flowchart TD
 
 ### Metadata and Structure Repair
 
-`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair.
+`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair. With the `Verify` option off, the next run clears `VerifyFailed` again, S4.
 
 ```mermaid
 flowchart TD
@@ -521,7 +521,7 @@ flowchart TD
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
   C1 -->|no| FAIL
-  C1 -->|yes| C2{"MediaInfo HDR format is HDR10 or HDR10+?"}
+  C1 -->|yes| C2{"MediaInfo HDR format names SMPTE ST 2086 or ST 2094?"}
   C2 -->|yes| FAIL
   C2 -->|no| C3["FfMpeg removes the NAL units to .tmp10"]
   C3 -->|fail| FAIL
@@ -530,7 +530,7 @@ flowchart TD
   C4 --> C5["Move over the original, sets ClearedCaptions and ReMuxed, Refresh()"]
 ```
 
-The HDR10 refusal is deliberate, so captions in HDR10 video fail the file rather than pass unremoved.
+The HDR refusal is deliberate, so captions fail the file rather than pass unremoved. It matches HDR10 and HDR10+, and also Dolby Vision with an HDR10 base layer.
 
 ### Deinterlace
 
@@ -726,7 +726,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S1** ([#1068](https://github.com/ptr727/PlexCleaner/issues/1068)): Any failure after the state holder exists reaches `DeleteFailedFile()`. That includes a cancel and the read-only file and sidecar paths the log calls skipping. With `DeleteInvalidFiles` on, this deletes the media file and its sidecar. The sidecar it deletes is the one named after the file, so a failed `name.avi` deletes the sidecar of a sibling `name.mkv`. On Windows, deleting a read-only file throws instead, which becomes S2.
 - **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
-- **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans.
+- **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.
 - **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failure after that leaves the rewritten file with no state flag and the file not reported as modified. That is the remux or language restore in `ReEncode()`, and the language restore in `DeInterlace()`. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
