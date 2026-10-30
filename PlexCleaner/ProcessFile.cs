@@ -1749,7 +1749,7 @@ public class ProcessFile
         // Will update sidecar state if bitrate exceeded
         _ = VerifyBitrate();
 
-        // Verify media streams, both failure kinds are repairable
+        // Verify media streams, VerifyAndRepair() stops on a tool error before it reads canRepair
         canRepair = true;
         _lastVerifyResult = VerifyMediaStreams(FileInfo);
 
