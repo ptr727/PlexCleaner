@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install vsdbg and the .NET diagnostic tools into the debug image.
+# Install vsdbg and the .NET diagnostic tools into the final image.
 
 set -Eeuo pipefail
 

@@ -27,7 +27,7 @@ dotnet build ./PlexCleaner/PlexCleaner.csproj
 
 # Test the solution
 # Use --project, since no 10.x SDK honors a positional project under Microsoft.Testing.Platform.
-# Some SDKs ignore a positional path and resolve from the current directory, where /Builder holds no project.
+# Some SDKs ignore a positional path and resolve from the current directory, where /Builder holds no solution or project at its root.
 dotnet test --project ./PlexCleanerTests/PlexCleanerTests.csproj
 
 # Build release and debug builds

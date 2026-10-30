@@ -7,8 +7,7 @@
 # Each run provisions hddpool/media/test as a zero-copy ZFS clone of the newest corpus snapshot.
 # Rollbacks inside the run use the clone's @backup snapshot.
 #
-# Results go into a directory named after the image's "version" label, such as 3.20.7-g3235a8a055.
-# That label is also the tag the plugin build checks out, so results stay comparable across versions.
+# Results go into a directory named after the image's "version" label, such as 3.20.7-g3235a8a055, so they stay comparable across versions.
 # Re-running the same build overwrites the files in that build's directory.
 #
 # The flow is:
@@ -18,7 +17,7 @@
 #   4. Copy the live PlexCleaner.json settings into the directory as a durable record.
 #   5. Write buildinfo.json with the channel, version, image digest, and run timestamp.
 #   6. Build the requested plugins from the matching source tag into the directory.
-#   7. Run process and defaultsettings, then each plugin on the processed results.
+#   7. Run defaultsettings, provision the test dataset, run process, then run each plugin on the processed results.
 #
 # Settings file PlexCleaner.json is expected to use:
 #   "UseSystem": true, "AutoUpdate": false, "RemoveUnwantedLanguageTracks": true,
@@ -88,7 +87,7 @@ DefaultPlugin="MatroskaHeaderCleanup"
 PluginRepo="https://github.com/ptr727/PlexCleaner.git"
 PluginBuildDir="/data/media/PlexCleaner/PluginBuild"
 
-# Parallel file-processing thread count; server has ample cores, so double the default of 4
+# Parallel file-processing thread count, doubling the default of 4 since the server has ample cores
 ThreadCount=8
 
 # Process options, always run in parallel.
