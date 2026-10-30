@@ -58,11 +58,12 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
     - The next run retries the repair.
   - A re-encode or deinterlace replaces the media file only after every rewriting step succeeds, the track language restore included.
+    - Before, a failure in a later step left the rewritten file with its state unchanged and reported it as not modified.
   - With the `Verify` option off, processing leaves a file's state unchanged rather than marking it `Verified`.
     - Enabling `Verify` later verifies such a file, and a file marked `VerifyFailed` keeps that state.
-    - The `ScannedInterlace` and `ScannedCaptions` state flags record a clean interlace or closed caption scan, so each scan runs once per file without a verify.
+    - The `ScannedInterlace` and `ScannedCaptions` state flags record a clean interlace or closed caption scan of the whole file.
+    - So each scan runs once per file without a verify, and a `--quickscan` sample sets neither flag.
     - A file an earlier version marked `Verified` with the `Verify` option off is not re-verified automatically, and the `createsidecar` command resets its state.
-    - Before, a failure in a later step left the rewritten file with its state unchanged and reported it as not modified.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

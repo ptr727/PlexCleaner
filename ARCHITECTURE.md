@@ -402,7 +402,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan.
 
 ### Remux and Container Steps
 
@@ -524,7 +524,7 @@ flowchart TD
   F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
-  F3 -->|none| F4["Sets ScannedCaptions, Refresh()"]
+  F3 -->|none| F4["Sets ScannedCaptions without --quickscan, Refresh()"]
   F4 --> AOK
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
@@ -709,7 +709,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote. There a pass with the `Verify` option off set `Verified` and cleared `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+Every repair failure sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 

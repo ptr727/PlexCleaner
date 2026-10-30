@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -15,6 +16,11 @@ public sealed class ScanStateTests : IDisposable
         .Config
         .ProcessOptions
         .RemoveClosedCaptions;
+    private readonly bool _sidecarUpdateOnToolChange = Program
+        .Config
+        .ProcessOptions
+        .SidecarUpdateOnToolChange;
+    private readonly bool _quickScan = Program.Options.QuickScan;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -42,6 +48,8 @@ public sealed class ScanStateTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.ProcessOptions.DeInterlace = _deInterlace;
         Program.Config.ProcessOptions.RemoveClosedCaptions = _removeClosedCaptions;
+        Program.Config.ProcessOptions.SidecarUpdateOnToolChange = _sidecarUpdateOnToolChange;
+        Program.Options.QuickScan = _quickScan;
         Directory.Delete(_directory, true);
     }
 
@@ -123,5 +131,46 @@ public sealed class ScanStateTests : IDisposable
         _ = processFile.RemoveClosedCaptions(true, ref modified).Should().BeFalse();
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
         _ = OpenProcessFile(mediaFile).State.Should().Be(SidecarFile.StatesType.None);
+    }
+
+    [Fact]
+    public void RemoveClosedCaptions_QuickScan_DoesNotSetScannedCaptions()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        Program.Options.QuickScan = true;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            "echo '{ \"streams\": [ { \"closed_captions\": 0 } ] }'\n"
+        );
+
+        bool modified = false;
+        ProcessFile processFile = OpenProcessFile(mediaFile);
+        _ = processFile.RemoveClosedCaptions(true, ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        _ = OpenProcessFile(mediaFile).State.Should().Be(SidecarFile.StatesType.None);
+    }
+
+    [Fact]
+    public void Read_ToolChange_ClearsVerifiedAndScannedFlags()
+    {
+        Program.Config.ProcessOptions.SidecarUpdateOnToolChange = true;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
+        sidecar["State"] = (int)(
+            SidecarFile.StatesType.SetLanguage
+            | SidecarFile.StatesType.Verified
+            | SidecarFile.StatesType.ScannedInterlace
+            | SidecarFile.StatesType.ScannedCaptions
+        );
+        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
+
+        SidecarFile sidecarFileState = new(mediaFile);
+        _ = sidecarFileState.Read(out bool current).Should().BeTrue();
+        _ = current.Should().BeFalse();
+        _ = sidecarFileState.State.Should().Be(SidecarFile.StatesType.SetLanguage);
     }
 }

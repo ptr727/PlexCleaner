@@ -1168,7 +1168,6 @@ public class ProcessFile
             return true;
         }
 
-        // Running idet is expensive, skip if already verified or already deinterlaced
         if (
             conditional
             && (
@@ -1228,7 +1227,6 @@ public class ProcessFile
             return true;
         }
 
-        // Running analyze_frames is expensive, skip if already verified or closed captions already removed
         if (
             conditional
             && (
@@ -1261,6 +1259,11 @@ public class ProcessFile
             // Use the first video track from FfProbe
             videoProps = FfProbeProps.Video.First();
             videoProps.ClosedCaptions = true;
+            return true;
+        }
+
+        if (Program.Options.QuickScan)
+        {
             return true;
         }
 
@@ -1707,13 +1710,6 @@ public class ProcessFile
         // Init
         canRepair = false;
         _lastVerifyResult = VerifyResult.Clean;
-
-        // Conditional
-        if (conditional && !Program.Config.ProcessOptions.Verify)
-        {
-            // Done
-            return true;
-        }
 
         // Skip if Verified
         if (conditional && _sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
