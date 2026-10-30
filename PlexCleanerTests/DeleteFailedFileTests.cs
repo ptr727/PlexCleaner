@@ -92,4 +92,13 @@ public sealed class DeleteFailedFileTests : IDisposable
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = File.Exists(sidecarFile).Should().BeFalse();
     }
+
+    [Fact]
+    public void SidecarDeleteThrows_ReturnsFalse()
+    {
+        string mediaFile = CreateFile("name.mkv");
+        _ = Directory.CreateDirectory(Path.Combine(_directory, "name.PlexCleaner"));
+
+        _ = new ProcessFile(mediaFile).DeleteFailedFile().Should().BeFalse();
+    }
 }

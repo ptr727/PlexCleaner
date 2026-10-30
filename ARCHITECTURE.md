@@ -282,7 +282,7 @@ flowchart TD
   K2 --> N{"More files in the group?"}
   N -->|yes| D
   N -->|no| C
-  E -->|"exception escaping ProcessFile() while no cancel is requested, such as from DeleteFailedFile()"| E1["Log it and fail the file, no result row"]
+  E -->|"exception escaping ProcessFile() while no cancel is requested"| E1["Log it and fail the file, no result row"]
   E1 --> K
   E -->|"exception after a cancel request"| X3["The exception leaves ForAll"]
   X1 --> RF["Run result false"]
@@ -366,7 +366,7 @@ flowchart TD
   class P02,CLEAN suspect
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 

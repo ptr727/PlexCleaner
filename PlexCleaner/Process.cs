@@ -69,6 +69,7 @@ public static class Process
                 }
 
                 // Create file processor to hold state
+                operation = nameof(ProcessFile);
                 processFile = new ProcessFile(fileName);
                 DateTime lastWriteTime = processFile.FileInfo.LastWriteTimeUtc;
 
@@ -561,9 +562,9 @@ public static class Process
             Log.Logger.LogOverrideContext()
                 .Information(
                     "Error: {Reason} : {FileName}",
-                    item.State != SidecarFile.StatesType.None
-                        ? item.State.ToString()
-                        : item.FailedOperation ?? "Unknown",
+                    item.State == SidecarFile.StatesType.None ? item.FailedOperation ?? "Unknown"
+                        : item.FailedOperation == null ? item.State.ToString()
+                        : $"{item.State}, {item.FailedOperation}",
                     item.NewFileName
                 )
         );

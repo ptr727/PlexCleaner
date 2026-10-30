@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -28,47 +29,52 @@ public sealed class PerFileExceptionTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    [Fact]
-    public void ProcessFiles_TaskThrows_FailsOneFileAndContinues()
+    private static void AssertFirstFileFails(Exception exception, string taskName)
     {
+        long errors = 0;
+        using MeterListener listener = new();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Name == "plexcleaner.files.errors")
+            {
+                meterListener.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, measurement, _, _) => errors += measurement);
+        listener.Start();
+
         List<string> processed = [];
         _ = ProcessDriver
             .ProcessFiles(
                 ["first.mkv", "second.mkv"],
-                nameof(ProcessFiles_TaskThrows_FailsOneFileAndContinues),
+                taskName,
                 false,
                 fileName =>
                 {
                     processed.Add(fileName);
-                    return fileName == "first.mkv" ? throw new IOException() : true;
+                    return fileName == "first.mkv" ? throw exception : true;
                 }
             )
             .Should()
             .BeTrue();
 
         _ = processed.Should().Equal("first.mkv", "second.mkv");
+        _ = errors.Should().Be(1);
     }
 
     [Fact]
-    public void ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues()
-    {
-        List<string> processed = [];
-        _ = ProcessDriver
-            .ProcessFiles(
-                ["first.mkv", "second.mkv"],
-                nameof(ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues),
-                false,
-                fileName =>
-                {
-                    processed.Add(fileName);
-                    return fileName == "first.mkv" ? throw new TaskCanceledException() : true;
-                }
-            )
-            .Should()
-            .BeTrue();
+    public void ProcessFiles_TaskThrows_FailsOneFileAndContinues() =>
+        AssertFirstFileFails(
+            new IOException(),
+            nameof(ProcessFiles_TaskThrows_FailsOneFileAndContinues)
+        );
 
-        _ = processed.Should().Equal("first.mkv", "second.mkv");
-    }
+    [Fact]
+    public void ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues() =>
+        AssertFirstFileFails(
+            new TaskCanceledException(),
+            nameof(ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues)
+        );
 
     [Fact]
     public void ProcessFile_StepThrows_FailsAndKeepsFile()
