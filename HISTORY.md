@@ -20,6 +20,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - When the demux packet analysis finds no non-monotonic audio or video DTS, the repair tries only the remux tier.
     - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
     - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
+    - Such a file is also marked `PostDecodeTimestamps`, and `DeleteInvalidFiles` never deletes a file carrying that flag, on this run or a later one.
     - A file can also carry both a demux-visible audio DTS break and a post-decode video DTS break.
     - The lossless `setts` tier repairs the audio, but the rewrite still fails verify on the video and is discarded.
     - When that rewrite leaves no demux-visible audio or video DTS, the remaining failure is post-decode, and the repair stops after the remux tier.

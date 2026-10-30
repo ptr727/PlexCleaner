@@ -357,13 +357,13 @@ flowchart TD
   CLEAN -.->|"any step false or cancel"| AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, or an FfMpeg verify run was killed by a signal outside Windows"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, an FfMpeg verify run was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN suspect
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 
@@ -697,9 +697,9 @@ flowchart TD
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the repaired file already replaced the original, S5"| FAIL
-  RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed and RepairFailed, Refresh(), continue"]
+  RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
   RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
-  RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, save state, fail"]
+  RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder and clear it otherwise, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
@@ -724,7 +724,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
 | `ReEncode()` | `ReEncoded`, `ReMuxed` | |
-| `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed` |
+| `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps` |
 | `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified` on a tool change with `SidecarUpdateOnToolChange` on |
 
 ### Suspect Branches
@@ -830,7 +830,8 @@ enum StatesType {
     Repaired, RepairFailed, Verified, VerifyFailed,
     BitrateExceeded, ClearedTags, FileReNamed, FileDeleted,
     FileModified, ClearedCaptions, RemovedAttachments,
-    SetFlags, RemovedCoverArt, ClearedDefaultFlags
+    SetFlags, RemovedCoverArt, ClearedDefaultFlags,
+    PostDecodeTimestamps
 }
 ```
 
