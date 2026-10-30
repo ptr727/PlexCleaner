@@ -287,7 +287,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     }
 
     [Fact]
-    public void RepairTimestamps_DemuxVisibleDtsRepairFails_ClearsPostDecodeAndDeletes()
+    public void RepairTimestamps_CleanVerify_ClearsPostDecode()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
@@ -303,44 +303,15 @@ public sealed class VerifyToolErrorTests : IDisposable
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
-        WriteScript(
-            Tools.FfProbe.GetToolPath(),
-            """
-            echo '{"packets":[{"codec_type":"video","stream_index":0,"dts_time":1.0},{"codec_type":"video","stream_index":0,"dts_time":0.5}]}'
-
-            """,
-            true
-        );
-        _ = processFile.GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo).Should().BeTrue();
-        _ = dtsInfo!.HasNonMonotonicAudioVideoDts.Should().BeTrue();
-        WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
-        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
-        string ffMpeg = Tools.FfMpeg.GetToolPath();
-        WriteScript(
-            ffMpeg,
-            """
-            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
-            echo $step > "$0.step"
-            [ $step -gt 2 ] && exit 1
-            echo "non monotonically increasing dts to muxer" >&2
-            exit 0
-
-            """,
-            true
-        );
+        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
 
         bool modified = false;
-        _ = processFile.RepairTimestamps(ref modified).Should().BeFalse();
-        _ = ToolErrorScope.Count.Should().Be(0);
-        _ = ToolErrorScope.SignalCount.Should().Be(0);
-        _ = processFile
-            .State.Should()
-            .Be(SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.RepairFailed);
-        _ = processFile.DeleteFailedFile().Should().BeTrue();
+        _ = processFile.RepairTimestamps(ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.Verified);
 
-        _ = modified.Should().BeFalse();
-        _ = File.Exists(mediaFile).Should().BeFalse();
-        _ = File.Exists(sidecarFile).Should().BeFalse();
+        ProcessFile nextRun = new(mediaFile);
+        _ = nextRun.GetMediaProps().Should().BeTrue();
+        _ = nextRun.State.Should().Be(SidecarFile.StatesType.Verified);
     }
 
     [Fact]

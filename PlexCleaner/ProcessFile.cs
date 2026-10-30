@@ -1909,7 +1909,6 @@ public class ProcessFile
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
             _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
             _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
-            _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
 
             // Update state
             _ = Refresh(false);
@@ -2270,7 +2269,7 @@ public class ProcessFile
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
         int toolErrors = ToolErrorScope.Count;
-        bool analyzed = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
+        _ = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
 
         // Escalate from setts to remux to re-encode, and the first clean re-verify wins
         // A post-decode only DTS stops after the remux
@@ -2307,10 +2306,6 @@ public class ProcessFile
         if (postDecodeOnly)
         {
             _sidecarFile.State |= SidecarFile.StatesType.PostDecodeTimestamps;
-        }
-        else if (analyzed)
-        {
-            _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
         }
         _ = Refresh(false);
         return false;
