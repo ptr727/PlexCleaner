@@ -36,7 +36,6 @@ jobs:
               - 'PlexCleanerTests/**'
               - 'Plugins/**'
               - 'Samples/**'
-              - 'ARCHITECTURE.md'
               - 'Docker/Dockerfile'
               - 'Docker/*.sh'
               - '.dockerignore'
