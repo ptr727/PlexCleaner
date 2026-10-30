@@ -114,6 +114,10 @@ public abstract class MediaTool
     // Stream carrying tool error text; stderr by default, stdout for the mkvtoolnix tools
     protected virtual string GetErrorOutput(BufferedCommandResult result) => result.StandardError;
 
+    // Signals 1 to 31 exit 129 to 159
+    protected internal virtual bool EndedBySignal(int exitCode) =>
+        !OperatingSystem.IsWindows() && exitCode is >= 129 and <= 159;
+
     protected bool LogFailedResult(
         BufferedCommandResult result,
         string fileName,
@@ -251,6 +255,10 @@ public abstract class MediaTool
                 stdOutBuilder.ToString(),
                 stdErrBuilder.ToString()
             );
+            if (EndedBySignal(commandResult.ExitCode))
+            {
+                ToolErrorScope.Record();
+            }
             return task.Task.IsCompletedSuccessfully;
         }
         catch (OperationCanceledException)

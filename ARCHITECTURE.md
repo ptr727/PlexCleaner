@@ -360,13 +360,13 @@ flowchart TD
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, an FfMpeg verify run was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN suspect
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 
@@ -646,7 +646,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. Outside Windows, a failed or skipped repair after such a run also leaves the state unchanged, so the next run verifies the file again. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. Outside Windows, a failed or skipped repair after such a run also leaves the state unchanged, so the next run verifies the file again. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair also leaves the state unchanged when it fails while any of its tool runs did not run to a result. Such a run fails to launch, is cancelled, throws, or is terminated by a signal outside Windows. The next run then repairs again, so a repair tool that crashes on the same input repeats the repair on every run.
 
 ```mermaid
 flowchart TD
@@ -704,12 +704,12 @@ flowchart TD
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
-  RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
+  RF{"Cancelled, a tool run during the repair failed to launch, threw, or was ended by a signal, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 
@@ -743,7 +743,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
 - **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
-- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
+- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored unless a signal ended the run, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
 - **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.

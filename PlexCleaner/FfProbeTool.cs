@@ -179,6 +179,10 @@ public partial class FfProbe
 
                 // Execute command
                 CommandResult result = await task;
+                if (EndedBySignal(result.ExitCode))
+                {
+                    ToolErrorScope.Record();
+                }
                 return (result.ExitCode == 0, stdErrBuilder.ToString().Trim());
             }
             catch (OperationCanceledException)
