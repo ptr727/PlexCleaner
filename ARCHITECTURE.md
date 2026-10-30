@@ -357,7 +357,7 @@ flowchart TD
   CLEAN -.->|"any step false or cancel"| AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled or a verify tool error, S16"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled or the file's own stream verify is a tool error, S16"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN,DF suspect
@@ -638,7 +638,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. An FfMpeg run that does not complete yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged and is not deleted. A re-verify inside the repair ladder reads `ToolError` as a failed repair, S16.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, S17, and no line yields `Clean`. An FfMpeg run that fails to launch or is cancelled yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged and is not deleted. A re-verify inside the repair ladder reads `ToolError` as a failed repair, S16.
 
 ```mermaid
 flowchart TD
@@ -654,8 +654,8 @@ flowchart TD
   V5 --> V6["VerifyBitrate(): MaximumBitrate, skipped with --quickscan, sets BitrateExceeded, S11"]:::suspect
   V6 --> V7["VerifyMediaStreams(): FfMpeg decode"]
   V7 -->|Clean| PASS
-  V7 -->|"TimestampOnly or DecodeError"| REP["Verify fails, repair possible"]
-  V7 -->|"ToolError, FfMpeg did not complete"| TE["Verify fails, the media unchecked"]
+  V7 -->|"TimestampOnly, or DecodeError including any non-zero exit, S17"| REP["Verify fails, repair possible"]
+  V7 -->|"ToolError, FfMpeg failed to launch or was cancelled"| TE["Verify fails, the media unchecked"]
   PASS --> P1{"Verified already set?"}
   P1 -->|yes| OK(["Continue"])
   P1 -->|no| P2["Set Verified, clear VerifyFailed, save state"]
@@ -741,6 +741,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.
 - **S16** ([#1088](https://github.com/ptr727/PlexCleaner/issues/1088)): A step whose tool did not run fails as if the media failed. `DeleteFailedFile()` keeps the file only after a `ToolError` from the file's own stream verify, in `Verify()` or `RepairTimestamps()`. A launch failure on a re-verify in the repair ladder fails the repair and sets `VerifyFailed` and `RepairFailed`. `DeleteInvalidFiles` then deletes the file. A tool that fails to launch in any other step aborts the file, and `DeleteInvalidFiles` deletes it.
+- **S17** ([#1090](https://github.com/ptr727/PlexCleaner/issues/1090)): `FfMpegTool.VerifyMedia()` reads any non-zero FfMpeg exit as `DecodeError`. A run killed by a signal is then repaired as corrupt media, and can end in `VerifyFailed`, `RepairFailed` and a delete.
 
 ## Code Conventions
 
