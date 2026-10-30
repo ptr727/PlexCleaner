@@ -199,7 +199,8 @@ public sealed class VerifyToolErrorTests : IDisposable
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified);
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
-        _ = ToolErrorScope.Count.Should().BePositive();
+        // The remux tier's MkvMerge, then the post-repair refresh's MediaInfo, fail to launch
+        _ = ToolErrorScope.Count.Should().Be(2);
         _ = processFile
             .State.Should()
             .HaveFlag(SidecarFile.StatesType.Verified)
