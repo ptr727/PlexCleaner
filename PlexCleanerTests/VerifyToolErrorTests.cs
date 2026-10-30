@@ -293,11 +293,8 @@ public sealed class VerifyToolErrorTests : IDisposable
 
     [Theory]
     [InlineData(true, SidecarFile.StatesType.Verified)]
-    [InlineData(
-        false,
-        SidecarFile.StatesType.Verified | SidecarFile.StatesType.PostDecodeTimestamps
-    )]
-    public void VerifyAndRepair_VerifyPasses_ClearsPostDecodeOnlyWhenVerified(
+    [InlineData(false, SidecarFile.StatesType.PostDecodeTimestamps)]
+    public void VerifyAndRepair_VerifyPasses_ClearsPostDecodeOnlyWhenVerifyRuns(
         bool verify,
         SidecarFile.StatesType state
     )
@@ -319,6 +316,34 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
         _ = processFile.State.Should().Be(state);
         _ = modified.Should().BeFalse();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_VerifyOff_LeavesVerifyFailedAndRunsNoTool()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.ProcessOptions.Verify = false;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
+        sidecar["State"] = (int)SidecarFile.StatesType.VerifyFailed;
+        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        FakeTools.WriteScript(ffMpeg, "touch \"$0.ran\"\nexit 1\n");
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.VerifyFailed);
+        _ = File.Exists(ffMpeg + ".ran").Should().BeFalse();
+        _ = modified.Should().BeFalse();
+
+        ProcessFile nextRun = new(mediaFile);
+        _ = nextRun.GetMediaProps().Should().BeTrue();
+        _ = nextRun.State.Should().Be(SidecarFile.StatesType.VerifyFailed);
     }
 
     [Fact]

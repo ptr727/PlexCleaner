@@ -91,7 +91,7 @@ Critical performance feature - DO NOT break compatibility:
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
-- A `Verified` or `VerifyFailed` state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
+- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
 - Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh](#sidecar-refresh)
 
@@ -390,7 +390,7 @@ flowchart TD
   M1 -->|no| M2["State becomes FileModified, all other flags reset"]
   M1 -->|yes| T1
   M2 --> T1{"SidecarUpdateOnToolChange on and IsToolsCurrent() false?"}
-  T1 -->|yes| T2["Clear Verified"]
+  T1 -->|yes| T2["Clear Verified, ScannedInterlace and ScannedCaptions"]
   T1 -->|no| T3
   T2 --> T3{"Media changed, or the tool change above applied?"}
   T3 -->|yes| T4["Treat as modified"]
@@ -402,7 +402,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan.
 
 ### Remux and Container Steps
 
@@ -462,7 +462,7 @@ flowchart TD
 
 ### Metadata and Structure Repair
 
-`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair. With the `Verify` option off, the next run clears `VerifyFailed` again, S4.
+`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair.
 
 ```mermaid
 flowchart TD
@@ -520,11 +520,12 @@ flowchart TD
   A1 -->|yes| F0["FindClosedCaptionTracks()"]
   F0 --> F1{"Any tool flags captions on a video track?"}
   F1 -->|yes| FOUND
-  F1 -->|no| F2{"State has Verified, VerifyFailed or ClearedCaptions?"}
-  F2 -->|"yes, S4"| AOK
+  F1 -->|no| F2{"State has ScannedCaptions, Verified, VerifyFailed or ClearedCaptions?"}
+  F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
-  F3 -->|none| AOK
+  F3 -->|none| F4["Sets ScannedCaptions, Refresh()"]
+  F4 --> AOK
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
   C1 -->|no| FAIL
@@ -550,11 +551,12 @@ flowchart TD
   F1 -->|yes| FOUND
   F1 -->|no| F2{"--quickscan set?"}
   F2 -->|yes| AOK
-  F2 -->|no| F3{"State has Verified, VerifyFailed or DeInterlaced?"}
-  F3 -->|"yes, S4"| AOK
+  F2 -->|no| F3{"State has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
+  F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
   F4 -->|"scan fails or no result"| FAIL(["Fail"])
-  F4 -->|progressive| AOK
+  F4 -->|progressive| F5["Sets ScannedInterlace, Refresh()"]
+  F5 --> AOK
   F4 -->|interlaced| FOUND["Interlaced, warns when DeInterlaced is already set, S9"]:::suspect
   FOUND --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
@@ -648,9 +650,9 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ```mermaid
 flowchart TD
-  V0["Verify()"] --> V1{"Verify option on?"}
-  V1 -->|"no, S4"| PASS
-  V1 -->|yes| V2{"State has Verified?"}
+  V0["VerifyAndRepair()"] --> V1{"Verify option on?"}
+  V1 -->|"no, state unchanged"| OK
+  V1 -->|yes| V2{"Verify(): state has Verified?"}
   V2 -->|yes| PASS["Verify passes"]
   V2 -->|no| V3{"State has VerifyFailed?"}
   V3 -->|yes| NOREP["Verify fails, canRepair false"]
@@ -664,7 +666,7 @@ flowchart TD
   V7 -->|"ToolError, FfMpeg did not launch, was cancelled, or threw"| TE["Verify fails, the media unchecked"]
   PASS --> P1{"Verified already set?"}
   P1 -->|yes| OK(["Continue"])
-  P1 -->|no| P2["Set Verified, clear VerifyFailed, and PostDecodeTimestamps with the Verify option on, save state"]
+  P1 -->|no| P2["Set Verified, clear VerifyFailed and PostDecodeTimestamps, save state"]
   P2 --> OK
   REP --> C0{"Cancelled?"}
   C0 -->|yes| FAIL(["Fail, state unchanged"])
@@ -707,7 +709,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off sets `Verified`, clears `VerifyFailed` and keeps `RepairFailed` and `PostDecodeTimestamps`. A later tool change with `SidecarUpdateOnToolChange` on clears `Verified`, and the next failed verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+Every repair failure sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote. There a pass with the `Verify` option off set `Verified` and cleared `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 
@@ -722,21 +724,20 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemoveTags()` | `RemovedAttachments`, `ClearedTags` | |
 | `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified` |
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified` |
-| `RemoveClosedCaptions()` | `ClearedCaptions`, `ReMuxed` | |
-| `DeInterlace()` | `DeInterlaced`, `ReMuxed` | |
+| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
+| `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
 | `ReEncode()` | `ReEncoded`, `ReMuxed` | |
 | `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps` |
-| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified` on a tool change with `SidecarUpdateOnToolChange` on |
+| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified`, `ScannedInterlace` and `ScannedCaptions` on a tool change with `SidecarUpdateOnToolChange` on |
 
 ### Suspect Branches
 
 Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
 
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
-- **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
@@ -833,7 +834,7 @@ enum StatesType {
     BitrateExceeded, ClearedTags, FileReNamed, FileDeleted,
     FileModified, ClearedCaptions, RemovedAttachments,
     SetFlags, RemovedCoverArt, ClearedDefaultFlags,
-    PostDecodeTimestamps
+    PostDecodeTimestamps, ScannedInterlace, ScannedCaptions
 }
 ```
 
@@ -964,7 +965,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 ### Performance Considerations
 
-- Sidecar files enable fast re-processing (cached media info, and a `Verified` state skips verification and the scans)
+- Sidecar files enable fast re-processing (cached media info, and a `Verified` or scanned state skips verification and the scans)
 - `--parallel` most effective with I/O-bound operations (re-mux)
 - `--quickscan` limits scan to 3 minutes (trades accuracy for speed)
 - `--testsnippets` creates 30s clips for testing

@@ -1172,7 +1172,8 @@ public class ProcessFile
         if (
             conditional
             && (
-                State.HasFlag(SidecarFile.StatesType.Verified)
+                State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
+                || State.HasFlag(SidecarFile.StatesType.Verified)
                 || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
                 || State.HasFlag(SidecarFile.StatesType.DeInterlaced)
             )
@@ -1194,7 +1195,8 @@ public class ProcessFile
         {
             // Not interlaced, clear the idet info so the caller does not treat it as a detection
             idetInfo = null;
-            return true;
+            _sidecarFile.State |= SidecarFile.StatesType.ScannedInterlace;
+            return Refresh(false);
         }
 
         // Use the first video track from FfProbe
@@ -1230,7 +1232,8 @@ public class ProcessFile
         if (
             conditional
             && (
-                State.HasFlag(SidecarFile.StatesType.Verified)
+                State.HasFlag(SidecarFile.StatesType.ScannedCaptions)
+                || State.HasFlag(SidecarFile.StatesType.Verified)
                 || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
                 || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
             )
@@ -1258,9 +1261,11 @@ public class ProcessFile
             // Use the first video track from FfProbe
             videoProps = FfProbeProps.Video.First();
             videoProps.ClosedCaptions = true;
+            return true;
         }
 
-        return true;
+        _sidecarFile.State |= SidecarFile.StatesType.ScannedCaptions;
+        return Refresh(false);
     }
 
     public bool DeInterlace(bool conditional, ref bool modified)
@@ -1821,6 +1826,11 @@ public class ProcessFile
 
     public bool VerifyAndRepair(ref bool modified)
     {
+        if (!Program.Config.ProcessOptions.Verify)
+        {
+            return true;
+        }
+
         // Verify (verify does not set any state, it just tests state)
         if (Verify(true, out bool canRepair))
         {
@@ -1829,10 +1839,7 @@ public class ProcessFile
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-                if (Program.Config.ProcessOptions.Verify)
-                {
-                    _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-                }
+                _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
