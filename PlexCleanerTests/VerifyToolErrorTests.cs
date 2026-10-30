@@ -14,6 +14,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     private readonly bool _useSidecarFiles = Program.Config.ProcessOptions.UseSidecarFiles;
     private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -25,6 +26,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = true;
         Program.Config.VerifyOptions.AutoRepair = true;
         Program.Config.VerifyOptions.DeleteInvalidFiles = true;
+        Program.Config.VerifyOptions.MaximumBitrate = 0;
 
         // An empty tools folder makes every tool fail to launch
         Program.Config.ToolsOptions = new ToolsOptions1
@@ -45,6 +47,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.VerifyOptions.AutoRepair = _autoRepair;
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Directory.Delete(_directory, true);
     }
 
@@ -53,6 +56,18 @@ public sealed class VerifyToolErrorTests : IDisposable
         string fileName = Path.Combine(_directory, name);
         File.WriteAllText(fileName, "");
         return fileName;
+    }
+
+    private static void WriteScript(string fileName, string body, bool executable)
+    {
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(fileName)!);
+        File.WriteAllText(fileName, "#!/bin/sh\n" + body);
+        File.SetUnixFileMode(
+            fileName,
+            UnixFileMode.UserRead
+                | UnixFileMode.UserWrite
+                | (executable ? UnixFileMode.UserExecute : UnixFileMode.None)
+        );
     }
 
     // The sample sidecar supplies the media props, so only the verify needs a tool
@@ -81,6 +96,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     [Fact]
     public void VerifyAndRepair_ToolError_KeepsStateAndFiles()
     {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CopyUnverifiedSample();
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
@@ -99,6 +115,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     [Fact]
     public void RepairTimestamps_ToolError_KeepsFiles()
     {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CreateFile("name.mkv");
         string sidecarFile = CreateFile("name.PlexCleaner");
         ProcessFile processFile = new(mediaFile);
@@ -109,5 +126,85 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         _ = File.Exists(mediaFile).Should().BeTrue();
         _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProcessFile_MediaPropsToolError_KeepsFiles()
+    {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CreateFile("name.mkv");
+
+        _ = Process
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .Should()
+            .BeFalse();
+
+        _ = failedOperation.Should().Be(nameof(ProcessFile.GetMediaProps));
+        _ = File.Exists(mediaFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_RepairToolError_KeepsStateAndFiles()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        // The first verify reads a decode error, then every repair tool fails to launch
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        WriteScript(ffMpeg, "rm -f \"$0\"\nexit 1\n", true);
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = File.Exists(ffMpeg).Should().BeFalse();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        _ = processFile.DeleteFailedFile().Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_RepairAfterToolError_SetsRepaired()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        // The remux tier's MkvMerge fails to launch, then the re-encode tier makes it executable
+        string mkvMerge = Tools.MkvMerge.GetToolPath();
+        WriteScript(mkvMerge, "for a; do out=$a; done\n: > \"$out\"\n", false);
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        WriteScript(
+            ffMpeg,
+            $$"""
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            for a; do out=$a; done
+            case $step in
+            1) exit 1 ;;
+            2) chmod u+x "{{mkvMerge}}" && : > "$out" ;;
+            esac
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified);
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
+        // The remux tier's MkvMerge, then the post-repair refresh's MediaInfo, fail to launch
+        _ = ToolErrorScope.Count.Should().Be(2);
+        _ = processFile
+            .State.Should()
+            .HaveFlag(SidecarFile.StatesType.Verified)
+            .And.HaveFlag(SidecarFile.StatesType.Repaired);
+        _ = modified.Should().BeTrue();
     }
 }

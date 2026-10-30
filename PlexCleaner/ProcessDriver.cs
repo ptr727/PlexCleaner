@@ -210,6 +210,7 @@ public static class ProcessDriver
                         bool taskResult;
                         try
                         {
+                            using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
                             taskResult = taskFunc(fileName);
                         }
                         finally

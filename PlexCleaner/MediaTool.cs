@@ -261,10 +261,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally
@@ -331,10 +333,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally
@@ -406,10 +410,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally

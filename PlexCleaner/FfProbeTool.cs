@@ -190,10 +190,12 @@ public partial class FfProbe
                     processId,
                     command.Arguments
                 );
+                ToolErrorScope.Record();
                 return (false, string.Empty);
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
+                ToolErrorScope.Record();
                 return (false, string.Empty);
             }
             finally
