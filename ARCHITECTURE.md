@@ -343,7 +343,9 @@ flowchart TD
     P21 --> P22["ReEncode(): ReEncode"]
     P22 --> P23["VerifyAndRepair(): Verify, AutoRepair"]
   end
-  P23 --> CLEAN
+  P23 --> G6{"Any step modified the file?"}
+  G6 -->|yes| CLEAN
+  G6 -->|no| P33
   subgraph CLEAN["Cleanup re-run"]
     P24["RemoveCoverArt(): ReMux"] --> P25["RemoveTags(): RemoveTags"]
     P25 --> P26["RepairMetadataErrors(): AutoRepair"]
@@ -353,15 +355,17 @@ flowchart TD
     P29 --> P30["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
     P30 --> P31["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
     P31 --> P32["RepairDefaultFlags(): SetTrackFlags"]
-    P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
-    P33 --> P34["VerifyMediaInfo()"]
   end
+  P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
+  P33 --> P34["VerifyMediaInfo()"]
   P34 --> OK(["Result true"])
   P03 -.->|"false or cancel"| AB
   P06 -.->|false| AB
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
+  P33 -.->|"false or cancel"| AB
+  P34 -.->|false| AB
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
@@ -373,7 +377,7 @@ flowchart TD
 
 `ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
 
-After `VerifyAndRepair()`, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A deinterlace, re-encode or repair by FfMpeg or HandBrake can undo their work.
+After `VerifyAndRepair()`, when any step modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. On a file no step modified, each step already found nothing to do.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 
