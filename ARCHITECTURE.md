@@ -704,7 +704,7 @@ flowchart TD
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
-  RF{"Cancelled, or a tool run failed to launch, threw, or was ended by a signal?"} -->|yes| FAIL
+  RF{"Cancelled, a tool run during the repair failed to launch, threw, or was ended by a signal, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
