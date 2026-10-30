@@ -524,7 +524,7 @@ flowchart TD
   F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
-  F3 -->|none| F4["Sets ScannedCaptions without --quickscan, Refresh()"]
+  F3 -->|none| F4["Without --quickscan, sets ScannedCaptions, Refresh()"]
   F4 --> AOK
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
