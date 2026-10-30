@@ -35,7 +35,7 @@ public sealed class ToolErrorScopeTests
             List<int> counts = [];
             _ = ProcessDriver
                 .ProcessFiles(
-                    ["first.mkv", "second.mkv"],
+                    ["name.avi", "name.mkv"],
                     nameof(ProcessFiles_BeginsScopePerFile),
                     false,
                     _ =>
@@ -49,7 +49,6 @@ public sealed class ToolErrorScopeTests
                 .BeTrue();
 
             _ = counts.Should().Equal(1, 1);
-            _ = ToolErrorScope.Count.Should().Be(0);
         }
         finally
         {

@@ -199,6 +199,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified);
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
+        _ = ToolErrorScope.Count.Should().BePositive();
         _ = processFile
             .State.Should()
             .HaveFlag(SidecarFile.StatesType.Verified)
