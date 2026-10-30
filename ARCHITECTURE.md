@@ -241,7 +241,7 @@ flowchart TD
   MON["Monitor.ProcessChanges(): one batch of settled folders"] --> D
   D -->|error or cancel| R1
   D --> F["Process.ProcessFiles(): see Dispatch and Results"]
-  F -->|"cancel, or an exception while processing"| R1
+  F -->|cancel| R1
   F -.->|"exception writing the settings or results file, S13"| CRASH["The command-line default handler prints it to stderr, skips DeleteEmptyFolders()"]:::suspect
   CRASH --> R1
   F --> G["Process.DeleteEmptyFolders(): DeleteEmptyFolders option, input folders only"]
@@ -282,9 +282,9 @@ flowchart TD
   K2 --> N{"More files in the group?"}
   N -->|yes| D
   N -->|no| C
-  E -.->|exception| X2["An exception from any file ends the whole run, S2"]:::suspect
+  E -->|"exception other than a cancel"| E1["Log it and fail the file, no result row"]
+  E1 --> K
   X1 --> RF["Run result false"]
-  X2 --> RF
   C -->|all groups done| RT["Run result true, whatever the error count"]
   RF --> P["Log the error, modified and VerifyFailed files"]
   RT --> P
@@ -302,7 +302,7 @@ flowchart TD
 
 `Process.ProcessFile()` runs one file through the steps below, in this order. The node ids `P01` onward follow the order of the step calls in `Process.ProcessFile()`, and `ArchitectureDiagramTests` fails when they differ.
 
-A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them.
+A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws an exception other than a cancel also leaves the chain at the abort node.
 
 ```mermaid
 flowchart TD
@@ -355,7 +355,8 @@ flowchart TD
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
+  THR["Any step throws an exception other than a cancel"] -.-> AB
+  AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
   G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, an FfMpeg verify run was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
@@ -731,7 +732,6 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 
 Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
 
-- **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.
 - **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failure after that leaves the rewritten file with no state flag and the file not reported as modified. That is the remux or language restore in `ReEncode()`, and the language restore in `DeInterlace()`. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
