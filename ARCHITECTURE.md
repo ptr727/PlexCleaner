@@ -343,30 +343,41 @@ flowchart TD
     P21 --> P22["ReEncode(): ReEncode"]
     P22 --> P23["VerifyAndRepair(): Verify, AutoRepair"]
   end
-  P23 --> CLEAN
-  subgraph CLEAN["Cleanup re-run, S8"]
-    P24["RepairMetadataErrors(): AutoRepair"] --> P25["SetUnknownLanguageTracks(): SetUnknownLanguage"]
-    P25 --> P26["RemoveTags(): RemoveTags"]
-    P26 --> P27["RepairDefaultFlags(): SetTrackFlags"]
-    P27 --> P28["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
-    P28 --> P29["VerifyMediaInfo()"]
+  P23 --> G6{"A step from RemoveCoverArt() on modified the file?"}
+  G6 -->|yes| CLEAN
+  G6 -->|no| P33
+  subgraph CLEAN["Cleanup re-run"]
+    P24["RemoveCoverArt(): ReMux"] --> P25["RemoveTags(): RemoveTags"]
+    P25 --> P26["RepairMetadataErrors(): AutoRepair"]
+    P26 --> P27["RepairMatroskaStructure(): Verify"]
+    P27 --> P28["RemoveClosedCaptions(): RemoveClosedCaptions"]
+    P28 --> P29["SetUnknownLanguageTracks(): SetUnknownLanguage"]
+    P29 --> P30["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
+    P30 --> P31["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
+    P31 --> P32["RepairDefaultFlags(): SetTrackFlags"]
   end
-  P29 --> OK(["Result true"])
+  P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
+  P33 --> P34["VerifyMediaInfo()"]
+  P34 --> OK(["Result true"])
   P03 -.->|"false or cancel"| AB
   P06 -.->|false| AB
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
+  P33 -.->|"false or cancel"| AB
+  P34 -.->|false| AB
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
   G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
-  class P02,CLEAN suspect
+  class P02 suspect
 ```
 
 `ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
+
+After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 
@@ -740,7 +751,6 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
-- **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
 - **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
 - **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored unless a signal ended the run, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.

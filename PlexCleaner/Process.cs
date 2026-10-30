@@ -29,6 +29,7 @@ public static class Process
         ProcessFile? processFile = null;
         bool result;
         bool skipped = false;
+        bool modifiedBeforeCleanup = false;
 
         // Current step, reported as the failure reason on error
         string? operation = null;
@@ -188,6 +189,9 @@ public static class Process
                     break;
                 }
 
+                modifiedBeforeCleanup = modified;
+                modified = false;
+
                 // Remove all cover art attachments or video tracks that interfere with processing logic
                 // Conditional on ReMux option, fails if cover art is present and ReMux not enabled
                 operation = nameof(processFile.RemoveCoverArt);
@@ -324,33 +328,70 @@ public static class Process
 
                 // FfMpeg or HandBrake could undo the previous cleanup, repeat cleanup
                 // Split so the reported operation names the actual failing step
-                operation = nameof(processFile.RepairMetadataErrors);
-                if (!processFile.RepairMetadataErrors(ref modified) || Program.IsCancelled())
+                if (modified)
                 {
-                    // Error
-                    result = false;
-                    break;
-                }
-                operation = nameof(processFile.SetUnknownLanguageTracks);
-                if (!processFile.SetUnknownLanguageTracks(ref modified) || Program.IsCancelled())
-                {
-                    // Error
-                    result = false;
-                    break;
-                }
-                operation = nameof(processFile.RemoveTags);
-                if (!processFile.RemoveTags(ref modified) || Program.IsCancelled())
-                {
-                    // Error
-                    result = false;
-                    break;
-                }
-                operation = nameof(processFile.RepairDefaultFlags);
-                if (!processFile.RepairDefaultFlags(ref modified) || Program.IsCancelled())
-                {
-                    // Error
-                    result = false;
-                    break;
+                    operation = nameof(processFile.RemoveCoverArt);
+                    if (!processFile.RemoveCoverArt(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RemoveTags);
+                    if (!processFile.RemoveTags(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RepairMetadataErrors);
+                    if (!processFile.RepairMetadataErrors(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RepairMatroskaStructure);
+                    if (!processFile.RepairMatroskaStructure(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RemoveClosedCaptions);
+                    if (
+                        !processFile.RemoveClosedCaptions(true, ref modified)
+                        || Program.IsCancelled()
+                    )
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.SetUnknownLanguageTracks);
+                    if (
+                        !processFile.SetUnknownLanguageTracks(ref modified) || Program.IsCancelled()
+                    )
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RemoveUnwantedLanguageTracks);
+                    if (
+                        !processFile.RemoveUnwantedLanguageTracks(ref modified)
+                        || Program.IsCancelled()
+                    )
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RemoveDuplicateTracks);
+                    if (!processFile.RemoveDuplicateTracks(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
+                    operation = nameof(processFile.RepairDefaultFlags);
+                    if (!processFile.RepairDefaultFlags(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
                 }
 
                 // Restore the file timestamp
@@ -383,6 +424,7 @@ public static class Process
             skipped = true;
         }
 
+        modified |= modifiedBeforeCleanup;
         if (!result)
         {
             failedOperation = operation;
