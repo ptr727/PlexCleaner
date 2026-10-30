@@ -1375,9 +1375,7 @@ public class ProcessFile
             }
         }
 
-        // Delete the temp files and rename the output
         File.Delete(deintName);
-        File.Move(remuxName, FileInfo.FullName, true);
 
         // Clone the original MkvMergeInfo
         MediaProps postMkvMerge = MkvMergeProps.Clone();
@@ -1397,11 +1395,14 @@ public class ProcessFile
 
         // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
         // https://github.com/ptr727/PlexCleaner/issues/148
-        if (!Tools.MkvPropEdit.SetTrackLanguage(FileInfo.FullName, postMkvMerge))
+        if (!Tools.MkvPropEdit.SetTrackLanguage(remuxName, postMkvMerge))
         {
-            // Error
+            File.Delete(remuxName);
             return false;
         }
+
+        // Replace the original only after every step succeeded
+        File.Move(remuxName, FileInfo.FullName, true);
 
         // Refresh
         modified = true;
@@ -1614,29 +1615,21 @@ public class ProcessFile
         Log.Information("Reencoding required tracks : {FileName}", FileInfo.FullName);
         selectMediaProps.WriteLine("ReEncode", "Passthrough");
 
-        // ReEncode selected tracks
-        if (!Convert.ConvertToMkv(FileInfo.FullName, selectMediaProps, out string outputName))
-        {
-            // Convert will log error
-            // Error
-            return false;
-        }
-
-        // ReMux using MkvMerge after FfMpeg encoding
-        if (!Convert.ReMux(outputName))
-        {
-            // Error
-            return false;
-        }
-
         // The FfMpeg map is constructed using the same order as the original file
         // No need to adjust the track numbers
         MediaProps postMkvMerge = MkvMergeProps.Clone();
 
-        // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
-        // https://github.com/ptr727/PlexCleaner/issues/148
-        if (!Tools.MkvPropEdit.SetTrackLanguage(outputName, postMkvMerge))
+        // ReEncode selected tracks
+        if (
+            !Convert.ConvertToMkv(
+                FileInfo.FullName,
+                selectMediaProps,
+                postMkvMerge,
+                out string outputName
+            )
+        )
         {
+            // Convert will log error
             // Error
             return false;
         }
@@ -1900,17 +1893,15 @@ public class ProcessFile
         int toolErrors = ToolErrorScope.Count;
         bool repaired = RepairAndReVerify();
 
-        // Cancel requested
-        if (Program.IsCancelled())
-        {
-            return false;
-        }
-
         // Repair failed
         if (!repaired)
         {
-            // A repair tool did not run or a signal ended a verify, leave the state unchanged
-            if (ToolErrorScope.Count != toolErrors || ToolErrorScope.SignalCount > 0)
+            // Cancel requested, a repair tool did not run, or a signal ended a verify, leave the state unchanged
+            if (
+                Program.IsCancelled()
+                || ToolErrorScope.Count != toolErrors
+                || ToolErrorScope.SignalCount > 0
+            )
             {
                 return false;
             }
