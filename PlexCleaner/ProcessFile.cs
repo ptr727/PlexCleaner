@@ -1881,8 +1881,8 @@ public class ProcessFile
         int toolErrors = ToolErrorScope.Count;
         bool repaired = RepairAndReVerify();
 
-        // Cancel requested, or a repair tool did not run, leave the state unchanged
-        if (Program.IsCancelled() || ToolErrorScope.Count != toolErrors)
+        // Cancel requested
+        if (Program.IsCancelled())
         {
             return false;
         }
@@ -1890,6 +1890,12 @@ public class ProcessFile
         // Repair failed
         if (!repaired)
         {
+            // A repair tool did not run, leave the state unchanged
+            if (ToolErrorScope.Count != toolErrors)
+            {
+                return false;
+            }
+
             // Repair failed and verify failed state
             _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;

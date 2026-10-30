@@ -363,7 +363,7 @@ flowchart TD
   class P02,CLEAN suspect
 ```
 
-`Process.ProcessFile()` counts the tool runs of the file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. A file with any such run is never deleted.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. `DeleteFailedFile()` does not delete a file in a run that had any such tool run.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 

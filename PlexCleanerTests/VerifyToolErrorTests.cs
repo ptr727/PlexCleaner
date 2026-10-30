@@ -14,6 +14,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     private readonly bool _useSidecarFiles = Program.Config.ProcessOptions.UseSidecarFiles;
     private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -25,6 +26,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = true;
         Program.Config.VerifyOptions.AutoRepair = true;
         Program.Config.VerifyOptions.DeleteInvalidFiles = true;
+        Program.Config.VerifyOptions.MaximumBitrate = 0;
 
         // An empty tools folder makes every tool fail to launch
         Program.Config.ToolsOptions = new ToolsOptions1
@@ -45,6 +47,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.VerifyOptions.AutoRepair = _autoRepair;
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Directory.Delete(_directory, true);
     }
 
@@ -116,6 +119,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     [Fact]
     public void ProcessFile_MediaPropsToolError_KeepsFiles()
     {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CreateFile("name.mkv");
 
         _ = Process
