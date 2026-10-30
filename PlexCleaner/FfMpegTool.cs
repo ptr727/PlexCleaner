@@ -170,6 +170,8 @@ public partial class FfMpeg
         internal static bool IsSignalExit(int exitCode) =>
             !OperatingSystem.IsWindows() && exitCode is (>= 129 and <= 159) or 255;
 
+        protected override bool EndedBySignal(int exitCode) => IsSignalExit(exitCode);
+
         public VerifyResult VerifyMedia(string fileName)
         {
             Command command = GetVerifyMediaCommand(GetToolPath(), fileName);

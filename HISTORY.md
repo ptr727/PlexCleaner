@@ -46,7 +46,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - `DeleteInvalidFiles` deletes only a file that failed processing.
     - A cancel, a read-only media file, and a read-only sidecar file leave the media file and its sidecar in place.
     - A failed non-MKV file keeps the sidecar of a sibling MKV file with the same name.
-    - A tool that fails to launch or throws leaves the media file and its sidecar in place, in any processing step.
+    - A tool run that does not finish leaves the media file and its sidecar in place, in any processing step.
+      - Such a run fails to launch, throws, or is killed by a signal outside Windows.
     - A file marked `PostDecodeTimestamps` keeps the media file and its sidecar in place, on every run.
     - An FfMpeg verify run killed by a signal still runs the repair.
       - Outside Windows, the media file and its sidecar stay in place when that repair fails.
@@ -55,7 +56,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Before, it ended the run for every remaining file with exit code 1.
     - The media file and its sidecar stay in place, whatever `DeleteInvalidFiles` says.
   - The error summary names the failed step beside the state of each file that failed processing, such as `VerifyFailed, VerifyAndRepair`.
-  - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
+  - A failed repair whose tool run does not finish leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
     - The next run retries the repair.
   - A re-encode or deinterlace replaces the media file only after every rewriting step succeeds, the track language restore included.
     - Before, a failure in a later step left the rewritten file with its state unchanged and reported it as not modified.
