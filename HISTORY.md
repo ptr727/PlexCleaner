@@ -66,7 +66,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - So each scan runs once per file without a verify, and a `--quickscan` sample sets neither flag.
     - A file an earlier version marked `Verified` with the `Verify` option off is not re-verified automatically, and the `createsidecar` command resets its state.
   - With `UseSidecarFiles` off, a step that only changes a file's state does not run the media info tools again.
-  - When processing modifies a file, it repeats the cleanup steps after the verify and repair step.
+  - When a cleanup step or a later step modifies a file, processing repeats the cleanup steps after the verify and repair step.
     - The repeated steps are cover art, tags, metadata, Matroska structure, closed captions, track language, duplicate tracks and default flags.
     - A rewrite by FfMpeg or HandBrake, such as a deinterlace, re-encode or repair, can undo their work.
     - Before, it repeated only the metadata, unknown language, tag and default flag steps.

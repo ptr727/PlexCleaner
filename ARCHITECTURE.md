@@ -343,7 +343,7 @@ flowchart TD
     P21 --> P22["ReEncode(): ReEncode"]
     P22 --> P23["VerifyAndRepair(): Verify, AutoRepair"]
   end
-  P23 --> G6{"Any step modified the file?"}
+  P23 --> G6{"A step from RemoveCoverArt() on modified the file?"}
   G6 -->|yes| CLEAN
   G6 -->|no| P33
   subgraph CLEAN["Cleanup re-run"]
@@ -377,7 +377,7 @@ flowchart TD
 
 `ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
 
-After `VerifyAndRepair()`, when any step modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. On a file no step modified, running the steps again would change nothing.
+After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
 

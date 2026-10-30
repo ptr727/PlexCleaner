@@ -29,6 +29,7 @@ public static class Process
         ProcessFile? processFile = null;
         bool result;
         bool skipped = false;
+        bool modifiedBeforeCleanup = false;
 
         // Current step, reported as the failure reason on error
         string? operation = null;
@@ -187,6 +188,9 @@ public static class Process
                     result = false;
                     break;
                 }
+
+                modifiedBeforeCleanup = modified;
+                modified = false;
 
                 // Remove all cover art attachments or video tracks that interfere with processing logic
                 // Conditional on ReMux option, fails if cover art is present and ReMux not enabled
@@ -420,6 +424,7 @@ public static class Process
             skipped = true;
         }
 
+        modified |= modifiedBeforeCleanup;
         if (!result)
         {
             failedOperation = operation;
