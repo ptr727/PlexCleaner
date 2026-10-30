@@ -151,9 +151,6 @@ public partial class FfMpeg
             return true;
         }
 
-        // FFmpeg 6.1 added the -enc_time_base:v demux keyword verify uses, and the README states this minimum
-        public override Version MinimumVersion { get; } = new(6, 1);
-
         internal static Command GetVerifyMediaCommand(string toolPath, string fileName) =>
             Builder
                 .Create(toolPath)
