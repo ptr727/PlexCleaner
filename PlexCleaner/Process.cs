@@ -381,7 +381,7 @@ public static class Process
         {
             // Delete files that failed processing
             // Conditional on DeleteInvalidFiles
-            if (!result && !skipped && !Program.IsCancelledError())
+            if (!result && !skipped)
             {
                 _ = processFile.DeleteFailedFile();
             }

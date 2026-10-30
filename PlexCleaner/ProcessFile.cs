@@ -1783,7 +1783,7 @@ public class ProcessFile
     public bool DeleteFailedFile()
     {
         // Conditional
-        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
+        if (!Program.Config.VerifyOptions.DeleteInvalidFiles || Program.IsCancelledError())
         {
             // Return false if not deleted
             return false;
