@@ -162,7 +162,7 @@ Critical performance feature - DO NOT break compatibility:
 - Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
 - Files must be readable (not being written) before processing
 - Retry logic: `FileRetryCount` attempts with `FileRetryWaitTime` delays
-- Cleanup: Deletes empty folders after file removal
+- Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow](#run-flow)
 - Pre-process: Optional initial scan of all monitored folders on startup
 
 **Concurrency:**
@@ -214,7 +214,7 @@ The diagrams below trace the `process` command from the command line to the resu
 
 Conventions used in every diagram:
 
-- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists, and one that more of them define takes its type.
+- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists, and one that more of them define takes its type. Pipeline `P` nodes name `ProcessFile` steps, which the step order check holds to `Process.cs` instead.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
@@ -637,7 +637,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. An FfMpeg run that does not complete also yields `DecodeError`, S15.
 
 ```mermaid
 flowchart TD
@@ -653,7 +653,7 @@ flowchart TD
   V5 --> V6["VerifyBitrate(): MaximumBitrate, skipped with --quickscan, sets BitrateExceeded, S11"]:::suspect
   V6 --> V7["VerifyMediaStreams(): FfMpeg decode"]
   V7 -->|Clean| PASS
-  V7 -->|"TimestampOnly or DecodeError"| REP["Verify fails, repair possible"]
+  V7 -->|"TimestampOnly, or DecodeError including a run that did not complete, S15"| REP["Verify fails, repair possible"]
   PASS --> P1{"Verified already set?"}
   P1 -->|yes| OK(["Continue"])
   P1 -->|no| P2["Set Verified, clear VerifyFailed, save state"]
@@ -734,10 +734,11 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
 - **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
-- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair and never cleared. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
+- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
 - **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.
+- **S15** ([#1084](https://github.com/ptr727/PlexCleaner/issues/1084)): `FfMpegTool.VerifyMedia()` returns `DecodeError` when FfMpeg does not run to completion. A verification that never ran then enters the repair ladder, and can end in `VerifyFailed`, `RepairFailed` and a delete.
 
 ## Code Conventions
 
