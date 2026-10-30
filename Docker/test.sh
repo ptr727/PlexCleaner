@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Run the PlexCleaner commands against the test media inside the container.
+
 set -Eeuo pipefail
 
 case "${1-}" in

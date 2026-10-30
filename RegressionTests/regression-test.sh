@@ -1,38 +1,33 @@
 #!/bin/bash
 
-# Regression test harness: process the ZFS test dataset through a single PlexCleaner Docker
-# image tag and write per-version results/logs for diffing against other runs.
+# Regression test harness, processing the ZFS test dataset through one PlexCleaner Docker image tag.
+# It writes per-version results and logs for diffing against other runs.
 #
-# Test data provisioning (2026-07-16): the corpus lives in the snapshotted dataset
-# hddpool/media/troublesome (full/ + reduced/); each run provisions hddpool/media/test as an
-# instant zero-copy ZFS CLONE of the newest corpus snapshot (no rsync, no drift - the clone
-# replaces the old PrepTestDataset.sh flow). Rollbacks inside the run use the clone's @backup.
+# The corpus lives in the snapshotted dataset hddpool/media/troublesome, with full/ and reduced/ subsets.
+# Each run provisions hddpool/media/test as a zero-copy ZFS clone of the newest corpus snapshot.
+# Rollbacks inside the run use the clone's @backup snapshot.
 #
-# Results are written into a directory named after the image build version (the "version"
-# label, e.g. 3.20.7-g3235a8a055 - the same tag used for source code sync and plugin build).
-# This makes results durable and version-to-version comparable, and replaces the old manual
-# step of copying results into a version-named folder when happy with a release. Re-running
-# the same build overwrites the files in that build's directory.
+# Results go into a directory named after the image's "version" label, such as 3.20.7-g3235a8a055.
+# That label is also the tag the plugin build checks out, so results stay comparable across versions.
+# Re-running the same build overwrites the files in that build's directory.
 #
 # The flow is:
-#   1. pull the image
-#   2. read the build version from the image "version" label
-#   3. create the version-named directory under this folder
-#   4. copy the live PlexCleaner.json settings into the directory (durable record)
-#   5. write buildinfo.json (channel, version, image digest, run timestamp)
-#   6. build the requested plugins from the matching source tag into the directory
-#   7. run process + defaultsettings, then each plugin on the processed results, saving into the directory
+#   1. Pull the image.
+#   2. Read the build version from the image "version" label.
+#   3. Create the version-named directory under this folder.
+#   4. Copy the live PlexCleaner.json settings into the directory as a durable record.
+#   5. Write buildinfo.json with the channel, version, image digest, and run timestamp.
+#   6. Build the requested plugins from the matching source tag into the directory.
+#   7. Run process and defaultsettings, then each plugin on the processed results.
 #
 # Settings file PlexCleaner.json is expected to use:
 #   "UseSystem": true, "AutoUpdate": false, "RemoveUnwantedLanguageTracks": true,
 #   "RemoveDuplicateTracks": true, "DeInterlace": true
-# Test data provisioned per run as a ZFS clone (see above); PrepTestDataset.sh is retired.
 #
-# The plugin assembly is not shipped in the image, so the script clones the PlexCleaner source,
-# checks out the git tag matching the image version label (the release tag), and builds the example
-# MatroskaHeaderCleanup plugin from it, so the plugin API matches the running image. Requires git and
-# the .NET SDK on the host; the custom run is skipped with a warning if they are missing or the version
-# tag cannot be checked out.
+# The image ships no plugin assembly, so the script builds each plugin from the matching source tag.
+# That keeps the plugin API equal to the running image's.
+# The build needs git and the .NET SDK on the host.
+# A missing tool or an unresolvable tag skips the plugin run with a warning.
 
 set -Eeuo pipefail
 
@@ -83,9 +78,8 @@ Snapshot="hddpool/media/test@backup"
 Image="docker.io/ptr727/plexcleaner"
 # Live master settings copied into each build's version directory
 Settings="PlexCleaner.json"
-# Example plugins runnable after the process test, name -> "project dll". The post-process plugin runs
-# only confirm a plugin loads and runs against the processed dataset; per-plugin behaviour is verified
-# in isolation elsewhere, not here.
+# Example plugins runnable after the process test, name -> "project dll".
+# A post-process plugin run only confirms the plugin loads and runs against the processed dataset.
 declare -A PluginRegistry=(
     [MatroskaHeaderCleanup]="Plugins/MatroskaHeaderCleanup/MatroskaHeaderCleanup.csproj MatroskaHeaderCleanup.dll"
     [DtsTimestampRepair]="Plugins/DtsTimestampRepair/DtsTimestampRepair.csproj DtsTimestampRepair.dll"
@@ -97,8 +91,8 @@ PluginBuildDir="/data/media/PlexCleaner/PluginBuild"
 # Parallel file-processing thread count; server has ample cores, so double the default of 4
 ThreadCount=8
 
-# Process options, always run in parallel
-# quick mode keeps full-file scanning but writes short testsnippets to shorten remux and re-encode
+# Process options, always run in parallel.
+# Quick mode keeps full-file scanning, and writes short test snippets to shorten remux and re-encode.
 ProcessOptions=(--parallel --threadcount "$ThreadCount")
 if [[ "$Mode" == "quick" ]]; then
     ProcessOptions+=(--testsnippets)
@@ -121,12 +115,10 @@ DockerCommon=(
 )
 
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
-# Fast path (every run): the existing clone already originates from the newest snapshot -> just
-# roll back to its @backup (rollback works even while long-running media containers or SMB
-# clients hold the mount in their namespaces; destroy does NOT - Plex/Jellyfin/smbd bind
-# /data/media at start).
-# Corpus-change path: rename the stale clone aside (rename succeeds where destroy is blocked),
-# clone fresh, and opportunistically destroy any retired clones once the holders are gone.
+# Where the clone already originates from the newest snapshot, the run rolls it back to its @backup.
+# A rollback works while media containers or SMB clients hold the mount, where a destroy fails.
+# Where the corpus changed, the run renames the stale clone aside, since a rename succeeds where a destroy fails.
+# It then clones fresh and destroys any retired clones whose holders are gone.
 ProvisionDataset() {
     local CorpusSnap Origin
     CorpusSnap="$(zfs list -H -t snapshot -o name -s creation "$CorpusDataset" | tail -1)"
@@ -171,8 +163,7 @@ GetImageVersion() {
 }
 
 # WriteBuildInfo Tag Version VersionDir
-# Record the channel and run metadata so results can be identified and ordered later,
-# e.g. "the last develop build" vs "the last latest build".
+# Record the channel and run metadata, so results can be ordered later, such as the last develop build.
 WriteBuildInfo() {
     local Tag="$1"
     local Version="$2"
@@ -200,8 +191,8 @@ EOF
 }
 
 # RunProcess Tag Version
-# Processes the dataset in place; the caller restores before and after so the processed results survive
-# for any post-process plugin runs
+# Process the dataset in place.
+# The caller restores before and after, so the processed results survive for the post-process plugin runs.
 RunProcess() {
     local Tag="$1"
     local Version="$2"
@@ -224,9 +215,8 @@ RunProcess() {
 }
 
 # BuildPlugin Tag Version VersionDir
-# Clone the PlexCleaner source, check out the git tag matching the image version label, and build the
-# example plugin into the version directory, so the plugin API matches the running image. Returns
-# non-zero (skip) on any failure.
+# Build the example plugin into the version directory from the git tag matching the image version label.
+# Return non-zero on any failure, which skips the plugin run.
 BuildPlugin() {
     local Tag="$1"
     local Version="$2"
@@ -262,8 +252,8 @@ BuildPlugin() {
 }
 
 # RunPlugin Tag Version Dll
-# Run the custom command with one plugin against the current (already processed) dataset, no rollback,
-# to confirm the plugin loads and runs. Per-plugin log so multiple plugin runs do not overwrite each other
+# Run the custom command with one plugin against the already processed dataset, with no rollback.
+# Each plugin writes its own log, so plugin runs do not overwrite each other.
 RunPlugin() {
     local Tag="$1"
     local Version="$2"

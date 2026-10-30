@@ -2,9 +2,8 @@
 
 # Run dotnet-counters against the in-container PlexCleaner process.
 # The single-file tool needs a writable extract dir, and the app is PID 1 in the container.
-# Usage from the host:
-#   docker exec <container> counters             # live monitor of the PlexCleaner.Process meter
-#   docker exec <container> counters collect ... # any other dotnet-counters verb/args, passed through
+# From the host, `docker exec <container> counters` opens a live monitor of the PlexCleaner.Process meter.
+# Any other dotnet-counters verb and its arguments pass through, as in `docker exec <container> counters collect`.
 
 set -Eeuo pipefail
 

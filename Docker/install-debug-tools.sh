@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Install vsdbg and the .NET diagnostic tools into the debug image.
+
 set -Eeuo pipefail
 
 case "${1-}" in

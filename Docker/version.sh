@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Print the OS, .NET, PlexCleaner, and media tool versions inside the container.
+
 set -Eeuo pipefail
 
 case "${1-}" in
