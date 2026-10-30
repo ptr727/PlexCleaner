@@ -22,7 +22,7 @@ public class ProcessFile
 
     private SidecarFile _sidecarFile;
 
-    // Classification of the most recent stream verify, used to choose the repair strategy
+    // Classification of the file's own stream verify, it chooses the repair and a tool error blocks the delete
     private VerifyResult _lastVerifyResult;
 
     public ProcessFile(string mediaFile)
@@ -1749,9 +1749,9 @@ public class ProcessFile
         // Will update sidecar state if bitrate exceeded
         _ = VerifyBitrate();
 
-        // Verify media streams, a tool error is not repairable
+        // Verify media streams, both failure kinds are repairable
+        canRepair = true;
         _lastVerifyResult = VerifyMediaStreams(FileInfo);
-        canRepair = _lastVerifyResult != VerifyResult.ToolError;
 
         // Deterministic: pass only when clean, a timestamp-only or decode result is a repairable failure
         return _lastVerifyResult == VerifyResult.Clean;
