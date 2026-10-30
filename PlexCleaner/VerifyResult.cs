@@ -11,6 +11,6 @@ public enum VerifyResult
     // A genuine decode or demux corruption signature, or any unrecognized diagnostic, verify fails
     DecodeError,
 
-    // FfMpeg failed to launch, was cancelled, or threw before exiting, so the media is unchecked
+    // FfMpeg failed to launch, was cancelled, or its execution threw, so the media is unchecked
     ToolError,
 }

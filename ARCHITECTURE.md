@@ -638,7 +638,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, S17, and no line yields `Clean`. An FfMpeg run that fails to launch, is cancelled, or throws before it exits yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged and is not deleted. A re-verify inside the repair ladder reads `ToolError` as a failed repair, S16.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, S17, and no line yields `Clean`. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged and is not deleted. A re-verify inside the repair ladder reads `ToolError` as a failed repair, S16.
 
 ```mermaid
 flowchart TD
