@@ -44,12 +44,12 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     // Each fake writes its tool name into every argument matching the patterns, MkvPropEdit logs the file it edits
-    private static string WriteFakeTools(string tempOutputs, int propEditExit)
+    private static string WriteFakeTools(string tempOutputs, int propEditExit, int mkvMergeExit = 0)
     {
         string write =
             $"for a; do a=${{a#*=}}; case $a in {tempOutputs}) echo $(basename \"$0\") > \"$a\" ;; esac; done\n";
         FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), write);
-        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), write);
+        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), write + $"exit {mkvMergeExit}\n");
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), write);
         string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
         FakeTools.WriteScript(mkvPropEdit, $"echo \"$@\" > \"$0.log\"\nexit {propEditExit}\n");
@@ -57,15 +57,20 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     [Theory]
-    [InlineData(0, true)]
-    [InlineData(2, false)]
-    public void ConvertToMkv_ReplacesInputOnlyAfterLanguageRestore(int propEditExit, bool success)
+    [InlineData(0, 0, true)]
+    [InlineData(0, 2, false)]
+    [InlineData(2, 0, false)]
+    public void ConvertToMkv_ReplacesInputOnlyAfterEveryStep(
+        int mkvMergeExit,
+        int propEditExit,
+        bool success
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         ProcessFile processFile = CreateProcessFile();
         string mediaFile = processFile.FileInfo.FullName;
         byte[] original = File.ReadAllBytes(mediaFile);
-        string propEditLog = WriteFakeTools("*.tmp1|*.tmp4", propEditExit);
+        string propEditLog = WriteFakeTools("*.tmp1|*.tmp4", propEditExit, mkvMergeExit);
 
         bool converted = PlexCleaner.Convert.ConvertToMkv(
             mediaFile,
@@ -76,7 +81,14 @@ public sealed class ReplaceOriginalTests : IDisposable
 
         _ = converted.Should().Be(success);
         _ = outputName.Should().Be(mediaFile);
-        _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
+        if (mkvMergeExit == 0)
+        {
+            _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
+        }
+        else
+        {
+            _ = File.Exists(propEditLog).Should().BeFalse();
+        }
         if (success)
         {
             _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
