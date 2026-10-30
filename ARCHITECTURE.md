@@ -282,9 +282,11 @@ flowchart TD
   K2 --> N{"More files in the group?"}
   N -->|yes| D
   N -->|no| C
-  E -->|"exception escaping ProcessFile(), such as from DeleteFailedFile()"| E1["Log it and fail the file, no result row"]
+  E -->|"exception escaping ProcessFile() while no cancel is requested, such as from DeleteFailedFile()"| E1["Log it and fail the file, no result row"]
   E1 --> K
+  E -->|"exception after a cancel request"| X3["The exception leaves ForAll"]
   X1 --> RF["Run result false"]
+  X3 --> RF
   C -->|all groups done| RT["Run result true, whatever the error count"]
   RF --> P["Log the error, modified and VerifyFailed files"]
   RT --> P
