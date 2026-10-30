@@ -55,4 +55,32 @@ public sealed class ToolErrorScopeTests
             Program.Options.ThreadCount = threadCount;
         }
     }
+
+    [Fact]
+    public async Task Record_ConcurrentScopes_AreIsolated()
+    {
+        using Barrier barrier = new(2);
+        Task<int> recording = Task.Run(
+            () =>
+            {
+                using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+                ToolErrorScope.Record();
+                barrier.SignalAndWait(TestContext.Current.CancellationToken);
+                return ToolErrorScope.Count;
+            },
+            TestContext.Current.CancellationToken
+        );
+        Task<int> idle = Task.Run(
+            () =>
+            {
+                using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+                barrier.SignalAndWait(TestContext.Current.CancellationToken);
+                return ToolErrorScope.Count;
+            },
+            TestContext.Current.CancellationToken
+        );
+
+        _ = (await recording).Should().Be(1);
+        _ = (await idle).Should().Be(0);
+    }
 }
