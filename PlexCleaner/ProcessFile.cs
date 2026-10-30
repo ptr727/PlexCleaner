@@ -405,7 +405,7 @@ public class ProcessFile
         );
         _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
-        _ = Refresh(false);
+        _ = SaveState();
 
         // Always returns false to signal the repair did not succeed
         return false;
@@ -1168,11 +1168,11 @@ public class ProcessFile
             return true;
         }
 
-        // Running idet is expensive, skip if already verified or already deinterlaced
         if (
             conditional
             && (
-                State.HasFlag(SidecarFile.StatesType.Verified)
+                State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
+                || State.HasFlag(SidecarFile.StatesType.Verified)
                 || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
                 || State.HasFlag(SidecarFile.StatesType.DeInterlaced)
             )
@@ -1194,7 +1194,7 @@ public class ProcessFile
         {
             // Not interlaced, clear the idet info so the caller does not treat it as a detection
             idetInfo = null;
-            return true;
+            return SetScanned(SidecarFile.StatesType.ScannedInterlace);
         }
 
         // Use the first video track from FfProbe
@@ -1226,11 +1226,11 @@ public class ProcessFile
             return true;
         }
 
-        // Running analyze_frames is expensive, skip if already verified or closed captions already removed
         if (
             conditional
             && (
-                State.HasFlag(SidecarFile.StatesType.Verified)
+                State.HasFlag(SidecarFile.StatesType.ScannedCaptions)
+                || State.HasFlag(SidecarFile.StatesType.Verified)
                 || State.HasFlag(SidecarFile.StatesType.VerifyFailed)
                 || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
             )
@@ -1258,9 +1258,16 @@ public class ProcessFile
             // Use the first video track from FfProbe
             videoProps = FfProbeProps.Video.First();
             videoProps.ClosedCaptions = true;
+            return true;
         }
 
-        return true;
+        return Program.Options.QuickScan || SetScanned(SidecarFile.StatesType.ScannedCaptions);
+    }
+
+    private bool SetScanned(SidecarFile.StatesType scanned)
+    {
+        _sidecarFile.State |= scanned;
+        return SaveState();
     }
 
     public bool DeInterlace(bool conditional, ref bool modified)
@@ -1703,13 +1710,6 @@ public class ProcessFile
         canRepair = false;
         _lastVerifyResult = VerifyResult.Clean;
 
-        // Conditional
-        if (conditional && !Program.Config.ProcessOptions.Verify)
-        {
-            // Done
-            return true;
-        }
-
         // Skip if Verified
         if (conditional && _sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
         {
@@ -1821,6 +1821,11 @@ public class ProcessFile
 
     public bool VerifyAndRepair(ref bool modified)
     {
+        if (!Program.Config.ProcessOptions.Verify)
+        {
+            return true;
+        }
+
         // Verify (verify does not set any state, it just tests state)
         if (Verify(true, out bool canRepair))
         {
@@ -1829,14 +1834,11 @@ public class ProcessFile
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-                if (Program.Config.ProcessOptions.Verify)
-                {
-                    _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-                }
+                _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
-                return Refresh(false);
+                return SaveState();
             }
 
             // Done
@@ -1872,7 +1874,7 @@ public class ProcessFile
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
                 // Update state
-                _ = Refresh(false);
+                _ = SaveState();
             }
 
             // Error
@@ -1915,7 +1917,7 @@ public class ProcessFile
             _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
 
             // Update state
-            _ = Refresh(false);
+            _ = SaveState();
 
             // Error
             return false;
@@ -2255,7 +2257,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-                return Refresh(false);
+                return SaveState();
             case VerifyResult.TimestampOnly:
                 // Detected non-monotonic DTS, run the timestamp repair ladder
                 return RepairTimestampsAndSetState(ref modified);
@@ -2311,7 +2313,7 @@ public class ProcessFile
         {
             _sidecarFile.State |= SidecarFile.StatesType.PostDecodeTimestamps;
         }
-        _ = Refresh(false);
+        _ = SaveState();
         return false;
     }
 
@@ -2438,6 +2440,9 @@ public class ProcessFile
         // Refresh sidecar info
         return Refresh(true);
     }
+
+    // Without a sidecar the state is not persisted, and a Refresh() would probe the unchanged media again
+    private bool SaveState() => !Program.Config.ProcessOptions.UseSidecarFiles || Refresh(false);
 
     private bool Refresh(bool modified)
     {

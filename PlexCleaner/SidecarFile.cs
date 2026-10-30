@@ -31,6 +31,8 @@ public class SidecarFile
         RemovedCoverArt = 1 << 16,
         ClearedDefaultFlags = 1 << 17,
         PostDecodeTimestamps = 1 << 18,
+        ScannedInterlace = 1 << 19,
+        ScannedCaptions = 1 << 20,
     }
 
     private const string SidecarExtension = ".PlexCleaner";
@@ -151,15 +153,16 @@ public class SidecarFile
             && Program.Config.ProcessOptions.SidecarUpdateOnToolChange
         )
         {
-            // Remove the verified state flag if set
             current = false;
-            if (State.HasFlag(StatesType.Verified))
+            const StatesType toolStates =
+                StatesType.Verified | StatesType.ScannedInterlace | StatesType.ScannedCaptions;
+            if ((State & toolStates) != 0)
             {
                 Log.Warning(
-                    "Sidecar out of sync with tools, clearing Verified flag : {FileName}",
+                    "Sidecar out of sync with tools, clearing Verified and Scanned flags : {FileName}",
                     _sidecarFileInfo.FullName
                 );
-                State &= ~StatesType.Verified;
+                State &= ~toolStates;
             }
         }
 
