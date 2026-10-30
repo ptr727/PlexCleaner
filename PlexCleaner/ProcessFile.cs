@@ -1194,8 +1194,7 @@ public class ProcessFile
         {
             // Not interlaced, clear the idet info so the caller does not treat it as a detection
             idetInfo = null;
-            _sidecarFile.State |= SidecarFile.StatesType.ScannedInterlace;
-            return Refresh(false);
+            return SetScanned(SidecarFile.StatesType.ScannedInterlace);
         }
 
         // Use the first video track from FfProbe
@@ -1262,13 +1261,14 @@ public class ProcessFile
             return true;
         }
 
-        if (Program.Options.QuickScan)
-        {
-            return true;
-        }
+        return Program.Options.QuickScan || SetScanned(SidecarFile.StatesType.ScannedCaptions);
+    }
 
-        _sidecarFile.State |= SidecarFile.StatesType.ScannedCaptions;
-        return Refresh(false);
+    private bool SetScanned(SidecarFile.StatesType scanned)
+    {
+        // Without a sidecar the flag is not persisted, and a Refresh() would probe the unchanged media again
+        _sidecarFile.State |= scanned;
+        return !Program.Config.ProcessOptions.UseSidecarFiles || Refresh(false);
     }
 
     public bool DeInterlace(bool conditional, ref bool modified)

@@ -119,6 +119,31 @@ public sealed class ScanStateTests : IDisposable
     }
 
     [Fact]
+    public void DeInterlace_CleanScanWithoutSidecars_ProbesNoMediaProps()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        FakeTools.WriteScript(
+            Tools.FfMpeg.GetToolPath(),
+            """
+            echo '[Parsed_idet_0 @ 0] Repeated Fields: Neither: 1000 Top: 0 Bottom: 0' >&2
+            echo '[Parsed_idet_0 @ 0] Single frame detection: TFF: 0 BFF: 0 Progressive: 1000 Undetermined: 0' >&2
+            echo '[Parsed_idet_0 @ 0] Multi frame detection: TFF: 0 BFF: 0 Progressive: 1000 Undetermined: 0' >&2
+
+            """
+        );
+        string marker = WriteFailingTool(Tools.FfProbe.GetToolPath());
+        ProcessFile processFile = OpenProcessFile(mediaFile);
+        Program.Config.ProcessOptions.UseSidecarFiles = false;
+
+        bool modified = false;
+        _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.ScannedInterlace);
+        _ = File.Exists(marker).Should().BeFalse();
+    }
+
+    [Fact]
     public void RemoveClosedCaptions_ScanFails_LeavesStateUnchanged()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
