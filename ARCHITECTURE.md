@@ -703,7 +703,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off sets `Verified`, clears `VerifyFailed` and keeps `RepairFailed`. A later tool change with `SidecarUpdateOnToolChange` on clears `Verified`, and the next failed verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off sets `Verified`, clears `VerifyFailed` and keeps `RepairFailed` and `PostDecodeTimestamps`. A later tool change with `SidecarUpdateOnToolChange` on clears `Verified`, and the next failed verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
 ### State Flags by Step
 
