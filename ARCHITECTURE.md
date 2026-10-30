@@ -704,7 +704,7 @@ flowchart TD
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
-  RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a repair run or a verify?"} -->|yes| FAIL
+  RF{"Cancelled, or a tool run failed to launch, threw, or was ended by a signal?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
@@ -743,7 +743,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
 - **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
-- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
+- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored unless a signal ended the run, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
 - **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.

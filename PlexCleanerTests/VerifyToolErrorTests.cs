@@ -270,6 +270,44 @@ public sealed class VerifyToolErrorTests : IDisposable
     }
 
     [Fact]
+    public void VerifyAndRepair_PacketAnalysisSignalExit_KeepsStateAndFiles()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        FakeTools.WriteScript(Tools.FfProbe.GetToolPath(), "kill -9 $$\n", true);
+        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n", true);
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(
+            Tools.FfMpeg.GetToolPath(),
+            """
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            [ $step -gt 1 ] && exit 1
+            echo "non monotonically increasing dts to muxer" >&2
+            exit 0
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = ToolErrorScope.Count.Should().BeGreaterThan(0);
+        _ = ToolErrorScope.SignalCount.Should().Be(0);
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        _ = processFile.DeleteFailedFile().Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
     public void VerifyAndRepair_PostDecodeTimestampRepairFails_KeepsFilesOnEveryRun()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
