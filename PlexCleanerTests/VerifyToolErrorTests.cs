@@ -81,6 +81,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     [Fact]
     public void VerifyAndRepair_ToolError_KeepsStateAndFiles()
     {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CopyUnverifiedSample();
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
         ProcessFile processFile = new(mediaFile);
@@ -99,6 +100,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     [Fact]
     public void RepairTimestamps_ToolError_KeepsFiles()
     {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CreateFile("name.mkv");
         string sidecarFile = CreateFile("name.PlexCleaner");
         ProcessFile processFile = new(mediaFile);
@@ -107,6 +109,47 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = processFile.RepairTimestamps(ref modified).Should().BeFalse();
         _ = processFile.DeleteFailedFile().Should().BeFalse();
 
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProcessFile_MediaPropsToolError_KeepsFiles()
+    {
+        string mediaFile = CreateFile("name.mkv");
+
+        _ = Process
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .Should()
+            .BeFalse();
+
+        _ = failedOperation.Should().Be(nameof(ProcessFile.GetMediaProps));
+        _ = File.Exists(mediaFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_RepairToolError_KeepsStateAndFiles()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        // The first verify reads a decode error, then every repair tool fails to launch
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(ffMpeg)!);
+        File.WriteAllText(ffMpeg, "#!/bin/sh\nrm -f \"$0\"\nexit 1\n");
+        File.SetUnixFileMode(ffMpeg, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = File.Exists(ffMpeg).Should().BeFalse();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        _ = processFile.DeleteFailedFile().Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
         _ = File.Exists(sidecarFile).Should().BeTrue();
     }

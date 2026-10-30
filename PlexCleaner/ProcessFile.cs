@@ -22,7 +22,7 @@ public class ProcessFile
 
     private SidecarFile _sidecarFile;
 
-    // Classification of the file's own stream verify, it chooses the repair and a tool error blocks the delete
+    // Classification of the file's own stream verify, it chooses the repair
     private VerifyResult _lastVerifyResult;
 
     public ProcessFile(string mediaFile)
@@ -1793,7 +1793,7 @@ public class ProcessFile
         // Conditional
         if (
             !Program.Config.VerifyOptions.DeleteInvalidFiles
-            || _lastVerifyResult == VerifyResult.ToolError
+            || ToolErrorScope.Count > 0
             || Program.IsCancelledError()
         )
         {
@@ -1878,10 +1878,11 @@ public class ProcessFile
         }
 
         // Attempt repair, if repair fails the original file will not be modified
+        int toolErrors = ToolErrorScope.Count;
         bool repaired = RepairAndReVerify();
 
-        // Cancel requested
-        if (Program.IsCancelled())
+        // Cancel requested, or a repair tool did not run, leave the state unchanged
+        if (Program.IsCancelled() || ToolErrorScope.Count != toolErrors)
         {
             return false;
         }
@@ -2251,6 +2252,7 @@ public class ProcessFile
 
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
+        int toolErrors = ToolErrorScope.Count;
         _ = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
 
         // Escalate from setts to remux to re-encode, and the first clean re-verify wins
@@ -2268,8 +2270,8 @@ public class ProcessFile
             return Refresh(true);
         }
 
-        // Do not touch state on cancellation, the caller retries next run
-        if (Program.IsCancelled())
+        // Do not touch state on cancellation or when a tool did not run, the caller retries next run
+        if (Program.IsCancelled() || ToolErrorScope.Count != toolErrors)
         {
             return false;
         }

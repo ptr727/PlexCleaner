@@ -39,6 +39,7 @@ public static class Process
         using IDisposable logScope = PerFileLogLevel.BeginScope(
             LoggerFactory.EffectiveLevel(Program.Options)
         );
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
 
         // Process in jump loop
         for (; ; )
