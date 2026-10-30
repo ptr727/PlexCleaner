@@ -61,6 +61,7 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 COPY ./Plugins/. ./Plugins/.
+COPY ./ARCHITECTURE.md ./
 COPY ./.editorconfig ./
 COPY ./Directory.Build.props ./
 COPY ./Directory.Packages.props ./
