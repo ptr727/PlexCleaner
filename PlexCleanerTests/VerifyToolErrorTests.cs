@@ -93,12 +93,15 @@ public sealed class VerifyToolErrorTests : IDisposable
     public void VerifyMedia_ToolDoesNotRun_IsToolError() =>
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.ToolError);
 
-    [Fact]
-    public void VerifyMedia_SignalExit_IsDecodeErrorAndRecordsSignal()
+    [Theory]
+    [InlineData("KILL")]
+    [InlineData("TERM")]
+    [InlineData("PROF")]
+    public void VerifyMedia_SignalExit_IsDecodeErrorAndRecordsSignal(string signal)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        WriteScript(Tools.FfMpeg.GetToolPath(), "kill -9 $$\n", true);
+        WriteScript(Tools.FfMpeg.GetToolPath(), $"kill -{signal} $$\n", true);
 
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
         _ = ToolErrorScope.SignalCount.Should().Be(1);
@@ -125,7 +128,10 @@ public sealed class VerifyToolErrorTests : IDisposable
     [InlineData(129, true)]
     [InlineData(137, true)]
     [InlineData(143, true)]
-    [InlineData(144, false)]
+    [InlineData(153, true)]
+    [InlineData(159, true)]
+    [InlineData(160, false)]
+    [InlineData(166, false)]
     [InlineData(183, false)]
     [InlineData(244, false)]
     [InlineData(255, true)]

@@ -167,11 +167,11 @@ public partial class FfMpeg
                 )
                 .Build();
 
-        // Signals 1 to 15 exit 129 to 143, and FFmpeg exits 255 once it handles a signal
+        // Signals 1 to 31 exit 129 to 159, and FFmpeg exits 255 once it handles a signal
         // FFmpeg exits an error as its negative code cut to a byte, such as 183 for invalid data
         // A rare error that also exits 255 only keeps the file
         internal static bool IsSignalExit(int exitCode) =>
-            !OperatingSystem.IsWindows() && exitCode is (>= 129 and <= 143) or 255;
+            !OperatingSystem.IsWindows() && exitCode is (>= 129 and <= 159) or 255;
 
         public VerifyResult VerifyMedia(string fileName)
         {
