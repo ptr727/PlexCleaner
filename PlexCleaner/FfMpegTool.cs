@@ -167,6 +167,10 @@ public partial class FfMpeg
                 )
                 .Build();
 
+        // A process killed by a signal exits with 128 plus the signal number
+        internal static bool IsSignalExit(int exitCode) =>
+            !OperatingSystem.IsWindows() && exitCode > 128;
+
         public VerifyResult VerifyMedia(string fileName)
         {
             Command command = GetVerifyMediaCommand(GetToolPath(), fileName);
@@ -189,6 +193,10 @@ public partial class FfMpeg
             if (exitCode != 0)
             {
                 verifyResult = VerifyResult.DecodeError;
+            }
+            if (IsSignalExit(exitCode))
+            {
+                ToolErrorScope.RecordSignal();
             }
             if (verifyResult == VerifyResult.DecodeError)
             {

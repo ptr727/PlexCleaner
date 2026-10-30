@@ -94,6 +94,69 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.ToolError);
 
     [Fact]
+    public void VerifyMedia_SignalExit_IsDecodeErrorAndRecordsSignal()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        WriteScript(Tools.FfMpeg.GetToolPath(), "kill -9 $$\n", true);
+
+        _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
+        _ = ToolErrorScope.SignalCount.Should().Be(1);
+        _ = ToolErrorScope.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public void VerifyMedia_ErrorExit_RecordsNoSignal()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 1\n", true);
+
+        _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
+        _ = ToolErrorScope.SignalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void VerifyAndRepair_SignalExitRepairFails_SetsStateAndKeepsFiles()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n", true);
+        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        WriteScript(
+            ffMpeg,
+            """
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            [ $step -eq 1 ] && kill -9 $$
+            exit 1
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = ToolErrorScope.SignalCount.Should().Be(1);
+        _ = ToolErrorScope.Count.Should().Be(0);
+        _ = processFile
+            .State.Should()
+            .HaveFlag(SidecarFile.StatesType.VerifyFailed)
+            .And.HaveFlag(SidecarFile.StatesType.RepairFailed);
+        _ = processFile.DeleteFailedFile().Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
     public void VerifyAndRepair_ToolError_KeepsStateAndFiles()
     {
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();

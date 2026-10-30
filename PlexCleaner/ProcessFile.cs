@@ -1794,6 +1794,7 @@ public class ProcessFile
         if (
             !Program.Config.VerifyOptions.DeleteInvalidFiles
             || ToolErrorScope.Count > 0
+            || ToolErrorScope.SignalCount > 0
             || Program.IsCancelledError()
         )
         {

@@ -26,6 +26,17 @@ public sealed class ToolErrorScopeTests
     }
 
     [Fact]
+    public void RecordSignal_LeavesCountUnchanged()
+    {
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+
+        ToolErrorScope.RecordSignal();
+
+        _ = ToolErrorScope.SignalCount.Should().Be(1);
+        _ = ToolErrorScope.Count.Should().Be(0);
+    }
+
+    [Fact]
     public void ProcessFiles_BeginsScopePerFile()
     {
         int threadCount = Program.Options.ThreadCount;
