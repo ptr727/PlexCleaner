@@ -187,6 +187,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.Count.Should().Be(0);
         _ = processFile.State.Should().Be(state);
         _ = processFile.DeleteFailedFile().Should().Be(deleted);
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be(autoRepair ? "2" : "1");
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().Be(!deleted);
