@@ -311,6 +311,8 @@ public sealed class VerifyToolErrorTests : IDisposable
             """,
             true
         );
+        _ = processFile.GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo).Should().BeTrue();
+        _ = dtsInfo!.HasNonMonotonicAudioVideoDts.Should().BeTrue();
         WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
         WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
         string ffMpeg = Tools.FfMpeg.GetToolPath();
