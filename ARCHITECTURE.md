@@ -671,7 +671,7 @@ flowchart TD
   NS -->|yes| FAIL
   NS -->|no| NF["Set VerifyFailed, clear Verified, save state, fail"]
   C1 -->|yes| C2{"Result was TimestampOnly?"}
-  C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis() result ignored, S11"]:::suspect
+  C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis() result ignored for the ladder, S11"]:::suspect
   T0 --> T1["TryLosslessTimestampRepair(): only when every non-monotonic stream is audio"]
   T1 --> T2["FfMpeg rewrites timestamps to .tmp14"]
   T2 --> T3["TimestampRepairRegressionGate(): stream hashes equal, start and duration within 40 ms"]
@@ -699,7 +699,7 @@ flowchart TD
   RC -->|"yes, the repaired file already replaced the original, S5"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
   RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
-  RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder and clear it otherwise, save state, fail"]
+  RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, clear it after any other ladder whose packet analysis succeeded, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 

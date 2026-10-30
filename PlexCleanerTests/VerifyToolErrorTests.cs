@@ -344,6 +344,59 @@ public sealed class VerifyToolErrorTests : IDisposable
     }
 
     [Fact]
+    public void RepairTimestamps_PacketAnalysisFailsRepairFails_KeepsPostDecodeAndFiles()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
+        sidecar["State"] = (int)(
+            SidecarFile.StatesType.VerifyFailed
+            | SidecarFile.StatesType.RepairFailed
+            | SidecarFile.StatesType.PostDecodeTimestamps
+        );
+        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        WriteScript(Tools.FfProbe.GetToolPath(), "exit 1\n", true);
+        _ = processFile.GetPacketAnalysis(false, out _, out _).Should().BeFalse();
+        WriteScript(Tools.MkvMerge.GetToolPath(), "for a; do out=$a; done\n: > \"$out\"\n", true);
+        WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        WriteScript(
+            ffMpeg,
+            """
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            [ $step -gt 2 ] && exit 1
+            echo "non monotonically increasing dts to muxer" >&2
+            exit 0
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        _ = processFile.RepairTimestamps(ref modified).Should().BeFalse();
+        _ = ToolErrorScope.Count.Should().Be(0);
+        _ = ToolErrorScope.SignalCount.Should().Be(0);
+        _ = processFile
+            .State.Should()
+            .Be(
+                SidecarFile.StatesType.VerifyFailed
+                    | SidecarFile.StatesType.RepairFailed
+                    | SidecarFile.StatesType.PostDecodeTimestamps
+            );
+        _ = processFile.DeleteFailedFile().Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(sidecarFile).Should().BeTrue();
+    }
+
+    [Fact]
     public void VerifyAndRepair_ToolError_KeepsStateAndFiles()
     {
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
