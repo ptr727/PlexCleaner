@@ -87,7 +87,7 @@ All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap)
 
 Critical performance feature - DO NOT break compatibility:
 
-- Each `.mkv` gets a `.PlexCleaner` sidecar JSON file
+- With `UseSidecarFiles` on, each `.mkv` gets a `.PlexCleaner` sidecar JSON file
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
@@ -161,7 +161,6 @@ Critical performance feature - DO NOT break compatibility:
 
 - Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
 - Files must be readable (not being written) before processing
-- Retry logic: `FileRetryCount` attempts with `FileRetryWaitTime` delays
 - Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow](#run-flow)
 - Pre-process: Optional initial scan of all monitored folders on startup
 
@@ -214,7 +213,7 @@ The diagrams below trace the `process` command from the command line to the resu
 
 Conventions used in every diagram:
 
-- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists, and one that more of them define takes its type. Pipeline `P` nodes name `ProcessFile` steps, which the step order check holds to `Process.cs` instead.
+- A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists. A name more than one of them defines must carry its `Type.` prefix. Pipeline `P` nodes name `ProcessFile` steps, which the step order check holds to `Process.cs` instead.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
@@ -256,7 +255,7 @@ flowchart TD
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`Monitor.ProcessChanges()` runs the same `GetFiles()`, `ProcessFiles()` and `DeleteEmptyFolders()` sequence for each batch of folders that have been quiet for the settle time. A successful batch returns to the monitor loop. A failure ends the loop, and the monitor command then exits with 1.
+`Monitor.ProcessChanges()` runs the same `GetFiles()`, `ProcessFiles()` and `DeleteEmptyFolders()` sequence for each batch of folders that have been quiet for the settle time. A successful batch returns to the monitor loop. A failure ends the loop, and the monitor command then exits with 1, or with the signal's code after a cancel.
 
 ### Dispatch and Results
 
