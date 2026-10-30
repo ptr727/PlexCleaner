@@ -390,6 +390,7 @@ public sealed class VerifyToolErrorTests : IDisposable
                     | SidecarFile.StatesType.RepairFailed
                     | SidecarFile.StatesType.PostDecodeTimestamps
             );
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
         _ = processFile.DeleteFailedFile().Should().BeFalse();
 
         _ = modified.Should().BeFalse();
