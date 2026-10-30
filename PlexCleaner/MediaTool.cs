@@ -115,7 +115,7 @@ public abstract class MediaTool
     protected virtual string GetErrorOutput(BufferedCommandResult result) => result.StandardError;
 
     // Signals 1 to 31 exit 129 to 159
-    protected virtual bool EndedBySignal(int exitCode) =>
+    protected internal virtual bool EndedBySignal(int exitCode) =>
         !OperatingSystem.IsWindows() && exitCode is >= 129 and <= 159;
 
     protected bool LogFailedResult(

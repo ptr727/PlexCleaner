@@ -104,10 +104,25 @@ public sealed class VerifyToolErrorTests : IDisposable
     [InlineData(183, false)]
     [InlineData(244, false)]
     [InlineData(255, true)]
-    public void IsSignalExit_MatchesSignalExitCodes(int exitCode, bool isSignal)
+    public void EndedBySignal_FfMpeg_MatchesSignalExitCodes(int exitCode, bool isSignal)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "Signal exit codes are not read on Windows");
-        _ = FfMpeg.Tool.IsSignalExit(exitCode).Should().Be(isSignal);
+        _ = Tools.FfMpeg.EndedBySignal(exitCode).Should().Be(isSignal);
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(2, false)]
+    [InlineData(128, false)]
+    [InlineData(129, true)]
+    [InlineData(137, true)]
+    [InlineData(159, true)]
+    [InlineData(160, false)]
+    [InlineData(255, false)]
+    public void EndedBySignal_OtherTool_MatchesSignalExitCodes(int exitCode, bool isSignal)
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Signal exit codes are not read on Windows");
+        _ = Tools.MkvMerge.EndedBySignal(exitCode).Should().Be(isSignal);
     }
 
     [Theory]
