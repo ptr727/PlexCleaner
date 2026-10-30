@@ -278,8 +278,8 @@ public static class Process
                     break;
                 }
 
-                // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux, are logically separate,
-                // but could be combined to complete in one remux operation
+                // TODO: RemoveUnwantedLanguageTracks() and RemoveDuplicateTracks() both remux and are logically separate.
+                // They could be combined to complete in one remux operation.
 
                 // Remove all the duplicate tracks
                 // Conditional on RemoveDuplicateTracks option
