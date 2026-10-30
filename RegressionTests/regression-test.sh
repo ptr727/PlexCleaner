@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# Regression test harness, processing the ZFS test dataset through one PlexCleaner Docker image tag.
-# It writes per-version results and logs for diffing against other runs.
-#
 # The corpus lives in the snapshotted dataset hddpool/media/troublesome, with full/ and reduced/ subsets.
 # Each run provisions hddpool/media/test as a zero-copy ZFS clone of the newest corpus snapshot.
 # Rollbacks inside the run use the clone's @backup snapshot.
 #
 # Results go into a directory named after the image's "version" label, such as 3.20.7-g3235a8a055, so they stay comparable across versions.
+# A reduced-corpus run appends -reduced to that directory name.
 # Re-running the same build overwrites the files in that build's directory.
 #
 # The flow is:

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Build, test, and publish PlexCleaner inside the Docker builder stage.
-
 set -Eeuo pipefail
 
 case "${1-}" in
