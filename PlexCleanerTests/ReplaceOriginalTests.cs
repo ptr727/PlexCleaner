@@ -113,7 +113,7 @@ public sealed class ReplaceOriginalTests : IDisposable
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", propEditExit);
         processFile.FfProbeProps.Video[0].Interlaced = true;
 
-        // The fakes return no media info, so the Refresh() after a replace fails and the result is not asserted
+        // MediaInfo has no fake, so the Refresh() after a replace fails and the result is not asserted
         bool modified = false;
         bool deInterlaced = processFile.DeInterlace(false, ref modified);
 
