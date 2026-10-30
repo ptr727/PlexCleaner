@@ -29,7 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
 - Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
-- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 6.1.
+- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 8.0.
 - Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
@@ -193,7 +193,7 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
-PlexCleaner requires FFmpeg 6.1 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+PlexCleaner requires FFmpeg 8.0 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
 
 ### Docker
 
