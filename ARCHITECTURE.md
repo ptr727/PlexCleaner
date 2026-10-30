@@ -357,7 +357,7 @@ flowchart TD
   CLEAN -.->|"any step false or cancel"| AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled or a verify tool error"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN suspect
@@ -638,7 +638,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. An FfMpeg run that does not complete also yields `DecodeError`, S15.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. An FfMpeg run that does not complete yields `ToolError`, which leaves the media unchecked. The file then fails with its state unchanged and is never deleted.
 
 ```mermaid
 flowchart TD
@@ -654,7 +654,8 @@ flowchart TD
   V5 --> V6["VerifyBitrate(): MaximumBitrate, skipped with --quickscan, sets BitrateExceeded, S11"]:::suspect
   V6 --> V7["VerifyMediaStreams(): FfMpeg decode"]
   V7 -->|Clean| PASS
-  V7 -->|"TimestampOnly, or DecodeError including a run that did not complete, S15"| REP["Verify fails, repair possible"]
+  V7 -->|"TimestampOnly or DecodeError"| REP["Verify fails, repair possible"]
+  V7 -->|"ToolError, FfMpeg did not complete"| TE["Verify fails, canRepair false"]
   PASS --> P1{"Verified already set?"}
   P1 -->|yes| OK(["Continue"])
   P1 -->|no| P2["Set Verified, clear VerifyFailed, save state"]
@@ -663,6 +664,7 @@ flowchart TD
   C0 -->|yes| FAIL(["Fail, state unchanged"])
   C0 -->|no| C1{"canRepair, AutoRepair option on, and no RepairFailed?"}
   NOREP --> C0
+  TE --> FAIL
   C1 -->|no| NF["Set VerifyFailed, clear Verified, save state, fail"]
   C1 -->|yes| C2{"Result was TimestampOnly?"}
   C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis() result ignored, S11"]:::suspect
@@ -738,7 +740,6 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 - **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
 - **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
 - **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.
-- **S15** ([#1084](https://github.com/ptr727/PlexCleaner/issues/1084)): `FfMpegTool.VerifyMedia()` returns `DecodeError` when FfMpeg does not run to completion. A verification that never ran then enters the repair ladder, and can end in `VerifyFailed`, `RepairFailed` and a delete.
 
 ## Code Conventions
 

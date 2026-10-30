@@ -1708,6 +1708,7 @@ public class ProcessFile
 
         // Init
         canRepair = false;
+        _lastVerifyResult = VerifyResult.Clean;
 
         // Conditional
         if (conditional && !Program.Config.ProcessOptions.Verify)
@@ -1748,9 +1749,9 @@ public class ProcessFile
         // Will update sidecar state if bitrate exceeded
         _ = VerifyBitrate();
 
-        // Verify media streams, both failure kinds are repairable
-        canRepair = true;
+        // Verify media streams, a tool error is not repairable
         _lastVerifyResult = VerifyMediaStreams(FileInfo);
+        canRepair = _lastVerifyResult != VerifyResult.ToolError;
 
         // Deterministic: pass only when clean, a timestamp-only or decode result is a repairable failure
         return _lastVerifyResult == VerifyResult.Clean;
@@ -1768,6 +1769,13 @@ public class ProcessFile
             {
                 Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
             }
+            else if (verifyResult == VerifyResult.ToolError)
+            {
+                Log.Error(
+                    "Failed to run media stream verification : {FileName}",
+                    fileInfo.FullName
+                );
+            }
             else if (verifyResult == VerifyResult.TimestampOnly)
             {
                 // Correctable failure, the decision Warning is emitted later if the repair runs
@@ -1783,7 +1791,11 @@ public class ProcessFile
     public bool DeleteFailedFile()
     {
         // Conditional
-        if (!Program.Config.VerifyOptions.DeleteInvalidFiles || Program.IsCancelledError())
+        if (
+            !Program.Config.VerifyOptions.DeleteInvalidFiles
+            || _lastVerifyResult == VerifyResult.ToolError
+            || Program.IsCancelledError()
+        )
         {
             // Return false if not deleted
             return false;
@@ -1825,8 +1837,8 @@ public class ProcessFile
             return true;
         }
 
-        // Cancel requested
-        if (Program.IsCancelled())
+        // Cancel requested, or the verify did not run, leave the state unchanged
+        if (Program.IsCancelled() || _lastVerifyResult == VerifyResult.ToolError)
         {
             return false;
         }
@@ -2229,6 +2241,9 @@ public class ProcessFile
             case VerifyResult.DecodeError:
                 // Genuine decode corruption, not repairable here, leave the state unchanged
                 return true;
+            case VerifyResult.ToolError:
+                // The verify did not run, leave the state unchanged and report the failure
+                return false;
             default:
                 throw new NotImplementedException();
         }

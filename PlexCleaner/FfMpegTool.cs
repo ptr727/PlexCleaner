@@ -180,7 +180,7 @@ public partial class FfMpeg
             {
                 // Process could not run
                 Metrics.OpAborted();
-                return VerifyResult.DecodeError;
+                return VerifyResult.ToolError;
             }
             Metrics.OpCompleted();
 
