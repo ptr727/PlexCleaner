@@ -20,6 +20,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - When the demux packet analysis finds no non-monotonic audio or video DTS, the repair tries only the remux tier.
     - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
     - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
+    - Such a file is also marked `PostDecodeTimestamps`.
     - A file can also carry both a demux-visible audio DTS break and a post-decode video DTS break.
     - The lossless `setts` tier repairs the audio, but the rewrite still fails verify on the video and is discarded.
     - When that rewrite leaves no demux-visible audio or video DTS, the remaining failure is post-decode, and the repair stops after the remux tier.
@@ -46,6 +47,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - A cancel, a read-only media file, and a read-only sidecar file leave the media file and its sidecar in place.
     - A failed non-MKV file keeps the sidecar of a sibling MKV file with the same name.
     - A tool that fails to launch or throws leaves the media file and its sidecar in place, in any processing step.
+    - A file marked `PostDecodeTimestamps` keeps the media file and its sidecar in place, on every run.
     - An FfMpeg verify run killed by a signal still runs the repair.
       - Outside Windows, the media file and its sidecar stay in place when that repair fails.
         - A failed or skipped repair leaves the file's state unchanged, so the next run verifies it again.

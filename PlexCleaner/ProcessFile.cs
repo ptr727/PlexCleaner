@@ -1796,6 +1796,7 @@ public class ProcessFile
             || ToolErrorScope.Count > 0
             || ToolErrorScope.SignalCount > 0
             || Program.IsCancelledError()
+            || _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
         )
         {
             // Return false if not deleted
@@ -1828,6 +1829,10 @@ public class ProcessFile
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+                if (Program.Config.ProcessOptions.Verify)
+                {
+                    _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                }
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
@@ -1921,6 +1926,7 @@ public class ProcessFile
         _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+        _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
 
         // Repaired
         modified = true;
@@ -2248,6 +2254,7 @@ public class ProcessFile
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+                _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
                 return Refresh(false);
             case VerifyResult.TimestampOnly:
                 // Detected non-monotonic DTS, run the timestamp repair ladder
@@ -2270,15 +2277,15 @@ public class ProcessFile
 
         // Escalate from setts to remux to re-encode, and the first clean re-verify wins
         // A post-decode only DTS stops after the remux
-        if (
-            TryLosslessTimestampRepair(dtsInfo, out bool residualPostDecode)
-            || RepairAndReVerify(residualPostDecode || DtsInfo.IsPostDecodeOnly(dtsInfo))
-        )
+        bool repaired = TryLosslessTimestampRepair(dtsInfo, out bool residualPostDecode);
+        bool postDecodeOnly = residualPostDecode || DtsInfo.IsPostDecodeOnly(dtsInfo);
+        if (repaired || RepairAndReVerify(postDecodeOnly))
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
             _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
             _sidecarFile.State |= SidecarFile.StatesType.Repaired;
             _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
+            _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
             modified = true;
             return Refresh(true);
         }
@@ -2299,6 +2306,11 @@ public class ProcessFile
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
         _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
+
+        if (postDecodeOnly)
+        {
+            _sidecarFile.State |= SidecarFile.StatesType.PostDecodeTimestamps;
+        }
         _ = Refresh(false);
         return false;
     }
