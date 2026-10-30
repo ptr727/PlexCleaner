@@ -372,7 +372,7 @@ flowchart TD
 
 ### Sidecar Refresh
 
-Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)` and then fails a file that any tool reports as unsupported.
+Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)` and then fails a file that any tool reports as unsupported. A step that only changes the state calls `SaveState()`, which calls `Refresh(false)` only with `UseSidecarFiles` on.
 
 ```mermaid
 flowchart TD
@@ -524,7 +524,7 @@ flowchart TD
   F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
-  F3 -->|none| F4["Without --quickscan, sets ScannedCaptions, Refresh()"]
+  F3 -->|none| F4["Without --quickscan, sets ScannedCaptions and saves state"]
   F4 --> AOK
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
@@ -555,7 +555,7 @@ flowchart TD
   F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
   F4 -->|"scan fails or no result"| FAIL(["Fail"])
-  F4 -->|progressive| F5["Sets ScannedInterlace, Refresh()"]
+  F4 -->|progressive| F5["Sets ScannedInterlace and saves state"]
   F5 --> AOK
   F4 -->|interlaced| FOUND["Interlaced, warns when DeInterlaced is already set, S9"]:::suspect
   FOUND --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]

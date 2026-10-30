@@ -64,6 +64,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - The `ScannedInterlace` and `ScannedCaptions` state flags record a clean interlace or closed caption scan of the whole file.
     - So each scan runs once per file without a verify, and a `--quickscan` sample sets neither flag.
     - A file an earlier version marked `Verified` with the `Verify` option off is not re-verified automatically, and the `createsidecar` command resets its state.
+  - With `UseSidecarFiles` off, a step that only changes a file's state does not run the media info tools again.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

@@ -405,7 +405,7 @@ public class ProcessFile
         );
         _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
-        _ = Refresh(false);
+        _ = SaveState();
 
         // Always returns false to signal the repair did not succeed
         return false;
@@ -1266,9 +1266,8 @@ public class ProcessFile
 
     private bool SetScanned(SidecarFile.StatesType scanned)
     {
-        // Without a sidecar the flag is not persisted, and a Refresh() would probe the unchanged media again
         _sidecarFile.State |= scanned;
-        return !Program.Config.ProcessOptions.UseSidecarFiles || Refresh(false);
+        return SaveState();
     }
 
     public bool DeInterlace(bool conditional, ref bool modified)
@@ -1839,7 +1838,7 @@ public class ProcessFile
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
-                return Refresh(false);
+                return SaveState();
             }
 
             // Done
@@ -1875,7 +1874,7 @@ public class ProcessFile
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
                 // Update state
-                _ = Refresh(false);
+                _ = SaveState();
             }
 
             // Error
@@ -1918,7 +1917,7 @@ public class ProcessFile
             _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
 
             // Update state
-            _ = Refresh(false);
+            _ = SaveState();
 
             // Error
             return false;
@@ -2258,7 +2257,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-                return Refresh(false);
+                return SaveState();
             case VerifyResult.TimestampOnly:
                 // Detected non-monotonic DTS, run the timestamp repair ladder
                 return RepairTimestampsAndSetState(ref modified);
@@ -2314,7 +2313,7 @@ public class ProcessFile
         {
             _sidecarFile.State |= SidecarFile.StatesType.PostDecodeTimestamps;
         }
-        _ = Refresh(false);
+        _ = SaveState();
         return false;
     }
 
@@ -2441,6 +2440,9 @@ public class ProcessFile
         // Refresh sidecar info
         return Refresh(true);
     }
+
+    // Without a sidecar the state is not persisted, and a Refresh() would probe the unchanged media again
+    private bool SaveState() => !Program.Config.ProcessOptions.UseSidecarFiles || Refresh(false);
 
     private bool Refresh(bool modified)
     {
