@@ -50,6 +50,27 @@ public sealed class PerFileExceptionTests : IDisposable
     }
 
     [Fact]
+    public void ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues()
+    {
+        List<string> processed = [];
+        _ = ProcessDriver
+            .ProcessFiles(
+                ["first.mkv", "second.mkv"],
+                nameof(ProcessFiles_TaskThrowsCancelWithoutCancel_FailsOneFileAndContinues),
+                false,
+                fileName =>
+                {
+                    processed.Add(fileName);
+                    return fileName == "first.mkv" ? throw new TaskCanceledException() : true;
+                }
+            )
+            .Should()
+            .BeTrue();
+
+        _ = processed.Should().Equal("first.mkv", "second.mkv");
+    }
+
+    [Fact]
     public void ProcessFile_StepThrows_FailsAndKeepsFile()
     {
         string mediaFile = Path.Combine(_directory, "name.MKV");

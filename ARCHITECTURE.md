@@ -302,7 +302,7 @@ flowchart TD
 
 `Process.ProcessFile()` runs one file through the steps below, in this order. The node ids `P01` onward follow the order of the step calls in `Process.ProcessFile()`, and `ArchitectureDiagramTests` fails when they differ.
 
-A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws an exception other than a cancel also leaves the chain at the abort node.
+A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws while no cancel is requested also leaves the chain at the abort node.
 
 ```mermaid
 flowchart TD
@@ -355,7 +355,7 @@ flowchart TD
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  THR["Any step throws an exception other than a cancel"] -.-> AB
+  THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
   G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, an FfMpeg verify run was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]

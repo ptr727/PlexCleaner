@@ -375,7 +375,7 @@ public static class Process
                 break;
             }
         }
-        catch (Exception e) when (e is not OperationCanceledException && Log.Logger.LogAndHandle(e))
+        catch (Exception e) when (!Program.IsCancelled() && Log.Logger.LogAndHandle(e))
         {
             // An exception says nothing about the media, so fail the file without deleting it
             result = false;

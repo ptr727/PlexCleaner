@@ -214,7 +214,7 @@ public static class ProcessDriver
                             taskResult = taskFunc(fileName);
                         }
                         catch (Exception e)
-                            when (e is not OperationCanceledException && Log.Logger.LogAndHandle(e))
+                            when (!Program.IsCancelled() && Log.Logger.LogAndHandle(e))
                         {
                             taskResult = false;
                         }
