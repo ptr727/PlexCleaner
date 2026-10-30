@@ -60,25 +60,30 @@ public sealed class ToolErrorScopeTests
     public async Task Record_ConcurrentScopes_AreIsolated()
     {
         using Barrier barrier = new(2);
-        Task<int> recording = Task.Run(
-            () =>
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+
+        // Both counts are read while both scopes are open
+        int ReadCount(bool record)
+        {
+            using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+            if (record)
             {
-                using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
                 ToolErrorScope.Record();
-                barrier.SignalAndWait(TestContext.Current.CancellationToken);
-                return ToolErrorScope.Count;
-            },
-            TestContext.Current.CancellationToken
-        );
-        Task<int> idle = Task.Run(
-            () =>
-            {
-                using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-                barrier.SignalAndWait(TestContext.Current.CancellationToken);
-                return ToolErrorScope.Count;
-            },
-            TestContext.Current.CancellationToken
-        );
+            }
+            _ = barrier
+                .SignalAndWait(TimeSpan.FromSeconds(30), cancellationToken)
+                .Should()
+                .BeTrue();
+            int count = ToolErrorScope.Count;
+            _ = barrier
+                .SignalAndWait(TimeSpan.FromSeconds(30), cancellationToken)
+                .Should()
+                .BeTrue();
+            return count;
+        }
+
+        Task<int> recording = Task.Run(() => ReadCount(true), cancellationToken);
+        Task<int> idle = Task.Run(() => ReadCount(false), cancellationToken);
 
         _ = (await recording).Should().Be(1);
         _ = (await idle).Should().Be(0);
