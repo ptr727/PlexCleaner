@@ -1853,6 +1853,12 @@ public class ProcessFile
             || !Program.Config.VerifyOptions.AutoRepair
         )
         {
+            // A signal ended a verify, leave the state unchanged so the next run verifies again
+            if (ToolErrorScope.SignalCount > 0)
+            {
+                return false;
+            }
+
             // Set VerifyFailed state if not already set
             if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
             {
@@ -1891,8 +1897,8 @@ public class ProcessFile
         // Repair failed
         if (!repaired)
         {
-            // A repair tool did not run, leave the state unchanged
-            if (ToolErrorScope.Count != toolErrors)
+            // A repair tool did not run or a signal ended a verify, leave the state unchanged
+            if (ToolErrorScope.Count != toolErrors || ToolErrorScope.SignalCount > 0)
             {
                 return false;
             }
@@ -2277,8 +2283,12 @@ public class ProcessFile
             return Refresh(true);
         }
 
-        // Do not touch state on cancellation or when a tool did not run, the caller retries next run
-        if (Program.IsCancelled() || ToolErrorScope.Count != toolErrors)
+        // Do not touch state on cancellation, a tool that did not run, or a signal-ended verify
+        if (
+            Program.IsCancelled()
+            || ToolErrorScope.Count != toolErrors
+            || ToolErrorScope.SignalCount > 0
+        )
         {
             return false;
         }

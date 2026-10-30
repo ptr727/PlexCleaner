@@ -640,7 +640,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. A failed or skipped repair after such a run leaves the state unchanged, so the next run verifies the file again. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
 
 ```mermaid
 flowchart TD
@@ -667,7 +667,9 @@ flowchart TD
   C0 -->|no| C1{"canRepair, AutoRepair option on, and no RepairFailed?"}
   NOREP --> C0
   TE --> FAIL
-  C1 -->|no| NF["Set VerifyFailed, clear Verified, save state, fail"]
+  C1 -->|no| NS{"A signal ended a verify?"}
+  NS -->|yes| FAIL
+  NS -->|no| NF["Set VerifyFailed, clear Verified, save state, fail"]
   C1 -->|yes| C2{"Result was TimestampOnly?"}
   C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis() result ignored, S11"]:::suspect
   T0 --> T1["TryLosslessTimestampRepair(): only when every non-monotonic stream is audio"]
@@ -696,7 +698,7 @@ flowchart TD
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the repaired file already replaced the original, S5"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed and RepairFailed, Refresh(), continue"]
-  RF{"Cancelled, or a repair tool failed to launch or threw?"} -->|yes| FAIL
+  RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, save state, fail"]
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```

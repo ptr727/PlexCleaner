@@ -141,10 +141,25 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = FfMpeg.Tool.IsSignalExit(exitCode).Should().Be(isSignal);
     }
 
-    [Fact]
-    public void VerifyAndRepair_SignalExitRepairFails_SetsStateAndKeepsFiles()
+    [Theory]
+    [InlineData("kill -9 $$", true, SidecarFile.StatesType.None, false)]
+    [InlineData("kill -9 $$", false, SidecarFile.StatesType.None, false)]
+    [InlineData(
+        "exit 183",
+        true,
+        SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.RepairFailed,
+        true
+    )]
+    [InlineData("exit 183", false, SidecarFile.StatesType.VerifyFailed, true)]
+    public void VerifyAndRepair_VerifyFails_SetsStateAndDeletesOnlyWithoutSignal(
+        string firstVerify,
+        bool autoRepair,
+        SidecarFile.StatesType state,
+        bool deleted
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.VerifyOptions.AutoRepair = autoRepair;
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         string mediaFile = CopyUnverifiedSample();
         string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
@@ -156,10 +171,10 @@ public sealed class VerifyToolErrorTests : IDisposable
         string ffMpeg = Tools.FfMpeg.GetToolPath();
         WriteScript(
             ffMpeg,
-            """
+            $$"""
             step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
             echo $step > "$0.step"
-            [ $step -eq 1 ] && kill -9 $$
+            [ $step -eq 1 ] && {{firstVerify}}
             exit 1
 
             """,
@@ -168,17 +183,14 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
-        _ = ToolErrorScope.SignalCount.Should().Be(1);
+        _ = ToolErrorScope.SignalCount.Should().Be(deleted ? 0 : 1);
         _ = ToolErrorScope.Count.Should().Be(0);
-        _ = processFile
-            .State.Should()
-            .HaveFlag(SidecarFile.StatesType.VerifyFailed)
-            .And.HaveFlag(SidecarFile.StatesType.RepairFailed);
-        _ = processFile.DeleteFailedFile().Should().BeFalse();
+        _ = processFile.State.Should().Be(state);
+        _ = processFile.DeleteFailedFile().Should().Be(deleted);
 
         _ = modified.Should().BeFalse();
-        _ = File.Exists(mediaFile).Should().BeTrue();
-        _ = File.Exists(sidecarFile).Should().BeTrue();
+        _ = File.Exists(mediaFile).Should().Be(!deleted);
+        _ = File.Exists(sidecarFile).Should().Be(!deleted);
     }
 
     [Fact]
