@@ -11,7 +11,7 @@ namespace PlexCleaner;
 
 public static class Process
 {
-    private static bool ProcessFile(
+    internal static bool ProcessFile(
         string fileName,
         out bool modified,
         out bool ignored,
@@ -28,6 +28,7 @@ public static class Process
         failedOperation = null;
         ProcessFile? processFile = null;
         bool result;
+        bool skipped = false;
 
         // Current step, reported as the failure reason on error
         string? operation = null;
@@ -75,6 +76,7 @@ public static class Process
             {
                 Log.Error("Skipping read-only file : {FileName}", fileName);
                 // Error
+                skipped = true;
                 result = false;
                 break;
             }
@@ -129,6 +131,7 @@ public static class Process
                     fileName
                 );
                 // Error
+                skipped = true;
                 result = false;
                 break;
             }
@@ -378,7 +381,7 @@ public static class Process
         {
             // Delete files that failed processing
             // Conditional on DeleteInvalidFiles
-            if (!result)
+            if (!result && !skipped && !Program.IsCancelled())
             {
                 _ = processFile.DeleteFailedFile();
             }
