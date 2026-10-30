@@ -357,7 +357,7 @@ flowchart TD
   CLEAN -.->|"any step false or cancel"| AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, or an FfMpeg verify run was killed by a signal"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, or an FfMpeg verify run was killed by a signal outside Windows"]
   DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN suspect
@@ -640,7 +640,7 @@ The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and 
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs, and the file is never deleted on it. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
 
 ```mermaid
 flowchart TD

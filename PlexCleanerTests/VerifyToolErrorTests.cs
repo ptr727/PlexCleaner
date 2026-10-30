@@ -105,15 +105,34 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.Count.Should().Be(0);
     }
 
-    [Fact]
-    public void VerifyMedia_ErrorExit_RecordsNoSignal()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(183)]
+    [InlineData(234)]
+    public void VerifyMedia_ErrorExit_RecordsNoSignal(int exitCode)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake FfMpeg is a shell script");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 1\n", true);
+        WriteScript(Tools.FfMpeg.GetToolPath(), $"exit {exitCode}\n", true);
 
         _ = Tools.FfMpeg.VerifyMedia(CreateFile("name.mkv")).Should().Be(VerifyResult.DecodeError);
         _ = ToolErrorScope.SignalCount.Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(128, false)]
+    [InlineData(129, true)]
+    [InlineData(137, true)]
+    [InlineData(143, true)]
+    [InlineData(144, false)]
+    [InlineData(183, false)]
+    [InlineData(244, false)]
+    [InlineData(255, true)]
+    public void IsSignalExit_MatchesSignalExitCodes(int exitCode, bool isSignal)
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Signal exit codes are not read on Windows");
+        _ = FfMpeg.Tool.IsSignalExit(exitCode).Should().Be(isSignal);
     }
 
     [Fact]
