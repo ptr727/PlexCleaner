@@ -314,6 +314,36 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = nextRun.State.Should().Be(SidecarFile.StatesType.Verified);
     }
 
+    [Theory]
+    [InlineData(true, SidecarFile.StatesType.Verified)]
+    [InlineData(
+        false,
+        SidecarFile.StatesType.Verified | SidecarFile.StatesType.PostDecodeTimestamps
+    )]
+    public void VerifyAndRepair_VerifyPasses_ClearsPostDecodeOnlyWhenVerified(
+        bool verify,
+        SidecarFile.StatesType state
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.ProcessOptions.Verify = verify;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = CopyUnverifiedSample();
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
+        sidecar["State"] = (int)SidecarFile.StatesType.PostDecodeTimestamps;
+        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+
+        WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(state);
+        _ = modified.Should().BeFalse();
+    }
+
     [Fact]
     public void RepairTimestamps_PacketAnalysisFailsRepairFails_KeepsPostDecodeAndFiles()
     {

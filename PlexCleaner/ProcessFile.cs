@@ -1829,6 +1829,10 @@ public class ProcessFile
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
+                if (Program.Config.ProcessOptions.Verify)
+                {
+                    _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                }
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state

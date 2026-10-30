@@ -660,7 +660,7 @@ flowchart TD
   V7 -->|"ToolError, FfMpeg did not launch, was cancelled, or threw"| TE["Verify fails, the media unchecked"]
   PASS --> P1{"Verified already set?"}
   P1 -->|yes| OK(["Continue"])
-  P1 -->|no| P2["Set Verified, clear VerifyFailed, save state"]
+  P1 -->|no| P2["Set Verified, clear VerifyFailed, and PostDecodeTimestamps with the Verify option on, save state"]
   P2 --> OK
   REP --> C0{"Cancelled?"}
   C0 -->|yes| FAIL(["Fail, state unchanged"])
