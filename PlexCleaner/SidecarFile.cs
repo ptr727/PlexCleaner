@@ -30,6 +30,7 @@ public class SidecarFile
         SetFlags = 1 << 15,
         RemovedCoverArt = 1 << 16,
         ClearedDefaultFlags = 1 << 17,
+        PostDecodeTimestamps = 1 << 18,
     }
 
     private const string SidecarExtension = ".PlexCleaner";
