@@ -46,7 +46,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - A cancel, a read-only media file, and a read-only sidecar file leave the media file and its sidecar in place.
     - A failed non-MKV file keeps the sidecar of a sibling MKV file with the same name.
     - A tool that fails to launch or throws leaves the media file and its sidecar in place, in any processing step.
-  - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`, so the next run retries it.
+  - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
+    - The next run retries the repair.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.
