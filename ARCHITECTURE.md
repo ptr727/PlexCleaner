@@ -311,7 +311,7 @@ flowchart TD
   G2 -->|no| NOF(["Result false, no state and no delete"])
   G2 -->|yes| G3["Create the ProcessFile state holder and save the write time"]
   G3 --> P01["IsWriteable()"]
-  P01 -->|"read-only, logged as skipping, S1"| AB
+  P01 -->|"read-only, skipped"| AB
   P01 --> P02["DeleteMismatchedSidecarFile()"]
   P02 -->|"orphan sidecar deleted, S3"| AB
   P02 --> G4{"SidecarFile.IsSidecarFile()"}
@@ -320,7 +320,7 @@ flowchart TD
   P03 --> P04["DeleteNonMkvFile(): DeleteUnwantedExtensions"]
   P04 -->|"not MKV, deleted or skipped"| SKP(["Result true, not ignored"])
   P04 --> P05["IsSidecarWriteable()"]
-  P05 -->|"sidecar exists and is read-only, S1"| AB
+  P05 -->|"sidecar exists and is read-only, skipped"| AB
   P05 --> P06["MakeExtensionLowercase()"]
   P06 --> P07["GetMediaProps(): see Sidecar Refresh"]
   P07 --> MAIN
@@ -355,8 +355,10 @@ flowchart TD
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  AB["Abort the file, failedOperation names the step"] --> DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file and sidecar, S1"]:::suspect
-  DF --> RET(["Result false, return the state and final path"])
+  AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
+  G5 -->|yes| RET(["Result false, return the state and final path"])
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled"]
+  DF --> RET
   classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
   class P02,CLEAN suspect
 ```
@@ -723,7 +725,6 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 
 Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
 
-- **S1** ([#1068](https://github.com/ptr727/PlexCleaner/issues/1068)): Any failure after the state holder exists reaches `DeleteFailedFile()`. That includes a cancel and the read-only file and sidecar paths the log calls skipping. With `DeleteInvalidFiles` on, this deletes the media file and its sidecar. The sidecar it deletes is the one named after the file, so a failed `name.avi` deletes the sidecar of a sibling `name.mkv`. On Windows, deleting a read-only file throws instead, which becomes S2.
 - **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.

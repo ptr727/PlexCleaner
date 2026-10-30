@@ -1783,7 +1783,7 @@ public class ProcessFile
     public bool DeleteFailedFile()
     {
         // Conditional
-        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
+        if (!Program.Config.VerifyOptions.DeleteInvalidFiles || Program.IsCancelledError())
         {
             // Return false if not deleted
             return false;
@@ -1792,7 +1792,10 @@ public class ProcessFile
         // Delete the media file and sidecar file
         Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
         File.Delete(FileInfo.FullName);
-        File.Delete(SidecarFile.GetSidecarName(FileInfo));
+        if (SidecarFile.IsMkvFile(FileInfo))
+        {
+            File.Delete(SidecarFile.GetSidecarName(FileInfo));
+        }
 
         // Set the sidecar state as deleted
         // Sidecar file no longer exists, but in-memory state does
