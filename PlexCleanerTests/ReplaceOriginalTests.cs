@@ -100,23 +100,36 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
-    [Fact]
-    public void DeInterlace_LanguageRestoreFails_KeepsOriginal()
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(2, false)]
+    public void DeInterlace_ReplacesOriginalOnlyAfterLanguageRestore(int propEditExit, bool success)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile();
         string mediaFile = processFile.FileInfo.FullName;
         byte[] original = File.ReadAllBytes(mediaFile);
-        string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", 2);
+        string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", propEditExit);
         processFile.FfProbeProps.Video[0].Interlaced = true;
 
+        // The fakes return no media info, so the Refresh() after a replace fails and the result is not asserted
         bool modified = false;
-        _ = processFile.DeInterlace(false, ref modified).Should().BeFalse();
+        bool deInterlaced = processFile.DeInterlace(false, ref modified);
 
-        _ = modified.Should().BeFalse();
+        _ = modified.Should().Be(success);
         _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp9");
-        _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
-        _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.DeInterlaced);
+        if (success)
+        {
+            _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
+            _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.DeInterlaced);
+        }
+        else
+        {
+            _ = deInterlaced.Should().BeFalse();
+            _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
+            _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.DeInterlaced);
+        }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 }
