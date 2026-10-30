@@ -563,10 +563,10 @@ flowchart TD
   D2 -->|yes| D4["MkvMerge merges the original subtitles back to .tmp9"]
   D3 -->|fail| FAIL
   D4 -->|fail| FAIL
-  D3 --> D5["Move .tmp9 over the original, S5"]:::suspect
+  D3 --> D5["MkvPropEdit restores the track languages in .tmp9"]
   D4 --> D5
-  D5 --> D6["MkvPropEdit restores the track languages"]
-  D6 -->|fail| FAIL
+  D5 -->|fail| FAIL
+  D5 --> D6["Move .tmp9 over the original"]
   D6 --> D7["Sets DeInterlaced and ReMuxed, Refresh()"]
   D7 --> D8{"Track order matches?"}
   D8 -->|no| FAIL
@@ -626,13 +626,14 @@ flowchart TD
   S3 --> S4{"Anything selected?"}
   S4 -->|no| AOK
   S4 -->|yes| S5["Warn when ReEncoded is already set, S9"]:::suspect
-  S5 --> C1["Convert.ConvertToMkv(): FfMpeg to .tmp1, moved over the original, S5"]:::suspect
+  S5 --> C1["Convert.ConvertToMkv(): FfMpeg to .tmp1"]
   C1 -->|fail| FAIL(["Fail"])
-  C1 --> C2["Convert.ReMux()"]
+  C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["MkvPropEdit restores the track languages"]
+  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
-  C3 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
+  C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
+  C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
   C4 --> C5{"Track order matches?"}
   C5 -->|no| FAIL
   C5 -->|yes| AOK
@@ -699,7 +700,7 @@ flowchart TD
   R5 -->|pass| R6
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
-  RC -->|"yes, the repaired file already replaced the original, S5"| FAIL
+  RC -->|"yes, the next run verifies the replaced media again"| FAIL
   RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
   RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
@@ -736,7 +737,6 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 
 - **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.
-- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failure after that leaves the rewritten file with no state flag and the file not reported as modified. That is the remux or language restore in `ReEncode()`, and the language restore in `DeInterlace()`. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
 - **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.

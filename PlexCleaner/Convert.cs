@@ -7,6 +7,7 @@ public static class Convert
     public static bool ConvertToMkv(
         string inputName,
         SelectMediaProps selectMediaProps,
+        MediaProps languageProps,
         out string outputName
     )
     {
@@ -25,6 +26,19 @@ public static class Convert
         if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName))
         {
             Log.Error("Failed to reencode using FfMpeg : {FileName}", inputName);
+            File.Delete(tempName);
+            return false;
+        }
+
+        if (!ReMux(tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
+        // FfMpeg discards IETF language tags, restore them before the output replaces the input
+        if (!Tools.MkvPropEdit.SetTrackLanguage(tempName, languageProps))
+        {
             File.Delete(tempName);
             return false;
         }
