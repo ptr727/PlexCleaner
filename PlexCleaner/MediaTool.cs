@@ -53,6 +53,16 @@ public abstract class MediaTool
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
+    // Oldest version whose command line the tool wrapper relies on, null when any version works
+    public Version? MinimumVersion =>
+        GetToolFamily() == ToolFamily.FfMpeg ? new Version(8, 0) : null; // The README states this minimum
+
+    // An unparsed version is taken to be a current git build, so it passes the gate
+    public static bool IsSupportedVersion(string version, Version? minimumVersion) =>
+        minimumVersion == null
+        || !Version.TryParse(version, out Version? parsed)
+        || parsed >= minimumVersion;
+
     // Tool subfolder, e.g. /x64, /bin
     protected virtual string GetSubFolder() => string.Empty;
 
@@ -252,10 +262,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally
@@ -322,10 +334,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally
@@ -397,10 +411,12 @@ public abstract class MediaTool
                 processId,
                 command.Arguments
             );
+            ToolErrorScope.Record();
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
+            ToolErrorScope.Record();
             return false;
         }
         finally

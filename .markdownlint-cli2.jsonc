@@ -16,11 +16,17 @@
         "MD060": false
     },
     "gitignore": true,
-    // Declared here rather than only as the CI action's globs input, because the ignores entry below only subtracts, so without a positive glob a run lints nothing and exits clean.
+    // Declared here rather than only as the CI action's globs input.
+    // It is declared because the ignores entry below only subtracts, so without a positive glob a run lints nothing and exits clean.
     "globs": ["**/*.md"],
     // Third-party Markdown under node_modules is not authored prose, and a repository's .gitignore does not reliably exclude it.
     // A bare `node_modules` entry would match the root copy only.
-    // This list is fleet-wide. A repository excluding a subtree of its own adds no entry here, and puts a `.markdownlint-cli2.jsonc` carrying its own `ignores` beside that content instead, which a bare local run and CI both honor.
-    // Those `ignores` patterns resolve against the directory holding that file rather than against the repository root, so each entry names its target as seen from that directory and a repository-root path matches nothing there, reporting no error saying so.
+    // This list is fleet-wide.
+    // A repository excluding a subtree of its own adds no entry here.
+    // It puts a `.markdownlint-cli2.jsonc` carrying its own `ignores` beside that content instead.
+    // A bare local run and CI both honor that file.
+    // Those `ignores` patterns resolve against the directory holding that file rather than against the repository root.
+    // Each entry names its target as seen from that directory.
+    // A repository-root path matches nothing there, and the run reports no error saying so.
     "ignores": ["**/node_modules/**"]
 }

@@ -151,15 +151,28 @@ public partial class FfMpeg
             return true;
         }
 
-        public VerifyResult VerifyMedia(string fileName)
-        {
-            // Build command line
-            Command command = GetBuilder()
+        internal static Command GetVerifyMediaCommand(string toolPath, string fileName) =>
+            Builder
+                .Create(toolPath)
                 // Exit on error
                 .GlobalOptions(options => options.Default().ExitOnError())
                 .InputOptions(options => options.Default().QuickScan().InputFile(fileName))
-                .OutputOptions(options => options.Default().NullOutput())
+                // The default 1/framerate encoder time base rounds close frames onto one tick, a false non-monotonic DTS
+                // The demuxer time base keeps decoded timestamps at native precision, so only a real repeat is reported
+                .OutputOptions(options =>
+                    options.Default().EncoderTimeBaseVideo("demux").NullOutput()
+                )
                 .Build();
+
+        // Signals 1 to 31 exit 129 to 159, and FFmpeg exits 255 once it handles a signal
+        // FFmpeg exits an error as its negative code cut to a byte, such as 183 for invalid data
+        // A rare error that also exits 255 only keeps the file
+        internal static bool IsSignalExit(int exitCode) =>
+            !OperatingSystem.IsWindows() && exitCode is (>= 129 and <= 159) or 255;
+
+        public VerifyResult VerifyMedia(string fileName)
+        {
+            Command command = GetVerifyMediaCommand(GetToolPath(), fileName);
 
             // Execute command: ffmpeg can exit 0 yet report stream errors on stderr
             // Classify stderr line by line as it streams to keep memory bounded, e.g. non-monotonic-DTS file emits a warning per packet
@@ -170,7 +183,7 @@ public partial class FfMpeg
             {
                 // Process could not run
                 Metrics.OpAborted();
-                return VerifyResult.DecodeError;
+                return VerifyResult.ToolError;
             }
             Metrics.OpCompleted();
 
@@ -179,6 +192,10 @@ public partial class FfMpeg
             if (exitCode != 0)
             {
                 verifyResult = VerifyResult.DecodeError;
+            }
+            if (IsSignalExit(exitCode))
+            {
+                ToolErrorScope.RecordSignal();
             }
             if (verifyResult == VerifyResult.DecodeError)
             {

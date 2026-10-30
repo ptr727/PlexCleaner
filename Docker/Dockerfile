@@ -61,15 +61,16 @@ COPY ./Samples/. ./Samples/.
 COPY ./PlexCleanerTests/. ./PlexCleanerTests/.
 COPY ./PlexCleaner/. ./PlexCleaner/.
 COPY ./Plugins/. ./Plugins/.
+COPY ./ARCHITECTURE.md ./
 COPY ./.editorconfig ./
 COPY ./Directory.Build.props ./
 COPY ./Directory.Packages.props ./
-# global.json opts dotnet test into Microsoft.Testing.Platform, so the builder needs it before Build.sh runs the tests.
+# The global.json file opts dotnet test into Microsoft.Testing.Platform, so the builder needs it before build.sh runs the tests.
 COPY ./global.json ./
 
 # Build project
-COPY --chmod=ug=rwx,o=rx ./Docker/Build.sh ./
-RUN ./Build.sh
+COPY --chmod=ug=rwx,o=rx ./Docker/build.sh ./
+RUN ./build.sh
 
 
 # Final layer
@@ -129,22 +130,22 @@ RUN apt autoremove -y \
 COPY --from=builder /Builder/Publish/PlexCleaner/. /PlexCleaner
 
 # Copy test script
-COPY --chmod=ug=rwx,o=rx ./Docker/Test.sh /Test/
+COPY --chmod=ug=rwx,o=rx ./Docker/test.sh /Test/
 
 # Install debug tools
-COPY --chmod=ug=rwx,o=rx ./Docker/InstallDebugTools.sh ./
-RUN ./InstallDebugTools.sh \
-    && rm -rf ./InstallDebugTools.sh
+COPY --chmod=ug=rwx,o=rx ./Docker/install-debug-tools.sh ./
+RUN ./install-debug-tools.sh \
+    && rm -rf ./install-debug-tools.sh
 
 # Wrapper to read the PlexCleaner.Process metrics: "docker exec <container> counters"
 COPY --chmod=ug=rwx,o=rx ./Docker/counters.sh /usr/local/bin/counters
 
 # Copy version script
-COPY --chmod=ug=rwx,o=rx ./Docker/Version.sh /PlexCleaner/
+COPY --chmod=ug=rwx,o=rx ./Docker/version.sh /PlexCleaner/
 
 # Print version information
 ARG TARGETPLATFORM \
     BUILDPLATFORM
 RUN if [ "$BUILDPLATFORM" = "$TARGETPLATFORM" ]; then \
-        /PlexCleaner/Version.sh; \
+        /PlexCleaner/version.sh; \
     fi

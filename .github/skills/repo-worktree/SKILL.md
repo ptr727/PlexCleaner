@@ -3,8 +3,8 @@ name: repo-worktree
 description: >-
   Mandates and mechanizes task isolation in ptr727/ProjectTemplate fleet repos: every task,
   including a continuation of a prior session's task, creates its own git worktree on its own
-  feature branch before its first file edit, based on the branch work starts on (develop on both
-  fleet workflow models unless the task is explicitly about main-only content, never whichever
+  feature branch before its first file edit, based on the branch work starts on (develop on every
+  fleet workflow model unless the task is explicitly about main-only content, never whichever
   branch a tool defaulted to), preferring a registered worktree in the fleet layout and using a
   standalone-clone fallback only when the executor cannot write to either the standard worktree
   location or its Git metadata, and no available approval route grants access. Also wraps the
@@ -25,10 +25,8 @@ description: >-
 ## Why This Exists
 
 Two agent sessions once ran concurrently in the same primary checkout, on the same feature
-branch, neither knowing the other was in the tree. One session's commits swept in the other
-session's uncommitted files, so two commits landed carrying work their subjects never mention,
-committed by a task that never saw it. No rule fired at the moment it was violated, which is the
-first file edit: the commit-time and review-time skills all run after a sweep has already
+branch, neither knowing the other was in the tree. One session's commits swept in the other session's uncommitted files. So two commits landed carrying work their subjects never mention,
+committed by a task that never saw it. No rule fired at the moment it was violated, which is the first file edit. The reason is that the commit-time and review-time skills all run after a sweep has already
 happened. This skill is that missing task-start surface. `GOVERNANCE.md` "Repository Boundaries
 and Write Safety" keeps the isolation law and wins on any disagreement, and the mechanics below
 are this skill's own content.
@@ -40,39 +38,33 @@ are this skill's own content.
   the maintainer's own surface, so a session launched there isolates before writing rather than
   after noticing contention.
 - **A continuation re-isolates.** A session resuming prior work finds its branch already checked
-  out somewhere and naturally resumes there, and that instinct is the hazard: a branch sitting
-  checked out in a shared tree is exactly how two sessions end up in one checkout. Create a
+  out somewhere and naturally resumes there. That instinct is the hazard, because a branch sitting checked out in a shared tree is exactly how two sessions end up in one checkout. Create a
   fresh worktree for the continuation and check the branch out there.
 - **The moment is the first file edit, not the commit.** By commit time another task's
   uncommitted work can already be swept into the staging area, so isolating late protects
   nothing. Reading anywhere is fine, and the worktree exists before the first write.
-- **Someone else's tree stays theirs.** A branch that changes when nothing you did changed it,
-  or an edit of yours reverted with no conflict, means another task is live in that tree, and
-  the response is to stop rather than to re-apply the edit, per `GOVERNANCE.md` "Repository
+- **Someone else's tree stays theirs.** A branch that changes when nothing you did changed it means another task is live in that tree. So does an edit of yours reverted with no conflict. The response is to stop rather than to re-apply the edit, per `GOVERNANCE.md` "Repository
   Boundaries and Write Safety".
+- **A worktree does not use `git stash`.** The stash is one list per repository, `refs/stash`,
+  shared by every worktree, so a `git stash pop` in one worktree can pop another task's entry. A
+  task copies work in progress to a scratch directory of its own instead. A task authorized to
+  commit can commit it on its own branch.
 
 ## The Base Branch
 
 Base the worktree on the branch work starts on for the repository's model, not on whichever
-branch a tool defaulted to. GitHub's own "default branch" setting reads `main`, but on both
-fleet workflow models work starts on `develop`, so a worktree defaulted to "the default branch"
+branch a tool defaulted to. GitHub's own "default branch" setting reads `main`, but on every fleet workflow model work starts on `develop`. So a worktree defaulted to "the default branch"
 lands on `main` and silently misses everything merged to `develop` but not yet promoted. Branch
 from `develop` unless the task is explicitly about `main`-only content, per `GOVERNANCE.md`
 "Branching Model". Fetch immediately before creating and base on the remote ref, because a clone
 is whatever it last fetched rather than the branch it names.
 
-The base clone is a fetch source, not a place to do task work. `fetch` and `worktree add` run
-against it for that purpose, and outside two steps below, nothing else mutates its working tree,
-index, or HEAD while a task is in progress: never `checkout`, `pull`, `reset`, `commit`, or any
-other such command. Those two are "Listing and Cleanup"'s own terminal step and "Creating a
-Worktree"'s return of the base clone to its own working branch where a continuation finds the task
-branch checked out there. That distinction is the one a real incident missed, where an agent
-reused a primary checkout as the working directory itself rather than only as the source a
+The base clone is a fetch source, not a place to do task work. `fetch` and `worktree add` run against it for that purpose. Outside the steps below, nothing else mutates its working tree, index, or HEAD while a task is in progress. While a task is in progress and outside those steps, never `checkout`, `pull`, `reset`, `commit`, or any
+other such command. The steps are "Listing and Cleanup"'s own terminal step and "Creating a
+Worktree"'s return of the base clone to its own working branch. That return applies where a continuation finds the task branch checked out there. That distinction is the one a real incident missed. In that incident, an agent reused a primary checkout as the working directory itself rather than only as the source a
 worktree is created from. On a machine carrying the hub's agent-safety install, Claude Code also
-makes this a mechanical stop for most of that list. `merge --ff-only`/`pull --ff-only` stay exempt
-even there, and so does a `checkout <ref>`/`switch <ref>` naming exactly one positional that
-resolves as a ref, with no force flag and no `--` separator, which is the shape both of this
-skill's own steps below run. A `checkout -- .` or a `switch -c <new>` is denied, being neither.
+makes this a mechanical stop for most of that list. `merge --ff-only`/`pull --ff-only` stay exempt even there. So does a `checkout <ref>`/`switch <ref>` naming exactly one positional that resolves as a ref, with no force flag and no `--` separator. That is the shape this
+skill's own steps below run. A `checkout -- .` or a `switch -c <new>` is denied, not being that shape.
 Prose remains the only enforcement for a non-Claude-Code agent, for a machine without that
 install, and for the shapes the hook itself exempts.
 
@@ -88,27 +80,20 @@ place:
 ```
 
 The top level carries no owner segment because everything in it is the fleet owner's own, an
-original repo and a fork alike. A fork is named `<upstream-owner>-<upstream-repo>` at fork time,
-so a fork of `acme/core` is `acme-core`, and its name identifies the upstream project and stays
+original repo and a fork alike. A fork is named `<upstream-owner>-<upstream-repo>` at fork time, so a fork of `acme/core` is `acme-core`. Its name identifies the upstream project and stays
 unique in the flat namespace without an owner segment of its own. A repository adopted as the
-owner's own work rather than kept as a fork is detached from its parent and keeps a plain name,
-`widget` rather than `initech-widget`, since it no longer tracks anything upstream.
+owner's own work rather than kept as a fork is detached from its parent. That repository keeps a plain name, `widget` rather than `initech-widget`, since it no longer tracks anything upstream.
 
-A clone of a repository under another owner is neither of those, and flattening one collides
-rather than merely reading oddly: `acme/core` joined the way a fork is joined **is** the fork's
-name, `acme-core`, while reduced to a bare `core` it names no project and collides with the next
+A clone of a repository under another owner is neither of those. Flattening one collides rather than merely reading oddly. The reason is that `acme/core` joined the way a fork is joined **is** the fork's name, `acme-core`. Reduced instead to a bare `core`, `acme/core` names no project and collides with the next
 `core` cloned from any other owner. Those clones live one level down under `upstream/`, named by
 that same join, so `upstream/acme-core` sits beside the fork it would otherwise land on. The
 segment states the relationship rather than the owner, so a reference checkout is told from a
-working repo without a `git remote` call, and the names under it never compete with the flat
+working repo without a `git remote` call. Also, the names under `upstream/` never compete with the flat
 namespace above. The join is ambiguous in the abstract, since a hyphen in either half means
-`acme-labs/core` and `acme/labs-core` produce one name, and it is kept anyway because it is the
-fork convention's own join: the ambiguity is inherited from the flat namespace above rather than
-introduced here, and it surfaces at clone time as a directory that already exists, where the
+`acme-labs/core` and `acme/labs-core` produce one name. The join is kept anyway because it is the fork convention's own join. The ambiguity is inherited from the flat namespace above rather than introduced here. The ambiguity surfaces at clone time as a directory that already exists, where the
 second clone takes a hand-picked name. A worktree off one of them keeps the flat worktrees path
 under the same name, `~/repos/worktrees/<owner>-<repo>-<task-slug>`. Contributing a change from
-such a clone is never a push out of it: fork the upstream first, per the
-`upstream-contribution-workflow` skill, and that fork's own clone then belongs in the flat
+such a clone is never a push out of it. Fork the upstream first, per the `upstream-contribution-workflow` skill. That fork's own clone then belongs in the flat
 namespace above, under the name this one already has.
 
 ```sh
@@ -121,7 +106,7 @@ list`, the fleet worktree directory, and IDE worktree discovery. It also leaves 
 durable location the maintainer can inspect after the agent session ends.
 
 Before running that command, inspect the executor's active write boundaries. A linked worktree
-requires write access to both of these locations:
+requires write access to each of these locations:
 
 - the intended `~/repos/worktrees/<Repo>-<task-slug>` worktree directory
 - the base clone's `.git/worktrees/` administrative directory, which holds the index and locks
@@ -135,22 +120,17 @@ Use the standard layout when both locations are writable or the executor approve
 write. When approval for the worktree path is unavailable or denied, create a standalone clone
 under a writable temporary root. Name it `<temporary-root>/<Repo>-<task-slug>`, fetch immediately,
 and create the task branch from `origin/develop`. On Claude Code that clone needs a grant of its
-own before its git steps will run, per the paragraph below, so ask for both together rather than
+own before its git steps will run, per the paragraph below. So ask for both together rather than
 meeting the second after the clone exists. A standalone clone keeps its worktree and Git
 administrative directory under the same writable root. It therefore supports edits, explicit-path
 staging, commits, and branch updates without sharing the base clone's index.
 
 On Claude Code, a standalone clone is structurally a primary checkout to `gh-write-guard.py`'s own
-rule 6 test (`--git-dir` equals `--git-common-dir` there too, since it is not a linked worktree of
-anything), so the hook denies the git commands this fallback exists to run. Its rules classify git
-and gh commands only, so a plain file edit is never denied there and only the git steps need the
-grant, though a compound command is judged whole, so an edit chained to a denied git write does
+rule 6 test. Like a primary checkout, the clone has `--git-dir` equal to `--git-common-dir`, since it is not a linked worktree of anything. So the hook denies the git commands this fallback exists to run. Its rules classify git
+and gh commands only, so a plain file edit is never denied there and only the git steps need the grant. A compound command is judged whole, though, so an edit chained to a denied git write does
 not run either. That grant is `GH_WRITE_GUARD_ALLOW_PRIMARY_CHECKOUT`, the same escape hatch
-`host-setup/agent-safety/README.md` in the hub already documents as its requirement 6, not a
-repo-relative link since that path is hub-local and not carried into every fleet repo. The
-maintainer sets it before the session starts, and an agent cannot set it for itself: the guard
-reads it from the environment the session was launched with, never from an inline `VAR=x` prefix
-or an `export` the agent runs, so ask for it rather than trying to set it mid-session. This
+`host-setup/agent-safety/README.md` in the hub already documents as its requirement 6. That path is not a repo-relative link, since it is hub-local and not carried into every fleet repo. The
+maintainer sets it before the session starts, and an agent cannot set it for itself. That is because the guard reads it from the environment the session was launched with. The guard never reads it from an inline `VAR=x` prefix or an `export` the agent runs. So ask for it rather than trying to set it mid-session. This
 fallback is exactly the narrow, already-approval-gated case that grant exists for.
 
 A temporary standalone clone is a degraded handoff, not an equivalent location. The base clone
@@ -180,9 +160,8 @@ git -C ~/repos/"<Repo>" worktree add ~/repos/worktrees/"<Repo>-<task-slug>" "<ta
 ```
 
 When the base clone holds only the remote-tracking ref, the same command creates the local branch
-tracking `origin/<task-branch>` through git's ordinary checkout guessing, so a fresh clone needs
-no separate branch setup. Git refuses to attach a branch that is already checked out somewhere
-else, and that refusal is the mandate working, since the branch sitting checked out in a shared
+tracking `origin/<task-branch>` through git's ordinary checkout guessing. So a fresh clone needs
+no separate branch setup. Git refuses to attach a branch that is already checked out somewhere else. That refusal is the mandate working, since the branch sitting checked out in a shared
 tree is the hazard the continuation rule exists for. `git worktree list` names the checkout
 holding it and prints the base clone first, and what to do there depends on which checkout that is.
 
@@ -197,8 +176,7 @@ aborts on the existing directory whatever its branch is. Remove it when it is cl
 it is not, because a dirty tree there may be uncommitted work. `backlog-burndown` calls this
 retire-then-dispatch and cites this skill for it.
 
-A machine not yet migrated to this layout still isolates exactly the same way, since the mandate
-is the isolation rather than the path: create the worktree beside whatever layout the machine
+A machine not yet migrated to this layout still isolates exactly the same way, since the mandate is the isolation rather than the path. Create the worktree beside whatever layout the machine
 has, and note that the base clone may live elsewhere than `~/repos/<Repo>`.
 
 ## Agent-Specific Worktree Tools
@@ -222,17 +200,38 @@ the hooks immediately after creating or attaching the worktree, before the first
 shared `core.hooksPath` value does not make generated files such as `.husky/_/husky.sh` appear
 in the new tree.
 
-- **Husky.Net:** When `.husky/pre-commit` sources `.husky/_/husky.sh` and the local .NET tool
-  manifest declares Husky.Net, run `dotnet tool restore`, then `dotnet husky install` from the
-  worktree root.
-- **Python pre-commit:** When `.pre-commit-config.yaml` exists, run `uv tool install pre-commit`
-  once per host if not already installed, then `pre-commit install` from the worktree root.
-  `pre-commit` is never a project dependency, so this is the same regardless of profile.
-- **Repository override:** Follow a repository's explicit hook-setup instructions when they
-  differ from these standard cases. Do not infer a replacement command from the language alone.
+- **Husky.Net:** When `.husky/pre-commit` sources `.husky/_/husky.sh`, the local .NET tool
+  manifest declares Husky.Net, and `git config core.hooksPath` already reads `.husky`, run
+  `dotnet tool restore`, then `dotnet husky install` from the worktree root. That generates the
+  runtime in this tree and writes `core.hooksPath` back to the value it already holds. Where the
+  setting reads anything else, the install would change it for every checkout, so the
+  linked-worktree bullet below applies. In a standalone clone, whose config and hooks are its
+  own, run the same commands there whatever the setting reads.
+- **Python pre-commit:** When `.pre-commit-config.yaml` exists, check for the hook the new tree
+  will run before installing anything, from the worktree root, with
+  `test -x "$(git rev-parse --git-path hooks)/pre-commit"`. In a linked worktree with no
+  `core.hooksPath` set, that path is the base clone's shared hooks directory. So a hook already there is the one every checkout runs, and the step is done. Where none is present in a linked
+  worktree, the bullet below applies. In a standalone clone the hooks directory is the clone's
+  own, so run `uv tool install pre-commit` once per host if not already installed, then
+  `pre-commit install` there. `pre-commit` is never a project dependency, so this is the same
+  regardless of profile.
+- **Never change a shared hook or its setting from a linked worktree.** A linked worktree is one
+  where `git rev-parse --git-dir` and `git rev-parse --git-common-dir`, both run from the worktree
+  root, print different paths. Its git config is the base clone's, and so is its hooks directory
+  when no `core.hooksPath` is set. So an installer that changes either there changes it for every
+  checkout of the repository, the maintainer's own included. Rewriting a setting to the value it
+  already holds, as the Husky.Net step above does, changes nothing and is not this case. Switching
+  installers is the same act, since `prek install` over a pre-commit framework hook moves the original aside and chains to it. That chaining has left every commit in every checkout failing on the
+  chained script. A missing or wrong shared hook is reported to the maintainer, not repaired from
+  the worktree.
+- **Repository override:** Follow a repository's explicit hook-setup instructions when they differ from these standard cases. The exception is that none of them may change a shared hook or setting
+  from a linked worktree, per the bullet above. Do not infer a replacement command from
+  the language alone.
 
 Treat hook preparation as worktree setup, not as recovery after a rejected commit. If setup
 fails, report that boundary and fix the setup. Never bypass the hook to make the commit succeed.
+A commit-time `core.hooksPath` override, `git -c core.hooksPath=<dir> commit`, is a bypass too,
+since git then runs whatever that directory holds, and nothing where it holds nothing.
 
 ## Listing and Cleanup
 
@@ -240,11 +239,46 @@ fails, report that boundary and fix the setup. Never bypass the hook to make the
   worktree with its branch. On the convention layout, one `ls ~/repos/worktrees/` reads what is
   in flight across the whole fleet.
 - **Cleanup after merge is the default terminal step.** Run it after a squash merge into `develop`. Run it again after a merge-commit promotion into `main`, unless the user explicitly says to retain a checkout or branch. A merge or release handoff is incomplete while finished task, conflict-resolution, installer, or release worktrees remain registered.
-- **Verify before removing.** Read the pull request's merged state and head SHA from live GitHub state. Confirm the worktree is clean and resolves to that head. A dirty worktree stops cleanup because force-removing it would discard work. A detached helper worktree needs no pull request, but its commit must be contained in the branch whose completed operation created it.
-- **Remove the exact finished worktree, then its local task branch.** Use `git worktree remove <exact-path>`. Try `git branch -d <exact-branch>` after a merge commit. A squash merge does not make the feature tip an ancestor of `develop`, so `-d` cannot recognize it as merged. After the live merged-PR and clean-worktree checks prove that exact branch finished, use `git branch -D <exact-branch>` under the narrow post-squash exception in `git-commit-conventions`. Never apply that exception to an unverified branch or to `develop`.
-- **Remove temporary standalone clones and detached helper worktrees too.** Remove the exact `<temporary-root>/<Repo>-<task-slug>` path after confirming it is clean. The remote feature branch follows the repository's normal pull request cleanup policy. Never delete `develop` after a promotion because it is the permanent integration branch.
-- **Return the base clone to current `develop`.** Fetch and prune `origin`, confirm the base clone is clean, switch it to `develop` when needed, and fast-forward it with `git merge --ff-only origin/develop`. A completed promotion or release does not leave the base clone on `main`. Stop and report a dirty base clone or a non-fast-forward instead of switching or reconciling it.
+- **Verify before removing.** A worktree or branch is removed only once live state proves it
+  finished. For a pull request, that proof is its merged state and head SHA read from GitHub. That proof also requires the worktree to be clean and the local branch to be at that head or behind it. `cleanup` below checks that in code. A dirty worktree stops cleanup because force-removing it would discard work. A detached
+  helper worktree needs no pull request, but its commit must be contained in the branch whose
+  completed operation created it.
+- **A pull request merged into `develop` is cleaned up by one command.** Run
+  `uv run --no-project --script scripts/pr_review.py cleanup <number> --repo <owner>/<repo> --checkout <base-clone>`
+  from a hub checkout outside the worktree it removes, `<base-clone>` being the repository's
+  primary clone. It reads the branch from the pull request and deletes the remote branch. It then
+  removes every worktree holding the branch without force, deletes the local branch, and
+  fast-forwards the base clone's `develop`. Its local refusals are decided before the remote delete. So a dirty worktree, an operation in progress, or a local tip the merge did not carry
+  leaves everything in place. A re-check after the delete can still refuse where a concurrent
+  session changed a tree in between. The refusal's output then names what was already deleted. Any exit
+  other than `0` stops and is reported as it stands rather than finished by hand. The raw
+  `git worktree remove`, `git branch -D`, and remote delete it replaces are not on the host-safety
+  permission allowlist, and the command is. It forwards to `scripts/pr_cleanup.py`, and
+  `scripts/README.md` "`pr_cleanup.py`" in the hub holds the full contract.
+- **What no merged pull request into `develop` covers is removed by hand.** That is a promotion's
+  worktree, a detached helper worktree, and a temporary standalone clone. Confirm the tree is
+  clean, then remove the exact path with `git worktree remove <exact-path>`, or delete the exact
+  `<temporary-root>/<Repo>-<task-slug>` directory. A named branch such a tree held, a promotion
+  branch merged into `main` by a merge commit for one, is left for the sweep below. The sweep reads it as finished once `origin/main` or `origin/develop` contains it. `git branch -d` is no substitute, since it judges a branch with no upstream against `HEAD`. So it refuses one merged only into
+  `main` while the base clone is on `develop`. Where that branch was pushed, its remote branch is
+  reported to the maintainer for deletion, since `cleanup` reads only a pull request merged into
+  `develop`. Never delete `develop` after a promotion, since it is the permanent integration
+  branch.
+- **Return the base clone to current `develop`.** `cleanup` does this itself where the base clone
+  is on `develop` or on the merged branch with no tracked changes. A base clone on the merged
+  branch that it cannot switch is one of its refusals. One on another branch, or on `develop` with
+  tracked changes or no fast-forward, exits `0` with `base=kept` on its `status=CLEANED` line.
+  That line, and every hand removal, leaves this step to run. The step is to fetch and prune `origin`, confirm the base clone is clean, switch it to `develop` when
+  needed, and fast-forward it with `git merge --ff-only origin/develop`. A completed promotion or
+  release does not leave the base clone on `main`. Stop and report a dirty base clone or a
+  non-fast-forward instead of switching or reconciling it.
+- **What an interrupted or abandoned session left behind is swept.** Run
+  `uv run --no-project --script scripts/pr_review.py cleanup --sweep --repo <owner>/<repo> --checkout <base-clone>`
+  from a hub checkout. It fetches and prunes `origin` and writes nothing else. It reports each worktree and branch that is clean, idle past `--min-age-hours` (default 24), and provably
+  finished. Adding `--apply` removes what the report lists through the same checks, the remote
+  branch of a merged `develop` pull request included. The report reaches other sessions' finished
+  work as well as this task's, so `--apply` runs on the maintainer's go-ahead.
 - **Prove the cleanup.** Finish with `git status --short --branch` in the base clone and `git worktree list`. The expected result is a clean base clone at `origin/develop` and no worktree belonging only to the completed task.
-- A worktree that refuses removal is dirty, and force is not the fix: look at what is
+- A worktree that refuses removal is dirty, and force is not the fix. Look at what is
   uncommitted in it first, since discarding uncommitted work runs only on explicit instruction,
   per the `git-commit-conventions` skill.

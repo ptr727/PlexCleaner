@@ -23,12 +23,14 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.22**:
+**Version: 3.23**:
 
 **Summary:**
 
-- Added always-on runtime metrics with operation-weighted progress, published via `System.Diagnostics.Metrics` and readable with `dotnet-counters`.
-- Bundled a `counters` wrapper in the Docker image for reading the metrics with a single command.
+- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
+- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
+- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 8.0.
+- Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -39,16 +41,22 @@ Get started with PlexCleaner in three easy steps using Docker (recommended):
 > **⚠️ Important**: PlexCleaner modifies media files in place. Always maintain backups of your media library before processing. Consider testing on sample files first.
 >
 > **ℹ️ Note**: Replace `/data/media` with your actual host media directory path. All examples map the host directory to `/media` inside the container.
+>
+> **ℹ️ Note**: The examples run as the `nonroot` user and `users` group that own your media. Files PlexCleaner writes then stay readable by the rest of your stack. Set `USER_NONROOT_ID` and `USERS_GROUP_ID` to your own numeric IDs, and see [Docker Run Examples](#docker-run-examples) to prepare the media directory.
 
 ```shell
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # 1. Create a default settings file
-docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner defaultsettings --settingsfile /media/PlexCleaner/PlexCleaner.json
 
 # 2. Edit /data/media/PlexCleaner/PlexCleaner.json to suit your needs
 
 # 3. Process your media files
-docker run --rm --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
+docker run --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --volume /data/media:/media:rw docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log \
   process --settingsfile /media/PlexCleaner/PlexCleaner.json \
   --mediafiles /media/Movies --mediafiles /media/Series
@@ -185,6 +193,8 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
+PlexCleaner requires FFmpeg 8.0 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+
 ### Docker
 
 - Builds are published on [Docker Hub][docker-hub-link].
@@ -208,7 +218,7 @@ services:
     container_name: PlexCleaner
     restart: unless-stopped
     stop_grace_period: 30s  # Allow time to finish the current file and log the summary on stop
-    user: 1000:100  # Change to match your nonroot:users
+    user: ${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}  # Set in .env to your own IDs, e.g. USER_NONROOT_ID=1001 and USERS_GROUP_ID=100
     command:
       - /PlexCleaner/PlexCleaner
       - monitor  # Monitor command
@@ -229,24 +239,41 @@ On stop (`docker stop`, or Compose shutdown), PlexCleaner handles the terminatio
 
 For a simple one-time process operation, see the [Getting Started](#getting-started) example.
 
-**Setup Permissions** (if running as non-root user):
+**Setup Permissions:**
+
+PlexCleaner runs as a non-root user, so the media directory must be owned by and writable for that user and group. Prepare it once:
 
 ```shell
-# Create nonroot user and set media directory permissions
-sudo adduser --no-create-home --shell /bin/false --disabled-password --system --group users nonroot
+# Create the nonroot system user in the users group, with the Debian or Ubuntu adduser
+sudo adduser --no-create-home --disabled-password --system --ingroup users nonroot
+
+# Give nonroot:users ownership, with group read and write
 sudo chown -R nonroot:users /data/media
-sudo chmod -R ug=rwx,o=rx /data/media
+sudo chmod -R ug=rwX,o=rX /data/media
+
+# New files keep the users group
+sudo find /data/media -type d -exec chmod g+s {} +
+
+# New files stay group writable, which needs the acl package and a filesystem with ACL support
+sudo find /data/media -type d -exec setfacl -m d:g:users:rwx {} +
+
+# The numeric IDs the examples use as USER_NONROOT_ID and USERS_GROUP_ID
+id -u nonroot
+getent group users | cut -d: -f3
 ```
 
 **Interactive Shell Access:**
 
 ```shell
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # Replace /data/media with your actual media directory
-# Replace the 1001:100 with your nonroot:users
 docker run \
   -it --rm --pull always \
   --name PlexCleaner \
-  --user 1001:100 \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /bin/bash
@@ -262,10 +289,15 @@ exit
 screen
 # Or: screen -rd
 
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 # Run monitor (adjust paths as needed)
 docker run -it --rm --pull always \
   --log-driver json-file --log-opt max-size=10m \
   --name PlexCleaner --env TZ=America/Los_Angeles \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
   /PlexCleaner/PlexCleaner --logfile /media/PlexCleaner/PlexCleaner.log --loglevel Warning --logelevate \
@@ -310,7 +342,7 @@ For one-time processing, see the [Getting Started](#getting-started) example or 
    - Set `ToolsOptions:UseSystem` to `true` and `ToolsOptions:AutoUpdate` to `false`.
 
    **Option C: Manual download**
-   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-6.0-full.7z`: `\Tools\FfMpeg`
+   - [FfMpeg Full][codexffmpeg-releases-link], e.g. `ffmpeg-9.0.2-full_build.7z`: `\Tools\FfMpeg`
    - [HandBrake CLI x64][handbrake-releases-link], e.g. `HandBrakeCLI-1.6.1-win-x86_64.zip`: `\Tools\HandBrake`
    - [MediaInfo CLI x64][mediainfo-download-link], e.g. `MediaInfo_CLI_23.07_Windows_x64.zip`: `\Tools\MediaInfo`
    - [MkvToolNix Portable x64][mkvtoolnix-download-link], e.g. `mkvtoolnix-64-bit-79.0.7z`: `\Tools\MkvToolNix`
@@ -875,7 +907,7 @@ services:
   plexcleaner-custom:
     image: docker.io/ptr727/plexcleaner:latest
     container_name: PlexCleaner-Custom
-    user: 1000:100  # Change to match your nonroot:users
+    user: ${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}  # Set in .env to your own IDs, e.g. USER_NONROOT_ID=1001 and USERS_GROUP_ID=100
     command:
       - /PlexCleaner/PlexCleaner
       - custom
@@ -931,18 +963,23 @@ dotnet test
 
 ### Docker Testing
 
-The [`Test.sh`](./Docker/Test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
+The [`test.sh`](./Docker/test.sh) script validates basic container functionality. It downloads sample files if no external media path is provided.
 
-The [`Test.sh`](./Docker/Test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container.
+The [`test.sh`](./Docker/test.sh) test script is included in the docker build and can be used to test basic functionality from inside the container. It writes its output under `/tmp/PlexCleaner-Test`, so it runs as the same non-root user as the rest of the stack.
 
 If an external media path is not specified the test will download and use the [Matroska test files][matroska-test-files-zip-link].
 
 ```shell
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+
 docker run \
   -it --rm \
+  --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --name PlexCleaner-Test \
   docker.io/ptr727/plexcleaner:latest \
-  /Test/Test.sh
+  /Test/test.sh
 ```
 
 ### Regression Testing
@@ -1032,7 +1069,7 @@ Licensed under the [MIT License][license]\
 [docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Docker%20Build
 [last-commit-shield]: https://img.shields.io/github/last-commit/ptr727/PlexCleaner?logo=github&label=Last%20Commit
 [license-shield]: https://img.shields.io/github/license/ptr727/PlexCleaner?label=License
-[pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&label=GitHub%20Pre-Release&logo=github
+[pre-release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?include_prereleases&filter=*-g*&label=GitHub%20Pre-Release&logo=github
 [release-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Releases%20Build
 [release-version-shield]: https://img.shields.io/github/v/release/ptr727/PlexCleaner?logo=github&label=GitHub%20Release
 
