@@ -1805,10 +1805,17 @@ public class ProcessFile
 
         // Delete the media file and sidecar file
         Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
-        File.Delete(FileInfo.FullName);
-        if (SidecarFile.IsMkvFile(FileInfo))
+        try
         {
-            File.Delete(SidecarFile.GetSidecarName(FileInfo));
+            File.Delete(FileInfo.FullName);
+            if (SidecarFile.IsMkvFile(FileInfo))
+            {
+                File.Delete(SidecarFile.GetSidecarName(FileInfo));
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
         }
 
         // Set the sidecar state as deleted

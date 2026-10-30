@@ -292,21 +292,7 @@ public static class Program
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Process each file using the plugin, isolating plugin exceptions to the current file so a
-        // faulty plugin fails that file instead of aborting the entire run
-        bool ProcessFile(string fileName)
-        {
-            try
-            {
-                return plugin.ProcessFile(fileName);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e))
-            {
-                return false;
-            }
-        }
-
-        if (!ProcessDriver.ProcessFiles(fileList, plugin.Name, false, ProcessFile))
+        if (!ProcessDriver.ProcessFiles(fileList, plugin.Name, false, plugin.ProcessFile))
         {
             return MakeExitCode(ExitCode.Error);
         }

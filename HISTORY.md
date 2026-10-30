@@ -51,6 +51,10 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - An FfMpeg verify run killed by a signal still runs the repair.
       - Outside Windows, the media file and its sidecar stay in place when that repair fails.
         - A failed or skipped repair leaves the file's state unchanged, so the next run verifies it again.
+  - An exception while processing one file fails that file, and the run continues with the next file.
+    - Before, it ended the run for every remaining file with exit code 1.
+    - The media file and its sidecar stay in place, whatever `DeleteInvalidFiles` says.
+  - The error summary names the failed step beside the state of each file that failed processing, such as `VerifyFailed, VerifyAndRepair`.
   - A failed repair whose tool fails to launch or throws leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
     - The next run retries the repair.
 - Version 3.22:

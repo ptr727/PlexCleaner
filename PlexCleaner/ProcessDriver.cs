@@ -213,6 +213,11 @@ public static class ProcessDriver
                             using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
                             taskResult = taskFunc(fileName);
                         }
+                        catch (Exception e)
+                            when (!Program.IsCancelled() && Log.Logger.LogAndHandle(e))
+                        {
+                            taskResult = false;
+                        }
                         finally
                         {
                             Metrics.FileInflightDone();
