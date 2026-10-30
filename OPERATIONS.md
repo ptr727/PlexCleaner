@@ -6,7 +6,7 @@ How this repository is run. PlexCleaner is a code repository, so its operations 
 
 What verifying a change here requires, including the part CI cannot perform.
 
-The clean-compile is the `.NET Format` VS Code task, chaining `CSharpier Format` -> `.NET Build` -> `dotnet format style --verify-no-changes --severity=info`, and it must pass before a commit, per [CODESTYLE.md](./CODESTYLE.md). CI runs the same checks plus the rest of its lint gate (unit tests with coverage, markdownlint, cspell, actionlint, editorconfig-checker, and ruff plus mypy over `RegressionTests/`), and `Lint: All (CI parity)` in [.vscode/tasks.json](./.vscode/tasks.json) runs that whole gate locally. A green clean-compile does not predict a green CI, so run the parity task before pushing a change that touches anything beyond `.cs` files.
+The clean-compile is the `.NET Format` VS Code task, chaining `CSharpier Format` -> `.NET Build` -> `dotnet format style --verify-no-changes --severity=info`, and it must pass before a commit, per [CODESTYLE.md](./CODESTYLE.md). CI runs the same checks plus the rest of the hub validator's gate, including unit tests with coverage, markdownlint, cspell, actionlint, editorconfig-checker, shellcheck, and shfmt. It also runs ruff, mypy, and the `unittest` suite over `RegressionTests/`, plus the prose and repo gates. `Lint: All (CI parity)` in [.vscode/tasks.json](./.vscode/tasks.json) runs the lint half locally except shellcheck, shfmt, and the prose and repo gates, and `Python Test` runs the `RegressionTests/` suite. A change to a shell script or to prose therefore owes those checks by hand, per the `shell-codestyle` and `comment-and-doc-style` Skills. A green clean-compile does not predict a green CI, so run the parity task before pushing a change that touches anything beyond `.cs` files.
 
 The part CI structurally cannot exercise is media processing. The unit tests need no media files and run everywhere, but the behavior of the tool depends on the media it processes and on the external tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) it drives, and a pull request runner has neither a media collection nor a reason to trust one. So a change to processing, sidecar, media-tool, or language-tag code is verified locally against real media, by the Docker test script and by the regression harness described under Runbooks, before it is called done. Read [ARCHITECTURE.md](./ARCHITECTURE.md) before changing that code.
 
@@ -18,11 +18,29 @@ Merges never publish. The publisher (`publish-release.yml`) runs on a weekly sch
 
 ### Test the Docker image
 
-[Docker/Test.sh](./Docker/Test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container:
+[Docker/test.sh](./Docker/test.sh) validates basic container functionality against sample media, downloading the Matroska test files when no external media path is given. It is included in the image, so a published tag is tested from inside the container. The image has no `USER` directive and defaults to root, so the command below passes the host's `nonroot` user and `users` group with `--user`. The test then cannot write to the root-owned `/Test`, so it writes its output under `/tmp/PlexCleaner-Test`:
 
 ```sh
-docker run -it --rm --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/Test.sh
+# Replace with your own IDs, from `id -u nonroot` and `getent group users | cut -d: -f3`
+USER_NONROOT_ID=1001
+USERS_GROUP_ID=100
+docker run -it --rm --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test docker.io/ptr727/plexcleaner:latest /Test/test.sh
 ```
+
+### Test an unreleased build in the image
+
+The image is the reference environment, so a branch build is tested inside it before an image carries it. Publish the build framework-dependent and run it with the image's own .NET runtime:
+
+```sh
+dotnet publish PlexCleaner -c Release --no-self-contained -o ./publish
+docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" --entrypoint dotnet \
+  docker.io/ptr727/plexcleaner:latest /test/publish/PlexCleaner.dll process \
+  --settingsfile /test/PlexCleaner.json --mediafiles /test/media
+```
+
+A self-contained publish crashes in the image with `No usable version of libssl`. The image's Ubuntu ships an OpenSSL that only Ubuntu's own .NET runtime supports.
+
+To test a different FFmpeg version, mount a static FFmpeg build into the container and put its directory first on `PATH` with `--env PATH=...`. Startup logs the FFmpeg version in use, and the minimum tool version check applies to it. A distribution image with FFmpeg from apt is a quick way to check a single command line against an older FFmpeg release.
 
 ### Run the regression tests
 
@@ -54,5 +72,5 @@ The `.NET Tool Update` and `.NET Outdated Upgrade` tasks refresh the local .NET 
 - [Samples/](./Samples/): the versioned sample settings files and sidecar fixtures the tests read.
 - The branch rulesets, repository settings, and required secret names are hub-hosted rather than carried here, and [AUDIT.md](./AUDIT.md) states how the self-audit reaches them.
 - [host-tools.json](./host-tools.json): the tools a host needs beyond the fleet's own declaration.
-- [.github/workflows/](./.github/workflows/): the CI and publish entry points plus the carried `validate-task.yml`, under the [WORKFLOW.md](./WORKFLOW.md) contract. The build, publish, plan, merge-bot and Docker-Hub-overview tasks are hub-hosted and reached by a SHA pin.
+- [.github/workflows/](./.github/workflows/): the CI and publish entry points, under the [WORKFLOW.md](./WORKFLOW.md) contract. The validate, build, publish, plan, merge-bot and Docker-Hub-overview tasks are hub-hosted and reached by a SHA pin.
 - [global.json](./global.json): the Microsoft.Testing.Platform opt-in `dotnet test` needs on the .NET 10 SDK.

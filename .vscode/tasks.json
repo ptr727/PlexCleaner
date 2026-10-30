@@ -177,15 +177,7 @@
         {
             "label": "Test Dockerfile",
             "type": "shell",
-            "command": "docker",
-            "args": [
-                "run",
-                "-it",
-                "--rm",
-                "--name=PlexCleaner-Test",
-                "plexcleaner:ubuntu",
-                "/Test/Test.sh"
-            ],
+            "command": "USER_NONROOT_ID=$(id -u nonroot) && USERS_GROUP_ID=$(getent group users | cut -d: -f3) && [ -n \"$USERS_GROUP_ID\" ] && docker run -it --rm --user=$USER_NONROOT_ID:$USERS_GROUP_ID --name=PlexCleaner-Test plexcleaner:ubuntu /Test/test.sh",
             "dependsOrder": "sequence",
             "dependsOn": [
                 "Load Dockerfile"
@@ -256,7 +248,7 @@
                 "--pull=always",
                 "--volume=${workspaceFolder}:/check",
                 "--workdir=/check",
-                "mstruebing/editorconfig-checker:latest"
+                "ghcr.io/editorconfig-checker/editorconfig-checker:latest"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -328,7 +320,7 @@
             "type": "shell",
             "command": "uvx",
             "args": [
-                "ruff",
+                "ruff@latest",
                 "check",
                 "."
             ],
@@ -346,7 +338,7 @@
             "type": "shell",
             "command": "uvx",
             "args": [
-                "ruff",
+                "ruff@latest",
                 "format",
                 "--check",
                 "."
@@ -365,8 +357,30 @@
             "type": "shell",
             "command": "uvx",
             "args": [
-                "mypy",
+                "mypy@latest",
                 "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/RegressionTests"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Python Test",
+            "type": "shell",
+            "command": "uvx",
+            "args": [
+                "coverage@latest",
+                "run",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/RegressionTests"

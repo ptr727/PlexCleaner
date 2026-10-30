@@ -13,11 +13,11 @@ project.
 
 2. **Nullable reference types**: enabled (`<Nullable>enable</Nullable>`), use nullable annotations
    appropriately, use `required` for mandatory properties.
-3. **Modern C# features**: prefer modern language constructs, primary constructors when
-   appropriate, top-level statements for console apps, pattern matching over traditional checks,
-   collection expressions when types loosely match, extension methods (the classic
-   `this`-parameter form or an `extension(<receiver>) { ... }` block on C# 14+), implicit object
-   creation when the type is apparent, range and index operators.
+3. **Modern C# features**: prefer modern language constructs. Prefer primary constructors when
+   appropriate, top-level statements for console apps, pattern matching over traditional checks.
+   Prefer collection expressions when types loosely match. Prefer extension methods (the classic
+   `this`-parameter form or an `extension(<receiver>) { ... }` block on C# 14+). Prefer implicit
+   object creation when the type is apparent. Prefer range and index operators.
 4. **Expression-bodied members**: use for applicable methods, properties, accessors, operators,
    lambdas, local functions.
 5. **`var` keyword**: do NOT use `var`, always use explicit types:
@@ -92,8 +92,8 @@ project.
    per GOVERNANCE.md's "Line Endings" section.
 6. **`#region`**: do not use regions, prefer logical file/folder/namespace organization.
 7. **Member ordering (StyleCop SA1201)**: const -> static readonly -> static fields -> instance
-   readonly fields -> instance fields -> constructors -> public (events -> properties -> indexers
-   -> methods -> operators) -> non-public in same order -> nested types.
+   readonly fields -> instance fields -> constructors -> public. Public members are ordered events -> properties -> indexers
+   -> methods -> operators. Non-public follows in same order, then nested types.
 
 ## Comments and documentation
 

@@ -22,7 +22,7 @@ public class ProcessFile
 
     private SidecarFile _sidecarFile;
 
-    // Classification of the most recent stream verify, used to choose the repair strategy
+    // Classification of the file's own stream verify, it chooses the repair
     private VerifyResult _lastVerifyResult;
 
     public ProcessFile(string mediaFile)
@@ -1708,6 +1708,7 @@ public class ProcessFile
 
         // Init
         canRepair = false;
+        _lastVerifyResult = VerifyResult.Clean;
 
         // Conditional
         if (conditional && !Program.Config.ProcessOptions.Verify)
@@ -1748,7 +1749,7 @@ public class ProcessFile
         // Will update sidecar state if bitrate exceeded
         _ = VerifyBitrate();
 
-        // Verify media streams, both failure kinds are repairable
+        // Verify media streams, VerifyAndRepair() stops on a tool error before it reads canRepair
         canRepair = true;
         _lastVerifyResult = VerifyMediaStreams(FileInfo);
 
@@ -1768,6 +1769,13 @@ public class ProcessFile
             {
                 Log.Error("Failed to verify media streams : {FileName}", fileInfo.FullName);
             }
+            else if (verifyResult == VerifyResult.ToolError)
+            {
+                Log.Error(
+                    "Failed to run media stream verification : {FileName}",
+                    fileInfo.FullName
+                );
+            }
             else if (verifyResult == VerifyResult.TimestampOnly)
             {
                 // Correctable failure, the decision Warning is emitted later if the repair runs
@@ -1783,7 +1791,12 @@ public class ProcessFile
     public bool DeleteFailedFile()
     {
         // Conditional
-        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
+        if (
+            !Program.Config.VerifyOptions.DeleteInvalidFiles
+            || ToolErrorScope.Count > 0
+            || ToolErrorScope.SignalCount > 0
+            || Program.IsCancelledError()
+        )
         {
             // Return false if not deleted
             return false;
@@ -1792,7 +1805,10 @@ public class ProcessFile
         // Delete the media file and sidecar file
         Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
         File.Delete(FileInfo.FullName);
-        File.Delete(SidecarFile.GetSidecarName(FileInfo));
+        if (SidecarFile.IsMkvFile(FileInfo))
+        {
+            File.Delete(SidecarFile.GetSidecarName(FileInfo));
+        }
 
         // Set the sidecar state as deleted
         // Sidecar file no longer exists, but in-memory state does
@@ -1822,8 +1838,8 @@ public class ProcessFile
             return true;
         }
 
-        // Cancel requested
-        if (Program.IsCancelled())
+        // Cancel requested, or the verify did not run, leave the state unchanged
+        if (Program.IsCancelled() || _lastVerifyResult == VerifyResult.ToolError)
         {
             return false;
         }
@@ -1837,6 +1853,12 @@ public class ProcessFile
             || !Program.Config.VerifyOptions.AutoRepair
         )
         {
+            // A signal ended a verify, leave the state unchanged so the next run verifies again
+            if (ToolErrorScope.SignalCount > 0)
+            {
+                return false;
+            }
+
             // Set VerifyFailed state if not already set
             if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.VerifyFailed))
             {
@@ -1856,14 +1878,14 @@ public class ProcessFile
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
-        // Non-monotonic DTS is a repairable failure; try a lossless surgical setts repair first, then fall
-        // through to the shared remux and re-encode tiers for a video or post-decode DTS setts cannot fix
+        // Non-monotonic DTS takes the timestamp repair ladder
         if (_lastVerifyResult == VerifyResult.TimestampOnly)
         {
             return RepairTimestampsAndSetState(ref modified);
         }
 
         // Attempt repair, if repair fails the original file will not be modified
+        int toolErrors = ToolErrorScope.Count;
         bool repaired = RepairAndReVerify();
 
         // Cancel requested
@@ -1875,6 +1897,12 @@ public class ProcessFile
         // Repair failed
         if (!repaired)
         {
+            // A repair tool did not run or a signal ended a verify, leave the state unchanged
+            if (ToolErrorScope.Count != toolErrors || ToolErrorScope.SignalCount > 0)
+            {
+                return false;
+            }
+
             // Repair failed and verify failed state
             _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
@@ -2035,7 +2063,7 @@ public class ProcessFile
         return true;
     }
 
-    private bool RepairAndReVerify()
+    private bool RepairAndReVerify(bool remuxOnly = false)
     {
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
@@ -2080,6 +2108,16 @@ public class ProcessFile
         }
         if (Program.IsCancelledError())
         {
+            return false;
+        }
+
+        // A re-encode passes a post-decode only DTS by dropping the colliding frames
+        if (remuxOnly)
+        {
+            Log.Warning(
+                "Non-monotonic DTS is post-decode only, skipping re-encode repair : {FileName}",
+                FileInfo.FullName
+            );
             return false;
         }
 
@@ -2174,7 +2212,7 @@ public class ProcessFile
             return false;
         }
 
-        // Require a clean re-verify, a remux that still fails falls through to the re-encode tier
+        // Require a clean re-verify before replacing the original
         if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
         {
             File.Delete(tempName);
@@ -2212,11 +2250,14 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 return Refresh(false);
             case VerifyResult.TimestampOnly:
-                // Detected non-monotonic DTS, repair losslessly when demux-visible, else stays reported
+                // Detected non-monotonic DTS, run the timestamp repair ladder
                 return RepairTimestampsAndSetState(ref modified);
             case VerifyResult.DecodeError:
                 // Genuine decode corruption, not repairable here, leave the state unchanged
                 return true;
+            case VerifyResult.ToolError:
+                // The verify did not run, leave the state unchanged and report the failure
+                return false;
             default:
                 throw new NotImplementedException();
         }
@@ -2224,10 +2265,15 @@ public class ProcessFile
 
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
-        // Escalate through the repair tiers: a lossless surgical setts repair for a demux-visible audio
-        // DTS, then the shared remux and re-encode ladder for a video or post-decode DTS setts cannot fix.
-        // The first tier whose re-verify is clean wins
-        if (TryLosslessTimestampRepair() || RepairAndReVerify())
+        int toolErrors = ToolErrorScope.Count;
+        _ = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
+
+        // Escalate from setts to remux to re-encode, and the first clean re-verify wins
+        // A post-decode only DTS stops after the remux
+        if (
+            TryLosslessTimestampRepair(dtsInfo, out bool residualPostDecode)
+            || RepairAndReVerify(residualPostDecode || DtsInfo.IsPostDecodeOnly(dtsInfo))
+        )
         {
             _sidecarFile.State |= SidecarFile.StatesType.Verified;
             _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
@@ -2237,8 +2283,12 @@ public class ProcessFile
             return Refresh(true);
         }
 
-        // Do not touch state on cancellation, the caller retries next run
-        if (Program.IsCancelled())
+        // Do not touch state on cancellation, a tool that did not run, or a signal-ended verify
+        if (
+            Program.IsCancelled()
+            || ToolErrorScope.Count != toolErrors
+            || ToolErrorScope.SignalCount > 0
+        )
         {
             return false;
         }
@@ -2253,16 +2303,11 @@ public class ProcessFile
         return false;
     }
 
-    private bool TryLosslessTimestampRepair()
+    private bool TryLosslessTimestampRepair(DtsInfo? dtsInfo, out bool residualPostDecode)
     {
-        // The audio-only setts filter can repair only an audio-stream DTS, so attempt it only when every
-        // non-monotonic stream is audio; a video or subtitle DTS, a post-decode-only break with no demux
-        // target, or an analysis failure all stay reported failures without a wasted rewrite
-        if (
-            !GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo)
-            || dtsInfo == null
-            || !dtsInfo.NonMonotonicIsAudioOnly
-        )
+        // The audio-only setts filter repairs only an audio DTS, so it runs only when every flagged stream is audio
+        residualPostDecode = false;
+        if (dtsInfo == null || !dtsInfo.NonMonotonicIsAudioOnly)
         {
             return false;
         }
@@ -2280,11 +2325,19 @@ public class ProcessFile
         }
 
         // Reject unless the payload is byte-identical and the result verifies clean
-        if (
-            !TimestampRepairRegressionGate(FileInfo.FullName, tempName)
-            || VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean
-        )
+        if (!TimestampRepairRegressionGate(FileInfo.FullName, tempName))
         {
+            File.Delete(tempName);
+            return false;
+        }
+        VerifyResult verifyResult = VerifyMediaStreams(new FileInfo(tempName));
+        if (verifyResult != VerifyResult.Clean)
+        {
+            // A timestamp failure left after setts cleared every demux-visible DTS arises after decode
+            residualPostDecode =
+                verifyResult == VerifyResult.TimestampOnly
+                && GetPacketAnalysis(tempName, false, out _, out DtsInfo? residualDtsInfo)
+                && DtsInfo.IsPostDecodeOnly(residualDtsInfo);
             File.Delete(tempName);
             return false;
         }
@@ -2529,6 +2582,13 @@ public class ProcessFile
         bool quickScan,
         out BitrateInfo? bitrateInfo,
         out DtsInfo? dtsInfo
+    ) => GetPacketAnalysis(FileInfo.FullName, quickScan, out bitrateInfo, out dtsInfo);
+
+    private bool GetPacketAnalysis(
+        string fileName,
+        bool quickScan,
+        out BitrateInfo? bitrateInfo,
+        out DtsInfo? dtsInfo
     )
     {
         // Use the default track, else the first track
@@ -2553,7 +2613,7 @@ public class ProcessFile
 
         if (
             !Tools.FfProbe.GetAnalysisPackets(
-                FileInfo.FullName,
+                fileName,
                 packet =>
                 {
                     packetBitrate.Add(packet);

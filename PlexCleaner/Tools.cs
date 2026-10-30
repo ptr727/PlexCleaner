@@ -47,9 +47,25 @@ public static class Tools
                         tool.Info.FileName
                     )
                 );
-            return true;
+            return VerifyToolVersions();
         }
         return false;
+    }
+
+    private static bool VerifyToolVersions()
+    {
+        List<MediaTool> unsupportedTools = GetToolList()
+            .FindAll(tool => !MediaTool.IsSupportedVersion(tool.Info.Version, tool.MinimumVersion));
+        unsupportedTools.ForEach(tool =>
+            Log.Error(
+                "{Tool} version {Version} is older than the minimum supported version {MinimumVersion} : {FileName}",
+                tool.GetToolType(),
+                tool.Info.Version,
+                tool.MinimumVersion,
+                tool.Info.FileName
+            )
+        );
+        return unsupportedTools.Count == 0;
     }
 
     private static bool VerifySystemTools()

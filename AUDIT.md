@@ -16,7 +16,7 @@ The result must be exactly two rulesets named `develop` and `main`. A missing ru
 
 ## Secrets
 
-From the same hub checkout, run `spec/audit.py PlexCleaner` and read its Secrets section. It resolves the required set from the hub's `spec/secrets.json` plus this repo's registry entry (`publish[]`/`types[]`/`requiredSecrets[]`) and confirms each required name exists (name only, not values) in the stores its mechanism claims. For PlexCleaner that is the baseline App pair, the Docker Hub pair, and `CODECOV_TOKEN`, all in both the Actions and Dependabot stores, since a workflow run triggered by a Dependabot pull request reads the Dependabot store and would otherwise silently skip the coverage upload.
+From the same hub checkout, run `uv run --no-project --script spec/audit.py PlexCleaner` and read its Secrets section. It resolves the required set from the hub's `spec/secrets.json` plus this repo's registry entry (`publish[]`/`types[]`/`requiredSecrets[]`) and confirms each required name exists (name only, not values) in the stores its mechanism claims. For PlexCleaner that is the baseline App pair, the Docker Hub pair, and `CODECOV_TOKEN`, all in both the Actions and Dependabot stores, since a workflow run triggered by a Dependabot pull request reads the Dependabot store and would otherwise silently skip the coverage upload.
 
 ## Verdict and Follow-Up
 
