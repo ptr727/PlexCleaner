@@ -256,7 +256,7 @@ public partial class FfMpeg
                 && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
-        private static void CreateTrackArgs(
+        internal static void CreateTrackArgs(
             SelectMediaProps selectMediaProps,
             out string inputMap,
             out string outputMap
@@ -269,8 +269,6 @@ public partial class FfMpeg
             Debug.Assert(selectMediaProps.NotSelected.Parser == ToolType.FfProbe);
 
             // Create a list of all the tracks ordered by Id
-            // Selected is ReEncode, state is expected to be ReEncode
-            // NotSelected is Keep, state is expected to be Keep
             List<TrackProps> trackList = selectMediaProps.GetTrackList();
 
             // Create the input map using all tracks referenced by id
@@ -295,14 +293,14 @@ public partial class FfMpeg
                 _ = trackProps switch
                 {
                     VideoProps videoProps => sb.Append(
-                        videoProps.State == TrackProps.StateType.Keep
-                            ? $"-c:v:{videoIndex++} copy "
-                            : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+                        videoProps.Actions.HasFlag(TrackProps.ActionsType.ReEncode)
+                            ? $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+                            : $"-c:v:{videoIndex++} copy "
                     ),
                     AudioProps audioProps => sb.Append(
-                        audioProps.State == TrackProps.StateType.Keep
-                            ? $"-c:a:{audioIndex++} copy "
-                            : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+                        audioProps.Actions.HasFlag(TrackProps.ActionsType.ReEncode)
+                            ? $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+                            : $"-c:a:{audioIndex++} copy "
                     ),
                     SubtitleProps => sb.Append(
                         CultureInfo.InvariantCulture,

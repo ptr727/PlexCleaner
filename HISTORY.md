@@ -24,6 +24,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - `BitrateExceeded` clears when a measurement is under the limit, and is measured again after a re-encode repair.
   - A renamed file keeps its state, an interrupted repair is retried on the next run, and deleting an orphan sidecar counts as a success.
   - The media info tools no longer rerun after a tool upgrade with `SidecarUpdateOnToolChange` off, or after a state-only change with `UseSidecarFiles` off.
+  - A track that needs more than one repair, such as a language remux and track flags, is repaired and reported for each.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.
