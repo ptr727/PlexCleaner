@@ -121,7 +121,8 @@ Critical performance feature - DO NOT break compatibility:
 
 - Language tags: ISO 639-2B (`Language`) and RFC 5646/BCP 47 (`LanguageIetf`)
 - Flags: Default, Forced, HearingImpaired, VisualImpaired, Descriptions, Original, Commentary
-- State: Keep, Remove, ReMux, ReEncode, DeInterlace, SetFlags, SetLanguage, Unsupported
+- State: one of None, Keep, Remove, Unsupported, what happens to the track as a whole
+- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions](#track-state-and-actions)
 - Title, Format, Codec, Id, Number, Uid
 
 **Track selection (`SelectMediaProps.cs`):**
@@ -130,6 +131,7 @@ Critical performance feature - DO NOT break compatibility:
 - Used for language filtering, duplicate removal, codec selection
 - Move operations: `Move(track, toSelected)`, `Move(trackList, toSelected)`
 - State assignment: `SetState(selectedState, notSelectedState)`
+- Action assignment: `SetActions(actions)` adds the actions to the selected tracks and clears them from the not selected tracks
 
 ### Language Tag Management
 
@@ -216,6 +218,7 @@ Conventions used in every diagram:
 - A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists. A name more than one of them defines must carry its `Type.` prefix. Pipeline `P` nodes name `ProcessFile` steps, which the step order check holds to `Process.cs` instead.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
+- "State has" names the sidecar `StatesType` flags. A track's own state and actions are always named as the track state or a track action.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
 - A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches](#suspect-branches).
 - Change a diagram in the same change that moves a branch it draws.
@@ -549,9 +552,9 @@ flowchart TD
   L4 -->|yes| M0["RepairMetadataRemux()"]
   M0 --> M1{"ReMux option on?"}
   M1 -->|no| M6
-  M1 -->|yes| M2{"Remove or ReMux errors, or SetLanguage errors with SetIetfLanguageTags on?"}
+  M1 -->|yes| M2{"A track in the Remove state, with the ReMux action, or with the SetLanguage action and SetIetfLanguageTags on?"}
   M2 -->|no| M6
-  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo marked Remove, else a full remux"]
+  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo put in the Remove state, else a full remux"]
   M3 -->|fail| RXF(["Fail, no VerifyFailed"])
   M3 --> M4["Sets ReMuxed, Refresh()"]
   M4 --> M5{"Targeted errors still present?"}
@@ -559,7 +562,7 @@ flowchart TD
   M5 -->|no| M6{"Errors left?"}
   M6 -->|no| AOK
   M6 -->|yes| F0["RepairMetadataFlags()"]
-  F0 --> F1{"SetTrackFlags option on and tracks need flags?"}
+  F0 --> F1{"SetTrackFlags option on and a track with the SetFlags action?"}
   F1 -->|no| RP
   F1 -->|yes| F2{"An earlier set of the flags, in this run or a previous one, left them missing?"}
   F2 -->|yes| RP
@@ -582,7 +585,7 @@ flowchart TD
   S5 -->|yes| AOK
 ```
 
-`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds `SetFlags` with the flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
+`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. A track needing more than one repair is reported for each, since its actions combine. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds the sidecar `SetFlags` flag with the track flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
 
 ### Closed Captions
 
@@ -634,8 +637,9 @@ flowchart TD
   FOUND -->|"yes, process command"| SKIP["Warn naming the track, skip"]
   SKIP --> AOK
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
-  AGAIN --> D1
-  FOUND -->|no| D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  AGAIN --> D0
+  FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
+  D0 --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
@@ -724,8 +728,9 @@ flowchart TD
   S0 --> S1["Select video matching ReEncodeVideo, and audio whose format is in ReEncodeAudioFormats"]
   S1 --> S2{"Audio selected and no video selected?"}
   S2 -->|yes| S3["Also select video that is not h264, hevc or av1"]
-  S2 -->|no| S4
-  S3 --> S4{"Anything selected?"}
+  S2 -->|no| SA
+  S3 --> SA["Every track is set to Keep, and SelectMediaProps.SetActions() gives the selected tracks the ReEncode action"]
+  SA --> S4{"Anything selected?"}
   S4 -->|no| AOK
   S4 -->|yes| S5{"State has ReEncoded?"}
   S5 -->|"yes, process command"| SKIP["Warn naming the tracks that still match, skip"]
@@ -818,6 +823,32 @@ flowchart TD
 `VerifyBitrate()` sets `BitrateExceeded` when a measured bitrate exceeds `MaximumBitrate`, and clears it when a measurement is within the limit. Where no measurement runs, the flag stays. That covers no limit, `--quickscan`, and every path the chart draws that skips `VerifyBitrate()`. A failed bitrate analysis warns and keeps the last measured state. When a tool error ended it, a file that passes or is repaired is not marked `Verified`, so the next run measures it again. A repair that re-encodes measures the repaired media again.
 
 A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+
+### Track State and Actions
+
+Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the states and actions the table below names for it. Processing steps set the rest. A `Refresh()` that reads the tool output again, as one after a step changes the media does, discards every value a step set. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
+
+```mermaid
+flowchart TD
+  T["Track"] --> ST["State, one of: None, Keep, Remove, Unsupported"]
+  T --> AC["Actions, any combination"]
+  AC --> AA["AttributeActions change the track metadata: SetLanguage, SetFlags"]
+  AC --> SA["StreamActions rewrite the file: ReMux, ReEncode, DeInterlace"]
+```
+
+A remux copies the streams into a new file, and a re-encode or deinterlace encodes them again. An attribute action is applied in place by MkvPropEdit, or by the metadata remux, as `RepairMetadataErrors()` shows. Every action belongs to exactly one group, and `TrackActionsTests` checks that.
+
+| Value | Kind | Set by |
+| --- | --- | --- |
+| `Keep`, `Remove` | State | `SelectMediaProps.SetState()` and the remux steps that drop tracks, and MediaInfo parsing sets `Remove` for a VobSub subtitle with no muxing mode |
+| `Unsupported` | State | Parsing a track that has no format or codec |
+| `SetLanguage` | Attribute action | Parsing, in `TrackProps.SetLanguage()`, when the IETF tag is missing and maps from the ISO tag |
+| `SetFlags` | Attribute action | Parsing, in `TrackProps.SetFlagsFromTitle()`, when the title names a flag that is not set |
+| `ReMux` | Stream action | Parsing a language tag that conflicts with its IETF tag, cannot be mapped, or is invalid. Also a missing language tag beside an IETF tag, or a tag language that differs from the language tag |
+| `ReEncode` | Stream action | `FindNeedReEncode()` through `SelectMediaProps.SetActions()` |
+| `DeInterlace` | Stream action | `DeInterlace()` before HandBrake runs |
+
+`ClearMetadataErrors()` resets both the state and the actions of every track.
 
 ### State Flags by Step
 

@@ -297,6 +297,87 @@ public sealed class CleanupStepRepeatTests : IDisposable
     }
 
     [Fact]
+    public void RepairMetadataErrors_TrackNeedsRemuxAndFlags_ReportsBoth()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.ProcessOptions.ReMux = false;
+        Program.Config.ProcessOptions.SetTrackFlags = false;
+        ProcessFile processFile = CreateProcessFile(
+            SidecarFile.StatesType.None,
+            mkvMerge: data =>
+            {
+                JsonNode properties = AudioProperties(data);
+                properties["language"] = "eng";
+                properties["language_ietf"] = "de";
+                properties["track_name"] = "Commentary";
+            }
+        );
+        _ = processFile
+            .MkvMergeProps.Audio.Single()
+            .Actions.Should()
+            .Be(TrackProps.ActionsType.ReMux | TrackProps.ActionsType.SetFlags);
+
+        bool modified = false;
+        List<LogEvent> events = Capture(() =>
+            processFile.RepairMetadataErrors(ref modified).Should().BeTrue()
+        );
+
+        _ = modified.Should().BeFalse();
+        _ = Calls.Should().BeEmpty();
+        _ = events
+            .Should()
+            .ContainSingle(item => item.MessageTemplate.Text.Contains("ReMux option not enabled"));
+        _ = events
+            .Should()
+            .ContainSingle(item =>
+                item.MessageTemplate.Text.Contains("SetTrackFlags option not enabled")
+            );
+    }
+
+    [Fact]
+    public void RepairMetadataErrors_TrackNeedsRemuxAndFlags_RemuxesThenSetsFlags()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+
+        // The remux fixes the language tags and keeps the title that asks for a flag
+        string remuxed = Path.Combine(_directory, "remuxed.json");
+        string flagged = Path.Combine(_directory, "flagged.json");
+        ProcessFile processFile = CreateProcessFile(
+            SidecarFile.StatesType.None,
+            mkvMerge: data =>
+            {
+                JsonNode properties = AudioProperties(data);
+                properties["language"] = "eng";
+                properties["language_ietf"] = "de";
+                properties["track_name"] = "Commentary";
+            },
+            mkvMergeRemuxBody: $"cp \"{remuxed}\" \"{_directory}/MkvMergeInfoData.json\"",
+            mkvPropEditBody: $"cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\""
+        );
+        JsonNode mkvMerge = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.orig.json"))
+        )!;
+        AudioProperties(mkvMerge)["track_name"] = "Commentary";
+        File.WriteAllText(remuxed, mkvMerge.ToJsonString());
+        AudioProperties(mkvMerge)["flag_commentary"] = true;
+        File.WriteAllText(flagged, mkvMerge.ToJsonString());
+
+        bool modified = false;
+        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+
+        _ = modified.Should().BeTrue();
+        _ = Calls.Should().Equal("mkvmerge", "mkvpropedit");
+        _ = processFile
+            .State.Should()
+            .HaveFlag(SidecarFile.StatesType.ReMuxed)
+            .And.HaveFlag(SidecarFile.StatesType.SetFlags)
+            .And.NotHaveFlag(SidecarFile.StatesType.VerifyFailed);
+        AudioProps audio = processFile.MkvMergeProps.Audio.Single();
+        _ = audio.Flags.Should().HaveFlag(TrackProps.FlagsType.Commentary);
+        _ = audio.Actions.Should().Be(TrackProps.ActionsType.None);
+    }
+
+    [Fact]
     public void RepairMetadataErrors_RewriteDropsFlagsInRun_SetsThemInCleanupReRun()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
@@ -317,7 +398,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
         bool modified = false;
         _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
         _ = processFile.RemoveCoverArt(ref modified).Should().BeTrue();
-        _ = processFile.HasMetadataErrors(TrackProps.StateType.SetFlags).Should().BeTrue();
+        _ = processFile.HasMetadataErrors(TrackProps.ActionsType.SetFlags).Should().BeTrue();
         _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
 
         _ = Calls.Should().Equal("mkvmerge", "mkvpropedit");

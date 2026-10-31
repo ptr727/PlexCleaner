@@ -280,9 +280,16 @@ public class ProcessFile
         FfProbeProps.AnyErrors || MkvMergeProps.AnyErrors || MediaInfoProps.AnyErrors;
 
     public bool HasMetadataErrors(TrackProps.StateType stateType) =>
-        FfProbeProps.GetTrackList().Any(item => item.State == stateType)
-        || MkvMergeProps.GetTrackList().Any(item => item.State == stateType)
-        || MediaInfoProps.GetTrackList().Any(item => item.State == stateType);
+        AnyTrack(item => item.State == stateType);
+
+    // Any of the actions, so a group such as StreamActions can be passed
+    public bool HasMetadataErrors(TrackProps.ActionsType actions) =>
+        AnyTrack(item => (item.Actions & actions) != 0);
+
+    private bool AnyTrack(Func<TrackProps, bool> predicate) =>
+        FfProbeProps.GetTrackList().Any(predicate)
+        || MkvMergeProps.GetTrackList().Any(predicate)
+        || MediaInfoProps.GetTrackList().Any(predicate);
 
     public void ClearMetadataErrors()
     {
@@ -301,6 +308,7 @@ public class ProcessFile
                 {
                     item.HasErrors = false;
                     item.State = TrackProps.StateType.None;
+                    item.Actions = TrackProps.ActionsType.None;
                 });
     }
 
@@ -309,7 +317,7 @@ public class ProcessFile
         // Flags an earlier run set that are still missing did not stick
         _trackFlagsDoNotStick ??=
             _sidecarFile.State.HasFlag(SidecarFile.StatesType.SetFlags)
-            && HasMetadataErrors(TrackProps.StateType.SetFlags);
+            && HasMetadataErrors(TrackProps.ActionsType.SetFlags);
 
         // Conditional
         if (!Program.Config.VerifyOptions.AutoRepair)
@@ -375,7 +383,7 @@ public class ProcessFile
         // Leaving IETF tags unset is a deliberate opt-out, so it is not a warning
         if (
             !Program.Config.ProcessOptions.SetIetfLanguageTags
-            && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+            && HasMetadataErrors(TrackProps.ActionsType.SetLanguage)
         )
         {
             Log.Information(
@@ -401,7 +409,7 @@ public class ProcessFile
 
         if (
             !Program.Config.ProcessOptions.SetTrackFlags
-            && HasMetadataErrors(TrackProps.StateType.SetFlags)
+            && HasMetadataErrors(TrackProps.ActionsType.SetFlags)
         )
         {
             Log.Warning(
@@ -599,9 +607,9 @@ public class ProcessFile
     private (bool Remove, bool ReMux, bool SetLanguage) GetRemuxErrors() =>
         (
             HasMetadataErrors(TrackProps.StateType.Remove),
-            HasMetadataErrors(TrackProps.StateType.ReMux),
+            HasMetadataErrors(TrackProps.ActionsType.ReMux),
             Program.Config.ProcessOptions.SetIetfLanguageTags
-                && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+                && HasMetadataErrors(TrackProps.ActionsType.SetLanguage)
         );
 
     public bool RemuxRemoveExtraVideoTracks(ref bool modified)
@@ -668,7 +676,7 @@ public class ProcessFile
         }
 
         // Any tracks to set flags on
-        if (!HasMetadataErrors(TrackProps.StateType.SetFlags))
+        if (!HasMetadataErrors(TrackProps.ActionsType.SetFlags))
         {
             // Nothing to do
             return true;
@@ -687,9 +695,9 @@ public class ProcessFile
         // Detected: tracks needing flags set
         Log.Warning(
             "Track flags to be set detected : Tracks: {Tracks} : {FileName}",
-            MkvMergeProps.Video.Count(item => item.State == TrackProps.StateType.SetFlags)
-                + MkvMergeProps.Audio.Count(item => item.State == TrackProps.StateType.SetFlags)
-                + MkvMergeProps.Subtitle.Count(item => item.State == TrackProps.StateType.SetFlags),
+            MkvMergeProps
+                .GetTrackList()
+                .Count(item => item.Actions.HasFlag(TrackProps.ActionsType.SetFlags)),
             FileInfo.FullName
         );
 
@@ -707,7 +715,9 @@ public class ProcessFile
 
         // Set flags using MkvMergeInfo
         Debug.Assert(
-            MkvMergeProps.GetTrackList().Any(item => item.State == TrackProps.StateType.SetFlags)
+            MkvMergeProps
+                .GetTrackList()
+                .Any(item => item.Actions.HasFlag(TrackProps.ActionsType.SetFlags))
         );
         if (!Tools.MkvPropEdit.SetTrackFlags(FileInfo.FullName, MkvMergeProps))
         {
@@ -724,7 +734,7 @@ public class ProcessFile
         }
 
         // Warn once, the state stops later runs from setting them again
-        _trackFlagsDoNotStick = HasMetadataErrors(TrackProps.StateType.SetFlags);
+        _trackFlagsDoNotStick = HasMetadataErrors(TrackProps.ActionsType.SetFlags);
         if (_trackFlagsDoNotStick == true)
         {
             Log.Warning(
@@ -1539,7 +1549,7 @@ public class ProcessFile
         }
 
         Log.Information("Deinterlacing interlaced media : {FileName}", FileInfo.FullName);
-        videoProps.State = TrackProps.StateType.DeInterlace;
+        videoProps.Actions |= TrackProps.ActionsType.DeInterlace;
         videoProps.WriteLine("Interlaced");
 
         // TODO: HandBrake will convert closed captions and subtitle tracks to ASS format
@@ -1811,8 +1821,8 @@ public class ProcessFile
 
         // Find all tracks that need re-encoding
         // Use FfProbeInfo for matching logic
-        // Selected is ReEncode
-        // NotSelected is Keep
+        // Selected has the ReEncode action
+        // NotSelected is copied
         SelectMediaProps selectMediaProps = FindNeedReEncode();
         if (selectMediaProps.Selected.Count == 0)
         {
@@ -2951,8 +2961,8 @@ public class ProcessFile
     {
         // Filter logic values are based on FfProbe attributes
         // Start with empty selection
-        // Selected is ReEncode
-        // NotSelected is Keep
+        // Selected has the ReEncode action
+        // NotSelected is copied
         SelectMediaProps selectMediaProps = new(FfProbeProps);
 
         // Add audio and video tracks
@@ -2998,9 +3008,8 @@ public class ProcessFile
             }
         }
 
-        // Selected is ReEncode
-        // NotSelected is Keep
-        selectMediaProps.SetState(TrackProps.StateType.ReEncode, TrackProps.StateType.Keep);
+        selectMediaProps.SetState(TrackProps.StateType.Keep, TrackProps.StateType.Keep);
+        selectMediaProps.SetActions(TrackProps.ActionsType.ReEncode);
         return selectMediaProps;
     }
 
