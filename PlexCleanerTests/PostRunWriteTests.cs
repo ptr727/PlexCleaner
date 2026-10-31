@@ -110,6 +110,35 @@ public sealed class PostRunWriteTests : IDisposable
         _ = Process.FinishProcessing(resultsJson, true).Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void FinishProcessing_OneWriteFails_OtherWriteStillRuns(bool settingsFails)
+    {
+        // A directory at the path, or a missing parent directory, makes the write throw
+        string settingsFile = Path.Combine(_directory, "settings.json");
+        string resultsFile = Path.Combine(_directory, "results.json");
+        if (settingsFails)
+        {
+            _ = Directory.CreateDirectory(settingsFile);
+        }
+        else
+        {
+            resultsFile = Path.Combine(_directory, "missing", "results.json");
+        }
+        Program.Options.SettingsFile = settingsFile;
+        Program.Options.ResultsFile = resultsFile;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        ProcessResultJsonSchema resultsJson = new();
+        resultsJson.Results.Results.Add(
+            CreateResult("failed.mkv", SidecarFile.StatesType.VerifyFailed)
+        );
+
+        _ = Process.FinishProcessing(resultsJson, true).Should().BeFalse();
+        _ = File.Exists(settingsFile).Should().Be(!settingsFails);
+        _ = File.Exists(resultsFile).Should().Be(settingsFails);
+    }
+
     [Fact]
     public void RegisterInvalidFiles_OnlyDeletedFiles_WritesNothing()
     {
