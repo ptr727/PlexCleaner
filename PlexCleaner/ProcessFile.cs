@@ -31,6 +31,10 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
+    // Null until a step's first call reads what an earlier run left, a later call follows this run
+    private bool? _coverArtRemains;
+    private bool? _trackFlagsDoNotStick;
+
     public ProcessFile(string mediaFile)
     {
         FileInfo = new FileInfo(mediaFile);
@@ -302,6 +306,11 @@ public class ProcessFile
 
     public bool RepairMetadataErrors(ref bool modified)
     {
+        // Flags an earlier run set that are still missing did not stick
+        _trackFlagsDoNotStick ??=
+            _sidecarFile.State.HasFlag(SidecarFile.StatesType.SetFlags)
+            && HasMetadataErrors(TrackProps.StateType.SetFlags);
+
         // Conditional
         if (!Program.Config.VerifyOptions.AutoRepair)
         {
@@ -351,7 +360,55 @@ public class ProcessFile
         }
 
         // Set track flags
-        return RepairMetadataFlags(ref modified);
+        if (!RepairMetadataFlags(ref modified))
+        {
+            return false;
+        }
+
+        // Errors a disabled repair leaves are reported, the file is not failed
+        ReportUnrepairedMetadataErrors();
+        return true;
+    }
+
+    private void ReportUnrepairedMetadataErrors()
+    {
+        // Leaving IETF tags unset is a deliberate opt-out, so it is not a warning
+        if (
+            !Program.Config.ProcessOptions.SetIetfLanguageTags
+            && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+        )
+        {
+            Log.Information(
+                "IETF language tags not set, SetIetfLanguageTags option not enabled : {FileName}",
+                FileInfo.FullName
+            );
+        }
+
+        (bool removeErrors, bool remuxErrors, bool setLanguageErrors) = GetRemuxErrors();
+        if (
+            !Program.Config.ProcessOptions.ReMux
+            && (removeErrors || remuxErrors || setLanguageErrors)
+        )
+        {
+            Log.Warning(
+                "Metadata errors not repaired, ReMux option not enabled : Remove: {Remove}, ReMux: {ReMux}, SetLanguage: {SetLanguage} : {FileName}",
+                removeErrors,
+                remuxErrors,
+                setLanguageErrors,
+                FileInfo.FullName
+            );
+        }
+
+        if (
+            !Program.Config.ProcessOptions.SetTrackFlags
+            && HasMetadataErrors(TrackProps.StateType.SetFlags)
+        )
+        {
+            Log.Warning(
+                "Track flags not set, SetTrackFlags option not enabled : {FileName}",
+                FileInfo.FullName
+            );
+        }
     }
 
     private static bool HasInvalidLanguageTag(TrackProps item) =>
@@ -471,11 +528,7 @@ public class ProcessFile
         // Honor Program.Config.ProcessOptions.SetIetfLanguageTags as lots of older media does not have IETF tags set
 
         // Any tracks need remuxing, evaluate each once and reuse for the detection warning
-        bool removeErrors = HasMetadataErrors(TrackProps.StateType.Remove);
-        bool remuxErrors = HasMetadataErrors(TrackProps.StateType.ReMux);
-        bool setLanguageErrors =
-            Program.Config.ProcessOptions.SetIetfLanguageTags
-            && HasMetadataErrors(TrackProps.StateType.SetLanguage);
+        (bool removeErrors, bool remuxErrors, bool setLanguageErrors) = GetRemuxErrors();
         if (!removeErrors && !remuxErrors && !setLanguageErrors)
         {
             // Done
@@ -538,16 +591,18 @@ public class ProcessFile
         }
 
         // Stop if the remux did not resolve the errors it targets, else monitor mode loops
-        // Mirror the trigger condition above, including SetLanguage when SetIetfLanguageTags is enabled
-        return (
-                !HasMetadataErrors(TrackProps.StateType.Remove)
-                && !HasMetadataErrors(TrackProps.StateType.ReMux)
-                && !(
-                    Program.Config.ProcessOptions.SetIetfLanguageTags
-                    && HasMetadataErrors(TrackProps.StateType.SetLanguage)
-                )
-            ) || SetVerifyFailed("remuxing");
+        (removeErrors, remuxErrors, setLanguageErrors) = GetRemuxErrors();
+        return (!removeErrors && !remuxErrors && !setLanguageErrors) || SetVerifyFailed("remuxing");
     }
+
+    // SetLanguage needs a remux only when SetIetfLanguageTags is enabled
+    private (bool Remove, bool ReMux, bool SetLanguage) GetRemuxErrors() =>
+        (
+            HasMetadataErrors(TrackProps.StateType.Remove),
+            HasMetadataErrors(TrackProps.StateType.ReMux),
+            Program.Config.ProcessOptions.SetIetfLanguageTags
+                && HasMetadataErrors(TrackProps.StateType.SetLanguage)
+        );
 
     public bool RemuxRemoveExtraVideoTracks(ref bool modified)
     {
@@ -619,6 +674,16 @@ public class ProcessFile
             return true;
         }
 
+        // Flags that did not stick are not set again, else every run edits the file
+        if (_trackFlagsDoNotStick == true)
+        {
+            Log.Information(
+                "Track flags did not stick, not setting again : {FileName}",
+                FileInfo.FullName
+            );
+            return true;
+        }
+
         // Detected: tracks needing flags set
         Log.Warning(
             "Track flags to be set detected : Tracks: {Tracks} : {FileName}",
@@ -653,7 +718,21 @@ public class ProcessFile
         // Refresh
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
-        return Refresh(true);
+        if (!Refresh(true))
+        {
+            return false;
+        }
+
+        // Warn once, the state stops later runs from setting them again
+        _trackFlagsDoNotStick = HasMetadataErrors(TrackProps.StateType.SetFlags);
+        if (_trackFlagsDoNotStick == true)
+        {
+            Log.Warning(
+                "Track flags did not stick, not setting again : {FileName}",
+                FileInfo.FullName
+            );
+        }
+        return true;
     }
 
     public bool RepairDefaultFlags(ref bool modified)
@@ -905,16 +984,33 @@ public class ProcessFile
         return Refresh(true);
     }
 
+    private bool AnyCoverArt() =>
+        MkvMergeProps.HasCovertArt()
+        || FfProbeProps.HasCovertArt()
+        || MediaInfoProps.HasCovertArt();
+
     public bool RemoveCoverArt(ref bool modified)
     {
+        // Cover art an earlier run removed that a tool other than MkvMerge still reports remains
+        _coverArtRemains ??=
+            _sidecarFile.State.HasFlag(SidecarFile.StatesType.RemovedCoverArt)
+            && !MkvMergeProps.HasCovertArt()
+            && AnyCoverArt();
+
         // Any cover art
-        if (
-            !MkvMergeProps.HasCovertArt()
-            && !FfProbeProps.HasCovertArt()
-            && !MediaInfoProps.HasCovertArt()
-        )
+        if (!AnyCoverArt())
         {
             // Nothing to do
+            return true;
+        }
+
+        // Cover art that remained after removing it is not removed again, else every run edits the file
+        if (_coverArtRemains == true && !MkvMergeProps.HasCovertArt())
+        {
+            Log.Information(
+                "Cover Art remains after removing, not removing again : {FileName}",
+                FileInfo.FullName
+            );
             return true;
         }
 
@@ -946,15 +1042,76 @@ public class ProcessFile
             return false;
         }
 
-        // Did we get it all?
-        Debug.Assert(
-            !MkvMergeProps.HasCovertArt()
-                && !FfProbeProps.HasCovertArt()
-                && !MediaInfoProps.HasCovertArt()
+        // Any MediaInfo cover art
+        if (MediaInfoProps.HasCovertArt() && !RemoveCoverArtMediaInfo(ref modified))
+        {
+            // Error
+            return false;
+        }
+
+        // Did we get it all
+        if (!AnyCoverArt())
+        {
+            // Done
+            return true;
+        }
+
+        // Warn once, the state stops later runs from removing it again
+        Log.Warning(
+            "Cover Art remains after removing : MkvMerge: {MkvMerge}, FfProbe: {FfProbe}, MediaInfo: {MediaInfo} : {FileName}",
+            MkvMergeProps.HasCovertArt(),
+            FfProbeProps.HasCovertArt(),
+            MediaInfoProps.HasCovertArt(),
+            FileInfo.FullName
+        );
+        _coverArtRemains = true;
+        _sidecarFile.State |= SidecarFile.StatesType.RemovedCoverArt;
+        return SaveState();
+    }
+
+    public bool RemoveCoverArtMediaInfo(ref bool modified)
+    {
+        // MkvMerge has no track for this cover art, MkvMerge cover art is removed by track
+        if (!MediaInfoProps.HasCovertArt() || MkvMergeProps.HasCovertArt())
+        {
+            // Nothing to do
+            return true;
+        }
+
+        // Detected: cover art present
+        Log.Warning(
+            "Cover Art detected : Format: {Format} : {FileName}",
+            MediaInfoProps.Video.First(item => item.CoverArt).Format,
+            FileInfo.FullName
         );
 
-        // Done
-        return true;
+        // Remove attachments in place, if any
+        if (!RemoveAttachments(ref modified))
+        {
+            // Error
+            return false;
+        }
+
+        // Any MediaInfo cover art
+        if (!MediaInfoProps.HasCovertArt())
+        {
+            // No cover art
+            return true;
+        }
+
+        // MkvMerge drops attachments by default, the FfMpeg remux fallback would keep them
+        Log.Information("Removing Cover Art from media file : {FileName}", FileInfo.FullName);
+        if (!Convert.ReMux(FileInfo.FullName))
+        {
+            // Error
+            return false;
+        }
+
+        // Refresh
+        modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        _sidecarFile.State |= SidecarFile.StatesType.RemovedCoverArt;
+        return Refresh(true);
     }
 
     public bool RemoveCoverArtFfProbe(ref bool modified)
@@ -1870,10 +2027,6 @@ public class ProcessFile
         try
         {
             File.Delete(FileInfo.FullName);
-            if (SidecarFile.IsMkvFile(FileInfo))
-            {
-                File.Delete(SidecarFile.GetSidecarName(FileInfo));
-            }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
@@ -1881,8 +2034,22 @@ public class ProcessFile
         }
 
         // Set the sidecar state as deleted
-        // Sidecar file no longer exists, but in-memory state does
+        // Media file no longer exists, but in-memory state does
         _sidecarFile.State |= SidecarFile.StatesType.FileDeleted;
+
+        // The media file is gone, so a sidecar left behind does not make the delete fail
+        if (SidecarFile.IsMkvFile(FileInfo))
+        {
+            string sidecarName = SidecarFile.GetSidecarName(FileInfo);
+            try
+            {
+                File.Delete(sidecarName);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                Log.Error("Failed to delete sidecar file : {FileName}", sidecarName);
+            }
+        }
 
         // Return true if deleted
         return true;
