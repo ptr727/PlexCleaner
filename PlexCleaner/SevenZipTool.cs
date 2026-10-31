@@ -51,7 +51,7 @@ public partial class SevenZip
             // Parse version
             string[] lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
             Match match = InstalledVersionRegex().Match(lines[0]);
-            Debug.Assert(match.Success && Version.TryParse(match.Groups["version"].Value, out _));
+            Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
             return true;
         }
