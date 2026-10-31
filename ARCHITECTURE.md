@@ -440,9 +440,10 @@ flowchart TD
   X4 --> X5
   X5 -->|yes| X6["Move over the input"]
   X5 -->|no| X7["Move to the .mkv name"]
-  X7 -->|"another file there"| XT(["Throw after deleting .tmp2, the input stays"])
+  X6 -->|"move fails"| XT(["Throw after deleting the temp file, the input stays"])
+  X7 -->|"move fails, another file there included"| XT
   X7 -->|moved| X8["Delete the input, a failed delete is logged"]
-  X6 --> XOK(["Done"])
+  X6 -->|moved| XOK(["Done"])
   X8 --> XOK
 ```
 
