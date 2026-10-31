@@ -53,11 +53,20 @@ public abstract class MediaTool
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
-    // Oldest version whose command line the tool wrapper relies on, null when any version works
+    // Oldest version of the tool family that the wrappers support, the README states these minimums
     public Version? MinimumVersion =>
-        GetToolFamily() == ToolFamily.FfMpeg ? new Version(8, 0) : null; // The README states this minimum
+        GetToolFamily() switch
+        {
+            ToolFamily.FfMpeg => new Version(8, 0),
+            ToolFamily.HandBrake => new Version(1, 10, 0),
+            ToolFamily.MediaInfo => new Version(25, 7),
+            ToolFamily.MkvToolNix => new Version(94, 0),
+            ToolFamily.SevenZip => new Version(25, 1),
+            ToolFamily.None => null,
+            _ => null,
+        };
 
-    // An unparsed version is taken to be a current git build, so it passes the gate
+    // A version that does not parse is a git or nightly build, so it passes the gate with a warning
     public static bool IsSupportedVersion(string version, Version? minimumVersion) =>
         minimumVersion == null
         || !Version.TryParse(version, out Version? parsed)

@@ -95,7 +95,7 @@ RUN apt install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
-        p7zip-full \
+        7zip \
         tzdata \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
