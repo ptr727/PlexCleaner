@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -367,15 +366,12 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)(
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
             SidecarFile.StatesType.VerifyFailed
-            | SidecarFile.StatesType.RepairFailed
-            | SidecarFile.StatesType.PostDecodeTimestamps
+                | SidecarFile.StatesType.RepairFailed
+                | SidecarFile.StatesType.PostDecodeTimestamps
         );
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
@@ -401,11 +397,10 @@ public sealed class VerifyToolErrorTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         Program.Config.ProcessOptions.Verify = verify;
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)SidecarFile.StatesType.PostDecodeTimestamps;
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.PostDecodeTimestamps
+        );
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
@@ -423,11 +418,10 @@ public sealed class VerifyToolErrorTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         Program.Config.ProcessOptions.Verify = false;
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)SidecarFile.StatesType.VerifyFailed;
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.VerifyFailed
+        );
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
@@ -450,15 +444,12 @@ public sealed class VerifyToolErrorTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)(
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
             SidecarFile.StatesType.VerifyFailed
-            | SidecarFile.StatesType.RepairFailed
-            | SidecarFile.StatesType.PostDecodeTimestamps
+                | SidecarFile.StatesType.RepairFailed
+                | SidecarFile.StatesType.PostDecodeTimestamps
         );
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
         ProcessFile processFile = new(mediaFile);
         _ = processFile.GetMediaProps().Should().BeTrue();
 
@@ -500,7 +491,7 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
-        _ = File.Exists(sidecarFile).Should().BeTrue();
+        _ = File.Exists(Path.ChangeExtension(mediaFile, ".PlexCleaner")).Should().BeTrue();
     }
 
     [Fact]
