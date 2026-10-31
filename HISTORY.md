@@ -15,8 +15,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A non-monotonic DTS that only appears after decode marks the file `RepairFailed` and `PostDecodeTimestamps`, rather than a re-encode that drops frames.
   - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
   - `DeleteInvalidFiles` keeps a file that was canceled, read-only, blocked by a rename collision, marked `PostDecodeTimestamps`, or whose tool run did not finish.
-  - With the `Verify` option off, a file is no longer marked `Verified`, and the interlace and closed caption scans each run once per file.
-  - Automatic processing skips re-encoding or deinterlacing a file already converted, while the `reencode` and `deinterlace` commands still force it.
+  - With the `Verify` option off, a file is no longer marked `Verified`, and the sidecar records a clean full-file interlace or caption scan.
+  - Automatic processing skips re-encoding a file it already re-encoded, or deinterlacing one it already deinterlaced, while the `reencode` and `deinterlace` commands still force it.
   - When a step rewrites a file, processing repeats every cleanup step, and cleanup it cannot finish is logged rather than retried every run.
   - `RegisterInvalidFiles` skips deleted files and prunes missing ones, and a failed settings or results file write is logged without ending the run.
   - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS and sent it to repair.
