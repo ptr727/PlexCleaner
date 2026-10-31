@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
-using ptr727.Utilities;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -45,11 +44,11 @@ public sealed class SidecarRenameStateTests : IDisposable
     public void Open_SeededStateOverMatchingSidecar_KeepsBothStates()
     {
         // The sidecar name ignores the extension case, so the hash matches
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.Verified
+        );
         string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
-        JsonNode stored = JsonNode.Parse(File.ReadAllText(sidecarPath))!;
-        stored["State"] = (int)SidecarFile.StatesType.Verified;
-        File.WriteAllText(sidecarPath, stored.ToJsonString());
         string renamed = Path.Combine(_directory, "name.MKV");
         string tempName = Path.ChangeExtension(mediaFile, ".tmp7");
         File.Move(mediaFile, tempName);
@@ -68,30 +67,14 @@ public sealed class SidecarRenameStateTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         // A remuxed file meets the stale sidecar of the file it replaced
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.Verified
+        );
         string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
-        JsonNode stored = JsonNode.Parse(File.ReadAllText(sidecarPath))!;
-        stored["State"] = (int)SidecarFile.StatesType.Verified;
-        File.WriteAllText(sidecarPath, stored.ToJsonString());
         File.AppendAllText(mediaFile, "changed");
 
-        // Tools return the stored sample data so the media update can run
-        foreach (
-            (MediaTool tool, string key) in new (MediaTool, string)[]
-            {
-                (Tools.MediaInfo, "MediaInfoData"),
-                (Tools.MkvMerge, "MkvMergeInfoData"),
-                (Tools.FfProbe, "FfProbeInfoData"),
-            }
-        )
-        {
-            string dataFile = Path.Combine(_directory, key + ".json");
-            File.WriteAllText(
-                dataFile,
-                StringCompression.Decompress(stored[key]!.GetValue<string>())
-            );
-            FakeTools.WriteScript(tool.GetToolPath(), $"cat \"{dataFile}\"\n");
-        }
+        FakeTools.WriteSampleToolData(_directory);
 
         SidecarFile sidecarFile = new(mediaFile) { State = Seeded };
         _ = sidecarFile.Open(true).Should().BeTrue();
