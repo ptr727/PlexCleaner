@@ -71,7 +71,6 @@ public static class Tools
                     tool.Info.Version,
                     tool.MinimumVersion,
                     tool.MinimumDate,
-                    tool.MinimumDate,
                     tool.Info.FileName
                 )
             );
