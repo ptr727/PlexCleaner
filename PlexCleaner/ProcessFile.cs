@@ -137,7 +137,7 @@ public class ProcessFile
         }
         catch
         {
-            UndoRename(tempName);
+            modified = !UndoRename(tempName);
             throw;
         }
 
@@ -148,29 +148,26 @@ public class ProcessFile
 
     private bool IsRenameCollision(string targetName)
     {
-        if (!Convert.WouldReplaceOtherFile(FileInfo.FullName, targetName))
+        if (Convert.CanReplace(FileInfo.FullName, targetName))
         {
             return false;
         }
-        Log.Error(
-            "Rename target already exists : {TargetName} : {FileName}",
-            targetName,
-            FileInfo.FullName
-        );
         _renameCollision = true;
         return true;
     }
 
-    private void UndoRename(string tempName)
+    private bool UndoRename(string tempName)
     {
         try
         {
             File.Move(tempName, FileInfo.FullName, false);
+            return true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Report where the media is
             FileInfo = new FileInfo(tempName);
+            return false;
         }
     }
 

@@ -218,13 +218,13 @@ public static class Convert
                 );
     }
 
-    private static bool CanReplace(string inputName, string outputName)
+    public static bool CanReplace(string fileName, string targetName)
     {
-        if (!WouldReplaceOtherFile(inputName, outputName))
+        if (!WouldReplaceOtherFile(fileName, targetName))
         {
             return true;
         }
-        Log.Error("Output file already exists : {OutputName} : {FileName}", outputName, inputName);
+        Log.Error("Target file already exists : {TargetName} : {FileName}", targetName, fileName);
         return false;
     }
 
@@ -232,7 +232,15 @@ public static class Convert
     {
         // Overwrite only the input itself, so a file created at the output name since the check fails the move
         bool inPlace = IsSameFile(inputName, outputName);
-        File.Move(tempName, outputName, inPlace);
+        try
+        {
+            File.Move(tempName, outputName, inPlace);
+        }
+        catch
+        {
+            File.Delete(tempName);
+            throw;
+        }
         if (inPlace)
         {
             return;

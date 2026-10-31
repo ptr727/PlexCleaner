@@ -177,7 +177,7 @@ public sealed class RenameCollisionTests : IDisposable
         Assert.SkipUnless(OperatingSystem.IsLinux(), "Needs the Linux 255-byte file name limit");
 
         // Lowercase U+023A is one UTF-8 byte longer, so only the move to the lowercase name exceeds the limit
-        string mediaFile = CreateFile(new string('a', 250) + ".ȺȺ");
+        string mediaFile = CreateFile(new string('a', 250) + ".\u023A\u023A");
         ProcessFile processFile = new(mediaFile);
 
         bool modified = false;
@@ -190,6 +190,30 @@ public sealed class RenameCollisionTests : IDisposable
         _ = processFile.FileInfo.FullName.Should().Be(mediaFile);
         _ = File.Exists(mediaFile).Should().BeTrue();
         _ = Directory.GetFiles(_directory, "*.tmp7").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ReMuxToMkv_OutputCreatedDuringRemux_KeepsItAndDeletesTemp()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "96.0" };
+        string mediaFile = CreateFile("name.avi");
+        string outputFile = Path.ChangeExtension(mediaFile, ".mkv");
+
+        // The fake writes its output and a newcomer at the output name, after the collision check
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            $"for a; do case $a in *.tmp2) echo mkvmerge > \"$a\" ;; esac; done\necho newcomer > \"{outputFile}\"\n"
+        );
+
+        _ = FluentActions
+            .Invoking(() => PlexCleaner.Convert.ReMuxToMkv(mediaFile, out _))
+            .Should()
+            .Throw<IOException>();
+
+        _ = File.ReadAllText(outputFile).Should().StartWith("newcomer");
+        _ = File.ReadAllText(mediaFile).Should().Be("name.avi");
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
     [Fact]
