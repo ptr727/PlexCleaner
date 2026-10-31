@@ -2,8 +2,6 @@ using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using ptr727.Utilities;
-using Serilog;
-using Serilog.Core;
 using Serilog.Events;
 using Xunit;
 
@@ -214,34 +212,6 @@ public sealed class CleanupStepRepeatTests : IDisposable
         _ = Calls.Should().Equal("mkvpropedit");
     }
 
-    private sealed class CapturingSink : ILogEventSink
-    {
-        public List<LogEvent> Events { get; } = [];
-
-        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
-    }
-
-    private static List<LogEvent> Capture(Action action)
-    {
-        CapturingSink sink = new();
-        ILogger original = Log.Logger;
-        Logger capture = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .WriteTo.Sink(sink)
-            .CreateLogger();
-        Log.Logger = capture;
-        try
-        {
-            action();
-        }
-        finally
-        {
-            Log.Logger = original;
-            capture.Dispose();
-        }
-        return sink.Events;
-    }
-
     [Theory]
     [InlineData("ReMux", LogEventLevel.Warning)]
     [InlineData("SetIetfLanguageTags", LogEventLevel.Information)]
@@ -280,7 +250,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
         );
 
         bool modified = false;
-        List<LogEvent> events = Capture(() =>
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
             processFile.RepairMetadataErrors(ref modified).Should().BeTrue()
         );
 
@@ -318,7 +288,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
             .Be(TrackProps.ActionsType.ReMux | TrackProps.ActionsType.SetFlags);
 
         bool modified = false;
-        List<LogEvent> events = Capture(() =>
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
             processFile.RepairMetadataErrors(ref modified).Should().BeTrue()
         );
 
