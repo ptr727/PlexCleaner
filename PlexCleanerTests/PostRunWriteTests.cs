@@ -21,7 +21,9 @@ public sealed class PostRunWriteTests : IDisposable
     public PostRunWriteTests()
     {
         _ = Directory.CreateDirectory(_directory);
-        Program.Config.ProcessOptions.FileIgnoreList = new HashSet<string>(StringComparer.Ordinal);
+        Program.Config.ProcessOptions.FileIgnoreList = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+        );
         Program.Options.ThreadCount = 1;
 
         // The results file lists the tool versions
@@ -97,6 +99,7 @@ public sealed class PostRunWriteTests : IDisposable
     {
         // A directory at the settings path makes the write throw
         Program.Options.SettingsFile = Path.Combine(_directory, "settings.json");
+        Program.Options.ResultsFile = string.Empty;
         _ = Directory.CreateDirectory(Program.Options.SettingsFile);
         Program.Config.VerifyOptions.RegisterInvalidFiles = true;
         ProcessResultJsonSchema resultsJson = new();
