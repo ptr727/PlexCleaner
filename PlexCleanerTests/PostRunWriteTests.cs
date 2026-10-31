@@ -276,10 +276,7 @@ public sealed class PostRunWriteTests : IDisposable
     public void RegisterInvalidFiles_WildcardAndHiddenEntries_AreMatchedLiterally()
     {
         // Wildcard characters are only legal in names on Linux
-        if (OperatingSystem.IsWindows())
-        {
-            return;
-        }
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Wildcard characters are not legal in names");
         File.WriteAllText(Path.Combine(_directory, "Whats.mkv"), string.Empty);
         File.WriteAllText(Path.Combine(_directory, ".Hidden.mkv"), string.Empty);
         string wildcard = Path.Combine(_directory, "What?.mkv");
@@ -297,10 +294,10 @@ public sealed class PostRunWriteTests : IDisposable
     public void RegisterInvalidFiles_UnreadableFolder_KeepsEntry()
     {
         // Root bypasses the mode, and Windows has no mode
-        if (OperatingSystem.IsWindows() || Environment.UserName == "root")
-        {
-            return;
-        }
+        Assert.SkipWhen(
+            OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess,
+            "A privileged process or Windows reads a locked folder"
+        );
         string folder = Path.Combine(_directory, "locked");
         _ = Directory.CreateDirectory(folder);
         string entry = Path.Combine(folder, "a.mkv");
@@ -310,10 +307,7 @@ public sealed class PostRunWriteTests : IDisposable
         try
         {
             // A DAC-override capability still reads the folder, so the exception path is not reached
-            if (File.Exists(entry))
-            {
-                return;
-            }
+            Assert.SkipWhen(File.Exists(entry), "The process can still read the locked folder");
             _ = Process
                 .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
                 .Should()
