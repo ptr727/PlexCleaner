@@ -57,7 +57,9 @@ public static class Tools
         List<MediaTool> unsupportedTools = GetToolList()
             .FindAll(tool => !MediaTool.IsSupportedVersion(tool.Info.Version, tool.MinimumVersion));
         GetToolList()
-            .FindAll(tool => !Version.TryParse(tool.Info.Version, out _))
+            .FindAll(tool =>
+                tool.MinimumVersion != null && !Version.TryParse(tool.Info.Version, out _)
+            )
             .ForEach(tool =>
                 Log.Warning(
                     "{Tool} version {Version} is not comparable, assuming it meets the minimum supported version {MinimumVersion} : {FileName}",

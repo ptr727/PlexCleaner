@@ -6,29 +6,32 @@ namespace PlexCleanerTests;
 
 public class MinimumVersionTests
 {
-    public static TheoryData<MediaTool, string> Minimums =>
+    public static TheoryData<MediaTool.ToolType, string> Minimums =>
         new()
         {
-            { new FfMpeg.Tool(), "8.0" },
-            { new FfProbe.Tool(), "8.0" },
-            { new HandBrake.Tool(), "1.10.0" },
-            { new MediaInfo.Tool(), "25.07" },
-            { new MkvMerge.Tool(), "94.0" },
-            { new MkvPropEdit.Tool(), "94.0" },
-            { new SevenZip.Tool(), "25.01" },
+            { MediaTool.ToolType.FfMpeg, "8.0" },
+            { MediaTool.ToolType.FfProbe, "8.0" },
+            { MediaTool.ToolType.HandBrake, "1.10.0" },
+            { MediaTool.ToolType.MediaInfo, "25.07" },
+            { MediaTool.ToolType.MkvMerge, "94.0" },
+            { MediaTool.ToolType.MkvPropEdit, "94.0" },
+            { MediaTool.ToolType.SevenZip, "25.01" },
         };
 
-    public static TheoryData<MediaTool, string> OlderVersions =>
+    public static TheoryData<MediaTool.ToolType, string> OlderVersions =>
         new()
         {
-            { new FfMpeg.Tool(), "7.1.1" },
-            { new FfProbe.Tool(), "7.1.1" },
-            { new HandBrake.Tool(), "1.9.2" },
-            { new MediaInfo.Tool(), "25.04" },
-            { new MkvMerge.Tool(), "93.0" },
-            { new MkvPropEdit.Tool(), "93.0" },
-            { new SevenZip.Tool(), "25.00" },
+            { MediaTool.ToolType.FfMpeg, "7.1.1" },
+            { MediaTool.ToolType.FfProbe, "7.1.1" },
+            { MediaTool.ToolType.HandBrake, "1.9.2" },
+            { MediaTool.ToolType.MediaInfo, "25.04" },
+            { MediaTool.ToolType.MkvMerge, "93.0" },
+            { MediaTool.ToolType.MkvPropEdit, "93.0" },
+            { MediaTool.ToolType.SevenZip, "25.00" },
         };
+
+    private static MediaTool GetTool(MediaTool.ToolType toolType) =>
+        Tools.GetToolList().Single(tool => tool.GetToolType() == toolType);
 
     [Fact]
     public void MinimumVersion_EveryTool_HasMinimum()
@@ -41,16 +44,20 @@ public class MinimumVersionTests
 
     [Theory]
     [MemberData(nameof(Minimums))]
-    public void IsSupportedVersion_Minimum_Accepted(MediaTool tool, string minimum)
+    public void IsSupportedVersion_Minimum_Accepted(MediaTool.ToolType toolType, string minimum)
     {
+        MediaTool tool = GetTool(toolType);
         _ = tool.MinimumVersion.Should().Be(Version.Parse(minimum));
         _ = MediaTool.IsSupportedVersion(minimum, tool.MinimumVersion).Should().BeTrue();
     }
 
     [Theory]
     [MemberData(nameof(OlderVersions))]
-    public void IsSupportedVersion_Older_Refused(MediaTool tool, string version) =>
-        _ = MediaTool.IsSupportedVersion(version, tool.MinimumVersion).Should().BeFalse();
+    public void IsSupportedVersion_Older_Refused(MediaTool.ToolType toolType, string version) =>
+        _ = MediaTool
+            .IsSupportedVersion(version, GetTool(toolType).MinimumVersion)
+            .Should()
+            .BeFalse();
 
     [Theory]
     [InlineData("20230223192356-5c2b5d2d0-1.6.x")]
