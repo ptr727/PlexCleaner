@@ -12,7 +12,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 [![Release Status][release-status-shield]][actions-link]\
 [![Docker Status][docker-status-shield]][actions-link]\
-[![Last Commit][last-commit-shield]][commits-link]
+[![Last Commit][last-commit-shield]][commits-link]\
+[![Coverage][coverage-shield]][coverage-link]
 
 ### Releases
 
@@ -1074,6 +1075,7 @@ Licensed under the [MIT License][license]\
 ![GitHub License][license-shield]
 
 <!-- Shields -->
+[coverage-shield]: https://img.shields.io/codecov/c/github/ptr727/PlexCleaner/main?logo=codecov&label=Coverage
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
 [docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Docker%20Build
@@ -1087,6 +1089,7 @@ Licensed under the [MIT License][license]\
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [clone-link]: https://github.com/ptr727/PlexCleaner.git
 [commits-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[coverage-link]: https://app.codecov.io/gh/ptr727/PlexCleaner/tree/main
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [docker-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [github-link]: https://github.com/ptr727/PlexCleaner
