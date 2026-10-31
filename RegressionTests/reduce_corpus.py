@@ -203,7 +203,8 @@ def stage_settings(settings_dir: Path, workdir: Path) -> Path:
     """Copy the settings file into ``workdir/config`` and return that directory.
 
     PlexCleaner writes the settings file back when it upgrades an older ``SchemaVersion``.
-    A read-only mount fails that write, and so every clip, while a copy leaves the source intact.
+    A read-only mount fails that write, so the run aborts for every clip.
+    A per-clip copy takes the write and leaves the source intact.
     The copy takes default permissions, so a read-only source still stages a writable file.
     """
     config = workdir / "config"
@@ -323,8 +324,6 @@ def main() -> None:
 
     sources = args.sources or sorted(entries)
     settings_dir = Path(args.settings)
-    if not (settings_dir / SETTINGS_NAME).is_file():
-        sys.exit(f"settings file not found: {settings_dir / SETTINGS_NAME}")
     work_root = SCRATCH / "work"
     work_root.mkdir(parents=True, exist_ok=True)
     out_dir = Path(args.out) if args.out else None
