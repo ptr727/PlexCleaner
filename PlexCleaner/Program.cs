@@ -222,18 +222,15 @@ public static class Program
         return MakeExitCode(Tools.CheckForNewTools() && Tools.VerifyTools());
     }
 
-    public static int ProcessCommand()
-    {
-        // Create
-        if (!Create(true))
-        {
-            return MakeExitCode(ExitCode.Error);
-        }
+    public static int ProcessCommand() =>
+        !Create(true) ? MakeExitCode(ExitCode.Error) : RunProcess(Options.MediaFiles);
 
+    internal static int RunProcess(List<string> mediaFiles)
+    {
         // Get file and directory list
         if (
             !ProcessDriver.GetFiles(
-                Options.MediaFiles,
+                mediaFiles,
                 out List<string> directoryList,
                 out List<string> fileList
             )

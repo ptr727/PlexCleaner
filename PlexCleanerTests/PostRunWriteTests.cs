@@ -25,6 +25,7 @@ public sealed class PostRunWriteTests : IDisposable
             StringComparer.OrdinalIgnoreCase
         );
         Program.Options.ThreadCount = 1;
+        Process.s_ignoreListWritePending = false;
 
         // The results file lists the tool versions
         _toolInfos.ForEach(item =>
@@ -40,6 +41,7 @@ public sealed class PostRunWriteTests : IDisposable
         Program.Options.SettingsFile = _settingsFile;
         Program.Options.ThreadCount = _threadCount;
         _toolInfos.ForEach(item => item.Tool.Info = item.Info);
+        Process.s_ignoreListWritePending = false;
         Directory.Delete(_directory, true);
     }
 
@@ -59,11 +61,14 @@ public sealed class PostRunWriteTests : IDisposable
     public void RegisterInvalidFiles_DeletedFile_IsSkipped()
     {
         string settingsFile = Path.Combine(_directory, "settings.json");
+        string kept = Path.Combine(_directory, "kept.mkv");
+        string deleted = Path.Combine(_directory, "gone", "deleted.mkv");
+        File.WriteAllText(kept, string.Empty);
         bool result = Process.RegisterInvalidFiles(
             [
-                CreateResult("kept.mkv", SidecarFile.StatesType.VerifyFailed),
+                CreateResult(kept, SidecarFile.StatesType.VerifyFailed),
                 CreateResult(
-                    "deleted.mkv",
+                    deleted,
                     SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
                 ),
             ],
@@ -71,19 +76,21 @@ public sealed class PostRunWriteTests : IDisposable
         );
 
         _ = result.Should().BeTrue();
-        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal("kept.mkv");
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(kept);
         _ = File.Exists(settingsFile).Should().BeTrue();
     }
 
     [Fact]
     public void RegisterInvalidFiles_ExistingEntry_IsKept()
     {
-        _ = Program.Config.ProcessOptions.FileIgnoreList.Add("deleted.mkv");
+        string deleted = Path.Combine(_directory, "deleted.mkv");
+        File.WriteAllText(deleted, string.Empty);
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(deleted);
 
         bool result = Process.RegisterInvalidFiles(
             [
                 CreateResult(
-                    "deleted.mkv",
+                    deleted,
                     SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
                 ),
             ],
@@ -91,7 +98,7 @@ public sealed class PostRunWriteTests : IDisposable
         );
 
         _ = result.Should().BeTrue();
-        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal("deleted.mkv");
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(deleted);
     }
 
     [Fact]
@@ -146,7 +153,7 @@ public sealed class PostRunWriteTests : IDisposable
         bool result = Process.RegisterInvalidFiles(
             [
                 CreateResult(
-                    "deleted.mkv",
+                    Path.Combine(_directory, "gone", "deleted.mkv"),
                     SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
                 ),
             ],
@@ -223,5 +230,96 @@ public sealed class PostRunWriteTests : IDisposable
 
         _ = Process.RegisterInvalidFiles([], settingsFile).Should().BeTrue();
         _ = File.Exists(settingsFile).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_CaseMismatchEntry_IsKept()
+    {
+        string present = Path.Combine(_directory, "Present.mkv");
+        File.WriteAllText(present, string.Empty);
+        string mismatch = Path.Combine(_directory, "PRESENT.MKV");
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(mismatch);
+
+        _ = Process
+            .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
+            .Should()
+            .BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(mismatch);
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_FailedWrite_IsRetriedOnNextCall()
+    {
+        string settingsFile = Path.Combine(_directory, "settings.json");
+        _ = Directory.CreateDirectory(settingsFile);
+        List<ProcessResultJsonSchema.ProcessResult> failed =
+        [
+            CreateResult(
+                Path.Combine(_directory, "failed.mkv"),
+                SidecarFile.StatesType.VerifyFailed
+            ),
+        ];
+        _ = Process.RegisterInvalidFiles(failed, settingsFile).Should().BeFalse();
+        Directory.Delete(settingsFile);
+
+        // Nothing is modified, the pending write still runs
+        _ = Process.RegisterInvalidFiles([], settingsFile).Should().BeTrue();
+        _ = File.Exists(settingsFile).Should().BeTrue();
+
+        // The flag is cleared, so an unmodified list writes nothing
+        File.Delete(settingsFile);
+        _ = Process.RegisterInvalidFiles([], settingsFile).Should().BeTrue();
+        _ = File.Exists(settingsFile).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_WildcardAndHiddenEntries_AreMatchedLiterally()
+    {
+        // Wildcard characters are only legal in names on Linux
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Wildcard characters are not legal in names");
+        File.WriteAllText(Path.Combine(_directory, "Whats.mkv"), string.Empty);
+        File.WriteAllText(Path.Combine(_directory, ".Hidden.mkv"), string.Empty);
+        string wildcard = Path.Combine(_directory, "What?.mkv");
+        string hidden = Path.Combine(_directory, ".HIDDEN.MKV");
+        Program.Config.ProcessOptions.FileIgnoreList.UnionWith([wildcard, hidden]);
+
+        _ = Process
+            .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
+            .Should()
+            .BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(hidden);
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_UnreadableFolder_KeepsEntry()
+    {
+        // Root bypasses the mode, and Windows has no mode
+        Assert.SkipWhen(
+            OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess,
+            "A privileged process or Windows reads a locked folder"
+        );
+        string folder = Path.Combine(_directory, "locked");
+        _ = Directory.CreateDirectory(folder);
+        string entry = Path.Combine(folder, "a.mkv");
+        File.WriteAllText(entry, string.Empty);
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(entry);
+        File.SetUnixFileMode(folder, UnixFileMode.None);
+        try
+        {
+            // A DAC-override capability still reads the folder, so the exception path is not reached
+            Assert.SkipWhen(File.Exists(entry), "The process can still read the locked folder");
+            _ = Process
+                .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
+                .Should()
+                .BeTrue();
+            _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(entry);
+        }
+        finally
+        {
+            File.SetUnixFileMode(
+                folder,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+            );
+        }
     }
 }

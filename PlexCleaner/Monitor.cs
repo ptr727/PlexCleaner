@@ -175,7 +175,7 @@ public class Monitor
         return true;
     }
 
-    private static bool ProcessChanges(List<string> folderList)
+    internal static bool ProcessChanges(List<string> folderList)
     {
         // Get file and directory list
         if (
