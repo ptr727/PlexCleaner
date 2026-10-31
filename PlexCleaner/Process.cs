@@ -593,6 +593,11 @@ public static class Process
             }
         );
 
+        return FinishProcessing(resultsJson, ret);
+    }
+
+    internal static bool FinishProcessing(ProcessResultJsonSchema resultsJson, bool ret)
+    {
         // Errors
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [

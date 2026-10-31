@@ -74,6 +74,40 @@ public sealed class PostRunWriteTests : IDisposable
     }
 
     [Fact]
+    public void RegisterInvalidFiles_ExistingEntry_IsKept()
+    {
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add("deleted.mkv");
+
+        bool result = Process.RegisterInvalidFiles(
+            [
+                CreateResult(
+                    "deleted.mkv",
+                    SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
+                ),
+            ],
+            Path.Combine(_directory, "settings.json")
+        );
+
+        _ = result.Should().BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal("deleted.mkv");
+    }
+
+    [Fact]
+    public void FinishProcessing_SettingsWriteFails_ReturnsFalse()
+    {
+        // A directory at the settings path makes the write throw
+        Program.Options.SettingsFile = Path.Combine(_directory, "settings.json");
+        _ = Directory.CreateDirectory(Program.Options.SettingsFile);
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        ProcessResultJsonSchema resultsJson = new();
+        resultsJson.Results.Results.Add(
+            CreateResult("failed.mkv", SidecarFile.StatesType.VerifyFailed)
+        );
+
+        _ = Process.FinishProcessing(resultsJson, true).Should().BeFalse();
+    }
+
+    [Fact]
     public void RegisterInvalidFiles_OnlyDeletedFiles_WritesNothing()
     {
         string settingsFile = Path.Combine(_directory, "settings.json");
