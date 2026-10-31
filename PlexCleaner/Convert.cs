@@ -18,6 +18,10 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp1");
         Debug.Assert(inputName != tempName);
+        if (!CanReplace(inputName, outputName))
+        {
+            return false;
+        }
 
         // Convert using ffmpeg
         // Selected is ReEncode
@@ -43,15 +47,7 @@ public static class Convert
             return false;
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -66,6 +62,10 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp2");
         Debug.Assert(inputName != tempName);
+        if (!CanReplace(inputName, outputName))
+        {
+            return false;
+        }
 
         // MkvMerge and FfMpeg both have problems dealing with some AVI files, so we will try both
         // E.g. https://github.com/FFmpeg/FFmpeg/commit/8de1ee9f725aa3c550f425bd3120bcd95d5b2ea8
@@ -113,15 +113,7 @@ public static class Convert
             }
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -149,6 +141,10 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp3");
         Debug.Assert(inputName != tempName);
+        if (!CanReplace(inputName, outputName))
+        {
+            return false;
+        }
 
         // ReMux keeping specific tracks
         // Selected is Keep
@@ -161,15 +157,7 @@ public static class Convert
             return false;
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -195,5 +183,72 @@ public static class Convert
         File.Move(tempName, fileName, true);
 
         return true;
+    }
+
+    // A rename or move onto targetName replaces an existing entry other than fileName itself
+    public static bool WouldReplaceOtherFile(string fileName, string targetName) =>
+        Path.Exists(targetName) && !IsSameFile(fileName, targetName);
+
+    private static bool IsSameFile(string fileName, string targetName)
+    {
+        if (fileName.Equals(targetName, StringComparison.Ordinal))
+        {
+            return true;
+        }
+        if (!fileName.Equals(targetName, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // A case-only rename names the file itself unless the directory lists the exact target name
+        string targetFileName = Path.GetFileName(targetName);
+        return Path.Exists(targetName)
+            && !Directory
+                .EnumerateFileSystemEntries(
+                    Path.GetDirectoryName(Path.GetFullPath(targetName))!,
+                    targetFileName,
+                    new EnumerationOptions
+                    {
+                        MatchCasing = MatchCasing.CaseInsensitive,
+                        AttributesToSkip = 0,
+                    }
+                )
+                .Any(entry =>
+                    Path.GetFileName(entry).Equals(targetFileName, StringComparison.Ordinal)
+                );
+    }
+
+    private static bool CanReplace(string inputName, string outputName)
+    {
+        if (!WouldReplaceOtherFile(inputName, outputName))
+        {
+            return true;
+        }
+        Log.Error("Output file already exists : {OutputName} : {FileName}", outputName, inputName);
+        return false;
+    }
+
+    private static void ReplaceInput(string inputName, string tempName, string outputName)
+    {
+        // Overwrite only the input itself, so a file created at the output name since the check fails the move
+        bool inPlace = IsSameFile(inputName, outputName);
+        File.Move(tempName, outputName, inPlace);
+        if (inPlace)
+        {
+            return;
+        }
+
+        // The media is at the output name, so a failed delete still reports the output and the modification
+        try
+        {
+            File.Delete(inputName);
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error(
+                "Failed to delete the input after moving to the output : {FileName}",
+                inputName
+            );
+        }
     }
 }
