@@ -341,6 +341,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
 
         // The remux fixes the language tags and keeps the title that asks for a flag
         string remuxed = Path.Combine(_directory, "remuxed.json");
+        string flagged = Path.Combine(_directory, "flagged.json");
         ProcessFile processFile = CreateProcessFile(
             SidecarFile.StatesType.None,
             mkvMerge: data =>
@@ -350,13 +351,16 @@ public sealed class CleanupStepRepeatTests : IDisposable
                 properties["language_ietf"] = "de";
                 properties["track_name"] = "Commentary";
             },
-            mkvMergeRemuxBody: $"cp \"{remuxed}\" \"{_directory}/MkvMergeInfoData.json\""
+            mkvMergeRemuxBody: $"cp \"{remuxed}\" \"{_directory}/MkvMergeInfoData.json\"",
+            mkvPropEditBody: $"cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\""
         );
         JsonNode mkvMerge = JsonNode.Parse(
             File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.orig.json"))
         )!;
         AudioProperties(mkvMerge)["track_name"] = "Commentary";
         File.WriteAllText(remuxed, mkvMerge.ToJsonString());
+        AudioProperties(mkvMerge)["flag_commentary"] = true;
+        File.WriteAllText(flagged, mkvMerge.ToJsonString());
 
         bool modified = false;
         _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
@@ -368,6 +372,9 @@ public sealed class CleanupStepRepeatTests : IDisposable
             .HaveFlag(SidecarFile.StatesType.ReMuxed)
             .And.HaveFlag(SidecarFile.StatesType.SetFlags)
             .And.NotHaveFlag(SidecarFile.StatesType.VerifyFailed);
+        AudioProps audio = processFile.MkvMergeProps.Audio.Single();
+        _ = audio.Flags.Should().HaveFlag(TrackProps.FlagsType.Commentary);
+        _ = audio.Actions.Should().Be(TrackProps.ActionsType.None);
     }
 
     [Fact]
