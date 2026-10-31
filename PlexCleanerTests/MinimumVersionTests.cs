@@ -65,6 +65,8 @@ public class MinimumVersionTests
     [InlineData("20250901123456-5c2b5d2d0-master", MediaTool.VersionGate.Supported)]
     [InlineData("20250101000000-5c2b5d2d0-master", MediaTool.VersionGate.Unsupported)]
     [InlineData("1.11.2", MediaTool.VersionGate.Supported)]
+    [InlineData("1.9.2-dev", MediaTool.VersionGate.Unsupported)]
+    [InlineData("1.10.1-dev", MediaTool.VersionGate.Supported)]
     [InlineData("", MediaTool.VersionGate.Unknown)]
     [InlineData("custom-build", MediaTool.VersionGate.Unknown)]
     public void CheckVersion_HandBrake_DevelopmentBuilds(
@@ -116,12 +118,17 @@ public class MinimumVersionTests
     [InlineData("HandBrake 1.10.0", true)]
     [InlineData("HandBrake 20230223192356-5c2b5d2d0-1.6.x", false)]
     [InlineData("HandBrake 20250901123456-5c2b5d2d0-master", true)]
+    [InlineData("HandBrake 20200101000000-5c2b5d2d0-master", false)]
     public void GetVersion_HandBrake_GatesOnMinimum(string line, bool expected)
     {
         MediaToolInfo mediaToolInfo = new();
         _ = HandBrake.Tool.GetVersion(line, mediaToolInfo).Should().BeTrue();
         _ = MediaTool
-            .IsSupportedVersion(mediaToolInfo.Version, new HandBrake.Tool().MinimumVersion)
+            .IsSupportedVersion(
+                mediaToolInfo.Version,
+                new HandBrake.Tool().MinimumVersion,
+                new HandBrake.Tool().MinimumDate
+            )
             .Should()
             .Be(expected);
     }
@@ -147,6 +154,7 @@ public class MinimumVersionTests
     [InlineData("mkvmerge v93.0 ('Goblu') 64-bit", false)]
     [InlineData("mkvmerge v94.0 ('Initiate') 64-bit", true)]
     [InlineData("mkvmerge v100.0 ('Example') 64-bit", true)]
+    [InlineData("mkvmerge v93.0-12-g1a2b3c4 ('Goblu') 64-bit", false)]
     public void GetVersion_MkvMerge_GatesOnMinimum(string line, bool expected)
     {
         MediaToolInfo mediaToolInfo = new();

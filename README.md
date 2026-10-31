@@ -203,7 +203,7 @@ PlexCleaner exits with an error at startup when an installed tool is older than 
 | MKVToolNix | 94.0 |
 | 7-Zip | 25.01 |
 
-A development build is compared by its branch or build date, for example a HandBrake nightly or an FFmpeg git build. A version string that cannot be compared is accepted with a warning. The Docker image and the Windows automatic download provide current tools. A winget, manual, Linux, or macOS install must provide versions that meet the minimums.
+A version with a release prefix, a HandBrake nightly (by branch or build date), or an FFmpeg build named by date is compared by that. A version string that cannot be compared is accepted with a warning. The Docker image and the Windows automatic download provide current tools. A winget, manual, Linux, or macOS install must provide versions that meet the minimums.
 
 ### Docker
 

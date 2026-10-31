@@ -66,19 +66,22 @@ public static class Tools
             )
             .ForEach(tool =>
                 Log.Warning(
-                    "{Tool} version {Version} is not comparable, assuming it meets the minimum supported version {MinimumVersion} : {FileName}",
+                    "{Tool} version {Version} is not comparable, assuming it meets the minimum supported version {MinimumVersion} released {MinimumDate} : {FileName}",
                     tool.GetToolType(),
                     tool.Info.Version,
                     tool.MinimumVersion,
+                    tool.MinimumDate,
+                    tool.MinimumDate,
                     tool.Info.FileName
                 )
             );
         unsupportedTools.ForEach(tool =>
             Log.Error(
-                "{Tool} version {Version} is older than the minimum supported version {MinimumVersion} : {FileName}",
+                "{Tool} version {Version} is older than the minimum supported version {MinimumVersion} released {MinimumDate} : {FileName}",
                 tool.GetToolType(),
                 tool.Info.Version,
                 tool.MinimumVersion,
+                tool.MinimumDate,
                 tool.Info.FileName
             )
         );

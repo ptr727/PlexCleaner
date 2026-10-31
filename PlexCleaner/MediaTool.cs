@@ -96,6 +96,13 @@ public abstract partial class MediaTool
             return parsed >= minimumVersion ? VersionGate.Supported : VersionGate.Unsupported;
         }
 
+        // A release prefix with a suffix, such as "93.0-12-g1a2b3c4", compares by the prefix
+        Match prefix = VersionPrefixRegex().Match(version);
+        if (prefix.Success && Version.TryParse(prefix.Groups["version"].Value, out parsed))
+        {
+            return parsed >= minimumVersion ? VersionGate.Supported : VersionGate.Unsupported;
+        }
+
         // HandBrake nightly "20230223192356-5c2b5d2d0-1.6.x" is a build of the 1.6 branch
         Match branch = HandBrakeBranchRegex().Match(version);
         if (
@@ -132,6 +139,9 @@ public abstract partial class MediaTool
         Version? minimumVersion,
         DateOnly? minimumDate = null
     ) => CheckVersion(version, minimumVersion, minimumDate) != VersionGate.Unsupported;
+
+    [GeneratedRegex(@"^(?<version>\d+(\.\d+)+)")]
+    private static partial Regex VersionPrefixRegex();
 
     [GeneratedRegex(@"^\d{14}-[0-9a-f]+-(?<branch>\d+\.\d+)\.x$", RegexOptions.IgnoreCase)]
     private static partial Regex HandBrakeBranchRegex();
