@@ -306,7 +306,7 @@ public class ProcessFile
 
     public bool RepairMetadataErrors(ref bool modified)
     {
-        // SetFlags with flag errors left means an earlier run's flags did not stick
+        // Flags an earlier run set that are still missing did not stick
         _trackFlagsDoNotStick ??=
             _sidecarFile.State.HasFlag(SidecarFile.StatesType.SetFlags)
             && HasMetadataErrors(TrackProps.StateType.SetFlags);
@@ -693,6 +693,15 @@ public class ProcessFile
             FileInfo.FullName
         );
 
+        // Already flagged?
+        if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.SetFlags))
+        {
+            Log.Warning(
+                "Metadata errors re-detected after setting flags : {FileName}",
+                FileInfo.FullName
+            );
+        }
+
         // Setting flags
         Log.Information("Setting track flags on media file : {FileName}", FileInfo.FullName);
 
@@ -708,24 +717,22 @@ public class ProcessFile
 
         // Refresh
         modified = true;
+        _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
         if (!Refresh(true))
         {
             return false;
         }
 
-        // SetFlags records only flags that did not stick, so flags a later rewrite drops are set again
-        bool doNotStick = HasMetadataErrors(TrackProps.StateType.SetFlags);
-        _trackFlagsDoNotStick = doNotStick;
-        if (!doNotStick)
-        {
-            _sidecarFile.State &= ~SidecarFile.StatesType.SetFlags;
-            return SaveState();
-        }
-
         // Warn once, the state stops later runs from setting them again
-        Log.Warning("Track flags did not stick, not setting again : {FileName}", FileInfo.FullName);
-        _sidecarFile.State |= SidecarFile.StatesType.SetFlags;
-        return SaveState();
+        _trackFlagsDoNotStick = HasMetadataErrors(TrackProps.StateType.SetFlags);
+        if (_trackFlagsDoNotStick == true)
+        {
+            Log.Warning(
+                "Track flags did not stick, not setting again : {FileName}",
+                FileInfo.FullName
+            );
+        }
+        return true;
     }
 
     public bool RepairDefaultFlags(ref bool modified)

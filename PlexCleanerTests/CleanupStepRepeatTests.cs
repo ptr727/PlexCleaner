@@ -297,25 +297,6 @@ public sealed class CleanupStepRepeatTests : IDisposable
     }
 
     [Fact]
-    public void RepairMetadataErrors_TrackFlagsStick_LeavesSetFlagsUnset()
-    {
-        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
-
-        // Flags that stick leave no SetFlags, so a later rewrite that drops them is repaired
-        ProcessFile processFile = CreateProcessFile(
-            SidecarFile.StatesType.None,
-            mkvMerge: data => AudioProperties(data)["track_name"] = "Commentary",
-            mkvPropEditBody: $"cp \"{_directory}/MkvMergeInfoData.orig.json\" \"{_directory}/MkvMergeInfoData.json\""
-        );
-        bool modified = false;
-        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
-        _ = modified.Should().BeTrue();
-        _ = Calls.Should().Equal("mkvpropedit");
-        _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.SetFlags);
-        _ = processFile.HasMetadataErrors(TrackProps.StateType.SetFlags).Should().BeFalse();
-    }
-
-    [Fact]
     public void RepairMetadataErrors_RewriteDropsFlagsInRun_SetsThemInCleanupReRun()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
