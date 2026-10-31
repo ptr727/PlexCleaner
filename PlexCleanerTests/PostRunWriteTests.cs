@@ -271,4 +271,25 @@ public sealed class PostRunWriteTests : IDisposable
         _ = Process.RegisterInvalidFiles([], settingsFile).Should().BeTrue();
         _ = File.Exists(settingsFile).Should().BeFalse();
     }
+
+    [Fact]
+    public void RegisterInvalidFiles_WildcardAndHiddenEntries_AreMatchedLiterally()
+    {
+        // Wildcard characters are only legal in names on Linux
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+        File.WriteAllText(Path.Combine(_directory, "Whats.mkv"), string.Empty);
+        File.WriteAllText(Path.Combine(_directory, ".Hidden.mkv"), string.Empty);
+        string wildcard = Path.Combine(_directory, "What?.mkv");
+        string hidden = Path.Combine(_directory, ".HIDDEN.MKV");
+        Program.Config.ProcessOptions.FileIgnoreList.UnionWith([wildcard, hidden]);
+
+        _ = Process
+            .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
+            .Should()
+            .BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(hidden);
+    }
 }

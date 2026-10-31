@@ -755,15 +755,16 @@ public static class Process
         }
 
         // File.Exists hides access and IO errors, and is case sensitive on Linux, so list the folder
+        // Compare names directly, a pattern would treat * and ? in a name as wildcards
         try
         {
-            EnumerationOptions options = new()
-            {
-                MatchCasing = MatchCasing.CaseInsensitive,
-                MatchType = MatchType.Simple,
-                IgnoreInaccessible = false,
-            };
-            return !Directory.EnumerateFiles(folder, Path.GetFileName(fileName), options).Any();
+            string name = Path.GetFileName(fileName);
+            EnumerationOptions options = new() { AttributesToSkip = 0 };
+            return !Directory
+                .EnumerateFiles(folder, "*", options)
+                .Any(item =>
+                    Path.GetFileName(item).Equals(name, StringComparison.OrdinalIgnoreCase)
+                );
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
