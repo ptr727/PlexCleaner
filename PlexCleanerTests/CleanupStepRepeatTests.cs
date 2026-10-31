@@ -149,7 +149,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
         _ = processFile.RemoveCoverArt(ref modified).Should().BeTrue();
         _ = modified.Should().BeFalse();
 
-        // A later run does not remux again either
+        // A later run does not remux again either, and needs no ReMux option for that
+        Program.Config.ProcessOptions.ReMux = false;
         ProcessFile nextRun = Load(processFile.FileInfo.FullName);
         _ = nextRun.RemoveCoverArt(ref modified).Should().BeTrue();
         _ = modified.Should().BeFalse();

@@ -1007,6 +1007,16 @@ public class ProcessFile
             return true;
         }
 
+        // Cover art that remained after removing it is not removed again, else every run edits the file
+        if (_coverArtRemains == true && !MkvMergeProps.HasCovertArt())
+        {
+            Log.Debug(
+                "Cover Art remains after removing, not removing again : {FileName}",
+                FileInfo.FullName
+            );
+            return true;
+        }
+
         // Conditional
         if (!Program.Config.ProcessOptions.ReMux)
         {
@@ -1016,16 +1026,6 @@ public class ProcessFile
                 FileInfo.FullName
             );
             return false;
-        }
-
-        // Cover art that remained after removing it is not removed again, else every run edits the file
-        if (_coverArtRemains == true && !MkvMergeProps.HasCovertArt())
-        {
-            Log.Debug(
-                "Cover Art remains after removing, not removing again : {FileName}",
-                FileInfo.FullName
-            );
-            return true;
         }
 
         // Cover art can be detected by MediaInfo or FfMpeg or MkvMerge
