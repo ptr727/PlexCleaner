@@ -89,8 +89,7 @@ public static class Process
                 operation = nameof(processFile.DeleteMismatchedSidecarFile);
                 if (!processFile.DeleteMismatchedSidecarFile(ref modified))
                 {
-                    // Error
-                    result = false;
+                    result = true;
                     break;
                 }
 
